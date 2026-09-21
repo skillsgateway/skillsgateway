@@ -145,15 +145,14 @@ HTTP surface *promises*.
     reviewed miss shows the need; none exists yet, and this change does not add
     one.
 
-    Two consequences are live today. `skills-gateway.roles.enabled` was removed,
-    and a deployment that still sets it is **refused at startup** rather than
-    having the setting ignored. Ignoring it would reverse an operator who set it
-    to `false`, and a property that is read and a property that is ignored look
-    identical from inside a deployment. `…object-store.cache.ref-freshness` was
-    removed on the same reasoning: it lengthened the window in which a revoked
-    snapshot could still be advertised, so ignoring it would silently shorten a
-    bound the operator believed they had set. Both refusals are migration aids
-    and are scheduled for removal at the next major.
+    Two removed properties — `skills-gateway.roles.enabled` and
+    `…object-store.cache.ref-freshness` — used to refuse startup when a
+    deployment still set them. Those refusals were migration aids for versions
+    that had read the properties, promised only as far as the next major, and
+    1.0.0 is it: they are gone, and setting either name is now an unknown
+    property, ignored like any other. The policy that produced them stands —
+    removing a property whose absence reverses an operator's stated intention
+    needs a refusal, not silence — and the next such removal gets its own.
 
 **Within a major, `/api/**` only grows.** Endpoints, fields and enum values may
 be added; nothing a deployed client could depend on is removed, narrowed or
@@ -213,7 +212,7 @@ grow too.
     The gate does not object: adding a response is additive, and oasdiff cannot
     see that a caller who used to get `200` now gets `403`. That makes this a
     case review has to catch, like the prefix rule above it. It has happened once
-    so far, to `GET /api/snapshots/{id}/fetchers`.
+    so far, to `GET /api/v1/snapshots/{id}/fetchers`.
 
 !!! note "A payload field added later is added optional"
 
@@ -222,12 +221,13 @@ grow too.
     schema marks required is one the gateway populates on every delivery, without
     exception.
 
-!!! note "The prefix does not exist yet"
+!!! note "The prefix, and what it is for"
 
-    Endpoints are unversioned today (`/api/marketplaces`, not
-    `/api/v1/marketplaces`). The version segment arrives with the change that
-    introduces API versioning; until then the promise binds, and the check below
-    enforces it, against the unversioned paths.
+    Every endpoint carries one: `/api/v1/marketplaces`, `/status/v1/snapshots`.
+    The segment exists so that the remedy above is available — a breaking change
+    moves the prefix — without leaving a bare, unversioned path that has to be
+    supported forever beside its own successor. It arrived in 1.0.0, before the
+    promise began to bind, which is the only release where adding it was free.
 
 ### How it is enforced
 

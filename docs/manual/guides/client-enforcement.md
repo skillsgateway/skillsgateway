@@ -89,7 +89,7 @@ content that arrived while it was approved and has since been
 skills are already on disk, and the gateway cannot reach a client machine to
 take them back.
 
-So the client asks. `POST /status/snapshots` takes the marketplace-and-commit
+So the client asks. `POST /status/v1/snapshots` takes the marketplace-and-commit
 pairs a machine holds and answers one state each, and it authenticates with the
 same PAT a fetch uses — a client that can clone can ask.
 
@@ -97,7 +97,7 @@ same PAT a fetch uses — a client that can clone can ask.
 curl -sS -u "token:$SKILLS_GATEWAY_PAT" \
   -H 'Content-Type: application/json' \
   -d '{"holdings":[{"marketplace":"platform-skills","sha":"'"$(git -C ~/.claude/marketplaces/platform-skills rev-parse HEAD)"'"}]}' \
-  https://skills.corp.example/status/snapshots
+  https://skills.corp.example/status/v1/snapshots
 ```
 
 ```json

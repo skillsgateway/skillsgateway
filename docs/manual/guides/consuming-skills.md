@@ -31,7 +31,7 @@ If you are already logged in to the portal, mint a credential from that session
 instead of creating a standing token:
 
 ```console
-$ curl -X POST localhost:8080/api/tokens/session \
+$ curl -X POST localhost:8080/api/v1/tokens/session \
     -H 'Content-Type: application/json' -d '{"name":"my-laptop"}'
 ```
 
@@ -69,7 +69,7 @@ Git clients authenticate with PATs, not with your portal session.
 === "API"
 
     ```console
-    $ curl -X POST localhost:8080/api/tokens \
+    $ curl -X POST localhost:8080/api/v1/tokens \
         -H 'Content-Type: application/json' -d '{"name":"my-laptop"}'
     ```
 
@@ -91,7 +91,7 @@ own.
     and given an expiry (`"expiresAt":"..."`) — a leaked CI token limited to one
     marketplace is an incident contained to that marketplace, and one that dies
     on its own bounds the window a leak matters. Suspect exposure without
-    wanting to reconfigure anything? `POST /api/tokens/{id}/rotate` issues a
+    wanting to reconfigure anything? `POST /api/v1/tokens/{id}/rotate` issues a
     fresh secret with the identical grant and kills the old one in the same
     act. See [Access tokens](../reference/api/tokens.md).
 

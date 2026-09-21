@@ -121,7 +121,7 @@ class LicenseTests extends AbstractGatewayTest {
                         LicenseFixtures.MANIFEST_WITH_LICENSES,
                         Map.of("LICENSE", LicenseFixtures.MIT, "plugins/hello/COPYING", LicenseFixtures.GIBBERISH)));
 
-        String body = mockMvc.perform(get("/api/snapshots/%d/licenses"
+        String body = mockMvc.perform(get("/api/v1/snapshots/%d/licenses"
                                 .formatted(registered.snapshot().id()))
                         .with(oidcLogin()))
                 .andExpect(status().isOk())
@@ -136,12 +136,12 @@ class LicenseTests extends AbstractGatewayTest {
         assertThat(report.path("licenses").size()).isGreaterThan(0);
         assertThat(entry(report, "LICENSE").path("spdxId").asText()).isEqualTo("MIT");
         assertThat(entry(report, "LICENSE").path("source").asText()).isEqualTo("file");
-        assertThat(entry(report, "LICENSE").path("evaluation").asText()).isEqualTo("OK");
+        assertThat(entry(report, "LICENSE").path("evaluation").asText()).isEqualTo("ok");
         // The unknown state is first-class on the wire too.
         assertThat(entry(report, "plugins/hello/COPYING").path("spdxId").isNull())
                 .isTrue();
         assertThat(entry(report, "plugins/hello/COPYING").path("evaluation").asText())
-                .isEqualTo("UNKNOWN");
+                .isEqualTo("unknown");
         assertThat(entry(report, ".claude-plugin/marketplace.json#plugins[hello].license")
                         .path("declared")
                         .asText())
@@ -150,7 +150,7 @@ class LicenseTests extends AbstractGatewayTest {
         assertThat(report.path("allowed")).isEmpty();
         assertThat(report.path("banned")).isEmpty();
 
-        mockMvc.perform(get("/api/snapshots/999999999/licenses").with(oidcLogin()))
+        mockMvc.perform(get("/api/v1/snapshots/999999999/licenses").with(oidcLogin()))
                 .andExpect(status().isNotFound());
     }
 

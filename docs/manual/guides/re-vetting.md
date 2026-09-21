@@ -112,10 +112,10 @@ now".
 
     ```bash
     # one snapshot
-    curl -X POST https://gateway.example.com/api/snapshots/12/revet
+    curl -X POST https://gateway.example.com/api/v1/snapshots/12/revet
 
     # every approved snapshot of a marketplace
-    curl -X POST https://gateway.example.com/api/marketplaces/corp-marketplace/revet
+    curl -X POST https://gateway.example.com/api/v1/marketplaces/corp-marketplace/revet
     ```
 
 Both record their runs with trigger `revet-manual`.
@@ -126,7 +126,7 @@ Both record their runs with trigger `revet-manual`.
     external feed to subscribe to: their rules ship with the gateway, as does
     the Agent Skills specification `skill-conformance` validates against. So
     "re-vet when the feed updates" is, today, an operator calling
-    `POST /api/marketplaces/{name}/revet` after deploying a vetter whose
+    `POST /api/v1/marketplaces/{name}/revet` after deploying a vetter whose
     rules changed — and the run records the vetter versions, so an answer
     that changed can be attributed to the chain rather than guessed at.
 
@@ -174,7 +174,7 @@ reviewable and reversible by a person.
 
 ### Who already has it
 
-`GET /api/snapshots/{id}/fetchers` — and the portal panel on a revoked snapshot —
+`GET /api/v1/snapshots/{id}/fetchers` — and the portal panel on a revoked snapshot —
 lists every authenticated identity that received the content through the facade,
 with a fetch count and a last-fetch time, read from the append-only ledger the
 gateway has been keeping since the first clone. Reading it takes the same

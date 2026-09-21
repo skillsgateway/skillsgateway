@@ -202,8 +202,8 @@ const fourVetterVetting: typeof clearVetting = {
     ...clearVetting.run!,
     verdicts: [
       ...clearVetting.run!.verdicts!,
-      { verdictId: 20, vetter: "license-scan", position: 2, state: "PASS", findings: [] },
-      { verdictId: 21, vetter: "corp-llm-reviewer", position: 3, state: "PASS", findings: [] },
+      { verdictId: 20, vetter: "license-scan", position: 2, state: "pass", findings: [] },
+      { verdictId: 21, vetter: "corp-llm-reviewer", position: 3, state: "pass", findings: [] },
     ],
   },
   vetters: [

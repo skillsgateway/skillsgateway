@@ -85,7 +85,7 @@ Anything that prevents a rule from producing `false` **denies** the approval:
 - the facts cannot be built — malformed SKILL.md frontmatter, a SKILL.md over
   256 KiB, a file inventory over 20 000 entries.
 
-The refusal (HTTP 409 on `POST /api/snapshots/{id}/approve`) names **every**
+The refusal (HTTP 409 on `POST /api/v1/snapshots/{id}/approve`) names **every**
 deciding rule with its outcome — `matched`, or `error: …` — because the remedy
 differs: a match means the content is prohibited; an error means an admin
 fixes or disables the rule. The deliberate cost: a broken enabled rule blocks
@@ -106,14 +106,14 @@ hanging the gate.
 
 ## Test before you enforce: the playground
 
-`POST /api/policy/playground` evaluates any expression against a **real**
+`POST /api/v1/policy/playground` evaluates any expression against a **real**
 snapshot — held, approved or revoked — and answers `matched` or the error,
 without storing anything, appending nothing to the ledger, and changing no
 state. Author the rule in the playground against the snapshots it should and
 should not catch, then create it enabled.
 
 ```console
-$ curl -X POST localhost:8080/api/policy/playground \
+$ curl -X POST localhost:8080/api/v1/policy/playground \
     -H 'Content-Type: application/json' \
     -d '{"snapshotId": 42,
          "expression": "skills.exists(s, s.tools.exists(t, t.startsWith(\"Bash\")))"}'

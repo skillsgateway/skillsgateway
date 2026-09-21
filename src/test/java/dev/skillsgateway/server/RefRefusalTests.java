@@ -91,7 +91,7 @@ class RefRefusalTests extends AbstractGatewayTest {
                         + " to a retention promise nothing kept")
                 .isPresent();
 
-        String audit = mockMvc.perform(get("/api/audit").with(oidcLogin()))
+        String audit = mockMvc.perform(get("/api/v1/audit").with(oidcLogin()))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status()
                         .isOk())
                 .andReturn()

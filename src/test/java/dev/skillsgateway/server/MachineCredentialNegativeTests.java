@@ -162,11 +162,11 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_AUTH_0021", "SVC_GW_AUTH_0024"})
     void a_revoked_or_expired_machine_credential_is_refused() throws Exception {
         TokenService.IssuedToken revoked = machineCredential(List.of("marketplaces:read"));
-        mockMvc.perform(bearer(get("/api/marketplaces"), revoked.token())).andExpect(status().isOk());
+        mockMvc.perform(bearer(get("/api/v1/marketplaces"), revoked.token())).andExpect(status().isOk());
         assertThat(tokenService.revokeMachineCredential(revoked.id())).isTrue();
         // Immediate: checked at authentication time, so it takes effect on the very next request
         // rather than when some cache happens to expire.
-        mockMvc.perform(bearer(get("/api/marketplaces"), revoked.token())).andExpect(status().isUnauthorized());
+        mockMvc.perform(bearer(get("/api/v1/marketplaces"), revoked.token())).andExpect(status().isUnauthorized());
 
         TokenService.IssuedToken expired = tokenService.createMachineCredential(
                 uniqueName("expiring"),
@@ -175,7 +175,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
                 Instant.now().plusMillis(1),
                 "admin@example.invalid");
         Thread.sleep(20);
-        mockMvc.perform(bearer(get("/api/marketplaces"), expired.token())).andExpect(status().isUnauthorized());
+        mockMvc.perform(bearer(get("/api/v1/marketplaces"), expired.token())).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -183,11 +183,11 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     void a_request_carrying_both_a_bearer_credential_and_a_cookie_is_refused() throws Exception {
         TokenService.IssuedToken machine = machineCredential(List.of("marketplaces:read"));
 
-        mockMvc.perform(bearer(get("/api/marketplaces"), machine.token())
+        mockMvc.perform(bearer(get("/api/v1/marketplaces"), machine.token())
                         .header(HttpHeaders.COOKIE, "JSESSIONID=whatever"))
                 .andExpect(status().isUnauthorized());
         // The same credential alone is fine, so the refusal is the ambiguity and nothing else.
-        mockMvc.perform(bearer(get("/api/marketplaces"), machine.token())).andExpect(status().isOk());
+        mockMvc.perform(bearer(get("/api/v1/marketplaces"), machine.token())).andExpect(status().isOk());
     }
 
     @Test
@@ -195,7 +195,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     void a_bearer_request_creates_no_session_and_sets_no_cookie() throws Exception {
         TokenService.IssuedToken machine = machineCredential(List.of("marketplaces:read"));
 
-        MockHttpServletResponse response = mockMvc.perform(bearer(get("/api/marketplaces"), machine.token()))
+        MockHttpServletResponse response = mockMvc.perform(bearer(get("/api/v1/marketplaces"), machine.token()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse();
@@ -208,8 +208,8 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_AUTH_0002"})
     void a_browser_session_without_a_bearer_header_reaches_the_api_exactly_as_before() throws Exception {
         // The session chain is untouched: unauthenticated is still 401, and a login still works.
-        mockMvc.perform(get("/api/marketplaces")).andExpect(status().isUnauthorized());
-        mockMvc.perform(get("/api/marketplaces").with(oidcLogin())).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/marketplaces")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin())).andExpect(status().isOk());
     }
 
     @Test
@@ -217,21 +217,21 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
     void a_garbage_an_empty_and_a_valid_facade_bearer_value_are_indistinguishable() throws Exception {
         TokenService.IssuedToken facadeToken = tokenService.create("alice", "facade-only");
 
-        String garbage = body(mockMvc.perform(bearer(get("/api/marketplaces"), "sgw_definitely-not-a-token"))
+        String garbage = body(mockMvc.perform(bearer(get("/api/v1/marketplaces"), "sgw_definitely-not-a-token"))
                 .andExpect(status().isUnauthorized()));
-        String empty = body(mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer "))
+        String empty = body(mockMvc.perform(get("/api/v1/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer "))
                 .andExpect(status().isUnauthorized()));
         // The scheme with nothing after it at all, and no trailing space either. It must be
         // refused by this chain rather than falling through to the session chain, which would
         // answer a differently-shaped 401 and make the two distinguishable. Found by a surviving
         // mutant on the chain matcher, not by inspection.
-        String bare = body(mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer"))
+        String bare = body(mockMvc.perform(get("/api/v1/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer"))
                 .andExpect(status().isUnauthorized()));
         // And a lower-cased scheme, which RFC 7235 says is the same scheme.
         String lowercased = body(mockMvc.perform(
-                        get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "bearer " + facadeToken.token()))
+                        get("/api/v1/marketplaces").header(HttpHeaders.AUTHORIZATION, "bearer " + facadeToken.token()))
                 .andExpect(status().isUnauthorized()));
-        String valid = body(mockMvc.perform(bearer(get("/api/marketplaces"), facadeToken.token()))
+        String valid = body(mockMvc.perform(bearer(get("/api/v1/marketplaces"), facadeToken.token()))
                 .andExpect(status().isUnauthorized()));
 
         assertThat(garbage).isEqualTo(empty).isEqualTo(valid).isEqualTo(bare).isEqualTo(lowercased);
@@ -245,10 +245,10 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
 
         // Basic is the facade's scheme, and the machine chain does not match it at all, so the
         // request falls through to the session chain and is unauthenticated there.
-        mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, basic(facadeToken.token())))
+        mockMvc.perform(get("/api/v1/marketplaces").header(HttpHeaders.AUTHORIZATION, basic(facadeToken.token())))
                 .andExpect(status().isUnauthorized());
         // A machine credential presented as Basic fares no better: the scheme is the matcher.
-        mockMvc.perform(get("/api/marketplaces")
+        mockMvc.perform(get("/api/v1/marketplaces")
                         .header(
                                 HttpHeaders.AUTHORIZATION,
                                 basic(machineCredential(List.of("marketplaces:read"))
@@ -263,7 +263,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
      * just as well with the chain deleted.
      */
     private void reachesTheApi(TokenService.IssuedToken machine) throws Exception {
-        mockMvc.perform(bearer(get("/api/marketplaces"), machine.token())).andExpect(status().isOk());
+        mockMvc.perform(bearer(get("/api/v1/marketplaces"), machine.token())).andExpect(status().isOk());
     }
 
     private static String basic(String secret) {

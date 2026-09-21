@@ -50,15 +50,15 @@ class VetterToggleTests extends AbstractGatewayTest {
 
         // A non-administrator can neither switch a vetter nor read the settings.
         var mallory = oidcLogin().idToken(token -> token.subject("mallory"));
-        mockMvc.perform(put("/api/vetting/vetters/{name}/toggle", "secret-scan")
+        mockMvc.perform(put("/api/v1/vetting/vetters/{name}/toggle", "secret-scan")
                         .with(mallory)
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                         .content("{\"enabled\": false, \"marketplace\": \"%s\"}".formatted(nameA)))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/vetting/vetter-toggles").with(mallory)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/vetting/vetter-toggles").with(mallory)).andExpect(status().isForbidden());
 
         // An administrator disables secret-scan for marketplace A only.
-        mockMvc.perform(put("/api/vetting/vetters/{name}/toggle", "secret-scan")
+        mockMvc.perform(put("/api/v1/vetting/vetters/{name}/toggle", "secret-scan")
                         .with(root)
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                         .content("{\"enabled\": false, \"marketplace\": \"%s\", \"reason\": \"vendor keys, expected\"}"
@@ -83,17 +83,17 @@ class VetterToggleTests extends AbstractGatewayTest {
         // Ingesting A now records secret-scan as a disabled verdict and no longer blocks on it;
         // the other vetters provide the positive evidence, so the effective outcome clears.
         Snapshot onA = ingestionService.ingest(a, null);
-        mockMvc.perform(get("/api/snapshots/{id}/vetting", onA.id()).with(root))
+        mockMvc.perform(get("/api/v1/snapshots/{id}/vetting", onA.id()).with(root))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.CLEAR.name()))
+                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.CLEAR.stored()))
                 .andExpect(jsonPath("$.run.verdicts[?(@.vetter == 'secret-scan')].state")
-                        .value("DISABLED"));
+                        .value("disabled"));
 
         // Marketplace B, left alone, still runs secret-scan and still blocks on the same content.
         Snapshot onB = ingestionService.ingest(b, null);
-        mockMvc.perform(get("/api/snapshots/{id}/vetting", onB.id()).with(root))
+        mockMvc.perform(get("/api/v1/snapshots/{id}/vetting", onB.id()).with(root))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.BLOCKED.name()));
+                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.BLOCKED.stored()));
     }
 
     @Test
@@ -107,7 +107,7 @@ class VetterToggleTests extends AbstractGatewayTest {
         // The real chain, not a list to keep in step: "every vetter" has to stay literally true
         // as vetters are added, or this test quietly stops testing what it names.
         for (String vetter : vettingService.vetters().stream().map(Vetter::name).toList()) {
-            mockMvc.perform(put("/api/vetting/vetters/{name}/toggle", vetter)
+            mockMvc.perform(put("/api/v1/vetting/vetters/{name}/toggle", vetter)
                             .with(root)
                             .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                             .content("{\"enabled\": false, \"marketplace\": \"%s\"}".formatted(name)))
@@ -116,9 +116,9 @@ class VetterToggleTests extends AbstractGatewayTest {
         Snapshot snapshot = ingestionService.ingest(c, null);
         // Nothing ran, so nothing cleared: a marketplace with every control switched off is blocked,
         // never cleared — the switch is not a blanket approval.
-        mockMvc.perform(get("/api/snapshots/{id}/vetting", snapshot.id()).with(root))
+        mockMvc.perform(get("/api/v1/snapshots/{id}/vetting", snapshot.id()).with(root))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.BLOCKED.name()));
+                .andExpect(jsonPath("$.outcome").value(VettingChain.Outcome.BLOCKED.stored()));
     }
 
     @Test
@@ -140,11 +140,11 @@ class VetterToggleTests extends AbstractGatewayTest {
 
         // Vetter settings are administrator-only to read (GW_VETTING_0029.4), and so is the chain
         // that reports them.
-        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain", name)
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain", name)
                         .with(oidcLogin().idToken(token -> token.subject("mallory"))))
                 .andExpect(status().isForbidden());
 
-        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain", name).with(root))
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain", name).with(root))
                 .andExpect(status().isOk())
                 // Every configured vetter, in the order the chain runs them.
                 .andExpect(jsonPath("$.length()").value(chain.size()))
@@ -153,27 +153,27 @@ class VetterToggleTests extends AbstractGatewayTest {
                 .andExpect(jsonPath("$[2].name").value(untouched))
                 // A setting at the global scope: enabled, and named as global rather than default.
                 .andExpect(jsonPath("$[?(@.name == '%s')].source".formatted(global))
-                        .value("GLOBAL"))
+                        .value("global"))
                 .andExpect(jsonPath("$[?(@.name == '%s')].enabled".formatted(global))
                         .value(true))
                 .andExpect(jsonPath("$[?(@.name == '%s')].updatedBy".formatted(global))
                         .value("root"))
                 // The per-marketplace setting wins, and carries its note.
                 .andExpect(jsonPath("$[?(@.name == '%s')].source".formatted(scoped))
-                        .value("MARKETPLACE"))
+                        .value("marketplace"))
                 .andExpect(jsonPath("$[?(@.name == '%s')].enabled".formatted(scoped))
                         .value(false))
                 .andExpect(jsonPath("$[?(@.name == '%s')].reason".formatted(scoped))
                         .value("vendor keys, expected"))
                 // No setting at all is its own source, not a missing value.
                 .andExpect(jsonPath("$[?(@.name == '%s')].source".formatted(untouched))
-                        .value("DEFAULT"))
+                        .value("default"))
                 .andExpect(jsonPath("$[?(@.name == '%s')].enabled".formatted(untouched))
                         .value(true))
                 .andExpect(jsonPath("$[?(@.name == '%s')].version".formatted(untouched))
                         .isNotEmpty());
 
-        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain", "no-such-marketplace")
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain", "no-such-marketplace")
                         .with(root))
                 .andExpect(status().isNotFound());
     }
@@ -183,7 +183,7 @@ class VetterToggleTests extends AbstractGatewayTest {
                 ? "{\"enabled\": %s, \"reason\": \"%s\"}".formatted(enabled, reason)
                 : "{\"enabled\": %s, \"marketplace\": \"%s\", \"reason\": \"%s\"}"
                         .formatted(enabled, marketplace, reason);
-        mockMvc.perform(put("/api/vetting/vetters/{name}/toggle", vetter)
+        mockMvc.perform(put("/api/v1/vetting/vetters/{name}/toggle", vetter)
                         .with(root)
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                         .content(body))

@@ -199,14 +199,14 @@ function RevetPanel({ snapshot }: { snapshot: Snapshot }) {
             onClick={() =>
               revet.mutate(id, {
                 onSuccess: (result) =>
-                  result.classification === "VIOLATION"
+                  result.classification === "violation"
                     ? toast.error(
                         result.revoked
                           ? `Snapshot ${id} revoked by a re-vetting violation`
                           : `Snapshot ${id} has a re-vetting violation; it is still published`,
                       )
                     : toast.success(
-                        result.classification === "INCONCLUSIVE"
+                        result.classification === "inconclusive"
                           ? `Re-vetting of snapshot ${id} could not conclude`
                           : `Snapshot ${id} re-vetted clear`,
                       ),

@@ -80,7 +80,7 @@ class AdoptionTests extends AbstractNamedAdminsTest {
                 .param("sha", sha)
                 .update();
 
-        JsonNode windowed = marketplaceEntry(adoption("/api/adoption?days=30"), name);
+        JsonNode windowed = marketplaceEntry(adoption("/api/v1/adoption?days=30"), name);
         assertThat(windowed.get("fetches").asLong()).isEqualTo(2);
         assertThat(windowed.get("identities").asLong()).isEqualTo(2);
         assertThat(windowed.get("servedSha").asText()).isEqualTo(sha);
@@ -92,7 +92,7 @@ class AdoptionTests extends AbstractNamedAdminsTest {
         assertThat(breakdown.get(0).get("identities").asLong()).isEqualTo(2);
         assertThat(breakdown.get(0).get("current").asBoolean()).isTrue();
 
-        JsonNode yearWide = marketplaceEntry(adoption("/api/adoption?days=365"), name);
+        JsonNode yearWide = marketplaceEntry(adoption("/api/v1/adoption?days=365"), name);
         assertThat(yearWide.get("fetches").asLong()).isEqualTo(3);
         assertThat(yearWide.get("identities").asLong()).isEqualTo(3);
     }
@@ -229,7 +229,7 @@ class AdoptionTests extends AbstractNamedAdminsTest {
     /** The staleness entries concerning one marketplace; other suites' fixtures are not ours. */
     private List<JsonNode> stalenessOf(String marketplace) throws Exception {
         List<JsonNode> entries = new ArrayList<>();
-        for (JsonNode entry : adoption("/api/adoption/staleness")) {
+        for (JsonNode entry : adoption("/api/v1/adoption/staleness")) {
             if (marketplace.equals(entry.get("marketplace").asText())) {
                 entries.add(entry);
             }

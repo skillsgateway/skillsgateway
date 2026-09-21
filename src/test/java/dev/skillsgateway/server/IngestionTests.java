@@ -24,13 +24,13 @@ class IngestionTests extends AbstractGatewayTest {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         String url = upstream.toUri().toString();
 
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"%s\"}".formatted(name, url)))
                 .andExpect(status().isCreated());
 
-        String body = mockMvc.perform(get("/api/marketplaces").with(oidcLogin()))
+        String body = mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -77,7 +77,7 @@ class IngestionTests extends AbstractGatewayTest {
     void nonAllowlistedUrlSchemesAreRejectedAtRegistration() throws Exception {
         for (String url : List.of("ssh://git@evil.example/repo.git", "ext::sh -c whoami", "/var/tmp/local-repo")) {
             String name = uniqueName("corp");
-            mockMvc.perform(post("/api/marketplaces")
+            mockMvc.perform(post("/api/v1/marketplaces")
                             .with(oidcLogin())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"name\":\"%s\",\"url\":%s}".formatted(name, jsonString(url))))
@@ -93,7 +93,7 @@ class IngestionTests extends AbstractGatewayTest {
         String url = upstream.toUri().toString();
 
         String rejected = uniqueName("corp");
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
@@ -102,7 +102,7 @@ class IngestionTests extends AbstractGatewayTest {
         assertThat(marketplaceRepository.findByName(rejected)).isEmpty();
 
         String accepted = uniqueName("corp");
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"%s\",\"ref\":\"main\"}".formatted(accepted, url)))

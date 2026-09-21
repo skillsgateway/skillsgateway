@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Collection;
@@ -56,6 +57,7 @@ public final class VettingChain {
         /** Something objects, errored, is missing, or has not answered. Approval is gated. */
         BLOCKED;
 
+        @JsonValue
         public String stored() {
             return name().toLowerCase(Locale.ROOT);
         }

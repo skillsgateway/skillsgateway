@@ -32,7 +32,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
  * consumers (GW_AUDIT_0003) and cursor-tracking sinks for push consumers (GW_AUDIT_0004, GW_AUDIT_0005).
  */
 @RestController
-@RequestMapping("/api/audit")
+@RequestMapping("/api/v1/audit")
 public class AuditController {
 
     /** Audit export administration is not tied to a marketplace; the ledger column is NOT NULL. */

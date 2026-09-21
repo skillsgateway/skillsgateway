@@ -3,7 +3,7 @@
 The gateway records every vetting decision in the ledger. Webhooks push those
 same decisions outward, so CI, chat and inventory systems learn about a snapshot
 the moment it is ingested, waiting for a review, approved or rejected instead of
-polling `/api/marketplaces`.
+polling `/api/v1/marketplaces`.
 
 ## Events
 
@@ -19,7 +19,7 @@ to one snapshot; `marketplace.*` is what happened to the marketplace itself.
 | `marketplace.snapshot.rejected` | A held snapshot was rejected. |
 | `marketplace.snapshot.soft_deleted` | A snapshot was marked deleted, by an administrator or by a retention policy. |
 | `marketplace.snapshot.restored` | A soft-deleted snapshot's marks were cleared. |
-| `marketplace.snapshot.vetted` | A vetting chain run finished. The verdicts are readable at `GET /api/snapshots/{id}/vetting`. |
+| `marketplace.snapshot.vetted` | A vetting chain run finished. The verdicts are readable at `GET /api/v1/snapshots/{id}/vetting`. |
 | `marketplace.snapshot.approval_pending` | A chain run finished and the snapshot is still **held**: it is waiting for a person. Carries a vetting summary — see [Driving approvals from your own system](#driving-approvals-from-your-own-system). |
 | `marketplace.snapshot.revet_violation` | A re-vetting run found a violation on a snapshot that is **already approved**. |
 | `marketplace.snapshot.revoked` | A snapshot was retroactively quarantined; the facade no longer serves it. |
@@ -40,7 +40,7 @@ its ingestion, and which vetters run against it. They carry
 | `marketplace.vetter_toggled` | A vetter was enabled or disabled, for one marketplace or across the gateway. |
 
 Those are all of them. There is no `marketplace.removed`: the gateway has no
-deregistration — there is no `DELETE /api/marketplaces/{name}` — so there is
+deregistration — there is no `DELETE /api/v1/marketplaces/{name}` — so there is
 nothing for it to announce.
 
 An action taken by a scheduled pass rather than by a person carries a policy
@@ -74,7 +74,7 @@ delivery listings require **auditor** (or admin). See
 === "API"
 
     ```console
-    $ curl -X POST localhost:8080/api/webhooks \
+    $ curl -X POST localhost:8080/api/v1/webhooks \
         -H 'Content-Type: application/json' \
         -d '{"name":"ci-bot","url":"https://ci.example.com/hooks/skills-gateway",
              "events":["marketplace.snapshot.approved","marketplace.snapshot.rejected"]}'
@@ -90,7 +90,7 @@ delivery listings require **auditor** (or admin). See
 | --- | --- |
 | `name` | `^[a-z0-9][a-z0-9_-]*$`, unique. A bad name is **422**, a duplicate is **409**. |
 | `url` | The scheme must be on `skills-gateway.allowed-url-schemes`. Unparseable or scheme-less URLs are rejected — the check fails closed. **400**. |
-| `events` | An array of event names, or the single element `*` for every event. Omitted or empty means `*`. An unknown name is **400**, not silently dropped. `GET /api/webhooks/events` answers the names this gateway accepts. |
+| `events` | An array of event names, or the single element `*` for every event. Omitted or empty means `*`. An unknown name is **400**, not silently dropped. `GET /api/v1/webhooks/events` answers the names this gateway accepts. |
 
 The filter is exact-match per name: `*` is the only wildcard, and neither
 `marketplace.*` nor `marketplace.snapshot.*` is a valid filter. A subscriber only
@@ -163,7 +163,7 @@ Configure a sink instead.
 Every delivery above is described in the gateway's own OpenAPI document, under
 its top-level `webhooks` object — one entry per event, carrying the four headers
 and the body schema, rendered alongside the REST surface in the
-[API reference](../reference/api/index.md). `GET /api/webhooks/events` serves the
+[API reference](../reference/api/index.md). `GET /api/v1/webhooks/events` serves the
 same vocabulary with a worked example of each body, so a receiver can be
 generated or hand-written against the contract rather than against a sample
 somebody pasted into a ticket.
@@ -246,7 +246,7 @@ The first seven fields are the ones every event carries, unchanged. The
 
 | Field | Meaning |
 | --- | --- |
-| `runId` | The chain run being reported. Correlates with `GET /api/snapshots/{id}/vetting`. |
+| `runId` | The chain run being reported. Correlates with `GET /api/v1/snapshots/{id}/vetting`. |
 | `outcome` | The **effective** outcome, the one that gates approval: `CLEAR`, `CLEAR_WITH_WAIVERS` or `BLOCKED`. |
 | `recordedOutcome` | What the vetters concluded before any waiver was applied: `CLEAR` or `BLOCKED`. |
 | `blockingVetters` | Names of the vetters that are the reason it blocks. Empty when nothing objects. |
@@ -254,7 +254,7 @@ The first seven fields are the ones every event carries, unchanged. The
 | `waivedFindings` | How many findings an active waiver is currently suppressing. |
 
 `outcome` is what tells your system what to offer. `CLEAR` means
-[`POST /api/snapshots/{id}/approve`](approving-snapshots.md) will succeed;
+[`POST /api/v1/snapshots/{id}/approve`](approving-snapshots.md) will succeed;
 `CLEAR_WITH_WAIVERS` means it will, and only because someone accepted a risk;
 `BLOCKED` means it will be refused until every uncovered finding is
 [waived](waiving-findings.md) or fixed upstream. Either decision goes
@@ -269,7 +269,7 @@ stream your system is already reading.
     snapshot. A webhook target is authorized by a URL scheme allowlist, not by
     an identity, and the point of quarantine is that unapproved content does not
     leave it. Read the detail from
-    `GET /api/snapshots/{id}/vetting` as an authenticated caller; the
+    `GET /api/v1/snapshots/{id}/vetting` as an authenticated caller; the
     `snapshotId` and `runId` in the payload are what address it.
 
 Two things not to assume:
@@ -298,7 +298,7 @@ sequenceDiagram
     participant Disp as WebhookDispatcher
     participant Rcv as Subscriber endpoint
 
-    Reviewer->>API: POST /api/snapshots/42/approve
+    Reviewer->>API: POST /api/v1/snapshots/42/approve
     API->>DB: enqueue marketplace.snapshot.approved (state=pending)
     API-->>Reviewer: 200 (never waits for the receiver)
 
@@ -362,7 +362,7 @@ Tune all of this under
 === "API"
 
     ```console
-    $ curl 'localhost:8080/api/webhooks/deliveries?limit=20'
+    $ curl 'localhost:8080/api/v1/webhooks/deliveries?limit=20'
     ```
 
     Most recent first. `limit` defaults to 100 and is clamped to 500.
@@ -373,7 +373,7 @@ enough to tell a receiver that is down from one that is rejecting the payload.
 ## Remove a subscriber
 
 ```console
-$ curl -X DELETE localhost:8080/api/webhooks/1
+$ curl -X DELETE localhost:8080/api/v1/webhooks/1
 ```
 
 **204** on success, **404** if it never existed. The subscriber and its delivery

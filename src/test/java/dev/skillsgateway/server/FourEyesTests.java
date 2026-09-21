@@ -69,14 +69,14 @@ class FourEyesTests extends AbstractNamedAdminsTest {
         String name = registered.marketplace().name();
         long id = registered.snapshot().id();
 
-        mockMvc.perform(get("/api/snapshots/{id}/four-eyes", id)
+        mockMvc.perform(get("/api/v1/snapshots/{id}/four-eyes", id)
                         .with(oidcLogin().idToken(token -> token.subject("solo"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.mode").value("WARN"))
+                .andExpect(jsonPath("$.mode").value("warn"))
                 .andExpect(jsonPath("$.refused").value(false))
                 .andExpect(jsonPath("$.conflicts.length()").value(2));
 
-        mockMvc.perform(post("/api/snapshots/{id}/approve", id)
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", id)
                         .with(oidcLogin().idToken(token -> token.subject("solo")))
                         .with(csrf()))
                 .andExpect(status().isOk());
@@ -119,11 +119,11 @@ class FourEyesTests extends AbstractNamedAdminsTest {
         String name = registered.marketplace().name();
         long id = registered.snapshot().id();
 
-        mockMvc.perform(get("/api/snapshots/{id}/four-eyes", id)
+        mockMvc.perform(get("/api/v1/snapshots/{id}/four-eyes", id)
                         .with(oidcLogin().idToken(token -> token.subject("rachel"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.conflicts").isEmpty());
-        mockMvc.perform(post("/api/snapshots/{id}/approve", id)
+        mockMvc.perform(post("/api/v1/snapshots/{id}/approve", id)
                         .with(oidcLogin().idToken(token -> token.subject("rachel")))
                         .with(csrf()))
                 .andExpect(status().isOk());
@@ -143,7 +143,7 @@ class FourEyesTests extends AbstractNamedAdminsTest {
         String name = uniqueName("fe4actor");
         String url = "file://" + createUpstream(DEFAULT_MANIFEST).toAbsolutePath();
 
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin().idToken(token -> token.subject("dana")))
                         .with(csrf())
                         .contentType("application/json")
@@ -151,13 +151,13 @@ class FourEyesTests extends AbstractNamedAdminsTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.registeredBy").value("dana"));
 
-        mockMvc.perform(post("/api/marketplaces/{name}/ingest", name)
+        mockMvc.perform(post("/api/v1/marketplaces/{name}/ingest", name)
                         .with(oidcLogin().idToken(token -> token.subject("ingrid")))
                         .with(csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.ingestedBy").value("ingrid"));
 
-        mockMvc.perform(get("/api/marketplaces").with(oidcLogin()))
+        mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.name=='%s')].registeredBy".formatted(name))
                         .value("dana"));

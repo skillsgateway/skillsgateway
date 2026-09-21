@@ -132,7 +132,7 @@ sequenceDiagram
     participant P as Published repo
     participant L as Audit ledger
 
-    Rev->>API: POST /api/snapshots/{id}/approve
+    Rev->>API: POST /api/v1/snapshots/{id}/approve
     API->>Svc: approve(id, principal)
     Svc->>Svc: refuse unless state == held (409)
     Svc->>Q: read refs/snapshots/{sha}

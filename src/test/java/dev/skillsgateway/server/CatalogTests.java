@@ -160,7 +160,7 @@ class CatalogTests extends AbstractGatewayTest {
         approve(served.snapshot().id());
 
         // The API lists exactly what a clone contains.
-        String catalog = mockMvc.perform(get("/api/catalog").with(oidcLogin()))
+        String catalog = mockMvc.perform(get("/api/v1/catalog").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -183,7 +183,7 @@ class CatalogTests extends AbstractGatewayTest {
         });
 
         // Manual rebuild works and is audited with the acting identity.
-        mockMvc.perform(post("/api/catalog/rebuild").with(oidcLogin())).andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/catalog/rebuild").with(oidcLogin())).andExpect(status().isOk());
         assertThat(fetchLogRepository.list()).anySatisfy(entry -> {
             assertThat(entry.get("marketplace")).isEqualTo("catalog");
             assertThat(entry.get("event")).isEqualTo("catalog-rebuilt");
@@ -191,7 +191,7 @@ class CatalogTests extends AbstractGatewayTest {
         });
 
         // The catalog's name is reserved: registration refuses it.
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"catalog\",\"url\":\"https://example.com/x.git\"}"))
@@ -233,7 +233,7 @@ class CatalogTests extends AbstractGatewayTest {
         assertThat(clone.resolve(prefixed)).exists();
 
         // The served revision reports its own collisions, so an operator who looks afterwards finds it.
-        JsonNode info = MAPPER.readTree(mockMvc.perform(get("/api/catalog").with(oidcLogin()))
+        JsonNode info = MAPPER.readTree(mockMvc.perform(get("/api/v1/catalog").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()

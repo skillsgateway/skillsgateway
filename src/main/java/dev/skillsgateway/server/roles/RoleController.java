@@ -23,7 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
  * Role grant management (GW_AUTH_0013). Admin-only.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class RoleController {
 
     /** Grant administration is not itself tied to a marketplace; the ledger column is NOT NULL. */

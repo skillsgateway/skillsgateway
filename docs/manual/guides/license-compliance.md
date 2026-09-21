@@ -70,13 +70,13 @@ serve, in warn or enforce mode as configured.
 ## Read the licenses of a snapshot
 
 ```bash
-curl -s https://gateway.example.com/api/snapshots/42/licenses
+curl -s https://gateway.example.com/api/v1/snapshots/42/licenses
 ```
 
 The report lists every detection with its SPDX id (or its unknown state),
 where it was found, and its standing under the policy currently configured —
 see the [API reference](../reference/api/marketplaces.md#get-snapshotsidlicenses).
-It complements `/api/snapshots/{id}/content` and the gateway's own
+It complements `/api/v1/snapshots/{id}/content` and the gateway's own
 `/actuator/sbom` as the supply-chain read surface.
 
 ## Why the policy is configuration

@@ -361,7 +361,7 @@ filter chain and therefore independent of the session chain's role checks.
 Reach is the intersection of the allowlist, the credential's scopes and its
 principal's roles — never their union. Every act of human judgement, every
 operation that retracts or republishes content, every role grant and the whole
-of `/api/tokens/**` sits outside the allowlist, and no combination of scopes and
+of `/api/v1/tokens/**` sits outside the allowlist, and no combination of scopes and
 no role reaches them. An endpoint added later is unreachable until somebody
 names it; a build-time check refuses an unclassified one.
 

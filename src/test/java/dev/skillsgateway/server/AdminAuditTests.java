@@ -20,7 +20,7 @@ class AdminAuditTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_AUDIT_0002"})
     void adminActionsAreRecordedInTheLedgerWithTheActingIdentity() throws Exception {
         String me = JsonPath.read(
-                mockMvc.perform(get("/api/me").with(oidcLogin()))
+                mockMvc.perform(get("/api/v1/me").with(oidcLogin()))
                         .andReturn()
                         .getResponse()
                         .getContentAsString(),
@@ -28,23 +28,24 @@ class AdminAuditTests extends AbstractGatewayTest {
 
         String name = uniqueName("corp");
         Path upstream = createUpstream(DEFAULT_MANIFEST);
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"%s\"}"
                                 .formatted(name, upstream.toUri().toString())))
                 .andExpect(status().isCreated());
         String snapshot = mockMvc.perform(
-                        post("/api/marketplaces/%s/ingest".formatted(name)).with(oidcLogin()))
+                        post("/api/v1/marketplaces/%s/ingest".formatted(name)).with(oidcLogin()))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
         int snapshotId = JsonPath.read(snapshot, "$.id");
-        mockMvc.perform(post("/api/snapshots/%d/approve".formatted(snapshotId)).with(oidcLogin()))
+        mockMvc.perform(post("/api/v1/snapshots/%d/approve".formatted(snapshotId))
+                        .with(oidcLogin()))
                 .andExpect(status().isOk());
 
-        String issued = mockMvc.perform(post("/api/tokens")
+        String issued = mockMvc.perform(post("/api/v1/tokens")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"audit-test\"}"))
@@ -53,10 +54,10 @@ class AdminAuditTests extends AbstractGatewayTest {
                 .getResponse()
                 .getContentAsString();
         int tokenId = JsonPath.read(issued, "$.id");
-        mockMvc.perform(delete("/api/tokens/%d".formatted(tokenId)).with(oidcLogin()))
+        mockMvc.perform(delete("/api/v1/tokens/%d".formatted(tokenId)).with(oidcLogin()))
                 .andExpect(status().isNoContent());
 
-        String audit = mockMvc.perform(get("/api/audit").with(oidcLogin()))
+        String audit = mockMvc.perform(get("/api/v1/audit").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()

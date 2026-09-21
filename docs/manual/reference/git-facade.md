@@ -217,11 +217,11 @@ entries written before this behaviour shipped record.
 ## Checking content you already hold
 
 Withdrawing a snapshot removes it from the served refs; it does not reach a
-machine that cloned it earlier. `POST /status/snapshots` is what such a machine
+machine that cloned it earlier. `POST /status/v1/snapshots` is what such a machine
 asks.
 
 It is not under `/git/`, because that prefix is a JGit servlet mapping and no
-JSON endpoint is reachable beneath it. It is not under `/api/` either, because
+JSON endpoint is reachable beneath it. It is not under `/api/v1/` either, because
 that surface accepts only an OIDC session or a gateway-issued machine
 credential, and a git client holds neither. It has its own stateless chain
 accepting exactly the credentials described under

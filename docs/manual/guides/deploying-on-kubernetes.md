@@ -65,7 +65,7 @@ passthroughs, so no chart change is needed to reach a setting.
     `skills-gateway.roles.mappings` entry resolving `admin`, or in a declared
     `skills-gateway.estate.grants` entry.
 
-    A grant made later through `/api/roles` does **not** satisfy this: it is
+    A grant made later through `/api/v1/roles` does **not** satisfy this: it is
     revocable through the API, so it says nothing about whether the next start
     will have an administrator. The refusal names every path that resolves it.
 
@@ -413,7 +413,7 @@ kubectl -n skills-gateway rollout status deploy/skills-gateway
 kubectl -n skills-gateway logs deploy/skills-gateway | grep estate
 ```
 
-Then log in to the portal and confirm the estate reconciled — `GET /api/estate`
+Then log in to the portal and confirm the estate reconciled — `GET /api/v1/estate`
 reports the last run, and the audit ledger carries its entries under the
 `config-reconciler` principal. See
 [Declarative estate configuration](declarative-estate.md).

@@ -62,19 +62,19 @@ export interface FlowNode {
  */
 export function verdictWord(state: string | undefined): string {
   switch (state) {
-    case "PASS":
+    case "pass":
       return "pass";
-    case "WARN":
+    case "warn":
       return "warn";
-    case "FAIL":
+    case "fail":
       return "fail";
-    case "ERROR":
+    case "error":
       return "error";
-    case "PENDING":
+    case "pending":
       return "pending";
-    case "DISABLED":
+    case "disabled":
       return "skipped";
-    case "NOT_REACHED":
+    case "not_reached":
       return "not reached";
     default:
       return "not run";
@@ -83,12 +83,12 @@ export function verdictWord(state: string | undefined): string {
 
 export function verdictTone(state: string | undefined): FlowTone {
   switch (state) {
-    case "PASS":
+    case "pass":
       return "pass";
-    case "WARN":
+    case "warn":
       return "warn";
-    case "FAIL":
-    case "ERROR":
+    case "fail":
+    case "error":
       return "blocked";
     default:
       // PENDING, DISABLED, NOT_REACHED and "never ran" are all absences of a conclusion. They are
@@ -100,14 +100,14 @@ export function verdictTone(state: string | undefined): FlowTone {
 }
 
 export function outcomeWord(outcome: string | undefined): string {
-  if (outcome === "CLEAR") return "clear";
-  if (outcome === "CLEAR_WITH_WAIVERS") return "clear with waivers";
+  if (outcome === "clear") return "clear";
+  if (outcome === "clear_with_waivers") return "clear with waivers";
   return "blocked";
 }
 
 export function outcomeTone(outcome: string | undefined): FlowTone {
-  if (outcome === "CLEAR") return "pass";
-  if (outcome === "CLEAR_WITH_WAIVERS") return "warn";
+  if (outcome === "clear") return "pass";
+  if (outcome === "clear_with_waivers") return "warn";
   return "blocked";
 }
 
@@ -172,7 +172,7 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
       // vetter did not run, not something it found. Counting it on the node would read as a
       // result, which is the one thing these states must never look like.
       meta:
-        findings.length > 0 && verdict.state !== "NOT_REACHED" && verdict.state !== "DISABLED"
+        findings.length > 0 && verdict.state !== "not_reached" && verdict.state !== "disabled"
           ? `${findings.length} ${plural(findings.length, "finding")}`
           : undefined,
       external: vetter?.external === true,
@@ -183,7 +183,7 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
   });
 
   const blocking = ordered
-    .filter((verdict) => verdict.state === "FAIL" || verdict.state === "ERROR" || verdict.state === "PENDING")
+    .filter((verdict) => verdict.state === "fail" || verdict.state === "error" || verdict.state === "pending")
     .map((verdict) => verdict.vetter ?? "");
 
   nodes.push({
@@ -200,12 +200,12 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
       blocking,
       uncovered: view?.uncovered ?? [],
       notReached: ordered
-        .filter((verdict) => verdict.state === "NOT_REACHED")
+        .filter((verdict) => verdict.state === "not_reached")
         .map((verdict) => verdict.vetter ?? ""),
     },
   });
 
-  const blocked = (view?.outcome ?? "BLOCKED") === "BLOCKED";
+  const blocked = (view?.outcome ?? "blocked") === "blocked";
   nodes.push({
     id: "gate",
     kind: "step",
@@ -284,15 +284,15 @@ export function marketplaceFlow(chain: ChainVetter[]): FlowNode[] {
 
 /** Where a vetter's effective state came from, as an administrator reads it. */
 export function sourceWord(source: string | undefined): string {
-  if (source === "MARKETPLACE") return "set for this marketplace";
-  if (source === "GLOBAL") return "from the global setting";
+  if (source === "marketplace") return "set for this marketplace";
+  if (source === "global") return "from the global setting";
   return "default — no setting recorded";
 }
 
 /** The same, short enough to sit on the node as a chip. */
 export function sourceChip(source: string | undefined): string {
-  if (source === "MARKETPLACE") return "this marketplace";
-  if (source === "GLOBAL") return "global";
+  if (source === "marketplace") return "this marketplace";
+  if (source === "global") return "global";
   return "default";
 }
 
@@ -379,7 +379,7 @@ function stoppedReason(node: FlowNode): string {
 }
 
 /** Severity order as the gateway ranks it; the worst present is the one worth naming. */
-const SEVERITY_ORDER = ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
+const SEVERITY_ORDER = ["info", "low", "medium", "high", "critical"];
 
 function worstSeverity(severities: (string | undefined)[]): string | undefined {
   let worst: string | undefined;
@@ -414,7 +414,7 @@ export function marketplaceHeadline(
     off.length === 0
       ? `every configured vetter runs ${here}`
       : off
-          .map((node) => `${node.label} off ${node.setting?.source === "GLOBAL" ? "globally" : here}`)
+          .map((node) => `${node.label} off ${node.setting?.source === "global" ? "globally" : here}`)
           .join(", ");
   return {
     result: `${on} of ${vetters.length} ${plural(vetters.length, "vetter")} run`,

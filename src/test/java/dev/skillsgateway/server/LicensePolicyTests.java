@@ -140,7 +140,7 @@ class LicensePolicyTests extends AbstractGatewayTest {
         Registered registered = registerAndIngest(
                 uniqueName("licbanapi"), createUpstream(DEFAULT_MANIFEST, Map.of("LICENSE", LicenseFixtures.AGPL_3_0)));
 
-        String body = mockMvc.perform(get("/api/snapshots/%d/licenses"
+        String body = mockMvc.perform(get("/api/v1/snapshots/%d/licenses"
                                 .formatted(registered.snapshot().id()))
                         .with(oidcLogin()))
                 .andExpect(status().isOk())
@@ -151,7 +151,7 @@ class LicensePolicyTests extends AbstractGatewayTest {
 
         JsonNode entry = report.path("licenses").get(0);
         assertThat(entry.path("spdxId").asText()).isEqualTo("AGPL-3.0");
-        assertThat(entry.path("evaluation").asText()).isEqualTo("BANNED");
+        assertThat(entry.path("evaluation").asText()).isEqualTo("banned");
         assertThat(MAPPER.convertValue(report.path("allowed"), List.class)).containsExactly("MIT", "Apache-2.0");
         assertThat(MAPPER.convertValue(report.path("banned"), List.class)).containsExactly("AGPL-3.0");
     }

@@ -38,7 +38,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
     private GitStorage storage;
 
     private void createRule(String name, String expression, boolean enabled) throws Exception {
-        mockMvc.perform(post("/api/policy/rules")
+        mockMvc.perform(post("/api/v1/policy/rules")
                         .with(oidcLogin().idToken(token -> token.subject("root")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(MAPPER.writeValueAsString(Map.of(
@@ -50,7 +50,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
     }
 
     private void deleteRule(String name) throws Exception {
-        mockMvc.perform(delete("/api/policy/rules/{name}", name)
+        mockMvc.perform(delete("/api/v1/policy/rules/{name}", name)
                         .with(oidcLogin().idToken(token -> token.subject("root"))))
                 .andExpect(status().isOk());
     }
@@ -69,7 +69,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
         createRule(rule, scoped(name, "skills.exists(s, s.tools.exists(t, t.startsWith(\"Bash\")))"), true);
         try {
             mockMvc.perform(post(
-                                    "/api/snapshots/{id}/approve",
+                                    "/api/v1/snapshots/{id}/approve",
                                     registered.snapshot().id())
                             .with(oidcLogin().idToken(token -> token.subject("alice"))))
                     .andExpect(status().isConflict())
@@ -101,7 +101,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
         createRule(nonMatching, scoped(name, "files.exists(f, f.path.endsWith(\".exe\"))"), true);
         try {
             mockMvc.perform(post(
-                                    "/api/snapshots/{id}/approve",
+                                    "/api/v1/snapshots/{id}/approve",
                                     registered.snapshot().id())
                             .with(oidcLogin().idToken(token -> token.subject("alice"))))
                     .andExpect(status().isOk());
@@ -121,7 +121,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
         createRule(rule, scoped(name, "files[1000].path == \"x\""), true);
         try {
             mockMvc.perform(post(
-                                    "/api/snapshots/{id}/approve",
+                                    "/api/v1/snapshots/{id}/approve",
                                     registered.snapshot().id())
                             .with(oidcLogin().idToken(token -> token.subject("alice"))))
                     .andExpect(status().isConflict())
@@ -150,7 +150,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
         try {
             org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
                     java.time.Duration.ofSeconds(30), () -> mockMvc.perform(post(
-                                            "/api/snapshots/{id}/approve",
+                                            "/api/v1/snapshots/{id}/approve",
                                             registered.snapshot().id())
                                     .with(oidcLogin().idToken(token -> token.subject("alice"))))
                             .andExpect(status().isConflict())
@@ -173,7 +173,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
         createRule(rule, scoped(name, "skills.exists(s, s.tools.exists(t, t.startsWith(\"Bash\")))"), true);
         try {
             mockMvc.perform(post(
-                                    "/api/snapshots/{id}/approve",
+                                    "/api/v1/snapshots/{id}/approve",
                                     registered.snapshot().id())
                             .with(oidcLogin().idToken(token -> token.subject("alice"))))
                     .andExpect(status().isConflict())
@@ -196,7 +196,7 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
         createRule(erroring, scoped(name, "files[1000].path == \"x\""), true);
         try {
             mockMvc.perform(post(
-                                    "/api/snapshots/{id}/approve",
+                                    "/api/v1/snapshots/{id}/approve",
                                     registered.snapshot().id())
                             .with(oidcLogin().idToken(token -> token.subject("alice"))))
                     .andExpect(status().isConflict());

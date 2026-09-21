@@ -271,10 +271,10 @@ class ForgeMirrorSweepTests extends AbstractGatewayTest {
         seedOrphanOnMirror(sha);
         assertThat(mirrorRefs()).containsKey(ORPHAN_REF);
 
-        mockMvc.perform(post("/api/mirror/reconcile").with(oidcLogin().idToken(token -> token.subject("mallory"))))
+        mockMvc.perform(post("/api/v1/mirror/reconcile").with(oidcLogin().idToken(token -> token.subject("mallory"))))
                 .andExpect(status().isForbidden());
         String body = mockMvc.perform(
-                        post("/api/mirror/reconcile").with(oidcLogin().idToken(token -> token.subject("alice"))))
+                        post("/api/v1/mirror/reconcile").with(oidcLogin().idToken(token -> token.subject("alice"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.enabled").value(true))
                 .andExpect(jsonPath("$.inSync").value(true))

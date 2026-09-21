@@ -15,7 +15,7 @@ per marketplace, and it only changes the *trigger* — every snapshot still land
 ## Changing the mode
 
 ```console
-$ curl -X PUT localhost:8080/api/marketplaces/acme/sync \
+$ curl -X PUT localhost:8080/api/v1/marketplaces/acme/sync \
     -H 'Content-Type: application/json' -d '{"mode":"scheduled"}'
 ```
 
@@ -37,7 +37,7 @@ The interval and batch size are global settings; see
 Switching a marketplace to `webhook` mode generates an HMAC secret:
 
 ```console
-$ curl -X PUT localhost:8080/api/marketplaces/acme/sync \
+$ curl -X PUT localhost:8080/api/v1/marketplaces/acme/sync \
     -H 'Content-Type: application/json' -d '{"mode":"webhook"}'
 ```
 

@@ -26,7 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
  * off the control that governs it.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class VetterToggleController {
 
     private final VetterToggleService toggleService;

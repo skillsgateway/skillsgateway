@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>Every path here requires the {@code admin} role; see {@link RoleService#requireAdmin}.
  */
 @RestController
-@RequestMapping("/api/tokens/machine")
+@RequestMapping("/api/v1/tokens/machine")
 public class MachineTokenController {
 
     /** Credential events are not tied to a marketplace; the ledger column is NOT NULL. */

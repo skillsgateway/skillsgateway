@@ -171,7 +171,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
 
         // The on-demand trigger is an admin action and is itself recorded — exactly one entry.
         var root = oidcLogin().idToken(token -> token.subject("root"));
-        mockMvc.perform(post("/api/estate/reconcile").with(root))
+        mockMvc.perform(post("/api/v1/estate/reconcile").with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.trigger").value("api"))
                 .andExpect(jsonPath("$.failed").value(0));
@@ -250,9 +250,9 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         // ingest (which then fails upstream, 502 — authorization passed), a stranger gets 403.
         var approver = oidcLogin().idToken(token -> token.subject("estate-approver"));
         var mallory = oidcLogin().idToken(token -> token.subject("mallory"));
-        mockMvc.perform(post("/api/marketplaces/estate-alpha/ingest").with(mallory))
+        mockMvc.perform(post("/api/v1/marketplaces/estate-alpha/ingest").with(mallory))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/marketplaces/estate-alpha/ingest").with(approver))
+        mockMvc.perform(post("/api/v1/marketplaces/estate-alpha/ingest").with(approver))
                 .andExpect(status().isBadGateway());
 
         // A grant may reference an API-registered marketplace; an unknown one fails in isolation.
@@ -350,7 +350,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         assertThat(fetchLogRepository.list().toString()).doesNotContain(first).doesNotContain(second);
         assertThat(rotated.toString()).doesNotContain(first).doesNotContain(second);
         String reportJson = mockMvc.perform(
-                        get("/api/estate").with(oidcLogin().idToken(token -> token.subject("root"))))
+                        get("/api/v1/estate").with(oidcLogin().idToken(token -> token.subject("root"))))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -418,12 +418,12 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         // trigger endpoint refuses non-admins (the full walk lives in RoleEnforcementTests).
         var auditor = oidcLogin().idToken(token -> token.subject("estate-auditor"));
         var mallory = oidcLogin().idToken(token -> token.subject("mallory"));
-        mockMvc.perform(get("/api/estate").with(auditor))
+        mockMvc.perform(get("/api/v1/estate").with(auditor))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.entries").isArray());
-        mockMvc.perform(get("/api/estate").with(mallory)).andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/estate/reconcile").with(auditor)).andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/estate/reconcile").with(mallory)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/estate").with(mallory)).andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/v1/estate/reconcile").with(auditor)).andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/v1/estate/reconcile").with(mallory)).andExpect(status().isForbidden());
     }
 
     @Test

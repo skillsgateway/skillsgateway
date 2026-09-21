@@ -395,7 +395,7 @@ skills-gateway:
     # Ledger entries per pushed batch, unless the sink overrides it.
     batch-size: 500
 
-    # GET /api/audit/export page size when ?limit= is omitted, and the ceiling
+    # GET /api/v1/audit/export page size when ?limit= is omitted, and the ceiling
     # it is clamped to when it is given.
     default-page-size: 1000
     max-page-size: 10000
@@ -630,7 +630,7 @@ skills-gateway:
 
 ### Minimum release age
 
-The gate refuses `POST /api/snapshots/{id}/approve` with `409` while the
+The gate refuses `POST /api/v1/snapshots/{id}/approve` with `409` while the
 snapshot is younger than this, and the problem document names the setting, the
 snapshot's current age and the time remaining. Nothing has to run for the wait
 to end: the age is compared at the instant of each approval request, exactly as
@@ -714,7 +714,7 @@ skills-gateway:
     external:
       - name: llm-review              # stable identity, recorded on every verdict;
                                       # must be unique and not a built-in name
-        url: https://vet.internal/api/vet   # http/https endpoint the gateway POSTs to
+        url: https://vet.internal/api/v1/vet   # http/https endpoint the gateway POSTs to
         order: 150                    # chain position; the built-ins are at 100+
         version: "2024-06"            # rule-set identity, stamped into the chain identity
         description: IT Security LLM review of skill instructions
@@ -812,7 +812,7 @@ skills-gateway:
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `skills-gateway.vetting.revet.enabled` | boolean | `true` | Runs the scheduled sweep. `POST /api/snapshots/{id}/revet` and `POST /api/marketplaces/{name}/revet` are unaffected. |
+| `skills-gateway.vetting.revet.enabled` | boolean | `true` | Runs the scheduled sweep. `POST /api/v1/snapshots/{id}/revet` and `POST /api/v1/marketplaces/{name}/revet` are unaffected. |
 | `skills-gateway.vetting.revet.mode` | `warn` \| `enforce` | `warn` | What a violation does. `warn` never unpublishes anything. |
 | `skills-gateway.vetting.revet.interval` | duration | `6h` | Sweep schedule. |
 | `skills-gateway.vetting.revet.cadence` | duration | `24h` | Minimum age of a snapshot's newest run before the sweep picks it again. |
@@ -897,7 +897,7 @@ single provider — that one person is one principal string — and makes no att
 to reconcile two spellings of the same human.
 
 Refusals are visible to reviewers before they act: the portal's approve dialog
-says which acts conflict, and `GET /api/snapshots/{id}/four-eyes` answers the
+says which acts conflict, and `GET /api/v1/snapshots/{id}/four-eyes` answers the
 same question for the calling identity. Rejecting a snapshot is never gated —
 refusing content quickly must not need a second pair of eyes.
 
@@ -976,7 +976,7 @@ skills-gateway:
 
 !!! warning "Enabling retention starts deleting on the next pass"
 
-    Preview first: `GET /api/retention/candidates` shows exactly what the
+    Preview first: `GET /api/v1/retention/candidates` shows exactly what the
     policies in force would select, and writes nothing. Approved snapshots are
     never eligible, but a generous `held-max-age` can still clear a large
     review backlog on the first pass.
@@ -1040,7 +1040,7 @@ nothing appears in `application.yaml`.
 ```yaml
 skills-gateway:
   catalog:
-    # Whether approvals and revocations rebuild the catalog and the /api/catalog
+    # Whether approvals and revocations rebuild the catalog and the /api/v1/catalog
     # endpoints answer. Turning this off never deletes an existing catalog repo.
     enabled: true
 
@@ -1174,7 +1174,7 @@ Both name administrators, and neither replaces the other.
 | Granularity | individuals only — a group name is not a principal name and would match nobody | whatever the claim carries, so typically a whole group or app role at once |
 | Roles it can confer | `admin` only | `admin`, `auditor`, and `approver` scoped to one marketplace |
 | Changing who holds it | edit configuration, restart | change directory membership; no gateway change |
-| `/api/me` source | `config` | `claim` |
+| `/api/v1/me` source | `config` | `claim` |
 | Survives a directory outage, an unassigned role or a wrong claim name | yes | no |
 
 Prefer `mappings` for everyone whose access the directory already governs —
@@ -1214,7 +1214,7 @@ The estate defined as configuration (GW_ESTATE_0001–GW_ESTATE_0005, GW_APPROVA
 role grants, webhook subscribers, audit export sinks and policy deny rules,
 reconciled at startup —
 after schema migration, before the web surface serves — and on demand via
-[`POST /api/estate/reconcile`](api/estate.md). Empty by default; an empty
+[`POST /api/v1/estate/reconcile`](api/estate.md). Empty by default; an empty
 declaration reconciles nothing.
 
 Reconciliation is **additive and idempotent**. A declared object is created if
@@ -1231,7 +1231,7 @@ other entries.
 ```yaml
 skills-gateway:
   estate:
-    # Registered through the exact same gate as POST /api/marketplaces:
+    # Registered through the exact same gate as POST /api/v1/marketplaces:
     # name rules, the reserved catalog name, the URL scheme allowlist.
     # There is no ref key — the ingested ref is always the gateway's
     # decision (the upstream default branch).
@@ -1239,7 +1239,7 @@ skills-gateway:
       - name: corp-marketplace
         url: https://github.com/acme/skills-marketplace.git
         # on-demand or scheduled; applied through the same audited path as
-        # PUT /api/marketplaces/{name}/sync. Omit to leave the stored mode
+        # PUT /api/v1/marketplaces/{name}/sync. Omit to leave the stored mode
         # alone. webhook mode is refused: its inbound HMAC secret is
         # generated and shown once, which has no declarative form.
         sync-mode: scheduled
@@ -1250,7 +1250,7 @@ skills-gateway:
         origin: hosted
         push-policy: append-only
 
-    # The exact shape of POST /api/roles: approver grants name one
+    # The exact shape of POST /api/v1/roles: approver grants name one
     # marketplace that must exist at reconcile time (declared above, or
     # registered through the API); admin and auditor grants must not.
     grants:
@@ -1280,7 +1280,7 @@ skills-gateway:
         batch-size: 500
 
     # CEL policy deny rules, through the same compiled, audited path as
-    # POST /api/policy/rules: an expression that does not compile to a
+    # POST /api/v1/policy/rules: an expression that does not compile to a
     # boolean is an isolated entry failure, never a stored rule.
     policy-rules:
       - name: no-shell-tools

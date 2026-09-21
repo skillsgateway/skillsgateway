@@ -55,12 +55,12 @@ function outcomeFromDetail(detail: string | undefined): AuditStatus | undefined 
   if (!detail) return undefined;
   const match = /outcome=([A-Za-z_]+)/.exec(detail);
   if (!match?.[1]) return undefined;
-  switch (match[1].toUpperCase()) {
-    case "CLEAR":
+  switch (match[1].toLowerCase()) {
+    case "clear":
       return "clear";
-    case "CLEAR_WITH_WAIVERS":
+    case "clear_with_waivers":
       return "warn";
-    case "BLOCKED":
+    case "blocked":
       return "blocked";
     default:
       return undefined;

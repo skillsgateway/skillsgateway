@@ -333,7 +333,7 @@ and (d) optionally pushes a fleet-managed settings change to force uninstall.
 Implemented today (GW_VETTING_0012–GW_VETTING_0018): a `revoked` snapshot state, removal of both
 published refs (`refs/heads/main` when it is still the tip, and the advertised
 `refs/snapshots/<sha>`), and the blast-radius report from the fetch ledger at
-`GET /api/snapshots/{id}/fetchers`, readable by an approver of the marketplace or
+`GET /api/v1/snapshots/{id}/fetchers`, readable by an approver of the marketplace or
 an administrator. What triggers the recall is **continuous re-vetting** — the
 chain re-run over approved content on a schedule — rather than only a human
 pressing a button, so an acceptance that expired or a vetter rule that landed
@@ -427,7 +427,7 @@ not one mechanism.
 - **A pull-side check for what is already out there.** The controls above stop
   unapproved content arriving; they do nothing about content that arrived while
   it was approved and has since been withdrawn, which is precisely the case
-  revocation exists for. `POST /status/snapshots` lets a client ask whether the
+  revocation exists for. `POST /status/v1/snapshots` lets a client ask whether the
   commits it holds are still approved, authenticated with the PAT it already
   fetches with. The gateway deliberately cannot reach into a client filesystem,
   so this makes a withdrawal *discoverable* rather than enforceable — and a

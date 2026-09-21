@@ -1607,18 +1607,6 @@ cases:
       reads the database to decide
     revision: "0.1.0"
 
-  - id: SVC_GW_AUTH_0027
-    requirement_ids: ["GW_AUTH_0027"]
-    title: The removed enforcement property is refused in every spelling
-    verification: automated-test
-    description: |
-      GIVEN configurations setting the removed authorization-enforcement property to
-      false, to true, and through its relaxed environment-variable spelling
-      WHEN each is started
-      THEN each refuses with a message stating that the property was removed and that
-      enforcement is now unconditional
-    revision: "0.1.0"
-
   - id: SVC_GW_AUTH_0028
     requirement_ids: ["GW_AUTH_0028"]
     title: The escape hatch's principal administers, and nothing else does by that path

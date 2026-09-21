@@ -21,7 +21,7 @@ class AdminTests extends AbstractGatewayTest {
         Registered toReject = registerAndIngest(rejectedName, createUpstream(DEFAULT_MANIFEST));
         approvalService.reject(toReject.snapshot().id(), "alice");
 
-        String body = mockMvc.perform(get("/api/marketplaces").with(oidcLogin()))
+        String body = mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()

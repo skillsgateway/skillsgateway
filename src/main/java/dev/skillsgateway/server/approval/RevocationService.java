@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.approval;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.catalog.CatalogService;
 import dev.skillsgateway.server.persistence.Marketplace;
@@ -98,7 +99,13 @@ public class RevocationService {
         /** Return to the marketplace's previous approved snapshot. */
         PREVIOUS_APPROVED,
         /** Leave the marketplace serving nothing. */
-        NOTHING
+        NOTHING;
+
+        /** Wire form: the lower-case name, so the published vocabulary matches every other enum's. */
+        @JsonValue
+        public String wire() {
+            return name().toLowerCase(java.util.Locale.ROOT);
+        }
     }
 
     /**

@@ -43,10 +43,12 @@ class CsrfEnforcementTests extends AbstractGatewayTest {
     void a_body_less_mutation_on_an_admin_session_is_refused_without_a_token_and_accepted_with_one() throws Exception {
         var admin = oidcLogin().idToken(token -> token.subject("root"));
 
-        withoutDefaultToken().perform(post("/api/catalog/rebuild").with(admin)).andExpect(status().isForbidden());
+        withoutDefaultToken()
+                .perform(post("/api/v1/catalog/rebuild").with(admin))
+                .andExpect(status().isForbidden());
 
         withoutDefaultToken()
-                .perform(post("/api/catalog/rebuild").with(admin).with(csrf()))
+                .perform(post("/api/v1/catalog/rebuild").with(admin).with(csrf()))
                 .andExpect(status().isOk());
     }
 }

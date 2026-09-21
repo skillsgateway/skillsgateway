@@ -31,7 +31,7 @@ class RolesAlwaysEnforcedTests extends AbstractGatewayTest {
 
         // An admin-only mutation, an approver-or-admin mutation, and auditor-or-admin reads: the
         // same three classifications the old compatibility suite drove, now all refused.
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(nobody)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"%s\", \"url\": \"%s\"}"
@@ -41,28 +41,28 @@ class RolesAlwaysEnforcedTests extends AbstractGatewayTest {
                                                 .toAbsolutePath()
                                                 .toUri())))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(put("/api/marketplaces/{name}/sync", name)
+        mockMvc.perform(put("/api/v1/marketplaces/{name}/sync", name)
                         .with(nobody)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mode\": \"on-demand\"}"))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/audit").with(nobody)).andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/retention/candidates").with(nobody)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/audit").with(nobody)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/retention/candidates").with(nobody)).andExpect(status().isForbidden());
 
         // The grants API is not writable staging data any more: it is the thing that grants roles.
-        mockMvc.perform(post("/api/roles")
+        mockMvc.perform(post("/api/v1/roles")
                         .with(nobody)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"principal\": \"future-admin\", \"role\": \"admin\"}"))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/roles").with(nobody)).andExpect(status().isForbidden());
-        mockMvc.perform(delete("/api/roles/{id}", 1).with(nobody)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/roles").with(nobody)).andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/v1/roles/{id}", 1).with(nobody)).andExpect(status().isForbidden());
     }
 
     @Test
     @SVCs({"SVC_GW_AUTH_0025"})
     void the_session_endpoint_no_longer_reports_an_enforcement_flag() throws Exception {
-        mockMvc.perform(get("/api/me").with(oidcLogin()))
+        mockMvc.perform(get("/api/v1/me").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.rolesEnabled").doesNotExist());
     }

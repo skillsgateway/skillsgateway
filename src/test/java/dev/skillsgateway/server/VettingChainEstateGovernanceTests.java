@@ -62,15 +62,15 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
         setMode("stop-after-fail", name);
         toggle(vetter, name, false);
 
-        mockMvc.perform(get("/api/vetting/global-chain-settings").with(root))
+        mockMvc.perform(get("/api/v1/vetting/global-chain-settings").with(root))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.modeSource").value(org.hamcrest.Matchers.in(List.of("GLOBAL", "DEFAULT"))))
-                .andExpect(jsonPath("$.orderSource").value(org.hamcrest.Matchers.in(List.of("GLOBAL", "DEFAULT"))))
+                .andExpect(jsonPath("$.modeSource").value(org.hamcrest.Matchers.in(List.of("global", "default"))))
+                .andExpect(jsonPath("$.orderSource").value(org.hamcrest.Matchers.in(List.of("global", "default"))))
                 // The order is the whole chain, whatever any marketplace arranged.
                 .andExpect(jsonPath("$.order.length()")
                         .value(vettingService.vetters().size()));
 
-        mockMvc.perform(get("/api/vetting/global-chain").with(root))
+        mockMvc.perform(get("/api/v1/vetting/global-chain").with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(vettingService.vetters().size()))
                 .andExpect(jsonPath("$[?(@.source == 'MARKETPLACE')]").isEmpty())
@@ -79,17 +79,18 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
                         .value(true));
 
         // Meanwhile the marketplace's own read still says what it says: the two levels are separate.
-        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain-settings", marketplace.name())
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain-settings", marketplace.name())
                         .with(root))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.modeSource").value("MARKETPLACE"));
+                .andExpect(jsonPath("$.modeSource").value("marketplace"));
     }
 
     @Test
     @SVCs({"SVC_GW_VETTING_0035"})
     void the_estate_reads_are_refused_to_a_session_without_the_administrative_role() throws Exception {
-        mockMvc.perform(get("/api/vetting/global-chain").with(mallory)).andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/vetting/global-chain-settings").with(mallory)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/vetting/global-chain").with(mallory)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/vetting/global-chain-settings").with(mallory))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -101,19 +102,19 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
         // run-all is the default mode. Written as a marketplace setting it is still an override:
         // the marketplace is pinned, and the next global decision would pass it by.
         setMode("run-all", name);
-        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain-settings", name)
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain-settings", name)
                         .with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mode").value("run-all"))
-                .andExpect(jsonPath("$.modeSource").value("MARKETPLACE"));
+                .andExpect(jsonPath("$.modeSource").value("marketplace"));
 
         assertThat(clear(name, List.of("mode")).applied()).isEqualTo(1);
 
-        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain-settings", name)
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain-settings", name)
                         .with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mode").value("run-all"))
-                .andExpect(jsonPath("$.modeSource").value(org.hamcrest.Matchers.in(List.of("GLOBAL", "DEFAULT"))));
+                .andExpect(jsonPath("$.modeSource").value(org.hamcrest.Matchers.in(List.of("global", "default"))));
     }
 
     @Test
@@ -133,13 +134,13 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
         // One entry per kind removed: mode, order, and the one vetter override.
         assertThat(clearEntries(name) - before).isEqualTo(3);
 
-        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain-settings", name)
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain-settings", name)
                         .with(root))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.modeSource").value(org.hamcrest.Matchers.in(List.of("GLOBAL", "DEFAULT"))))
-                .andExpect(jsonPath("$.orderSource").value(org.hamcrest.Matchers.in(List.of("GLOBAL", "DEFAULT"))))
+                .andExpect(jsonPath("$.modeSource").value(org.hamcrest.Matchers.in(List.of("global", "default"))))
+                .andExpect(jsonPath("$.orderSource").value(org.hamcrest.Matchers.in(List.of("global", "default"))))
                 .andExpect(jsonPath("$.orderOverride.length()").value(0));
-        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain", name).with(root))
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain", name).with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.source == 'MARKETPLACE')]").isEmpty());
     }
@@ -176,10 +177,10 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
         bulk(body(name, "clear", "\"clear\": []")).andExpect(status().isUnprocessableEntity());
 
         assertThat(allChainEntries(name)).isEqualTo(before);
-        mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain-settings", name)
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain-settings", name)
                         .with(root))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.modeSource").value(org.hamcrest.Matchers.in(List.of("GLOBAL", "DEFAULT"))));
+                .andExpect(jsonPath("$.modeSource").value(org.hamcrest.Matchers.in(List.of("global", "default"))));
     }
 
     @Test
@@ -192,7 +193,7 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
         String missing = uniqueName("estate-bulk-gone");
 
         MvcResult result = mockMvc.perform(
-                        postJson("/api/vetting/chain-settings/bulk", root, """
+                        postJson("/api/v1/vetting/chain-settings/bulk", root, """
                         {"marketplaces": ["%s", "%s", "%s"], "action": "set-mode",
                          "mode": "stop-after-fail", "reason": "estate-wide rollout"}""".formatted(first, missing, second)))
                 // Not 200: a request that did not wholly happen must not answer as one that did.
@@ -200,7 +201,7 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
                 .andExpect(jsonPath("$.applied").value(2))
                 .andExpect(jsonPath("$.failed").value(1))
                 .andExpect(jsonPath("$.results[?(@.marketplace == '%s')].status".formatted(missing))
-                        .value("FAILED"))
+                        .value("failed"))
                 .andReturn();
 
         String correlationId = correlationId(result);
@@ -208,11 +209,11 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
         // The two that exist did change, and each carries its own entry naming the shared reason and
         // the one id: an auditor reads them as one act without a summary row that could disagree.
         for (String name : List.of(first, second)) {
-            mockMvc.perform(get("/api/marketplaces/{name}/vetting-chain-settings", name)
+            mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain-settings", name)
                             .with(root))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.mode").value("stop-after-fail"))
-                    .andExpect(jsonPath("$.modeSource").value("MARKETPLACE"));
+                    .andExpect(jsonPath("$.modeSource").value("marketplace"));
         }
         List<String> details = detailsOf(correlationId);
         assertThat(details).hasSize(2);
@@ -228,7 +229,7 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
         int before = allChainEntries(name);
 
         mockMvc.perform(postJson(
-                        "/api/vetting/chain-settings/bulk",
+                        "/api/v1/vetting/chain-settings/bulk",
                         mallory,
                         body(name, "set-mode", "\"mode\": \"stop-after-fail\"")))
                 .andExpect(status().isForbidden());
@@ -257,7 +258,7 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
                 .toList()
                 .toString();
         MvcResult result = mockMvc.perform(postJson(
-                        "/api/vetting/chain-settings/bulk",
+                        "/api/v1/vetting/chain-settings/bulk",
                         root,
                         body(marketplace, "clear", "\"clear\": " + array + ", \"reason\": \"back to the default\"")))
                 .andExpect(status().isOk())
@@ -267,7 +268,7 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
     }
 
     private org.springframework.test.web.servlet.ResultActions bulk(String body) throws Exception {
-        return mockMvc.perform(postJson("/api/vetting/chain-settings/bulk", root, body));
+        return mockMvc.perform(postJson("/api/v1/vetting/chain-settings/bulk", root, body));
     }
 
     private static String body(String marketplace, String action, String extra) {
@@ -277,7 +278,7 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
 
     private void setMode(String mode, String marketplace) throws Exception {
         mockMvc.perform(putJson(
-                        "/api/vetting/chain-mode",
+                        "/api/v1/vetting/chain-mode",
                         root,
                         "{\"mode\": %s, \"marketplace\": %s}".formatted(quote(mode), quote(marketplace))))
                 .andExpect(status().isOk());
@@ -289,7 +290,7 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
                 .toList()
                 .toString();
         mockMvc.perform(putJson(
-                        "/api/vetting/chain-order",
+                        "/api/v1/vetting/chain-order",
                         root,
                         "{\"vetters\": %s, \"marketplace\": %s}".formatted(array, quote(marketplace))))
                 .andExpect(status().isOk());
@@ -297,7 +298,7 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
 
     private void toggle(String vetter, String marketplace, boolean enabled) throws Exception {
         mockMvc.perform(putJson(
-                        "/api/vetting/vetters/{name}/toggle".replace("{name}", vetter),
+                        "/api/v1/vetting/vetters/{name}/toggle".replace("{name}", vetter),
                         root,
                         "{\"enabled\": %s, \"marketplace\": %s}".formatted(enabled, quote(marketplace))))
                 .andExpect(status().isOk());

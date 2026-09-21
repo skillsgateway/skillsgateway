@@ -18,13 +18,13 @@ another. See [Machine API credentials](tokens.md#machine-api-credentials).
 
 ---
 
-## `POST /api/policy/rules`
+## `POST /api/v1/policy/rules`
 
 Create a rule. The expression is compiled — parsed and type-checked to a
 boolean over the policy variables — before anything is stored.
 
 ```console
-$ curl -X POST localhost:8080/api/policy/rules \
+$ curl -X POST localhost:8080/api/v1/policy/rules \
     -H 'Content-Type: application/json' \
     -d '{"name": "no-shell-tools",
          "description": "deny skills declaring shell tools",
@@ -48,7 +48,7 @@ at the very next approval — there is no propagation delay to wait out.
 | 409 | A rule of that name exists. |
 | 422 | Malformed name, or an expression that does not compile to a boolean. |
 
-## `GET /api/policy/rules`
+## `GET /api/v1/policy/rules`
 
 Every stored rule, enabled or not.
 
@@ -57,7 +57,7 @@ Every stored rule, enabled or not.
 | 200 | All rules. |
 | 403 | The caller holds neither auditor nor admin. |
 
-## `PUT /api/policy/rules/{name}`
+## `PUT /api/v1/policy/rules/{name}`
 
 Replace a rule's description, expression and enabled flag. The new expression
 is compiled first; on 422 the stored rule is unchanged. Disabling a rule is
@@ -70,7 +70,7 @@ the audited off-switch — there is no per-snapshot waiver of a policy denial.
 | 404 | No rule of that name. |
 | 422 | An expression that does not compile. |
 
-## `DELETE /api/policy/rules/{name}`
+## `DELETE /api/v1/policy/rules/{name}`
 
 Remove the rule. Past denials it decided stay on the append-only ledger.
 
@@ -82,14 +82,14 @@ Remove the rule. Past denials it decided stay on the append-only ledger.
 
 ---
 
-## `POST /api/policy/playground`
+## `POST /api/v1/policy/playground`
 
 Evaluate any expression against a real snapshot without enforcing, storing or
 recording anything. Errors are answers, not failures: a broken expression
 returns 200 with the error, so authoring is an edit-evaluate loop.
 
 ```console
-$ curl -X POST localhost:8080/api/policy/playground \
+$ curl -X POST localhost:8080/api/v1/policy/playground \
     -H 'Content-Type: application/json' \
     -d '{"snapshotId": 42, "expression": "files.exists(f, f.path.endsWith(\".exe\"))"}'
 {"matched":false}
@@ -110,7 +110,7 @@ $ curl -X POST localhost:8080/api/policy/playground \
 
 ## How a denial looks
 
-Policy is enforced by `POST /api/snapshots/{id}/approve`
+Policy is enforced by `POST /api/v1/snapshots/{id}/approve`
 ([Marketplaces and snapshots](marketplaces.md)): after the vetting gate and
 before any state transition, every enabled rule is evaluated; any match or
 error refuses with 409 naming all deciding rules, and one `policy-denied`

@@ -32,7 +32,7 @@ public class MeController {
                             + " session having none — the roles above are then incomplete")
             boolean claimsTruncated) {}
 
-    @GetMapping("/api/me")
+    @GetMapping("/api/v1/me")
     @Requirements({"GW_AUTH_0013", "GW_AUTH_0015.3", "GW_AUTH_0016"})
     @Tag(name = "Session")
     @Operation(

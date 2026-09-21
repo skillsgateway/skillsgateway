@@ -81,11 +81,12 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
         // this asserts the scope gate alone.
         TokenService.IssuedToken reader = credential(List.of("marketplaces:read"));
 
-        mockMvc.perform(request(new Route("GET", "/api/marketplaces"), reader.token()))
+        mockMvc.perform(request(new Route("GET", "/api/v1/marketplaces"), reader.token()))
                 .andExpect(status().isOk());
-        mockMvc.perform(request(new Route("GET", "/api/estate"), reader.token()))
+        mockMvc.perform(request(new Route("GET", "/api/v1/estate"), reader.token()))
                 .andExpect(status().is(FORBIDDEN));
-        mockMvc.perform(request(new Route("GET", "/api/audit"), reader.token())).andExpect(status().is(FORBIDDEN));
+        mockMvc.perform(request(new Route("GET", "/api/v1/audit"), reader.token()))
+                .andExpect(status().is(FORBIDDEN));
     }
 
     /**
@@ -126,14 +127,16 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
         String writer = credential(List.of("policy:write")).token();
         // Writing policy rules does not confer reading them: implication chains are how coarse
         // scopes grow back, so naming both is the only way to have both.
-        mockMvc.perform(request(new Route("GET", "/api/policy/rules"), writer)).andExpect(status().is(FORBIDDEN));
+        mockMvc.perform(request(new Route("GET", "/api/v1/policy/rules"), writer))
+                .andExpect(status().is(FORBIDDEN));
 
         String registrar = credential(List.of("marketplaces:register")).token();
-        mockMvc.perform(request(new Route("GET", "/api/marketplaces"), registrar))
+        mockMvc.perform(request(new Route("GET", "/api/v1/marketplaces"), registrar))
                 .andExpect(status().is(FORBIDDEN));
 
         String reader = credential(List.of("marketplaces:read")).token();
-        mockMvc.perform(request(new Route("POST", "/api/marketplaces"), reader)).andExpect(status().is(FORBIDDEN));
+        mockMvc.perform(request(new Route("POST", "/api/v1/marketplaces"), reader))
+                .andExpect(status().is(FORBIDDEN));
     }
 
     @Test
@@ -141,11 +144,11 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
     void scopes_compose_additively_and_reach_exactly_the_union() throws Exception {
         String both = credential(List.of("marketplaces:read", "estate:read")).token();
 
-        mockMvc.perform(request(new Route("GET", "/api/marketplaces"), both)).andExpect(status().isOk());
-        mockMvc.perform(request(new Route("GET", "/api/estate"), both)).andExpect(status().isOk());
+        mockMvc.perform(request(new Route("GET", "/api/v1/marketplaces"), both)).andExpect(status().isOk());
+        mockMvc.perform(request(new Route("GET", "/api/v1/estate"), both)).andExpect(status().isOk());
         // And nothing more: a third scope's routes stay refused.
-        mockMvc.perform(request(new Route("GET", "/api/audit"), both)).andExpect(status().is(FORBIDDEN));
-        mockMvc.perform(request(new Route("POST", "/api/estate/reconcile"), both))
+        mockMvc.perform(request(new Route("GET", "/api/v1/audit"), both)).andExpect(status().is(FORBIDDEN));
+        mockMvc.perform(request(new Route("POST", "/api/v1/estate/reconcile"), both))
                 .andExpect(status().is(FORBIDDEN));
     }
 
@@ -181,26 +184,26 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
         String all = credential(List.copyOf(MachineApiRegistry.scopes())).token();
 
         List<Route> exclusions = List.of(
-                new Route("POST", "/api/snapshots/{id}/approve"),
-                new Route("POST", "/api/snapshots/{id}/reject"),
-                new Route("POST", "/api/snapshots/{id}/waivers"),
-                new Route("DELETE", "/api/waivers/{id}"),
-                new Route("POST", "/api/retention/evaluate"),
-                new Route("POST", "/api/retention/compact"),
-                new Route("DELETE", "/api/snapshots/{id}"),
-                new Route("POST", "/api/snapshots/{id}/restore"),
-                new Route("POST", "/api/roles"),
-                new Route("DELETE", "/api/roles/{id}"),
-                new Route("GET", "/api/me"),
-                new Route("POST", "/api/tokens"),
-                new Route("GET", "/api/tokens"),
-                new Route("POST", "/api/tokens/session"),
-                new Route("POST", "/api/tokens/{id}/rotate"),
-                new Route("DELETE", "/api/tokens/{id}"),
-                new Route("POST", "/api/tokens/machine"),
-                new Route("GET", "/api/tokens/machine"),
-                new Route("POST", "/api/tokens/machine/{id}/rotate"),
-                new Route("DELETE", "/api/tokens/machine/{id}"));
+                new Route("POST", "/api/v1/snapshots/{id}/approve"),
+                new Route("POST", "/api/v1/snapshots/{id}/reject"),
+                new Route("POST", "/api/v1/snapshots/{id}/waivers"),
+                new Route("DELETE", "/api/v1/waivers/{id}"),
+                new Route("POST", "/api/v1/retention/evaluate"),
+                new Route("POST", "/api/v1/retention/compact"),
+                new Route("DELETE", "/api/v1/snapshots/{id}"),
+                new Route("POST", "/api/v1/snapshots/{id}/restore"),
+                new Route("POST", "/api/v1/roles"),
+                new Route("DELETE", "/api/v1/roles/{id}"),
+                new Route("GET", "/api/v1/me"),
+                new Route("POST", "/api/v1/tokens"),
+                new Route("GET", "/api/v1/tokens"),
+                new Route("POST", "/api/v1/tokens/session"),
+                new Route("POST", "/api/v1/tokens/{id}/rotate"),
+                new Route("DELETE", "/api/v1/tokens/{id}"),
+                new Route("POST", "/api/v1/tokens/machine"),
+                new Route("GET", "/api/v1/tokens/machine"),
+                new Route("POST", "/api/v1/tokens/machine/{id}/rotate"),
+                new Route("DELETE", "/api/v1/tokens/machine/{id}"));
         assertThat(MachineApiRegistry.unreachable()).containsAll(exclusions);
 
         for (Route route : exclusions) {
@@ -226,7 +229,7 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
                 snapshotRepository.findById(snapshotId).orElseThrow().state();
         String vetter = credential(List.of("vetting:run")).token();
 
-        mockMvc.perform(post("/api/snapshots/{id}/revet", snapshotId)
+        mockMvc.perform(post("/api/v1/snapshots/{id}/revet", snapshotId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + vetter)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -251,13 +254,13 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
     void retention_candidates_is_reachable_while_evaluate_is_not() throws Exception {
         String reader = credential(List.of("retention:read")).token();
 
-        mockMvc.perform(request(new Route("GET", "/api/retention/candidates"), reader))
+        mockMvc.perform(request(new Route("GET", "/api/v1/retention/candidates"), reader))
                 .andExpect(status().isOk());
         // Not even with every scope there is.
         String all = credential(List.copyOf(MachineApiRegistry.scopes())).token();
-        mockMvc.perform(request(new Route("POST", "/api/retention/evaluate"), all))
+        mockMvc.perform(request(new Route("POST", "/api/v1/retention/evaluate"), all))
                 .andExpect(status().is(FORBIDDEN));
-        mockMvc.perform(request(new Route("POST", "/api/retention/compact"), all))
+        mockMvc.perform(request(new Route("POST", "/api/v1/retention/compact"), all))
                 .andExpect(status().is(FORBIDDEN));
     }
 }

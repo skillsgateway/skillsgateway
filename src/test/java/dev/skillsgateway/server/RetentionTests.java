@@ -128,7 +128,7 @@ class RetentionTests extends AbstractGatewayTest {
         Registered registered = registerAndIngest(uniqueName("softdel"), upstream);
         long id = registered.snapshot().id();
 
-        mockMvc.perform(delete("/api/snapshots/" + id).with(oidcLogin())).andExpect(status().isOk());
+        mockMvc.perform(delete("/api/v1/snapshots/" + id).with(oidcLogin())).andExpect(status().isOk());
 
         Snapshot deleted = snapshotRepository.findById(id).orElseThrow();
         assertThat(deleted.deleted()).isTrue();
@@ -137,7 +137,7 @@ class RetentionTests extends AbstractGatewayTest {
         // The vetting state is untouched by deletion: the snapshot was, and remains, held.
         assertThat(deleted.state()).isEqualTo(Snapshot.HELD);
 
-        mockMvc.perform(post("/api/snapshots/%d/restore".formatted(id)).with(oidcLogin()))
+        mockMvc.perform(post("/api/v1/snapshots/%d/restore".formatted(id)).with(oidcLogin()))
                 .andExpect(status().isOk());
 
         Snapshot restored = snapshotRepository.findById(id).orElseThrow();
@@ -163,7 +163,7 @@ class RetentionTests extends AbstractGatewayTest {
                 .extracting(RetentionService.Candidate::snapshotId)
                 .doesNotContain(served.id());
 
-        mockMvc.perform(delete("/api/snapshots/" + served.id()).with(oidcLogin()))
+        mockMvc.perform(delete("/api/v1/snapshots/" + served.id()).with(oidcLogin()))
                 .andExpect(status().isConflict());
 
         retentionService.evaluate("alice", name);

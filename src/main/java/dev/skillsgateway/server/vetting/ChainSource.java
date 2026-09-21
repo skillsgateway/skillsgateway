@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -17,5 +18,11 @@ public enum ChainSource {
     GLOBAL,
 
     /** No setting at all, so the vetter runs. */
-    DEFAULT
+    DEFAULT;
+
+    /** Wire form: the lower-case name, so the published vocabulary matches every other enum's. */
+    @JsonValue
+    public String wire() {
+        return name().toLowerCase(java.util.Locale.ROOT);
+    }
 }

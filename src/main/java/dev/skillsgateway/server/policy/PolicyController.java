@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Policy rules and their playground (GW_APPROVAL_0006, GW_APPROVAL_0009). */
 @RestController
-@RequestMapping("/api/policy")
+@RequestMapping("/api/v1/policy")
 public class PolicyController {
 
     private final PolicyRuleService ruleService;

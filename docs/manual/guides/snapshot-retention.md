@@ -19,7 +19,7 @@ The dry run writes nothing and works with retention disabled, which is the whole
 point: inspect the effect before switching the scheduler on.
 
 ```console
-$ curl 'localhost:8080/api/retention/candidates'
+$ curl 'localhost:8080/api/v1/retention/candidates'
 ```
 
 ```json
@@ -71,7 +71,7 @@ Two rules worth internalising before you tune:
 Still with the scheduler off, apply the policy once and watch what happens:
 
 ```console
-$ curl -X POST 'localhost:8080/api/retention/evaluate?marketplace=acme'
+$ curl -X POST 'localhost:8080/api/v1/retention/evaluate?marketplace=acme'
 ```
 
 ```json
@@ -95,14 +95,14 @@ shows each deleted snapshot with a `deleted` badge and its restore deadline.
 === "API"
 
     ```console
-    $ curl -X POST localhost:8080/api/snapshots/17/restore
+    $ curl -X POST localhost:8080/api/v1/snapshots/17/restore
     ```
 
 **409** means the snapshot is not deleted; **404** means compaction has already
 removed it, and at that point there is nothing to restore.
 
 You can also delete a single snapshot by hand — the **Delete** button, or
-`DELETE /api/snapshots/17`, recorded with the reason `manual`. Approved
+`DELETE /api/v1/snapshots/17`, recorded with the reason `manual`. Approved
 snapshots offer no delete control and the endpoint refuses them with **409**.
 
 ## 5. Enable the schedulers
@@ -132,7 +132,7 @@ and garbage-collecting the repository so the objects are actually reclaimed.
 To force a compaction pass — after a deliberate cleanup, say:
 
 ```console
-$ curl -X POST localhost:8080/api/retention/compact
+$ curl -X POST localhost:8080/api/v1/retention/compact
 ```
 
 ```json

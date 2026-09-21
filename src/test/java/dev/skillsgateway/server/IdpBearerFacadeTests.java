@@ -182,9 +182,9 @@ class IdpBearerFacadeTests extends AbstractGatewayTest {
     void a_token_the_facade_accepts_reaches_no_administrative_endpoint() throws Exception {
         String token = IdpBearerFixture.validToken("sso-alice");
 
-        mockMvc.perform(get("/api/marketplaces").header("Authorization", "Bearer " + token))
+        mockMvc.perform(get("/api/v1/marketplaces").header("Authorization", "Bearer " + token))
                 .andExpect(status().isUnauthorized());
-        mockMvc.perform(get("/api/audit").header("Authorization", "Bearer " + token))
+        mockMvc.perform(get("/api/v1/audit").header("Authorization", "Bearer " + token))
                 .andExpect(status().isUnauthorized());
     }
 

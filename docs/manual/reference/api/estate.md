@@ -16,13 +16,13 @@ convergence. See [Machine API credentials](tokens.md#machine-api-credentials).
 
 ---
 
-## `GET /api/estate`
+## `GET /api/v1/estate`
 
 The most recent reconciliation run — startup or on-demand — with one entry per
 declared object.
 
 ```console
-$ curl localhost:8080/api/estate
+$ curl localhost:8080/api/v1/estate
 ```
 
 ```json
@@ -56,13 +56,13 @@ the history.
 
 ---
 
-## `POST /api/estate/reconcile`
+## `POST /api/v1/estate/reconcile`
 
 Run the same additive, idempotent reconciliation as startup against the
 current declaration, and return its report. Takes no request body.
 
 ```console
-$ curl -X POST localhost:8080/api/estate/reconcile
+$ curl -X POST localhost:8080/api/v1/estate/reconcile
 ```
 
 A converged estate reconciles with zero writes and zero ledger entries; the

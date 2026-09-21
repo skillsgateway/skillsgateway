@@ -38,7 +38,7 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
     void a_hosted_marketplace_registers_without_a_url_and_gets_an_origin_repository() throws Exception {
         String name = uniqueName("hosted");
 
-        String created = mockMvc.perform(post("/api/marketplaces")
+        String created = mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"origin\":\"hosted\"}".formatted(name)))
@@ -65,7 +65,7 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_FACADE_0006"})
     void the_two_origins_are_mutually_exclusive_about_the_url() throws Exception {
         // A hosted marketplace with a URL is a contradiction, not an unused field.
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"origin\":\"hosted\",\"url\":\"https://example.com/x.git\"}"
@@ -73,14 +73,14 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
                 .andExpect(status().isBadRequest());
 
         // An upstream marketplace without one is refused exactly as before this change.
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\"}".formatted(uniqueName("nourl"))))
                 .andExpect(status().isBadRequest());
 
         // And an origin nobody defined is refused rather than silently treated as upstream.
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"origin\":\"mirror\"}".formatted(uniqueName("badorigin"))))
@@ -91,14 +91,14 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_FACADE_0006"})
     void a_hosted_marketplace_reports_its_publish_path_and_refuses_a_sync_mode_change() throws Exception {
         String name = uniqueName("hostedsync");
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"origin\":\"hosted\",\"pushPolicy\":\"allow-rewrite\"}"
                                 .formatted(name)))
                 .andExpect(status().isCreated());
 
-        String listing = mockMvc.perform(get("/api/marketplaces").with(oidcLogin()))
+        String listing = mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -110,7 +110,7 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
                 .containsExactly(Marketplace.PUSH_ALLOW_REWRITE);
 
         // There is no upstream to poll or be notified about: the trigger is the push.
-        mockMvc.perform(put("/api/marketplaces/{name}/sync", name)
+        mockMvc.perform(put("/api/v1/marketplaces/{name}/sync", name)
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mode\": \"scheduled\"}"))
@@ -122,14 +122,14 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
     void every_surface_that_would_report_an_upstream_survives_not_having_one() throws Exception {
         // A marketplace with no url is the shape most likely to NPE somewhere that assumed one.
         String name = uniqueName("nullurl");
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"origin\":\"hosted\"}".formatted(name)))
                 .andExpect(status().isCreated());
 
         // The listing renders it, forge metadata resolution included (there is none to resolve).
-        String listing = mockMvc.perform(get("/api/marketplaces").with(oidcLogin()))
+        String listing = mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -143,7 +143,7 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
         long snapshotId = snapshotRepository
                 .create(marketplaceId, "0".repeat(40), dev.skillsgateway.server.persistence.Snapshot.HELD, null, null)
                 .id();
-        mockMvc.perform(get("/api/snapshots/{id}/provenance", snapshotId).with(oidcLogin()))
+        mockMvc.perform(get("/api/v1/snapshots/{id}/provenance", snapshotId).with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.upstreamUrl").doesNotExist())
                 .andExpect(jsonPath("$.origin").value("hosted"));
@@ -168,7 +168,7 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_FACADE_0006"})
     void an_upstream_marketplace_is_unaffected() throws Exception {
         String name = uniqueName("stillupstream");
-        String created = mockMvc.perform(post("/api/marketplaces")
+        String created = mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"https://example.com/x.git\"}".formatted(name)))
@@ -180,7 +180,7 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
         assertThat((String) JsonPath.read(created, "$.url")).isEqualTo("https://example.com/x.git");
         assertThat(storage.hostedIfPresent(name)).isEmpty();
 
-        String listing = mockMvc.perform(get("/api/marketplaces").with(oidcLogin()))
+        String listing = mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()

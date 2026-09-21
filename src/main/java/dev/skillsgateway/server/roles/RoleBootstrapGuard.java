@@ -1,6 +1,5 @@
 package dev.skillsgateway.server.roles;
 
-import dev.skillsgateway.server.config.RemovedPropertyGuard;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import io.github.reqstool.annotations.Requirements;
 import org.springframework.stereotype.Component;
@@ -15,16 +14,12 @@ import org.springframework.stereotype.Component;
  * shape {@code DevInsecureAuthGuard} already established for the sibling escape hatch — say what was
  * detected, why it matters, and every way out, quoting property names in full.
  *
- * <p>{@link RemovedPropertyGuard} is a constructor parameter and not an unrelated bean: the
- * property that used to switch enforcement off is refused there, and a deployment still setting it
- * has to be told that before it is told anything about administrators. Depending on the guard is
- * what makes the order of those two messages a fact rather than a bean-creation accident.
  */
 @Component
 @Requirements({"GW_AUTH_0026"})
 public class RoleBootstrapGuard {
 
-    public RoleBootstrapGuard(SkillsGatewayProperties properties, RemovedPropertyGuard removedProperties) {
+    public RoleBootstrapGuard(SkillsGatewayProperties properties) {
         if (properties.devInsecureAuth()) {
             // The escape hatch confers the administrative role on its own principal (GW_AUTH_0028), so
             // the estate is administerable and there is nothing to check. DevInsecureAuthGuard

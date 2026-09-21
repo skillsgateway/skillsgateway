@@ -68,7 +68,7 @@ test("provenance_dialog_lists_the_served_commit_and_the_resolved_closure", async
  */
 test("approve_is_disabled_with_the_remaining_time_inside_the_cooling_off_window", async () => {
   const user = userEvent.setup();
-  server.use(http.get("/api/snapshots/:id/release-age", () => HttpResponse.json(tooYoung)));
+  server.use(http.get("/api/v1/snapshots/:id/release-age", () => HttpResponse.json(tooYoung)));
   renderPage();
   await user.click(await screen.findByRole("button", { name: "Expand corp-marketplace" }));
 
@@ -196,7 +196,7 @@ test("register_warns_and_gates_on_a_duplicate_clone_url", async () => {
 test("a_warning_in_the_registration_response_is_shown_even_when_the_client_missed_it", async () => {
   const user = userEvent.setup();
   server.use(
-    http.post("/api/marketplaces", () =>
+    http.post("/api/v1/marketplaces", () =>
       HttpResponse.json(
         {
           id: 9,

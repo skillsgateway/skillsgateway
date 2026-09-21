@@ -6,7 +6,7 @@ The gateway exposes three HTTP surfaces with different authentication:
 | --- | --- | --- |
 | Web / API | everything except the facade's paths below | OIDC session cookie |
 | Machine API | `/api/**` with an `Authorization: Bearer` header | [Machine API credential](tokens.md#machine-api-credentials) |
-| Git facade | `/git/**`, and the [revocation check](../git-facade.md#checking-content-you-already-hold) at `/status/**` | Personal access token over HTTP Basic |
+| Git facade | `/git/**`, and the [revocation check](../git-facade.md#checking-content-you-already-hold) at `/status/v1/**` | Personal access token over HTTP Basic |
 
 The three do not overlap. A personal access token reaches the facade and
 nothing else; a machine API credential reaches the API and nothing else — it
@@ -57,7 +57,7 @@ the browser surface and never the bearer path.
 **What a machine credential can reach** is an allowlist, described in
 [Machine API credentials](tokens.md#machine-api-credentials). Every act of human
 judgement — approving, rejecting, waiving — every operation that retracts or
-republishes content, every role grant and the whole of `/api/tokens/**` is
+republishes content, every role grant and the whole of `/api/v1/tokens/**` is
 outside it, and no combination of scopes and no role reaches them.
 
 **Authorization.** Every mutation and the audit surface require a role and
@@ -95,8 +95,8 @@ request there authenticates itself.
     the hatch opens authentication, not this.
 
     ```console
-    $ curl -sS -c jar -b jar -o /dev/null localhost:8080/api/marketplaces
-    $ curl -sS -c jar -b jar -X POST localhost:8080/api/snapshots/1/approve \
+    $ curl -sS -c jar -b jar -o /dev/null localhost:8080/api/v1/marketplaces
+    $ curl -sS -c jar -b jar -X POST localhost:8080/api/v1/snapshots/1/approve \
         -H "X-XSRF-TOKEN: $(grep XSRF-TOKEN jar | cut -f7)"
     ```
 
@@ -143,7 +143,7 @@ breaking and how it is enforced.
 
 ## Session
 
-`GET /api/me` returns the current principal, the session's effective roles
+`GET /api/v1/me` returns the current principal, the session's effective roles
 with the **source** of each, and whether the identity provider truncated the
 membership claim. The portal uses it for the user menu and, with roles, to
 adapt its controls.
@@ -171,7 +171,7 @@ then incomplete; see [Identity providers](../../guides/identity-providers.md).
 | Path | Notes |
 | --- | --- |
 | `/actuator/health` | The only unauthenticated path. Use the bare path for probes. |
-| `/status/snapshots` | The [revocation check](../git-facade.md#checking-content-you-already-hold): a facade-credentialled read, not part of `/api/**`. |
+| `/status/v1/snapshots` | The [revocation check](../git-facade.md#checking-content-you-already-hold): a facade-credentialled read, not part of `/api/**`. |
 | `/actuator/sbom` | CycloneDX SBOM. Authenticated. |
 | `/v3/api-docs`, `/docs` | OpenAPI document and Scalar UI. Authenticated. |
 | `/oauth2/authorization/idp`, `/login/oauth2/code/idp` | OIDC login and callback. |

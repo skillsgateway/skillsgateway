@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /** How one detected license stands under the configured allow/ban policy (GW_VETTING_0020). */
@@ -16,5 +17,11 @@ public enum LicenseEvaluation {
     NOT_ALLOWED,
 
     /** The source identifies no known license; blocking once an allow list is configured. */
-    UNKNOWN
+    UNKNOWN;
+
+    /** Wire form: the lower-case name, so the published vocabulary matches every other enum's. */
+    @JsonValue
+    public String wire() {
+        return name().toLowerCase(java.util.Locale.ROOT);
+    }
 }

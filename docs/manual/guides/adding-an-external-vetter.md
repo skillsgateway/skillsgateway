@@ -184,11 +184,11 @@ Once configured, the connector's vetter behaves like any other in the chain:
 
 - **The portal** shows it in the chain flow on a snapshot's vetting tab,
   alongside the built-ins, with its findings and report link if it set one.
-- **`GET /api/snapshots/{id}/vetting`** lists it in `run.verdicts` and in the
+- **`GET /api/v1/snapshots/{id}/vetting`** lists it in `run.verdicts` and in the
   `vetters` array, with `"external":true`.
 - **The ledger** records one `vetting-verdict` entry for it on every run, same
   as a built-in.
-- **`PUT /api/vetting/vetters/{name}/toggle`** switches it off globally or for
+- **`PUT /api/v1/vetting/vetters/{name}/toggle`** switches it off globally or for
   one marketplace, the same way as a built-in. See
   [Vetter enable/disable](../reference/api/marketplaces.md#vetter-enabledisable).
 

@@ -282,7 +282,7 @@ class HeldContentStatusTests extends AbstractGatewayTest {
             for (RequestMappingInfo info : mapping.getHandlerMethods().keySet()) {
                 RequestMethodsRequestCondition methods = info.getMethodsCondition();
                 for (String pattern : info.getPathPatternsCondition().getPatternValues()) {
-                    if (!pattern.startsWith("/status/")) {
+                    if (!pattern.startsWith("/status/v1/")) {
                         continue;
                     }
                     for (RequestMethod method : methods.getMethods()) {
@@ -293,7 +293,7 @@ class HeldContentStatusTests extends AbstractGatewayTest {
         }
         assertThat(routes)
                 .as("a route added under /status/** needs a deliberate entry here and its own authorization story")
-                .containsExactly("POST /status/snapshots");
+                .containsExactly("POST /status/v1/snapshots");
     }
 
     private JsonNode answers(String pat, List<String> pairs) throws Exception {
@@ -309,7 +309,7 @@ class HeldContentStatusTests extends AbstractGatewayTest {
     }
 
     private static MockHttpServletRequestBuilder check(String pat, List<String> pairs) {
-        MockHttpServletRequestBuilder request = post("/status/snapshots")
+        MockHttpServletRequestBuilder request = post("/status/v1/snapshots")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"holdings\":[" + String.join(",", pairs) + "]}");
         return pat == null ? request : request.header(HttpHeaders.AUTHORIZATION, basic(pat));

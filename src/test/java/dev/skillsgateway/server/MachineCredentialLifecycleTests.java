@@ -69,7 +69,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
     void an_unknown_api_scope_is_refused_at_issue_time() throws Exception {
         // Misspelled: it must fail loudly, exactly as a fetch scope does, rather than silently
         // never matching anything.
-        mockMvc.perform(post("/api/tokens/machine")
+        mockMvc.perform(post("/api/v1/tokens/machine")
                         .with(admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createBody(uniqueName("typo"), List.of("marketplaces:regsiter"), soon().toString())))
@@ -80,7 +80,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
     @SVCs({"SVC_GW_AUTH_0020"})
     void there_is_no_wildcard_and_an_empty_scope_list_grants_nothing() throws Exception {
         for (String wildcard : List.of("*", "all", "admin", "api")) {
-            mockMvc.perform(post("/api/tokens/machine")
+            mockMvc.perform(post("/api/v1/tokens/machine")
                             .with(admin())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(createBody(uniqueName("wild"), List.of(wildcard), soon().toString())))
@@ -88,7 +88,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
         }
         // And the empty list is refused rather than quietly producing a credential that reaches
         // nothing — which would look like a working credential to whoever was handed it.
-        mockMvc.perform(post("/api/tokens/machine")
+        mockMvc.perform(post("/api/v1/tokens/machine")
                         .with(admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createBody(uniqueName("empty"), List.of(), soon().toString())))
@@ -98,7 +98,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
     @Test
     @SVCs({"SVC_GW_AUTH_0024"})
     void issuance_without_an_expiry_is_refused_and_never_defaulted() throws Exception {
-        mockMvc.perform(post("/api/tokens/machine")
+        mockMvc.perform(post("/api/v1/tokens/machine")
                         .with(admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createBody(uniqueName("forever"), List.of("estate:read"), null)))
@@ -115,7 +115,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
     void a_lifetime_beyond_the_built_in_cap_is_refused_rather_than_shortened() throws Exception {
         Instant aCentury = Instant.now().plus(365L * 100, ChronoUnit.DAYS);
 
-        mockMvc.perform(post("/api/tokens/machine")
+        mockMvc.perform(post("/api/v1/tokens/machine")
                         .with(admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createBody(uniqueName("century"), List.of("estate:read"), aCentury.toString())))
@@ -133,7 +133,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
         Instant inside = Instant.now()
                 .plus(SkillsGatewayProperties.Tokens.DEFAULT_MACHINE_MAX_TTL)
                 .minus(1, ChronoUnit.DAYS);
-        mockMvc.perform(post("/api/tokens/machine")
+        mockMvc.perform(post("/api/v1/tokens/machine")
                         .with(admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createBody(uniqueName("inside"), List.of("estate:read"), inside.toString())))
@@ -205,13 +205,13 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
         TokenService.IssuedToken machine = tokenService.createMachineCredential(
                 uniqueName("revoked"), "doomed", List.of("marketplaces:read"), soon(), "admin@example.invalid");
 
-        mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
+        mockMvc.perform(get("/api/v1/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
                 .andExpect(status().isOk());
-        mockMvc.perform(post("/api/tokens/machine/{id}", machine.id()).with(admin()))
+        mockMvc.perform(post("/api/v1/tokens/machine/{id}", machine.id()).with(admin()))
                 .andExpect(status().isMethodNotAllowed());
         assertThat(tokenService.revokeMachineCredential(machine.id())).isTrue();
         // No sleep: expiry and revocation are compared at authentication time, not swept.
-        mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
+        mockMvc.perform(get("/api/v1/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -224,7 +224,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
         // A personal access token belonging to somebody entirely different.
         tokenService.create("alice", "alices-pat");
 
-        String body = mockMvc.perform(get("/api/tokens/machine").with(admin()))
+        String body = mockMvc.perform(get("/api/v1/tokens/machine").with(admin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -238,7 +238,7 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
 
         // The caller's own-token listing is untouched and still strictly own-principal: the
         // machine credential above belongs to nobody who logs in, so it must not appear there.
-        String own = mockMvc.perform(get("/api/tokens").with(admin()))
+        String own = mockMvc.perform(get("/api/v1/tokens").with(admin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()

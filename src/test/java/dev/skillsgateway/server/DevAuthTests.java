@@ -48,10 +48,10 @@ class DevAuthTests {
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
                 .apply(SecurityMockMvcConfigurers.springSecurity())
                 .build();
-        mockMvc.perform(get("/api/me"))
+        mockMvc.perform(get("/api/v1/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("dev"));
-        mockMvc.perform(get("/api/marketplaces")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/marketplaces")).andExpect(status().isOk());
     }
 
     /**
@@ -69,7 +69,7 @@ class DevAuthTests {
                 .build();
 
         for (String value : List.of("sgw_definitely-not-a-token", "", "   ")) {
-            mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer " + value))
+            mockMvc.perform(get("/api/v1/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer " + value))
                     .andExpect(status().isUnauthorized());
         }
         // The scheme with nothing after it at all — not even the trailing space. This mode is the
@@ -77,13 +77,13 @@ class DevAuthTests {
         // matcher that stopped recognising the bare scheme would look identical. Here the web
         // chain permits everything, so falling through to it would answer 200. A surviving mutant
         // on the matcher is what found this; the assertion above could not.
-        mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer"))
+        mockMvc.perform(get("/api/v1/marketplaces").header(HttpHeaders.AUTHORIZATION, "Bearer"))
                 .andExpect(status().isUnauthorized());
-        mockMvc.perform(get("/api/marketplaces").header(HttpHeaders.AUTHORIZATION, "bearer"))
+        mockMvc.perform(get("/api/v1/marketplaces").header(HttpHeaders.AUTHORIZATION, "bearer"))
                 .andExpect(status().isUnauthorized());
         // Not merely 401 for everything: the same request without the header is still open, which
         // is what the mode is for.
-        mockMvc.perform(get("/api/marketplaces")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/marketplaces")).andExpect(status().isOk());
     }
 
     /**
@@ -101,7 +101,7 @@ class DevAuthTests {
         // An administrative mutation, not merely a read: this is the loop a developer actually runs.
         // It carries a CSRF token because the hatch opens authentication and not forgery protection
         // (GW_AUTH_0030) — the portal sends one here exactly as it does against a configured gateway.
-        mockMvc.perform(post("/api/marketplaces")
+        mockMvc.perform(post("/api/v1/marketplaces")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"dev-local\", \"url\": \"https://example.com/x.git\"}"))
@@ -109,7 +109,7 @@ class DevAuthTests {
 
         // Attributed to the hatch rather than to config or a grant, because the session endpoint
         // exists to answer why a session holds a role and there is no configuration entry to find.
-        mockMvc.perform(get("/api/me"))
+        mockMvc.perform(get("/api/v1/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roles[0].role").value("admin"))
                 .andExpect(jsonPath("$.roles[0].marketplace").doesNotExist())

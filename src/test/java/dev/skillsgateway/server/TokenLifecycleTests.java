@@ -144,14 +144,14 @@ class TokenLifecycleTests extends AbstractGatewayTest {
         String name = registered.marketplace().name();
 
         String me = JsonPath.read(
-                mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/me")
+                mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/me")
                                 .with(oidcLogin()))
                         .andReturn()
                         .getResponse()
                         .getContentAsString(),
                 "$.username");
 
-        String created = mockMvc.perform(post("/api/tokens")
+        String created = mockMvc.perform(post("/api/v1/tokens")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"laptop\",\"scopes\":[\"%s\"]}".formatted(name)))
@@ -186,7 +186,7 @@ class TokenLifecycleTests extends AbstractGatewayTest {
                 .contains(firstId, second.id());
 
         // The lifecycle is on the ledger with identity, name and scopes.
-        mockMvc.perform(post("/api/tokens/%d/rotate".formatted(firstId)).with(oidcLogin()))
+        mockMvc.perform(post("/api/v1/tokens/%d/rotate".formatted(firstId)).with(oidcLogin()))
                 .andExpect(status().isOk());
         assertThat(fetchLogRepository.list())
                 .anySatisfy(entry -> {

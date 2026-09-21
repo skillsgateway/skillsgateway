@@ -107,7 +107,7 @@ approval predates the configuration does not have to wait for another one.
 To fill it immediately, ask:
 
 ```console
-$ curl -X POST localhost:8080/api/mirror/reconcile
+$ curl -X POST localhost:8080/api/v1/mirror/reconcile
 ```
 
 Administrator-only. It reconciles and answers with the resulting comparison, in
@@ -119,7 +119,7 @@ worked rather than only that it was attempted.
 === "API"
 
     ```console
-    $ curl localhost:8080/api/mirror/drift
+    $ curl localhost:8080/api/v1/mirror/drift
     ```
 
     ```json
@@ -167,7 +167,7 @@ Do something when the cause is outside the gateway. Fix the code host, the
 network or the credential, then either wait for the schedule or reconcile now:
 
 ```console
-$ curl -X POST localhost:8080/api/mirror/reconcile
+$ curl -X POST localhost:8080/api/v1/mirror/reconcile
 ```
 
 ### When the gateway repairs, it says so

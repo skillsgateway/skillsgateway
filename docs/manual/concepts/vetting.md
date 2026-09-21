@@ -15,7 +15,7 @@ outcome that gates approval.
 
 ```mermaid
 flowchart TD
-    U["Upstream repository"] -->|"POST /api/marketplaces/{name}/ingest"| F["Fetch into quarantine<br/>pin refs/snapshots/&lt;sha&gt;"]
+    U["Upstream repository"] -->|"POST /api/v1/marketplaces/{name}/ingest"| F["Fetch into quarantine<br/>pin refs/snapshots/&lt;sha&gt;"]
     F --> M{"Manifest policy<br/>local sources only"}
     M -->|violation| R["snapshot: rejected<br/>chain does not run"]
     M -->|ok| H["snapshot: held"]
@@ -31,9 +31,9 @@ flowchart TD
     E -->|clear| RV["Reviewer sees verdicts<br/>Approve enabled"]
     E -->|clear with waivers| RW["Reviewer sees verdicts<br/>and what was accepted"]
     E -->|blocked| RB["Reviewer sees the findings<br/>no waiver covers"]
-    RV -->|"POST /api/snapshots/{id}/approve"| P["Published repository<br/>refs/heads/main"]
-    RW -->|"POST /api/snapshots/{id}/approve"| P
-    RB -->|"POST /api/snapshots/{id}/waivers per finding"| E
+    RV -->|"POST /api/v1/snapshots/{id}/approve"| P["Published repository<br/>refs/heads/main"]
+    RW -->|"POST /api/v1/snapshots/{id}/approve"| P
+    RB -->|"POST /api/v1/snapshots/{id}/waivers per finding"| E
 ```
 
 The chain never changes the snapshot's own state. A vetted snapshot is still
@@ -216,7 +216,7 @@ at once. An administrator can trade that away per marketplace — see
 
 ## The approval gate
 
-`POST /api/snapshots/{id}/approve` takes no request body. It refuses a snapshot
+`POST /api/v1/snapshots/{id}/approve` takes no request body. It refuses a snapshot
 whose **effective** outcome is blocked, with `409` and a problem document naming
 both the blocking vetters and — in `uncoveredFindings` — every blocking
 finding that no active waiver covers. That array is the reviewer's worklist: it
@@ -387,7 +387,7 @@ carries a digest of the policy in force, so a changed list is visible in every
 run's chain identity. The task-shaped walkthrough is
 [License compliance for skills](../guides/license-compliance.md); the same
 detection is readable per snapshot at
-[`GET /api/snapshots/{id}/licenses`](../reference/api/marketplaces.md#get-snapshotsidlicenses).
+[`GET /api/v1/snapshots/{id}/licenses`](../reference/api/marketplaces.md#get-snapshotsidlicenses).
 
 !!! warning "What a passing verdict does *not* mean"
 

@@ -26,7 +26,7 @@ Create a token for the calling principal.
 **Body** — `{name, scopes?, expiresAt?, pushScopes?}`
 
 ```console
-$ curl -X POST localhost:8080/api/tokens \
+$ curl -X POST localhost:8080/api/v1/tokens \
     -H 'Content-Type: application/json' \
     -d '{"name":"ci-runner","scopes":["acme","catalog"],"expiresAt":"2026-12-31T00:00:00Z"}'
 ```
@@ -55,7 +55,7 @@ the registered hosted marketplaces at creation. An out-of-scope push answers
 exactly like a marketplace that does not exist, as an out-of-scope fetch does.
 
 `sessionDerived` on a returned token says the credential came from
-[`POST /api/tokens/session`](#post-apitokenssession) rather than from a
+[`POST /api/v1/tokens/session`](#post-apitokenssession) rather than from a
 deliberate provisioning.
 
 `expiresAt` (GW_AUTH_0007): an expired token fails authentication exactly like a
@@ -172,7 +172,7 @@ helper setup.
 
 ---
 
-## `POST /api/tokens/session`
+## `POST /api/v1/tokens/session`
 
 Mint a short-lived git credential from the calling principal's browser session
 (GW_AUTH_0018). The identity half of
@@ -188,7 +188,7 @@ a credential whose life the holder chooses is a personal access token reached
 through another URL.
 
 ```console
-$ curl -X POST localhost:8080/api/tokens/session \
+$ curl -X POST localhost:8080/api/v1/tokens/session \
     -H 'Content-Type: application/json' -d '{"name":"my-laptop"}'
 ```
 
@@ -206,13 +206,13 @@ $ curl -X POST localhost:8080/api/tokens/session \
 | Survives having no browser | no — it is minted from a session | yes |
 
 `scopes` narrows it to named marketplaces exactly as for any token. Rotation
-(`POST /api/tokens/{id}/rotate`) keeps both the expiry deadline and the
+(`POST /api/v1/tokens/{id}/rotate`) keeps both the expiry deadline and the
 session-derived mark, so it can neither extend the credential nor launder it
 into a standing one.
 
 !!! warning "Not tied to the session's end"
 
-    It is revoked by its timer, by `DELETE /api/tokens/{id}`, or not at all —
+    It is revoked by its timer, by `DELETE /api/v1/tokens/{id}`, or not at all —
     logging out does not kill it, because the gateway does not track session
     lifetime.
 
@@ -254,28 +254,28 @@ credential reaches the union of its scopes' endpoints and nothing more.
 
 | Scope | Reaches |
 | --- | --- |
-| `marketplaces:read` | `GET /api/marketplaces`, `GET /api/catalog`, and a snapshot's `/content`, `/content-diff`, `/licenses`, `/provenance`, `/release-age` |
+| `marketplaces:read` | `GET /api/v1/marketplaces`, `GET /api/v1/catalog`, and a snapshot's `/content`, `/content-diff`, `/licenses`, `/provenance`, `/release-age` |
 | `snapshots:read` | A snapshot's `/diff`, `/file`, `/files`, `/vetting`, `/fetchers`, `/four-eyes` |
-| `marketplaces:register` | `POST /api/marketplaces` |
-| `marketplaces:ingest` | `POST /api/marketplaces/{name}/ingest` |
-| `vetting:run` | `POST /api/marketplaces/{name}/revet`, `POST /api/snapshots/{id}/revet` |
-| `waivers:read` | `GET /api/marketplaces/{name}/waivers` |
-| `sync:write` | `PUT /api/marketplaces/{name}/sync` |
-| `catalog:rebuild` | `POST /api/catalog/rebuild` |
-| `webhooks:read` | `GET /api/webhooks`, `/deliveries`, `/events` |
-| `webhooks:write` | `POST /api/webhooks`, `DELETE /api/webhooks/{id}` |
-| `audit:read` | `GET /api/audit`, `GET /api/audit/export` |
-| `audit-sinks:read` | `GET /api/audit/sinks` |
-| `audit-sinks:write` | `POST /api/audit/sinks`, `DELETE /api/audit/sinks/{id}`, `PUT /api/audit/sinks/{id}/cursor` |
-| `policy:read` | `GET /api/policy/rules`, `POST /api/policy/playground` |
-| `policy:write` | `POST /api/policy/rules`, `PUT`/`DELETE /api/policy/rules/{name}` |
-| `retention:read` | `GET /api/retention/candidates` |
-| `estate:read` | `GET /api/estate` |
-| `estate:reconcile` | `POST /api/estate/reconcile` |
-| `adoption:read` | `GET /api/adoption`, `GET /api/adoption/staleness` |
-| `roles:read` | `GET /api/roles` |
+| `marketplaces:register` | `POST /api/v1/marketplaces` |
+| `marketplaces:ingest` | `POST /api/v1/marketplaces/{name}/ingest` |
+| `vetting:run` | `POST /api/v1/marketplaces/{name}/revet`, `POST /api/v1/snapshots/{id}/revet` |
+| `waivers:read` | `GET /api/v1/marketplaces/{name}/waivers` |
+| `sync:write` | `PUT /api/v1/marketplaces/{name}/sync` |
+| `catalog:rebuild` | `POST /api/v1/catalog/rebuild` |
+| `webhooks:read` | `GET /api/v1/webhooks`, `/deliveries`, `/events` |
+| `webhooks:write` | `POST /api/v1/webhooks`, `DELETE /api/v1/webhooks/{id}` |
+| `audit:read` | `GET /api/v1/audit`, `GET /api/v1/audit/export` |
+| `audit-sinks:read` | `GET /api/v1/audit/sinks` |
+| `audit-sinks:write` | `POST /api/v1/audit/sinks`, `DELETE /api/v1/audit/sinks/{id}`, `PUT /api/v1/audit/sinks/{id}/cursor` |
+| `policy:read` | `GET /api/v1/policy/rules`, `POST /api/v1/policy/playground` |
+| `policy:write` | `POST /api/v1/policy/rules`, `PUT`/`DELETE /api/v1/policy/rules/{name}` |
+| `retention:read` | `GET /api/v1/retention/candidates` |
+| `estate:read` | `GET /api/v1/estate` |
+| `estate:reconcile` | `POST /api/v1/estate/reconcile` |
+| `adoption:read` | `GET /api/v1/adoption`, `GET /api/v1/adoption/staleness` |
+| `roles:read` | `GET /api/v1/roles` |
 
-`POST /api/policy/playground` sits under `policy:read` because it evaluates a
+`POST /api/v1/policy/playground` sits under `policy:read` because it evaluates a
 policy against a candidate and persists nothing. It reads; the verb is an
 artefact of needing a request body.
 
@@ -287,25 +287,25 @@ of scopes and no role reaches any of these:**
 
 | Endpoint | Why |
 | --- | --- |
-| `POST /api/snapshots/{id}/approve`, `/reject` | Publishes or refuses content; human judgement |
-| `POST /api/snapshots/{id}/waivers`, `DELETE /api/waivers/{id}` | Overrides the vetting chain, and withdraws the override |
-| `POST /api/retention/evaluate`, `/compact` | Soft-deletes and permanently purges: retracts content |
-| `DELETE /api/snapshots/{id}`, `POST /api/snapshots/{id}/restore` | Retracts and republishes content |
-| `POST /api/roles`, `DELETE /api/roles/{id}` | Privilege granting; see below |
-| All of `/api/tokens/**` | Credential minting, including this page's own endpoints |
-| `GET /api/me` | A session identity page; a machine has no session |
+| `POST /api/v1/snapshots/{id}/approve`, `/reject` | Publishes or refuses content; human judgement |
+| `POST /api/v1/snapshots/{id}/waivers`, `DELETE /api/v1/waivers/{id}` | Overrides the vetting chain, and withdraws the override |
+| `POST /api/v1/retention/evaluate`, `/compact` | Soft-deletes and permanently purges: retracts content |
+| `DELETE /api/v1/snapshots/{id}`, `POST /api/v1/snapshots/{id}/restore` | Retracts and republishes content |
+| `POST /api/v1/roles`, `DELETE /api/v1/roles/{id}` | Privilege granting; see below |
+| All of `/api/v1/tokens/**` | Credential minting, including this page's own endpoints |
+| `GET /api/v1/me` | A session identity page; a machine has no session |
 
 Role grants are **declarative only**: `estate.grants` already serves them with
 the same validation and **no credential in the pipeline at all**, so a machine
 write path would add escalation surface for something that has a safer route.
 See [Declarative estate](../../guides/declarative-estate.md).
 
-`GET /api/roles` **is** reachable, because denying the read would not prevent
+`GET /api/v1/roles` **is** reachable, because denying the read would not prevent
 configuration drift — the estate never prunes, so it cannot discover a grant
 made by hand — it would only make that drift undetectable. The reconnaissance
-cost is paid for instead: **every authorized read of `/api/roles` is recorded on
+cost is paid for instead: **every authorized read of `/api/v1/roles` is recorded on
 the audit ledger**, by a person and by a machine alike, with the entry's actor
-type telling them apart. Reads of `/api/audit` are deliberately *not* recorded,
+type telling them apart. Reads of `/api/v1/audit` are deliberately *not* recorded,
 because logging a read of the ledger would make a polling exporter append an
 entry that is itself new content to export.
 
@@ -325,7 +325,7 @@ A machine principal acquires a role from the deployment's configuration
 declare. It never acquires one from identity-provider claims: a credential has
 none.
 
-### `POST /api/tokens/machine`
+### `POST /api/v1/tokens/machine`
 
 Provisions a credential. Requires the `admin` role — a credential outlives the
 session that created it, and without that requirement any user who completed a
@@ -358,13 +358,13 @@ The cap is `skills-gateway.tokens.max-ttl` when set, and otherwise a built-in
 **90 days**; see [Configuration](../configuration.md). The cleartext is returned
 exactly once.
 
-### `GET /api/tokens/machine`
+### `GET /api/v1/tokens/machine`
 
 Every machine credential, whoever provisioned it, never a secret. Deliberately
 not scoped to the caller: a machine credential's principal is not an identity
 anyone logs in as, so an owner-scoped listing would leave every one of them
 invisible — and unrevokable — during an incident. Each row carries its
-`machineOwner`, the person who provisioned it. `GET /api/tokens` is unaffected
+`machineOwner`, the person who provisioned it. `GET /api/v1/tokens` is unaffected
 and still shows only the caller's own tokens.
 
 Each row also carries [`lastUsedAt`](#lastusedat), with exactly the meaning it
@@ -373,13 +373,13 @@ successfully, `null` if it never has, approximate to a minute, and untouched by
 any refused attempt. It is the field that identifies a pipeline credential
 nothing runs any more.
 
-### `POST /api/tokens/machine/{id}/rotate`
+### `POST /api/v1/tokens/machine/{id}/rotate`
 
 Same grant, new secret. The principal, name, expiry **deadline** and every one
 of the API scope values carry over, and the old credential is revoked before the
 new one is issued, so no moment has two live secrets.
 
-### `DELETE /api/tokens/machine/{id}`
+### `DELETE /api/v1/tokens/machine/{id}`
 
 Revokes it. Checked at authentication time rather than swept, so it takes effect
 on the credential's very next request.
@@ -388,7 +388,7 @@ on the credential's very next request.
 
 ```bash
 curl -H "Authorization: Bearer $SKILLS_GATEWAY_TOKEN" \
-     https://gateway.example.com/api/estate
+     https://gateway.example.com/api/v1/estate
 ```
 
 Send no cookie. See [REST API](index.md) for why a request carrying both is
@@ -396,7 +396,7 @@ refused.
 
 !!! note "The first credential is minted by a person"
 
-    `/api/tokens/**` is unreachable by machine by design, so bootstrapping means
+    `/api/v1/tokens/**` is unreachable by machine by design, so bootstrapping means
     an administrator driving this endpoint from a browser session — once, to
     create something with a stated expiry and named scopes, rather than
     continuously to run a pipeline. A portal screen is what removes that step

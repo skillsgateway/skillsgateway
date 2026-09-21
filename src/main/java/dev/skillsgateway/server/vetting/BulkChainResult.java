@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
@@ -57,6 +58,12 @@ public record BulkChainResult(
         UNCHANGED,
 
         /** The marketplace was refused; nothing was written for it. */
-        FAILED
+        FAILED;
+
+        /** Wire form: the lower-case name, so the published vocabulary matches every other enum's. */
+        @JsonValue
+        public String wire() {
+            return name().toLowerCase(java.util.Locale.ROOT);
+        }
     }
 }

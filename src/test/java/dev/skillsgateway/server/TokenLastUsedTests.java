@@ -84,7 +84,7 @@ class TokenLastUsedTests extends AbstractGatewayTest {
         assertThat(stamped).isAfterOrEqualTo(before.minusSeconds(1));
 
         // And it reaches the owner's own listing, which is the surface the portal reads.
-        String body = mockMvc.perform(get("/api/tokens").with(oidcLogin().idToken(id -> id.subject("alice"))))
+        String body = mockMvc.perform(get("/api/v1/tokens").with(oidcLogin().idToken(id -> id.subject("alice"))))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -99,12 +99,12 @@ class TokenLastUsedTests extends AbstractGatewayTest {
         TokenService.IssuedToken credential = machineCredential();
         assertThat(lastUsed(credential.id())).isNull();
 
-        mockMvc.perform(bearer(get("/api/marketplaces"), credential.token())).andExpect(status().isOk());
+        mockMvc.perform(bearer(get("/api/v1/marketplaces"), credential.token())).andExpect(status().isOk());
 
         assertThat(lastUsed(credential.id())).isNotNull();
 
         String body = mockMvc.perform(
-                        get("/api/tokens/machine").with(oidcLogin().idToken(id -> id.subject("root"))))
+                        get("/api/v1/tokens/machine").with(oidcLogin().idToken(id -> id.subject("root"))))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -118,21 +118,21 @@ class TokenLastUsedTests extends AbstractGatewayTest {
     void the_stamp_is_rewritten_at_most_once_a_minute() throws Exception {
         TokenService.IssuedToken credential = machineCredential();
 
-        mockMvc.perform(bearer(get("/api/marketplaces"), credential.token())).andExpect(status().isOk());
+        mockMvc.perform(bearer(get("/api/v1/marketplaces"), credential.token())).andExpect(status().isOk());
         Instant first = lastUsed(credential.id());
         assertThat(first).isNotNull();
 
         // Within the bound: the credential is used again and the recorded instant does not move.
         // This is the whole point of the throttle — the hot path costs a statement that writes
         // nothing rather than a row write per request.
-        mockMvc.perform(bearer(get("/api/marketplaces"), credential.token())).andExpect(status().isOk());
+        mockMvc.perform(bearer(get("/api/v1/marketplaces"), credential.token())).andExpect(status().isOk());
         assertThat(lastUsed(credential.id())).isEqualTo(first);
 
         // Past the bound: the next use advances it, so a credential in continuous use never looks
         // stale.
         ageLastUsed(credential.id(), 5);
         Instant aged = lastUsed(credential.id());
-        mockMvc.perform(bearer(get("/api/marketplaces"), credential.token())).andExpect(status().isOk());
+        mockMvc.perform(bearer(get("/api/v1/marketplaces"), credential.token())).andExpect(status().isOk());
         assertThat(lastUsed(credential.id())).isAfter(aged);
     }
 
@@ -168,7 +168,7 @@ class TokenLastUsedTests extends AbstractGatewayTest {
         // credential on the machine API chain. The lookup resolves its row, so a stamp written
         // inside the lookup would mark this refusal as a use.
         TokenService.IssuedToken fetchOnly = tokenService.create("alice", "fetch-only-last-used");
-        mockMvc.perform(bearer(get("/api/marketplaces"), fetchOnly.token())).andExpect(status().isUnauthorized());
+        mockMvc.perform(bearer(get("/api/v1/marketplaces"), fetchOnly.token())).andExpect(status().isUnauthorized());
         assertThat(lastUsed(fetchOnly.id()))
                 .as("a credential the machine chain refused was not used on it")
                 .isNull();
@@ -176,7 +176,7 @@ class TokenLastUsedTests extends AbstractGatewayTest {
         // Positive control: the same route, the same chain, a credential that belongs on it. Without
         // this the assertions above would also hold with the recording deleted entirely.
         TokenService.IssuedToken accepted = machineCredential();
-        mockMvc.perform(bearer(get("/api/marketplaces"), accepted.token())).andExpect(status().isOk());
+        mockMvc.perform(bearer(get("/api/v1/marketplaces"), accepted.token())).andExpect(status().isOk());
         assertThat(lastUsed(accepted.id())).isNotNull();
     }
 }

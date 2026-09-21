@@ -917,7 +917,7 @@ test("the_session_holds_an_admin_role_derived_from_the_identity_providers_group_
 }) => {
   await login(page, "alice");
 
-  const me = await page.request.get("/api/me");
+  const me = await page.request.get("/api/v1/me");
   expect(me.ok()).toBeTruthy();
   const body = await me.json();
 

@@ -49,7 +49,7 @@ class PolicyPlaygroundTests extends AbstractGatewayTest {
         long ledgerBefore = fetchLogRepository.list().size();
 
         // Matched: the shell-tool rule from the issue, against real snapshot content.
-        mockMvc.perform(post("/api/policy/playground")
+        mockMvc.perform(post("/api/v1/policy/playground")
                         .with(oidcLogin().idToken(token -> token.subject("alice")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body(snapshotId, "skills.exists(s, s.tools.exists(t, t.startsWith(\"Bash\")))")))
@@ -58,7 +58,7 @@ class PolicyPlaygroundTests extends AbstractGatewayTest {
                 .andExpect(jsonPath("$.error").doesNotExist());
 
         // Not matched.
-        mockMvc.perform(post("/api/policy/playground")
+        mockMvc.perform(post("/api/v1/policy/playground")
                         .with(oidcLogin().idToken(token -> token.subject("alice")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body(snapshotId, "files.exists(f, f.path.endsWith(\".exe\"))")))
@@ -66,7 +66,7 @@ class PolicyPlaygroundTests extends AbstractGatewayTest {
                 .andExpect(jsonPath("$.matched").value(false));
 
         // A compile error is an answer, not a 500 — and echoes no snapshot content.
-        mockMvc.perform(post("/api/policy/playground")
+        mockMvc.perform(post("/api/v1/policy/playground")
                         .with(oidcLogin().idToken(token -> token.subject("alice")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body(snapshotId, "skills.exists(s,")))
@@ -76,7 +76,7 @@ class PolicyPlaygroundTests extends AbstractGatewayTest {
                         .value(org.hamcrest.Matchers.not(org.hamcrest.Matchers.blankOrNullString())));
 
         // An evaluation error is an answer too.
-        mockMvc.perform(post("/api/policy/playground")
+        mockMvc.perform(post("/api/v1/policy/playground")
                         .with(oidcLogin().idToken(token -> token.subject("alice")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body(snapshotId, "files[1000].path == \"x\"")))
@@ -86,7 +86,7 @@ class PolicyPlaygroundTests extends AbstractGatewayTest {
                         .value(org.hamcrest.Matchers.not(org.hamcrest.Matchers.blankOrNullString())));
 
         // An unknown snapshot is not-found.
-        mockMvc.perform(post("/api/policy/playground")
+        mockMvc.perform(post("/api/v1/policy/playground")
                         .with(oidcLogin().idToken(token -> token.subject("alice")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body(999_999_999L, "true")))
@@ -94,7 +94,7 @@ class PolicyPlaygroundTests extends AbstractGatewayTest {
 
         // Provably inert: nothing appended, nothing stored, nothing decided, nothing served.
         assertThat(fetchLogRepository.list()).hasSize((int) ledgerBefore);
-        mockMvc.perform(get("/api/policy/rules").with(oidcLogin().idToken(token -> token.subject("alice"))))
+        mockMvc.perform(get("/api/v1/policy/rules").with(oidcLogin().idToken(token -> token.subject("alice"))))
                 .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$[?(@.description == 'enforcement fixture')]").isEmpty());

@@ -20,7 +20,7 @@ import org.springframework.http.MediaType;
 class DuplicateUrlWarningTests extends AbstractGatewayTest {
 
     private String register(String name, String url) throws Exception {
-        return mockMvc.perform(post("/api/marketplaces")
+        return mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"%s\",\"url\":\"%s\"}".formatted(name, url)))

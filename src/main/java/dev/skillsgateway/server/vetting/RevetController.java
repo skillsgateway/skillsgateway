@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
  * vetter <em>is</em> the feed integration in v1; a webhook-triggered one is a follow-on.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class RevetController {
 
     private final RevetService revetService;

@@ -8,7 +8,7 @@ Two shapes of the same feed:
 
 | Path | Shape | Who holds the state |
 | --- | --- | --- |
-| **Pull** | `GET /api/audit/export` streams NDJSON. | The collector, as one number. |
+| **Pull** | `GET /api/v1/audit/export` streams NDJSON. | The collector, as one number. |
 | **Push** | A registered *sink* has batches POSTed to it, signed and retried. | The gateway, as the sink's cursor. |
 
 !!! note "Telemetry is not this path"
@@ -53,7 +53,7 @@ de-duplication key.
 ## Pull: NDJSON
 
 ```console
-$ curl -D- 'localhost:8080/api/audit/export?after=0&limit=1000'
+$ curl -D- 'localhost:8080/api/v1/audit/export?after=0&limit=1000'
 X-Skills-Gateway-Audit-Cursor: 842
 
 {"id":1,"ts":"2026-08-15T09:04:11Z","source":"10.0.0.4","principal":"alice@example.com","marketplace":"acme","event":"info-refs","ref":"refs/heads/main","sha":"3f9c2ab..."}
@@ -77,7 +77,7 @@ fixed-size chunks, so gateway memory is bounded by the chunk rather than by
 
 ```console
 $ cursor=$(cat cursor.txt 2>/dev/null || echo 0)
-$ next=$(curl -s -D headers.txt "localhost:8080/api/audit/export?after=${cursor}" \
+$ next=$(curl -s -D headers.txt "localhost:8080/api/v1/audit/export?after=${cursor}" \
     -o batch.ndjson && sed -n 's/^X-Skills-Gateway-Audit-Cursor: //Ip' headers.txt | tr -d '\r')
 $ [ -s batch.ndjson ] && ingest batch.ndjson && echo "${next}" > cursor.txt
 ```
@@ -102,7 +102,7 @@ engine.
 === "API"
 
     ```console
-    $ curl -X POST localhost:8080/api/audit/sinks \
+    $ curl -X POST localhost:8080/api/v1/audit/sinks \
         -H 'Content-Type: application/json' \
         -d '{"name":"siem","url":"https://siem.example.com/ingest/skills-gateway",
              "after":0,"batchSize":500}'
@@ -137,7 +137,7 @@ lifecycle deliveries.
 
 !!! note "A lifecycle subscriber never receives audit batches"
 
-    `audit.export` is not a subscribable lifecycle event: `POST /api/webhooks`
+    `audit.export` is not a subscribable lifecycle event: `POST /api/v1/webhooks`
     rejects it, and a `*` subscriber does not match it either. The only way to
     receive audit batches is to be a sink.
 
@@ -166,7 +166,7 @@ Replay is a cursor write, not a mode:
 === "API"
 
     ```console
-    $ curl -X PUT localhost:8080/api/audit/sinks/1/cursor \
+    $ curl -X PUT localhost:8080/api/v1/audit/sinks/1/cursor \
         -H 'Content-Type: application/json' -d '{"after":800}'
     ```
 
@@ -178,7 +178,7 @@ the signal that a receiver is failing or that a batch size is too small for the
 poll interval:
 
 ```console
-$ curl localhost:8080/api/audit/sinks
+$ curl localhost:8080/api/v1/audit/sinks
 ```
 
 ```json
@@ -187,7 +187,7 @@ $ curl localhost:8080/api/audit/sinks
   "enabled":true,"createdAt":"..."}]
 ```
 
-`DELETE /api/audit/sinks/{id}` removes the sink and its delivery channel — **204**,
+`DELETE /api/v1/audit/sinks/{id}` removes the sink and its delivery channel — **204**,
 or **404** if it never existed.
 
 ## Why exports lag a few seconds

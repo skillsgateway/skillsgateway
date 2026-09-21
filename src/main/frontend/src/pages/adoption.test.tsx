@@ -52,8 +52,8 @@ test("window_selection_is_a_pressed_button_group_defaulting_to_30_days", async (
 
 test("empty_ledger_and_no_stale_identities_render_explicit_empty_states", async () => {
   server.use(
-    http.get("/api/adoption", () => HttpResponse.json([])),
-    http.get("/api/adoption/staleness", () => HttpResponse.json([])),
+    http.get("/api/v1/adoption", () => HttpResponse.json([])),
+    http.get("/api/v1/adoption/staleness", () => HttpResponse.json([])),
   );
   renderPage();
   expect(await screen.findByText(/No fetches in the last 30 days/)).toBeInTheDocument();
@@ -61,7 +61,7 @@ test("empty_ledger_and_no_stale_identities_render_explicit_empty_states", async 
 });
 
 test("a_failing_report_renders_an_alert_not_a_blank_page", async () => {
-  server.use(http.get("/api/adoption", () => HttpResponse.json({}, { status: 500 })));
+  server.use(http.get("/api/v1/adoption", () => HttpResponse.json({}, { status: 500 })));
   renderPage();
   expect(await screen.findByRole("alert")).toBeInTheDocument();
 });

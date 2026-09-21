@@ -23,7 +23,7 @@ test("export_download_and_sink_positions_are_shown", async () => {
   // The download link points at the NDJSON stream, not at a rendered table.
   expect(screen.getByRole("link", { name: /Download ledger/ })).toHaveAttribute(
     "href",
-    "/api/audit/export",
+    "/api/v1/audit/export",
   );
   // The sink row carries its target and its position in the ledger.
   expect(await screen.findByRole("row", { name: /siem.*42.*3 entries/ })).toBeInTheDocument();
@@ -36,7 +36,7 @@ test("export_download_and_sink_positions_are_shown", async () => {
  */
 test("a_blocked_vetting_row_is_flagged_and_the_marketplace_links_to_its_detail", async () => {
   server.use(
-    http.get("/api/audit", () =>
+    http.get("/api/v1/audit", () =>
       HttpResponse.json([
         {
           id: 1,
@@ -69,7 +69,7 @@ test("a_blocked_vetting_row_is_flagged_and_the_marketplace_links_to_its_detail",
  */
 test("column_filters_offer_completion_from_present_values", async () => {
   server.use(
-    http.get("/api/audit", () =>
+    http.get("/api/v1/audit", () =>
       HttpResponse.json([
         {
           id: 1,
@@ -89,7 +89,7 @@ test("column_filters_offer_completion_from_present_values", async () => {
         },
       ]),
     ),
-    http.get("/api/marketplaces", () =>
+    http.get("/api/v1/marketplaces", () =>
       HttpResponse.json([{ name: "corp-marketplace" }, { name: "ri-2" }]),
     ),
   );
@@ -157,7 +157,7 @@ test("created_sink_secret_is_shown_once_in_a_dialog", async () => {
  */
 test("the_ledger_opens_with_the_newest_entry_first", async () => {
   server.use(
-    http.get("/api/audit", () =>
+    http.get("/api/v1/audit", () =>
       HttpResponse.json([
         {
           id: 1,

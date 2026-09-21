@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.config;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.github.reqstool.annotations.Requirements;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -1027,7 +1028,13 @@ public record SkillsGatewayProperties(
         WARN,
 
         /** Revoke the snapshot and stop serving it (GW_VETTING_0013). */
-        ENFORCE
+        ENFORCE;
+
+        /** Wire form: the lower-case name, so the published vocabulary matches every other enum's. */
+        @JsonValue
+        public String wire() {
+            return name().toLowerCase(java.util.Locale.ROOT);
+        }
     }
 
     /**
@@ -1090,7 +1097,13 @@ public record SkillsGatewayProperties(
         WARN,
 
         /** Refuse the approval fail-closed; the snapshot stays held and nothing is published. */
-        ENFORCE
+        ENFORCE;
+
+        /** Wire form: the lower-case name, so the published vocabulary matches every other enum's. */
+        @JsonValue
+        public String wire() {
+            return name().toLowerCase(java.util.Locale.ROOT);
+        }
     }
 
     /**

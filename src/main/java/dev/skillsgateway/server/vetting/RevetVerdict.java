@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
@@ -63,6 +64,7 @@ public final class RevetVerdict {
          */
         INCONCLUSIVE;
 
+        @JsonValue
         public String stored() {
             return name().toLowerCase(Locale.ROOT);
         }

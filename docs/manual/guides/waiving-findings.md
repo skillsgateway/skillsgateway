@@ -19,7 +19,7 @@ waiver and in the audit ledger.
 
 ## Before you start
 
-- A snapshot whose vetting outcome is blocked. `GET /api/snapshots/{id}/vetting`
+- A snapshot whose vetting outcome is blocked. `GET /api/v1/snapshots/{id}/vetting`
   shows the verdicts, or open the approve dialog in the portal.
 - A portal session, or — for the API — a session cookie and the CSRF token that
   goes with it ([REST API](../reference/api/index.md#conventions)).
@@ -29,7 +29,7 @@ waiver and in the audit ledger.
 Ask for the approval and read the refusal — it lists the work:
 
 ```console
-$ curl -sS -X POST localhost:8080/api/snapshots/1/approve | jq
+$ curl -sS -X POST localhost:8080/api/v1/snapshots/1/approve | jq
 {
   "status": 409,
   "title": "Vetting chain blocked this snapshot",
@@ -75,7 +75,7 @@ approval will succeed — covering some of them changes nothing.
 === "API"
 
     ```console
-    $ curl -X POST localhost:8080/api/snapshots/1/waivers \
+    $ curl -X POST localhost:8080/api/v1/snapshots/1/waivers \
         -H 'Content-Type: application/json' \
         -d '{
               "ruleId": "aws-access-key-id",
@@ -89,7 +89,7 @@ approval will succeed — covering some of them changes nothing.
     path:
 
     ```console
-    $ curl -X POST localhost:8080/api/snapshots/1/waivers \
+    $ curl -X POST localhost:8080/api/v1/snapshots/1/waivers \
         -H 'Content-Type: application/json' \
         -d '{
               "ruleId": "instruction-override",
@@ -120,7 +120,7 @@ With every blocking finding covered, the approval goes through with no special
 request and no flags:
 
 ```console
-$ curl -X POST localhost:8080/api/snapshots/1/approve
+$ curl -X POST localhost:8080/api/v1/snapshots/1/approve
 ```
 
 Each waiver that was in force is written to the ledger as `waiver-applied`, with
@@ -131,7 +131,7 @@ the rule, the location, the approver and the expiry.
 List what a marketplace has accepted — active and lapsed alike:
 
 ```console
-$ curl -sS localhost:8080/api/marketplaces/corp-marketplace/waivers | jq
+$ curl -sS localhost:8080/api/v1/marketplaces/corp-marketplace/waivers | jq
 ```
 
 A lapsed or revoked waiver is kept and returned with `"active": false`: the
@@ -140,7 +140,7 @@ record of what was once accepted is part of the audit trail.
 Withdraw one when the reason no longer holds:
 
 ```console
-$ curl -X DELETE localhost:8080/api/waivers/3
+$ curl -X DELETE localhost:8080/api/v1/waivers/3
 ```
 
 Revocation takes effect on the next read. A snapshot that was cleared only by
