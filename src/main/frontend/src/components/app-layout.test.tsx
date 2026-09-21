@@ -4,6 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "next-themes";
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router-dom";
 import { beforeEach, expect, test, vi } from "vitest";
+import { http, HttpResponse } from "msw";
+import { server } from "@/test/msw-server";
 import { AppLayout, UserMenuView } from "./app-layout";
 
 // A data router, as main.tsx uses: the shell reads each route's `handle` to decide whether the
@@ -209,4 +211,40 @@ test("the_sidebar_links_out_to_the_manual_and_the_source", async () => {
     "href",
     "https://github.com/skillsgateway/skillsgateway",
   );
+});
+
+/**
+ * The shell describing itself: the group of reference links says what it is, and the footer says
+ * which build is answering. Both were wrong or missing (#466).
+ */
+test("the_reference_group_is_named_for_what_it_holds_not_called_tools", async () => {
+  renderLayout();
+  await screen.findByRole("navigation", { name: "Main" });
+
+  expect(screen.getByText("Reference")).toBeInTheDocument();
+  // Nothing under it does anything to the gateway, so "Tools" was a promise the group did not keep.
+  expect(screen.queryByText("Tools")).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "API reference" })).toHaveAttribute("href", "/docs");
+});
+
+test("the_sidebar_states_the_build_that_is_answering", async () => {
+  renderLayout();
+
+  const version = await screen.findByText("0.3.0");
+  // Scoped to the footer: the brand mark at the top of the sidebar says the product name too.
+  expect(version.parentElement).toHaveTextContent("Skills Gateway 0.3.0");
+});
+
+test("a_build_that_reports_no_version_renders_no_footer_rather_than_the_word_unknown", async () => {
+  server.use(
+    http.get("/api/v1/me", () =>
+      HttpResponse.json({ username: "alice", roles: [], claimsTruncated: false }),
+    ),
+  );
+  renderLayout();
+  await screen.findByRole("navigation", { name: "Main" });
+
+  // Silence is the honest rendering of "I do not know"; "unknown" reads like a shipped version.
+  expect(screen.queryByText(/unknown/i)).not.toBeInTheDocument();
+  expect(screen.queryByText("0.3.0")).not.toBeInTheDocument();
 });

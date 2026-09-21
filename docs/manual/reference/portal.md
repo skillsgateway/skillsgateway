@@ -16,9 +16,9 @@ A fixed sidebar, grouped:
 | Governance | Vetting | [`/vetting`](#vetting-governance) — **shown only to administrators** |
 | Governance | Adoption | [`/adoption`](#adoption) |
 | Governance | Webhooks | [`/webhooks`](#webhooks) |
-| Tools | API reference | `/docs` — the Scalar API reference, not a portal route |
-| Tools | Documentation | this manual — leaves the portal, opens in a new tab |
-| Tools | Source code | the project repository — leaves the portal, opens in a new tab |
+| Reference | API reference | `/docs` — the Scalar API reference, not a portal route |
+| Reference | Documentation | this manual — leaves the portal, opens in a new tab |
+| Reference | Source code | the project repository — leaves the portal, opens in a new tab |
 
 [Marketplace detail](#marketplace-detail) is reached by clicking a marketplace,
 not from the sidebar, and [Snapshot contents](#snapshot-contents) from a
@@ -26,6 +26,12 @@ snapshot on that page. [Access tokens](#access-tokens) is a per-user concern, no
 estate-wide navigation — it is reached from the user menu, described next, and
 from the Overview page's Access tokens card; `/tokens` remains a resolvable
 address for existing bookmarks and links.
+
+The sidebar footer states the running build — *Skills Gateway 0.3.0* — read from
+`GET /api/v1/me`. It is the build artifact's own version and nothing a
+deployment can set, so it cannot claim to be a version it is not; a gateway run
+from an exploded build carries no build information and the footer is then
+absent entirely rather than saying "unknown".
 
 ## User menu
 

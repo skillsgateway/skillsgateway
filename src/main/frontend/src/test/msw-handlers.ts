@@ -860,7 +860,7 @@ export const handlers = [
   http.get("/api/v1/adoption", () => HttpResponse.json(marketplaceAdoption)),
   http.get("/api/v1/adoption/staleness", () => HttpResponse.json(staleIdentities)),
   http.get("/api/v1/me", () =>
-    HttpResponse.json({ username: "alice", roles: [], claimsTruncated: false }),
+    HttpResponse.json({ username: "alice", roles: [], claimsTruncated: false, version: "0.3.0" }),
   ),
   http.get("/api/v1/marketplaces", () => HttpResponse.json([marketplace])),
   http.post("/api/v1/marketplaces", () =>

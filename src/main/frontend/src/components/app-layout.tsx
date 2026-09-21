@@ -76,7 +76,7 @@ const REPO_URL = "https://github.com/skillsgateway/skillsgateway";
 const toolLinkClass =
   "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent";
 
-/** A Tools entry that leaves the portal. The icon is decoration, so the name carries the warning. */
+/** A Reference entry that leaves the portal. The icon is decoration, so the name carries the warning. */
 function OutboundLink({ href, label, icon: Icon }: { href: string; label: string; icon: typeof Home }) {
   return (
     <a
@@ -334,6 +334,30 @@ function UserMenu() {
 }
 
 /**
+ * Which build is answering (GW_AUTH_0047).
+ *
+ * The first question of any incident, and until now it could not be answered without leaving the
+ * portal for a shell. It rides on `me`, which the shell already fetches once per load, so this
+ * costs no request.
+ *
+ * Renders nothing at all when the gateway reports no version — an exploded build carries no build
+ * information, and the honest rendering of "I do not know" is silence rather than the word
+ * "unknown", which reads like a version somebody shipped.
+ */
+function GatewayVersion() {
+  const me = useMe();
+  const version = me.data?.version;
+  if (!version) return null;
+  return (
+    <div className="border-t px-4 py-3">
+      <span className="text-[11px] text-muted-foreground">
+        Skills Gateway <span className="font-mono">{version}</span>
+      </span>
+    </div>
+  );
+}
+
+/**
  * Portal shell: grouped sidebar navigation, breadcrumb top bar, and the signed-in user's
  * menu — identity, roles, theme, personal tokens and sign out.
  *
@@ -393,8 +417,10 @@ export function AppLayout() {
             </div>
           ))}
           <div>
+            {/* Reference, not "Tools": nothing in this group does anything to the gateway. Two
+                leave the portal and the third is the same-origin API reference page. */}
             <div className="px-2 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-              Tools
+              Reference
             </div>
             <a href="/docs" className={toolLinkClass}>
               <BookOpen className="size-4" aria-hidden />
@@ -404,6 +430,7 @@ export function AppLayout() {
             <OutboundLink href={REPO_URL} label="Source code" icon={Code2} />
           </div>
         </nav>
+        <GatewayVersion />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-4 border-b px-6 py-3">
