@@ -499,6 +499,30 @@ is refuse to start against a store whose conditional writes are not faithful, so
 that its *own* concurrent writers cannot lose a transition. That is a different
 guarantee, and it is not a substitute for the policy.
 
+## Credentials at rest — two postures, and the reason they differ
+
+The database holds two kinds of secret, and they are stored differently on
+purpose. Stated here because the difference looks like an oversight and is not.
+
+**Personal access tokens are hashed.** A PAT is verified by hashing what the
+client sent and comparing, so the gateway never needs the cleartext again. It is
+shown exactly once at creation and cannot be recovered afterwards — not by an
+administrator, not by a database reader.
+
+**Signing secrets are stored in cleartext.** `webhook_subscribers.secret` and a
+hosted marketplace's `marketplaces.webhook_secret` are HMAC keys: signing an
+outbound delivery and verifying an inbound push both require the key itself, so a
+hash would make them useless. They are returned exactly once by the call that
+generates them and by no read endpoint afterwards, but they are readable to
+anything that can read the table.
+
+The consequence is worth being plain about: **a database reader can forge a
+delivery signature and can forge an inbound push event.** The mitigation is that
+the database is inside the trust boundary and is expected to be treated as such —
+the same expectation the storage volume carries above. Encrypting the column
+against a key held elsewhere would change that, and the gateway does not do it
+today.
+
 ## The forge mirror — outbound, and outside the boundary
 
 The optional [read-only mirror](../guides/read-only-forge-mirror.md) puts a copy
