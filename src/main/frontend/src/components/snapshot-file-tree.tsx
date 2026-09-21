@@ -107,10 +107,11 @@ export function SnapshotFileTree({
                   : `${node.path}, ${size(node.size)}`
               }
               onClick={() => onSelect(node.path)}
-              className={`flex w-full items-center gap-1.5 rounded-md border-l-2 px-2 py-1 text-left font-mono text-xs hover:bg-muted outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 ${
-                node.path === selectedPath
-                  ? "border-l-primary bg-muted font-semibold"
-                  : "border-l-transparent"
+              // Selected is a violet tint, hover is the neutral one. They have to differ by hue
+              // rather than by token, because `--accent` and `--muted` are the same value in both
+              // themes — so "use a different background token" would have been a visual no-op.
+              className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left font-mono text-xs hover:bg-muted outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 ${
+                node.path === selectedPath ? "bg-primary/10 font-semibold" : ""
               }`}
             >
               {(() => {
