@@ -1001,3 +1001,72 @@ test("an_admin_sets_the_default_chain_and_clears_a_marketplaces_override", async
   await page.getByRole("link", { name, exact: true }).click();
   await expect(page.getByText(/Currently from the global setting/)).toBeVisible();
 });
+
+/**
+ * The seam between a chain change and the approval gate, through the surfaces a reviewer actually
+ * uses: evidence goes stale because an administrator changed the chain, the reviewer is told with
+ * both chains named, refreshes it in place, and approves — an approval that was never blocked.
+ *
+ * @SVCs SVC_GW_VETTING_0038, SVC_GW_VETTING_0038.1
+ */
+test("a_chain_change_marks_held_evidence_superseded_and_the_reviewer_refreshes_it", async ({
+  page,
+}) => {
+  await login(page, "alice");
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  const name = uniqueName("staleness");
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
+  await submitRegister(page);
+
+  await expandMarketplace(page, name);
+  const card = marketplaceRegion(page, name);
+  await card.getByRole("button", { name: `Ingest ${name}` }).click();
+  await expect(card.getByText("held", { exact: true })).toBeVisible();
+
+  // The vetting evidence is read on the marketplace detail page, which is also where the chain
+  // is configured — the two facts this test is about live on one screen.
+  await page.getByRole("link", { name, exact: true }).click();
+  const vetting = page.getByRole("region", { name: /Vetting of snapshot \d+/ }).first();
+  await expect(vetting).toBeVisible();
+  // Vetted against the chain in force, so nothing is said about it.
+  await expect(vetting.getByText(/different chain than this marketplace runs now/)).toHaveCount(0);
+
+  // An administrator changes the chain. The mode is part of its identity, so this is a chain
+  // change in exactly the sense the requirement means — and it re-runs nothing.
+  const mode = page.getByRole("group", { name: "When a vetter fails" });
+  await mode.getByRole("button", { name: "Stop after a failure" }).click();
+  await expect(mode.getByRole("button", { name: "Stop after a failure" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  // The stored run is now evidence from a superseded chain, and the reviewer is told so — with
+  // both chains named, because "it is stale" without saying how is not actionable.
+  const detailVetting = page.getByRole("region", { name: /Vetting of snapshot \d+/ }).first();
+  await expect(detailVetting.getByText(/different chain than this marketplace runs now/)).toBeVisible();
+  await expect(detailVetting.getByText(/mode=run-all/).first()).toBeVisible();
+  await expect(detailVetting.getByText(/mode=stop-after-fail/).first()).toBeVisible();
+  await expect(detailVetting.getByText(/Approval is not blocked by this/)).toBeVisible();
+
+  // Refreshed in place: the chain runs again, and the snapshot is still held.
+  await detailVetting.getByRole("button", { name: /Re-run the vetting chain on snapshot \d+/ }).click();
+  await expect(
+    detailVetting.getByText(/different chain than this marketplace runs now/),
+  ).toHaveCount(0);
+
+  // And the approval was never blocked by any of it.
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  await expandMarketplace(page, name);
+  const after = marketplaceRegion(page, name);
+  await after.getByRole("button", { name: /Approve snapshot \d+/ }).click();
+  await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
+  await expect(after.getByText("approved", { exact: true })).toBeVisible();
+});

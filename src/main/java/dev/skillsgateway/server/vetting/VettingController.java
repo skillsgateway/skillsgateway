@@ -99,10 +99,18 @@ public class VettingController {
                     description = "Present when an administrator approved this snapshot over a blocked vetting"
                             + " outcome (GW_VETTING_0028); its presence is what surfaces the override so it is never"
                             + " indistinguishable from a clean approval. Null otherwise.")
-            VettingOverrideRecord override) {}
+            VettingOverrideRecord override,
+
+            @Schema(
+                    description = "Whether the run above was produced by the chain this marketplace runs now"
+                            + " (GW_VETTING_0038). Enabling a vetter re-runs nothing, so a snapshot still at"
+                            + " the approval gate can carry evidence a newly enabled vetter never produced;"
+                            + " this says so rather than leaving it silent. It gates nothing — approval is"
+                            + " not refused for it.")
+            ChainStaleness chainStaleness) {}
 
     @GetMapping("/snapshots/{id}/vetting")
-    @Requirements({"GW_VETTING_0001", "GW_VETTING_0002", "GW_VETTING_0008"})
+    @Requirements({"GW_VETTING_0001", "GW_VETTING_0002", "GW_VETTING_0008", "GW_VETTING_0038"})
     @Tag(name = "Vetting")
     @Operation(
             summary = "Snapshot vetting verdicts",
@@ -140,6 +148,9 @@ public class VettingController {
                 .map(WaiverController.WaiverView::of)
                 .toList();
         VettingOverrideRecord override = overrideRepository.findBySnapshot(id).orElse(null);
+        // Derived here, like the effective outcome above, rather than read from a column: a stored
+        // marker would be wrong the moment the chain changed again (GW_VETTING_0038).
+        ChainStaleness staleness = vettingService.chainStaleness(snapshot);
         return new VettingView(
                 id,
                 effect.outcome(),
@@ -149,7 +160,8 @@ public class VettingController {
                 effect.uncovered(),
                 relevant,
                 vetters,
-                override);
+                override,
+                staleness);
     }
 
     @ExceptionHandler(SnapshotNotFoundException.class)

@@ -408,7 +408,8 @@ public class AdminController {
         "GW_APPROVAL_0010",
         "GW_APPROVAL_0011",
         "GW_VETTING_0028",
-        "GW_APPROVAL_0004.5"
+        "GW_APPROVAL_0004.5",
+        "GW_VETTING_0038.1"
     })
     @Tag(name = "Snapshots")
     @Operation(
@@ -481,6 +482,21 @@ public class AdminController {
                 "snapshot-approved",
                 snapshot.sha(),
                 "ingestion-age=" + ReleaseAgeGate.format(approved.ingestionAge()));
+        // The evidence this decision rested on was produced by a chain the marketplace no longer
+        // runs (GW_VETTING_0038.1): enabling a vetter re-runs nothing, so a snapshot at the gate can carry
+        // evidence the new vetter never produced. Recorded beside the approval, never instead of
+        // it, and never as a refusal — the reviewer owns the decision, the ledger owns the fact.
+        if (approved.chainStaleness() != null && approved.chainStaleness().stale()) {
+            auditLogger.record(
+                    authentication.getName(),
+                    marketplace,
+                    ApprovalService.EVENT_APPROVED_ON_SUPERSEDED_CHAIN,
+                    snapshot.sha(),
+                    "evidenceChain=%s; chainInForce=%s"
+                            .formatted(
+                                    approved.chainStaleness().runChain(),
+                                    approved.chainStaleness().currentChain()));
+        }
         // Warn mode published a self-approval (GW_APPROVAL_0011). The decision entry above says who approved;
         // this one says why that was not an independent review, and it is written beside the
         // approval rather than instead of it so the ledger carries both facts.

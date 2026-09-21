@@ -12,6 +12,8 @@ import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.policy.PolicyGate;
 import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.storage.ServedContentChangedEvent;
+import dev.skillsgateway.server.vetting.ChainStaleness;
+import dev.skillsgateway.server.vetting.VettingService;
 import dev.skillsgateway.server.vetting.WaiverEvaluation;
 import dev.skillsgateway.server.vetting.WaiverService;
 import io.github.reqstool.annotations.Requirements;
@@ -36,6 +38,7 @@ public class ApprovalService {
     private final SnapshotRepository snapshotRepository;
     private final MarketplaceRepository marketplaceRepository;
     private final WaiverService waiverService;
+    private final VettingService vettingService;
     private final PolicyGate policyGate;
     private final CatalogService catalogService;
     private final GatewayMetrics metrics;
@@ -53,6 +56,7 @@ public class ApprovalService {
             SnapshotRepository snapshotRepository,
             MarketplaceRepository marketplaceRepository,
             WaiverService waiverService,
+            VettingService vettingService,
             PolicyGate policyGate,
             CatalogService catalogService,
             GatewayMetrics metrics,
@@ -68,6 +72,7 @@ public class ApprovalService {
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
         this.waiverService = waiverService;
+        this.vettingService = vettingService;
         this.policyGate = policyGate;
         this.catalogService = catalogService;
         this.metrics = metrics;
@@ -96,6 +101,13 @@ public class ApprovalService {
      * approval on the ledger.
      */
     public static final String EVENT_OVERRIDE = "snapshot-approved-over-vetting-failure";
+
+    /**
+     * An approval decided on evidence a superseded chain produced (GW_VETTING_0038.1). Written beside the
+     * approval, never instead of it, and never as a refusal: the gateway states the fact and the
+     * reviewer owns the decision, exactly as it does for an override and a waiver.
+     */
+    public static final String EVENT_APPROVED_ON_SUPERSEDED_CHAIN = "snapshot-approved-on-superseded-chain";
 
     /**
      * An administrator's request to approve past a blocked vetting outcome (GW_VETTING_0028). The captain
@@ -145,7 +157,15 @@ public class ApprovalService {
             VettingOverrideRecord vettingOverride,
 
             /** The reversal of an administrator's withdrawal, or null (GW_APPROVAL_0017). */
-            RevocationReversalRecord revocationReversal) {
+            RevocationReversalRecord revocationReversal,
+
+            /**
+             * Whether the evidence this approval relied on came from the chain in force at the moment it
+             * was decided (GW_VETTING_0038.1). Captured here rather than read back afterwards: a reviewer can
+             * leave a page open, and the ledger has to record the chain in force when the decision
+             * landed.
+             */
+            ChainStaleness chainStaleness) {
 
         public Approved {
             fourEyesConflicts = fourEyesConflicts == null ? List.of() : List.copyOf(fourEyesConflicts);
@@ -218,6 +238,10 @@ public class ApprovalService {
         List<WaiverEvaluation.Suppression> applied = List.of();
         List<FourEyesConflictException.Conflict> conflicts = List.of();
         Duration ingestionAge = Duration.ZERO;
+        // Read at the decision, not carried from whatever surface displayed the evidence: a reviewer
+        // can leave a page open, and the ledger has to name the chain in force when the decision
+        // landed (GW_VETTING_0038.1). It gates nothing below — no branch reads it.
+        ChainStaleness staleness = vettingService.chainStaleness(current);
         OverrideCapture override = null;
         ReversalCapture reversal = null;
         if (current.decidable()) {
@@ -317,7 +341,7 @@ public class ApprovalService {
         // affect this decision (GW_FACADE_0021): the publication has already landed, and a listener that
         // fails leaves it landed.
         events.publishEvent(new ServedContentChangedEvent(marketplace.name(), "snapshot-approved"));
-        return new Approved(decided, applied, ingestionAge, conflicts, overrideRecord, reversalRecord);
+        return new Approved(decided, applied, ingestionAge, conflicts, overrideRecord, reversalRecord, staleness);
     }
 
     /**

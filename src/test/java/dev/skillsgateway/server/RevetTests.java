@@ -229,14 +229,36 @@ class RevetTests extends AbstractGatewayTest {
                 .isEqualTo(VettingChain.Outcome.BLOCKED);
     }
 
-    /** Only served content is re-vetted on demand; a held or rejected snapshot is refused. */
+    /**
+     * The constraint, as it now stands: a terminal snapshot is refused.
+     *
+     * <p>This test used to assert that a held snapshot was refused too, on the reasoning that
+     * re-vetting is about served content. That reasoning still holds — a held snapshot is not
+     * re-vetted — but refusing it outright left a reviewer told their evidence came from a
+     * superseded chain (GW_VETTING_0038) with no way to refresh it. A held snapshot is now
+     * refreshed instead: the chain runs, the run is recorded, and nothing is classified,
+     * announced or retracted. {@code ChainStalenessAtTheGateTests} and {@code RevetEnforceTests}
+     * pin that it stays a refresh and never becomes a retraction.
+     *
+     * <p>What is unchanged, and asserted here, is the outer bound: a rejected or revoked snapshot
+     * has a terminal answer, serves nothing, and has no approval coming, so there is neither
+     * content to re-vet nor evidence worth refreshing.
+     */
     @Test
-    void onlyApprovedSnapshotsCanBeRevetted() throws Exception {
+    void terminalSnapshotsAreRefusedAndHeldOnesAreRefreshedInstead() throws Exception {
         Registered held = registerAndIngest(uniqueName("revetheld"), createUpstream(DEFAULT_MANIFEST));
+        long id = held.snapshot().id();
 
-        org.assertj.core.api.Assertions.assertThatThrownBy(
-                        () -> revetService.revetSnapshot(held.snapshot().id(), "alice"))
+        // Held: refreshed in place, and still held afterwards.
+        RevetService.RevetResult refreshed = revetService.revetSnapshot(id, "alice");
+        assertThat(refreshed.revoked()).isFalse();
+        assertThat(refreshed.affected()).isEmpty();
+        assertThat(snapshotRepository.findById(id).orElseThrow().state()).isEqualTo(Snapshot.HELD);
+
+        // Rejected: refused, because nothing is coming for it.
+        approvalService.reject(id, "alice");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> revetService.revetSnapshot(id, "alice"))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("only approved");
+                .hasMessageContaining("only approved and held");
     }
 }

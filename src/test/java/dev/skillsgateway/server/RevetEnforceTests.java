@@ -413,4 +413,46 @@ class RevetEnforceTests extends AbstractGatewayTest {
                 "",
                 List.of());
     }
+
+    /**
+     * Enforce mode is the mode that takes content away from consumers, and refreshing a held
+     * snapshot's evidence must not reach it (GW_VETTING_0038). This is the adversarial half of that
+     * claim: a held snapshot whose refreshed chain now objects stays held, publishes nothing, and
+     * produces no violation — because there is nothing in the field to violate.
+     */
+    @Test
+    @SVCs({"SVC_GW_VETTING_0038"})
+    void refreshing_a_held_snapshots_evidence_never_retracts_even_under_enforcement() throws Exception {
+        Registered registered = registerAndIngest(
+                uniqueName("enf-refresh"),
+                createUpstream(DEFAULT_MANIFEST, Map.of("plugins/hello/DEPLOY.md", PLANTED_SECRET)),
+                "bob",
+                "bob");
+        String name = registered.marketplace().name();
+        long id = registered.snapshot().id();
+        assertThat(snapshotRepository.findById(id).orElseThrow().state()).isEqualTo(Snapshot.HELD);
+
+        mockMvc.perform(post("/api/v1/snapshots/{id}/revet", id)
+                        .with(oidcLogin().idToken(token -> token.subject("bob")))
+                        .with(csrf()))
+                .andExpect(status().isOk());
+
+        assertThat(snapshotRepository.findById(id).orElseThrow().state())
+                .as("a refresh decides nothing, in any mode")
+                .isEqualTo(Snapshot.HELD);
+        assertThat(fetchLogRepository.list())
+                .filteredOn(entry -> name.equals(entry.get("marketplace"))
+                        && String.valueOf(entry.get("event")).startsWith("revet-"))
+                .as("no retraction vocabulary for content that was never served")
+                .isEmpty();
+        // Scoped by payload: this context is shared, and other suites in it do announce violations.
+        assertThat(webhookService.listDeliveries(200).stream()
+                        .filter(delivery -> delivery.event().contains("revet"))
+                        .filter(delivery -> delivery.payload() != null
+                                && delivery.payload()
+                                        .contains(registered.snapshot().sha()))
+                        .toList())
+                .as("and nothing announced for this snapshot")
+                .isEmpty();
+    }
 }

@@ -11,8 +11,10 @@ import {
 import { toast } from "sonner";
 import {
   useCreateWaiver,
+  useRevetSnapshot,
   useRevokeWaiver,
   useSnapshotVetting,
+  type VettingView,
   type VettingFinding,
   type VettingVerdict,
   type Waiver,
@@ -345,6 +347,77 @@ function WaiverList({ waivers }: { waivers: Waiver[] }) {
  *
  * @Requirements GW_VETTING_0005, GW_VETTING_0010
  */
+/**
+ * Whether the evidence below was produced by the chain this marketplace runs now
+ * (GW_VETTING_0038).
+ *
+ * Enabling a vetter re-runs nothing, so a snapshot still at the approval gate can carry evidence
+ * the new vetter never produced. The gateway states that and does not refuse the approval — the
+ * same posture as an override or a waiver — so this has to be legible without being a blocker, and
+ * it has to come with the way to act on it.
+ *
+ * Undetermined is its own case, not folded into either answer: a run recorded before the chain
+ * identity was stamped has no chain to compare, and saying "current" there would assert something
+ * the gateway does not know.
+ *
+ * @Requirements GW_VETTING_0038
+ */
+export function ChainStalenessNotice({
+  snapshotId,
+  staleness,
+  refreshable,
+}: {
+  snapshotId: number;
+  staleness: VettingView["chainStaleness"];
+  refreshable: boolean;
+}) {
+  const revet = useRevetSnapshot();
+  if (!staleness || staleness.state === "IN_FORCE") return null;
+
+  if (staleness.state === "UNDETERMINED") {
+    return (
+      <p className="text-xs text-muted-foreground">
+        This run records no chain identity, so whether it matches the chain in force is unknown.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2 rounded-md border p-3">
+      <p className="text-sm">
+        This evidence was produced by a different chain than this marketplace runs now. Enabling or
+        disabling a vetter does not re-run anything, so a vetter in the chain today may never have
+        looked at this content.
+      </p>
+      <dl className="space-y-1 text-xs text-muted-foreground">
+        <div className="flex flex-wrap gap-2">
+          <dt className="font-medium">Evidence from</dt>
+          <dd className="font-mono">{staleness.runChain}</dd>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <dt className="font-medium">Chain in force</dt>
+          <dd className="font-mono">{staleness.currentChain}</dd>
+        </div>
+      </dl>
+      <p className="text-xs text-muted-foreground">
+        Approval is not blocked by this. If you approve anyway, the ledger records that the
+        evidence came from the superseded chain.
+      </p>
+      {refreshable ? (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={revet.isPending}
+          aria-label={`Re-run the vetting chain on snapshot ${snapshotId}`}
+          onClick={() => revet.mutate(snapshotId)}
+        >
+          {revet.isPending ? "Re-running the chain…" : "Re-run the chain now"}
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
 export function VettingReport({ snapshotId }: { snapshotId: number }) {
   const vetting = useSnapshotVetting(snapshotId);
 
@@ -382,6 +455,13 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
       {/* The overview, above the detail: where this snapshot is in the chain and what stopped it.
           The per-vetter list below is unchanged — it is where findings are read side by side
           and a waiver is written next to the one being accepted. */}
+      {/* Against the evidence it qualifies, above the per-vetter detail: the claim is about this
+          run, so it belongs where the run is read rather than as a banner on the page. */}
+      <ChainStalenessNotice
+        snapshotId={snapshotId}
+        staleness={vetting.data?.chainStaleness}
+        refreshable={Boolean(run)}
+      />
       <VettingFlow
         label={`Vetting chain of snapshot ${snapshotId}`}
         headline={snapshotHeadline(flow)}

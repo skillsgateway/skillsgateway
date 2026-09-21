@@ -206,3 +206,9 @@ The system SHALL implement GW_VETTING_0037.
 
 #### Scenario: SVC_GW_VETTING_0037
 The system SHALL pass SVC_GW_VETTING_0037.
+
+### Requirement: GW_VETTING_0038
+The system SHALL implement GW_VETTING_0038.
+
+#### Scenario: SVC_GW_VETTING_0038
+The system SHALL pass SVC_GW_VETTING_0038.

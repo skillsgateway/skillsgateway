@@ -62,6 +62,13 @@ public class RevetService {
     public static final String EVENT_VIOLATION = "revet-violation";
 
     public static final String EVENT_CLEAR = "revet-clear";
+
+    /**
+     * A held snapshot's evidence run again against the chain in force (GW_VETTING_0038). Distinct from every
+     * revet event: nothing was published, so nothing was violated and nothing was retracted.
+     */
+    public static final String EVENT_HELD_REFRESHED = "held-evidence-refreshed";
+
     public static final String EVENT_INCONCLUSIVE = "revet-inconclusive";
     public static final String EVENT_REVOKED = "snapshot-revoked";
     public static final String EVENT_UNPUBLISHED = "snapshot-unpublished";
@@ -198,18 +205,61 @@ public class RevetService {
         return summarize(results);
     }
 
-    /** One snapshot, re-vetted now (GW_VETTING_0012). */
-    @Requirements({"GW_VETTING_0012"})
+    /** One snapshot, re-vetted now (GW_VETTING_0012), or — if it is still held — refreshed (GW_VETTING_0038). */
+    @Requirements({"GW_VETTING_0012", "GW_VETTING_0038"})
     public RevetResult revetSnapshot(long snapshotId, String actor) {
         Snapshot snapshot =
                 snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
-        if (!Snapshot.APPROVED.equals(snapshot.state())) {
-            // Re-vetting is about content that is being served. A held snapshot is vetted by the
-            // approval surface, and a rejected or revoked one is not serving anything to retract.
-            throw new IllegalStateException(
-                    "snapshot %d is %s; only approved snapshots are re-vetted".formatted(snapshotId, snapshot.state()));
+        if (Snapshot.APPROVED.equals(snapshot.state())) {
+            return revet(snapshot, VettingRepository.TRIGGER_REVET_MANUAL, actor);
         }
-        return revet(snapshot, VettingRepository.TRIGGER_REVET_MANUAL, actor);
+        if (Snapshot.HELD.equals(snapshot.state())) {
+            return refreshHeld(snapshot, actor);
+        }
+        // A rejected or revoked snapshot is a terminal answer: it serves nothing to retract and
+        // nobody is about to approve it, so there is no evidence worth refreshing either.
+        throw new IllegalStateException("snapshot %d is %s; only approved and held snapshots are re-vetted"
+                .formatted(snapshotId, snapshot.state()));
+    }
+
+    /**
+     * A held snapshot's evidence, run again against the chain in force (GW_VETTING_0038).
+     *
+     * <p>Deliberately not {@link #revet}: that method exists to decide whether content <em>already
+     * in the field</em> must be retracted, and every step it takes beyond running the chain — the
+     * retroactive violation naming each identity that fetched the content, the announcement, the
+     * unpublishing under enforce — is about published content. A held snapshot has no fetchers and
+     * nothing published, and a blocking verdict on it is the approval gate doing its job rather
+     * than a violation of anything.
+     *
+     * <p>So this runs the chain, records the run, and says so. It decides nothing: the snapshot is
+     * held before and held after, and the next approval simply reads better evidence.
+     */
+    @Requirements({"GW_VETTING_0038"})
+    private RevetResult refreshHeld(Snapshot snapshot, String actor) {
+        String marketplace = marketplaceName(snapshot);
+        VettingService.Run run = vettingService.run(snapshot, marketplace, VettingRepository.TRIGGER_REVET_MANUAL);
+        WaiverEvaluation.Effect effect = waiverService.evaluate(snapshot);
+        auditLogger.record(
+                actor,
+                marketplace,
+                EVENT_HELD_REFRESHED,
+                snapshot.sha(),
+                "outcome=%s; the snapshot stays held and the approval gate reads this run"
+                        .formatted(effect.outcome().stored()));
+        return new RevetResult(
+                snapshot.id(),
+                marketplace,
+                snapshot.sha(),
+                run.runId(),
+                // Reported because the shape carries it; nothing here acts on it. Retraction is
+                // not a question that can be asked of content nobody has ever been served.
+                RevetVerdict.classify(vettingService.recordedRun(run.runId()).orElse(null), effect),
+                effect.outcome(),
+                false,
+                properties.mode(),
+                effect.uncovered(),
+                List.of());
     }
 
     /**

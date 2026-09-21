@@ -186,3 +186,8 @@ WHEN a snapshot was revoked by re-vetting rather than by an administrator
 THEN it SHALL be approved again by clearing the finding that caused it, exactly
 as before, and SHALL NOT require a reversal.
 
+### Requirement: GW_VETTING_0038.1
+The system SHALL implement GW_VETTING_0038.1.
+
+#### Scenario: SVC_GW_VETTING_0038.1
+The system SHALL pass SVC_GW_VETTING_0038.1.
