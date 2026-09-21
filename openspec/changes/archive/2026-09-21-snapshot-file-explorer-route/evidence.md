@@ -6,7 +6,7 @@ One fresh run of every gate after the last edit.
 | --- | --- | --- |
 | Java + UI + jar | `./mvnw clean verify` | `Tests run: 713, Failures: 0, Errors: 0, Skipped: 9` · `BUILD SUCCESS` (05:39 min) |
 | Storybook | `(cd src/main/frontend && pnpm test:stories)` | `Test Files 10 passed (10)` · `Tests 52 passed (52)` |
-| Real-browser e2e | `(cd src/main/frontend && E2E_GATEWAY_PORT=18500 pnpm e2e)` | `20 passed (1.1m)` |
+| Real-browser e2e | `(cd src/main/frontend && pnpm e2e)` | `20 passed (1.1m)`; `21 passed (2.5m)` after the rebase, with no port override |
 | Requirements | `reqstool status local -p docs/reqstool` | `252/252 complete · 0 incomplete · PASS` |
 | OpenSpec | `openspec validate --all --strict` | `Totals: 32 passed, 0 failed (32 items)` |
 | Docs | `mkdocs build --strict` | `Documentation built in 1.31 seconds` |
@@ -30,14 +30,20 @@ Maven plugin does not check categories, so only the dedicated gate found it.
 
 ## Notes on the runs
 
-- **`E2E_GATEWAY_PORT=18500` was required**, as it was throughout the 1.0.0
-  readiness run: an unrelated process on this machine holds 8081, and the
-  gateway failed to start with `Web server failed to start. Port 8081 was
-  already in use.` after the compose stack was already up. That is exactly the
-  failure [#448's sibling issue #458](https://github.com/skillsgateway/skillsgateway/issues/458)
-  describes; its fix is in flight as
-  [#461](https://github.com/skillsgateway/skillsgateway/pull/461) and is not on
-  this branch.
+- **The port override is no longer needed** (updated after rebase). The run
+  tabled above needed `E2E_GATEWAY_PORT=18500`, because an unrelated process
+  holds 8081 — exactly the failure
+  [#458](https://github.com/skillsgateway/skillsgateway/issues/458) describes.
+  [#461](https://github.com/skillsgateway/skillsgateway/pull/461) has since
+  merged, along with #464 and #463, and this branch was rebased onto all three;
+  every gate was re-run on that base with no override at all: `Tests run: 735`
+  Java, `57 passed (57)` stories, `21 passed (2.5m)` e2e, and
+  `256/256 complete · PASS` for requirements.
+- **The three branches' e2e specs coexist.** `portal.spec.ts` auto-merged across
+  this branch's rewrite of the preview test, #463's added staleness test and
+  #461's port change. Checked rather than assumed: 21 tests, both new specs
+  present, the replaced one gone, and `SpaRoutesTests` now derives its route list
+  from the merged router.
 - **The first e2e run after a code change must repackage.** `run-e2e.sh` takes
   the newest jar under `target/`, so a fix made after `mvnw verify` is not in
   the jar the suite runs; the SPA-route fix appeared to not work until
