@@ -83,5 +83,5 @@
 - [x] 7.1 Run `/impeccable audit`, `/impeccable harden` and `/impeccable critique`
       (new page). Fix or dismiss each finding with a reason in the PR body;
       `design-conventions` and ADR 0003 outrank Impeccable where taste collides.
-- [ ] 7.2 Run all gates fresh after the last edit and write
+- [x] 7.2 Run all gates fresh after the last edit and write
       `openspec/changes/snapshot-file-explorer-route/evidence.md`.

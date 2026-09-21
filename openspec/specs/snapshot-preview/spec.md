@@ -5,7 +5,7 @@
 Read-only inspection of a snapshot's pinned content — file tree, individual
 file contents, and the diff against the marketplace's currently served
 commit — resolved strictly through the quarantine repository's object store,
-and the portal preview pane presenting it to reviewers.
+and the addressable portal page presenting it to reviewers.
 
 ## Requirements
 
@@ -26,3 +26,9 @@ The system SHALL implement GW_APPROVAL_0005.
 
 #### Scenario: SVC_GW_APPROVAL_0005
 The system SHALL pass SVC_GW_APPROVAL_0005.
+
+### Requirement: GW_INGEST_0032
+The system SHALL implement GW_INGEST_0032.
+
+#### Scenario: SVC_GW_INGEST_0032
+The system SHALL pass SVC_GW_INGEST_0032.
