@@ -1881,10 +1881,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#get-apimirrordrift" class="md-nav__link">
+  <a href="#get-apiv1mirrordrift" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/mirror/drift
+        GET /api/v1/mirror/drift
       
     </span>
   </a>
@@ -1892,10 +1892,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#post-apimirrorreconcile" class="md-nav__link">
+  <a href="#post-apiv1mirrorreconcile" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/mirror/reconcile
+        POST /api/v1/mirror/reconcile
       
     </span>
   </a>
@@ -2418,10 +2418,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#get-apimirrordrift" class="md-nav__link">
+  <a href="#get-apiv1mirrordrift" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/mirror/drift
+        GET /api/v1/mirror/drift
       
     </span>
   </a>
@@ -2429,10 +2429,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#post-apimirrorreconcile" class="md-nav__link">
+  <a href="#post-apiv1mirrorreconcile" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/mirror/reconcile
+        POST /api/v1/mirror/reconcile
       
     </span>
   </a>
@@ -2478,9 +2478,9 @@ whom; the reconcile route is the one that actually exercises that credential.</p
 <p><strong>Machine reach.</strong> None. No API scope reaches either endpoint, for the same
 reason. See <a href="../tokens/#machine-api-credentials">Machine API credentials</a>.</p>
 <hr />
-<h2 id="get-apimirrordrift"><code>GET /api/mirror/drift</code><a class="headerlink" href="#get-apimirrordrift" title="Permanent link">&para;</a></h2>
+<h2 id="get-apiv1mirrordrift"><code>GET /api/v1/mirror/drift</code><a class="headerlink" href="#get-apiv1mirrordrift" title="Permanent link">&para;</a></h2>
 <p>Reads the mirror's references now and diffs them against published storage.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/mirror/drift
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/mirror/drift
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"enabled"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"corp-marketplace"</span><span class="p">,</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://forge.example.com/mirrors/corp-marketplace.git"</span><span class="p">,</span>
@@ -2570,10 +2570,10 @@ is stale, unreachable or wrong does not change which snapshot the facade
 serves, and a revoked snapshot is off the facade whatever this report says.</p>
 </div>
 <hr />
-<h2 id="post-apimirrorreconcile"><code>POST /api/mirror/reconcile</code><a class="headerlink" href="#post-apimirrorreconcile" title="Permanent link">&para;</a></h2>
+<h2 id="post-apiv1mirrorreconcile"><code>POST /api/v1/mirror/reconcile</code><a class="headerlink" href="#post-apiv1mirrorreconcile" title="Permanent link">&para;</a></h2>
 <p>Reconciles the mirror with what the facade serves now, and answers with the
-resulting comparison — the same body as <code>GET /api/mirror/drift</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/mirror/reconcile
+resulting comparison — the same body as <code>GET /api/v1/mirror/drift</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/mirror/reconcile
 </code></pre></div>
 <p>Use it after fixing a code-host outage, rotating a rejected credential, or
 enabling the mirror on a marketplace whose last approval is in the past, rather

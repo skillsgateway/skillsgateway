@@ -2597,7 +2597,7 @@ per marketplace, and it only changes the <em>trigger</em> — every snapshot sti
 </tbody>
 </table>
 <h2 id="changing-the-mode">Changing the mode<a class="headerlink" href="#changing-the-mode" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/marketplaces/acme/sync<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/v1/marketplaces/acme/sync<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"mode":"scheduled"}'</span>
 </code></pre></div>
 <p>The change is audit-logged (<code>sync-mode-changed</code>) with your identity and the new
@@ -2611,7 +2611,7 @@ retried on a later pass without stopping the rest of the batch.</p>
 <a href="../../reference/configuration/#upstream-sync">Configuration</a>.</p>
 <h2 id="webhook-triggered-ingestion">Webhook-triggered ingestion<a class="headerlink" href="#webhook-triggered-ingestion" title="Permanent link">&para;</a></h2>
 <p>Switching a marketplace to <code>webhook</code> mode generates an HMAC secret:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/marketplaces/acme/sync<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/v1/marketplaces/acme/sync<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"mode":"webhook"}'</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">"marketplace"</span><span class="p">:{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"syncMode"</span><span class="p">:</span><span class="s2">"webhook"</span><span class="p">,</span><span class="err">...</span><span class="p">},</span>

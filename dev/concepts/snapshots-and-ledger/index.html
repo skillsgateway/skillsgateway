@@ -2904,7 +2904,7 @@ the <a href="../../guides/policy-rules/#the-evaluation-variables">policy facts</
 <a href="../../guides/approving-snapshots/#reviewing-a-resolved-external-plugin">approval gate</a>
 refuses any snapshot whose closure, served manifest and pinned tree disagree.</p>
 <h3 id="what-a-snapshot-contains">What a snapshot contains<a class="headerlink" href="#what-a-snapshot-contains" title="Permanent link">&para;</a></h3>
-<p><code>GET /api/snapshots/{id}/content</code> parses the captured commit and lists what it
+<p><code>GET /api/v1/snapshots/{id}/content</code> parses the captured commit and lists what it
 declares: each plugin with its name, <code>source</code> and description, and the skills
 found under each. A resolved external plugin appears like any other, with its
 <code>source</code> inside the snapshot, because by the time anything reads the snapshot
@@ -2990,7 +2990,7 @@ unaccounted for, and content served while the ledger was unreachable would
 falsify that claim for exactly the incident the ledger exists to answer. Size
 the database for the serving path, not for the reporting one.</p>
 <h3 id="reading-it">Reading it<a class="headerlink" href="#reading-it" title="Permanent link">&para;</a></h3>
-<p><code>GET /api/audit</code> returns the whole table, and the portal's
+<p><code>GET /api/v1/audit</code> returns the whole table, and the portal's
 <a href="../../reference/portal/#audit-log">Audit log page</a> renders it. There is no
 filtering, search or paging: it is a recent-activity view.</p>
 <p>Because entries carry the principal, marketplace and SHA, the inventory question

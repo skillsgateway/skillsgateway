@@ -2569,11 +2569,11 @@ get around a retraction.</p>
 list rather than nothing: an empty estate and a broken gateway must look
 different.</p>
 <h2 id="provenance-and-audit">Provenance and audit<a class="headerlink" href="#provenance-and-audit" title="Permanent link">&para;</a></h2>
-<p><code>GET /api/catalog</code> returns the served revision and its constituents — the
+<p><code>GET /api/v1/catalog</code> returns the served revision and its constituents — the
 <code>(marketplace, SHA)</code> pairs vendored into it, which are also recorded in the
 catalog commit itself. Fetches of <code>/git/catalog</code> land on the audit ledger under
 the name <code>catalog</code> like any marketplace, and a manual
-<code>POST /api/catalog/rebuild</code> (the on-demand repair path) is ledger-recorded with
+<code>POST /api/v1/catalog/rebuild</code> (the on-demand repair path) is ledger-recorded with
 the acting identity and requires <strong>admin</strong>
 (see <a href="../delegated-administration/">role enforcement</a>); the catalog read stays
 open to any session.</p>
@@ -2598,7 +2598,7 @@ name is legitimate; substituting content is not.</p>
 <p>Every withheld name is announced: a WARN log line, a ledger entry
 <code>catalog-name-collision</code> from the <code>catalog-builder</code> actor naming the claimants,
 an increment of the <code>skills_gateway.catalog.collisions</code> counter, and an entry in
-the <code>collisions</code> field of <code>GET /api/catalog</code>. The counter is untagged — a
+the <code>collisions</code> field of <code>GET /api/v1/catalog</code>. The counter is untagged — a
 contested name is unbounded cardinality, so the ledger and the catalog read are
 where you look for <em>which</em>. That field is persisted in the catalog commit beside
 the constituents, so the served revision reports its own collisions.</p>

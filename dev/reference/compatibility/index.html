@@ -2860,15 +2860,14 @@ PR title declares. A future gate could diff the
 <code>spring-configuration-metadata.json</code> the build already generates, if a
 reviewed miss shows the need; none exists yet, and this change does not add
 one.</p>
-<p>Two consequences are live today. <code>skills-gateway.roles.enabled</code> was removed,
-and a deployment that still sets it is <strong>refused at startup</strong> rather than
-having the setting ignored. Ignoring it would reverse an operator who set it
-to <code>false</code>, and a property that is read and a property that is ignored look
-identical from inside a deployment. <code>…object-store.cache.ref-freshness</code> was
-removed on the same reasoning: it lengthened the window in which a revoked
-snapshot could still be advertised, so ignoring it would silently shorten a
-bound the operator believed they had set. Both refusals are migration aids
-and are scheduled for removal at the next major.</p>
+<p>Two removed properties — <code>skills-gateway.roles.enabled</code> and
+<code>…object-store.cache.ref-freshness</code> — used to refuse startup when a
+deployment still set them. Those refusals were migration aids for versions
+that had read the properties, promised only as far as the next major, and
+1.0.0 is it: they are gone, and setting either name is now an unknown
+property, ignored like any other. The policy that produced them stands —
+removing a property whose absence reverses an operator's stated intention
+needs a refusal, not silence — and the next such removal gets its own.</p>
 </div>
 <p><strong>Within a major, <code>/api/**</code> only grows.</strong> Endpoints, fields and enum values may
 be added; nothing a deployed client could depend on is removed, narrowed or
@@ -2952,7 +2951,7 @@ the old prefix serving the gap it exists to close.</p>
 <p>The gate does not object: adding a response is additive, and oasdiff cannot
 see that a caller who used to get <code>200</code> now gets <code>403</code>. That makes this a
 case review has to catch, like the prefix rule above it. It has happened once
-so far, to <code>GET /api/snapshots/{id}/fetchers</code>.</p>
+so far, to <code>GET /api/v1/snapshots/{id}/fetchers</code>.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">A payload field added later is added optional</p>
@@ -2962,11 +2961,12 @@ schema marks required is one the gateway populates on every delivery, without
 exception.</p>
 </div>
 <div class="admonition note">
-<p class="admonition-title">The prefix does not exist yet</p>
-<p>Endpoints are unversioned today (<code>/api/marketplaces</code>, not
-<code>/api/v1/marketplaces</code>). The version segment arrives with the change that
-introduces API versioning; until then the promise binds, and the check below
-enforces it, against the unversioned paths.</p>
+<p class="admonition-title">The prefix, and what it is for</p>
+<p>Every endpoint carries one: <code>/api/v1/marketplaces</code>, <code>/status/v1/snapshots</code>.
+The segment exists so that the remedy above is available — a breaking change
+moves the prefix — without leaving a bare, unversioned path that has to be
+supported forever beside its own successor. It arrived in 1.0.0, before the
+promise began to bind, which is the only release where adding it was free.</p>
 </div>
 <h3 id="how-it-is-enforced">How it is enforced<a class="headerlink" href="#how-it-is-enforced" title="Permanent link">&para;</a></h3>
 <p>Several mechanisms, and it is worth being clear about which is which.</p>

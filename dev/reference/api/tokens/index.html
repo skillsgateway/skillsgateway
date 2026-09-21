@@ -1796,10 +1796,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#post-apitokenssession" class="md-nav__link">
+  <a href="#post-apiv1tokenssession" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/tokens/session
+        POST /api/v1/tokens/session
       
     </span>
   </a>
@@ -1863,10 +1863,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#post-apitokensmachine" class="md-nav__link">
+  <a href="#post-apiv1tokensmachine" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/tokens/machine
+        POST /api/v1/tokens/machine
       
     </span>
   </a>
@@ -1874,10 +1874,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get-apitokensmachine" class="md-nav__link">
+  <a href="#get-apiv1tokensmachine" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/tokens/machine
+        GET /api/v1/tokens/machine
       
     </span>
   </a>
@@ -1885,10 +1885,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#post-apitokensmachineidrotate" class="md-nav__link">
+  <a href="#post-apiv1tokensmachineidrotate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/tokens/machine/{id}/rotate
+        POST /api/v1/tokens/machine/{id}/rotate
       
     </span>
   </a>
@@ -1896,10 +1896,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#delete-apitokensmachineid" class="md-nav__link">
+  <a href="#delete-apiv1tokensmachineid" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DELETE /api/tokens/machine/{id}
+        DELETE /api/v1/tokens/machine/{id}
       
     </span>
   </a>
@@ -2689,10 +2689,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#post-apitokenssession" class="md-nav__link">
+  <a href="#post-apiv1tokenssession" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/tokens/session
+        POST /api/v1/tokens/session
       
     </span>
   </a>
@@ -2756,10 +2756,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#post-apitokensmachine" class="md-nav__link">
+  <a href="#post-apiv1tokensmachine" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/tokens/machine
+        POST /api/v1/tokens/machine
       
     </span>
   </a>
@@ -2767,10 +2767,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get-apitokensmachine" class="md-nav__link">
+  <a href="#get-apiv1tokensmachine" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/tokens/machine
+        GET /api/v1/tokens/machine
       
     </span>
   </a>
@@ -2778,10 +2778,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#post-apitokensmachineidrotate" class="md-nav__link">
+  <a href="#post-apiv1tokensmachineidrotate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/tokens/machine/{id}/rotate
+        POST /api/v1/tokens/machine/{id}/rotate
       
     </span>
   </a>
@@ -2789,10 +2789,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#delete-apitokensmachineid" class="md-nav__link">
+  <a href="#delete-apiv1tokensmachineid" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DELETE /api/tokens/machine/{id}
+        DELETE /api/v1/tokens/machine/{id}
       
     </span>
   </a>
@@ -2857,7 +2857,7 @@ be recovered afterwards.</p>
 <h2 id="post-tokens"><code>POST /tokens</code><a class="headerlink" href="#post-tokens" title="Permanent link">&para;</a></h2>
 <p>Create a token for the calling principal.</p>
 <p><strong>Body</strong> — <code>{name, scopes?, expiresAt?, pushScopes?}</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/tokens<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/tokens<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name":"ci-runner","scopes":["acme","catalog"],"expiresAt":"2026-12-31T00:00:00Z"}'</span>
 </code></pre></div>
@@ -2881,7 +2881,7 @@ publication to everything by forgetting a field. Entries are validated against
 the registered hosted marketplaces at creation. An out-of-scope push answers
 exactly like a marketplace that does not exist, as an out-of-scope fetch does.</p>
 <p><code>sessionDerived</code> on a returned token says the credential came from
-<a href="#post-apitokenssession"><code>POST /api/tokens/session</code></a> rather than from a
+<a href="#post-apitokenssession"><code>POST /api/v1/tokens/session</code></a> rather than from a
 deliberate provisioning.</p>
 <p><code>expiresAt</code> (GW_AUTH_0007): an expired token fails authentication exactly like a
 revoked one, decided by comparing the stamp at authentication time — no
@@ -3027,7 +3027,7 @@ helper setup.</p>
 surgical, and ledger entries attribute fetches to something meaningful.</p>
 </div>
 <hr />
-<h2 id="post-apitokenssession"><code>POST /api/tokens/session</code><a class="headerlink" href="#post-apitokenssession" title="Permanent link">&para;</a></h2>
+<h2 id="post-apiv1tokenssession"><code>POST /api/v1/tokens/session</code><a class="headerlink" href="#post-apiv1tokenssession" title="Permanent link">&para;</a></h2>
 <p>Mint a short-lived git credential from the calling principal's browser session
 (GW_AUTH_0018). The identity half of
 <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0008-serving-surface-stays-the-embedded-facade.md">ADR 0008 — The serving surface stays the embedded facade</a>: a human who has just proved who they are should
@@ -3038,7 +3038,7 @@ not have to create a second, standing credential in order to fetch.</p>
 (8 hours by default) and a caller who sends <code>expiresAt</code> anyway does not get it —
 a credential whose life the holder chooses is a personal access token reached
 through another URL.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/tokens/session<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/tokens/session<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"name":"my-laptop"}'</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-23T09:00:00Z"</span><span class="p">,</span>
@@ -3077,12 +3077,12 @@ through another URL.</p>
 </tbody>
 </table>
 <p><code>scopes</code> narrows it to named marketplaces exactly as for any token. Rotation
-(<code>POST /api/tokens/{id}/rotate</code>) keeps both the expiry deadline and the
+(<code>POST /api/v1/tokens/{id}/rotate</code>) keeps both the expiry deadline and the
 session-derived mark, so it can neither extend the credential nor launder it
 into a standing one.</p>
 <div class="admonition warning">
 <p class="admonition-title">Not tied to the session's end</p>
-<p>It is revoked by its timer, by <code>DELETE /api/tokens/{id}</code>, or not at all —
+<p>It is revoked by its timer, by <code>DELETE /api/v1/tokens/{id}</code>, or not at all —
 logging out does not kill it, because the gateway does not track session
 lifetime.</p>
 </div>
@@ -3164,7 +3164,7 @@ credential reaches the union of its scopes' endpoints and nothing more.</p>
 <tbody>
 <tr>
 <td><code>marketplaces:read</code></td>
-<td><code>GET /api/marketplaces</code>, <code>GET /api/catalog</code>, and a snapshot's <code>/content</code>, <code>/content-diff</code>, <code>/licenses</code>, <code>/provenance</code>, <code>/release-age</code></td>
+<td><code>GET /api/v1/marketplaces</code>, <code>GET /api/v1/catalog</code>, and a snapshot's <code>/content</code>, <code>/content-diff</code>, <code>/licenses</code>, <code>/provenance</code>, <code>/release-age</code></td>
 </tr>
 <tr>
 <td><code>snapshots:read</code></td>
@@ -3172,79 +3172,79 @@ credential reaches the union of its scopes' endpoints and nothing more.</p>
 </tr>
 <tr>
 <td><code>marketplaces:register</code></td>
-<td><code>POST /api/marketplaces</code></td>
+<td><code>POST /api/v1/marketplaces</code></td>
 </tr>
 <tr>
 <td><code>marketplaces:ingest</code></td>
-<td><code>POST /api/marketplaces/{name}/ingest</code></td>
+<td><code>POST /api/v1/marketplaces/{name}/ingest</code></td>
 </tr>
 <tr>
 <td><code>vetting:run</code></td>
-<td><code>POST /api/marketplaces/{name}/revet</code>, <code>POST /api/snapshots/{id}/revet</code></td>
+<td><code>POST /api/v1/marketplaces/{name}/revet</code>, <code>POST /api/v1/snapshots/{id}/revet</code></td>
 </tr>
 <tr>
 <td><code>waivers:read</code></td>
-<td><code>GET /api/marketplaces/{name}/waivers</code></td>
+<td><code>GET /api/v1/marketplaces/{name}/waivers</code></td>
 </tr>
 <tr>
 <td><code>sync:write</code></td>
-<td><code>PUT /api/marketplaces/{name}/sync</code></td>
+<td><code>PUT /api/v1/marketplaces/{name}/sync</code></td>
 </tr>
 <tr>
 <td><code>catalog:rebuild</code></td>
-<td><code>POST /api/catalog/rebuild</code></td>
+<td><code>POST /api/v1/catalog/rebuild</code></td>
 </tr>
 <tr>
 <td><code>webhooks:read</code></td>
-<td><code>GET /api/webhooks</code>, <code>/deliveries</code>, <code>/events</code></td>
+<td><code>GET /api/v1/webhooks</code>, <code>/deliveries</code>, <code>/events</code></td>
 </tr>
 <tr>
 <td><code>webhooks:write</code></td>
-<td><code>POST /api/webhooks</code>, <code>DELETE /api/webhooks/{id}</code></td>
+<td><code>POST /api/v1/webhooks</code>, <code>DELETE /api/v1/webhooks/{id}</code></td>
 </tr>
 <tr>
 <td><code>audit:read</code></td>
-<td><code>GET /api/audit</code>, <code>GET /api/audit/export</code></td>
+<td><code>GET /api/v1/audit</code>, <code>GET /api/v1/audit/export</code></td>
 </tr>
 <tr>
 <td><code>audit-sinks:read</code></td>
-<td><code>GET /api/audit/sinks</code></td>
+<td><code>GET /api/v1/audit/sinks</code></td>
 </tr>
 <tr>
 <td><code>audit-sinks:write</code></td>
-<td><code>POST /api/audit/sinks</code>, <code>DELETE /api/audit/sinks/{id}</code>, <code>PUT /api/audit/sinks/{id}/cursor</code></td>
+<td><code>POST /api/v1/audit/sinks</code>, <code>DELETE /api/v1/audit/sinks/{id}</code>, <code>PUT /api/v1/audit/sinks/{id}/cursor</code></td>
 </tr>
 <tr>
 <td><code>policy:read</code></td>
-<td><code>GET /api/policy/rules</code>, <code>POST /api/policy/playground</code></td>
+<td><code>GET /api/v1/policy/rules</code>, <code>POST /api/v1/policy/playground</code></td>
 </tr>
 <tr>
 <td><code>policy:write</code></td>
-<td><code>POST /api/policy/rules</code>, <code>PUT</code>/<code>DELETE /api/policy/rules/{name}</code></td>
+<td><code>POST /api/v1/policy/rules</code>, <code>PUT</code>/<code>DELETE /api/v1/policy/rules/{name}</code></td>
 </tr>
 <tr>
 <td><code>retention:read</code></td>
-<td><code>GET /api/retention/candidates</code></td>
+<td><code>GET /api/v1/retention/candidates</code></td>
 </tr>
 <tr>
 <td><code>estate:read</code></td>
-<td><code>GET /api/estate</code></td>
+<td><code>GET /api/v1/estate</code></td>
 </tr>
 <tr>
 <td><code>estate:reconcile</code></td>
-<td><code>POST /api/estate/reconcile</code></td>
+<td><code>POST /api/v1/estate/reconcile</code></td>
 </tr>
 <tr>
 <td><code>adoption:read</code></td>
-<td><code>GET /api/adoption</code>, <code>GET /api/adoption/staleness</code></td>
+<td><code>GET /api/v1/adoption</code>, <code>GET /api/v1/adoption/staleness</code></td>
 </tr>
 <tr>
 <td><code>roles:read</code></td>
-<td><code>GET /api/roles</code></td>
+<td><code>GET /api/v1/roles</code></td>
 </tr>
 </tbody>
 </table>
-<p><code>POST /api/policy/playground</code> sits under <code>policy:read</code> because it evaluates a
+<p><code>POST /api/v1/policy/playground</code> sits under <code>policy:read</code> because it evaluates a
 policy against a candidate and persists nothing. It reads; the verb is an
 artefact of needing a request body.</p>
 <h3 id="what-no-credential-reaches">What no credential reaches<a class="headerlink" href="#what-no-credential-reaches" title="Permanent link">&para;</a></h3>
@@ -3260,31 +3260,31 @@ of scopes and no role reaches any of these:</strong></p>
 </thead>
 <tbody>
 <tr>
-<td><code>POST /api/snapshots/{id}/approve</code>, <code>/reject</code></td>
+<td><code>POST /api/v1/snapshots/{id}/approve</code>, <code>/reject</code></td>
 <td>Publishes or refuses content; human judgement</td>
 </tr>
 <tr>
-<td><code>POST /api/snapshots/{id}/waivers</code>, <code>DELETE /api/waivers/{id}</code></td>
+<td><code>POST /api/v1/snapshots/{id}/waivers</code>, <code>DELETE /api/v1/waivers/{id}</code></td>
 <td>Overrides the vetting chain, and withdraws the override</td>
 </tr>
 <tr>
-<td><code>POST /api/retention/evaluate</code>, <code>/compact</code></td>
+<td><code>POST /api/v1/retention/evaluate</code>, <code>/compact</code></td>
 <td>Soft-deletes and permanently purges: retracts content</td>
 </tr>
 <tr>
-<td><code>DELETE /api/snapshots/{id}</code>, <code>POST /api/snapshots/{id}/restore</code></td>
+<td><code>DELETE /api/v1/snapshots/{id}</code>, <code>POST /api/v1/snapshots/{id}/restore</code></td>
 <td>Retracts and republishes content</td>
 </tr>
 <tr>
-<td><code>POST /api/roles</code>, <code>DELETE /api/roles/{id}</code></td>
+<td><code>POST /api/v1/roles</code>, <code>DELETE /api/v1/roles/{id}</code></td>
 <td>Privilege granting; see below</td>
 </tr>
 <tr>
-<td>All of <code>/api/tokens/**</code></td>
+<td>All of <code>/api/v1/tokens/**</code></td>
 <td>Credential minting, including this page's own endpoints</td>
 </tr>
 <tr>
-<td><code>GET /api/me</code></td>
+<td><code>GET /api/v1/me</code></td>
 <td>A session identity page; a machine has no session</td>
 </tr>
 </tbody>
@@ -3293,12 +3293,12 @@ of scopes and no role reaches any of these:</strong></p>
 the same validation and <strong>no credential in the pipeline at all</strong>, so a machine
 write path would add escalation surface for something that has a safer route.
 See <a href="../../../guides/declarative-estate/">Declarative estate</a>.</p>
-<p><code>GET /api/roles</code> <strong>is</strong> reachable, because denying the read would not prevent
+<p><code>GET /api/v1/roles</code> <strong>is</strong> reachable, because denying the read would not prevent
 configuration drift — the estate never prunes, so it cannot discover a grant
 made by hand — it would only make that drift undetectable. The reconnaissance
-cost is paid for instead: <strong>every authorized read of <code>/api/roles</code> is recorded on
+cost is paid for instead: <strong>every authorized read of <code>/api/v1/roles</code> is recorded on
 the audit ledger</strong>, by a person and by a machine alike, with the entry's actor
-type telling them apart. Reads of <code>/api/audit</code> are deliberately <em>not</em> recorded,
+type telling them apart. Reads of <code>/api/v1/audit</code> are deliberately <em>not</em> recorded,
 because logging a read of the ledger would make a polling exporter append an
 entry that is itself new content to export.</p>
 <h3 id="roles-still-apply">Roles still apply<a class="headerlink" href="#roles-still-apply" title="Permanent link">&para;</a></h3>
@@ -3313,7 +3313,7 @@ unconditional and always on.</p>
 (<code>skills-gateway.roles.admins</code>) or from a grant, which <code>estate.grants</code> can
 declare. It never acquires one from identity-provider claims: a credential has
 none.</p>
-<h3 id="post-apitokensmachine"><code>POST /api/tokens/machine</code><a class="headerlink" href="#post-apitokensmachine" title="Permanent link">&para;</a></h3>
+<h3 id="post-apiv1tokensmachine"><code>POST /api/v1/tokens/machine</code><a class="headerlink" href="#post-apiv1tokensmachine" title="Permanent link">&para;</a></h3>
 <p>Provisions a credential. Requires the <code>admin</code> role — a credential outlives the
 session that created it, and without that requirement any user who completed a
 login could mint one that keeps working after their own account is
@@ -3361,34 +3361,34 @@ actions to and what a role grant names.</p>
 <p>The cap is <code>skills-gateway.tokens.max-ttl</code> when set, and otherwise a built-in
 <strong>90 days</strong>; see <a href="../../configuration/">Configuration</a>. The cleartext is returned
 exactly once.</p>
-<h3 id="get-apitokensmachine"><code>GET /api/tokens/machine</code><a class="headerlink" href="#get-apitokensmachine" title="Permanent link">&para;</a></h3>
+<h3 id="get-apiv1tokensmachine"><code>GET /api/v1/tokens/machine</code><a class="headerlink" href="#get-apiv1tokensmachine" title="Permanent link">&para;</a></h3>
 <p>Every machine credential, whoever provisioned it, never a secret. Deliberately
 not scoped to the caller: a machine credential's principal is not an identity
 anyone logs in as, so an owner-scoped listing would leave every one of them
 invisible — and unrevokable — during an incident. Each row carries its
-<code>machineOwner</code>, the person who provisioned it. <code>GET /api/tokens</code> is unaffected
+<code>machineOwner</code>, the person who provisioned it. <code>GET /api/v1/tokens</code> is unaffected
 and still shows only the caller's own tokens.</p>
 <p>Each row also carries <a href="#lastusedat"><code>lastUsedAt</code></a>, with exactly the meaning it
 has on a personal token: when the credential most recently authenticated
 successfully, <code>null</code> if it never has, approximate to a minute, and untouched by
 any refused attempt. It is the field that identifies a pipeline credential
 nothing runs any more.</p>
-<h3 id="post-apitokensmachineidrotate"><code>POST /api/tokens/machine/{id}/rotate</code><a class="headerlink" href="#post-apitokensmachineidrotate" title="Permanent link">&para;</a></h3>
+<h3 id="post-apiv1tokensmachineidrotate"><code>POST /api/v1/tokens/machine/{id}/rotate</code><a class="headerlink" href="#post-apiv1tokensmachineidrotate" title="Permanent link">&para;</a></h3>
 <p>Same grant, new secret. The principal, name, expiry <strong>deadline</strong> and every one
 of the API scope values carry over, and the old credential is revoked before the
 new one is issued, so no moment has two live secrets.</p>
-<h3 id="delete-apitokensmachineid"><code>DELETE /api/tokens/machine/{id}</code><a class="headerlink" href="#delete-apitokensmachineid" title="Permanent link">&para;</a></h3>
+<h3 id="delete-apiv1tokensmachineid"><code>DELETE /api/v1/tokens/machine/{id}</code><a class="headerlink" href="#delete-apiv1tokensmachineid" title="Permanent link">&para;</a></h3>
 <p>Revokes it. Checked at authentication time rather than swept, so it takes effect
 on the credential's very next request.</p>
 <h3 id="using-one">Using one<a class="headerlink" href="#using-one" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$SKILLS_GATEWAY_TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">     </span>https://gateway.example.com/api/estate
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">     </span>https://gateway.example.com/api/v1/estate
 </code></pre></div>
 <p>Send no cookie. See <a href="../">REST API</a> for why a request carrying both is
 refused.</p>
 <div class="admonition note">
 <p class="admonition-title">The first credential is minted by a person</p>
-<p><code>/api/tokens/**</code> is unreachable by machine by design, so bootstrapping means
+<p><code>/api/v1/tokens/**</code> is unreachable by machine by design, so bootstrapping means
 an administrator driving this endpoint from a browser session — once, to
 create something with a stated expiry and named scopes, rather than
 continuously to run a pipeline. A portal screen is what removes that step

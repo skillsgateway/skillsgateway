@@ -1853,10 +1853,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#post-apipolicyrules" class="md-nav__link">
+  <a href="#post-apiv1policyrules" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/policy/rules
+        POST /api/v1/policy/rules
       
     </span>
   </a>
@@ -1864,10 +1864,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get-apipolicyrules" class="md-nav__link">
+  <a href="#get-apiv1policyrules" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/policy/rules
+        GET /api/v1/policy/rules
       
     </span>
   </a>
@@ -1875,10 +1875,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#put-apipolicyrulesname" class="md-nav__link">
+  <a href="#put-apiv1policyrulesname" class="md-nav__link">
     <span class="md-ellipsis">
       
-        PUT /api/policy/rules/{name}
+        PUT /api/v1/policy/rules/{name}
       
     </span>
   </a>
@@ -1886,10 +1886,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#delete-apipolicyrulesname" class="md-nav__link">
+  <a href="#delete-apiv1policyrulesname" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DELETE /api/policy/rules/{name}
+        DELETE /api/v1/policy/rules/{name}
       
     </span>
   </a>
@@ -1897,10 +1897,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#post-apipolicyplayground" class="md-nav__link">
+  <a href="#post-apiv1policyplayground" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/policy/playground
+        POST /api/v1/policy/playground
       
     </span>
   </a>
@@ -2462,10 +2462,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#post-apipolicyrules" class="md-nav__link">
+  <a href="#post-apiv1policyrules" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/policy/rules
+        POST /api/v1/policy/rules
       
     </span>
   </a>
@@ -2473,10 +2473,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get-apipolicyrules" class="md-nav__link">
+  <a href="#get-apiv1policyrules" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/policy/rules
+        GET /api/v1/policy/rules
       
     </span>
   </a>
@@ -2484,10 +2484,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#put-apipolicyrulesname" class="md-nav__link">
+  <a href="#put-apiv1policyrulesname" class="md-nav__link">
     <span class="md-ellipsis">
       
-        PUT /api/policy/rules/{name}
+        PUT /api/v1/policy/rules/{name}
       
     </span>
   </a>
@@ -2495,10 +2495,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#delete-apipolicyrulesname" class="md-nav__link">
+  <a href="#delete-apiv1policyrulesname" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DELETE /api/policy/rules/{name}
+        DELETE /api/v1/policy/rules/{name}
       
     </span>
   </a>
@@ -2506,10 +2506,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#post-apipolicyplayground" class="md-nav__link">
+  <a href="#post-apiv1policyplayground" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/policy/playground
+        POST /api/v1/policy/playground
       
     </span>
   </a>
@@ -2567,10 +2567,10 @@ evaluates a policy and persists nothing. <code>policy:write</code> covers rule c
 update and deletion, and does <strong>not</strong> confer <code>policy:read</code>: no scope implies
 another. See <a href="../tokens/#machine-api-credentials">Machine API credentials</a>.</p>
 <hr />
-<h2 id="post-apipolicyrules"><code>POST /api/policy/rules</code><a class="headerlink" href="#post-apipolicyrules" title="Permanent link">&para;</a></h2>
+<h2 id="post-apiv1policyrules"><code>POST /api/v1/policy/rules</code><a class="headerlink" href="#post-apiv1policyrules" title="Permanent link">&para;</a></h2>
 <p>Create a rule. The expression is compiled — parsed and type-checked to a
 boolean over the policy variables — before anything is stored.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/policy/rules<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/policy/rules<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"no-shell-tools"</span>,
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">         "description": "deny skills declaring shell tools",</span>
@@ -2609,7 +2609,7 @@ at the very next approval — there is no propagation delay to wait out.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="get-apipolicyrules"><code>GET /api/policy/rules</code><a class="headerlink" href="#get-apipolicyrules" title="Permanent link">&para;</a></h2>
+<h2 id="get-apiv1policyrules"><code>GET /api/v1/policy/rules</code><a class="headerlink" href="#get-apiv1policyrules" title="Permanent link">&para;</a></h2>
 <p>Every stored rule, enabled or not.</p>
 <table>
 <thead>
@@ -2629,7 +2629,7 @@ at the very next approval — there is no propagation delay to wait out.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="put-apipolicyrulesname"><code>PUT /api/policy/rules/{name}</code><a class="headerlink" href="#put-apipolicyrulesname" title="Permanent link">&para;</a></h2>
+<h2 id="put-apiv1policyrulesname"><code>PUT /api/v1/policy/rules/{name}</code><a class="headerlink" href="#put-apiv1policyrulesname" title="Permanent link">&para;</a></h2>
 <p>Replace a rule's description, expression and enabled flag. The new expression
 is compiled first; on 422 the stored rule is unchanged. Disabling a rule is
 the audited off-switch — there is no per-snapshot waiver of a policy denial.</p>
@@ -2659,7 +2659,7 @@ the audited off-switch — there is no per-snapshot waiver of a policy denial.</
 </tr>
 </tbody>
 </table>
-<h2 id="delete-apipolicyrulesname"><code>DELETE /api/policy/rules/{name}</code><a class="headerlink" href="#delete-apipolicyrulesname" title="Permanent link">&para;</a></h2>
+<h2 id="delete-apiv1policyrulesname"><code>DELETE /api/v1/policy/rules/{name}</code><a class="headerlink" href="#delete-apiv1policyrulesname" title="Permanent link">&para;</a></h2>
 <p>Remove the rule. Past denials it decided stay on the append-only ledger.</p>
 <table>
 <thead>
@@ -2684,11 +2684,11 @@ the audited off-switch — there is no per-snapshot waiver of a policy denial.</
 </tbody>
 </table>
 <hr />
-<h2 id="post-apipolicyplayground"><code>POST /api/policy/playground</code><a class="headerlink" href="#post-apipolicyplayground" title="Permanent link">&para;</a></h2>
+<h2 id="post-apiv1policyplayground"><code>POST /api/v1/policy/playground</code><a class="headerlink" href="#post-apiv1policyplayground" title="Permanent link">&para;</a></h2>
 <p>Evaluate any expression against a real snapshot without enforcing, storing or
 recording anything. Errors are answers, not failures: a broken expression
 returns 200 with the error, so authoring is an edit-evaluate loop.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/policy/playground<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/policy/playground<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"snapshotId": 42, "expression": "files.exists(f, f.path.endsWith(\".exe\"))"}'</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="go">{"matched":false}</span>
@@ -2735,7 +2735,7 @@ returns 200 with the error, so authoring is an edit-evaluate loop.</p>
 </table>
 <hr />
 <h2 id="how-a-denial-looks">How a denial looks<a class="headerlink" href="#how-a-denial-looks" title="Permanent link">&para;</a></h2>
-<p>Policy is enforced by <code>POST /api/snapshots/{id}/approve</code>
+<p>Policy is enforced by <code>POST /api/v1/snapshots/{id}/approve</code>
 (<a href="../marketplaces/">Marketplaces and snapshots</a>): after the vetting gate and
 before any state transition, every enabled rule is evaluated; any match or
 error refuses with 409 naming all deciding rules, and one <code>policy-denied</code>

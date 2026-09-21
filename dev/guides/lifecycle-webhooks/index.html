@@ -2734,7 +2734,7 @@
 <p>The gateway records every vetting decision in the ledger. Webhooks push those
 same decisions outward, so CI, chat and inventory systems learn about a snapshot
 the moment it is ingested, waiting for a review, approved or rejected instead of
-polling <code>/api/marketplaces</code>.</p>
+polling <code>/api/v1/marketplaces</code>.</p>
 <h2 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h2>
 <p>Every event name says what it is about. <code>marketplace.snapshot.*</code> is what happened
 to one snapshot; <code>marketplace.*</code> is what happened to the marketplace itself.</p>
@@ -2769,7 +2769,7 @@ to one snapshot; <code>marketplace.*</code> is what happened to the marketplace 
 </tr>
 <tr>
 <td><code>marketplace.snapshot.vetted</code></td>
-<td>A vetting chain run finished. The verdicts are readable at <code>GET /api/snapshots/{id}/vetting</code>.</td>
+<td>A vetting chain run finished. The verdicts are readable at <code>GET /api/v1/snapshots/{id}/vetting</code>.</td>
 </tr>
 <tr>
 <td><code>marketplace.snapshot.approval_pending</code></td>
@@ -2814,7 +2814,7 @@ its ingestion, and which vetters run against it. They carry
 </tbody>
 </table>
 <p>Those are all of them. There is no <code>marketplace.removed</code>: the gateway has no
-deregistration — there is no <code>DELETE /api/marketplaces/{name}</code> — so there is
+deregistration — there is no <code>DELETE /api/v1/marketplaces/{name}</code> — so there is
 nothing for it to announce.</p>
 <p>An action taken by a scheduled pass rather than by a person carries a policy
 actor — <code>retention-policy</code> for deletions, <code>revet-policy</code> for re-vetting — so a
@@ -2843,7 +2843,7 @@ to receive (all of them by default; the box above the list narrows it) →
 button.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/webhooks<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/webhooks<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"name"</span>:<span class="s2">"ci-bot"</span>,<span class="s2">"url"</span>:<span class="s2">"https://ci.example.com/hooks/skills-gateway"</span>,
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">         "events":["marketplace.snapshot.approved","marketplace.snapshot.rejected"]}'</span>
@@ -2873,7 +2873,7 @@ button.</p>
 </tr>
 <tr>
 <td><code>events</code></td>
-<td>An array of event names, or the single element <code>*</code> for every event. Omitted or empty means <code>*</code>. An unknown name is <strong>400</strong>, not silently dropped. <code>GET /api/webhooks/events</code> answers the names this gateway accepts.</td>
+<td>An array of event names, or the single element <code>*</code> for every event. Omitted or empty means <code>*</code>. An unknown name is <strong>400</strong>, not silently dropped. <code>GET /api/v1/webhooks/events</code> answers the names this gateway accepts.</td>
 </tr>
 </tbody>
 </table>
@@ -2965,7 +2965,7 @@ Configure a sink instead.</p>
 <p>Every delivery above is described in the gateway's own OpenAPI document, under
 its top-level <code>webhooks</code> object — one entry per event, carrying the four headers
 and the body schema, rendered alongside the REST surface in the
-<a href="../../reference/api/">API reference</a>. <code>GET /api/webhooks/events</code> serves the
+<a href="../../reference/api/">API reference</a>. <code>GET /api/v1/webhooks/events</code> serves the
 same vocabulary with a worked example of each body, so a receiver can be
 generated or hand-written against the contract rather than against a sample
 somebody pasted into a ticket.</p>
@@ -3047,7 +3047,7 @@ it carries enough to open a review item without a follow-up call:</p>
 <tbody>
 <tr>
 <td><code>runId</code></td>
-<td>The chain run being reported. Correlates with <code>GET /api/snapshots/{id}/vetting</code>.</td>
+<td>The chain run being reported. Correlates with <code>GET /api/v1/snapshots/{id}/vetting</code>.</td>
 </tr>
 <tr>
 <td><code>outcome</code></td>
@@ -3072,7 +3072,7 @@ it carries enough to open a review item without a follow-up call:</p>
 </tbody>
 </table>
 <p><code>outcome</code> is what tells your system what to offer. <code>CLEAR</code> means
-<a href="../approving-snapshots/"><code>POST /api/snapshots/{id}/approve</code></a> will succeed;
+<a href="../approving-snapshots/"><code>POST /api/v1/snapshots/{id}/approve</code></a> will succeed;
 <code>CLEAR_WITH_WAIVERS</code> means it will, and only because someone accepted a risk;
 <code>BLOCKED</code> means it will be refused until every uncovered finding is
 <a href="../waiving-findings/">waived</a> or fixed upstream. Either decision goes
@@ -3086,7 +3086,7 @@ finding's message, rule id or location, and never a file name from the
 snapshot. A webhook target is authorized by a URL scheme allowlist, not by
 an identity, and the point of quarantine is that unapproved content does not
 leave it. Read the detail from
-<code>GET /api/snapshots/{id}/vetting</code> as an authenticated caller; the
+<code>GET /api/v1/snapshots/{id}/vetting</code> as an authenticated caller; the
 <code>snapshotId</code> and <code>runId</code> in the payload are what address it.</p>
 </div>
 <p>Two things not to assume:</p>
@@ -3112,7 +3112,7 @@ an atomic conditional update, and POSTs it.</p>
     participant Disp as WebhookDispatcher
     participant Rcv as Subscriber endpoint
 
-    Reviewer-&gt;&gt;API: POST /api/snapshots/42/approve
+    Reviewer-&gt;&gt;API: POST /api/v1/snapshots/42/approve
     API-&gt;&gt;DB: enqueue marketplace.snapshot.approved (state=pending)
     API--&gt;&gt;Reviewer: 200 (never waits for the receiver)
 
@@ -3191,7 +3191,7 @@ subscriber, state, attempt count and last response — see
 <a href="../../reference/portal/#webhooks">Admin portal</a>.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span><span class="s1">'localhost:8080/api/webhooks/deliveries?limit=20'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span><span class="s1">'localhost:8080/api/v1/webhooks/deliveries?limit=20'</span>
 </code></pre></div>
 <p>Most recent first. <code>limit</code> defaults to 100 and is clamped to 500.</p>
 </div>
@@ -3200,7 +3200,7 @@ subscriber, state, attempt count and last response — see
 <p>Each row carries <code>state</code>, <code>attempts</code>, <code>lastStatus</code> and <code>lastError</code>, which is
 enough to tell a receiver that is down from one that is rejecting the payload.</p>
 <h2 id="remove-a-subscriber">Remove a subscriber<a class="headerlink" href="#remove-a-subscriber" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>localhost:8080/api/webhooks/1
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>localhost:8080/api/v1/webhooks/1
 </code></pre></div>
 <p><strong>204</strong> on success, <strong>404</strong> if it never existed. The subscriber and its delivery
 history go with it, and no further events are queued for it. Subscriber creation

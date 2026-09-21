@@ -3583,7 +3583,7 @@ re-vetting found. See
 <h2 id="post-marketplaces"><code>POST /marketplaces</code><a class="headerlink" href="#post-marketplaces" title="Permanent link">&para;</a></h2>
 <p>Register a marketplace. Fetches nothing.</p>
 <p><strong>Body</strong> — <code>{name, url?, ref?, origin?, pushPolicy?}</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/marketplaces<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/marketplaces<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name":"acme","url":"https://github.com/acme/skills.git"}'</span>
 </code></pre></div>
@@ -3660,7 +3660,7 @@ the portal's primary query; there is no per-marketplace endpoint.</p>
 <code>refs/snapshots/{sha}</code>. Creates a snapshot in state <code>held</code>. For a hosted
 marketplace the source is its own origin repository, and a push already does
 this — the endpoint stays available to re-ingest.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/marketplaces/acme/ingest
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/marketplaces/acme/ingest
 </code></pre></div>
 <table>
 <thead>
@@ -3692,7 +3692,7 @@ are described in <a href="../../../guides/upstream-sync/">Syncing from upstream 
 <h3 id="put-marketplacesnamesync"><code>PUT /marketplaces/{name}/sync</code><a class="headerlink" href="#put-marketplacesnamesync" title="Permanent link">&para;</a></h3>
 <p>Set how upstream content reaches quarantine: <code>on-demand</code> (default),
 <code>scheduled</code>, or <code>webhook</code>. No mode bypasses approval.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/marketplaces/acme/sync<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/v1/marketplaces/acme/sync<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"mode":"webhook"}'</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span><span class="nt">"marketplace"</span><span class="p">:{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"syncMode"</span><span class="p">:</span><span class="s2">"webhook"</span><span class="p">,</span><span class="nt">"..."</span><span class="p">:</span><span class="s2">"..."</span><span class="p">},</span>
@@ -4996,7 +4996,7 @@ is never indistinguishable from content nobody withdrew.</p>
 by a machine credential — the reason is the whole of the accountability for an
 act that takes one identity, and a credential in a pipeline cannot supply one
 that means anything.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/42/revoke<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/snapshots/42/revoke<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"reason": "CVE-2026-0001 in a vendored dependency", "serveAfter": "PREVIOUS_APPROVED"}'</span>
 </code></pre></div>
@@ -5071,7 +5071,7 @@ Quarantine is untouched. Retention may reclaim the content but
 does not reach into client machines.
 <a href="#get-snapshotsidfetchers"><code>GET /snapshots/{id}/fetchers</code></a> names the blast
 radius, and a client can discover the withdrawal for itself by asking
-<a href="../../git-facade/#checking-content-you-already-hold"><code>POST /status/snapshots</code></a>
+<a href="../../git-facade/#checking-content-you-already-hold"><code>POST /status/v1/snapshots</code></a>
 about the commits it holds. Acting on the answer is the client's, so pair a
 withdrawal with whatever
 <a href="../../../guides/client-enforcement/#noticing-that-something-you-already-hold-was-withdrawn">fleet check</a>

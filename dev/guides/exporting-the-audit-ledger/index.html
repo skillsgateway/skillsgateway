@@ -2602,7 +2602,7 @@ without gaps.</p>
 <tbody>
 <tr>
 <td><strong>Pull</strong></td>
-<td><code>GET /api/audit/export</code> streams NDJSON.</td>
+<td><code>GET /api/v1/audit/export</code> streams NDJSON.</td>
 <td>The collector, as one number.</td>
 </tr>
 <tr>
@@ -2647,7 +2647,7 @@ makes replay a single write rather than a re-materialisation of history.</p>
 <p>Every exported entry carries its ledger <code>id</code>, so it doubles as the receiver's
 de-duplication key.</p>
 <h2 id="pull-ndjson">Pull: NDJSON<a class="headerlink" href="#pull-ndjson" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-D-<span class="w"> </span><span class="s1">'localhost:8080/api/audit/export?after=0&amp;limit=1000'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-D-<span class="w"> </span><span class="s1">'localhost:8080/api/v1/audit/export?after=0&amp;limit=1000'</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="go">X-Skills-Gateway-Audit-Cursor: 842</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="go">{"id":1,"ts":"2026-08-15T09:04:11Z","source":"10.0.0.4","principal":"alice@example.com","marketplace":"acme","event":"info-refs","ref":"refs/heads/main","sha":"3f9c2ab..."}</span>
@@ -2683,7 +2683,7 @@ fixed-size chunks, so gateway memory is bounded by the chunk rather than by
 <code>X-Skills-Gateway-Audit-Cursor</code> from the response, and use it as the next
 <code>after</code>. When a response comes back empty the consumer is caught up.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span><span class="nv">cursor</span><span class="o">=</span><span class="k">$(</span>cat<span class="w"> </span>cursor.txt<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="m">0</span><span class="k">)</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="gp">$ </span><span class="nv">next</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-s<span class="w"> </span>-D<span class="w"> </span>headers.txt<span class="w"> </span><span class="s2">"localhost:8080/api/audit/export?after=</span><span class="si">${</span><span class="nv">cursor</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="gp">$ </span><span class="nv">next</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-s<span class="w"> </span>-D<span class="w"> </span>headers.txt<span class="w"> </span><span class="s2">"localhost:8080/api/v1/audit/export?after=</span><span class="si">${</span><span class="nv">cursor</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-o<span class="w"> </span>batch.ndjson<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sed<span class="w"> </span>-n<span class="w"> </span><span class="s1">'s/^X-Skills-Gateway-Audit-Cursor: //Ip'</span><span class="w"> </span>headers.txt<span class="w"> </span><span class="p">|</span><span class="w"> </span>tr<span class="w"> </span>-d<span class="w"> </span><span class="s1">'\r'</span><span class="k">)</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="gp">$ </span><span class="o">[</span><span class="w"> </span>-s<span class="w"> </span>batch.ndjson<span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>ingest<span class="w"> </span>batch.ndjson<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">next</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>&gt;<span class="w"> </span>cursor.txt
 </code></pre></div>
@@ -2703,7 +2703,7 @@ engine.</p>
 <strong>Add sink</strong>. The signing secret appears in a show-once dialog.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/audit/sinks<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/audit/sinks<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"name"</span>:<span class="s2">"siem"</span>,<span class="s2">"url"</span>:<span class="s2">"https://siem.example.com/ingest/skills-gateway"</span>,
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="go">         "after":0,"batchSize":500}'</span>
@@ -2753,7 +2753,7 @@ on the portal's <a href="../../reference/portal/#webhooks">Webhooks page</a> alo
 lifecycle deliveries.</p>
 <div class="admonition note">
 <p class="admonition-title">A lifecycle subscriber never receives audit batches</p>
-<p><code>audit.export</code> is not a subscribable lifecycle event: <code>POST /api/webhooks</code>
+<p><code>audit.export</code> is not a subscribable lifecycle event: <code>POST /api/v1/webhooks</code>
 rejects it, and a <code>*</code> subscriber does not match it either. The only way to
 receive audit batches is to be a sink.</p>
 </div>
@@ -2777,7 +2777,7 @@ otherwise loop forever. Fix the receiver, then replay explicitly.</p>
 <em>Sink '{name}' will replay the ledger</em>.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/audit/sinks/1/cursor<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>localhost:8080/api/v1/audit/sinks/1/cursor<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"after":800}'</span>
 </code></pre></div>
 </div>
@@ -2788,13 +2788,13 @@ the updated sink, <strong>404</strong> if the sink is unknown.</p>
 <p>The sink list also reports how far behind the ledger head each sink is, which is
 the signal that a receiver is failing or that a batch size is too small for the
 poll interval:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/audit/sinks
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/audit/sinks
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"siem"</span><span class="p">,</span><span class="nt">"kind"</span><span class="p">:</span><span class="s2">"webhook"</span><span class="p">,</span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://siem.example.com/..."</span><span class="p">,</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">"cursorPosition"</span><span class="p">:</span><span class="mi">842</span><span class="p">,</span><span class="nt">"ledgerHead"</span><span class="p">:</span><span class="mi">844</span><span class="p">,</span><span class="nt">"behind"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"batchSize"</span><span class="p">:</span><span class="mi">500</span><span class="p">,</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">"enabled"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}]</span>
 </code></pre></div>
-<p><code>DELETE /api/audit/sinks/{id}</code> removes the sink and its delivery channel — <strong>204</strong>,
+<p><code>DELETE /api/v1/audit/sinks/{id}</code> removes the sink and its delivery channel — <strong>204</strong>,
 or <strong>404</strong> if it never existed.</p>
 <h2 id="why-exports-lag-a-few-seconds">Why exports lag a few seconds<a class="headerlink" href="#why-exports-lag-a-few-seconds" title="Permanent link">&para;</a></h2>
 <p>The ledger's <code>id</code> is a <code>BIGSERIAL</code>, and <code>nextval</code> is assigned <strong>before</strong> commit.

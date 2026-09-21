@@ -2842,7 +2842,7 @@ the admin role to nobody refuses to start rather than run as an estate
 nobody can administer. Name one in <code>skills-gateway.roles.admins</code>, in a
 <code>skills-gateway.roles.mappings</code> entry resolving <code>admin</code>, or in a declared
 <code>skills-gateway.estate.grants</code> entry.</p>
-<p>A grant made later through <code>/api/roles</code> does <strong>not</strong> satisfy this: it is
+<p>A grant made later through <code>/api/v1/roles</code> does <strong>not</strong> satisfy this: it is
 revocable through the API, so it says nothing about whether the next start
 will have an administrator. The refusal names every path that resolves it.</p>
 </div>
@@ -3161,7 +3161,7 @@ offline, verified, reversible copy described in
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>skills-gateway<span class="w"> </span>rollout<span class="w"> </span>status<span class="w"> </span>deploy/skills-gateway
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>skills-gateway<span class="w"> </span>logs<span class="w"> </span>deploy/skills-gateway<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>estate
 </code></pre></div>
-<p>Then log in to the portal and confirm the estate reconciled — <code>GET /api/estate</code>
+<p>Then log in to the portal and confirm the estate reconciled — <code>GET /api/v1/estate</code>
 reports the last run, and the audit ledger carries its entries under the
 <code>config-reconciler</code> principal. See
 <a href="../declarative-estate/">Declarative estate configuration</a>.</p>

@@ -1741,10 +1741,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#get-apiaudit" class="md-nav__link">
+  <a href="#get-apiv1audit" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/audit
+        GET /api/v1/audit
       
     </span>
   </a>
@@ -2468,10 +2468,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#get-apiaudit" class="md-nav__link">
+  <a href="#get-apiv1audit" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/audit
+        GET /api/v1/audit
       
     </span>
   </a>
@@ -2581,9 +2581,9 @@ entry, deliberately: logging it would make a polling exporter append an entry
 that is itself new content to export. See
 <a href="../tokens/#machine-api-credentials">Machine API credentials</a>.</p>
 <hr />
-<h2 id="get-apiaudit"><code>GET /api/audit</code><a class="headerlink" href="#get-apiaudit" title="Permanent link">&para;</a></h2>
+<h2 id="get-apiv1audit"><code>GET /api/v1/audit</code><a class="headerlink" href="#get-apiv1audit" title="Permanent link">&para;</a></h2>
 <p>Return the ledger. Requires an authenticated session with the auditor role.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/audit
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/audit
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"ts"</span><span class="p">:</span><span class="s2">"2026-08-15T09:04:11Z"</span><span class="p">,</span><span class="nt">"source"</span><span class="p">:</span><span class="s2">"10.0.0.4"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"info-refs"</span><span class="p">,</span><span class="nt">"ref"</span><span class="p">:</span><span class="s2">"refs/heads/main"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">},</span>
@@ -2611,23 +2611,23 @@ endpoints below.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>GET /api/audit/export</code></td>
+<td><code>GET /api/v1/audit/export</code></td>
 <td>Stream entries as <code>application/x-ndjson</code>, one per line in ledger order. <code>?after=</code> (default <code>0</code>) and <code>?limit=</code> (default <code>1000</code>, capped at <code>10000</code>). The resume sequence comes back in <code>X-Skills-Gateway-Audit-Cursor</code>.</td>
 </tr>
 <tr>
-<td><code>POST /api/audit/sinks</code></td>
+<td><code>POST /api/v1/audit/sinks</code></td>
 <td>Register a push sink. <strong>201</strong> with the show-once signing secret; <strong>400</strong> disallowed scheme, <strong>409</strong> name taken, <strong>422</strong> bad name.</td>
 </tr>
 <tr>
-<td><code>GET /api/audit/sinks</code></td>
+<td><code>GET /api/v1/audit/sinks</code></td>
 <td>List sinks with <code>cursorPosition</code>, <code>ledgerHead</code> and <code>behind</code>. Secrets are never returned.</td>
 </tr>
 <tr>
-<td><code>PUT /api/audit/sinks/{id}/cursor</code></td>
+<td><code>PUT /api/v1/audit/sinks/{id}/cursor</code></td>
 <td>Set the position — replay. <strong>200</strong> with the sink, <strong>404</strong> unknown.</td>
 </tr>
 <tr>
-<td><code>DELETE /api/audit/sinks/{id}</code></td>
+<td><code>DELETE /api/v1/audit/sinks/{id}</code></td>
 <td>Remove the sink and its delivery channel. <strong>204</strong>, or <strong>404</strong>.</td>
 </tr>
 </tbody>
@@ -2687,11 +2687,11 @@ polling, batch payload, signature, replay — is in
 </tr>
 <tr>
 <td><code>tokenId</code> / <code>token_id</code></td>
-<td>Id of the credential that authenticated a facade entry (GW_AUTH_0009) or a machine API entry (GW_AUDIT_0007); null on interactive admin entries and on entries older than per-credential attribution. <code>GET /api/tokens</code> gives the owner the id→name mapping.</td>
+<td>Id of the credential that authenticated a facade entry (GW_AUTH_0009) or a machine API entry (GW_AUDIT_0007); null on interactive admin entries and on entries older than per-credential attribution. <code>GET /api/v1/tokens</code> gives the owner the id→name mapping.</td>
 </tr>
 <tr>
 <td><code>credential_kind</code></td>
-<td>What kind of credential authenticated a facade fetch (GW_AUTH_0041): <code>pat</code> for a gateway-issued access token, <code>idp</code> for an <a href="../../git-facade/#identity-provider-bearer-tokens">identity-provider bearer token</a>. Null on every entry no credential authenticated — administrative and system entries — and on facade entries written before this column existed. Available on <code>GET /api/audit</code>; the export payload is unchanged, exactly as it is for <code>actor_type</code>.</td>
+<td>What kind of credential authenticated a facade fetch (GW_AUTH_0041): <code>pat</code> for a gateway-issued access token, <code>idp</code> for an <a href="../../git-facade/#identity-provider-bearer-tokens">identity-provider bearer token</a>. Null on every entry no credential authenticated — administrative and system entries — and on facade entries written before this column existed. Available on <code>GET /api/v1/audit</code>; the export payload is unchanged, exactly as it is for <code>actor_type</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -2790,7 +2790,7 @@ the acting OIDC principal.</p>
 <tbody>
 <tr>
 <td><code>roles-read</code></td>
-<td>Every <strong>authorized</strong> read of <code>GET /api/roles</code>, by a person or a machine alike (GW_AUDIT_0007). A refused read records nothing.</td>
+<td>Every <strong>authorized</strong> read of <code>GET /api/v1/roles</code>, by a person or a machine alike (GW_AUDIT_0007). A refused read records nothing.</td>
 <td><code>grants={n}</code>.</td>
 </tr>
 <tr>
@@ -2938,7 +2938,7 @@ a single query:</p>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">FROM</span><span class="w"> </span><span class="n">fetch_log</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">sha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'3f9c2ab...'</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">ts</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">now</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">interval</span><span class="w"> </span><span class="s1">'90 days'</span><span class="p">;</span>
 </code></pre></div>
-<p><code>GET /api/snapshots/{id}/fetchers</code> answers exactly this from the API, and it is
+<p><code>GET /api/v1/snapshots/{id}/fetchers</code> answers exactly this from the API, and it is
 what the portal shows beneath a revoked snapshot. That endpoint is the approver's
 view of one snapshot — an admin, or an approver of its marketplace; an auditor
 asks the same question of the whole ledger through the reads on this page.</p>

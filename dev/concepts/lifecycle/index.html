@@ -3008,7 +3008,7 @@ facade accepts a request — see
     participant P as Published repo
     participant L as Audit ledger
 
-    Rev-&gt;&gt;API: POST /api/snapshots/{id}/approve
+    Rev-&gt;&gt;API: POST /api/v1/snapshots/{id}/approve
     API-&gt;&gt;Svc: approve(id, principal)
     Svc-&gt;&gt;Svc: refuse unless state == held (409)
     Svc-&gt;&gt;Q: read refs/snapshots/{sha}

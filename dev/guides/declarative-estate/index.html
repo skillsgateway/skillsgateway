@@ -2761,12 +2761,12 @@ from an unset <code>${VAR:}</code> default) are refused as reconciliation failur
 <p>Reconciliation runs at startup — after schema migration, before the web
 surface serves — so the declaration is in force from the first request. Verify
 it from the report and the ledger:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/estate
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/audit<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.[] | select(.principal == "config-reconciler")'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/estate
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/audit<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.[] | select(.principal == "config-reconciler")'</span>
 </code></pre></div>
 <p>To converge without a restart — after editing the declaration source the
 running process reads, or rotating an environment secret:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/estate/reconcile
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/estate/reconcile
 </code></pre></div>
 <p>The report read is auditor-or-admin and the trigger is admin-only; the
 trigger itself is always on the ledger as <code>estate-reconcile-triggered</code>.</p>
@@ -2778,7 +2778,7 @@ converges:</p>
 <li><code>ERROR</code> in the application log,</li>
 <li><code>estate-reconciliation-failed</code> on the ledger (with the reason, never a
   secret),</li>
-<li>an <code>"action": "failed"</code> entry in <a href="../../reference/api/estate/"><code>GET /api/estate</code></a>.</li>
+<li>an <code>"action": "failed"</code> entry in <a href="../../reference/api/estate/"><code>GET /api/v1/estate</code></a>.</li>
 </ul>
 <p>Two failures are policy, not typos:</p>
 <ul>
@@ -2788,7 +2788,7 @@ converges:</p>
   new marketplace instead.</li>
 <li><strong><code>sync-mode: webhook</code>.</strong> Enabling webhook sync generates the inbound HMAC
   secret and returns it exactly once, which has no declarative form. Set it
-  through <a href="../../reference/api/marketplaces/"><code>PUT /api/marketplaces/{name}/sync</code></a>
+  through <a href="../../reference/api/marketplaces/"><code>PUT /api/v1/marketplaces/{name}/sync</code></a>
   like the <a href="../upstream-sync/">upstream sync guide</a> describes.</li>
 </ul>
 <h2 id="declare-converge-able-state-call-for-acts-and-reads">Declare converge-able state; call for acts and reads<a class="headerlink" href="#declare-converge-able-state-call-for-acts-and-reads" title="Permanent link">&para;</a></h2>
@@ -2809,12 +2809,12 @@ converges:</p>
   belongs to another team.</li>
 </ul>
 <p><strong>Role grants are estate-only.</strong> No machine credential can call <code>POST
-/api/roles</code>, whatever scopes it holds, because <code>estate.grants</code> already serves
+/api/v1/roles</code>, whatever scopes it holds, because <code>estate.grants</code> already serves
 the same need with the same validation and no credential to steal. This is the
 sharpest case of the rule above rather than an exception to it.</p>
 <div class="admonition note">
 <p class="admonition-title">A provider cannot converge a marketplace's whole lifecycle</p>
-<p>There is no <code>PUT</code> or <code>DELETE /api/marketplaces/{name}</code> — registration
+<p>There is no <code>PUT</code> or <code>DELETE /api/v1/marketplaces/{name}</code> — registration
 exists, deregistration does not — so <code>terraform destroy</code> has nothing to
 call. That is a pre-existing gap in the API rather than something machine
 credentials introduce, but a provider author meets it immediately.</p>
@@ -2850,7 +2850,7 @@ the answer.</p>
 <h3 id="provision-one">Provision one<a class="headerlink" href="#provision-one" title="Permanent link">&para;</a></h3>
 <p>An administrator does this once, from a browser session, naming only the scopes
 the pipeline needs and an expiry:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://gateway.example.com/api/tokens/machine<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://gateway.example.com/api/v1/tokens/machine<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--data<span class="w"> </span><span class="s1">'{</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="s1">    "principal": "platform-ci",</span>
@@ -2866,24 +2866,24 @@ store; the gateway keeps only a hash.</p>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">env</span><span class="p">:</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nt">SKILLS_GATEWAY_TOKEN</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.SKILLS_GATEWAY_TOKEN }}</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="no">curl -sSf -X POST "$GATEWAY/api/estate/reconcile" \</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="no">curl -sSf -X POST "$GATEWAY/api/v1/estate/reconcile" \</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">      </span><span class="no">-H "Authorization: Bearer $SKILLS_GATEWAY_TOKEN"</span>
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Fail the build on unreconciled entries</span>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="no">curl -sSf "$GATEWAY/api/estate" \</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="no">curl -sSf "$GATEWAY/api/v1/estate" \</span>
 <a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">      </span><span class="no">-H "Authorization: Bearer $SKILLS_GATEWAY_TOKEN" \</span>
 <a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">      </span><span class="no">| jq -e '.entries | map(select(.outcome == "failed")) | length == 0'</span>
 </code></pre></div>
 <p>A Terraform provider follows the same shape: the credential in the provider
-block, <code>POST /api/marketplaces</code> to register, <code>GET /api/estate</code> to read back.</p>
+block, <code>POST /api/v1/marketplaces</code> to register, <code>GET /api/v1/estate</code> to read back.</p>
 <h3 id="what-this-credential-cannot-do-by-design">What this credential cannot do, by design<a class="headerlink" href="#what-this-credential-cannot-do-by-design" title="Permanent link">&para;</a></h3>
 <p>State it plainly, because a pipeline author will otherwise try:</p>
 <ul>
 <li><strong>It cannot approve or reject a snapshot</strong>, and cannot create or delete a
   waiver. Publishing content is a human decision, and no scope reaches it.</li>
 <li><strong>It cannot retract content</strong> — no snapshot delete, no restore, no retention
-  evaluate or compact. It can read <code>GET /api/retention/candidates</code> and stop
+  evaluate or compact. It can read <code>GET /api/v1/retention/candidates</code> and stop
   there.</li>
 <li><strong>It cannot grant a role</strong>, to anyone, including itself. Declare grants in
   <code>estate.grants</code> instead; <code>roles:read</code> lets the pipeline <em>detect</em> a grant made
@@ -2903,7 +2903,7 @@ block, <code>POST /api/marketplaces</code> to register, <code>GET /api/estate</c
 </li>
 </ul>
 <h3 id="rotate-it">Rotate it<a class="headerlink" href="#rotate-it" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"</span><span class="nv">$GATEWAY</span><span class="s2">/api/tokens/machine/</span><span class="nv">$ID</span><span class="s2">/rotate"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"</span><span class="nv">$GATEWAY</span><span class="s2">/api/v1/tokens/machine/</span><span class="nv">$ID</span><span class="s2">/rotate"</span>
 </code></pre></div>
 <p>The same principal, name, expiry deadline and every one of the same scopes, with
 a new secret; the old one is dead before the new one is returned. The expiry is

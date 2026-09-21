@@ -2440,7 +2440,7 @@
 </tr>
 <tr>
 <td>Git facade</td>
-<td><code>/git/**</code>, and the <a href="../git-facade/#checking-content-you-already-hold">revocation check</a> at <code>/status/**</code></td>
+<td><code>/git/**</code>, and the <a href="../git-facade/#checking-content-you-already-hold">revocation check</a> at <code>/status/v1/**</code></td>
 <td>Personal access token over HTTP Basic</td>
 </tr>
 </tbody>
@@ -2488,7 +2488,7 @@ own session-affinity cookie (<code>AWSALB</code>, <code>GCLB</code>-style) is re
 <p><strong>What a machine credential can reach</strong> is an allowlist, described in
 <a href="tokens/#machine-api-credentials">Machine API credentials</a>. Every act of human
 judgement — approving, rejecting, waiving — every operation that retracts or
-republishes content, every role grant and the whole of <code>/api/tokens/**</code> is
+republishes content, every role grant and the whole of <code>/api/v1/tokens/**</code> is
 outside it, and no combination of scopes and no role reaches them.</p>
 <p><strong>Authorization.</strong> Every mutation and the audit surface require a role and
 answer <strong>403</strong> without one; the browsing surface stays open. There is no
@@ -2519,8 +2519,8 @@ request there authenticates itself.</p>
 credential. Reads are unaffected; a mutation needs the cookie jar and the
 header, and that holds under <code>skills-gateway.dev-insecure-auth=true</code> too —
 the hatch opens authentication, not this.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-sS<span class="w"> </span>-c<span class="w"> </span>jar<span class="w"> </span>-b<span class="w"> </span>jar<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>localhost:8080/api/marketplaces
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">$ </span>curl<span class="w"> </span>-sS<span class="w"> </span>-c<span class="w"> </span>jar<span class="w"> </span>-b<span class="w"> </span>jar<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/approve<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-sS<span class="w"> </span>-c<span class="w"> </span>jar<span class="w"> </span>-b<span class="w"> </span>jar<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>localhost:8080/api/v1/marketplaces
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">$ </span>curl<span class="w"> </span>-sS<span class="w"> </span>-c<span class="w"> </span>jar<span class="w"> </span>-b<span class="w"> </span>jar<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/snapshots/1/approve<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-H<span class="w"> </span><span class="s2">"X-XSRF-TOKEN: </span><span class="k">$(</span>grep<span class="w"> </span>XSRF-TOKEN<span class="w"> </span>jar<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-f7<span class="k">)</span><span class="s2">"</span>
 </code></pre></div>
 <p>A pipeline should use a
@@ -2618,7 +2618,7 @@ breaking and how it is enforced.</p>
 </tbody>
 </table>
 <h2 id="session">Session<a class="headerlink" href="#session" title="Permanent link">&para;</a></h2>
-<p><code>GET /api/me</code> returns the current principal, the session's effective roles
+<p><code>GET /api/v1/me</code> returns the current principal, the session's effective roles
 with the <strong>source</strong> of each, and whether the identity provider truncated the
 membership claim. The portal uses it for the user menu and, with roles, to
 adapt its controls.</p>
@@ -2667,7 +2667,7 @@ then incomplete; see <a href="../../guides/identity-providers/">Identity provide
 <td>The only unauthenticated path. Use the bare path for probes.</td>
 </tr>
 <tr>
-<td><code>/status/snapshots</code></td>
+<td><code>/status/v1/snapshots</code></td>
 <td>The <a href="../git-facade/#checking-content-you-already-hold">revocation check</a>: a facade-credentialled read, not part of <code>/api/**</code>.</td>
 </tr>
 <tr>

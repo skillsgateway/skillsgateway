@@ -2620,7 +2620,7 @@ exactly as capable of carrying a planted credential or a prompt injection as
 content it did not.</p>
 <h2 id="step-1-register-the-marketplace">Step 1 — register the marketplace<a class="headerlink" href="#step-1-register-the-marketplace" title="Permanent link">&para;</a></h2>
 <p>A hosted marketplace takes no clone URL, because there is nothing to clone from:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/marketplaces<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/marketplaces<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name": "platform-skills", "origin": "hosted"}'</span>
 </code></pre></div>
@@ -2641,7 +2641,7 @@ supply chain under snapshots that were already approved.</p>
 <h2 id="step-2-mint-a-push-scoped-token">Step 2 — mint a push-scoped token<a class="headerlink" href="#step-2-mint-a-push-scoped-token" title="Permanent link">&para;</a></h2>
 <p>Publication authority is <strong>not</strong> fetch authority. It is a separate scope, and it
 has no "all marketplaces" form:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/tokens<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/tokens<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name": "platform-skills-ci", "pushScopes": ["platform-skills"]}'</span>
 </code></pre></div>
@@ -2728,7 +2728,7 @@ on the ledger.</p>
 <h2 id="step-4-approve-it">Step 4 — approve it<a class="headerlink" href="#step-4-approve-it" title="Permanent link">&para;</a></h2>
 <p>The push ingests itself. Within moments there is a <code>held</code> snapshot at the
 commit you pushed, with a vetting chain run against it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span>localhost:8080/api/marketplaces<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.[] | select(.name=="platform-skills") | .snapshots'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span>localhost:8080/api/v1/marketplaces<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.[] | select(.name=="platform-skills") | .snapshots'</span>
 </code></pre></div>
 <p>From here it is the ordinary flow — review the findings, waive what you accept,
 approve. See <a href="../approving-snapshots/">Approving snapshots</a>. Until then the

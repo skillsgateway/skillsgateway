@@ -1797,10 +1797,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#get-apiroles" class="md-nav__link">
+  <a href="#get-apiv1roles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/roles
+        GET /api/v1/roles
       
     </span>
   </a>
@@ -1808,10 +1808,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#post-apiroles" class="md-nav__link">
+  <a href="#post-apiv1roles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/roles
+        POST /api/v1/roles
       
     </span>
   </a>
@@ -1819,10 +1819,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#delete-apirolesid" class="md-nav__link">
+  <a href="#delete-apiv1rolesid" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DELETE /api/roles/{id}
+        DELETE /api/v1/roles/{id}
       
     </span>
   </a>
@@ -2429,10 +2429,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#get-apiroles" class="md-nav__link">
+  <a href="#get-apiv1roles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/roles
+        GET /api/v1/roles
       
     </span>
   </a>
@@ -2440,10 +2440,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#post-apiroles" class="md-nav__link">
+  <a href="#post-apiv1roles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/roles
+        POST /api/v1/roles
       
     </span>
   </a>
@@ -2451,10 +2451,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#delete-apirolesid" class="md-nav__link">
+  <a href="#delete-apiv1rolesid" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DELETE /api/roles/{id}
+        DELETE /api/v1/roles/{id}
       
     </span>
   </a>
@@ -2508,9 +2508,9 @@ is</strong>; the entry's actor type is what separates them. A refused read recor
 nothing.</p>
 </div>
 <hr />
-<h2 id="get-apiroles"><code>GET /api/roles</code><a class="headerlink" href="#get-apiroles" title="Permanent link">&para;</a></h2>
+<h2 id="get-apiv1roles"><code>GET /api/v1/roles</code><a class="headerlink" href="#get-apiv1roles" title="Permanent link">&para;</a></h2>
 <p>List every current grant.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/roles
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/roles
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"approver"</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">"grantedBy"</span><span class="p">:</span><span class="s2">"admin@example.com"</span><span class="p">,</span><span class="nt">"grantedAt"</span><span class="p">:</span><span class="s2">"2026-08-17T09:00:00Z"</span><span class="p">},</span>
@@ -2519,7 +2519,7 @@ nothing.</p>
 </code></pre></div>
 <p>Configuration-bootstrapped admins and roles derived from identity-provider
 claims are not grants and do not appear here; they show as effective roles with
-source <code>config</code> and <code>claim</code> on <a href="../#session"><code>/api/me</code></a>.</p>
+source <code>config</code> and <code>claim</code> on <a href="../#session"><code>/api/v1/me</code></a>.</p>
 <table>
 <thead>
 <tr>
@@ -2539,9 +2539,9 @@ source <code>config</code> and <code>claim</code> on <a href="../#session"><code
 </tbody>
 </table>
 <hr />
-<h2 id="post-apiroles"><code>POST /api/roles</code><a class="headerlink" href="#post-apiroles" title="Permanent link">&para;</a></h2>
+<h2 id="post-apiv1roles"><code>POST /api/v1/roles</code><a class="headerlink" href="#post-apiv1roles" title="Permanent link">&para;</a></h2>
 <p>Grant a role.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/roles<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/roles<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"principal": "alice@example.com", "role": "approver", "marketplace": "acme"}'</span>
 </code></pre></div>
@@ -2602,7 +2602,7 @@ source <code>config</code> and <code>claim</code> on <a href="../#session"><code
 </tbody>
 </table>
 <hr />
-<h2 id="delete-apirolesid"><code>DELETE /api/roles/{id}</code><a class="headerlink" href="#delete-apirolesid" title="Permanent link">&para;</a></h2>
+<h2 id="delete-apiv1rolesid"><code>DELETE /api/v1/roles/{id}</code><a class="headerlink" href="#delete-apiv1rolesid" title="Permanent link">&para;</a></h2>
 <p>Revoke a grant. The row is deleted; the ledger keeps the history as
 <code>role-revoked</code>.</p>
 <table>

@@ -2734,7 +2734,7 @@ unreachable never affects startup.</p>
 mirror from what the marketplace already serves, so a marketplace whose last
 approval predates the configuration does not have to wait for another one.</p>
 <p>To fill it immediately, ask:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/mirror/reconcile
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/mirror/reconcile
 </code></pre></div>
 <p>Administrator-only. It reconciles and answers with the resulting comparison, in
 the same shape as the drift report below — so the response tells you whether it
@@ -2743,7 +2743,7 @@ worked rather than only that it was attempted.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">API</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/mirror/drift
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/mirror/drift
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"enabled"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"corp-marketplace"</span><span class="p">,</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w"> </span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://forge.example.com/mirrors/corp-marketplace.git"</span><span class="p">,</span>
@@ -2798,7 +2798,7 @@ a restart, a mirror somebody edited by hand — the next one corrects it, and th
 next one is at most <code>sweep-interval</code> away.</p>
 <p>Do something when the cause is outside the gateway. Fix the code host, the
 network or the credential, then either wait for the schedule or reconcile now:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/mirror/reconcile
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/mirror/reconcile
 </code></pre></div>
 <h3 id="when-the-gateway-repairs-it-says-so">When the gateway repairs, it says so<a class="headerlink" href="#when-the-gateway-repairs-it-says-so" title="Permanent link">&para;</a></h3>
 <p>A reconciliation that changes the mirror writes one audit-ledger entry naming

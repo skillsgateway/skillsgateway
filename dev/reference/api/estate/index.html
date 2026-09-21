@@ -1825,10 +1825,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#get-apiestate" class="md-nav__link">
+  <a href="#get-apiv1estate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/estate
+        GET /api/v1/estate
       
     </span>
   </a>
@@ -1836,10 +1836,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#post-apiestatereconcile" class="md-nav__link">
+  <a href="#post-apiv1estatereconcile" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/estate/reconcile
+        POST /api/v1/estate/reconcile
       
     </span>
   </a>
@@ -2418,10 +2418,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#get-apiestate" class="md-nav__link">
+  <a href="#get-apiv1estate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/estate
+        GET /api/v1/estate
       
     </span>
   </a>
@@ -2429,10 +2429,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#post-apiestatereconcile" class="md-nav__link">
+  <a href="#post-apiv1estatereconcile" class="md-nav__link">
     <span class="md-ellipsis">
       
-        POST /api/estate/reconcile
+        POST /api/v1/estate/reconcile
       
     </span>
   </a>
@@ -2477,10 +2477,10 @@ infrastructure, like the subscriber and sink listings) and the trigger is
 trigger — separately, so a credential that reads drift cannot also cause a
 convergence. See <a href="../tokens/#machine-api-credentials">Machine API credentials</a>.</p>
 <hr />
-<h2 id="get-apiestate"><code>GET /api/estate</code><a class="headerlink" href="#get-apiestate" title="Permanent link">&para;</a></h2>
+<h2 id="get-apiv1estate"><code>GET /api/v1/estate</code><a class="headerlink" href="#get-apiv1estate" title="Permanent link">&para;</a></h2>
 <p>The most recent reconciliation run — startup or on-demand — with one entry per
 declared object.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/estate
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/estate
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"ranAt"</span><span class="p">:</span><span class="s2">"2026-08-18T06:00:00Z"</span><span class="p">,</span><span class="nt">"trigger"</span><span class="p">:</span><span class="s2">"startup"</span><span class="p">,</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"entries"</span><span class="p">:[</span>
@@ -2544,10 +2544,10 @@ the history.</p>
 </tbody>
 </table>
 <hr />
-<h2 id="post-apiestatereconcile"><code>POST /api/estate/reconcile</code><a class="headerlink" href="#post-apiestatereconcile" title="Permanent link">&para;</a></h2>
+<h2 id="post-apiv1estatereconcile"><code>POST /api/v1/estate/reconcile</code><a class="headerlink" href="#post-apiv1estatereconcile" title="Permanent link">&para;</a></h2>
 <p>Run the same additive, idempotent reconciliation as startup against the
 current declaration, and return its report. Takes no request body.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/estate/reconcile
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/estate/reconcile
 </code></pre></div>
 <p>A converged estate reconciles with zero writes and zero ledger entries; the
 trigger itself is always recorded on the ledger as

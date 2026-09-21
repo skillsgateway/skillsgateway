@@ -2850,7 +2850,7 @@ and waiver ids, and an auditor still cannot mutate anything.</p>
   the failure this avoids. Naming a marketplace that does not exist <em>yet</em> is
   fine: the mapping matches nothing until it is registered.</li>
 </ul>
-<p><code>GET /api/me</code> reports the source of every effective role — <code>config</code>, <code>grant</code> or
+<p><code>GET /api/v1/me</code> reports the source of every effective role — <code>config</code>, <code>grant</code> or
 <code>claim</code> — so "why does this person have admin" is answerable from the session
 endpoint.</p>
 <div class="admonition tip">
@@ -2862,7 +2862,7 @@ emitted, or a mapping is wrong.</p>
 <h3 id="check-the-mapping-before-you-rely-on-it">Check the mapping before you rely on it<a class="headerlink" href="#check-the-mapping-before-you-rely-on-it" title="Permanent link">&para;</a></h3>
 <p>Enforcement is unconditional, so there is no unenforced window to rehearse in —
 configure the mappings and the break-glass admin together, before the gateway's
-first start. Then log in and read <code>GET /api/me</code>: it reports every effective
+first start. Then log in and read <code>GET /api/v1/me</code>: it reports every effective
 role and its source, so a mapping that produces <code>claim</code> roles is confirmed
 working, and one that produces none tells you the claim did not arrive or the
 values do not match. The configuration admin is what keeps that a diagnosis
@@ -2880,7 +2880,7 @@ guessing at what the provider meant.</p>
 <p>Providers cap how many groups a token may carry. Past the cap, some drop the
 claim entirely and set a marker instead — leaving a user who can see their own
 membership wondering why the gateway refuses them.</p>
-<p>The gateway detects that: <code>GET /api/me</code> reports <code>claimsTruncated: true</code>, and the
+<p>The gateway detects that: <code>GET /api/v1/me</code> reports <code>claimsTruncated: true</code>, and the
 startup log says so too. It is deliberately distinguished from a session that
 simply has no memberships. The fix is on the provider's side — emit application
 roles instead of raw groups, or restrict the claim to the groups assigned to
@@ -2947,12 +2947,12 @@ unreadable; pick which cost you would rather pay, and be consistent.</p>
 <li><strong>Groups</strong> arrive in the <code>groups</code> claim as <strong>object ids</strong>, not display names —
   copy the object id from the group's overview page. Above roughly 200
   memberships the claim is dropped and <code>hasgroups: true</code> appears instead; the
-  gateway reports this as <code>claimsTruncated</code> on <code>/api/me</code>. Restricting the groups
+  gateway reports this as <code>claimsTruncated</code> on <code>/api/v1/me</code>. Restricting the groups
   claim to "groups assigned to the application" avoids it in most tenants; app
   roles avoid it entirely.</li>
 </ul>
 <h3 id="5-verify">5. Verify<a class="headerlink" href="#5-verify" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>session.txt<span class="w"> </span>https://&lt;gateway-host&gt;/api/me<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>session.txt<span class="w"> </span>https://&lt;gateway-host&gt;/api/v1/me<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="go">{</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="go">  "username": "alice@example.com",</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="go">  "roles": [{"role": "admin", "marketplace": null, "source": "claim"}],</span>

@@ -2650,7 +2650,7 @@ whose URL is recorded in its registration, and every snapshot is pinned to an
 upstream commit SHA. Nothing is rewritten except composite snapshots — those
 built from a manifest declaring external plugin sources — and those record their
 provenance in the commit message itself.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>localhost:8080/api/marketplaces
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>localhost:8080/api/v1/marketplaces
 </code></pre></div>
 <p>Clone those URLs directly and you are out, with no further steps. This is the
 right exit when the gateway was a distribution mechanism rather than a system of
@@ -2704,7 +2704,7 @@ third party. Rotate anything that leaves your control.</p>
 <p>For an auditor who wants the history and not the content, the ledger streams out
 over the API in NDJSON, with no database access:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="s2">"localhost:8080/api/audit/export?limit=10000"</span><span class="w"> </span>&gt;<span class="w"> </span>ledger.ndjson
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="s2">"localhost:8080/api/v1/audit/export?limit=10000"</span><span class="w"> </span>&gt;<span class="w"> </span>ledger.ndjson
 </code></pre></div>
 <p>See <a href="../exporting-the-audit-ledger/">Exporting the audit ledger</a>.</p>
 <h2 id="what-does-not-come-back">What does not come back<a class="headerlink" href="#what-does-not-come-back" title="Permanent link">&para;</a></h2>

@@ -1769,10 +1769,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#get-apiadoption" class="md-nav__link">
+  <a href="#get-apiv1adoption" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/adoption
+        GET /api/v1/adoption
       
     </span>
   </a>
@@ -1780,10 +1780,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get-apiadoptionstaleness" class="md-nav__link">
+  <a href="#get-apiv1adoptionstaleness" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/adoption/staleness
+        GET /api/v1/adoption/staleness
       
     </span>
   </a>
@@ -2418,10 +2418,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#get-apiadoption" class="md-nav__link">
+  <a href="#get-apiv1adoption" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/adoption
+        GET /api/v1/adoption
       
     </span>
   </a>
@@ -2429,10 +2429,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get-apiadoptionstaleness" class="md-nav__link">
+  <a href="#get-apiv1adoptionstaleness" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/adoption/staleness
+        GET /api/v1/adoption/staleness
       
     </span>
   </a>
@@ -2486,7 +2486,7 @@ is deliberately not reconstructed here.</p>
 ledger, exactly like the ledger reads themselves. See
 <a href="../../../guides/delegated-administration/">Delegated administration</a>.</p>
 <hr />
-<h2 id="get-apiadoption"><code>GET /api/adoption</code><a class="headerlink" href="#get-apiadoption" title="Permanent link">&para;</a></h2>
+<h2 id="get-apiv1adoption"><code>GET /api/v1/adoption</code><a class="headerlink" href="#get-apiv1adoption" title="Permanent link">&para;</a></h2>
 <p>The adoption report: per marketplace, the window's content-transferring
 fetches, distinct fetching identities, the most recent fetch, and a
 per-snapshot-SHA breakdown with each SHA marked current against the served tip.</p>
@@ -2504,7 +2504,7 @@ per-snapshot-SHA breakdown with each SHA marked current against the served tip.<
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span><span class="s2">"localhost:8080/api/adoption?days=30"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span><span class="s2">"localhost:8080/api/v1/adoption?days=30"</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">[{</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"servedSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"fetches"</span><span class="p">:</span><span class="mi">14</span><span class="p">,</span><span class="nt">"identities"</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">"lastFetch"</span><span class="p">:</span><span class="s2">"2026-08-15T09:04:11Z"</span><span class="p">,</span>
@@ -2520,12 +2520,12 @@ like any marketplace. <code>servedSha</code> is <code>null</code> when the marke
 serving. A marketplace nobody fetched in the window has no entry — the report
 covers fetch activity, not the registry.</p>
 <hr />
-<h2 id="get-apiadoptionstaleness"><code>GET /api/adoption/staleness</code><a class="headerlink" href="#get-apiadoptionstaleness" title="Permanent link">&para;</a></h2>
+<h2 id="get-apiv1adoptionstaleness"><code>GET /api/v1/adoption/staleness</code><a class="headerlink" href="#get-apiv1adoptionstaleness" title="Permanent link">&para;</a></h2>
 <p>Every identity whose most recent content-transferring fetch of a marketplace
 received a SHA that is <strong>not</strong> that marketplace's currently served tip.
 Window-free by design: staleness is a property of an identity's latest state,
 not of a reporting period.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/adoption/staleness
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/adoption/staleness
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">[{</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"team-payments"</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"9d01c44..."</span><span class="p">,</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">"lastFetch"</span><span class="p">:</span><span class="s2">"2026-08-12T08:00:00Z"</span><span class="p">,</span><span class="nt">"servedSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">},</span>

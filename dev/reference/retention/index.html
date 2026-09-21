@@ -2801,7 +2801,7 @@ into a catalog inherits the protection instead of having to remember it.</p>
   approved one;</li>
 <li>the soft-delete <code>UPDATE</code> itself excludes approved snapshots, so served content
   stays served whatever a caller asks for;</li>
-<li><code>DELETE /api/snapshots/{id}</code> refuses an approved snapshot with <strong>409</strong> before
+<li><code>DELETE /api/v1/snapshots/{id}</code> refuses an approved snapshot with <strong>409</strong> before
   anything is written.</li>
 </ul>
 <p>The guard is in SQL, not only in Java, which is why the check holds for the
@@ -2833,8 +2833,8 @@ who had already fetched it, stays in the append-only ledger regardless.</p>
 passes so that a wrong criterion costs a mark rather than content.</p>
 <pre class="mermaid"><code>stateDiagram-v2
     [*] --&gt; Live : ingested
-    Live --&gt; SoftDeleted : evaluate() selects it,\nor DELETE /api/snapshots/{id}
-    SoftDeleted --&gt; Live : POST /api/snapshots/{id}/restore\n(clears deleted_at)
+    Live --&gt; SoftDeleted : evaluate() selects it,\nor DELETE /api/v1/snapshots/{id}
+    SoftDeleted --&gt; Live : POST /api/v1/snapshots/{id}/restore\n(clears deleted_at)
     SoftDeleted --&gt; Purged : compact() after purge_after
     Purged --&gt; [*]
 
@@ -2937,23 +2937,23 @@ switches the sweep off entirely rather than making everything eligible.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>GET /api/retention/candidates</code></td>
+<td><code>GET /api/v1/retention/candidates</code></td>
 <td>Dry run — what a pass would select right now, each with the criterion that selected it. Writes nothing. <code>?marketplace=</code> restricts it.</td>
 </tr>
 <tr>
-<td><code>POST /api/retention/evaluate</code></td>
+<td><code>POST /api/v1/retention/evaluate</code></td>
 <td>Run one evaluation pass now. <code>?marketplace=</code> restricts it. <strong>200</strong> with <code>{selected, acted}</code>.</td>
 </tr>
 <tr>
-<td><code>POST /api/retention/compact</code></td>
+<td><code>POST /api/v1/retention/compact</code></td>
 <td>Run one compaction pass now. <strong>200</strong> with <code>{selected, acted}</code>.</td>
 </tr>
 <tr>
-<td><code>DELETE /api/snapshots/{id}</code></td>
+<td><code>DELETE /api/v1/snapshots/{id}</code></td>
 <td>Soft-delete by hand, reason <code>manual</code>. <strong>409</strong> if approved or already deleted, <strong>404</strong> if unknown.</td>
 </tr>
 <tr>
-<td><code>POST /api/snapshots/{id}/restore</code></td>
+<td><code>POST /api/v1/snapshots/{id}/restore</code></td>
 <td>Clear the marks. <strong>409</strong> if the snapshot is not deleted, <strong>404</strong> if unknown.</td>
 </tr>
 </tbody>

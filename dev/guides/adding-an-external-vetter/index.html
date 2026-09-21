@@ -2807,11 +2807,11 @@ full property list, including timeouts and size caps, is in
 <ul>
 <li><strong>The portal</strong> shows it in the chain flow on a snapshot's vetting tab,
   alongside the built-ins, with its findings and report link if it set one.</li>
-<li><strong><code>GET /api/snapshots/{id}/vetting</code></strong> lists it in <code>run.verdicts</code> and in the
+<li><strong><code>GET /api/v1/snapshots/{id}/vetting</code></strong> lists it in <code>run.verdicts</code> and in the
   <code>vetters</code> array, with <code>"external":true</code>.</li>
 <li><strong>The ledger</strong> records one <code>vetting-verdict</code> entry for it on every run, same
   as a built-in.</li>
-<li><strong><code>PUT /api/vetting/vetters/{name}/toggle</code></strong> switches it off globally or for
+<li><strong><code>PUT /api/v1/vetting/vetters/{name}/toggle</code></strong> switches it off globally or for
   one marketplace, the same way as a built-in. See
   <a href="../../reference/api/marketplaces/#vetter-enabledisable">Vetter enable/disable</a>.</li>
 </ul>

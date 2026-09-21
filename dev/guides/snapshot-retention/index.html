@@ -2589,7 +2589,7 @@ select and what they can never touch.</p>
 <h2 id="1-see-what-a-policy-would-delete">1. See what a policy would delete<a class="headerlink" href="#1-see-what-a-policy-would-delete" title="Permanent link">&para;</a></h2>
 <p>The dry run writes nothing and works with retention disabled, which is the whole
 point: inspect the effect before switching the scheduler on.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span><span class="s1">'localhost:8080/api/retention/candidates'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span><span class="s1">'localhost:8080/api/v1/retention/candidates'</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">[{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">17</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">"reason"</span><span class="p">:</span><span class="s2">"held-too-long"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-04-02T08:11:03Z"</span><span class="p">},</span>
@@ -2628,7 +2628,7 @@ states what differs. The full reference is
 </ul>
 <h2 id="3-run-a-pass-by-hand">3. Run a pass by hand<a class="headerlink" href="#3-run-a-pass-by-hand" title="Permanent link">&para;</a></h2>
 <p>Still with the scheduler off, apply the policy once and watch what happens:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s1">'localhost:8080/api/retention/evaluate?marketplace=acme'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s1">'localhost:8080/api/v1/retention/evaluate?marketplace=acme'</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span><span class="nt">"selected"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"acted"</span><span class="p">:</span><span class="mi">2</span><span class="p">}</span>
 </code></pre></div>
@@ -2645,7 +2645,7 @@ shows each deleted snapshot with a <code>deleted</code> badge and its restore de
 It toasts <em>Snapshot {id} restored</em>.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/17/restore
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/snapshots/17/restore
 </code></pre></div>
 </div>
 </div>
@@ -2653,7 +2653,7 @@ It toasts <em>Snapshot {id} restored</em>.</p>
 <p><strong>409</strong> means the snapshot is not deleted; <strong>404</strong> means compaction has already
 removed it, and at that point there is nothing to restore.</p>
 <p>You can also delete a single snapshot by hand — the <strong>Delete</strong> button, or
-<code>DELETE /api/snapshots/17</code>, recorded with the reason <code>manual</code>. Approved
+<code>DELETE /api/v1/snapshots/17</code>, recorded with the reason <code>manual</code>. Approved
 snapshots offer no delete control and the endpoint refuses them with <strong>409</strong>.</p>
 <h2 id="5-enable-the-schedulers">5. Enable the schedulers<a class="headerlink" href="#5-enable-the-schedulers" title="Permanent link">&para;</a></h2>
 <p>Once the previews and a manual pass look right:</p>
@@ -2675,7 +2675,7 @@ SHA existed and was purged. Give yourself a restore window you would
 actually notice a mistake within — the default is 14 days.</p>
 </div>
 <p>To force a compaction pass — after a deliberate cleanup, say:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/retention/compact
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/retention/compact
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span><span class="nt">"selected"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"acted"</span><span class="p">:</span><span class="mi">2</span><span class="p">}</span>
 </code></pre></div>

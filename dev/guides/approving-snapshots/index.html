@@ -2979,18 +2979,18 @@ that usually decides a successor snapshot — <strong>Diff vs served</strong>: e
 paths were added, modified or removed against the commit consumers are
 currently receiving, with per-file text diffs. A snapshot of a marketplace
 serving nothing shows every path as new: approving it serves all of it.</p>
-<p>The same reads exist on the API (<code>GET /api/snapshots/{id}/files</code>, <code>.../file</code>,
+<p>The same reads exist on the API (<code>GET /api/v1/snapshots/{id}/files</code>, <code>.../file</code>,
 <code>.../diff</code> — see
 <a href="../../reference/api/marketplaces/#snapshot-preview">the API reference</a>). They
 require admin or an approver grant for the marketplace (see
 <a href="../delegated-administration/">Delegated administration</a>), because they return
 held quarantine content.</p>
 <h3 id="contents">Contents<a class="headerlink" href="#contents" title="Permanent link">&para;</a></h3>
-<p><code>GET /api/snapshots/{id}/content</code> enumerates what the snapshot declares — each
+<p><code>GET /api/v1/snapshots/{id}/content</code> enumerates what the snapshot declares — each
 plugin with its name, <code>source</code> and description, and the skills found under each.
 In the portal this is the <strong>Show contents</strong> toggle on the marketplace detail
 page.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/snapshots/1/content
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/snapshots/1/content
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"plugins"</span><span class="p">:[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acme-tools"</span><span class="p">,</span><span class="nt">"description"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"source"</span><span class="p">:</span><span class="s2">"./plugins/acme-tools"</span><span class="p">,</span>
@@ -2999,12 +2999,12 @@ page.</p>
 <p>This works on <code>held</code> snapshots by design — reviewing must not require serving.</p>
 <h3 id="what-it-changes">What it changes<a class="headerlink" href="#what-it-changes" title="Permanent link">&para;</a></h3>
 <p>The inventory says what the snapshot ships; <code>GET
-/api/snapshots/{id}/content-diff</code> says what approving it would add to what you
+/api/v1/snapshots/{id}/content-diff</code> says what approving it would add to what you
 already approved. Every plugin and skill is marked <code>added</code>, <code>removed</code>,
 <code>changed</code>, <code>moved</code> or <code>unchanged</code> against the marketplace's last approved
 snapshot, and a skill counts as changed when anything under its directory
 differs — not only its <code>SKILL.md</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/snapshots/1/content-diff
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/snapshots/1/content-diff
 </code></pre></div>
 <p>On the tenth snapshot of a large marketplace this is the read worth starting
 from: it is the difference between reviewing two new skills and re-reading
@@ -3012,7 +3012,7 @@ forty. In the portal it is the second half of the <strong>Show contents</strong>
 <a href="../../reference/api/marketplaces/#get-snapshotsidcontent-diff">the API reference</a>.</p>
 <h3 id="provenance">Provenance<a class="headerlink" href="#provenance" title="Permanent link">&para;</a></h3>
 <p>Where it came from and who has touched it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/snapshots/1/provenance
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/snapshots/1/provenance
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"upstreamUrl"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skills.git"</span><span class="p">,</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w"> </span><span class="nt">"upstreamSha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"closure"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span>
@@ -3120,8 +3120,8 @@ confirm button stays disabled until every blocking finding is waived from
 that same dialog.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/approve
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/reject
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/snapshots/1/approve
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/snapshots/1/reject
 </code></pre></div>
 <p>Neither takes a request body. A snapshot the vetting chain blocked is
 refused with 409 until each blocking finding is covered by an active
@@ -3224,7 +3224,7 @@ wait for a second pair of eyes.</p>
 which acts conflict — as a warning under <code>warn</code>, and with the confirm button
 shut under <code>enforce</code> — and the API answers the same question without deciding
 anything:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/snapshots/1/four-eyes
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/snapshots/1/four-eyes
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span><span class="nt">"mode"</span><span class="p">:</span><span class="s2">"ENFORCE"</span><span class="p">,</span><span class="nt">"refused"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w"> </span><span class="nt">"conflicts"</span><span class="p">:[{</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"registered-by"</span><span class="p">,</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span>
@@ -3246,7 +3246,7 @@ a second admin, or an approver scoped to it under
 a snapshot cannot be approved until the gateway has been holding its commit for
 that long. The portal shows the approve control disabled and reading <strong>Eligible
 in 2d 4h</strong>; the API answers <code>409</code> with the setting, the current age and the time
-remaining, and <code>GET /api/snapshots/{id}/release-age</code> answers the same question
+remaining, and <code>GET /api/v1/snapshots/{id}/release-age</code> answers the same question
 without attempting a decision.</p>
 <p>The window exists for a threat no scanner covers: a compromised release is
 usually noticed by the wider world — often by the project's own community —
@@ -3279,7 +3279,7 @@ nothing to say about it — a vulnerability disclosed upstream, a maintainer
 account compromised, a dependency found to be malicious. The chain will keep
 clearing the content, because none of that is visible in the files.</p>
 <p>An administrator withdraws it directly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/42/revoke<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/snapshots/42/revoke<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"reason"</span>:<span class="w"> </span><span class="s2">"CVE-2026-0001 in a vendored dependency"</span>,
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="go">         "serveAfter": "PREVIOUS_APPROVED"}'</span>
@@ -3324,9 +3324,9 @@ return is recorded on the ledger as a publication in its own right.</p>
 <div class="admonition warning">
 <p class="admonition-title">This stops the gateway serving it; it does not delete what clients hold</p>
 <p>Anyone who already cloned the content still has it on disk. <code>GET
-/api/snapshots/{id}/fetchers</code> names every identity that fetched it — the
+/api/v1/snapshots/{id}/fetchers</code> names every identity that fetched it — the
 blast radius — and a client can find out for itself by asking
-<a href="../../reference/git-facade/#checking-content-you-already-hold"><code>POST /status/snapshots</code></a>
+<a href="../../reference/git-facade/#checking-content-you-already-hold"><code>POST /status/v1/snapshots</code></a>
 about the commits it holds. Nothing forces it to ask, so a withdrawal is
 only as fast as the
 <a href="../client-enforcement/#noticing-that-something-you-already-hold-was-withdrawn">check your fleet runs</a>.</p>
@@ -3337,7 +3337,7 @@ refusal names who withdrew it, when, and why — so a reviewer can judge whether
 anything has actually changed rather than assuming they have hit a bug.</p>
 <p>If it has changed — the withdrawal was a mistake, or the upstream problem is
 fixed — a <strong>different</strong> administrator reverses it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/42/approve<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/snapshots/42/approve<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"reverseRevocation"</span>:<span class="w"> </span>true,
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="go">         "reason": "upstream published a fix; re-reviewed"}'</span>

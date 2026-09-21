@@ -2677,7 +2677,7 @@ it.</p>
 <h3 id="a-session-credential-recommended-for-people">A session credential (recommended for people)<a class="headerlink" href="#a-session-credential-recommended-for-people" title="Permanent link">&para;</a></h3>
 <p>If you are already logged in to the portal, mint a credential from that session
 instead of creating a standing token:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/tokens/session<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/tokens/session<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"name":"my-laptop"}'</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-08-23T17:00:00Z"</span><span class="p">,</span>
@@ -2708,7 +2708,7 @@ buys is a bounded window and an attributable origin, not immunity.</p>
 token</strong>. The value appears in a dialog with a copy button.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/tokens<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/tokens<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"name":"my-laptop"}'</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
@@ -2729,7 +2729,7 @@ own.</p>
 and given an expiry (<code>"expiresAt":"..."</code>) — a leaked CI token limited to one
 marketplace is an incident contained to that marketplace, and one that dies
 on its own bounds the window a leak matters. Suspect exposure without
-wanting to reconfigure anything? <code>POST /api/tokens/{id}/rotate</code> issues a
+wanting to reconfigure anything? <code>POST /api/v1/tokens/{id}/rotate</code> issues a
 fresh secret with the identical grant and kills the old one in the same
 act. See <a href="../../reference/api/tokens/">Access tokens</a>.</p>
 </div>

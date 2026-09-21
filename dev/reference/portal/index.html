@@ -3441,7 +3441,7 @@ from the Overview page's Access tokens card; <code>/tokens</code> remains a reso
 address for existing bookmarks and links.</p>
 <h2 id="user-menu">User menu<a class="headerlink" href="#user-menu" title="Permanent link">&para;</a></h2>
 <p>The header's breadcrumb sits opposite a menu named after the signed-in user
-(<code>GET /api/me</code>). Opening it shows:</p>
+(<code>GET /api/v1/me</code>). Opening it shows:</p>
 <ul>
 <li><strong>Signed in as</strong> the username.</li>
 <li><strong>Roles</strong> — one line per effective role the session holds, said in the
@@ -3508,7 +3508,7 @@ Action: <strong>Manage marketplaces</strong>.</p>
 log</strong>.</p>
 <p><strong>Access tokens</strong> — chips for active and revoked counts. Action: <strong>Manage
 tokens</strong>.</p>
-<p>Data comes from <code>GET /api/marketplaces</code>, <code>GET /api/tokens</code> and <code>GET /api/audit</code>;
+<p>Data comes from <code>GET /api/v1/marketplaces</code>, <code>GET /api/v1/tokens</code> and <code>GET /api/v1/audit</code>;
 counts are computed in the browser, as there is no summary endpoint. While the
 queries are in flight the chips show an ellipsis.</p>
 <hr />
@@ -3545,7 +3545,7 @@ the existing marketplace(s) and holds <strong>Register</strong> shut until <em>R
 ticked. This is a warning, not a block: the same upstream under a different name is
 a legitimate test setup, so the server still accepts it; the acknowledgement only
 makes the collision deliberate rather than silent.</p>
-<p>Submits <code>POST /api/marketplaces</code>; toasts <em>Marketplace '{name}' registered</em>. The
+<p>Submits <code>POST /api/v1/marketplaces</code>; toasts <em>Marketplace '{name}' registered</em>. The
 server runs the identical duplicate-URL check independently against every
 registered marketplace, not only the list this dialog already had loaded, and
 returns what it found in the response's <code>warnings</code>; each one is shown as its
@@ -3588,7 +3588,7 @@ the operator.</p>
 </tbody>
 </table>
 <p>Expanding a row reveals <strong>Ingest</strong>
-(<code>POST /api/marketplaces/{name}/ingest</code>, toasting <em>Snapshot {sha12} is {state}</em>),
+(<code>POST /api/v1/marketplaces/{name}/ingest</code>, toasting <em>Snapshot {sha12} is {state}</em>),
 an <strong>Open detail</strong> link, and the <a href="#snapshot-table">snapshot table</a> with its
 review actions.</p>
 <h3 id="snapshot-table">Snapshot table<a class="headerlink" href="#snapshot-table" title="Permanent link">&para;</a></h3>
@@ -3610,7 +3610,7 @@ review actions.</p>
 </tr>
 <tr>
 <td>Vetting</td>
-<td>Badge from <code>GET /api/snapshots/{id}/vetting</code>: <code>vetting clear</code> (primary), <code>vetting clear with waivers</code> (secondary) or <code>vetting blocked</code> (destructive). A snapshot the chain never ran against reads <em>blocked</em>. The waived case is a separate badge on purpose — an accepted risk must not read as a clean chain.</td>
+<td>Badge from <code>GET /api/v1/snapshots/{id}/vetting</code>: <code>vetting clear</code> (primary), <code>vetting clear with waivers</code> (secondary) or <code>vetting blocked</code> (destructive). A snapshot the chain never ran against reads <em>blocked</em>. The waived case is a separate badge on purpose — an accepted risk must not read as a clean chain.</td>
 </tr>
 <tr>
 <td>Violation</td>
@@ -3635,7 +3635,7 @@ the moment content becomes reachable by clients, so the verdicts come first.</p>
 <p>While a snapshot is inside the configured
 <a href="../configuration/#minimum-release-age">minimum release age</a>, the approve control
 is disabled and reads <strong>Eligible in {remaining}</strong> — from
-<code>GET /api/snapshots/{id}/release-age</code>, so the portal never computes the deadline
+<code>GET /api/v1/snapshots/{id}/release-age</code>, so the portal never computes the deadline
 from the browser's clock. <strong>Reject</strong> stays enabled: rejection is never age-gated.
 With the gate off (the default) the control reads <strong>Approve</strong> as before, and a
 snapshot whose eligibility has not been fetched yet is never disabled on
@@ -3650,7 +3650,7 @@ the disabled button mirrors policy rather than replacing it.</p>
 <p>The dialog is also shut by the minimum release age, and says so in its own note:
 that one has no way past it in the portal at all, and needs none — it opens by
 itself at the stated time.</p>
-<p>Confirming calls <code>POST /api/snapshots/{id}/approve</code> with no body and toasts
+<p>Confirming calls <code>POST /api/v1/snapshots/{id}/approve</code> with no body and toasts
 <em>Snapshot {id} approved</em>.</p>
 <h4 id="waiving-a-finding">Waiving a finding<a class="headerlink" href="#waiving-a-finding" title="Permanent link">&para;</a></h4>
 <p>Each blocking finding in the report carries a <strong>Waive finding {rule}</strong> button
@@ -3680,16 +3680,16 @@ that opens an inline form beside it:</p>
 <p><em>Record waiver for {rule}</em> stays disabled until the justification is non-blank
 <strong>and</strong> the expiry is still in the future, which is exactly what the server
 requires.</p>
-<p><em>Record waiver for {rule}</em> calls <code>POST /api/snapshots/{id}/waivers</code> and toasts
+<p><em>Record waiver for {rule}</em> calls <code>POST /api/v1/snapshots/{id}/waivers</code> and toasts
 <em>Waiver recorded for {rule}</em>. The finding is then struck through and badged
 <strong>waived by {approver} until {date}</strong>, and the outcome badge becomes
 <strong>vetting clear with waivers</strong> once nothing is left uncovered.</p>
 <p>Below the verdicts, <strong>Accepted risks</strong> lists every waiver whose rule appears in
 this run — active, expired and revoked alike — with its rule, scope,
 justification, approver and expiry. An active one carries
-<em>Revoke waiver {id}</em>, which calls <code>DELETE /api/waivers/{id}</code>.</p>
+<em>Revoke waiver {id}</em>, which calls <code>DELETE /api/v1/waivers/{id}</code>.</p>
 <p><strong>Provenance</strong> is always available, opening a dialog fed by
-<code>GET /api/snapshots/{id}/provenance</code>: marketplace, upstream URL, upstream SHA,
+<code>GET /api/v1/snapshots/{id}/provenance</code>: marketplace, upstream URL, upstream SHA,
 served SHA, state, ingested time, decided by, decided at — and, for a snapshot
 with resolved external plugin sources, the closure: each external plugin with
 the URL it was fetched through and the commit it resolved to.</p>
@@ -3708,7 +3708,7 @@ link back.</p>
 shows "—".</p>
 <h3 id="vetting-chain-administrators">Vetting chain (administrators)<a class="headerlink" href="#vetting-chain-administrators" title="Permanent link">&para;</a></h3>
 <p><strong>Shown only to a session holding the <code>admin</code> role</strong>, above the snapshots. Fed by
-<code>GET /api/marketplaces/{name}/vetting-chain</code>, which the server refuses to anyone
+<code>GET /api/v1/marketplaces/{name}/vetting-chain</code>, which the server refuses to anyone
 else — the switch that governs the chain, and the visibility of its settings, sit
 above the content they govern.</p>
 <p>The card's description links to <a href="#vetting-governance">Vetting</a>, which governs the
@@ -3726,16 +3726,16 @@ is built in or external, when the deciding setting was last set, and the note le
 with it.</p>
 <p>The node's detail also carries the switch: an optional reason field and a single
 control that enables or disables that vetter <strong>for this marketplace</strong>, calling
-<code>PUT /api/vetting/vetters/{name}/toggle</code>. A per-marketplace setting overrides
+<code>PUT /api/v1/vetting/vetters/{name}/toggle</code>. A per-marketplace setting overrides
 the global one. Every change is written to the audit ledger with the acting
 administrator, the vetter, the scope, the new state and the reason.</p>
 <p>Switching vetters off narrows the evidence behind an approval; it never makes
 one automatic. What that means for a run is described in
 <a href="../../concepts/vetting/#switching-a-vetter-off">Switching a vetter off</a>.</p>
 <p>Beneath the drawing sit the two chain-level controls, fed by
-<code>GET /api/marketplaces/{name}/vetting-chain-settings</code>.</p>
+<code>GET /api/v1/marketplaces/{name}/vetting-chain-settings</code>.</p>
 <p><strong>When a vetter fails</strong> is a two-option control — <em>Run every vetter</em> or <em>Stop
-after a failure</em> — calling <code>PUT /api/vetting/chain-mode</code> for this marketplace,
+after a failure</em> — calling <code>PUT /api/v1/vetting/chain-mode</code> for this marketplace,
 with an optional reason. The hint beside it states the cost rather than leaving
 it to be discovered on a snapshot: stopping early spares the vetters after a
 failure, and it also means a reviewer no longer sees everything that is wrong
@@ -3747,7 +3747,7 @@ with where the current mode came from.</p>
 with names of their own, so the reordering is operable by keyboard and announced
 as what it does; there is no drag gesture to have an equivalent for. Movements
 are local until <strong>Save order</strong> writes the whole arrangement through
-<code>PUT /api/vetting/chain-order</code> — one intended reordering is one audited change,
+<code>PUT /api/v1/vetting/chain-order</code> — one intended reordering is one audited change,
 not one per hop — and <strong>Discard changes</strong> puts it back. While an arrangement is
 unsaved the drawing above shows the proposed order and the list says it is not
 saved yet.</p>
@@ -3756,11 +3756,11 @@ saved yet.</p>
 state badge, and the deciding principal once decided. A violation, when present,
 renders as destructive text beneath the header row.</p>
 <p>The <strong>Show contents</strong> toggle opens two sections.</p>
-<p><strong>What this snapshot ships</strong> loads <code>GET /api/snapshots/{id}/content</code> and renders
+<p><strong>What this snapshot ships</strong> loads <code>GET /api/v1/snapshots/{id}/content</code> and renders
 one block per declared plugin: name, <code>source</code>, optional description, and one
 badge per skill found under it. Plugins with no skills show "no skills found".</p>
 <p><strong>Changes since the last approved snapshot</strong> loads
-<code>GET /api/snapshots/{id}/content-diff</code> and lists only what differs from the
+<code>GET /api/v1/snapshots/{id}/content-diff</code> and lists only what differs from the
 marketplace's last approved snapshot, named above the list with its short SHA
 and summarised as count chips (added, changed, moved, removed). Each entry
 carries a status badge; a skill that moved between plugins is listed once,
@@ -3776,15 +3776,15 @@ snapshot must not require serving it.</p>
 pane: the pinned commit's actual content, not a summary of it.</p>
 <ul>
 <li><strong>Files</strong>: a scrollable file tree (path and size, from
-  <code>GET /api/snapshots/{id}/files</code>) beside a viewer for the selected file
-  (<code>GET /api/snapshots/{id}/file?path=</code>). A skill's <code>SKILL.md</code> is opened
+  <code>GET /api/v1/snapshots/{id}/files</code>) beside a viewer for the selected file
+  (<code>GET /api/v1/snapshots/{id}/file?path=</code>). A skill's <code>SKILL.md</code> is opened
   automatically. Markdown renders inertly — there is no HTML pipeline at all,
   so HTML embedded in a hostile file appears as visible text and links are
   shown but never navigable. Other text renders preformatted; a binary file is
   described ("Binary file (N bytes) — content is not rendered."); a file over
   the size cap says it is truncated and shows the first part.</li>
 <li><strong>Diff vs served</strong>: the delta against the marketplace's currently served
-  commit (<code>GET /api/snapshots/{id}/diff</code>) — one row per added, modified or
+  commit (<code>GET /api/v1/snapshots/{id}/diff</code>) — one row per added, modified or
   removed path, each expandable to its unified text diff. When nothing is
   served the pane says so: there is no baseline, and approving the snapshot
   serves all of it.</li>
@@ -3848,7 +3848,7 @@ derived from the address the browser is already on.</p>
 snippets carry the <code>&lt;YOUR_TOKEN&gt;</code> placeholder.</p>
 <h3 id="vetting">Vetting<a class="headerlink" href="#vetting" title="Permanent link">&para;</a></h3>
 <p>Each snapshot card carries a <strong>Vetting</strong> section fed by
-<code>GET /api/snapshots/{id}/vetting</code>, above the contents toggle and always visible
+<code>GET /api/v1/snapshots/{id}/vetting</code>, above the contents toggle and always visible
 — the evidence is not behind a click.</p>
 <h4 id="the-chain-flow">The chain flow<a class="headerlink" href="#the-chain-flow" title="Permanent link">&para;</a></h4>
 <p>Above the per-vetter list, the chain is drawn as an ordered flow — one node
@@ -3977,13 +3977,13 @@ are readable at the point of decision. The same section is embedded in the
 </tr>
 </tbody>
 </table>
-<p><strong>Re-vet now</strong> calls <code>POST /api/snapshots/{id}/revet</code> and toasts what the run
+<p><strong>Re-vet now</strong> calls <code>POST /api/v1/snapshots/{id}/revet</code> and toasts what the run
 concluded: <em>re-vetted clear</em>, <em>could not conclude</em>, <em>has a re-vetting violation;
 it is still published</em> (warn mode), or <em>revoked by a re-vetting violation</em>
 (enforce mode). Why the snapshot was revoked is the card's own <code>violation</code> line.</p>
 <p><strong>Already fetched by</strong> lists every identity that received the snapshot's content
 through the facade, each with a fetch count and a last-fetch time, from
-<code>GET /api/snapshots/{id}/fetchers</code>. It is only requested for a revoked snapshot.
+<code>GET /api/v1/snapshots/{id}/fetchers</code>. It is only requested for a revoked snapshot.
 When nobody fetched it, the panel says so rather than showing an empty list.
 This read is privileged — admin or an approver of this marketplace — so the
 panel shows an error to a session holding neither.</p>
@@ -4014,8 +4014,8 @@ approve control reads <strong>Re-approve</strong> and goes through the ordinary 
 </tr>
 </tbody>
 </table>
-<p><strong>Delete</strong> calls <code>DELETE /api/snapshots/{id}</code> and toasts <em>Snapshot {id} deleted;
-it can be restored</em>. <strong>Restore</strong> calls <code>POST /api/snapshots/{id}/restore</code> and
+<p><strong>Delete</strong> calls <code>DELETE /api/v1/snapshots/{id}</code> and toasts <em>Snapshot {id} deleted;
+it can be restored</em>. <strong>Restore</strong> calls <code>POST /api/v1/snapshots/{id}/restore</code> and
 toasts <em>Snapshot {id} restored</em>. Both fire immediately, like every other
 mutation in the portal — deletion here is a reversible mark, not a purge.</p>
 <div class="admonition warning">
@@ -4027,7 +4027,7 @@ quarantine ref permanently and the card disappears. See
 <p>Empty state: "No snapshots yet."</p>
 <h3 id="audit-log">Audit log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h3>
 <p>Below the snapshots, the marketplace's slice of the ledger: the entries from
-<code>GET /api/audit</code> whose marketplace is this one, newest first, with the same
+<code>GET /api/v1/audit</code> whose marketplace is this one, newest first, with the same
 verdict colouring as the <a href="#audit-log">Audit log</a> page — a blocked verdict reads
 red here too. A <strong>See the full ledger</strong> link goes to <code>/audit</code>. Empty state:
 "Nothing recorded against this marketplace yet."</p>
@@ -4046,7 +4046,7 @@ runs unless it says otherwise, and the ones that say otherwise.</p>
 <p>The chain as it applies to <strong>a marketplace with no override of its own</strong> — the
 same drawing, the same per-vetter switch, and the same two chain-level controls
 as the marketplace card, scoped globally. Fed by
-<code>GET /api/vetting/global-chain</code> and <code>GET /api/vetting/global-chain-settings</code>,
+<code>GET /api/v1/vetting/global-chain</code> and <code>GET /api/v1/vetting/global-chain-settings</code>,
 which resolve in the gateway rather than being recomposed in the browser, so this
 page cannot disagree with what actually runs. The source a control reports here is
 <code>global</code> or <code>default</code>, never <code>this marketplace</code>.</p>
@@ -4057,8 +4057,8 @@ overrides the setting keeps its own; clearing that override is how it comes back
 <p>One row per marketplace whose chain departs from the default, showing what it
 departs in — <code>mode: stop-after-fail</code>, <code>order: …</code>, <code>secret-scan: off</code> — and a
 <strong>Clear every chain override on <em>name</em></strong> control. Assembled from
-<code>GET /api/vetting/chain-settings</code>, <code>GET /api/vetting/vetter-toggles</code> and
-<code>GET /api/marketplaces</code>; a stored override whose marketplace is no longer
+<code>GET /api/v1/vetting/chain-settings</code>, <code>GET /api/v1/vetting/vetter-toggles</code> and
+<code>GET /api/v1/marketplaces</code>; a stored override whose marketplace is no longer
 registered still gets a row, labelled by its id and with its control disabled.</p>
 <div class="admonition warning">
 <p class="admonition-title">Clearing is not setting the default value</p>
@@ -4082,7 +4082,7 @@ lists every affected marketplace with its <strong>Now</strong> and <strong>After
 marketplace's <em>own</em> setting (<code>no mode override</code> → <code>mode: stop-after-fail</code>),
 because that is what will be stored.</p>
 <p><strong>Apply to these marketplaces</strong> calls
-<a href="../api/marketplaces/#post-vettingchain-settingsbulk"><code>POST /api/vetting/chain-settings/bulk</code></a>.
+<a href="../api/marketplaces/#post-vettingchain-settingsbulk"><code>POST /api/v1/vetting/chain-settings/bulk</code></a>.
 The result is rendered per marketplace — <code>applied</code>, <code>unchanged</code>, <code>failed</code> with
 the server's reason — together with the <strong>correlation id</strong> every ledger entry the
 act wrote carries. A response in which anything was refused renders as a failure,
@@ -4093,11 +4093,11 @@ with an error toast and an <code>alert</code>; it is never reported as a success
 <p>The ledger and its export surface. Subtitle: "Append-only ledger of every facade
 fetch and administrative action, exportable to an external compliance system."</p>
 <h3 id="export">Export<a class="headerlink" href="#export" title="Permanent link">&para;</a></h3>
-<p>A <strong>Download ledger (NDJSON)</strong> link pointing at <code>/api/audit/export</code> — a plain
+<p>A <strong>Download ledger (NDJSON)</strong> link pointing at <code>/api/v1/audit/export</code> — a plain
 same-origin, session-authenticated download, not a fetch through the API client.</p>
 <h3 id="export-sinks">Export sinks<a class="headerlink" href="#export-sinks" title="Permanent link">&para;</a></h3>
 <p>An inline form with <strong>Sink name</strong> and <strong>Target URL</strong> posts to
-<code>POST /api/audit/sinks</code>. <strong>Add sink</strong> stays disabled until the name matches
+<code>POST /api/v1/audit/sinks</code>. <strong>Add sink</strong> stays disabled until the name matches
 <code>^[a-z0-9][a-z0-9_-]*$</code> and the target URL parses with a scheme; the scheme
 allowlist itself stays server-side. The response opens the same show-once secret dialog as
 <a href="#access-tokens">Access tokens</a> and <a href="#webhooks">Webhooks</a>.</p>
@@ -4137,14 +4137,14 @@ allowlist itself stays server-side. The response opens the same show-once secret
 </table>
 <p><strong>Replay</strong> sets the cursor to <code>0</code> — the whole ledger, from the beginning — and
 toasts <em>Sink '{name}' will replay the ledger</em>. Replaying to an arbitrary
-position is API-only (<code>PUT /api/audit/sinks/{id}/cursor</code>).</p>
-<p><strong>Delete</strong> calls <code>DELETE /api/audit/sinks/{id}</code>, taking the sink's delivery
+position is API-only (<code>PUT /api/v1/audit/sinks/{id}/cursor</code>).</p>
+<p><strong>Delete</strong> calls <code>DELETE /api/v1/audit/sinks/{id}</code>, taking the sink's delivery
 channel with it, and toasts <em>Sink '{name}' deleted</em>.</p>
 <p>Sink deliveries are ordinary webhook deliveries, so their attempts appear on the
 <a href="#webhooks">Webhooks</a> page rather than here.</p>
 <p>Empty state: "No export sinks yet."</p>
 <h3 id="ledger">Ledger<a class="headerlink" href="#ledger" title="Permanent link">&para;</a></h3>
-<p>The table, from <code>GET /api/audit</code>, <strong>newest first</strong> — the API answers in ledger
+<p>The table, from <code>GET /api/v1/audit</code>, <strong>newest first</strong> — the API answers in ledger
 order, so the page sorts it by timestamp descending to open on what just
 happened. Any column header re-sorts it.</p>
 <table>
@@ -4207,7 +4207,7 @@ the auditor role (see <a href="#authorization">Authorization</a>), so a session 
 it sees the page's error state.</p>
 <h3 id="window-and-totals">Window and totals<a class="headerlink" href="#window-and-totals" title="Permanent link">&para;</a></h3>
 <p>A <strong>Report window</strong> button group — 7, 30 or 90 days, default 30, the active
-choice pressed — drives <code>GET /api/adoption?days=</code>. Beside it, stat chips:
+choice pressed — drives <code>GET /api/v1/adoption?days=</code>. Beside it, stat chips:
 total fetches in the window, marketplaces fetched, and stale identities.</p>
 <h3 id="adoption-by-marketplace">Adoption by marketplace<a class="headerlink" href="#adoption-by-marketplace" title="Permanent link">&para;</a></h3>
 <p>One row card per marketplace fetched in the window: name, a <code>serving</code> /
@@ -4259,7 +4259,7 @@ not verdicts.</p>
 signed with HMAC-SHA256 and retried with backoff until delivered."</p>
 <h3 id="add-subscriber">Add subscriber<a class="headerlink" href="#add-subscriber" title="Permanent link">&para;</a></h3>
 <p>An inline form with <strong>Subscriber name</strong>, <strong>Target URL</strong> and <strong>Events</strong>. Events is
-a checkbox list built from <code>GET /api/webhooks/events</code>, so the portal offers exactly
+a checkbox list built from <code>GET /api/v1/webhooks/events</code>, so the portal offers exactly
 the names this gateway emits rather than asking for them: <strong>All events</strong> ticks or
 clears every one, and the box above the list narrows what is shown without
 changing what is selected. Every event is ticked by default, and that state submits
@@ -4267,7 +4267,7 @@ changing what is selected. Every event is ticked by default, and that state subm
 events added to the gateway later.</p>
 <p><strong>Add subscriber</strong> stays disabled until the name matches <code>^[a-z0-9][a-z0-9_-]*$</code>,
 the target URL parses with a scheme, and at least one event is ticked; only then is
-<code>POST /api/webhooks</code> called. The scheme allowlist remains server-side and surfaces
+<code>POST /api/v1/webhooks</code> called. The scheme allowlist remains server-side and surfaces
 as an error toast.</p>
 <p>The response opens a show-once dialog — "This signing secret is shown exactly
 once — copy it now." — with the <code>whsec_…</code> value in a code block and a clipboard
@@ -4304,11 +4304,11 @@ button that flips to a checkmark for two seconds, the same pattern as
 </tr>
 </tbody>
 </table>
-<p><strong>Delete</strong> calls <code>DELETE /api/webhooks/{id}</code> and toasts <em>Subscriber '{name}'
+<p><strong>Delete</strong> calls <code>DELETE /api/v1/webhooks/{id}</code> and toasts <em>Subscriber '{name}'
 deleted</em>. It removes the delivery history with the subscriber.</p>
 <p>Empty state: "No subscribers yet."</p>
 <h3 id="delivery-attempts">Delivery attempts<a class="headerlink" href="#delivery-attempts" title="Permanent link">&para;</a></h3>
-<p>From <code>GET /api/webhooks/deliveries</code> — the operator's view of a failing
+<p>From <code>GET /api/v1/webhooks/deliveries</code> — the operator's view of a failing
 integration.</p>
 <table>
 <thead>
@@ -4355,7 +4355,7 @@ headers and signature verification.</p>
 <p>"Personal access tokens authenticate git clients against the facade. Values are
 hashed at rest and shown exactly once."</p>
 <p>An inline form with a <strong>Token name</strong> field and a <strong>Create token</strong> button posts to
-<code>POST /api/tokens</code>. <strong>Create token</strong> stays disabled until the name field holds a
+<code>POST /api/v1/tokens</code>. <strong>Create token</strong> stays disabled until the name field holds a
 non-blank value — the name is trimmed before it is sent. The response opens a
 show-once dialog — "This value is shown
 exactly once — copy it now. Only a hash is stored." — with the token in a code
@@ -4398,7 +4398,7 @@ records it at most once a minute, so it can be up to a minute behind, and a
 refused authentication never moves it — see
 <a href="../api/tokens/#lastusedat"><code>lastUsedAt</code></a> for what a <strong>never</strong> does and does not
 prove.</p>
-<p><strong>Revoke</strong> calls <code>DELETE /api/tokens/{id}</code> and toasts <em>Token '{name}' revoked</em>.
+<p><strong>Revoke</strong> calls <code>DELETE /api/v1/tokens/{id}</code> and toasts <em>Token '{name}' revoked</em>.
 It fires immediately. Revocation is recorded rather than deleted: the row stays
 with a <code>revoked</code> badge.</p>
 <p>Empty state: "No tokens yet."</p>

@@ -2665,7 +2665,7 @@ fail-closed below).</p>
 <li>the facts cannot be built — malformed SKILL.md frontmatter, a SKILL.md over
   256 KiB, a file inventory over 20 000 entries.</li>
 </ul>
-<p>The refusal (HTTP 409 on <code>POST /api/snapshots/{id}/approve</code>) names <strong>every</strong>
+<p>The refusal (HTTP 409 on <code>POST /api/v1/snapshots/{id}/approve</code>) names <strong>every</strong>
 deciding rule with its outcome — <code>matched</code>, or <code>error: …</code> — because the remedy
 differs: a match means the content is prohibited; an error means an admin
 fixes or disables the rule. The deliberate cost: a broken enabled rule blocks
@@ -2683,12 +2683,12 @@ an admin editing or disabling the rule — audited on the ledger — or the
 content changing upstream and being re-ingested.</p>
 </div>
 <h2 id="test-before-you-enforce-the-playground">Test before you enforce: the playground<a class="headerlink" href="#test-before-you-enforce-the-playground" title="Permanent link">&para;</a></h2>
-<p><code>POST /api/policy/playground</code> evaluates any expression against a <strong>real</strong>
+<p><code>POST /api/v1/policy/playground</code> evaluates any expression against a <strong>real</strong>
 snapshot — held, approved or revoked — and answers <code>matched</code> or the error,
 without storing anything, appending nothing to the ledger, and changing no
 state. Author the rule in the playground against the snapshots it should and
 should not catch, then create it enabled.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/policy/playground<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/policy/playground<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"snapshotId"</span>:<span class="w"> </span><span class="m">42</span>,
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="go">         "expression": "skills.exists(s, s.tools.exists(t, t.startsWith(\"Bash\")))"}'</span>

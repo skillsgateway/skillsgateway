@@ -2962,7 +2962,7 @@ normalises what they answer, records it, and aggregates it into a single
 outcome that gates approval.</p>
 <h2 id="where-the-chain-sits">Where the chain sits<a class="headerlink" href="#where-the-chain-sits" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart TD
-    U["Upstream repository"] --&gt;|"POST /api/marketplaces/{name}/ingest"| F["Fetch into quarantine&lt;br/&gt;pin refs/snapshots/&amp;lt;sha&amp;gt;"]
+    U["Upstream repository"] --&gt;|"POST /api/v1/marketplaces/{name}/ingest"| F["Fetch into quarantine&lt;br/&gt;pin refs/snapshots/&amp;lt;sha&amp;gt;"]
     F --&gt; M{"Manifest policy&lt;br/&gt;local sources only"}
     M --&gt;|violation| R["snapshot: rejected&lt;br/&gt;chain does not run"]
     M --&gt;|ok| H["snapshot: held"]
@@ -2978,9 +2978,9 @@ outcome that gates approval.</p>
     E --&gt;|clear| RV["Reviewer sees verdicts&lt;br/&gt;Approve enabled"]
     E --&gt;|clear with waivers| RW["Reviewer sees verdicts&lt;br/&gt;and what was accepted"]
     E --&gt;|blocked| RB["Reviewer sees the findings&lt;br/&gt;no waiver covers"]
-    RV --&gt;|"POST /api/snapshots/{id}/approve"| P["Published repository&lt;br/&gt;refs/heads/main"]
-    RW --&gt;|"POST /api/snapshots/{id}/approve"| P
-    RB --&gt;|"POST /api/snapshots/{id}/waivers per finding"| E</code></pre>
+    RV --&gt;|"POST /api/v1/snapshots/{id}/approve"| P["Published repository&lt;br/&gt;refs/heads/main"]
+    RW --&gt;|"POST /api/v1/snapshots/{id}/approve"| P
+    RB --&gt;|"POST /api/v1/snapshots/{id}/waivers per finding"| E</code></pre>
 <p>The chain never changes the snapshot's own state. A vetted snapshot is still
 <code>held</code>; what the chain decides is whether approving it is an ordinary act or one
 that has to be justified in writing.</p>
@@ -3184,7 +3184,7 @@ failure, because a reviewer should see everything that is wrong with a snapshot
 at once. An administrator can trade that away per marketplace — see
 <a href="#stopping-the-chain-after-a-failure">Stopping the chain after a failure</a>.</p>
 <h2 id="the-approval-gate">The approval gate<a class="headerlink" href="#the-approval-gate" title="Permanent link">&para;</a></h2>
-<p><code>POST /api/snapshots/{id}/approve</code> takes no request body. It refuses a snapshot
+<p><code>POST /api/v1/snapshots/{id}/approve</code> takes no request body. It refuses a snapshot
 whose <strong>effective</strong> outcome is blocked, with <code>409</code> and a problem document naming
 both the blocking vetters and — in <code>uncoveredFindings</code> — every blocking
 finding that no active waiver covers. That array is the reviewer's worklist: it
@@ -3425,7 +3425,7 @@ carries a digest of the policy in force, so a changed list is visible in every
 run's chain identity. The task-shaped walkthrough is
 <a href="../../guides/license-compliance/">License compliance for skills</a>; the same
 detection is readable per snapshot at
-<a href="../../reference/api/marketplaces/#get-snapshotsidlicenses"><code>GET /api/snapshots/{id}/licenses</code></a>.</p>
+<a href="../../reference/api/marketplaces/#get-snapshotsidlicenses"><code>GET /api/v1/snapshots/{id}/licenses</code></a>.</p>
 <div class="admonition warning">
 <p class="admonition-title">What a passing verdict does <em>not</em> mean</p>
 <p>These are patterns, not understanding. An attacker who paraphrases

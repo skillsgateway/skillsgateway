@@ -2744,10 +2744,10 @@ toast says what the run concluded.</p>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># one snapshot</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://gateway.example.com/api/snapshots/12/revet
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://gateway.example.com/api/v1/snapshots/12/revet
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># every approved snapshot of a marketplace</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://gateway.example.com/api/marketplaces/corp-marketplace/revet
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://gateway.example.com/api/v1/marketplaces/corp-marketplace/revet
 </code></pre></div>
 </div>
 </div>
@@ -2759,7 +2759,7 @@ toast says what the run concluded.</p>
 external feed to subscribe to: their rules ship with the gateway, as does
 the Agent Skills specification <code>skill-conformance</code> validates against. So
 "re-vet when the feed updates" is, today, an operator calling
-<code>POST /api/marketplaces/{name}/revet</code> after deploying a vetter whose
+<code>POST /api/v1/marketplaces/{name}/revet</code> after deploying a vetter whose
 rules changed — and the run records the vetter versions, so an answer
 that changed can be attributed to the chain rather than guessed at.</p>
 <p>A webhook-triggered feed integration is a follow-on, not something this
@@ -2797,7 +2797,7 @@ fetchable by anyone who knows its SHA, which is everyone who ever cloned it.</p>
 content is still pinned where it always was, which is what makes the decision
 reviewable and reversible by a person.</p>
 <h3 id="who-already-has-it">Who already has it<a class="headerlink" href="#who-already-has-it" title="Permanent link">&para;</a></h3>
-<p><code>GET /api/snapshots/{id}/fetchers</code> — and the portal panel on a revoked snapshot —
+<p><code>GET /api/v1/snapshots/{id}/fetchers</code> — and the portal panel on a revoked snapshot —
 lists every authenticated identity that received the content through the facade,
 with a fetch count and a last-fetch time, read from the append-only ledger the
 gateway has been keeping since the first clone. Reading it takes the same

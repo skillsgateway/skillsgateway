@@ -2606,12 +2606,12 @@ refused through the standard gate, and the refusal names the finding:</p>
 policy tightened later produces fresh violations on the estate you already
 serve, in warn or enforce mode as configured.</p>
 <h2 id="read-the-licenses-of-a-snapshot">Read the licenses of a snapshot<a class="headerlink" href="#read-the-licenses-of-a-snapshot" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-s<span class="w"> </span>https://gateway.example.com/api/snapshots/42/licenses
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-s<span class="w"> </span>https://gateway.example.com/api/v1/snapshots/42/licenses
 </code></pre></div>
 <p>The report lists every detection with its SPDX id (or its unknown state),
 where it was found, and its standing under the policy currently configured —
 see the <a href="../../reference/api/marketplaces/#get-snapshotsidlicenses">API reference</a>.
-It complements <code>/api/snapshots/{id}/content</code> and the gateway's own
+It complements <code>/api/v1/snapshots/{id}/content</code> and the gateway's own
 <code>/actuator/sbom</code> as the supply-chain read surface.</p>
 <h2 id="why-the-policy-is-configuration">Why the policy is configuration<a class="headerlink" href="#why-the-policy-is-configuration" title="Permanent link">&para;</a></h2>
 <p>Vetting evidence must be attributable: when a snapshot that cleared last month

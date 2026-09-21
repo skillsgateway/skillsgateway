@@ -3834,7 +3834,7 @@ exporter that feeds push sinks. Java-side defaults again; nothing appears in
 <a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">    </span><span class="c1"># Ledger entries per pushed batch, unless the sink overrides it.</span>
 <a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">    </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
 <a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="w">    </span><span class="c1"># GET /api/audit/export page size when ?limit= is omitted, and the ceiling</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="w">    </span><span class="c1"># GET /api/v1/audit/export page size when ?limit= is omitted, and the ceiling</span>
 <a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">    </span><span class="c1"># it is clamped to when it is given.</span>
 <a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="w">    </span><span class="nt">default-page-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
 <a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="w">    </span><span class="nt">max-page-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10000</span>
@@ -4244,7 +4244,7 @@ in <code>application.yaml</code>.</p>
 </tbody>
 </table>
 <h3 id="minimum-release-age">Minimum release age<a class="headerlink" href="#minimum-release-age" title="Permanent link">&para;</a></h3>
-<p>The gate refuses <code>POST /api/snapshots/{id}/approve</code> with <code>409</code> while the
+<p>The gate refuses <code>POST /api/v1/snapshots/{id}/approve</code> with <code>409</code> while the
 snapshot is younger than this, and the problem document names the setting, the
 snapshot's current age and the time remaining. Nothing has to run for the wait
 to end: the age is compared at the instant of each approval request, exactly as
@@ -4319,7 +4319,7 @@ fail-closed rules. An empty or absent list changes nothing.</p>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="nt">external</span><span class="p">:</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">llm-review</span><span class="w">              </span><span class="c1"># stable identity, recorded on every verdict;</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">                                      </span><span class="c1"># must be unique and not a built-in name</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://vet.internal/api/vet</span><span class="w">   </span><span class="c1"># http/https endpoint the gateway POSTs to</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://vet.internal/api/v1/vet</span><span class="w">   </span><span class="c1"># http/https endpoint the gateway POSTs to</span>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">        </span><span class="nt">order</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">150</span><span class="w">                    </span><span class="c1"># chain position; the built-ins are at 100+</span>
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"2024-06"</span><span class="w">            </span><span class="c1"># rule-set identity, stamped into the chain identity</span>
 <a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IT Security LLM review of skill instructions</span>
@@ -4495,7 +4495,7 @@ what a fresh violation on it does. Java-side defaults; nothing appears in
 <td><code>skills-gateway.vetting.revet.enabled</code></td>
 <td>boolean</td>
 <td><code>true</code></td>
-<td>Runs the scheduled sweep. <code>POST /api/snapshots/{id}/revet</code> and <code>POST /api/marketplaces/{name}/revet</code> are unaffected.</td>
+<td>Runs the scheduled sweep. <code>POST /api/v1/snapshots/{id}/revet</code> and <code>POST /api/v1/marketplaces/{name}/revet</code> are unaffected.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.vetting.revet.mode</code></td>
@@ -4623,7 +4623,7 @@ through the configured principal claim. The comparison assumes what is true of a
 single provider — that one person is one principal string — and makes no attempt
 to reconcile two spellings of the same human.</p>
 <p>Refusals are visible to reviewers before they act: the portal's approve dialog
-says which acts conflict, and <code>GET /api/snapshots/{id}/four-eyes</code> answers the
+says which acts conflict, and <code>GET /api/v1/snapshots/{id}/four-eyes</code> answers the
 same question for the calling identity. Rejecting a snapshot is never gated —
 refusing content quickly must not need a second pair of eyes.</p>
 <p>The rule as part of the approval boundary is described in
@@ -4759,7 +4759,7 @@ passes run. Java-side defaults; nothing appears in <code>application.yaml</code>
 </table>
 <div class="admonition warning">
 <p class="admonition-title">Enabling retention starts deleting on the next pass</p>
-<p>Preview first: <code>GET /api/retention/candidates</code> shows exactly what the
+<p>Preview first: <code>GET /api/v1/retention/candidates</code> shows exactly what the
 policies in force would select, and writes nothing. Approved snapshots are
 never eligible, but a generous <code>held-max-age</code> can still clear a large
 review backlog on the first pass.</p>
@@ -4841,7 +4841,7 @@ it.</p>
 nothing appears in <code>application.yaml</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">catalog</span><span class="p">:</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="c1"># Whether approvals and revocations rebuild the catalog and the /api/catalog</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="c1"># Whether approvals and revocations rebuild the catalog and the /api/v1/catalog</span>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="c1"># endpoints answer. Turning this off never deletes an existing catalog repo.</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
@@ -5041,7 +5041,7 @@ it is revocable through the API, so it says nothing about the <em>next</em> star
 <td>change directory membership; no gateway change</td>
 </tr>
 <tr>
-<td><code>/api/me</code> source</td>
+<td><code>/api/v1/me</code> source</td>
 <td><code>config</code></td>
 <td><code>claim</code></td>
 </tr>
@@ -5082,7 +5082,7 @@ grants API in <a href="../api/roles/">Roles</a>.</p>
 role grants, webhook subscribers, audit export sinks and policy deny rules,
 reconciled at startup —
 after schema migration, before the web surface serves — and on demand via
-<a href="../api/estate/"><code>POST /api/estate/reconcile</code></a>. Empty by default; an empty
+<a href="../api/estate/"><code>POST /api/v1/estate/reconcile</code></a>. Empty by default; an empty
 declaration reconciles nothing.</p>
 <p>Reconciliation is <strong>additive and idempotent</strong>. A declared object is created if
 missing and converged if drifted; an object absent from the declaration is
@@ -5096,7 +5096,7 @@ the <a href="../api/estate/">reconciliation report</a> — and never prevents st
 other entries.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">estate</span><span class="p">:</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span><span class="c1"># Registered through the exact same gate as POST /api/marketplaces:</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span><span class="c1"># Registered through the exact same gate as POST /api/v1/marketplaces:</span>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="c1"># name rules, the reserved catalog name, the URL scheme allowlist.</span>
 <a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="c1"># There is no ref key — the ingested ref is always the gateway's</span>
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">    </span><span class="c1"># decision (the upstream default branch).</span>
@@ -5104,7 +5104,7 @@ other entries.</p>
 <a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">corp-marketplace</span>
 <a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/acme/skills-marketplace.git</span>
 <a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">        </span><span class="c1"># on-demand or scheduled; applied through the same audited path as</span>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">        </span><span class="c1"># PUT /api/marketplaces/{name}/sync. Omit to leave the stored mode</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">        </span><span class="c1"># PUT /api/v1/marketplaces/{name}/sync. Omit to leave the stored mode</span>
 <a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="w">        </span><span class="c1"># alone. webhook mode is refused: its inbound HMAC secret is</span>
 <a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="w">        </span><span class="c1"># generated and shown once, which has no declarative form.</span>
 <a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="w">        </span><span class="nt">sync-mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scheduled</span>
@@ -5115,7 +5115,7 @@ other entries.</p>
 <a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="w">        </span><span class="nt">origin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hosted</span>
 <a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a><span class="w">        </span><span class="nt">push-policy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">append-only</span>
 <a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a>
-<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a><span class="w">    </span><span class="c1"># The exact shape of POST /api/roles: approver grants name one</span>
+<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a><span class="w">    </span><span class="c1"># The exact shape of POST /api/v1/roles: approver grants name one</span>
 <a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a><span class="w">    </span><span class="c1"># marketplace that must exist at reconcile time (declared above, or</span>
 <a id="__codelineno-15-24" name="__codelineno-15-24" href="#__codelineno-15-24"></a><span class="w">    </span><span class="c1"># registered through the API); admin and auditor grants must not.</span>
 <a id="__codelineno-15-25" name="__codelineno-15-25" href="#__codelineno-15-25"></a><span class="w">    </span><span class="nt">grants</span><span class="p">:</span>
@@ -5145,7 +5145,7 @@ other entries.</p>
 <a id="__codelineno-15-49" name="__codelineno-15-49" href="#__codelineno-15-49"></a><span class="w">        </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
 <a id="__codelineno-15-50" name="__codelineno-15-50" href="#__codelineno-15-50"></a>
 <a id="__codelineno-15-51" name="__codelineno-15-51" href="#__codelineno-15-51"></a><span class="w">    </span><span class="c1"># CEL policy deny rules, through the same compiled, audited path as</span>
-<a id="__codelineno-15-52" name="__codelineno-15-52" href="#__codelineno-15-52"></a><span class="w">    </span><span class="c1"># POST /api/policy/rules: an expression that does not compile to a</span>
+<a id="__codelineno-15-52" name="__codelineno-15-52" href="#__codelineno-15-52"></a><span class="w">    </span><span class="c1"># POST /api/v1/policy/rules: an expression that does not compile to a</span>
 <a id="__codelineno-15-53" name="__codelineno-15-53" href="#__codelineno-15-53"></a><span class="w">    </span><span class="c1"># boolean is an isolated entry failure, never a stored rule.</span>
 <a id="__codelineno-15-54" name="__codelineno-15-54" href="#__codelineno-15-54"></a><span class="w">    </span><span class="nt">policy-rules</span><span class="p">:</span>
 <a id="__codelineno-15-55" name="__codelineno-15-55" href="#__codelineno-15-55"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">no-shell-tools</span>

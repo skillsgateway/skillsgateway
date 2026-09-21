@@ -2614,14 +2614,14 @@ else.</p>
 waiver and in the audit ledger.</p>
 <h2 id="before-you-start">Before you start<a class="headerlink" href="#before-you-start" title="Permanent link">&para;</a></h2>
 <ul>
-<li>A snapshot whose vetting outcome is blocked. <code>GET /api/snapshots/{id}/vetting</code>
+<li>A snapshot whose vetting outcome is blocked. <code>GET /api/v1/snapshots/{id}/vetting</code>
   shows the verdicts, or open the approve dialog in the portal.</li>
 <li>A portal session, or — for the API — a session cookie and the CSRF token that
   goes with it (<a href="../../reference/api/#conventions">REST API</a>).</li>
 </ul>
 <h2 id="1-find-out-exactly-what-is-blocking">1. Find out exactly what is blocking<a class="headerlink" href="#1-find-out-exactly-what-is-blocking" title="Permanent link">&para;</a></h2>
 <p>Ask for the approval and read the refusal — it lists the work:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-sS<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/approve<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-sS<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/snapshots/1/approve<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="go">{</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="go">  "status": 409,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">  "title": "Vetting chain blocked this snapshot",</span>
@@ -2663,7 +2663,7 @@ badged with who accepted it and until when, and the outcome badge changes to
 <strong>vetting clear with waivers</strong> once nothing is left uncovered.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/waivers<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/snapshots/1/waivers<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="go">          "ruleId": "aws-access-key-id",</span>
@@ -2674,7 +2674,7 @@ badged with who accepted it and until when, and the outcome badge changes to
 </code></pre></div>
 <p>For a waiver that should survive re-ingestion, use <code>PATH</code> scope and name the
 path:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/waivers<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/snapshots/1/waivers<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="go">          "ruleId": "instruction-override",</span>
@@ -2726,18 +2726,18 @@ it will also cover files that do not exist yet.</p>
 <h2 id="4-approve">4. Approve<a class="headerlink" href="#4-approve" title="Permanent link">&para;</a></h2>
 <p>With every blocking finding covered, the approval goes through with no special
 request and no flags:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/snapshots/1/approve
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/snapshots/1/approve
 </code></pre></div>
 <p>Each waiver that was in force is written to the ledger as <code>waiver-applied</code>, with
 the rule, the location, the approver and the expiry.</p>
 <h2 id="reviewing-and-withdrawing-waivers">Reviewing and withdrawing waivers<a class="headerlink" href="#reviewing-and-withdrawing-waivers" title="Permanent link">&para;</a></h2>
 <p>List what a marketplace has accepted — active and lapsed alike:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-sS<span class="w"> </span>localhost:8080/api/marketplaces/corp-marketplace/waivers<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-sS<span class="w"> </span>localhost:8080/api/v1/marketplaces/corp-marketplace/waivers<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
 </code></pre></div>
 <p>A lapsed or revoked waiver is kept and returned with <code>"active": false</code>: the
 record of what was once accepted is part of the audit trail.</p>
 <p>Withdraw one when the reason no longer holds:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>localhost:8080/api/waivers/3
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>localhost:8080/api/v1/waivers/3
 </code></pre></div>
 <p>Revocation takes effect on the next read. A snapshot that was cleared only by
 that waiver reads as blocked again immediately.</p>
