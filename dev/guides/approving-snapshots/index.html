@@ -1174,6 +1174,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#evidence-from-a-superseded-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evidence from a superseded chain
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2785,6 +2796,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#evidence-from-a-superseded-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evidence from a superseded chain
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3126,6 +3148,25 @@ matched", and keep reading the content. The limits of each vetter are
 listed under <em>What these vetters can and cannot see</em> next to the
 verdicts, and in <a href="../../concepts/vetting/">Vetting — the vetter chain</a>.</p>
 </div>
+<h3 id="evidence-from-a-superseded-chain">Evidence from a superseded chain<a class="headerlink" href="#evidence-from-a-superseded-chain" title="Permanent link">&para;</a></h3>
+<p>Enabling a vetter <strong>re-runs nothing</strong>. Neither does disabling one, reordering
+the chain, or changing its mode. For content that is already approved the
+<a href="../re-vetting/">re-vetting sweep</a> converges on it; for a snapshot still waiting
+at the approval gate, nothing does.</p>
+<p>So a snapshot ingested before a chain change carries evidence the chain as it
+stands today never produced — and the vetter you deliberately switched on did
+not look at this content. When that is the case, the vetting section says so and
+names both chains: the one that produced the evidence, and the one in force.</p>
+<p><strong>This does not block the approval, and no setting makes it.</strong> The gateway
+states the fact; the decision stays yours, exactly as it is for an override or
+a waiver. If you approve on superseded evidence, the ledger records it —
+<code>snapshot-approved-on-superseded-chain</code>, naming both chains — beside the
+approval rather than instead of it, so it is answerable afterwards.</p>
+<p>To act on it instead, use <strong>Re-run the chain now</strong> on the notice, or
+<code>POST /api/v1/snapshots/{id}/revet</code>. On a held snapshot that refreshes the
+evidence in place: the chain runs, the new run is recorded, the snapshot stays
+held, and nothing is published or retracted. Then read the verdicts again —
+they may have changed, which is the point.</p>
 <h2 id="what-to-look-for">What to look for<a class="headerlink" href="#what-to-look-for" title="Permanent link">&para;</a></h2>
 <p>The threats that matter here are the ones no scanner catches:</p>
 <ul>

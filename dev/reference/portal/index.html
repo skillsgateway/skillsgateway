@@ -2285,6 +2285,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#chain-staleness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chain staleness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#re-vetting-panel" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3125,6 +3136,17 @@
         
       </ul>
     </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chain-staleness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chain staleness
+      
+    </span>
+  </a>
   
 </li>
         
@@ -3983,6 +4005,48 @@ is nothing to waive — a snapshot with no evidence cannot be approved at all.</
 configured vetter and its self-description, so the limits of the heuristics
 are readable at the point of decision. The same section is embedded in the
 <a href="#approve-dialog">approve dialog</a> on the marketplaces page.</p>
+<h3 id="chain-staleness">Chain staleness<a class="headerlink" href="#chain-staleness" title="Permanent link">&para;</a></h3>
+<p>Enabling or disabling a vetter, or changing the chain's mode or order, <strong>re-runs
+nothing</strong>. For approved content the re-vetting sweep converges on it; for a
+snapshot still at the approval gate nothing does. So a snapshot ingested before
+a chain change can be approved on evidence a vetter in the chain today never
+produced.</p>
+<p>The vetting section says so, against the evidence it qualifies:</p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Shown</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The run came from the chain in force</td>
+<td>Nothing. A marking on every snapshot would be noise.</td>
+</tr>
+<tr>
+<td>The run came from a different chain</td>
+<td>A notice naming <strong>both</strong> chains — the one that produced the evidence and the one in force — and a <strong>Re-run the chain now</strong> button.</td>
+</tr>
+<tr>
+<td>The run records no chain identity</td>
+<td><em>This run records no chain identity, so whether it matches the chain in force is unknown.</em> No alarm and no button: the gateway does not know that anything is wrong.</td>
+</tr>
+</tbody>
+</table>
+<p>A chain is described as <code>vetter@version,…;mode=…</code>, and — when an administrator
+has switched vetters off — <code>;disabled=[…]</code>. A switched-off vetter stays named in
+the chain and is recorded on the run as a <code>disabled</code> verdict, so a toggle shows
+up in the <code>disabled=</code> part rather than by a name disappearing.</p>
+<p><strong>Approval is not blocked by this</strong>, and no configuration makes it block. The
+gateway states the fact and the reviewer decides, the same as for an override or
+a waiver. If they approve anyway, the ledger records
+<code>snapshot-approved-on-superseded-chain</code> naming both chains, beside the approval
+rather than instead of it.</p>
+<p><strong>Re-run the chain now</strong> calls <code>POST /api/v1/snapshots/{id}/revet</code>. For a held
+snapshot that is a <em>refresh</em>, not a re-vetting: the chain runs, the run is
+recorded, the snapshot stays held, and nothing is announced or retracted —
+there is nothing published to retract.</p>
 <h3 id="re-vetting-panel">Re-vetting panel<a class="headerlink" href="#re-vetting-panel" title="Permanent link">&para;</a></h3>
 <p>Above the vetting section, each snapshot card carries the re-vetting surface.</p>
 <table>
@@ -4003,7 +4067,7 @@ are readable at the point of decision. The same section is embedded in the
 </tr>
 <tr>
 <td>Anything else</td>
-<td>Nothing — re-vetting is about content that is being served.</td>
+<td>Nothing here — a held snapshot's evidence is refreshed from the <a href="#chain-staleness">chain staleness notice</a> instead, which is where the reason to refresh it appears.</td>
 </tr>
 </tbody>
 </table>
