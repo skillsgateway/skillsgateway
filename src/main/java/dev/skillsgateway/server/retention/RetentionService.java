@@ -2,6 +2,8 @@ package dev.skillsgateway.server.retention;
 
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.persistence.AuditSinkRepository;
+import dev.skillsgateway.server.persistence.FetchLogRepository;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
@@ -15,6 +17,7 @@ import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,12 +64,24 @@ public class RetentionService {
     private static final String INCOMING_REF = "refs/quarantine/incoming";
     private static final String NO_MARKETPLACE = "-";
 
+    /**
+     * Rows per chunk, and how long one pass may spend trimming. Constants rather than
+     * {@code skills-gateway.*} leaves: they are the shape of the work, not a policy anyone
+     * deploying this has an opinion about, and the one setting that is a policy —
+     * {@code ledger-max-age} — is enough surface for this feature to carry.
+     */
+    private static final int LEDGER_TRIM_CHUNK = 5_000;
+
+    private static final Duration LEDGER_TRIM_BUDGET = Duration.ofMinutes(2);
+
     private final MarketplaceRepository marketplaceRepository;
     private final SnapshotRepository snapshotRepository;
     private final StagingRefSightingRepository sightingRepository;
     private final GitStorage storage;
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
+    private final AuditSinkRepository auditSinkRepository;
+    private final FetchLogRepository fetchLogRepository;
     private final SkillsGatewayProperties.Retention properties;
 
     public RetentionService(
@@ -76,6 +91,8 @@ public class RetentionService {
             GitStorage storage,
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
+            AuditSinkRepository auditSinkRepository,
+            FetchLogRepository fetchLogRepository,
             SkillsGatewayProperties properties) {
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
@@ -83,6 +100,8 @@ public class RetentionService {
         this.storage = storage;
         this.auditLogger = auditLogger;
         this.webhookService = webhookService;
+        this.auditSinkRepository = auditSinkRepository;
+        this.fetchLogRepository = fetchLogRepository;
         this.properties = properties.retention();
     }
 
@@ -105,6 +124,14 @@ public class RetentionService {
             String reason,
 
             @Schema(description = "Ingestion time") Instant createdAt) {}
+
+    /**
+     * How far one ledger trim got, and what stopped it (GW_RETENTION_0009).
+     *
+     * <p>{@code boundBy} is the sink holding the watermark, or null when no enabled sink exists at
+     * all — the two reasons nothing moved, kept apart so the log line can say which one it was.
+     */
+    public record LedgerTrim(int removed, boolean budgetExhausted, String boundBy) {}
 
     /** What one retention pass did. */
     @Schema(description = "Outcome of a retention pass")
@@ -297,6 +324,65 @@ public class RetentionService {
      * query. That ordering closes today's window on its own; the age bound is what keeps it closed
      * when the publication path changes.
      */
+    /**
+     * Trims the audit ledger (GW_RETENTION_0009, GW_RETENTION_0010), a second duty of the same
+     * six-hourly compaction pass rather than a sweep of its own — same lease, same switch, same
+     * reason: this is the gateway deleting its own records because an operator asked it to.
+     *
+     * <p>Removes nothing unless an age is configured <em>and</em> an enabled export sink has
+     * already read past the entries in question. A deployment with no sink keeps its ledger, and
+     * that is the design rather than an oversight: the export position is the gateway's only
+     * evidence that some other system holds the entry, and without one it is deleting the only
+     * copy of its own audit trail.
+     */
+    @Requirements({"GW_RETENTION_0009", "GW_RETENTION_0010"})
+    public LedgerTrim trimLedger(String actor) {
+        return trimLedger(actor, Instant.now().plus(LEDGER_TRIM_BUDGET));
+    }
+
+    /**
+     * As {@link #trimLedger(String)}, with the deadline supplied by the caller rather than taken
+     * from the constant — so the budget can be exercised without a test that waits two minutes.
+     */
+    @Requirements({"GW_RETENTION_0009"})
+    public LedgerTrim trimLedger(String actor, Instant deadline) {
+        if (!properties.ledgerTrimEnabled()) {
+            return new LedgerTrim(0, false, null);
+        }
+        AuditSinkRepository.Watermark watermark =
+                auditSinkRepository.lowestEnabledCursor().orElse(null);
+        if (watermark == null) {
+            // Not an error and not a warning every six hours: it is the documented consequence of
+            // running without an export destination, and the ledger-lag gauge is where an operator
+            // watches it.
+            return new LedgerTrim(0, false, null);
+        }
+        Instant cutoff = Instant.now().minus(properties.ledgerMaxAge());
+        int removed = 0;
+        boolean budgetExhausted = false;
+        while (true) {
+            if (!Instant.now().isBefore(deadline)) {
+                budgetExhausted = true;
+                break;
+            }
+            int chunk = fetchLogRepository.trimChunk(cutoff, watermark.position(), LEDGER_TRIM_CHUNK);
+            removed += chunk;
+            if (chunk < LEDGER_TRIM_CHUNK) {
+                break;
+            }
+        }
+        if (removed > 0) {
+            log.info(
+                    "ledger trim removed {} entries older than {}, bounded by sink {} at position {}{}",
+                    removed,
+                    properties.ledgerMaxAge(),
+                    watermark.sink(),
+                    watermark.position(),
+                    budgetExhausted ? " (work budget reached; the next pass continues)" : "");
+        }
+        return new LedgerTrim(removed, budgetExhausted, watermark.sink());
+    }
+
     @Requirements({"GW_FACADE_0019"})
     public PassResult sweepStagingRefs(String actor) {
         if (!properties.stagingSweepEnabled()) {

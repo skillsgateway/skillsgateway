@@ -81,6 +81,10 @@ public class RetentionScheduler {
             if (result.acted() > 0) {
                 log.info("retention compaction purged {} snapshots", result.acted());
             }
+            // A second duty of the same pass, under the same lease and the same switch
+            // (GW_RETENTION_0009). It logs its own line when it removes anything, so nothing is said here
+            // about the ordinary case of a ledger nothing consumes.
+            retentionService.trimLedger(RetentionService.POLICY_ACTOR);
         } catch (RuntimeException e) {
             log.warn("retention compaction pass failed", e);
         }

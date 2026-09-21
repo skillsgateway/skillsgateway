@@ -235,10 +235,10 @@ requirements:
   - id: GW_AUDIT_0005
     title: Audit export cursor replay
     significance: shall
-    description: The system shall allow an administrator to set an audit export sink's position to any earlier ledger sequence, after which the entries following that sequence are delivered to the sink again.
-    rationale: A consumer that lost or corrupted its copy of the ledger needs the gateway to re-send history; expressing replay as a position reset keeps one delivery path instead of a separate replay mode.
+    description: "The system shall allow an administrator to set an audit export sink's position to any earlier ledger sequence, after which the entries following that sequence are delivered to the sink again, reaching in every case only those entries the ledger still holds."
+    rationale: "A consumer that lost or corrupted its copy of the ledger needs the gateway to re-send history; expressing replay as a position reset keeps one delivery path instead of a separate replay mode. Replay cannot outrun retention: trimming removes only entries every enabled sink has already taken (GW_RETENTION_0009), so rewinding an existing sink can only ask again for what that sink was handed, while a sink registered later and starting at zero begins at the oldest surviving entry rather than at the beginning of time."
     categories: ["functional-suitability", "reliability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_AUDIT_0006
     title: Portal audit export surface
@@ -693,10 +693,10 @@ requirements:
   - id: GW_OBSERVABILITY_0003
     title: Always-recorded gateway metrics and observations
     significance: shall
-    description: The system shall record, through its metrics and observation registries and regardless of whether telemetry export is enabled, an ingestion timing observation tagged with its outcome, an approval-decision observation tagged with the decision taken, and a facade fetch counter tagged with the fetch event kind, all named under the skills_gateway prefix and carrying only fixed-vocabulary tags, so that enabling OpenTelemetry export in a deployment publishes them without any code or configuration change to the gateway itself, and shall not attempt any telemetry export unless a deployment explicitly enables it.
-    rationale: Instrumentation that must be added at incident time is instrumentation that is missing at incident time — recording always and exporting opt-in gives every deployment the same numbers the moment it turns on a collector, while fixed-vocabulary tags keep an estate of any size from exploding a time-series backend, and the export default keeps builds and tests free of OTLP attempts.
+    description: The system shall record, through its metrics and observation registries and regardless of whether telemetry export is enabled, an ingestion timing observation tagged with its outcome, an approval-decision observation tagged with the decision taken, a facade fetch counter tagged with the fetch event kind, a gauge of the audit ledger's depth, and a gauge of the age of the oldest ledger entry no enabled export sink has taken, all named under the skills_gateway prefix and carrying only fixed-vocabulary tags, so that enabling OpenTelemetry export in a deployment publishes them without any code or configuration change to the gateway itself, and shall not attempt any telemetry export unless a deployment explicitly enables it.
+    rationale: Instrumentation that must be added at incident time is instrumentation that is missing at incident time — recording always and exporting opt-in gives every deployment the same numbers the moment it turns on a collector, while fixed-vocabulary tags keep an estate of any size from exploding a time-series backend, and the export default keeps builds and tests free of OTLP attempts. The two ledger gauges are here rather than as a requirement of their own because they are the same statement applied to one more thing; the second is what makes an unbounded ledger a number an operator can watch in the deployment where GW_RETENTION_0009 deliberately trims nothing because nothing consumes it.
     categories: ["functional-suitability", "reliability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_OBSERVABILITY_0004
     title: Adoption page in the admin portal
@@ -1681,6 +1681,26 @@ requirements:
     description: "The system shall honour without limit any configured resolution bound that is at or below the value it ships with; shall honour a configured bound above that value only up to a limit it defines for each bound, using its own limit in place of the configured value beyond that point; shall record every such substitution, naming the bound, the value that was configured and the value in force; and shall start normally in either case."
     rationale: "The bounds exist so that no manifest the gateway will look at can exhaust the gateway, and a bound an operator can set to any value is not that — it is a control that can be switched off by typing a large number, after which the gateway behaves exactly as an unbounded resolver while its own configuration still claims a limit. Lowering is never restricted because an operator asking for a tighter gateway is asking for more of what these bounds are for, and raising is not refused outright because a legitimate marketplace has to be able to outgrow a default. Substitution rather than a refused start is the proportionate answer for a resource budget: a stale number in a manifest should not be an outage, and the substitution is only defensible if it is recorded, since an operator who set a number and got a different one has no other way to find out."
     categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_RETENTION_0009
+    title: Audit ledger read entries are trimmed only behind every sink's export position
+    significance: shall
+    description: "The system shall, while retention is enabled and a ledger maximum age is configured, remove during its scheduled hard-delete compaction pass those append-only audit ledger entries that record a facade read — a ref advertisement or a pack send — whose timestamp is older than that maximum age and whose ledger position is at or below the lowest export position held by any enabled audit export sink; shall remove nothing while no enabled sink exists or no maximum age is configured; shall bound each pass by a fixed work budget and resume on the next pass rather than exceed it; and shall report per pass how many entries it removed and which sink holds the position that bounded it."
+    rationale: "Nothing else bounds the one table that grows with every client poll, and an operator under a retention obligation has no mechanism at all today. The export position required by GW_AUDIT_0004 is the only evidence the gateway has that some other system now holds an entry, so trimming behind it is the one deletion that destroys no record; a deployment that exports nothing is deliberately left unbounded rather than silently stripped of its only copy of the evidence, which makes registering a destination the stated price of bounding the table rather than a surprise. The work budget exists because the pass shares a lease with compaction and must not hold it indefinitely on the first run against a table years deep."
+    references:
+      requirement_ids: ["GW_AUDIT_0004"]
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_RETENTION_0010
+    title: Administrative and publication ledger entries are never trimmed
+    significance: shall
+    description: "The system shall never remove an append-only audit ledger entry recording an administrative action or a first-party publication, whatever its age and whatever the export positions permit, admitting to trimming only a closed set of facade read events so that a ledger event kind introduced later is not eligible until it is deliberately admitted."
+    rationale: "The compliance-bearing half of the ledger is also its low-volume half, so exempting it costs nothing and removes the whole class of error where a retention setting quietly erases the record of who decided what. This is the principle GW_RETENTION_0008 already fixes for revocation, generalised to the whole administrative half rather than restated as a new one. The admitted set is closed rather than open because the failure modes are not symmetric: a forgotten addition grows the table, while a forgotten exclusion deletes evidence."
+    references:
+      requirement_ids: ["GW_RETENTION_0008"]
+    categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
   - id: GW_INGEST_0030.1

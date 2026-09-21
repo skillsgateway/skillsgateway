@@ -967,6 +967,7 @@ skills-gateway:
 | `skills-gateway.retention.compaction-interval` | duration | `6h` | Compaction (hard delete) interval. |
 | `skills-gateway.retention.batch-size` | integer | `200` | Snapshots per marketplace per pass. |
 | `skills-gateway.retention.staging-ref-max-age` | duration | `24h` | How long an abandoned publication staging ref must be observed before compaction removes it. Zero or negative disables the sweep. |
+| `skills-gateway.retention.ledger-max-age` | _(unset)_ | How old an audit-ledger read entry must be before the compaction pass may remove it. **Unset, zero or negative switches the trim off**, and it removes nothing regardless unless an enabled [export sink](../guides/exporting-the-audit-ledger.md) has already taken the entries — see [Bound the audit ledger](../guides/snapshot-retention.md#7-bound-the-audit-ledger). |
 | `skills-gateway.retention.defaults.held-max-age` | duration | `90d` | Zero or negative disables the criterion. |
 | `skills-gateway.retention.defaults.superseded` | boolean | `true` | Enables the supersession criterion. |
 | `skills-gateway.retention.defaults.superseded-min-age` | duration | `30d` | Minimum age of a superseded snapshot. |

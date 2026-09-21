@@ -59,7 +59,10 @@ class ConfigSurfaceBudgetTests {
      * set and the issuer are read from the identity provider the web surface already trusts, so
      * they are not configurable here at all — and cannot diverge from it.
      */
-    private static final int BUDGET = 106;
+    // 107 since bound-ledger-growth: `retention.ledger-max-age`, the one policy in that change an
+    // operator has an opinion about. Its chunk size and work budget are constants for that reason.
+    // The argument the ratchet asks for is in that change's proposal, under Impact.
+    private static final int BUDGET = 107;
 
     /** Where the measured breakdown is written, so a run's numbers survive for a PR body. */
     private static final Path REPORT = Path.of("target", "config-surface.txt");

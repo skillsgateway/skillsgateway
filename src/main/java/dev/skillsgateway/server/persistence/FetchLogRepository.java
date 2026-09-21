@@ -9,6 +9,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -338,4 +340,76 @@ public class FetchLogRepository {
     }
 
     public record FetchRecord(long id, Instant ts, String source, String principal, String marketplace, String event) {}
+
+    /**
+     * The ledger events a retention trim may remove (GW_RETENTION_0010).
+     *
+     * <p>An <b>allowlist</b>, not a denylist, and the asymmetry is the whole reason: a ledger event
+     * kind added later and forgotten here grows the table, while one forgotten from a denylist
+     * deletes evidence. These two are the facade reads — the rows that exist in their millions
+     * because every client poll writes one — and everything else in this table is the
+     * administrative and publication record, which is the compliance-bearing half and also the
+     * small one, so exempting all of it costs nothing.
+     *
+     * <p>Deliberately matched on {@code event} rather than on {@code source}: {@code source} holds
+     * the client address on a facade entry and the literal {@code admin} only on an administrative
+     * one, so it is an IP most of the time and cannot carry this decision.
+     */
+    public static final Set<String> TRIMMABLE_EVENTS = Set.of("info-refs", "upload-pack");
+
+    /**
+     * Rows in the ledger, from the planner's estimate rather than a count (GW_OBSERVABILITY_0003).
+     *
+     * <p>A gauge is read on every scrape, and this table is the one that gets large — {@code
+     * count(*)} on it is a sequential scan of the thing the gauge exists to warn about, which would
+     * make watching the problem part of the problem. The estimate is maintained by autovacuum and
+     * is approximate by design; for a number an operator watches trend upward, approximate is the
+     * right precision. Falls back to zero before the table has ever been analysed.
+     */
+    @Requirements({"GW_OBSERVABILITY_0003"})
+    public long approximateDepth() {
+        Long estimate = jdbc.sql("SELECT reltuples::BIGINT FROM pg_class WHERE oid = 'fetch_log'::regclass")
+                .query(Long.class)
+                .optional()
+                .orElse(0L);
+        return estimate < 0 ? 0 : estimate;
+    }
+
+    /**
+     * The timestamp of the oldest entry at or above {@code position} — the oldest thing no export
+     * sink has taken yet (GW_OBSERVABILITY_0003). Empty when everything has been exported.
+     */
+    @Requirements({"GW_OBSERVABILITY_0003"})
+    public Optional<Instant> oldestAbove(long position) {
+        return jdbc.sql("SELECT MIN(ts) FROM fetch_log WHERE id > :position")
+                .param("position", position)
+                .query(Instant.class)
+                .optional();
+    }
+
+    /**
+     * Removes one chunk of trimmable ledger entries (GW_RETENTION_0009): oldest first, only the
+     * admitted events, only past the cutoff, and only at or below the watermark an enabled export
+     * sink has already read to.
+     *
+     * <p>Both bounds are load-bearing and neither is sufficient alone. The cutoff is the operator's
+     * retention policy; the watermark is the gateway's only evidence that some other system now
+     * holds the entry, which is what makes this the one deletion here that destroys no record.
+     *
+     * <p>Chunked so the enclosing pass can stop between chunks and resume on the next one: this
+     * shares a lease with compaction, and the first run against a ledger years deep must not hold
+     * it until it finishes.
+     */
+    @Requirements({"GW_RETENTION_0009", "GW_RETENTION_0010"})
+    public int trimChunk(Instant cutoff, long watermark, int limit) {
+        return jdbc.sql("DELETE FROM fetch_log WHERE id IN ("
+                        + " SELECT id FROM fetch_log"
+                        + "  WHERE event = ANY(:events) AND ts < :cutoff AND id <= :watermark"
+                        + "  ORDER BY id LIMIT :limit)")
+                .param("events", TRIMMABLE_EVENTS.toArray(String[]::new))
+                .param("cutoff", OffsetDateTime.ofInstant(cutoff, ZoneOffset.UTC))
+                .param("watermark", watermark)
+                .param("limit", limit)
+                .update();
+    }
 }

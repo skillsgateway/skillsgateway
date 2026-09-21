@@ -49,7 +49,7 @@ public record SkillsGatewayProperties(
             auditExport = new AuditExport(null, null, null, null, null, null);
         }
         if (retention == null) {
-            retention = new Retention(null, null, null, null, null, null, null);
+            retention = new Retention(null, null, null, null, null, null, null, null);
         }
         if (vetting == null) {
             vetting = new Vetting(null, null, null, null, null, null, null, null, null);
@@ -1122,6 +1122,7 @@ public record SkillsGatewayProperties(
             Duration compactionInterval,
             Integer batchSize,
             Duration stagingRefMaxAge,
+            Duration ledgerMaxAge,
             Policy defaults,
             Map<String, Policy> marketplaces) {
 
@@ -1149,6 +1150,19 @@ public record SkillsGatewayProperties(
             }
             defaults = merge(defaults, FALLBACK);
             marketplaces = marketplaces == null ? Map.of() : Map.copyOf(marketplaces);
+        }
+
+        /**
+         * Whether the audit ledger trim runs at all (GW_RETENTION_0009). Deliberately has no default:
+         * a deployment that never asked for its ledger to be shortened does not get it shortened,
+         * and unset is therefore off rather than some age the gateway picked. Zero and negative are
+         * off for the reason {@link #stagingSweepEnabled()} states.
+         *
+         * <p>Arming it is not sufficient on its own. Nothing is removed that no enabled export sink
+         * has already taken, so a deployment with no sink keeps its ledger whatever this says.
+         */
+        public boolean ledgerTrimEnabled() {
+            return ledgerMaxAge != null && !ledgerMaxAge.isZero() && !ledgerMaxAge.isNegative();
         }
 
         /**

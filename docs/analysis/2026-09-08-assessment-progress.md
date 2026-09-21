@@ -15,6 +15,8 @@ KISS; do not wait for approval between PRs.**
 
 _Refreshed 2026-09-15: steps 3–8 had merged on 2026-09-09 but were still listed open here. Steps 9 and 10 remain not started._
 
+_Refreshed 2026-09-21: step 9's remaining half is answered — see the F7 note below. Partitioning was rejected with its reasoning recorded rather than left as an open recommendation._
+
 | # | Step | What | PR | State |
 | --- | --- | --- | --- | --- |
 | 1 | F6 | Gate the blast-radius report behind approver scoping | [#335](https://github.com/skillsgateway/skillsgateway/pull/335) | **merged** |
@@ -25,7 +27,7 @@ _Refreshed 2026-09-15: steps 3–8 had merged on 2026-09-09 but were still liste
 | 6 | F3 | Publication reconciliation sweep (order not reversed) | [#340](https://github.com/skillsgateway/skillsgateway/pull/340) | **merged** |
 | 7 | F2 | Lease table per sweep, uniformly | [#341](https://github.com/skillsgateway/skillsgateway/pull/341) | **merged** |
 | 8 | F8/§4 | Config-surface ratchet (#342), interval agreement (#343), revocation freshness not a knob (#344), budgets clamped (#346) | [#342](https://github.com/skillsgateway/skillsgateway/pull/342) [#343](https://github.com/skillsgateway/skillsgateway/pull/343) [#344](https://github.com/skillsgateway/skillsgateway/pull/344) [#346](https://github.com/skillsgateway/skillsgateway/pull/346) | **merged** |
-| 9 | F7(1,3) | Ledger honesty + partitioning | [#444](https://github.com/skillsgateway/skillsgateway/pull/444) | honesty half **merged**; partitioning not started |
+| 9 | F7(1,3) | Ledger honesty + growth | [#444](https://github.com/skillsgateway/skillsgateway/pull/444), [#464](https://github.com/skillsgateway/skillsgateway/pull/464) | honesty half **merged**; growth half answered — **partitioning rejected**, ledger trimmed behind the export cursor instead |
 | 10 | F1, D4, D5 | Freeze object-store; stop rule in `CLAUDE.md`; one-page capability map | — | **D4 and D5 already shipped** (`CLAUDE.md` "The stop rule", `docs/manual/capability-map.md`); F1 is an owner decision, not work |
 
 **D1 is now satisfied** — F4 and F6 are both merged, so `docs/analysis/` may be
@@ -99,6 +101,18 @@ doing it; publishing was explicitly the owner's call.
   cosmetic. Partitioning (F7.3) is a behaviour change and needs a full OpenSpec
   change — its design must open with whether a scheduled partition sweep can be
   avoided, because the stop rule makes "adds a scheduled sweep" an argued cost.
+
+    **Answered, and the answer was no** (`bound-ledger-growth`). The design
+    rejects native range partitioning: new partitions are a recurring obligation
+    that would have to be discharged by the very scheduled thing the stop rule
+    asks to avoid, cannot be tied to a pass that defaults to off without turning
+    a missed partition into a failed `INSERT` on the serving hot path, and would
+    scatter `idx_fetch_log_adoption` across every partition and so regress a live
+    read. What shipped instead adds no sweep and no schema change: the existing
+    six-hourly compaction pass gains a ledger trim, bounded by the lowest export
+    cursor across enabled sinks, never touching the administrative half. A
+    deployment with no sink keeps its ledger forever, deliberately and visibly —
+    two gauges make that a line on a chart rather than a surprise.
 - **The `skills-gateway.roles.enabled` residue is half cleared (re-verified
   2026-09-20).** The switch went in #210. The docs half is now clean — zero hits
   for `Enforcement is enabled` or "While role enforcement is enabled" anywhere in

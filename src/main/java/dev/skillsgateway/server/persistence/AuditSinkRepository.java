@@ -39,6 +39,26 @@ public class AuditSinkRepository {
                 .list();
     }
 
+    /**
+     * The lowest export position any enabled sink holds, and the sink that holds it
+     * (GW_RETENTION_0009) — the bound on what the ledger trim may remove.
+     *
+     * <p>Empty means <em>no enabled sink exists</em>, which is not the same fact as a sink sitting
+     * at position zero. Both stop the trim, for different reasons: one because nothing consumes the
+     * ledger at all, the other because the consumer has taken nothing yet. Collapsing them would
+     * leave an operator unable to tell "I have not registered a destination" from "my destination
+     * is stuck", so they stay distinct all the way out to the log line.
+     */
+    public Optional<Watermark> lowestEnabledCursor() {
+        return jdbc.sql("SELECT name, cursor_position FROM audit_sinks WHERE enabled"
+                        + " ORDER BY cursor_position, id LIMIT 1")
+                .query((rs, rowNum) -> new Watermark(rs.getString("name"), rs.getLong("cursor_position")))
+                .optional();
+    }
+
+    /** The slowest enabled consumer: how far it has read, and which one it is. */
+    public record Watermark(String sink, long position) {}
+
     public List<AuditSink> listEnabled() {
         return jdbc.sql("SELECT * FROM audit_sinks WHERE enabled ORDER BY id")
                 .query(AuditSink.class)

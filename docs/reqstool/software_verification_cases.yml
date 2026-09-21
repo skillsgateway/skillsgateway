@@ -2300,6 +2300,35 @@ cases:
       itself below the value the gateway ships with
     revision: "0.1.0"
 
+  - id: SVC_GW_RETENTION_0009
+    requirement_ids: ["GW_RETENTION_0009"]
+    title: The trim is bounded by the slowest enabled sink, and by nothing else
+    verification: automated-test
+    description: |
+      GIVEN a ledger of facade read entries older than the configured maximum age
+      WHEN the compaction pass runs with no sink at all, then with one enabled sink that has
+      exported only part of the ledger, then with a second enabled sink further behind, then
+      with the laggard disabled, then with retention disabled, and then with no maximum age
+      configured
+      THEN nothing is removed in the no-sink, retention-disabled and no-age cases, each other
+      case removes only entries at or below the lowest export position held by an enabled
+      sink, an entry past the cutoff but above that position survives, the pass stops at its
+      work budget and resumes on the next pass, and each pass reports how many it removed and
+      which sink bounded it
+    revision: "0.1.0"
+
+  - id: SVC_GW_RETENTION_0010
+    requirement_ids: ["GW_RETENTION_0010"]
+    title: The administrative half of the ledger survives every trim
+    verification: automated-test
+    description: |
+      GIVEN administrative and publication ledger entries older than the configured maximum
+      age and below every enabled sink's export position
+      WHEN the compaction pass trims the ledger
+      THEN every such entry survives, only the closed set of facade read events is removed,
+      and an event kind outside that set is not eligible
+    revision: "0.1.0"
+
   - id: SVC_GW_INGEST_0030.1
     requirement_ids: ["GW_INGEST_0030.1"]
     title: The closure and its members record the value copies the requirement describes

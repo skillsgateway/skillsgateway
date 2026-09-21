@@ -230,6 +230,27 @@ Because entries carry the principal, marketplace and SHA, the inventory question
 — "every identity that fetched this exact content" — is a single query against
 the ledger.
 
+### Append-only, and finite
+
+Append-only is a rule about writes: nothing in the gateway updates a ledger row
+or deletes one to change what it says. It was never a promise that the table
+grows forever, and it could not be — `info-refs` is appended on every client
+poll, so the ledger is the one table whose size is set by how often developers
+run `git fetch` rather than by how much the organisation does.
+
+What bounds it is deliberately narrow. Only the two facade **read** events are
+ever removable, and only once **every enabled export sink has already taken
+them**; the administrative half — who approved, rejected, revoked, registered —
+is never removable at any age. Nothing is removed at all unless an operator
+configures a maximum age, and nothing is removed in a deployment with no export
+sink, because then the gateway's own copy is the only copy and deleting it would
+destroy the evidence rather than age it.
+
+So the ledger is append-only in the sense that matters — no entry ever changes
+its meaning — and finite only behind proof that something else holds what is
+being dropped. See
+[Bound the audit ledger](../guides/snapshot-retention.md#7-bound-the-audit-ledger).
+
 ### Exporting it
 
 The portal view is a recent-activity table; evidence lives in your compliance
