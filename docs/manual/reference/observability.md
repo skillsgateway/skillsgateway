@@ -111,6 +111,25 @@ OTLP export. To publish telemetry, a deployment sets `arconia.otel.enabled=true`
 `skills_gateway.*` instruments flow immediately — they were being recorded all
 along.
 
+### From the Helm chart
+
+The chart had no values for this, so a default install recorded everything and
+exported nothing — including the two metrics this page tells an operator to **alert
+on**, which therefore reached nobody. One value is the switch:
+
+```yaml
+otel:
+  enabled: true
+  endpoint: http://otel-collector.observability:4318
+  protocol: http/protobuf        # or grpc, matching the receiver
+```
+
+The chart sets `ARCONIA_OTEL_ENABLED`, the endpoint, the protocol and
+`OTEL_SERVICE_NAME` from those, and passes `otel.extraEnv` through for anything else
+the standard variables cover — headers for an authenticated collector, resource
+attributes, sampling. Enabling it without an endpoint fails the render rather than
+the interval: exporting to nowhere reports nothing and says nothing.
+
 ## Local stack
 
 For local work the `observability` profile starts a Grafana LGTM dev container

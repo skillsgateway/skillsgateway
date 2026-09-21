@@ -52,6 +52,12 @@ securityContext:
 # See guides/deploying-on-kubernetes.md.
 replicaCount: 1
 
+# How long the kubelet waits after SIGTERM before SIGKILL. The gateway drains on
+# SIGTERM (`server.shutdown: graceful`), and what it is draining can be a large
+# upload-pack, so the default 30s is not obviously enough. Raise it if clients see
+# truncated fetches during a rollout.
+terminationGracePeriodSeconds: 60
+
 # Which storage holds the git repositories. The gateway takes this from a name
 # and never infers it, and neither does the chart: an object-store selection
 # missing what it needs fails the render, the same way it would fail the start.
@@ -249,6 +255,29 @@ extraEnvFrom: []
 #      name: skills-gateway-extra
 #  - configMapRef:
 #      name: skills-gateway-extra
+
+# Telemetry export. The gateway always *records* its metrics and observations, whatever
+# is set here (GW_OBSERVABILITY_0003); this is only whether they leave the process. Until
+# something is set, the two metrics the observability reference tells an operator to alert
+# on -- storage.conditional_write.exhaustions and mirror.stale_refs -- are recorded and
+# reach nobody, which is the gap this closes.
+#
+# `endpoint` is the collector's OTLP address. Setting it is the whole switch: the chart
+# turns Arconia's exporter on and passes the standard OTEL_* variables through, so nothing
+# about the gateway's own configuration changes.
+otel:
+  enabled: false
+  endpoint: ""
+  # http/protobuf or grpc. Match the collector's receiver.
+  protocol: http/protobuf
+  # Extra OTEL_* variables, passed through as written -- headers for an authenticated
+  # collector, resource attributes, sampling.
+  extraEnv: []
+  #  - name: OTEL_EXPORTER_OTLP_HEADERS
+  #    valueFrom:
+  #      secretKeyRef:
+  #        name: skills-gateway-otel
+  #        key: headers
 
 nodeSelector: {}
 tolerations: []

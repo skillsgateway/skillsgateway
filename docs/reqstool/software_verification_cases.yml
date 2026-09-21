@@ -318,6 +318,29 @@ cases:
       AND a caller holding no role to read the ledger is refused
     revision: "0.1.0"
 
+  - id: SVC_GW_FACADE_0033
+    requirement_ids: ["GW_FACADE_0033"]
+    title: A shutdown drains in-flight transfers
+    verification: automated-test
+    description: |
+      GIVEN the packaged application and its deployment chart
+      WHEN the shutdown configuration and the pod's grace period are read
+      THEN the application is configured to drain on termination
+      AND the chart sets a grace period for the orchestrator to wait through it
+    revision: "0.1.0"
+
+  - id: SVC_GW_FACADE_0034
+    requirement_ids: ["GW_FACADE_0034"]
+    title: Liveness and readiness are distinct probes
+    verification: automated-test
+    description: |
+      GIVEN the packaged application and its deployment chart
+      WHEN the health groups and the pod's probe paths are read
+      THEN liveness names no dependency and readiness names the database and git storage
+      AND the two probes address the two distinct paths
+      AND both paths are permitted without authentication
+    revision: "0.1.0"
+
   - id: SVC_GW_RETENTION_0001
     requirement_ids: ["GW_RETENTION_0001"]
     title: Retention selects the aged and superseded snapshots and nothing else

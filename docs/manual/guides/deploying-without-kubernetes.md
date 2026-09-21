@@ -394,3 +394,10 @@ If your manifests declare [external plugin sources](../reference/compatibility.m
 those clone URLs are additional destinations. They are refused by default;
 leaving `skills-gateway.ingestion.allow-external-sources` unset is what keeps
 the outbound set bounded to the marketplaces you registered.
+
+## Backups and upgrades
+
+The database and the git storage are one estate and have to be backed up and restored
+together — see
+[Backing up, restoring and upgrading](backup-and-upgrade.md), which also covers what
+startup does to the schema and what a rollout does to an in-flight fetch.

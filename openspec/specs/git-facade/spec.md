@@ -42,7 +42,6 @@ The system SHALL implement GW_FACADE_0018.
 #### Scenario: SVC_GW_FACADE_0018
 The system SHALL pass SVC_GW_FACADE_0018.
 
-
 ### Requirement: GW_FACADE_0031
 The system SHALL implement GW_FACADE_0031.
 
@@ -54,3 +53,16 @@ The system SHALL implement GW_FACADE_0032.
 
 #### Scenario: SVC_GW_FACADE_0032
 The system SHALL pass SVC_GW_FACADE_0032.
+
+### Requirement: GW_FACADE_0033
+The system SHALL implement GW_FACADE_0033.
+
+#### Scenario: SVC_GW_FACADE_0033
+The system SHALL pass SVC_GW_FACADE_0033.
+
+### Requirement: GW_FACADE_0034
+The system SHALL implement GW_FACADE_0034.
+
+#### Scenario: SVC_GW_FACADE_0034
+The system SHALL pass SVC_GW_FACADE_0034.
+
