@@ -21,7 +21,8 @@ A fixed sidebar, grouped:
 | Tools | Source code | the project repository — leaves the portal, opens in a new tab |
 
 [Marketplace detail](#marketplace-detail) is reached by clicking a marketplace,
-not from the sidebar. [Access tokens](#access-tokens) is a per-user concern, not
+not from the sidebar, and [Snapshot contents](#snapshot-contents) from a
+snapshot on that page. [Access tokens](#access-tokens) is a per-user concern, not
 estate-wide navigation — it is reached from the user menu, described next, and
 from the Overview page's Access tokens card; `/tokens` remains a resolvable
 address for existing bookmarks and links.
@@ -79,7 +80,7 @@ and refuses what it must regardless of what the menu shows.
 ## Authorization
 
 The server refuses mutations, the audit
-surface and the [snapshot preview reads](#preview-pane) to sessions without an
+surface and the [snapshot contents reads](#snapshot-contents) to sessions without an
 applicable role — see
 [Delegated administration](../guides/delegated-administration.md); the portal
 surfaces those refusals as errors rather than hiding controls.
@@ -343,29 +344,16 @@ snapshot that changed nothing says so.
 This is the review surface, and it works on `held` snapshots — inspecting a
 snapshot must not require serving it.
 
-### Preview pane
+### Contents glance
 
-The **Preview files** toggle on each snapshot card opens the reviewer preview
-pane: the pinned commit's actual content, not a summary of it.
+Inside **Show contents**, below the inventory, a line names how many paths the
+snapshot carries, links to the one or two that identify it
+(`.claude-plugin/marketplace.json` and the first `SKILL.md`), and offers
+**Inspect contents**. Each of those links opens the snapshot contents page at
+that file.
 
-- **Files**: a scrollable file tree (path and size, from
-  `GET /api/v1/snapshots/{id}/files`) beside a viewer for the selected file
-  (`GET /api/v1/snapshots/{id}/file?path=`). A skill's `SKILL.md` is opened
-  automatically. Markdown renders inertly — there is no HTML pipeline at all,
-  so HTML embedded in a hostile file appears as visible text and links are
-  shown but never navigable. Other text renders preformatted; a binary file is
-  described ("Binary file (N bytes) — content is not rendered."); a file over
-  the size cap says it is truncated and shows the first part.
-- **Diff vs served**: the delta against the marketplace's currently served
-  commit (`GET /api/v1/snapshots/{id}/diff`) — one row per added, modified or
-  removed path, each expandable to its unified text diff. When nothing is
-  served the pane says so: there is no baseline, and approving the snapshot
-  serves all of it.
-
-This is inspection, not execution: nothing fetched here is ever run, followed
-or injected as markup, and the pane changes nothing about what the facade
-serves. These reads are privileged — admin or an approver of this marketplace
-— so the pane shows an error to a session holding neither.
+Reading a commit is not a job for a pane beside three other cards, so the
+reading happens on its own page.
 
 ### Set up a client
 
@@ -595,6 +583,71 @@ Below the snapshots, the marketplace's slice of the ledger: the entries from
 verdict colouring as the [Audit log](#audit-log) page — a blocked verdict reads
 red here too. A **See the full ledger** link goes to `/audit`. Empty state:
 "Nothing recorded against this marketplace yet."
+
+---
+
+## Snapshot contents
+
+**Route:** `/marketplaces/:name/snapshots/:id/files` · **Heading:** Snapshot
+contents
+
+The reviewer's file explorer for one snapshot: exactly the commit it pins. It
+is reached from **Inspect contents** on a snapshot card, or from any of the
+quick-open links in that card's contents glance.
+
+**The address is the feature.** Approval is a two-person decision
+(see [Approving snapshots](../guides/approving-snapshots.md)), and this page is
+addressed so the first reviewer can send the second a link to a *file* rather
+than directions for finding it. The selected path is in the query string:
+
+```text
+/marketplaces/acme/snapshots/41/files?path=plugins/hello/skills/hello/SKILL.md
+```
+
+Opening that address restores the same file, with the directories above it
+already open. Back and forward walk the files visited. Which directories are
+open is not in the address — it is derived from the selection and from what you
+have since toggled.
+
+The page takes the whole window, and each pane scrolls on its own; the page
+itself does not scroll.
+
+**Left pane — the tree.** The paths of the pinned commit
+(`GET /api/v1/snapshots/{id}/files`), nested into real directories, directories
+before files, sizes on the right. Paths this snapshot *removes* relative to what
+is served are merged in and marked `removed`: a surface for reading a change
+that hid the deletions would be the wrong surface.
+
+Above it, a filter over the loaded tree. Its count is stated against the set it
+searched — "12 matching of 2000" — and when the listing was cut at its limit the
+line says that too, so a search is never read as complete when it cannot be.
+
+**Right pane — the file.** The selected blob
+(`GET /api/v1/snapshots/{id}/file?path=`), with a **vs served** toggle for that
+one file, read out of `GET /api/v1/snapshots/{id}/diff`. Files and the diff no
+longer compete for one box: switching to the diff leaves the tree where it is.
+
+Every bound of these reads is a state this page renders on purpose:
+
+| Condition | What the page says |
+| --- | --- |
+| Listing cut at 2000 paths | "…, and the listing is cut at its limit", beside the count |
+| Blob over 128 KiB | "Truncated: showing the first part of N bytes.", with the first part |
+| Binary blob | "Binary file (N bytes) — content is not rendered." |
+| Path removed by this snapshot | Marked `removed` in the tree; the pane shows the removal |
+| File unchanged vs served | "Unchanged against the served commit." |
+| Nothing served yet | No baseline; approving serves all of it |
+| No approver role | "You cannot read this snapshot's contents.", naming the role needed |
+| Snapshot is not this marketplace's | "Snapshot N is not a snapshot of X." |
+
+Markdown renders inertly — there is no HTML pipeline at all, so HTML embedded in
+a hostile file appears as visible text and links are shown but never navigable.
+Other text renders preformatted. This is inspection, not execution: nothing
+fetched here is ever run, followed or injected as markup, and the page changes
+nothing about what the facade serves.
+
+The reads are privileged — admin or an approver of this marketplace — and the
+page is gated by the server refusing them, not by the link being hidden.
 
 ---
 

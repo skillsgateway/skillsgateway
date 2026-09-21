@@ -8,6 +8,7 @@ import { AdoptionPage } from "@/pages/adoption";
 import { AuditPage } from "@/pages/audit";
 import { MarketplaceDetailPage } from "@/pages/marketplace-detail";
 import { MarketplacesPage } from "@/pages/marketplaces";
+import { SnapshotFilesPage } from "@/pages/snapshot-files";
 import { OverviewPage } from "@/pages/overview";
 import { TokensPage } from "@/pages/tokens";
 import { VettingPage } from "@/pages/vetting";
@@ -27,6 +28,12 @@ const router = createBrowserRouter([
       { path: "/", element: <OverviewPage /> },
       { path: "/marketplaces", element: <MarketplacesPage /> },
       { path: "/marketplaces/:name", element: <MarketplaceDetailPage /> },
+      // Wide, self-scrolling: two panes that own their scroll, in a page that does not.
+      {
+        path: "/marketplaces/:name/snapshots/:id/files",
+        element: <SnapshotFilesPage />,
+        handle: { layout: "wide" },
+      },
       { path: "/audit", element: <AuditPage /> },
       { path: "/vetting", element: <VettingPage /> },
       { path: "/adoption", element: <AdoptionPage /> },

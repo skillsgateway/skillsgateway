@@ -2,18 +2,21 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "next-themes";
-import { MemoryRouter } from "react-router-dom";
+import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router-dom";
 import { beforeEach, expect, test, vi } from "vitest";
 import { AppLayout, UserMenuView } from "./app-layout";
 
-function renderLayout() {
+// A data router, as main.tsx uses: the shell reads each route's `handle` to decide whether the
+// page gets the reading column or the whole viewport, and only a data router carries one.
+function renderLayout(initialEntry = "/") {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const router = createMemoryRouter([{ path: "*", element: <AppLayout /> }], {
+    initialEntries: [initialEntry],
+  });
   return render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-        <MemoryRouter>
-          <AppLayout />
-        </MemoryRouter>
+        <RouterProvider router={router} />
       </ThemeProvider>
     </QueryClientProvider>,
   );

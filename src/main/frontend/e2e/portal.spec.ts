@@ -822,13 +822,20 @@ test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async 
 });
 
 /**
- * The reviewer preview pane on a real held-vs-served delta: approve one commit, advance the
- * upstream fixture (modify the skill, add a file), re-ingest, and inspect the held snapshot —
- * tree, inertly rendered SKILL.md, and the diff naming the served baseline's changes.
+ * The reviewer's file explorer on a real held-vs-served delta: approve one commit, advance the
+ * upstream fixture (modify the skill, add a file), re-ingest, and inspect the held snapshot on
+ * its own route — nested tree, inertly rendered SKILL.md, and the file's diff against the
+ * served baseline.
  *
- * @SVCs SVC_GW_APPROVAL_0005
+ * The address is asserted twice, because that is the claim: selecting a file puts it in the
+ * URL, and opening that URL cold — a second approver following a pasted link — restores the
+ * same bytes with nothing else carried over.
+ *
+ * @SVCs SVC_GW_APPROVAL_0005, SVC_GW_INGEST_0032
  */
-test("preview_pane_shows_tree_inert_skill_md_and_diff_vs_served", async ({ page }) => {
+test("snapshot_contents_are_explored_on_an_address_that_restores_the_same_file", async ({
+  page,
+}) => {
   const upstream = process.env.E2E_PREVIEW_UPSTREAM_DIR;
   test.skip(!upstream, "E2E_PREVIEW_UPSTREAM_DIR not provided by run-e2e.sh");
 
@@ -879,29 +886,52 @@ test("preview_pane_shows_tree_inert_skill_md_and_diff_vs_served", async ({ page 
   await expect(card.getByText("held", { exact: true })).toBeVisible();
 
   await page.getByRole("link", { name, exact: true }).click();
-  // The held snapshot is the newest: its card is the one whose preview we open.
+  // The held snapshot is the newest: its card is the one we inspect.
   const heldCard = page.locator("[data-slot=card]").filter({ hasText: "held" }).last();
-  await heldCard.getByRole("button", { name: /Preview files of snapshot \d+/ }).click();
-  const preview = page.getByRole("region", { name: /Preview of snapshot \d+/ });
-  await expect(preview).toBeVisible();
+  await heldCard.getByRole("link", { name: /Inspect contents of snapshot \d+/ }).click();
 
-  // The tree lists the pinned commit's paths, and SKILL.md is quick-opened, rendered inertly:
-  // the hostile embedded HTML is visible as text and never becomes an element.
-  await expect(preview.getByText(".claude-plugin/marketplace.json")).toBeVisible();
-  await expect(preview.getByRole("heading", { name: "Hello skill" })).toBeVisible();
-  await expect(preview.getByText("<img src=x onerror=alert(1)>")).toBeVisible();
+  await expect(page).toHaveURL(/\/marketplaces\/[^/]+\/snapshots\/\d+\/files$/);
+  const tree = page.getByRole("navigation", { name: /File tree of snapshot \d+/ });
+  await expect(tree).toBeVisible();
 
-  // The diff names exactly what moved against the served baseline.
-  await preview.getByRole("button", { name: /Diff of snapshot \d+ vs served/ }).click();
-  await expect(preview.getByText(/Against served commit/)).toBeVisible();
-  await expect(preview.getByText("modified", { exact: true })).toBeVisible();
-  await expect(preview.getByText("plugins/hello/skills/hello/SKILL.md")).toBeVisible();
-  await expect(preview.getByText("added", { exact: true })).toBeVisible();
-  await expect(preview.getByText("docs-NEW.md")).toBeVisible();
-  await preview
-    .getByRole("button", { name: "Show diff of plugins/hello/skills/hello/SKILL.md" })
-    .click();
-  await expect(preview.getByText("+Now with a changed instruction.")).toBeVisible();
+  // A real tree: the skill is reached by opening directories, not by scrolling a flat list.
+  await tree.getByRole("button", { name: "plugins" }).click();
+  await tree.getByRole("button", { name: "hello" }).click();
+  await tree.getByRole("button", { name: "skills" }).click();
+  await tree.getByRole("button", { name: "hello" }).last().click();
+  await tree.getByRole("button", { name: /SKILL\.md/ }).click();
+
+  // Rendered inertly: the hostile embedded HTML is visible as text and never becomes an element.
+  await expect(page.getByRole("heading", { name: "Hello skill" })).toBeVisible();
+  await expect(page.getByText("<img src=x onerror=alert(1)>")).toBeVisible();
+  await expect(page.locator("main img")).toHaveCount(0);
+
+  // The selection is in the address — this is the link an approver sends to the second one.
+  await expect(page).toHaveURL(/\?path=plugins%2Fhello%2Fskills%2Fhello%2FSKILL\.md$/);
+  const deepLink = page.url();
+
+  // And the link is enough on its own: opened cold, it restores the same file, revealed.
+  await page.goto("about:blank");
+  await page.goto(deepLink);
+  await expect(page.getByRole("heading", { name: "Hello skill" })).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: /File tree of snapshot \d+/ }).getByRole("button", {
+      name: /SKILL\.md/,
+    }),
+  ).toHaveAttribute("aria-current", "true");
+
+  // The file's own delta against the served baseline, without the tree going anywhere.
+  await page.getByRole("button", { name: /vs served/ }).click();
+  await expect(page.getByText("+Now with a changed instruction.")).toBeVisible();
+  await expect(page.getByRole("navigation", { name: /File tree of snapshot \d+/ })).toBeVisible();
+
+  // The added file is marked as added in the tree, without the reviewer opening it.
+  const added = page
+    .getByRole("navigation", { name: /File tree of snapshot \d+/ })
+    .getByRole("button", { name: /docs-NEW\.md/ });
+  await expect(added).toContainText("added");
+  await added.click();
+  await expect(page.getByRole("region", { name: "Selected file" })).toContainText("added");
 });
 
 /**

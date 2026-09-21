@@ -1721,6 +1721,14 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
+  - id: GW_INGEST_0032
+    title: Addressable snapshot file inspection
+    significance: shall
+    description: "The system shall present a snapshot's pinned contents on a surface addressed by a single address that names both the snapshot and, when one is selected, a path within it; shall restore from that address alone the same snapshot, the same selected path and its content; shall present the bounds of the underlying reads — a listing cut at its limit, a blob truncated at its size limit, a blob detected as binary, and a path that the snapshot removes relative to what is served — each as a stated condition rather than as an absence; shall report any narrowing of the listing against the size of the set it narrowed, and state when that set is itself cut; and shall apply to this surface the same role rule as the reads it presents, presenting a refusal as a stated condition."
+    rationale: "Approval is a two-person decision about specific bytes, and a surface that cannot be addressed makes the second reviewer's job a set of directions — expand this snapshot, scroll, click the eleventh row — rather than a link, which is both slow and unverifiable: there is no way to know the two people looked at the same thing. Restoring from the address alone is what makes the link worth sending. Stating each bound rather than letting it show as an absence matters more here than on an ordinary page because every one of these bounds exists to defend the reviewer against a hostile upstream, and a defence the reviewer cannot see reads as content that is simply not there; a narrowing reported against an already-cut set is the one case where a count could honestly mislead, so the cut is stated alongside it."
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
   - id: GW_INGEST_0030.1
     title: Every closure and member field is recorded as a value copy taken at ingestion
     significance: shall
