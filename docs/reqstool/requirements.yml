@@ -248,6 +248,14 @@ requirements:
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
 
+  - id: GW_AUDIT_0008
+    title: The ledger browse read is bounded, typed and stably paged
+    significance: shall
+    description: The system shall serve the audit ledger's browse read as a bounded page of typed entries, newest entry first, ordered and paged by the ledger sequence rather than by offset, carrying the sequence a caller passes back to reach the next older page and omitting it once the page reaches the oldest entry held, clamping any requested page size to the same bounds the ledger export uses, and shall restrict the read to callers permitted to read the ledger.
+    rationale: An unbounded read of the one table that grows with every client poll makes the surface that exists to investigate an incident the thing that cannot be opened during one, and untyped rows keyed by column name make every column rename a change to the published contract. Paging by sequence rather than offset is what keeps a page stable while the ledger is being appended to underneath a reader, which offset paging over an append-only table cannot be; sharing the export's bounds avoids a second setting that says the same thing about the same table.
+    categories: ["functional-suitability", "performance-efficiency"]
+    revision: 0.1.0
+
   - id: GW_RETENTION_0001
     title: Snapshot retention policy evaluation
     significance: shall

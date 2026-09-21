@@ -304,6 +304,20 @@ cases:
       THEN the ledger export download control is present and the sink is listed with its target and current ledger position
     revision: "0.1.0"
 
+  - id: SVC_GW_AUDIT_0008
+    requirement_ids: ["GW_AUDIT_0008"]
+    title: The ledger browse read is bounded, typed and stably paged
+    verification: automated-test
+    description: |
+      GIVEN a ledger holding more entries than one page
+      WHEN the browse read is called without a cursor and then with the cursor it returned
+      THEN the first page carries the newest entries, newest first, no more than the bound
+      AND the second page continues strictly older with no entry repeated across the two
+      AND the final page omits the cursor rather than returning it pointing at nothing
+      AND a requested page size above the export maximum is clamped to it
+      AND a caller holding no role to read the ledger is refused
+    revision: "0.1.0"
+
   - id: SVC_GW_RETENTION_0001
     requirement_ids: ["GW_RETENTION_0001"]
     title: Retention selects the aged and superseded snapshots and nothing else

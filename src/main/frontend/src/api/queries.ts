@@ -586,10 +586,20 @@ export function useStaleness() {
   });
 }
 
+/**
+ * The newest page of the ledger. The read is paged rather than whole (GW_AUDIT_0008) — the table it
+ * reads grows with every client poll — so this is the first page, and `nextBefore` is what a
+ * later "load older" control would pass back.
+ */
 export function useAudit() {
   return useQuery({
     queryKey: ["audit"],
-    queryFn: () => api<Record<string, unknown>[]>("/api/v1/audit"),
+    queryFn: async () => {
+      const page = await api<{ entries: Record<string, unknown>[]; nextBefore: number | null }>(
+        "/api/v1/audit",
+      );
+      return page.entries;
+    },
   });
 }
 

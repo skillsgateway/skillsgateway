@@ -37,7 +37,7 @@ test("export_download_and_sink_positions_are_shown", async () => {
 test("a_blocked_vetting_row_is_flagged_and_the_marketplace_links_to_its_detail", async () => {
   server.use(
     http.get("/api/v1/audit", () =>
-      HttpResponse.json([
+      HttpResponse.json({ nextBefore: null, entries: [
         {
           id: 1,
           ts: "2026-08-14T10:00:01Z",
@@ -49,7 +49,7 @@ test("a_blocked_vetting_row_is_flagged_and_the_marketplace_links_to_its_detail",
           // The server writes the outcome lower-cased in the free-text detail.
           detail: "trigger=ingestion; outcome=blocked; vetters=3; chain=secret-scan@1,prompt-injection@1,license-scan@1",
         },
-      ]),
+      ] }),
     ),
   );
   renderPage();
@@ -70,7 +70,7 @@ test("a_blocked_vetting_row_is_flagged_and_the_marketplace_links_to_its_detail",
 test("column_filters_offer_completion_from_present_values", async () => {
   server.use(
     http.get("/api/v1/audit", () =>
-      HttpResponse.json([
+      HttpResponse.json({ nextBefore: null, entries: [
         {
           id: 1,
           ts: "2026-08-14T10:00:01Z",
@@ -87,7 +87,7 @@ test("column_filters_offer_completion_from_present_values", async () => {
           event: "fetch-served",
           sha: "-",
         },
-      ]),
+      ] }),
     ),
     http.get("/api/v1/marketplaces", () =>
       HttpResponse.json([{ name: "corp-marketplace" }, { name: "ri-2" }]),
@@ -158,7 +158,7 @@ test("created_sink_secret_is_shown_once_in_a_dialog", async () => {
 test("the_ledger_opens_with_the_newest_entry_first", async () => {
   server.use(
     http.get("/api/v1/audit", () =>
-      HttpResponse.json([
+      HttpResponse.json({ nextBefore: null, entries: [
         {
           id: 1,
           ts: "2026-09-20T10:00:00.000Z",
@@ -174,7 +174,7 @@ test("the_ledger_opens_with_the_newest_entry_first", async () => {
           event: "vetter-disabled",
           detail: "vetter=secret-scan scope=global enabled=false",
         },
-      ]),
+      ] }),
     ),
   );
   renderPage();

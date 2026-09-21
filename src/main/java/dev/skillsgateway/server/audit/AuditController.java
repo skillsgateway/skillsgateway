@@ -3,6 +3,7 @@ package dev.skillsgateway.server.audit;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.AuditSink;
+import dev.skillsgateway.server.persistence.FetchLogRepository;
 import dev.skillsgateway.server.roles.RoleService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,16 +45,19 @@ public class AuditController {
     private static final String NDJSON = "application/x-ndjson";
 
     private final AuditExportService exportService;
+    private final FetchLogRepository fetchLogRepository;
     private final SkillsGatewayProperties properties;
     private final AdminAuditLogger auditLogger;
     private final RoleService roleService;
 
     public AuditController(
             AuditExportService exportService,
+            FetchLogRepository fetchLogRepository,
             SkillsGatewayProperties properties,
             AdminAuditLogger auditLogger,
             RoleService roleService) {
         this.exportService = exportService;
+        this.fetchLogRepository = fetchLogRepository;
         this.properties = properties;
         this.auditLogger = auditLogger;
         this.roleService = roleService;
@@ -105,6 +109,49 @@ public class AuditController {
     public record CursorRequest(
             @Schema(description = "Ledger sequence to resume after; entries following it are delivered again")
             long after) {}
+
+    @Schema(description = "One page of the audit ledger, newest entry first")
+    public record AuditPage(
+            @Schema(description = "The entries, newest first")
+            List<FetchLogRepository.AuditEntry> entries,
+
+            @Schema(
+                    description = "Pass as `before` for the next, older page. Null when this page reaches"
+                            + " the oldest entry the ledger still holds.")
+            Long nextBefore) {}
+
+    /**
+     * One page of the ledger, newest first (GW_AUDIT_0008).
+     *
+     * <p>Was an unbounded {@code SELECT *} on {@code AdminController} returning rows keyed by column
+     * name, so every column rename was an API change and a portal visit loaded the whole of the one
+     * table the architecture assessment calls "the table that ends the deployment".
+     *
+     * <p>Paginates the opposite way from {@link #export}, deliberately: an export consumer resumes
+     * forward from where it stopped, and a person opening the audit page wants what happened most
+     * recently. The page bound is the export's, rather than a second setting saying the same thing.
+     */
+    @GetMapping
+    @Tag(name = "Audit")
+    @Operation(
+            summary = "Browse the audit ledger",
+            description = "One page of the append-only ledger, newest first: facade fetches with client source"
+                    + " address, identity, ref and commit SHA, and administrative actions with the acting"
+                    + " identity. Page backwards by passing the previous page's `nextBefore` as `before`.")
+    @ApiResponse(responseCode = "200", description = "The page, newest entry first")
+    @ApiResponse(responseCode = "403", description = "The session holds no applicable role")
+    @Requirements({"GW_AUDIT_0008"})
+    public AuditPage browse(
+            @RequestParam(required = false, defaultValue = "0") long before,
+            @RequestParam(required = false) Integer limit,
+            Authentication authentication) {
+        roleService.requireAuditor(authentication);
+        SkillsGatewayProperties.AuditExport bounds = properties.auditExport();
+        int page = Math.clamp(limit == null ? bounds.defaultPageSize() : limit, 1, bounds.maxPageSize());
+        List<FetchLogRepository.AuditEntry> entries = fetchLogRepository.entriesBefore(Math.max(before, 0), page);
+        Long next = entries.size() < page ? null : entries.getLast().id();
+        return new AuditPage(entries, next);
+    }
 
     @GetMapping(value = "/export", produces = NDJSON)
     @Requirements({"GW_AUDIT_0003"})

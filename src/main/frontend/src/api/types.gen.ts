@@ -52,10 +52,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Fetch audit ledger
-         * @description Append-only record of every git facade fetch: client source address, authenticated identity, repository, ref, commit SHA, and timestamp. Portal actions are not in this ledger; approvals live in snapshot provenance.
+         * Browse the audit ledger
+         * @description One page of the append-only ledger, newest first: facade fetches with client source address, identity, ref and commit SHA, and administrative actions with the acting identity. Page backwards by passing the previous page's `nextBefore` as `before`.
          */
-        get: operations["audit"];
+        get: operations["browse"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1723,6 +1723,45 @@ export interface components {
             reason?: string;
             /** @description Set true, as an administrator, to reverse another administrator's withdrawal of this commit (GW_APPROVAL_0017); a reason is required, and the identity that withdrew it may not be the one that reverses it */
             reverseRevocation?: boolean;
+        };
+        /** @description One append-only audit ledger entry */
+        AuditEntry: {
+            /** @description Free-text qualifier, such as the reason given for a vetting override */
+            detail?: string;
+            /** @description What happened */
+            event?: string;
+            /**
+             * Format: int64
+             * @description Ledger sequence; the export cursor and de-duplication key
+             */
+            id?: number;
+            /** @description Marketplace the entry concerns, or '-' */
+            marketplace?: string;
+            /** @description Authenticated identity, when there was one */
+            principal?: string;
+            /** @description For a fetch, the advertised ref the entry concerns (GW_FACADE_0018); null when unknown */
+            ref?: string;
+            /** @description Commit SHA, when the entry concerns one */
+            sha?: string;
+            /** @description Client address for a facade fetch, or 'admin' for an administrative action */
+            source?: string;
+            /**
+             * Format: int64
+             * @description Id of the token that authenticated a facade entry, or null (GW_AUTH_0009)
+             */
+            tokenId?: number;
+            /** @description When the entry was appended, ISO-8601 */
+            ts?: string;
+        };
+        /** @description One page of the audit ledger, newest entry first */
+        AuditPage: {
+            /** @description The entries, newest first */
+            entries?: components["schemas"]["AuditEntry"][];
+            /**
+             * Format: int64
+             * @description Pass as `before` for the next, older page. Null when this page reaches the oldest entry the ledger still holds.
+             */
+            nextBefore?: number;
         };
         /** @description One vetting-chain change addressed to several marketplaces */
         BulkChainChange: {
@@ -3847,24 +3886,34 @@ export interface operations {
             };
         };
     };
-    audit: {
+    browse: {
         parameters: {
-            query?: never;
+            query?: {
+                before?: number;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description The page, newest entry first */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": {
-                        [key: string]: unknown;
-                    }[];
+                    "*/*": components["schemas"]["AuditPage"];
+                };
+            };
+            /** @description The session holds no applicable role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
