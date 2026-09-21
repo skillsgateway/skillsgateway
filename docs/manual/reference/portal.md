@@ -507,6 +507,38 @@ configured vetter and its self-description, so the limits of the heuristics
 are readable at the point of decision. The same section is embedded in the
 [approve dialog](#approve-dialog) on the marketplaces page.
 
+### Chain staleness
+
+Enabling or disabling a vetter, or changing the chain's mode or order, **re-runs
+nothing**. For approved content the re-vetting sweep converges on it; for a
+snapshot still at the approval gate nothing does. So a snapshot ingested before
+a chain change can be approved on evidence a vetter in the chain today never
+produced.
+
+The vetting section says so, against the evidence it qualifies:
+
+| State | Shown |
+| --- | --- |
+| The run came from the chain in force | Nothing. A marking on every snapshot would be noise. |
+| The run came from a different chain | A notice naming **both** chains — the one that produced the evidence and the one in force — and a **Re-run the chain now** button. |
+| The run records no chain identity | *This run records no chain identity, so whether it matches the chain in force is unknown.* No alarm and no button: the gateway does not know that anything is wrong. |
+
+A chain is described as `vetter@version,…;mode=…`, and — when an administrator
+has switched vetters off — `;disabled=[…]`. A switched-off vetter stays named in
+the chain and is recorded on the run as a `disabled` verdict, so a toggle shows
+up in the `disabled=` part rather than by a name disappearing.
+
+**Approval is not blocked by this**, and no configuration makes it block. The
+gateway states the fact and the reviewer decides, the same as for an override or
+a waiver. If they approve anyway, the ledger records
+`snapshot-approved-on-superseded-chain` naming both chains, beside the approval
+rather than instead of it.
+
+**Re-run the chain now** calls `POST /api/v1/snapshots/{id}/revet`. For a held
+snapshot that is a *refresh*, not a re-vetting: the chain runs, the run is
+recorded, the snapshot stays held, and nothing is announced or retracted —
+there is nothing published to retract.
+
 ### Re-vetting panel
 
 Above the vetting section, each snapshot card carries the re-vetting surface.
@@ -515,7 +547,7 @@ Above the vetting section, each snapshot card carries the re-vetting surface.
 | --- | --- |
 | State `approved` | A **Re-vet now** button. |
 | State `revoked` | *revoked by {revokedBy} on {revokedAt}*, and an **Already fetched by** panel. |
-| Anything else | Nothing — re-vetting is about content that is being served. |
+| Anything else | Nothing here — a held snapshot's evidence is refreshed from the [chain staleness notice](#chain-staleness) instead, which is where the reason to refresh it appears. |
 
 **Re-vet now** calls `POST /api/v1/snapshots/{id}/revet` and toasts what the run
 concluded: *re-vetted clear*, *could not conclude*, *has a re-vetting violation;

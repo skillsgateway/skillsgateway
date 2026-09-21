@@ -154,6 +154,52 @@ public class VettingService {
                 vetters(marketplaceId), chainSettings.resolveMode(marketplaceId).mode());
     }
 
+    /**
+     * Whether a snapshot's latest run was produced by the chain its marketplace runs now
+     * (GW_VETTING_0038), and the one place that comparison is made.
+     *
+     * <p>{@link #chainIdentity(long)} alone is not enough, and the reason is a deliberate decision
+     * made elsewhere: a vetter an administrator switches off stays in the chain and is recorded as a
+     * {@code disabled} verdict, so that the disablement is part of the run's evidence rather than a
+     * silently shorter chain (GW_VETTING_0029.2). The identity therefore does not move when a vetter
+     * is toggled — which is precisely the change this comparison exists to catch.
+     *
+     * <p>So both sides are described the same way and compared whole: the identity, plus which
+     * vetters were switched off. Composed rather than parsed out of the stored string, and derived
+     * on both sides by the same code, so the two descriptions cannot drift apart. A vetter the chain
+     * never reached is deliberately not part of it — that is an outcome of one run under
+     * stop-after-fail, not a difference in the chain.
+     */
+    @Requirements({"GW_VETTING_0038"})
+    public ChainStaleness chainStaleness(Snapshot snapshot) {
+        String current = describe(
+                chainIdentity(snapshot.marketplaceId()),
+                vetters(snapshot.marketplaceId()).stream()
+                        .map(Vetter::name)
+                        .filter(vetter -> !toggleService.enabled(vetter, snapshot.marketplaceId()))
+                        .toList());
+        return latestRun(snapshot.id())
+                .map(run -> ChainStaleness.of(
+                        describe(
+                                run.chain(),
+                                run.verdicts().stream()
+                                        .filter(verdict -> verdict.state() == VerdictState.DISABLED)
+                                        .map(VettingRepository.VerdictView::vetter)
+                                        .toList()),
+                        current))
+                .orElseGet(() -> ChainStaleness.noRun(current));
+    }
+
+    /** One chain, described so that two descriptions are comparable and both are readable. */
+    private static String describe(String identity, List<String> disabled) {
+        if (identity == null || identity.isBlank()) {
+            return identity;
+        }
+        return disabled.isEmpty()
+                ? identity
+                : identity + ";disabled=" + disabled.stream().sorted().toList();
+    }
+
     private static String chainIdentity(List<Vetter> ordered, ChainMode mode) {
         return ordered.stream()
                         .map(vetter -> vetter.name() + "@" + vetter.version())

@@ -2329,6 +2329,33 @@ cases:
       and an event kind outside that set is not eligible
     revision: "0.1.0"
 
+  - id: SVC_GW_VETTING_0038
+    requirement_ids: ["GW_VETTING_0038"]
+    title: A run's chain is compared with the chain in force, and undetermined is its own answer
+    verification: automated-test
+    description: |
+      GIVEN a snapshot whose latest chain run records the chain that produced it
+      WHEN the chain in force is identical, then differs by an added vetter, a removed
+      vetter, a version, the order and the mode, and when the run records no chain
+      identity or the snapshot has no run at all
+      THEN the identical case reports the chain in force, each difference reports a
+      different chain and names both, and the missing cases report undetermined rather
+      than either answer
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0038.1
+    requirement_ids: ["GW_VETTING_0038.1"]
+    title: A stale approval is recorded and published, never refused
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot whose latest run was produced by a superseded chain
+      WHEN it is approved
+      THEN the approval proceeds and the snapshot is published, the ledger carries a record
+      naming the chain that produced the evidence and the chain in force, an approval on
+      evidence from the chain in force records no such entry, and no configuration exists
+      that would have refused either
+    revision: "0.1.0"
+
   - id: SVC_GW_INGEST_0030.1
     requirement_ids: ["GW_INGEST_0030.1"]
     title: The closure and its members record the value copies the requirement describes

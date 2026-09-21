@@ -258,6 +258,11 @@ export const createdAuditSink: Schemas["CreatedSink"] = {
 /** A blocked chain run: one vetter failed, one passed — the reviewer's evidence. */
 export const blockedVetting: Schemas["VettingView"] = {
   snapshotId: 1,
+  chainStaleness: {
+    state: "IN_FORCE",
+    runChain: "secret-scan@1,prompt-injection@1;mode=run-all",
+    currentChain: "secret-scan@1,prompt-injection@1;mode=run-all",
+  },
   outcome: "blocked",
   recordedOutcome: "blocked",
   suppressed: [],
@@ -319,6 +324,29 @@ export const blockedVetting: Schemas["VettingView"] = {
       external: false,
     },
   ],
+};
+
+/**
+ * The same evidence, produced by a chain this marketplace no longer runs (GW_VETTING_0038): a
+ * vetter was switched off after the run, so the run's description and the one in force differ.
+ */
+export const supersededChainVetting: Schemas["VettingView"] = {
+  ...blockedVetting,
+  chainStaleness: {
+    state: "SUPERSEDED",
+    runChain: "secret-scan@1,prompt-injection@1;mode=run-all",
+    currentChain: "secret-scan@1,prompt-injection@1;mode=run-all;disabled=[secret-scan]",
+  },
+};
+
+/** A run recorded before the chain identity was stamped: unknown, and not the same as current. */
+export const undeterminedChainVetting: Schemas["VettingView"] = {
+  ...blockedVetting,
+  chainStaleness: {
+    state: "UNDETERMINED",
+    runChain: undefined,
+    currentChain: "secret-scan@1,prompt-injection@1;mode=run-all",
+  },
 };
 
 /** A clean run: every vetter passed and nothing is waiting on a waiver. */

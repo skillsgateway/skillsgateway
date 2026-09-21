@@ -798,6 +798,20 @@ violation does is a deployment setting, not a request parameter — see
 Runs the chain again over the snapshot's pinned content, recording a new run
 with trigger `revet-manual`.
 
+Accepts a snapshot in state `approved` or `held`, and the two mean different
+things:
+
+- **`approved`** — a re-vetting, described below: the run is classified, a
+  violation is written to the ledger and announced, and in `enforce` mode the
+  snapshot is revoked and unpublished.
+- **`held`** — a *refresh*. The chain runs and the run is recorded, and that is
+  all. The snapshot stays held, `revoked` is always `false`, `affected` is always
+  empty, and nothing is announced: there is nothing published to retract. This is
+  what makes a [chain staleness](../portal.md#chain-staleness) marking
+  actionable — the next approval reads the new run.
+
+A `rejected` or `revoked` snapshot is refused with `409`.
+
 ```json
 {"snapshotId":12,"marketplace":"corp-marketplace","sha":"3f9c2ab…","runId":31,
  "classification":"VIOLATION","outcome":"BLOCKED","revoked":true,"mode":"ENFORCE",

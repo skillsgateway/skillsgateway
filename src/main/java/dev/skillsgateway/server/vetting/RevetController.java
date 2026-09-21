@@ -39,20 +39,26 @@ public class RevetController {
     }
 
     @PostMapping("/snapshots/{id}/revet")
-    @Requirements({"GW_VETTING_0012"})
+    @Requirements({"GW_VETTING_0012", "GW_VETTING_0038"})
     @Tag(name = "Vetting")
     @Operation(
-            summary = "Re-vet an approved snapshot now",
+            summary = "Re-vet an approved snapshot, or refresh a held one's evidence, now",
             description = "Runs the vetting chain again over the snapshot's pinned content and records a new run"
                     + " with trigger revet-manual. If the run's effective outcome — after the waivers active"
                     + " right now — objects to the content, the violation is written to the ledger and announced"
                     + " as marketplace.snapshot.revet_violation. In enforce mode the snapshot is then revoked and its"
                     + " published refs are removed; in warn mode, the default, publication is untouched. A run"
                     + " that only blocks because a vetter errored or has not answered is recorded as"
-                    + " inconclusive and never revokes anything.")
+                    + " inconclusive and never revokes anything.\n\nA **held** snapshot is refreshed rather"
+                    + " than re-vetted (GW_VETTING_0038): the chain runs and the run is recorded, and that is all."
+                    + " Nothing is published, so nothing is violated, announced or retracted, and the snapshot"
+                    + " stays held. This is what makes a superseded-chain marking actionable — the next"
+                    + " approval reads the new run. Rejected and revoked snapshots are still refused.")
     @ApiResponse(responseCode = "200", description = "The re-vetting run and what it concluded")
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
-    @ApiResponse(responseCode = "409", description = "The snapshot is not approved; only served content is re-vetted")
+    @ApiResponse(
+            responseCode = "409",
+            description = "The snapshot is rejected or revoked; only approved and held snapshots are re-vetted")
     public RevetService.RevetResult revetSnapshot(@PathVariable long id, Authentication authentication) {
         roleService.requireApproverOfSnapshot(authentication, id);
         return revetService.revetSnapshot(id, authentication.getName());

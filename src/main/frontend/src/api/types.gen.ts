@@ -894,8 +894,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Re-vet an approved snapshot now
+         * Re-vet an approved snapshot, or refresh a held one's evidence, now
          * @description Runs the vetting chain again over the snapshot's pinned content and records a new run with trigger revet-manual. If the run's effective outcome — after the waivers active right now — objects to the content, the violation is written to the ledger and announced as marketplace.snapshot.revet_violation. In enforce mode the snapshot is then revoked and its published refs are removed; in warn mode, the default, publication is untouched. A run that only blocks because a vetter errored or has not answered is recorded as inconclusive and never revokes anything.
+         *
+         *     A **held** snapshot is refreshed rather than re-vetted (GW_VETTING_0038): the chain runs and the run is recorded, and that is all. Nothing is published, so nothing is violated, announced or retracted, and the snapshot stays held. This is what makes a superseded-chain marking actionable — the next approval reads the new run. Rejected and revoked snapshots are still refused.
          */
         post: operations["revetSnapshot"];
         delete?: never;
@@ -1966,6 +1968,18 @@ export interface components {
             orderUpdatedAt?: string;
             /** @description The administrator who last set the order, or null for the default */
             orderUpdatedBy?: string;
+        };
+        /** @description Whether a run's chain is the one its marketplace runs now */
+        ChainStaleness: {
+            /** @description Identity of the chain the marketplace runs now, or null when it could not be resolved */
+            currentChain?: string;
+            /** @description Identity of the chain that produced the run, or null when it recorded none */
+            runChain?: string;
+            /**
+             * @description IN_FORCE: the run was produced by the chain in force. SUPERSEDED: it was produced by a different one, and both are named. UNDETERMINED: there is no run, or the run records no chain identity — which is not the same as being current.
+             * @enum {string}
+             */
+            state?: "IN_FORCE" | "SUPERSEDED" | "UNDETERMINED";
         };
         /** @description A vetter in a marketplace's effective vetting chain */
         ChainVetterView: {
@@ -3686,6 +3700,8 @@ export interface components {
         };
         /** @description A snapshot's latest vetting chain run, the waivers over it, and the chain that produced it */
         VettingView: {
+            /** @description Whether the run above was produced by the chain this marketplace runs now (GW_VETTING_0038). Enabling a vetter re-runs nothing, so a snapshot still at the approval gate can carry evidence a newly enabled vetter never produced; this says so rather than leaving it silent. It gates nothing — approval is not refused for it. */
+            chainStaleness?: components["schemas"]["ChainStaleness"];
             /**
              * @description The effective outcome, which is what gates approval: the run's verdicts with every waived finding removed. `clear_with_waivers` means nothing objects any more only because an active waiver is suppressing a finding. A snapshot with no run is blocked.
              * @enum {string}
@@ -5482,7 +5498,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
-            /** @description The snapshot is not approved; only served content is re-vetted */
+            /** @description The snapshot is rejected or revoked; only approved and held snapshots are re-vetted */
             409: {
                 headers: {
                     [name: string]: unknown;

@@ -408,6 +408,10 @@ function invalidateChain(queryClient: ReturnType<typeof useQueryClient>) {
     // Every chain change writes a ledger row, so a loaded audit page is stale the moment one
     // lands (nothing refetches on focus).
     "audit",
+    // And a chain change is exactly what makes stored evidence superseded (GW_VETTING_0038). The
+    // marking is derived per request, so the reviewer only sees it once this read is refetched —
+    // without this, changing the chain and looking straight at a snapshot shows it as current.
+    "snapshot-vetting",
   ]) {
     void queryClient.invalidateQueries({ queryKey: [key] });
   }

@@ -151,6 +151,30 @@ answered, or that the chain never ran for this snapshot at all.
     listed under *What these vetters can and cannot see* next to the
     verdicts, and in [Vetting — the vetter chain](../concepts/vetting.md).
 
+### Evidence from a superseded chain
+
+Enabling a vetter **re-runs nothing**. Neither does disabling one, reordering
+the chain, or changing its mode. For content that is already approved the
+[re-vetting sweep](re-vetting.md) converges on it; for a snapshot still waiting
+at the approval gate, nothing does.
+
+So a snapshot ingested before a chain change carries evidence the chain as it
+stands today never produced — and the vetter you deliberately switched on did
+not look at this content. When that is the case, the vetting section says so and
+names both chains: the one that produced the evidence, and the one in force.
+
+**This does not block the approval, and no setting makes it.** The gateway
+states the fact; the decision stays yours, exactly as it is for an override or
+a waiver. If you approve on superseded evidence, the ledger records it —
+`snapshot-approved-on-superseded-chain`, naming both chains — beside the
+approval rather than instead of it, so it is answerable afterwards.
+
+To act on it instead, use **Re-run the chain now** on the notice, or
+`POST /api/v1/snapshots/{id}/revet`. On a held snapshot that refreshes the
+evidence in place: the chain runs, the new run is recorded, the snapshot stays
+held, and nothing is published or retracted. Then read the verdicts again —
+they may have changed, which is the point.
+
 ## What to look for
 
 The threats that matter here are the ones no scanner catches:

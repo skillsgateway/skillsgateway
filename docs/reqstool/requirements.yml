@@ -1703,6 +1703,24 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
+  - id: GW_VETTING_0038
+    title: Chain staleness is stated at the approval gate
+    significance: shall
+    description: "The system shall determine, for the latest vetting chain run of any snapshot, whether that run was produced by the same chain the snapshot's marketplace runs at the moment of the determination, and shall report the answer as one of three states: produced by the chain in force, produced by a different chain, or undetermined. Where it reports a different chain the system shall name both the chain that produced the run and the chain in force. The system shall report undetermined — and not a difference — where the snapshot has no run, or where the run records no chain identity. The system shall derive this answer at the moment it is asked rather than from any stored marker."
+    rationale: "Enabling a vetter re-runs nothing, which is sound for approved content because the re-vetting sweep converges on it, and unsound at the approval gate, where the stored run a reviewer is shown can predate the chain the administrator deliberately changed. The failure is not that the evidence is old; it is that nothing says so, and a reviewer who is told can decide while a reviewer who is never told cannot. Three states rather than two because a run predating the identity stamp records no chain, and calling that stale would raise an alarm over every such row that nobody could act on, while calling it current would assert something unknown. Deriving rather than storing is what keeps the answer true: a stored marker would be wrong the moment the chain changed again, and would have to be invalidated from every path that can change a chain."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0038.1
+    title: An approval on evidence from a superseded chain records that fact and proceeds
+    significance: shall
+    description: "The system shall determine, at the moment an approval is decided, whether the evidence the approval relies on was produced by the chain in force, and shall append to the audit ledger, for an approval where it was not, a record naming the chain that produced the evidence and the chain in force. The system shall not refuse an approval for this reason, shall offer no configuration that makes it refuse, and shall gate no other operation on it."
+    rationale: "This system states a fact and records who accepted it rather than substituting its own judgment for the reviewer's — the same posture as an override and a waiver, both of which let a named identity accept a risk the gateway has described. Refusing instead would turn one chain change into a queue of manual steps across the whole held set, a cost only the operator can weigh. The determination is made at the decision rather than carried from the surface that displayed it because a reviewer may leave the surface open, and what the ledger has to record is the chain in force when the decision landed."
+    references:
+      requirement_ids: ["GW_VETTING_0038"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
   - id: GW_INGEST_0030.1
     title: Every closure and member field is recorded as a value copy taken at ingestion
     significance: shall
