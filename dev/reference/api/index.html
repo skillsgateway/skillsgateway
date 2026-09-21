@@ -2531,10 +2531,16 @@ needs neither the jar nor the header.</p>
 moves the path prefix and ships as a major. See
 <a href="../compatibility/#the-api-contract">The API contract</a> for what counts as
 breaking and how it is enforced.</p>
-<p><strong>Errors</strong> are RFC 7807 <code>ProblemDetail</code> documents:</p>
+<p><strong>Errors</strong> are RFC 7807 <code>ProblemDetail</code> documents, served as
+<code>application/problem+json</code>, whatever inside the gateway refused the request
+(<code>GW_API_0007</code>):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="s2">"about:blank"</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Bad Request"</span><span class="p">,</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">400</span><span class="p">,</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"url scheme must be one of [http, https]"</span><span class="p">}</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"url scheme must be one of [http, https]"</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"instance"</span><span class="p">:</span><span class="s2">"/api/v1/marketplaces"</span><span class="p">}</span>
 </code></pre></div>
+<p><code>detail</code> is the field to show a user: it is the only part that says why <em>this</em>
+request was refused. Every non-success response in this document declares this
+shape, so a client has one body to parse rather than one per endpoint.</p>
 <p><strong>Status codes</strong> used across the API:</p>
 <table>
 <thead>
