@@ -31,7 +31,7 @@ Every capability area the gateway has today, one row each. If you are asking
 | Lifecycle webhooks | Delivers signed snapshot-lifecycle events to subscribers with retry and backoff. | — | `GW_WEBHOOK` | [Lifecycle webhooks](guides/lifecycle-webhooks.md) |
 | Retention | Soft-deletes and then compacts eligible snapshots; approved ones are never eligible. The same pass trims audit-ledger read entries, only behind every enabled export sink and never the administrative half. | — | `GW_RETENTION` | [Reclaiming snapshot storage](guides/snapshot-retention.md) |
 | Declarative estate | Reconciles marketplaces, role grants, policy rules and webhook receivers from configuration through the same audited paths as the API. | Registration, Roles | `GW_ESTATE` | [Declarative estate configuration](guides/declarative-estate.md) |
-| Admin portal | The eight pages an operator works in: overview, marketplaces, marketplace detail, vetting, audit, adoption, tokens, webhooks. | Web surface | `GW_AUTH` | [Admin portal](reference/portal.md) |
+| Admin portal | The nine pages an operator works in: overview, marketplaces, marketplace detail, snapshot contents, vetting, audit, adoption, tokens, webhooks. | Web surface | `GW_AUTH` | [Admin portal](reference/portal.md) |
 | REST API contract | Serves and publishes the versioned contract document, and detects a breaking change to it. | — | `GW_API` | [REST API overview](reference/api/index.md) |
 | Release and packaging | Produces the container image release by digest, behind a gated release workflow. | — | `GW_RELEASE` | [Container image](reference/container-image.md), [Cutting a release](guides/releasing.md) |
 

@@ -14,13 +14,26 @@ A held snapshot gives you four things.
 
 ### The content itself
 
-The **Preview files** toggle on the marketplace detail page opens the pinned
-commit's actual file tree, each file rendered inertly (Markdown without any
-HTML interpretation, binary files described rather than shown), and — the part
-that usually decides a successor snapshot — **Diff vs served**: exactly which
-paths were added, modified or removed against the commit consumers are
-currently receiving, with per-file text diffs. A snapshot of a marketplace
+**Inspect contents** on the snapshot card opens the
+[snapshot contents page](../reference/portal.md#snapshot-contents): the pinned
+commit as a real file tree, each file rendered inertly (Markdown without any
+HTML interpretation, binary files described rather than shown), with a filter
+over the paths and — the part that usually decides a successor snapshot — a
+**vs served** view of the file you are reading: exactly what it adds, changes
+or removes against the commit consumers are currently receiving. Paths the
+snapshot removes are in the tree too, marked. A snapshot of a marketplace
 serving nothing shows every path as new: approving it serves all of it.
+
+**Send the second approver a link, not directions.** The address carries the
+file you are looking at:
+
+```text
+/marketplaces/acme/snapshots/41/files?path=plugins/hello/skills/hello/SKILL.md
+```
+
+Approval is four-eyes, and this is what makes "we both looked at the same
+thing" checkable rather than assumed. The link needs the same roles the reads
+do, so it resolves for a co-approver and refuses anyone else.
 
 The same reads exist on the API (`GET /api/v1/snapshots/{id}/files`, `.../file`,
 `.../diff` — see

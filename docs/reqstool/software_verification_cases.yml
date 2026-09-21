@@ -2356,6 +2356,24 @@ cases:
       that would have refused either
     revision: "0.1.0"
 
+  - id: SVC_GW_INGEST_0032
+    requirement_ids: ["GW_INGEST_0032"]
+    title: A snapshot file is reached, and restored, by its address alone
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot whose pinned commit carries nested paths, a truncated blob, a
+      binary blob and a path the served commit still has
+      WHEN the contents surface is opened at its address with no path selected, a file is
+      selected, the resulting address is opened again from nothing, the listing is
+      narrowed by a filter, and the surface is opened by a session holding no approver
+      role
+      THEN the address names the snapshot and the selected path, opening it afresh
+      restores the same file and its content, the truncated blob states that it is cut,
+      the binary blob is described rather than rendered, the removed path is shown as
+      removed, the filter reports its matches against the size of the listing and states
+      when that listing is itself cut, and the roleless session is told it is refused
+    revision: "0.1.0"
+
   - id: SVC_GW_INGEST_0030.1
     requirement_ids: ["GW_INGEST_0030.1"]
     title: The closure and its members record the value copies the requirement describes

@@ -1,4 +1,4 @@
-import { ArrowLeft, Puzzle } from "lucide-react";
+import { ArrowLeft, FileSearch, Puzzle } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -15,9 +15,10 @@ import {
 } from "@/api/queries";
 import { AuditStatusBadge, auditRowClass } from "@/components/audit-status";
 import { auditStatus } from "@/lib/audit-status";
+import { cn } from "@/lib/utils";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -323,7 +324,6 @@ export function MarketplaceDetailPage() {
   const { name } = useParams<{ name: string }>();
   const marketplaces = useMarketplaces();
   const [openSnapshot, setOpenSnapshot] = useState<number | null>(null);
-  const [openPreview, setOpenPreview] = useState<number | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
   const isAdmin = useIsAdmin();
   const marketplace = marketplaces.data?.find((m) => m.name === name);
@@ -430,7 +430,6 @@ export function MarketplaceDetailPage() {
           snapshots.map((snapshot) => {
             const id = snapshot.id ?? 0;
             const open = openSnapshot === id;
-            const preview = openPreview === id;
             return (
               <Card key={id}>
                 <CardContent className="space-y-3 py-4">
@@ -458,14 +457,14 @@ export function MarketplaceDetailPage() {
                     >
                       {open ? "Hide contents" : "Show contents"}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      aria-label={`${preview ? "Hide" : "Preview"} files of snapshot ${id}`}
-                      onClick={() => setOpenPreview(preview ? null : id)}
+                    <Link
+                      to={`/marketplaces/${encodeURIComponent(marketplace.name ?? "")}/snapshots/${id}/files`}
+                      aria-label={`Inspect contents of snapshot ${id}`}
+                      className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
                     >
-                      {preview ? "Hide preview" : "Preview files"}
-                    </Button>
+                      <FileSearch className="size-4" aria-hidden />
+                      Inspect contents
+                    </Link>
                   </div>
                   {snapshot.violation ? (
                     <p className="text-sm text-destructive">{snapshot.violation}</p>
@@ -479,12 +478,8 @@ export function MarketplaceDetailPage() {
                       <SnapshotContentView snapshotId={id} />
                       <Separator />
                       <SnapshotContentDiff snapshotId={id} />
-                    </>
-                  ) : null}
-                  {preview ? (
-                    <>
                       <Separator />
-                      <SnapshotPreview snapshotId={id} />
+                      <SnapshotPreview snapshotId={id} marketplace={marketplace.name ?? ""} />
                     </>
                   ) : null}
                 </CardContent>

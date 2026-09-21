@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useMatches, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -95,6 +95,7 @@ function OutboundLink({ href, label, icon: Icon }: { href: string; label: string
 
 function breadcrumb(pathname: string): string {
   if (pathname === "/") return "Overview";
+  if (/^\/marketplaces\/[^/]+\/snapshots\//.test(pathname)) return "Snapshot contents";
   if (pathname.startsWith("/marketplaces/")) return "Marketplace detail";
   if (pathname.startsWith("/marketplaces")) return "Marketplaces";
   if (pathname.startsWith("/audit")) return "Audit log";
@@ -340,11 +341,23 @@ function UserMenu() {
  */
 export function AppLayout() {
   const location = useLocation();
+  // A route asks for the whole viewport by declaring it, rather than the shell recognising
+  // paths: a workspace whose panes own their scroll cannot live inside the reading column.
+  // Only from lg up — below that there is no room for two panes side by side, so the page
+  // scrolls like every other one rather than clipping itself into a phone-sized viewport.
+  const wide = useMatches().some(
+    (match) => (match.handle as { layout?: string } | undefined)?.layout === "wide",
+  );
   // A hint only: the administrator-only pages are protected by the server refusing their reads,
   // not by the sidebar declining to mention them.
   const isAdmin = useIsAdmin();
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div
+      className={cn(
+        "flex bg-background text-foreground",
+        wide ? "min-h-screen lg:h-screen lg:overflow-hidden" : "min-h-screen",
+      )}
+    >
       <aside className="flex w-60 shrink-0 flex-col border-r bg-sidebar">
         <div className="flex items-center gap-2 px-4 py-4 font-semibold">
           <BrandMark className="size-5" />
@@ -399,7 +412,12 @@ export function AppLayout() {
           </div>
           <UserMenu />
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
+        <main
+          className={cn(
+            "w-full flex-1 px-6 py-8",
+            wide ? "lg:min-h-0 lg:overflow-hidden" : "mx-auto max-w-6xl",
+          )}
+        >
           <Outlet />
         </main>
       </div>
