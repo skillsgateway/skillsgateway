@@ -747,7 +747,7 @@ test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }
   expect(pat).toBeTruthy();
   await page.getByRole("button", { name: "Done" }).click();
 
-  const base = new URL(process.env.E2E_BASE_URL ?? "http://localhost:8081");
+  const base = new URL(process.env.E2E_BASE_URL ?? "http://localhost:18081");
   const cloneUrl = `http://token:${pat}@${base.host}/git/${name}`;
   const dest = mkdtempSync(join(tmpdir(), "e2e-adoption-clone-"));
   execFileSync("git", ["clone", cloneUrl, dest], {
