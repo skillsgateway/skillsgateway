@@ -381,7 +381,7 @@ export interface paths {
         };
         /**
          * Current user
-         * @description Username of the authenticated browser session, the session's effective roles with the source of each, and whether the identity provider truncated the membership claim — how the portal and CLI adapt their controls to what the caller may do. Authorization is always enforced, so there is no enforcement flag to report.
+         * @description Username of the authenticated browser session, the session's effective roles with the source of each, and whether the identity provider truncated the membership claim — how the portal and CLI adapt their controls to what the caller may do. Authorization is always enforced, so there is no enforcement flag to report. Also reports the running build's version, which the portal shell states: the portal already makes this call once per load, so the gateway's own self-description costs no second request.
          */
         get: operations["me"];
         put?: never;
@@ -2822,6 +2822,11 @@ export interface components {
             roles?: components["schemas"]["EffectiveRole"][];
             /** @description Username of the session */
             username?: string;
+            /**
+             * @description Version of the running gateway build (GW_AUTH_0047), or null when the artifact carries no build information. Taken from the build itself and from no configurable source, so it cannot be set to something the gateway is not.
+             * @example 0.3.0
+             */
+            version?: string;
         };
         Member: {
             /** @description The clone URL the source was resolved through */

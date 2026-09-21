@@ -2300,6 +2300,18 @@ cases:
       itself below the value the gateway ships with
     revision: "0.1.0"
 
+  - id: SVC_GW_AUTH_0047
+    requirement_ids: ["GW_AUTH_0047"]
+    title: The running build is reported on the session read, or reported absent
+    verification: automated-test
+    description: |
+      GIVEN a gateway whose artifact carries build information, and one whose does not
+      WHEN the portal's authenticated session read is made and the shell is rendered
+      THEN the first reports the version the build carries and the shell states it, the
+      second reports it as absent and the shell states nothing in its place, and no
+      configuration exists that can set the reported value
+    revision: "0.1.0"
+
   - id: SVC_GW_RETENTION_0009
     requirement_ids: ["GW_RETENTION_0009"]
     title: The trim is bounded by the slowest enabled sink, and by nothing else

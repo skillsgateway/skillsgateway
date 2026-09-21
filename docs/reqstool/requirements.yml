@@ -1729,6 +1729,14 @@ requirements:
     categories: ["security", "interaction-capability"]
     revision: 0.1.0
 
+  - id: GW_AUTH_0047
+    title: The portal states the build it is running
+    significance: shall
+    description: "The system shall report, on the authenticated session read the portal makes when it loads, the build version of the running gateway, taken from the build artifact itself and from no source a deployment can set; shall report that version as absent rather than as any substitute value when the running build carries none; and shall state it in the portal shell, stating nothing where it is absent."
+    rationale: "An operator looking at a console whose whole purpose is answering which content this gateway serves and on whose authority cannot answer the prior question — which build is answering — without leaving the portal for a shell, and that is the question every incident starts with. It rides on the session read because the portal already makes that call once per load, so the fact costs no endpoint, no request and no new failure mode. It is not configurable because a version a deployment can retype is a version that can lie, and a dishonest answer here is worse than no answer; for the same reason an absent version is reported as absent rather than as invented text, since a build without build information is a fact about that build."
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0
+
   - id: GW_INGEST_0030.1
     title: Every closure and member field is recorded as a value copy taken at ingestion
     significance: shall

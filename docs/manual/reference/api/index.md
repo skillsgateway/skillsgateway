@@ -151,15 +151,23 @@ shape, so a client has one body to parse rather than one per endpoint.
 ## Session
 
 `GET /api/v1/me` returns the current principal, the session's effective roles
-with the **source** of each, and whether the identity provider truncated the
-membership claim. The portal uses it for the user menu and, with roles, to
-adapt its controls.
+with the **source** of each, whether the identity provider truncated the
+membership claim, and the **version of the running gateway build**. The portal
+uses it for the user menu, to adapt its controls to the roles, and to state the
+build in the sidebar footer.
+
+`version` is read from the build artifact and from no configurable source, so it
+cannot be set to something the gateway is not. It is **absent** — not an empty
+string, and not `"unknown"` — when the artifact carries no build information,
+which is the case for a gateway run from an exploded build rather than the
+packaged jar.
 
 ```json
 {"username": "alice@example.com",
  "roles": [{"role": "approver", "marketplace": "acme", "source": "grant"},
            {"role": "auditor", "marketplace": null, "source": "claim"}],
- "claimsTruncated": false}
+ "claimsTruncated": false,
+ "version": "0.3.0"}
 ```
 
 | `source` | Where the role came from |
