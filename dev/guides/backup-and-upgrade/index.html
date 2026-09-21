@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/lifecycle-webhooks/">
+        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/backup-and-upgrade/">
       
       
-        <link rel="prev" href="../adding-an-external-vetter/">
+        <link rel="prev" href="../snapshot-retention/">
       
       
-        <link rel="next" href="../read-only-forge-mirror/">
+        <link rel="next" href="../exporting-the-audit-ledger/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Receiving lifecycle webhooks - Skills Gateway</title>
+        <title>Backing up, restoring and upgrading - Skills Gateway</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#receiving-lifecycle-webhooks" class="md-skip">
+        <a href="#backing-up-restoring-and-upgrading" class="md-skip">
           Skip to content
         </a>
       
@@ -119,7 +119,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Receiving lifecycle webhooks
+              Backing up, restoring and upgrading
             
           </span>
         </div>
@@ -445,8 +445,10 @@
                 
   
   
+    
   
   
+  
     
     
       
@@ -480,11 +482,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" checked>
         
           
           <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
@@ -505,7 +507,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3_1">
             <span class="md-nav__icon md-icon"></span>
             
@@ -744,10 +746,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../backup-and-upgrade/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backing up, restoring and upgrading
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -763,6 +792,148 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#taking-a-backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Taking a backup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Taking a backup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-quiesce" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Quiesce
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-copy-both-halves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Copy both halves
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-start-again" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Start again
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restoring
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upgrading">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-at-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens at startup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-a-rollout-does-to-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What a rollout does to clients
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-not-backed-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is not backed up
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -864,10 +1035,8 @@
                 
   
   
-    
   
   
-  
     
     
       
@@ -899,11 +1068,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
         
           
           <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
@@ -924,7 +1093,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1191,37 +1360,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Receiving lifecycle webhooks
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../lifecycle-webhooks/" class="md-nav__link">
         
   
   
@@ -1237,181 +1379,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#events" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Events
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Events">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#snapshot-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Snapshot events
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#marketplace-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Marketplace events
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#1-register-a-subscriber" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Register a subscriber
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-handle-the-delivery" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Handle the delivery
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. Handle the delivery">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-a-marketplace-event-carries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What a marketplace event carries
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#not-a-webhook-fetches" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Not a webhook: fetches
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-shape-is-published-and-it-only-grows" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The shape is published, and it only grows
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-verify-the-signature" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Verify the signature
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#driving-approvals-from-your-own-system" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Driving approvals from your own system
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#delivery-retry-and-backoff" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Delivery, retry and backoff
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#watch-what-happened" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Watch what happened
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#remove-a-subscriber" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Remove a subscriber
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2581,22 +2548,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#events" class="md-nav__link">
+  <a href="#taking-a-backup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Events
+        Taking a backup
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Events">
+    <nav class="md-nav" aria-label="Taking a backup">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#snapshot-events" class="md-nav__link">
+  <a href="#1-quiesce" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Snapshot events
+        1. Quiesce
       
     </span>
   </a>
@@ -2604,10 +2571,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#marketplace-events" class="md-nav__link">
+  <a href="#2-copy-both-halves" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Marketplace events
+        2. Copy both halves
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-start-again" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Start again
       
     </span>
   </a>
@@ -2620,10 +2598,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#1-register-a-subscriber" class="md-nav__link">
+  <a href="#restoring" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Register a subscriber
+        Restoring
       
     </span>
   </a>
@@ -2631,22 +2609,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-handle-the-delivery" class="md-nav__link">
+  <a href="#upgrading" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Handle the delivery
+        Upgrading
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. Handle the delivery">
+    <nav class="md-nav" aria-label="Upgrading">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#what-a-marketplace-event-carries" class="md-nav__link">
+  <a href="#what-happens-at-startup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What a marketplace event carries
+        What happens at startup
       
     </span>
   </a>
@@ -2654,10 +2632,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#not-a-webhook-fetches" class="md-nav__link">
+  <a href="#the-procedure" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Not a webhook: fetches
+        The procedure
       
     </span>
   </a>
@@ -2665,10 +2643,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#the-shape-is-published-and-it-only-grows" class="md-nav__link">
+  <a href="#what-a-rollout-does-to-clients" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The shape is published, and it only grows
+        What a rollout does to clients
       
     </span>
   </a>
@@ -2681,54 +2659,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-verify-the-signature" class="md-nav__link">
+  <a href="#what-is-not-backed-up" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Verify the signature
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#driving-approvals-from-your-own-system" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Driving approvals from your own system
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#delivery-retry-and-backoff" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Delivery, retry and backoff
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#watch-what-happened" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Watch what happened
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#remove-a-subscriber" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Remove a subscriber
+        What is not backed up
       
     </span>
   </a>
@@ -2752,7 +2686,7 @@
 
 
   
-    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/lifecycle-webhooks.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/backup-and-upgrade.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2760,482 +2694,118 @@
   
 
 
-<h1 id="receiving-lifecycle-webhooks">Receiving lifecycle webhooks<a class="headerlink" href="#receiving-lifecycle-webhooks" title="Permanent link">&para;</a></h1>
-<p>The gateway records every vetting decision in the ledger. Webhooks push those
-same decisions outward, so CI, chat and inventory systems learn about a snapshot
-the moment it is ingested, waiting for a review, approved or rejected instead of
-polling <code>/api/v1/marketplaces</code>.</p>
-<h2 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h2>
-<p>Every event name says what it is about. <code>marketplace.snapshot.*</code> is what happened
-to one snapshot; <code>marketplace.*</code> is what happened to the marketplace itself.</p>
-<h3 id="snapshot-events">Snapshot events<a class="headerlink" href="#snapshot-events" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Event</th>
-<th>Emitted when</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>marketplace.snapshot.ingested</code></td>
-<td>An ingestion succeeded and produced a snapshot.</td>
-</tr>
-<tr>
-<td><code>marketplace.snapshot.approved</code></td>
-<td>A held snapshot was approved and published.</td>
-</tr>
-<tr>
-<td><code>marketplace.snapshot.rejected</code></td>
-<td>A held snapshot was rejected.</td>
-</tr>
-<tr>
-<td><code>marketplace.snapshot.soft_deleted</code></td>
-<td>A snapshot was marked deleted, by an administrator or by a retention policy.</td>
-</tr>
-<tr>
-<td><code>marketplace.snapshot.restored</code></td>
-<td>A soft-deleted snapshot's marks were cleared.</td>
-</tr>
-<tr>
-<td><code>marketplace.snapshot.vetted</code></td>
-<td>A vetting chain run finished. The verdicts are readable at <code>GET /api/v1/snapshots/{id}/vetting</code>.</td>
-</tr>
-<tr>
-<td><code>marketplace.snapshot.approval_pending</code></td>
-<td>A chain run finished and the snapshot is still <strong>held</strong>: it is waiting for a person. Carries a vetting summary — see <a href="#driving-approvals-from-your-own-system">Driving approvals from your own system</a>.</td>
-</tr>
-<tr>
-<td><code>marketplace.snapshot.revet_violation</code></td>
-<td>A re-vetting run found a violation on a snapshot that is <strong>already approved</strong>.</td>
-</tr>
-<tr>
-<td><code>marketplace.snapshot.revoked</code></td>
-<td>A snapshot was retroactively quarantined; the facade no longer serves it.</td>
-</tr>
-</tbody>
-</table>
-<p>Deletion is orthogonal to the snapshot state machine, which is why the retention
-events carry the snapshot's unchanged vetting state.</p>
-<h3 id="marketplace-events">Marketplace events<a class="headerlink" href="#marketplace-events" title="Permanent link">&para;</a></h3>
-<p>These are about the estate rather than about content: what exists, what triggers
-its ingestion, and which vetters run against it. They carry
-<a href="#what-a-marketplace-event-carries">their own, shorter body</a>.</p>
-<table>
-<thead>
-<tr>
-<th>Event</th>
-<th>Emitted when</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>marketplace.registered</code></td>
-<td>A marketplace was registered, upstream or hosted.</td>
-</tr>
-<tr>
-<td><code>marketplace.updated</code></td>
-<td>A registered marketplace changed. Today that is its sync mode; the detail names the new one.</td>
-</tr>
-<tr>
-<td><code>marketplace.vetter_toggled</code></td>
-<td>A vetter was enabled or disabled, for one marketplace or across the gateway.</td>
-</tr>
-</tbody>
-</table>
-<p>Those are all of them. There is no <code>marketplace.removed</code>: the gateway has no
-deregistration — there is no <code>DELETE /api/v1/marketplaces/{name}</code> — so there is
-nothing for it to announce.</p>
-<p>An action taken by a scheduled pass rather than by a person carries a policy
-actor — <code>retention-policy</code> for deletions, <code>revet-policy</code> for re-vetting — so a
-receiver can tell the two apart. See
-<a href="../snapshot-retention/">Reclaiming snapshot storage</a> and
-<a href="../re-vetting/">Re-vetting approved content</a>.</p>
-<div class="admonition warning">
-<p class="admonition-title"><code>marketplace.snapshot.revet_violation</code> is the one that needs a receiver</p>
-<p>It says content a team is <em>already using</em> has stopped being acceptable, and
-in the default warn mode it is the only signal — nothing is unpublished, so
-nothing breaks to announce it. Read the payload's <code>state</code> to tell the two
-apart: <code>approved</code> means it is still being served and someone has to act;
-<code>revoked</code> means enforcement already retracted it and
-<code>marketplace.snapshot.revoked</code> follows.</p>
-</div>
-<p>Registering and deleting subscribers require <strong>admin</strong>; the subscriber and
-delivery listings require <strong>auditor</strong> (or admin). See
-<a href="../delegated-administration/">Delegated administration</a>.</p>
-<h2 id="1-register-a-subscriber">1. Register a subscriber<a class="headerlink" href="#1-register-a-subscriber" title="Permanent link">&para;</a></h2>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Portal</label><label for="__tabbed_1_2">API</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<p><strong>Webhooks</strong> → fill in <strong>Subscriber name</strong> and <strong>Target URL</strong>, tick the <strong>Events</strong>
-to receive (all of them by default; the box above the list narrows it) →
-<strong>Add subscriber</strong>. The signing secret appears in a dialog with a copy
-button.</p>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/webhooks<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"name"</span>:<span class="s2">"ci-bot"</span>,<span class="s2">"url"</span>:<span class="s2">"https://ci.example.com/hooks/skills-gateway"</span>,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">         "events":["marketplace.snapshot.approved","marketplace.snapshot.rejected"]}'</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"ci-bot"</span><span class="p">,</span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"https://ci.example.com/hooks/skills-gateway"</span><span class="p">,</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"events"</span><span class="p">:[</span><span class="s2">"marketplace.snapshot.approved"</span><span class="p">,</span><span class="s2">"marketplace.snapshot.rejected"</span><span class="p">],</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"secret"</span><span class="p">:</span><span class="s2">"whsec_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}</span>
-</code></pre></div>
-</div>
-</div>
-</div>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Rule</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>name</code></td>
-<td><code>^[a-z0-9][a-z0-9_-]*$</code>, unique. A bad name is <strong>422</strong>, a duplicate is <strong>409</strong>.</td>
-</tr>
-<tr>
-<td><code>url</code></td>
-<td>The scheme must be on <code>skills-gateway.allowed-url-schemes</code>. Unparseable or scheme-less URLs are rejected — the check fails closed. <strong>400</strong>.</td>
-</tr>
-<tr>
-<td><code>events</code></td>
-<td>An array of event names, or the single element <code>*</code> for every event. Omitted or empty means <code>*</code>. An unknown name is <strong>400</strong>, not silently dropped. <code>GET /api/v1/webhooks/events</code> answers the names this gateway accepts.</td>
-</tr>
-</tbody>
-</table>
-<p>The filter is exact-match per name: <code>*</code> is the only wildcard, and neither
-<code>marketplace.*</code> nor <code>marketplace.snapshot.*</code> is a valid filter. A subscriber only
-ever receives events its filter lists.</p>
-<p>Registering an outbound target is an egress decision, which is why it is an
-authenticated administrative act behind the same scheme allowlist as marketplace
-registration.</p>
+<h1 id="backing-up-restoring-and-upgrading">Backing up, restoring and upgrading<a class="headerlink" href="#backing-up-restoring-and-upgrading" title="Permanent link">&para;</a></h1>
+<p>The gateway keeps its state in two places, and <strong>they are one estate</strong>. Back them up
+together or the backup is not one.</p>
+<ul>
+<li><strong>PostgreSQL</strong> holds the governance state: which marketplaces exist, which snapshots
+  were approved and by whom, the roles, the tokens, the append-only ledger.</li>
+<li><strong>The git storage</strong> holds the content those rows describe — the quarantine
+  repositories and the published ones — on either the <code>filesystem</code> backend's volume or
+  the <code>object-store</code> backend's bucket prefix.</li>
+</ul>
+<p>A gateway that restarts onto an empty volume still reports its snapshots as published
+and can serve none of them. The database says the content is there; the storage
+disagrees; nothing in the gateway can tell which of the two is right, because both are
+authoritative about different halves of the same fact.</p>
 <div class="admonition danger">
-<p class="admonition-title">The signing secret is shown exactly once</p>
-<p><code>whsec_…</code> is returned only in the creation response and by no other endpoint.
-Unlike a personal access token it is stored recoverably — signing needs the
-key — but nothing ever reads it back over the API. A lost secret means
-deleting the subscriber and registering it again.</p>
+<p class="admonition-title">A split restore is silent</p>
+<p>Restore the database from Monday and the storage from Tuesday and the gateway
+starts, serves most things, and is wrong about the rest. There is no check that
+fails. The pairing is the operator's to preserve, which is why every procedure
+below quiesces first.</p>
 </div>
-<h2 id="2-handle-the-delivery">2. Handle the delivery<a class="headerlink" href="#2-handle-the-delivery" title="Permanent link">&para;</a></h2>
-<p>Each delivery is a <code>POST</code> of a JSON body with four headers:</p>
-<table>
-<thead>
-<tr>
-<th>Header</th>
-<th>Contents</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>X-Skills-Gateway-Event</code></td>
-<td>The event name.</td>
-</tr>
-<tr>
-<td><code>X-Skills-Gateway-Delivery</code></td>
-<td>The delivery id — your de-duplication key.</td>
-</tr>
-<tr>
-<td><code>X-Skills-Gateway-Timestamp</code></td>
-<td>ISO-8601 time of <em>this attempt</em>, so it differs between retries.</td>
-</tr>
-<tr>
-<td><code>X-Skills-Gateway-Signature</code></td>
-<td><code>sha256=&lt;lowercase hex&gt;</code> — HMAC-SHA256 over the exact body bytes, keyed with the subscriber's secret.</td>
-</tr>
-</tbody>
-</table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"marketplace.snapshot.approved"</span><span class="p">,</span><span class="nt">"occurredAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:14:22.481Z"</span><span class="p">,</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w"> </span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab9d1e4c7b6a5f80c3d2e1b0a9f8c7d6e5f"</span><span class="p">,</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"approved"</span><span class="p">,</span><span class="nt">"actor"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">}</span>
+<h2 id="taking-a-backup">Taking a backup<a class="headerlink" href="#taking-a-backup" title="Permanent link">&para;</a></h2>
+<p>The gateway does not need to be stopped for a <em>consistent-enough</em> copy if you accept
+that a snapshot approved during the copy may land in one half and not the other. It
+does need to be stopped for a copy you can restore without thinking about it.</p>
+<h3 id="1-quiesce">1. Quiesce<a class="headerlink" href="#1-quiesce" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp"># </span>Kubernetes
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">$ </span>kubectl<span class="w"> </span>scale<span class="w"> </span>deployment/skills-gateway<span class="w"> </span>--replicas<span class="o">=</span><span class="m">0</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp"># </span>Compose<span class="w"> </span>or<span class="w"> </span>a<span class="w"> </span>single<span class="w"> </span>host
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>stop<span class="w"> </span>skills-gateway
 </code></pre></div>
-<p><code>state</code> is the snapshot state <em>after</em> the event, and <code>actor</code> is the principal
-that performed the admin action.</p>
-<h3 id="what-a-marketplace-event-carries">What a marketplace event carries<a class="headerlink" href="#what-a-marketplace-event-carries" title="Permanent link">&para;</a></h3>
-<p>A <code>marketplace.*</code> event has no snapshot to name, so its body is the four fields
-every event shares plus one:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"marketplace.registered"</span><span class="p">,</span><span class="nt">"occurredAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:14:22.481Z"</span><span class="p">,</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"actor"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"origin=upstream"</span><span class="p">}</span>
+<p>Scaling to zero is enough: the gateway holds no lease it must release, and its
+background sweeps take a <code>sweep_leases</code> row that expires on its own.</p>
+<h3 id="2-copy-both-halves">2. Copy both halves<a class="headerlink" href="#2-copy-both-halves" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>pg_dump<span class="w"> </span>--format<span class="o">=</span>custom<span class="w"> </span>--file<span class="o">=</span>gateway-<span class="k">$(</span>date<span class="w"> </span>-I<span class="k">)</span>.dump<span class="w"> </span><span class="s2">"</span><span class="nv">$DATABASE_URL</span><span class="s2">"</span>
 </code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>marketplace</code></td>
-<td>The marketplace the change is about, or <code>-</code> when the change applies to the whole gateway — a vetter disabled everywhere rather than for one marketplace.</td>
-</tr>
-<tr>
-<td><code>detail</code></td>
-<td>What changed, as <code>key=value</code> pairs: <code>origin=upstream</code>, <code>mode=scheduled</code>, <code>vetter=secret-scan scope=global enabled=false</code>.</td>
-</tr>
-</tbody>
-</table>
-<p><code>detail</code> carries gateway-side configuration values only. It never carries
-snapshot content, and it never carries operator-supplied free text — the reason
-an administrator types when switching a vetter off stays in the ledger, where an
-authenticated caller reads it. The event announces; the API discloses.</p>
-<h3 id="not-a-webhook-fetches">Not a webhook: fetches<a class="headerlink" href="#not-a-webhook-fetches" title="Permanent link">&para;</a></h3>
-<p>There is no event for "someone fetched this marketplace", and there will not be
-one. Fetch volume is orders of magnitude above administrative change, the ledger
-already records every fetch with the identity behind it, and an
-<a href="../exporting-the-audit-ledger/">audit sink</a> already pushes those ledger entries
-to a receiver in signed, retried batches. Anything a per-fetch webhook could tell
-you is derivable from a sink today, over a delivery path built for that volume.
-Configure a sink instead.</p>
-<h3 id="the-shape-is-published-and-it-only-grows">The shape is published, and it only grows<a class="headerlink" href="#the-shape-is-published-and-it-only-grows" title="Permanent link">&para;</a></h3>
-<p>Every delivery above is described in the gateway's own OpenAPI document, under
-its top-level <code>webhooks</code> object — one entry per event, carrying the four headers
-and the body schema, rendered alongside the REST surface in the
-<a href="../../reference/api/">API reference</a>. <code>GET /api/v1/webhooks/events</code> serves the
-same vocabulary with a worked example of each body, so a receiver can be
-generated or hand-written against the contract rather than against a sample
-somebody pasted into a ticket.</p>
-<p>Those descriptions are generated from the registry and the types the dispatcher
-actually sends, so they cannot drift from what arrives.</p>
-<p>What you may rely on, and what you must not:</p>
+<p>Then, on the <code>filesystem</code> backend, the data directory — including the repositories:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>tar<span class="w"> </span>--create<span class="w"> </span>--file<span class="o">=</span>gateway-data-<span class="k">$(</span>date<span class="w"> </span>-I<span class="k">)</span>.tar.zst<span class="w"> </span>--zstd<span class="w"> </span>-C<span class="w"> </span>/data<span class="w"> </span>.
+</code></pre></div>
+<p>On the <code>object-store</code> backend, the bucket prefix:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>aws<span class="w"> </span>s3<span class="w"> </span>sync<span class="w"> </span><span class="s2">"s3://</span><span class="nv">$BUCKET</span><span class="s2">/</span><span class="nv">$PREFIX</span><span class="s2">"</span><span class="w"> </span><span class="s2">"./gateway-objects-</span><span class="k">$(</span>date<span class="w"> </span>-I<span class="k">)</span><span class="s2">/"</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Bucket versioning is not a substitute</p>
+<p><a href="../storage-backends/">Storage backends</a> records that the gateway's behaviour under
+bucket versioning is <strong>unverified</strong>. Treat the store's own point-in-time recovery as
+untested for this purpose and take the copy.</p>
+</div>
+<h3 id="3-start-again">3. Start again<a class="headerlink" href="#3-start-again" title="Permanent link">&para;</a></h3>
+<p>Reverse step 1. Keep the two files together — same directory, same date in the name.
+The pairing is the only thing that makes them a backup.</p>
+<h2 id="restoring">Restoring<a class="headerlink" href="#restoring" title="Permanent link">&para;</a></h2>
+<p>Restore <strong>both halves from the same moment</strong>, into a gateway that is not running.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>dropdb<span class="w"> </span>skills_gateway<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>createdb<span class="w"> </span>skills_gateway
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="gp">$ </span>pg_restore<span class="w"> </span>--dbname<span class="o">=</span><span class="s2">"</span><span class="nv">$DATABASE_URL</span><span class="s2">"</span><span class="w"> </span>gateway-2026-09-21.dump
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="gp">$ </span>rm<span class="w"> </span>-rf<span class="w"> </span>/data/*<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>tar<span class="w"> </span>--extract<span class="w"> </span>--file<span class="o">=</span>gateway-data-2026-09-21.tar.zst<span class="w"> </span>--zstd<span class="w"> </span>-C<span class="w"> </span>/data
+</code></pre></div>
+<p>Then start the gateway and check that what it claims to serve, it serves:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-sS<span class="w"> </span>localhost:8080/actuator/health/readiness
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>http://token:<span class="nv">$PAT</span>@localhost:8080/git/&lt;a-marketplace&gt;
+</code></pre></div>
+<p>A clone that fails against a marketplace the portal lists as published is the split
+restore this page exists to prevent. Restore the other half from the same moment.</p>
+<h2 id="upgrading">Upgrading<a class="headerlink" href="#upgrading" title="Permanent link">&para;</a></h2>
+<h3 id="what-happens-at-startup">What happens at startup<a class="headerlink" href="#what-happens-at-startup" title="Permanent link">&para;</a></h3>
+<p><strong>Flyway runs the schema migration when the application starts.</strong> No separate step, no
+flag. That has two consequences for a rollout:</p>
+<ol>
+<li><strong>Upgrade with one replica at a time</strong> on the <code>object-store</code> backend, and note that
+   the <code>filesystem</code> backend is single-replica anyway — the chart's stop-then-start
+   deployment strategy enforces it. Two versions of the application against one
+   database, one of which is migrating it, is not a configuration the project tests.</li>
+<li><strong>A migration is not reversible by restarting the old image.</strong> Roll back by
+   restoring the pair, not by redeploying the previous tag.</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Before 1.0.0 there is no migration path at all</p>
+<p>Until 1.0.0 the schema is a single migration that is <em>edited in place</em>, so its
+checksum changes between versions and Flyway refuses to start against a database
+created by a different build. Upgrading a pre-1.0 deployment means recreating the
+database, which means losing its state. Pre-1.0 deployments are for evaluation, and
+this is what that means in practice.</p>
+<p>From 1.0.0 the initial migration freezes and later changes arrive as additional
+migrations, which is when the procedure below starts to be the whole story.</p>
+</div>
+<h3 id="the-procedure">The procedure<a class="headerlink" href="#the-procedure" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp"># </span><span class="m">1</span>.<span class="w"> </span>Take<span class="w"> </span>the<span class="w"> </span>backup<span class="w"> </span>above.<span class="w"> </span>Not<span class="w"> </span>optional:<span class="w"> </span>this<span class="w"> </span>is<span class="w"> </span>the<span class="w"> </span>rollback.
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="gp"># </span><span class="m">2</span>.<span class="w"> </span>Roll<span class="w"> </span>the<span class="w"> </span>image<span class="w"> </span>forward.
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="gp">$ </span>helm<span class="w"> </span>upgrade<span class="w"> </span>skills-gateway<span class="w"> </span>./helm/skills-gateway<span class="w"> </span>--set<span class="w"> </span>image.tag<span class="o">=</span>&lt;new&gt;
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="gp"># </span><span class="m">3</span>.<span class="w"> </span>Watch<span class="w"> </span>it<span class="w"> </span>come<span class="w"> </span>ready,<span class="w"> </span>which<span class="w"> </span>is<span class="w"> </span>also<span class="w"> </span>watching<span class="w"> </span>the<span class="w"> </span>migration<span class="w"> </span>succeed.
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="gp">$ </span>kubectl<span class="w"> </span>rollout<span class="w"> </span>status<span class="w"> </span>deployment/skills-gateway
+</code></pre></div>
+<p>A failed migration leaves the pod not ready and the old data untouched. Readiness
+reports the database, so a pod that never becomes ready is the signal — there is no
+need to read logs to find out whether the migration ran.</p>
+<h3 id="what-a-rollout-does-to-clients">What a rollout does to clients<a class="headerlink" href="#what-a-rollout-does-to-clients" title="Permanent link">&para;</a></h3>
+<p>A <code>git fetch</code> in flight during a rollout <strong>completes</strong>: the gateway drains on SIGTERM
+rather than severing, and the pod's grace period is long enough to let it
+(<code>terminationGracePeriodSeconds</code>, 60 seconds by default). Raise it if clients report
+truncated fetches during upgrades, which means a transfer is outlasting the drain.</p>
+<h2 id="what-is-not-backed-up">What is not backed up<a class="headerlink" href="#what-is-not-backed-up" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Every field shown above is always present.</strong> The schema marks them required.</li>
-<li><strong>Fields are only ever added</strong>, and an added field is added <em>optional</em> — a
-  receiver written today keeps working, and a receiver cannot assume a field that
-  only exists from some release onward. Parse permissively: ignore keys you do
-  not recognise.</li>
-<li><strong>Removing or renaming an event, a field or a header is a breaking change</strong>,
-  refused by the same gate that guards <code>/api/**</code> unless it is declared. See
-  <a href="../../reference/compatibility/#the-api-contract">Compatibility</a>.</li>
-<li><strong>The signature scheme is not in the document.</strong> A schema can say the header
-  exists and constrain its shape; how the HMAC is computed and compared is
-  written out below, and that is where it stays.</li>
+<li><strong>Nothing reconstructible.</strong> The virtual catalog is derived from the approved set and
+  rebuilt on demand.</li>
+<li><strong>Secrets held outside the gateway</strong> — the OIDC client secret, the object store's
+  credentials, the database password. Those belong to whatever manages them, and a
+  restore needs them present before it starts.</li>
+<li><strong>The forge mirror.</strong> It is an outbound copy, not a source
+  (<a href="../read-only-forge-mirror/">The read-only forge mirror</a>); a restored gateway
+  re-mirrors.</li>
 </ul>
-<h2 id="3-verify-the-signature">3. Verify the signature<a class="headerlink" href="#3-verify-the-signature" title="Permanent link">&para;</a></h2>
-<p>Compute the HMAC over the raw request body — the bytes as received, before any
-JSON parsing or re-serialization. The payload is serialized once when the event
-is emitted and stored, so every retry sends byte-identical content.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Python</label><label for="__tabbed_2_2">Node</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span><span class="o">,</span><span class="w"> </span><span class="nn">hmac</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">verify</span><span class="p">(</span><span class="n">secret</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">header</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">expected</span> <span class="o">=</span> <span class="s2">"sha256="</span> <span class="o">+</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        <span class="n">secret</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">body</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="k">return</span> <span class="n">hmac</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createHmac</span><span class="p">,</span><span class="w"> </span><span class="nx">timingSafeEqual</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"node:crypto"</span><span class="p">;</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kd">function</span><span class="w"> </span><span class="nx">verify</span><span class="p">(</span><span class="nx">secret</span><span class="p">,</span><span class="w"> </span><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="nx">header</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">expected</span><span class="w"> </span><span class="o">=</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="s2">"sha256="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">createHmac</span><span class="p">(</span><span class="s2">"sha256"</span><span class="p">,</span><span class="w"> </span><span class="nx">secret</span><span class="p">).</span><span class="nx">update</span><span class="p">(</span><span class="nx">body</span><span class="p">).</span><span class="nx">digest</span><span class="p">(</span><span class="s2">"hex"</span><span class="p">);</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">Buffer</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="nx">expected</span><span class="p">);</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">Buffer</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="nx">header</span><span class="p">);</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">a</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">timingSafeEqual</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">);</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="p">}</span>
-</code></pre></div>
-</div>
-</div>
-</div>
-<div class="admonition warning">
-<p class="admonition-title">Compare in constant time, and reject before parsing</p>
-<p>Use <code>hmac.compare_digest</code> / <code>timingSafeEqual</code> rather than <code>==</code>, and verify
-before the body reaches any application logic. An unsigned or wrongly signed
-request is an unauthenticated request.</p>
-</div>
-<h2 id="driving-approvals-from-your-own-system">Driving approvals from your own system<a class="headerlink" href="#driving-approvals-from-your-own-system" title="Permanent link">&para;</a></h2>
-<p><code>marketplace.snapshot.approval_pending</code> exists so the review can happen where your
-organization already does reviews — a ticketing system, a change-approval board,
-a bot — instead of in the portal. It fires when a vetting chain run finishes and
-the snapshot is still <code>held</code>, which is exactly the moment a person is needed, and
-it carries enough to open a review item without a follow-up call:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"marketplace.snapshot.approval_pending"</span><span class="p">,</span><span class="nt">"occurredAt"</span><span class="p">:</span><span class="s2">"2026-08-15T09:14:22.481Z"</span><span class="p">,</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w"> </span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab9d1e4c7b6a5f80c3d2e1b0a9f8c7d6e5f"</span><span class="p">,</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w"> </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span><span class="nt">"actor"</span><span class="p">:</span><span class="s2">"vetting"</span><span class="p">,</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w"> </span><span class="nt">"vetting"</span><span class="p">:{</span><span class="nt">"runId"</span><span class="p">:</span><span class="mi">17</span><span class="p">,</span><span class="nt">"outcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span><span class="nt">"recordedOutcome"</span><span class="p">:</span><span class="s2">"BLOCKED"</span><span class="p">,</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">            </span><span class="nt">"blockingVetters"</span><span class="p">:[</span><span class="s2">"secret-scan"</span><span class="p">],</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">            </span><span class="nt">"uncoveredFindings"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"waivedFindings"</span><span class="p">:</span><span class="mi">0</span><span class="p">}}</span>
-</code></pre></div>
-<p>The first seven fields are the ones every event carries, unchanged. The
-<code>vetting</code> object is this event's own:</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>runId</code></td>
-<td>The chain run being reported. Correlates with <code>GET /api/v1/snapshots/{id}/vetting</code>.</td>
-</tr>
-<tr>
-<td><code>outcome</code></td>
-<td>The <strong>effective</strong> outcome, the one that gates approval: <code>CLEAR</code>, <code>CLEAR_WITH_WAIVERS</code> or <code>BLOCKED</code>.</td>
-</tr>
-<tr>
-<td><code>recordedOutcome</code></td>
-<td>What the vetters concluded before any waiver was applied: <code>CLEAR</code> or <code>BLOCKED</code>.</td>
-</tr>
-<tr>
-<td><code>blockingVetters</code></td>
-<td>Names of the vetters that are the reason it blocks. Empty when nothing objects.</td>
-</tr>
-<tr>
-<td><code>uncoveredFindings</code></td>
-<td>How many blocking findings no active waiver covers — the reviewer's worklist size.</td>
-</tr>
-<tr>
-<td><code>waivedFindings</code></td>
-<td>How many findings an active waiver is currently suppressing.</td>
-</tr>
-</tbody>
-</table>
-<p><code>outcome</code> is what tells your system what to offer. <code>CLEAR</code> means
-<a href="../approving-snapshots/"><code>POST /api/v1/snapshots/{id}/approve</code></a> will succeed;
-<code>CLEAR_WITH_WAIVERS</code> means it will, and only because someone accepted a risk;
-<code>BLOCKED</code> means it will be refused until every uncovered finding is
-<a href="../waiving-findings/">waived</a> or fixed upstream. Either decision goes
-back through the ordinary API, which emits <code>marketplace.snapshot.approved</code> or
-<code>marketplace.snapshot.rejected</code> in turn — so the round trip closes on the same webhook
-stream your system is already reading.</p>
-<div class="admonition warning">
-<p class="admonition-title">The event announces; the API discloses</p>
-<p>The payload carries counts, vetter names and identifiers — never a
-finding's message, rule id or location, and never a file name from the
-snapshot. A webhook target is authorized by a URL scheme allowlist, not by
-an identity, and the point of quarantine is that unapproved content does not
-leave it. Read the detail from
-<code>GET /api/v1/snapshots/{id}/vetting</code> as an authenticated caller; the
-<code>snapshotId</code> and <code>runId</code> in the payload are what address it.</p>
-</div>
-<p>Two things not to assume:</p>
-<ul>
-<li><strong>It is not <code>marketplace.snapshot.vetted</code>.</strong> That one fires for <em>every</em> chain run,
-  including runs against content that is already approved, and says nothing
-  about a pending decision. Subscribe to <code>marketplace.snapshot.approval_pending</code> if what you
-  want is "someone has to look at this".</li>
-<li><strong>It says nothing about a revocation.</strong> A snapshot that re-vetting revoked is
-  decidable again, but it is announced by <code>marketplace.snapshot.revoked</code> and means something
-  else: content that was already in use has been retracted.</li>
-</ul>
-<h2 id="delivery-retry-and-backoff">Delivery, retry and backoff<a class="headerlink" href="#delivery-retry-and-backoff" title="Permanent link">&para;</a></h2>
-<p>Emission is enqueue-only. The admin action writes one delivery row per matching
-subscriber and returns; an unreachable receiver can never fail or slow down an
-approval. A background dispatcher polls for due deliveries, claims each one with
-an atomic conditional update, and POSTs it.</p>
-<pre class="mermaid"><code>sequenceDiagram
-    autonumber
-    actor Reviewer
-    participant API as AdminController
-    participant DB as webhook_deliveries
-    participant Disp as WebhookDispatcher
-    participant Rcv as Subscriber endpoint
-
-    Reviewer-&gt;&gt;API: POST /api/v1/snapshots/42/approve
-    API-&gt;&gt;DB: enqueue marketplace.snapshot.approved (state=pending)
-    API--&gt;&gt;Reviewer: 200 (never waits for the receiver)
-
-    loop every poll-interval (5s)
-        Disp-&gt;&gt;DB: claim due pending deliveries
-    end
-    Disp-&gt;&gt;Rcv: POST payload + X-Skills-Gateway-Signature
-    Rcv--&gt;&gt;Disp: 503
-    Disp-&gt;&gt;DB: attempts=1, next_attempt_at = now + 10s (state=pending)
-
-    Disp-&gt;&gt;Rcv: POST identical bytes, same delivery id
-    Rcv--&gt;&gt;Disp: 200
-    Disp-&gt;&gt;DB: state=delivered, last_status=200</code></pre>
-<p>A 2xx marks the delivery <code>delivered</code>. Everything else — a non-2xx status or a
-transport error — is retried, because a 4xx from a receiver is usually a
-misconfiguration an operator will fix and the attempt budget bounds the cost.
-Attempt <em>n</em> schedules the next attempt at <code>base × 2^(n-1)</code>, capped:</p>
-<table>
-<thead>
-<tr>
-<th>Attempt</th>
-<th>Delay before it, with the defaults</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>immediate (within one poll interval)</td>
-</tr>
-<tr>
-<td>2</td>
-<td>10s</td>
-</tr>
-<tr>
-<td>3</td>
-<td>20s</td>
-</tr>
-<tr>
-<td>4</td>
-<td>40s</td>
-</tr>
-<tr>
-<td>5</td>
-<td>80s</td>
-</tr>
-</tbody>
-</table>
-<p>After the fifth attempt the delivery is <code>failed</code> and never retried. A delivery
-whose subscriber has been deleted fails immediately with
-<code>subscriber no longer exists</code>.</p>
-<p>Tune all of this under
-<a href="../../reference/configuration/#webhooks"><code>skills-gateway.webhooks.*</code></a>.</p>
-<div class="admonition warning">
-<p class="admonition-title">Delivery is at-least-once</p>
-<p>A receiver that returns 2xx after a network timeout will be retried, and a
-process restart mid-attempt makes the delivery due again once its lease
-expires. <strong>De-duplicate on <code>X-Skills-Gateway-Delivery</code></strong> — it is stable
-across every retry of the same delivery — and treat handlers as idempotent.</p>
-</div>
-<div class="admonition warning">
-<p class="admonition-title">Order is not promised, and one case makes that concrete</p>
-<p>Deliveries are claimed in batches and retried independently, so nothing
-guarantees the order two events for the same snapshot arrive in. One
-ingestion shows it plainly: the chain runs <em>inside</em> the ingestion, so
-<code>marketplace.snapshot.vetted</code> and <code>marketplace.snapshot.approval_pending</code> are queued <strong>before</strong>
-<code>marketplace.snapshot.ingested</code> for the same snapshot. Treat every event as
-self-describing — the payload carries the marketplace, the snapshot, the SHA
-and the state — rather than as a step in a sequence.</p>
-</div>
-<h2 id="watch-what-happened">Watch what happened<a class="headerlink" href="#watch-what-happened" title="Permanent link">&para;</a></h2>
-<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Portal</label><label for="__tabbed_3_2">API</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<p>The <strong>Webhooks</strong> page lists recent delivery attempts with their event,
-subscriber, state, attempt count and last response — see
-<a href="../../reference/portal/#webhooks">Admin portal</a>.</p>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span><span class="s1">'localhost:8080/api/v1/webhooks/deliveries?limit=20'</span>
-</code></pre></div>
-<p>Most recent first. <code>limit</code> defaults to 100 and is clamped to 500.</p>
-</div>
-</div>
-</div>
-<p>Each row carries <code>state</code>, <code>attempts</code>, <code>lastStatus</code> and <code>lastError</code>, which is
-enough to tell a receiver that is down from one that is rejecting the payload.</p>
-<h2 id="remove-a-subscriber">Remove a subscriber<a class="headerlink" href="#remove-a-subscriber" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>localhost:8080/api/v1/webhooks/1
-</code></pre></div>
-<p><strong>204</strong> on success, <strong>404</strong> if it never existed. The subscriber and its delivery
-history go with it, and no further events are queued for it. Subscriber creation
-and deletion are themselves recorded in the ledger as
-<code>webhook-subscriber-created</code> and <code>webhook-subscriber-deleted</code>.</p>
 
 
 

@@ -474,6 +474,8 @@
       
         
       
+        
+      
     
     
     
@@ -754,6 +756,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#backups-and-upgrades" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backups and upgrades
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -918,6 +931,34 @@
     
   
     Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup-and-upgrade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backing up, restoring and upgrading
   
 
     
@@ -2683,6 +2724,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#backups-and-upgrades" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backups and upgrades
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3121,6 +3173,11 @@ commission separately.</p>
 those clone URLs are additional destinations. They are refused by default;
 leaving <code>skills-gateway.ingestion.allow-external-sources</code> unset is what keeps
 the outbound set bounded to the marketplaces you registered.</p>
+<h2 id="backups-and-upgrades">Backups and upgrades<a class="headerlink" href="#backups-and-upgrades" title="Permanent link">&para;</a></h2>
+<p>The database and the git storage are one estate and have to be backed up and restored
+together — see
+<a href="../backup-and-upgrade/">Backing up, restoring and upgrading</a>, which also covers what
+startup does to the schema and what a rollout does to an in-flight fetch.</p>
 
 
 

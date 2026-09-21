@@ -470,6 +470,8 @@
       
         
       
+        
+      
     
     
     
@@ -723,6 +725,34 @@
     
   
     Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/backup-and-upgrade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backing up, restoring and upgrading
   
 
     
@@ -2113,6 +2143,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Exporting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#from-the-helm-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From the Helm chart
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2524,6 +2571,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Exporting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#from-the-helm-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From the Helm chart
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2795,10 +2859,24 @@ OTLP export. To publish telemetry, a deployment sets <code>arconia.otel.enabled=
 <code>OTEL_EXPORTER_OTLP_*</code> environment variables at its collector. The
 <code>skills_gateway.*</code> instruments flow immediately — they were being recorded all
 along.</p>
+<h3 id="from-the-helm-chart">From the Helm chart<a class="headerlink" href="#from-the-helm-chart" title="Permanent link">&para;</a></h3>
+<p>The chart had no values for this, so a default install recorded everything and
+exported nothing — including the two metrics this page tells an operator to <strong>alert
+on</strong>, which therefore reached nobody. One value is the switch:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">otel</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://otel-collector.observability:4318</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http/protobuf</span><span class="w">        </span><span class="c1"># or grpc, matching the receiver</span>
+</code></pre></div>
+<p>The chart sets <code>ARCONIA_OTEL_ENABLED</code>, the endpoint, the protocol and
+<code>OTEL_SERVICE_NAME</code> from those, and passes <code>otel.extraEnv</code> through for anything else
+the standard variables cover — headers for an authenticated collector, resource
+attributes, sampling. Enabling it without an endpoint fails the render rather than
+the interval: exporting to nowhere reports nothing and says nothing.</p>
 <h2 id="local-stack">Local stack<a class="headerlink" href="#local-stack" title="Permanent link">&para;</a></h2>
 <p>For local work the <code>observability</code> profile starts a Grafana LGTM dev container
 (collector, Loki, Tempo, Prometheus, Grafana) and enables export to it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span>-Dspring-boot.run.profiles<span class="o">=</span>observability
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span>-Dspring-boot.run.profiles<span class="o">=</span>observability
 </code></pre></div>
 <p>The Grafana URL is logged at startup. The supporting dependencies are optional,
 so nothing of the dev stack is reachable from the packaged jar or the container
