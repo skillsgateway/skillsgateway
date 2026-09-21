@@ -128,16 +128,16 @@ the usual SSO, and the token it receives is sent as
 === "Worked example (the mock provider the e2e suite runs)"
 
     The repository's end-to-end suite runs a mock OIDC provider on
-    `localhost:9090` and the gateway on `localhost:8081`. Against that pair, with
+    `localhost:9090` and the gateway on `localhost:18081`. Against that pair, with
     the gateway started with `SKILLSGATEWAY_FACADE_IDPBEARER_ENABLED=true` and
     `SKILLSGATEWAY_OIDC_ISSUER=http://localhost:9090/default`:
 
     ```console
-    $ git config --global credential.http://localhost:8081.oauthClientId e2e-client
-    $ git config --global credential.http://localhost:8081.oauthAuthorizeEndpoint http://localhost:9090/default/authorize
-    $ git config --global credential.http://localhost:8081.oauthTokenEndpoint http://localhost:9090/default/token
-    $ git config --global credential.http://localhost:8081.oauthScopes openid
-    $ git clone http://localhost:8081/git/acme
+    $ git config --global credential.http://localhost:18081.oauthClientId e2e-client
+    $ git config --global credential.http://localhost:18081.oauthAuthorizeEndpoint http://localhost:9090/default/authorize
+    $ git config --global credential.http://localhost:18081.oauthTokenEndpoint http://localhost:9090/default/token
+    $ git config --global credential.http://localhost:18081.oauthScopes openid
+    $ git clone http://localhost:18081/git/acme
     ```
 
     The values are real — they are the ones

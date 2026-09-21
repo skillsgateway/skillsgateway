@@ -13,6 +13,26 @@ if [[ -z "$JAR" ]]; then
   exit 1
 fi
 
+# 18081 keeps the recognisable "8081" shape while staying out of the 8000s, where a default
+# port collides with whatever else the machine runs — 8081 is React Native Metro's default,
+# and an unrelated dev server holding it used to fail the suite after the containers were up.
+GATEWAY_PORT="${E2E_GATEWAY_PORT:-18081}"
+
+# Probed here, before compose and the jar, so a taken port names its holder immediately instead
+# of surfacing 40 seconds later as a generic Spring Boot bind failure. Whichever of ss (Linux)
+# and lsof (macOS) exists is used; with neither, the probe is skipped rather than guessed at.
+port_holder=""
+if command -v ss >/dev/null 2>&1; then
+  port_holder="$(ss -ltnp "sport = :$GATEWAY_PORT" 2>/dev/null | tail -n +2)"
+elif command -v lsof >/dev/null 2>&1; then
+  port_holder="$(lsof -nP -iTCP:"$GATEWAY_PORT" -sTCP:LISTEN 2>/dev/null | tail -n +2)"
+fi
+if [[ -n "$port_holder" ]]; then
+  echo "port $GATEWAY_PORT is already in use — set E2E_GATEWAY_PORT to a free port:" >&2
+  echo "$port_holder" >&2
+  exit 1
+fi
+
 UPSTREAM_DIR="$(mktemp -d "${TMPDIR:-/tmp}/e2e-upstream.XXXXXX")"
 # A second fixture whose skill instructions carry planted prompt-injection markers, so the
 # vetting chain blocks it and the portal has a blocked snapshot to review.
@@ -97,7 +117,6 @@ git -C "$PREVIEW_DIR" -c user.name=e2e -c user.email=e2e@example.com \
 
 $COMPOSE up -d --wait
 
-GATEWAY_PORT="${E2E_GATEWAY_PORT:-8081}"
 mkdir -p "$UI_DIR/test-results"
 DATA_DIR="$(mktemp -d "${TMPDIR:-/tmp}/e2e-data.XXXXXX")"
 # Role enforcement is ON and the only admin is the group the mock IdP puts in every token, so the
