@@ -371,6 +371,30 @@ class PackagingTests {
         assertThat(deployment).contains("skills-gateway.replicaGate");
     }
 
+    /**
+     * The image smoke test addresses the API at the prefix the API actually has.
+     *
+     * <p>Exists because it did not. The change that introduced `/api/v1` swept `src/`, the portal
+     * and `docs/`, and missed this workflow — so the smoke test kept POSTing to unversioned paths,
+     * every call 404ed, and `main` went red on the one job that exercises the shipped artifact
+     * end to end. Nothing had ever read these paths, so nothing noticed.
+     *
+     * <p>Asserted as "no unversioned `$BASE/api/` remains" rather than by listing the five calls:
+     * a sixth call added later has to be versioned too, and a list would not say so.
+     */
+    @Test
+    @SVCs({"SVC_GW_RELEASE_0002"})
+    void theImageSmokeTestAddressesTheVersionedApi() throws IOException {
+        String body = Files.readString(REPO_ROOT.resolve(".github/workflows/container-image.yml"));
+
+        assertThat(body)
+                .as("the smoke test exercises the shipped artifact, so it has to use the shipped paths")
+                .contains("$BASE/api/v1/");
+        assertThat(body.replace("$BASE/api/v1/", ""))
+                .as("no unversioned $BASE/api/ call may remain — each one 404s against the real image")
+                .doesNotContain("$BASE/api/");
+    }
+
     @Test
     @SVCs({"SVC_GW_RELEASE_0002"})
     void releaseWorkflowCarriesTheMultiArchPublicationContract() throws IOException {

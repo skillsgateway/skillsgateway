@@ -233,14 +233,14 @@ jobs:
           # break in the OIDC chain fails this step rather than hiding behind a
           # posture no deployment runs.
           curl -sS -c "$JAR" -b "$JAR" -L -o /dev/null "$BASE/oauth2/authorization/idp"
-          me=$(curl -sS -b "$JAR" -c "$JAR" "$BASE/api/me")
+          me=$(curl -sS -b "$JAR" -c "$JAR" "$BASE/api/v1/me")
           echo "$me" | grep -q '"role":"admin"' || fail "login did not yield an administrator: $me"
 
           # 1. Register, from the bind-mounted fixture. The file scheme is off the
           # default allowlist and is enabled above purely to deliver the fixture;
           # what is asserted is the registration, not the scheme.
           code=$(curl -sS -b "$JAR" -c "$JAR" -o "$RUNNER_TEMP/register.json" -w '%{http_code}' \
-            -X POST "$BASE/api/marketplaces" \
+            -X POST "$BASE/api/v1/marketplaces" \
             -H 'Content-Type: application/json' -H "X-XSRF-TOKEN: $(csrf)" \
             -d '{"name":"smoke","url":"file:///fixture"}')
           [ "$code" = "201" ] || fail "register returned $code: $(cat "$RUNNER_TEMP/register.json")"
@@ -248,14 +248,14 @@ jobs:
           # 2. Ingest, and insist the snapshot is held -- not approved, and not
           # rejected on a policy violation.
           curl -sS -b "$JAR" -c "$JAR" -o "$RUNNER_TEMP/snapshot.json" \
-            -X POST "$BASE/api/marketplaces/smoke/ingest" -H "X-XSRF-TOKEN: $(csrf)"
+            -X POST "$BASE/api/v1/marketplaces/smoke/ingest" -H "X-XSRF-TOKEN: $(csrf)"
           id=$(jq -r '.id' "$RUNNER_TEMP/snapshot.json")
           state=$(jq -r '.state' "$RUNNER_TEMP/snapshot.json")
           [ "$state" = "held" ] || fail "ingest produced state '$state', expected held: $(cat "$RUNNER_TEMP/snapshot.json")"
 
           # 3. Approve. Only this publishes; the clone below is what proves it did.
           code=$(curl -sS -b "$JAR" -c "$JAR" -o "$RUNNER_TEMP/approve.json" -w '%{http_code}' \
-            -X POST "$BASE/api/snapshots/$id/approve" \
+            -X POST "$BASE/api/v1/snapshots/$id/approve" \
             -H 'Content-Type: application/json' -H "X-XSRF-TOKEN: $(csrf)" -d '{}')
           [ "$code" = "200" ] || fail "approve returned $code: $(cat "$RUNNER_TEMP/approve.json")"
           [ "$(jq -r '.state' "$RUNNER_TEMP/approve.json")" = "approved" ] || fail "snapshot not approved"
@@ -264,7 +264,7 @@ jobs:
           # The facade is a different chain from the API -- PAT over Basic, no
           # session, no cookie -- so this is the one assertion that covers it.
           curl -sS -b "$JAR" -c "$JAR" -o "$RUNNER_TEMP/token.json" \
-            -X POST "$BASE/api/tokens" \
+            -X POST "$BASE/api/v1/tokens" \
             -H 'Content-Type: application/json' -H "X-XSRF-TOKEN: $(csrf)" \
             -d '{"name":"container-smoke-test"}'
           pat=$(jq -r '.token' "$RUNNER_TEMP/token.json")
