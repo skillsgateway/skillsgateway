@@ -115,12 +115,12 @@
 
 ## 8. Gates and close-out
 
-- [ ] 8.1 `./mvnw clean verify` in the **foreground** — the background watchdog
+- [x] 8.1 `./mvnw clean verify` in the **foreground** — the background watchdog
       kills it. `MAVEN_OPTS="-Xmx3g"`, own Bash call.
-- [ ] 8.2 `pnpm test:stories`, `pnpm e2e`, `reqstool status local -p
+- [x] 8.2 `pnpm test:stories`, `pnpm e2e`, `reqstool status local -p
       docs/reqstool` (must end PASS), `openspec validate --all --strict`,
       `mkdocs build --strict` — each its own call.
-- [ ] 8.3 `evidence.md` from one final fresh run after the last code edit, with
+- [x] 8.3 `evidence.md` from one final fresh run after the last code edit, with
       the commit SHA.
 - [x] 8.4 Update `docs/analysis/2026-09-08-assessment-progress.md` step 9: the
       partitioning half is answered, and the answer was to reject partitioning.
