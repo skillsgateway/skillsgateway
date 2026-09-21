@@ -57,7 +57,10 @@ class AdminAuditTests extends AbstractGatewayTest {
         mockMvc.perform(delete("/api/v1/tokens/%d".formatted(tokenId)).with(oidcLogin()))
                 .andExpect(status().isNoContent());
 
-        String audit = mockMvc.perform(get("/api/v1/audit").with(oidcLogin()))
+        // The browse read is a page now (GW_AUDIT_0008), so ask for one big enough to hold this
+        // test's own entries rather than relying on the default.
+        String audit = mockMvc.perform(
+                        get("/api/v1/audit").param("limit", "1000").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -65,11 +68,11 @@ class AdminAuditTests extends AbstractGatewayTest {
 
         for (String event : List.of("marketplace-registered", "snapshot-ingested", "snapshot-approved")) {
             List<String> principals = JsonPath.read(
-                    audit, "$[?(@.event == '%s' && @.marketplace == '%s')].principal".formatted(event, name));
+                    audit, "$.entries[?(@.event == '%s' && @.marketplace == '%s')].principal".formatted(event, name));
             assertThat(principals).as(event).containsExactly(me);
         }
         for (String event : List.of("token-created", "token-revoked")) {
-            List<String> principals = JsonPath.read(audit, "$[?(@.event == '%s')].principal".formatted(event));
+            List<String> principals = JsonPath.read(audit, "$.entries[?(@.event == '%s')].principal".formatted(event));
             assertThat(principals).as(event).contains(me);
         }
     }

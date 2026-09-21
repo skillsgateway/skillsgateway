@@ -68,6 +68,72 @@
         },
         "type": "object"
       },
+      "AuditEntry": {
+        "description": "One append-only audit ledger entry",
+        "properties": {
+          "detail": {
+            "description": "Free-text qualifier, such as the reason given for a vetting override",
+            "type": "string"
+          },
+          "event": {
+            "description": "What happened",
+            "type": "string"
+          },
+          "id": {
+            "description": "Ledger sequence; the export cursor and de-duplication key",
+            "format": "int64",
+            "type": "integer"
+          },
+          "marketplace": {
+            "description": "Marketplace the entry concerns, or '-'",
+            "type": "string"
+          },
+          "principal": {
+            "description": "Authenticated identity, when there was one",
+            "type": "string"
+          },
+          "ref": {
+            "description": "For a fetch, the advertised ref the entry concerns (GW_FACADE_0018); null when unknown",
+            "type": "string"
+          },
+          "sha": {
+            "description": "Commit SHA, when the entry concerns one",
+            "type": "string"
+          },
+          "source": {
+            "description": "Client address for a facade fetch, or 'admin' for an administrative action",
+            "type": "string"
+          },
+          "tokenId": {
+            "description": "Id of the token that authenticated a facade entry, or null (GW_AUTH_0009)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "ts": {
+            "description": "When the entry was appended, ISO-8601",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AuditPage": {
+        "description": "One page of the audit ledger, newest entry first",
+        "properties": {
+          "entries": {
+            "description": "The entries, newest first",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntry"
+            },
+            "type": "array"
+          },
+          "nextBefore": {
+            "description": "Pass as `before` for the next, older page. Null when this page reaches the oldest entry the ledger still holds.",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "BulkChainChange": {
         "description": "One vetting-chain change addressed to several marketplaces",
         "properties": {
@@ -3584,25 +3650,52 @@
     },
     "/api/v1/audit": {
       "get": {
-        "description": "Append-only record of every git facade fetch: client source address, authenticated identity, repository, ref, commit SHA, and timestamp. Portal actions are not in this ledger; approvals live in snapshot provenance.",
-        "operationId": "audit",
+        "description": "One page of the append-only ledger, newest first: facade fetches with client source address, identity, ref and commit SHA, and administrative actions with the acting identity. Page backwards by passing the previous page's `nextBefore` as `before`.",
+        "operationId": "browse",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
               "*/*": {
                 "schema": {
-                  "items": {
-                    "additionalProperties": { },
-                    "type": "object"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/AuditPage"
                 }
               }
             },
-            "description": "OK"
+            "description": "The page, newest entry first"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "The session holds no applicable role"
           }
         },
-        "summary": "Fetch audit ledger",
+        "summary": "Browse the audit ledger",
         "tags": [
           "Audit"
         ]

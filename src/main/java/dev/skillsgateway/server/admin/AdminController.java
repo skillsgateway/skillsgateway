@@ -41,7 +41,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -594,18 +593,6 @@ public class AdminController {
                 .fourEyes(id, authentication.getName())
                 .orElseThrow(
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "snapshot %d not found".formatted(id)));
-    }
-
-    @GetMapping("/audit")
-    @Tag(name = "Audit")
-    @Operation(
-            summary = "Fetch audit ledger",
-            description = "Append-only record of every git facade fetch: client source address, authenticated"
-                    + " identity, repository, ref, commit SHA, and timestamp. Portal actions are not in this"
-                    + " ledger; approvals live in snapshot provenance.")
-    public List<Map<String, Object>> audit(Authentication authentication) {
-        roleService.requireAuditor(authentication);
-        return fetchLogRepository.list();
     }
 
     @ExceptionHandler(SnapshotNotFoundException.class)

@@ -23,29 +23,37 @@ that is itself new content to export. See
 
 ## `GET /api/v1/audit`
 
-Return the ledger. Requires an authenticated session with the auditor role.
+One page of the ledger, newest entry first. Requires an authenticated session with
+the auditor role.
 
 ```console
 $ curl localhost:8080/api/v1/audit
+$ curl 'localhost:8080/api/v1/audit?before=41&limit=100'
 ```
 
 ```json
-[{"id":1,"ts":"2026-08-15T09:04:11Z","source":"10.0.0.4","principal":"alice@example.com",
-  "marketplace":"acme","event":"info-refs","ref":"refs/heads/main","sha":"3f9c2ab..."},
- {"id":2,"ts":"2026-08-15T09:04:11Z","source":"10.0.0.4","principal":"alice@example.com",
-  "marketplace":"acme","event":"upload-pack","ref":"refs/heads/main","sha":"3f9c2ab..."},
- {"id":3,"ts":"2026-08-15T11:22:07Z","source":"10.0.0.9","principal":"team-payments",
-  "marketplace":"acme","event":"upload-pack","ref":"refs/snapshots/9d01c44...","sha":"9d01c44..."}]
+{"entries":[
+  {"id":43,"ts":"2026-08-15T11:22:07Z","source":"10.0.0.9","principal":"team-payments",
+   "marketplace":"acme","event":"upload-pack","ref":"refs/snapshots/9d01c44...","sha":"9d01c44..."},
+  {"id":42,"ts":"2026-08-15T09:04:11Z","source":"10.0.0.4","principal":"alice@example.com",
+   "marketplace":"acme","event":"upload-pack","ref":"refs/heads/main","sha":"3f9c2ab..."}],
+ "nextBefore":42}
 ```
 
-**200.** Rows are returned untyped, which is why the portal renders this table
-schema-lessly.
+**200.** `before` (default `0`, meaning start at the newest entry) and `limit`
+(clamped to the same bounds as the export). Page backwards by passing the previous
+response's `nextBefore` as `before`; it is absent once the page reaches the oldest
+entry the ledger still holds.
 
-!!! note "No filtering, search or paging"
+!!! note "Newest first, the opposite of the export"
 
-    This endpoint returns the whole table. It is a recent-activity view, not an
-    investigation tool. For a continuous, resumable feed use the export
-    endpoints below.
+    Deliberate. An export consumer resumes *forward* from where it stopped; a person
+    opening the audit page wants what happened most recently. Same rows and the same
+    typed shape — opposite ends of the ledger.
+
+    Paged by ledger sequence rather than by offset, so a page stays stable while the
+    ledger is being appended to underneath a reader. An offset page over an
+    append-only table cannot promise that.
 
 ---
 

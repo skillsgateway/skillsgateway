@@ -100,8 +100,33 @@ public class FetchLogRepository {
                 .update();
     }
 
+    /**
+     * The whole ledger, untyped. **Not for a request path** — it is unbounded, and the endpoint that
+     * used it is why GW_AUDIT_0008 exists. Kept for tests, which assert over a ledger of a few dozen
+     * rows and want the lot.
+     */
     public List<Map<String, Object>> list() {
         return jdbc.sql("SELECT * FROM fetch_log ORDER BY id").query().listOfRows();
+    }
+
+    /**
+     * One page of the ledger, newest first, for the portal's browse surface (GW_AUDIT_0008).
+     *
+     * <p>Descending and cursored by {@code id} rather than by offset: the ledger only grows at the
+     * newest end, so an offset page shifts under a reader between requests while a
+     * {@code id < before} page cannot. {@code before} of zero means start at the newest entry.
+     *
+     * <p>Deliberately a different direction from {@link #entriesAfter}, which the NDJSON export
+     * uses. An export consumer resumes forward from where it stopped; a person opening the audit
+     * page wants what happened most recently. Same rows, same typed shape, opposite ends.
+     */
+    @Requirements({"GW_AUDIT_0008"})
+    public List<AuditEntry> entriesBefore(long before, int limit) {
+        return jdbc.sql("SELECT * FROM fetch_log WHERE (:before = 0 OR id < :before) ORDER BY id DESC LIMIT :limit")
+                .param("before", before)
+                .param("limit", limit)
+                .query(FetchLogRepository::map)
+                .list();
     }
 
     /**
