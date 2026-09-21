@@ -73,3 +73,15 @@ WHEN retention would permanently remove the record of a snapshot revoked by
 re-vetting rather than by an administrator
 THEN the removal SHALL proceed as before.
 
+### Requirement: GW_RETENTION_0009
+The system SHALL implement GW_RETENTION_0009.
+
+#### Scenario: SVC_GW_RETENTION_0009
+The system SHALL pass SVC_GW_RETENTION_0009.
+
+
+### Requirement: GW_RETENTION_0010
+The system SHALL implement GW_RETENTION_0010.
+
+#### Scenario: SVC_GW_RETENTION_0010
+The system SHALL pass SVC_GW_RETENTION_0010.
