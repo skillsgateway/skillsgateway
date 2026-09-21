@@ -2815,6 +2815,17 @@ otherwise loop forever. Fix the receiver, then replay explicitly.</p>
 </div>
 <p>Everything after that position is delivered again on the next pass. <strong>200</strong> with
 the updated sink, <strong>404</strong> if the sink is unknown.</p>
+<div class="admonition note">
+<p class="admonition-title">Replay reaches only what the ledger still holds</p>
+<p>If <a href="../snapshot-retention/#7-bound-the-audit-ledger">ledger retention</a> is
+enabled, trimming removes only entries <strong>every</strong> enabled sink has already
+taken. So rewinding an existing sink can never ask for something it was not
+handed once — but a sink <strong>registered later</strong>, starting at position <code>0</code>,
+receives the ledger from the oldest surviving entry rather than from the
+beginning of time.</p>
+<p>Register the sinks you need <strong>before</strong> enabling the trim. A sink that does
+not exist yet holds no position, and so bounds nothing.</p>
+</div>
 <p>The sink list also reports how far behind the ledger head each sink is, which is
 the signal that a receiver is failing or that a batch size is too small for the
 poll interval:</p>

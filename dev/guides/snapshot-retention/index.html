@@ -847,6 +847,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#7-bound-the-audit-ledger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Bound the audit ledger
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#turning-it-off-again" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2569,6 +2580,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#7-bound-the-audit-ledger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Bound the audit ledger
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#turning-it-off-again" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2729,10 +2751,49 @@ attributed to <code>retention-policy</code> rather than to a person.</p>
 <code>marketplace.snapshot.restored</code> webhook events, so an inventory system can follow deletions
 the same way it follows approvals — see
 <a href="../lifecycle-webhooks/">Receiving lifecycle webhooks</a>.</p>
+<h2 id="7-bound-the-audit-ledger">7. Bound the audit ledger<a class="headerlink" href="#7-bound-the-audit-ledger" title="Permanent link">&para;</a></h2>
+<p>Retention compacts <em>snapshots</em>. The audit ledger grows independently, and it grows
+faster: <code>info-refs</code> is appended on every <code>git fetch</code> whether or not anything
+transfers, so a few thousand developers polling every half hour is a couple of
+hundred thousand rows a day, and nothing removed them.</p>
+<p>The same six-hourly compaction pass now trims it, behind the same
+<code>enabled</code> switch and one setting:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">retention</span><span class="p">:</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="nt">ledger-max-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90d</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">A ledger no sink exports is never trimmed — whatever this is set to</p>
+<p>An entry is eligible only when it is <strong>both</strong> older than <code>ledger-max-age</code>
+<strong>and</strong> already taken by every enabled
+<a href="../exporting-the-audit-ledger/">audit export sink</a>. The export position is
+the gateway's only evidence that some other system holds a copy, so trimming
+behind it is the one deletion that destroys no record.</p>
+<p>With no enabled sink there is no such position, nothing is eligible, and the
+trim does nothing at all. <strong>Registering an export destination is the price of
+bounding the table</strong> — the gateway will not be both the sole holder of the
+audit evidence and the thing that deletes it. Watch
+<code>skills_gateway.ledger.export_lag_seconds</code> to see the ledger you are keeping
+forever; see <a href="../../reference/observability/">Observability</a>.</p>
+</div>
+<p>Unset, zero or negative switches the trim off rather than making every entry
+instantly eligible: the mis-typed value must not be the one that deletes.</p>
+<p><strong>Administrative entries are never trimmed.</strong> Only the two facade read events
+(<code>info-refs</code>, <code>upload-pack</code>) are eligible; approvals, rejections, revocations,
+registrations, token and sink lifecycle — the compliance-bearing half, and the
+low-volume one — survive every pass whatever their age. The admitted set is a
+closed allowlist, so a ledger event added to the gateway later is not trimmable
+until somebody deliberately admits it.</p>
+<p>Each pass is bounded by a fixed work budget and resumes on the next one, so the
+first run against a ledger years deep does not hold the compaction lease until it
+finishes. When a pass removes anything it logs how many and which sink bounded
+it.</p>
 <h2 id="turning-it-off-again">Turning it off again<a class="headerlink" href="#turning-it-off-again" title="Permanent link">&para;</a></h2>
 <p>Set <code>enabled: false</code>. The schedulers stop; already-marked snapshots keep their
 marks and stay restorable, and nothing new is selected or purged. Restoring them
-is the explicit second step.</p>
+is the explicit second step. The ledger trim stops with them — it is a duty of the
+same pass — and clearing <code>ledger-max-age</code> stops it on its own.</p>
 
 
 

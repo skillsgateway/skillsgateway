@@ -4750,6 +4750,12 @@ passes run. Java-side defaults; nothing appears in <code>application.yaml</code>
 <td>How long an abandoned publication staging ref must be observed before compaction removes it. Zero or negative disables the sweep.</td>
 </tr>
 <tr>
+<td><code>skills-gateway.retention.ledger-max-age</code></td>
+<td><em>(unset)</em></td>
+<td>How old an audit-ledger read entry must be before the compaction pass may remove it. <strong>Unset, zero or negative switches the trim off</strong>, and it removes nothing regardless unless an enabled <a href="../../guides/exporting-the-audit-ledger/">export sink</a> has already taken the entries — see <a href="../../guides/snapshot-retention/#7-bound-the-audit-ledger">Bound the audit ledger</a>.</td>
+<td></td>
+</tr>
+<tr>
 <td><code>skills-gateway.retention.defaults.held-max-age</code></td>
 <td>duration</td>
 <td><code>90d</code></td>

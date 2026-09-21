@@ -2654,7 +2654,7 @@
 </tr>
 <tr>
 <td>Retention</td>
-<td>Soft-deletes and then compacts eligible snapshots; approved ones are never eligible.</td>
+<td>Soft-deletes and then compacts eligible snapshots; approved ones are never eligible. The same pass trims audit-ledger read entries, only behind every enabled export sink and never the administrative half.</td>
 <td>—</td>
 <td><code>GW_RETENTION</code></td>
 <td><a href="../guides/snapshot-retention/">Reclaiming snapshot storage</a></td>

@@ -2443,6 +2443,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#append-only-and-finite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Append-only, and finite
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#exporting-it" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2689,6 +2700,17 @@
     <span class="md-ellipsis">
       
         Reading it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#append-only-and-finite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Append-only, and finite
       
     </span>
   </a>
@@ -3026,6 +3048,23 @@ filtering, search or paging: it is a recent-activity view.</p>
 <p>Because entries carry the principal, marketplace and SHA, the inventory question
 — "every identity that fetched this exact content" — is a single query against
 the ledger.</p>
+<h3 id="append-only-and-finite">Append-only, and finite<a class="headerlink" href="#append-only-and-finite" title="Permanent link">&para;</a></h3>
+<p>Append-only is a rule about writes: nothing in the gateway updates a ledger row
+or deletes one to change what it says. It was never a promise that the table
+grows forever, and it could not be — <code>info-refs</code> is appended on every client
+poll, so the ledger is the one table whose size is set by how often developers
+run <code>git fetch</code> rather than by how much the organisation does.</p>
+<p>What bounds it is deliberately narrow. Only the two facade <strong>read</strong> events are
+ever removable, and only once <strong>every enabled export sink has already taken
+them</strong>; the administrative half — who approved, rejected, revoked, registered —
+is never removable at any age. Nothing is removed at all unless an operator
+configures a maximum age, and nothing is removed in a deployment with no export
+sink, because then the gateway's own copy is the only copy and deleting it would
+destroy the evidence rather than age it.</p>
+<p>So the ledger is append-only in the sense that matters — no entry ever changes
+its meaning — and finite only behind proof that something else holds what is
+being dropped. See
+<a href="../../guides/snapshot-retention/#7-bound-the-audit-ledger">Bound the audit ledger</a>.</p>
 <h3 id="exporting-it">Exporting it<a class="headerlink" href="#exporting-it" title="Permanent link">&para;</a></h3>
 <p>The portal view is a recent-activity table; evidence lives in your compliance
 system. The ledger is therefore also readable as a continuous feed, either

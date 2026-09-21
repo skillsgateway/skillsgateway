@@ -2673,6 +2673,18 @@ a time series.</p>
 <td>—</td>
 <td>Each catalog name a rebuild withheld because more than one plugin claimed it. Untagged for the reason above: <em>which</em> name is a <a href="../api/audit/">ledger</a> question.</td>
 </tr>
+<tr>
+<td><code>skills_gateway.ledger.entries</code></td>
+<td>gauge</td>
+<td>—</td>
+<td>Approximate rows in the audit ledger, from the planner's estimate rather than a count — reading it must not scan the table it exists to warn about.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.ledger.export_lag_seconds</code></td>
+<td>gauge</td>
+<td>—</td>
+<td>Age of the oldest ledger entry no enabled export sink has taken. <strong>Watch this</strong>: with no sink registered the <a href="../../guides/snapshot-retention/#7-bound-the-audit-ledger">ledger trim</a> removes nothing by design, and this is the line that climbs while it does. Zero when every entry has been exported.</td>
+</tr>
 </tbody>
 </table>
 <p>The ingestion and approval instruments are Micrometer <em>observations</em>, so when
