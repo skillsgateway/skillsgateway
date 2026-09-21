@@ -37,3 +37,9 @@ verification are unchanged.
 #### Scenario: SVC_GW_AUDIT_0006
 The system SHALL pass SVC_GW_AUDIT_0006.
 
+### Requirement: GW_AUDIT_0008
+The system SHALL implement GW_AUDIT_0008.
+
+#### Scenario: SVC_GW_AUDIT_0008
+The system SHALL pass SVC_GW_AUDIT_0008.
+
