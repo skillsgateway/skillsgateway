@@ -1776,6 +1776,14 @@ requirements:
     implementation: configuration
     revision: 0.1.0
 
+  - id: GW_API_0007
+    title: Every refusal is a problem document carrying its reason
+    significance: shall
+    description: The system shall answer every refused request on its REST API and its facade status surface with an RFC 7807 problem document served as application/problem+json, carrying at least the status and a human-readable detail stating why the request was refused, whatever mechanism inside the gateway raised the refusal, and shall describe that document as the response schema of every non-success response in its published contract.
+    rationale: A contract that documents one error shape while sending another is worse than one that documents none, because a client is written against the document; the reason text is also the only part of a refusal that says why, and dropping it leaves an operator with a bare status line and a support request. Requiring one envelope whatever raised the refusal is what stops the shape from depending on which of three internal mechanisms happened to run, which is not a distinction any caller can see or should have to.
+    categories: ["functional-suitability", "maintainability"]
+    revision: 0.1.0
+
   - id: GW_API_0005
     title: The lifecycle event deliveries are part of the published contract document
     significance: shall

@@ -109,12 +109,19 @@ moves the path prefix and ships as a major. See
 [The API contract](../compatibility.md#the-api-contract) for what counts as
 breaking and how it is enforced.
 
-**Errors** are RFC 7807 `ProblemDetail` documents:
+**Errors** are RFC 7807 `ProblemDetail` documents, served as
+`application/problem+json`, whatever inside the gateway refused the request
+(`GW_API_0007`):
 
 ```json
 {"type":"about:blank","title":"Bad Request","status":400,
- "detail":"url scheme must be one of [http, https]"}
+ "detail":"url scheme must be one of [http, https]",
+ "instance":"/api/v1/marketplaces"}
 ```
+
+`detail` is the field to show a user: it is the only part that says why *this*
+request was refused. Every non-success response in this document declares this
+shape, so a client has one body to parse rather than one per endpoint.
 
 **Status codes** used across the API:
 

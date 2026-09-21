@@ -2119,6 +2119,38 @@
         },
         "type": "object"
       },
+      "ProblemDetail": {
+        "description": "An RFC 7807 problem document. Every refusal uses this shape, whatever raised it.",
+        "properties": {
+          "detail": {
+            "description": "Why this request in particular was refused. The field a client should show a user.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "The request path this problem occurred on.",
+            "format": "uri",
+            "type": "string"
+          },
+          "status": {
+            "description": "The HTTP status code, repeated in the body.",
+            "format": "int32",
+            "type": "integer"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the type.",
+            "type": "string"
+          },
+          "type": {
+            "description": "A URI identifying the problem type; `about:blank` when the status is the whole story.",
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
       "Provenance": {
         "description": "Provenance of a snapshot: what was served, from where, and who approved it",
         "properties": {
@@ -3477,7 +3509,7 @@
       "name": "jimisola",
       "url": "https://github.com/skillsgateway/skillsgateway"
     },
-    "description": "Enterprise gateway for git-distributed AI agent skill marketplaces (Claude Code plugins, Copilot, Cursor).\n\n## Model\n\nUpstream marketplaces are ingested into quarantine as immutable, SHA-identified snapshots, held until a reviewer approves them, and served to unmodified git clients over smart-HTTP. Only approved content is ever fetchable; upstream changes never alter served content until re-ingested and re-approved (rug-pull protection). Every git fetch and every administrative action lands in an append-only audit ledger.\n\n## Quick start\n\n1. `POST /api/marketplaces` — register an upstream by clone URL (http/https only; the gateway pins ingestion to the upstream default branch — a `ref` cannot be supplied).\n2. `POST /api/marketplaces/{name}/ingest` — fetch the upstream into quarantine; the snapshot is `held` (or `rejected` on policy violation, e.g. non-local plugin sources).\n3. `GET /api/snapshots/{id}/content` — inspect the plugins and skills the snapshot ships before deciding.\n4. `POST /api/snapshots/{id}/approve` — publish it to the facade.\n5. `POST /api/tokens` — issue a personal access token, then `git clone http://token:<PAT>@<gateway>/git/{marketplace}`.\n\n## Authentication\n\nBrowser sessions authenticate via OIDC (the app is its own BFF — tokens never reach the browser); git clients authenticate with personal access tokens over the standard credential-helper flow (Basic auth, username `token`). Tokens are stored as hashes and shown exactly once at creation.\n\nThis API is the same surface the admin portal uses. The gateway also exposes its own CycloneDX SBOM at `/actuator/sbom` and health at `/actuator/health`.",
+    "description": "Enterprise gateway for git-distributed AI agent skill marketplaces (Claude Code plugins, Copilot, Cursor).\n\n## Model\n\nUpstream marketplaces are ingested into quarantine as immutable, SHA-identified snapshots, held until a reviewer approves them, and served to unmodified git clients over smart-HTTP. Only approved content is ever fetchable; upstream changes never alter served content until re-ingested and re-approved (rug-pull protection). Every git fetch and every administrative action lands in an append-only audit ledger.\n\n## Quick start\n\n1. `POST /api/v1/marketplaces` — register an upstream by clone URL (http/https only; the gateway pins ingestion to the upstream default branch — a `ref` cannot be supplied).\n2. `POST /api/v1/marketplaces/{name}/ingest` — fetch the upstream into quarantine; the snapshot is `held` (or `rejected` on policy violation, e.g. non-local plugin sources).\n3. `GET /api/v1/snapshots/{id}/content` — inspect the plugins and skills the snapshot ships before deciding.\n4. `POST /api/v1/snapshots/{id}/approve` — publish it to the facade.\n5. `POST /api/v1/tokens` — issue a personal access token, then `git clone http://token:<PAT>@<gateway>/git/{marketplace}`.\n\n## Authentication\n\nBrowser sessions authenticate via OIDC (the app is its own BFF — tokens never reach the browser); git clients authenticate with personal access tokens over the standard credential-helper flow (Basic auth, username `token`). Tokens are stored as hashes and shown exactly once at creation.\n\nThis API is the same surface the admin portal uses. The gateway also exposes its own CycloneDX SBOM at `/actuator/sbom` and health at `/actuator/health`.",
     "license": {
       "name": "Apache-2.0",
       "url": "https://www.apache.org/licenses/LICENSE-2.0"
@@ -3669,9 +3701,9 @@
           },
           "400": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreatedSink"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3679,9 +3711,9 @@
           },
           "409": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreatedSink"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3689,9 +3721,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreatedSink"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3724,6 +3756,13 @@
             "description": "Sink deleted"
           },
           "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
             "description": "Sink not found"
           }
         },
@@ -3771,9 +3810,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinkView"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3803,9 +3842,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CatalogInfo"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3835,9 +3874,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CatalogInfo"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3867,9 +3906,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EstateReconciliation"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3899,9 +3938,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EstateReconciliation"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3964,9 +4003,9 @@
           },
           "400": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisteredMarketplace"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3974,9 +4013,9 @@
           },
           "409": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisteredMarketplace"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3984,9 +4023,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisteredMarketplace"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4026,9 +4065,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Snapshot"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4036,9 +4075,9 @@
           },
           "502": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Snapshot"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4078,9 +4117,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PassResult"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4130,9 +4169,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncModeView"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4140,9 +4179,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncModeView"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4185,12 +4224,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/ChainVetterView"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4198,12 +4234,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/ChainVetterView"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4243,9 +4276,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChainSettingsView"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4253,9 +4286,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChainSettingsView"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4298,12 +4331,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/WaiverView"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4355,9 +4385,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MirrorReport"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4387,9 +4417,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MirrorReport"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4429,9 +4459,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlaygroundResult"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4494,9 +4524,9 @@
           },
           "409": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolicyRule"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4504,9 +4534,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolicyRule"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4549,12 +4579,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4602,9 +4629,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolicyRule"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4612,9 +4639,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolicyRule"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4738,12 +4765,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/RoleGrant"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4781,9 +4805,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RoleGrant"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4791,9 +4815,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RoleGrant"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4801,9 +4825,9 @@
           },
           "409": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RoleGrant"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4811,9 +4835,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RoleGrant"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4846,9 +4870,23 @@
             "description": "Grant revoked"
           },
           "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
             "description": "The caller is not an admin"
           },
           "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
             "description": "Grant not found"
           }
         },
@@ -4886,9 +4924,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Snapshot"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4896,9 +4934,9 @@
           },
           "409": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Snapshot"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4948,9 +4986,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Snapshot"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4958,9 +4996,9 @@
           },
           "409": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Snapshot"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4968,9 +5006,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Snapshot"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5011,9 +5049,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SnapshotContent"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5054,9 +5092,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ContentDiff"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5097,9 +5135,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SnapshotDiff"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5107,9 +5145,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SnapshotDiff"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5153,12 +5191,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/Fetcher"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5166,12 +5201,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/Fetcher"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5220,9 +5252,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FileContent"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5230,9 +5262,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FileContent"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5273,9 +5305,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FileTree"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5283,9 +5315,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FileTree"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5326,9 +5358,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FourEyesCheck"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5369,9 +5401,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LicenseReport"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5412,9 +5444,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Provenance"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5455,9 +5487,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Snapshot"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5465,9 +5497,9 @@
           },
           "409": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Snapshot"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5508,9 +5540,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Eligibility"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5551,9 +5583,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Snapshot"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5561,9 +5593,9 @@
           },
           "409": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Snapshot"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5604,9 +5636,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RevetResult"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5614,9 +5646,9 @@
           },
           "409": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RevetResult"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5666,9 +5698,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RevokeResponse"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5676,9 +5708,9 @@
           },
           "409": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RevokeResponse"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5686,9 +5718,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RevokeResponse"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5729,9 +5761,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VettingView"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5782,9 +5814,9 @@
           },
           "400": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WaiverView"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5792,9 +5824,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WaiverView"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5857,9 +5889,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IssuedToken"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5892,12 +5924,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/MachineCredentialView"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5935,9 +5964,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IssuedToken"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5945,9 +5974,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IssuedToken"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -5980,9 +6009,23 @@
             "description": "Revoked"
           },
           "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
             "description": "The caller does not hold the admin role"
           },
           "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
             "description": "No such active machine credential"
           }
         },
@@ -6020,9 +6063,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IssuedToken"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6030,9 +6073,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IssuedToken"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6040,9 +6083,9 @@
           },
           "409": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IssuedToken"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6082,9 +6125,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IssuedToken"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6117,6 +6160,13 @@
             "description": "Revoked"
           },
           "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
             "description": "No such active token of yours"
           }
         },
@@ -6154,9 +6204,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IssuedToken"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6164,9 +6214,9 @@
           },
           "409": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IssuedToken"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6206,9 +6256,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChainModeSetting"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6216,9 +6266,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChainModeSetting"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6226,9 +6276,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChainModeSetting"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6268,9 +6318,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChainOrderSetting"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6278,9 +6328,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChainOrderSetting"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6288,9 +6338,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChainOrderSetting"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6320,9 +6370,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChainSettings"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6372,9 +6422,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BulkChainResult"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6382,9 +6432,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BulkChainResult"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6417,12 +6467,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/ChainVetterView"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6452,9 +6499,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChainSettingsView"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6487,12 +6534,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/VetterToggle"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6542,9 +6586,9 @@
           },
           "403": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VetterToggle"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6552,9 +6596,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VetterToggle"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6562,9 +6606,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VetterToggle"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6605,9 +6649,9 @@
           },
           "404": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WaiverView"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6670,9 +6714,9 @@
           },
           "400": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreatedSubscriber"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6680,9 +6724,9 @@
           },
           "409": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreatedSubscriber"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6690,9 +6734,9 @@
           },
           "422": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreatedSubscriber"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6784,6 +6828,13 @@
             "description": "Subscriber deleted"
           },
           "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
             "description": "Subscriber not found"
           }
         },
@@ -6861,12 +6912,33 @@
             "description": "Trigger accepted; ingestion queued"
           },
           "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
             "description": "Missing or invalid signature"
           },
           "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
             "description": "Unknown marketplace, or its sync mode is not webhook"
           },
           "413": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
             "description": "Request body exceeds the configured bound"
           }
         },
@@ -6903,9 +6975,9 @@
           },
           "400": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HeldContentReport"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6913,9 +6985,9 @@
           },
           "401": {
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HeldContentReport"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -6957,7 +7029,7 @@
       "name": "Session"
     },
     {
-      "description": "Receivers for marketplace lifecycle events, and the deliveries the gateway sends them. Each event the gateway posts is described under this document's top-level `webhooks` object; `GET /api/webhooks/events` serves the same vocabulary with an example of each body.",
+      "description": "Receivers for marketplace lifecycle events, and the deliveries the gateway sends them. Each event the gateway posts is described under this document's top-level `webhooks` object; `GET /api/v1/webhooks/events` serves the same vocabulary with an example of each body.",
       "name": "Webhooks"
     },
     {
