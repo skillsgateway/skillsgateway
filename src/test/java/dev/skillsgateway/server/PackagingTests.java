@@ -701,4 +701,60 @@ class PackagingTests {
             return files.filter(p -> p.toString().endsWith(".yml")).sorted().toList();
         }
     }
+
+    /**
+     * A rollout drains rather than severs, and a dependency outage is not a restart
+     * (GW_FACADE_0033, GW_FACADE_0034).
+     *
+     * <p>Read from the files rather than from a running pod, because what went wrong here was not
+     * behaviour under load but configuration nobody had written: both probes addressed the
+     * aggregate health endpoint, which includes the database and the object store, so an outage of
+     * either failed <em>liveness</em> and the orchestrator killed pods that were working correctly
+     * and waiting. The chart also had no {@code strategy}, so the default rolling update ran two
+     * pods against the single-writer filesystem backend on every upgrade — the overlap the
+     * deployment guide names as repository corruption.
+     */
+    @Test
+    @SVCs({"SVC_GW_FACADE_0033", "SVC_GW_FACADE_0034"})
+    void aRolloutDrainsAndADependencyOutageIsNotARestart() throws Exception {
+        String application = Files.readString(REPO_ROOT.resolve("src/main/resources/application.yaml"));
+        Path chart = REPO_ROOT.resolve("helm/skills-gateway");
+        String deployment = Files.readString(chart.resolve("templates/deployment.yaml"));
+        Map<String, Object> values = parse(chart.resolve("values.yaml"));
+
+        assertThat(application)
+                .as("SIGTERM drains an in-flight upload-pack rather than cutting it")
+                .contains("shutdown: graceful");
+        assertThat(values)
+                .as("and the orchestrator is told to wait through that drain")
+                .containsKey("terminationGracePeriodSeconds");
+        assertThat(deployment).contains("terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}");
+
+        assertThat(application)
+                .as("liveness names no dependency: a restart cannot fix somebody else's database")
+                .contains("liveness:")
+                .contains("include: livenessState");
+        assertThat(application)
+                .as("readiness is where a dependency outage belongs")
+                .contains("include: readinessState,db,gitStorage");
+
+        assertThat(deployment)
+                .as("the two probes address the two distinct paths, not the aggregate")
+                .contains("path: /actuator/health/liveness")
+                .contains("path: /actuator/health/readiness");
+
+        String security =
+                Files.readString(REPO_ROOT.resolve("src/main/java/dev/skillsgateway/server/auth/SecurityConfig.java"));
+        assertThat(security)
+                .as("an orchestrator carries no session, so a probe that redirected to the IdP would"
+                        + " read as unhealthy forever")
+                .contains("\"/actuator/health/liveness\"")
+                .contains("\"/actuator/health/readiness\"");
+
+        assertThat(deployment)
+                .as("stop-then-start on the single-writer backend: a rolling update is the two-writer"
+                        + " case replicaGate already refuses to configure")
+                .contains("type: Recreate")
+                .contains("{{- if ne .Values.storage.backend \"object-store\" }}");
+    }
 }

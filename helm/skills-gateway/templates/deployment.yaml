@@ -8,6 +8,15 @@ metadata:
     {{- include "skills-gateway.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  {{- if ne .Values.storage.backend "object-store" }}
+  # Stop-then-start, not rolling. The filesystem backend assumes a single writer, and the
+  # default RollingUpdate runs the new pod while the old one still holds the volume -- the
+  # overlap the deploying-without-kubernetes guide names as repository corruption. replicaGate
+  # already refuses replicaCount > 1 on this backend; without this, every `helm upgrade` was
+  # the two-writer case it refuses to configure.
+  strategy:
+    type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       {{- include "skills-gateway.selectorLabels" . | nindent 6 }}
@@ -23,6 +32,9 @@ spec:
       labels:
         {{- include "skills-gateway.selectorLabels" . | nindent 8 }}
     spec:
+      # Long enough for `server.shutdown: graceful` to drain an in-flight upload-pack or
+      # ingestion clone before the kubelet escalates to SIGKILL.
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -138,6 +150,22 @@ spec:
             - name: SPRING_CONFIG_ADDITIONAL_LOCATION
               value: "optional:file:/etc/skills-gateway/"
             {{- end }}
+            {{- if .Values.otel.enabled }}
+            {{- if not .Values.otel.endpoint }}
+            {{- fail "otel.enabled is true but otel.endpoint is empty. Exporting to nowhere fails on every interval and reports nothing; set the collector's OTLP address or leave otel disabled." }}
+            {{- end }}
+            - name: ARCONIA_OTEL_ENABLED
+              value: "true"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.otel.endpoint | quote }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: {{ .Values.otel.protocol | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ include "skills-gateway.fullname" . | quote }}
+            {{- with .Values.otel.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -145,9 +173,6 @@ spec:
           envFrom:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          # The exact /actuator/health path is the only unauthenticated
-          # actuator endpoint; liveness/readiness subpaths would be
-          # redirected to the IdP.
           volumeMounts:
             {{- if ne .Values.persistence.mode "none" }}
             - name: data
@@ -163,13 +188,18 @@ spec:
               mountPath: /etc/skills-gateway
               readOnly: true
             {{- end }}
+          # Liveness asks "is this JVM still itself", readiness asks "send me traffic".
+          # Both used to read the aggregate, which includes the database and the object
+          # store -- so a dependency outage restarted pods that were working correctly and
+          # waiting for it to come back. The groups are defined in application.yaml and both
+          # paths are permitted unauthenticated in SecurityConfig.
           livenessProbe:
             httpGet:
-              path: /actuator/health
+              path: /actuator/health/liveness
               port: http
           readinessProbe:
             httpGet:
-              path: /actuator/health
+              path: /actuator/health/readiness
               port: http
           {{- with .Values.resources }}
           resources:

@@ -417,3 +417,10 @@ Then log in to the portal and confirm the estate reconciled — `GET /api/v1/est
 reports the last run, and the audit ledger carries its entries under the
 `config-reconciler` principal. See
 [Declarative estate configuration](declarative-estate.md).
+
+## Backups and upgrades
+
+The database and the git storage are one estate and have to be backed up and restored
+together — see
+[Backing up, restoring and upgrading](backup-and-upgrade.md), which also covers what
+startup does to the schema and what a rollout does to an in-flight fetch.

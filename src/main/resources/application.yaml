@@ -1,4 +1,8 @@
 server:
+  # An in-flight upload-pack or ingestion clone is not something to cut mid-transfer
+  # (GW_FACADE_0033): SIGTERM drains rather than severing. The chart's
+  # terminationGracePeriodSeconds must be at least this plus the container's own stop time.
+  shutdown: graceful
   servlet:
     session:
       cookie:
@@ -72,3 +76,20 @@ management:
     web:
       exposure:
         include: health,sbom
+  endpoint:
+    health:
+      # Separate liveness from readiness (GW_FACADE_0034). Without this both probes read the
+      # aggregate, so a PostgreSQL or object-store outage failed *liveness* and the orchestrator
+      # restarted pods that were working correctly and waiting for a dependency to come back.
+      probes:
+        enabled: true
+      group:
+        # Liveness is "this JVM is still itself". No dependency belongs here: a restart cannot
+        # fix somebody else's database.
+        liveness:
+          include: livenessState
+        # Readiness is "send me traffic", which a gateway that cannot reach its database or its
+        # object store should not be. This is where a dependency outage belongs, and taking a pod
+        # out of the endpoints is recoverable in a way that killing it is not.
+        readiness:
+          include: readinessState,db,gitStorage

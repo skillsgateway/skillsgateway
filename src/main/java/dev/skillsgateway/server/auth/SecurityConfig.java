@@ -304,7 +304,12 @@ public class SecurityConfig {
             return http.build();
         }
         http.authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/actuator/health")
+                        // The aggregate and the two probe groups, and nothing else under
+                        // /actuator: an orchestrator cannot carry a session, so a probe path that
+                        // redirected to the identity provider would read as unhealthy forever.
+                        // Enumerated rather than /actuator/health/** so a future health endpoint
+                        // that exposes component detail is not exempted by having been added.
+                        .requestMatchers("/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness")
                         .permitAll()
                         .anyRequest()
                         .authenticated())

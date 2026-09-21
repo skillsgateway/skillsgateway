@@ -256,6 +256,24 @@ requirements:
     categories: ["functional-suitability", "performance-efficiency"]
     revision: 0.1.0
 
+  - id: GW_FACADE_0033
+    title: A shutdown drains in-flight transfers rather than severing them
+    significance: shall
+    description: The system shall, on receiving a termination signal, stop accepting new requests and allow requests already in progress to complete before the process exits, and its deployment artifacts shall allow for that drain before the orchestrator escalates to an unconditional kill.
+    rationale: The requests this surface serves are git transfers that can run for minutes, and a severed upload-pack leaves the client with a partial fetch it must start again; a routine rollout should not be indistinguishable from a network failure. The grace period belongs with the drain because a drain the orchestrator does not wait for is not a drain.
+    categories: ["reliability", "functional-suitability"]
+    implementation: configuration
+    revision: 0.1.0
+
+  - id: GW_FACADE_0034
+    title: Liveness and readiness are distinct, and a dependency outage is not a restart
+    significance: shall
+    description: The system shall expose liveness and readiness as separate health probes, where liveness reports only on the process itself and readiness additionally reports on the database and the configured git storage, and shall serve both without authentication so that an orchestrator can read them.
+    rationale: A probe that treats an unreachable dependency as a dead process makes the orchestrator restart pods that are working correctly and waiting, which lengthens the outage it was meant to detect and loses whatever those pods were draining. Taking a pod out of the load balancer is recoverable and killing it is not, so the distinction has to exist before an outage rather than be discovered during one.
+    categories: ["reliability", "maintainability"]
+    implementation: configuration
+    revision: 0.1.0
+
   - id: GW_RETENTION_0001
     title: Snapshot retention policy evaluation
     significance: shall
