@@ -6,7 +6,7 @@ One fresh run of every gate after the last edit, against commit `ea58371e`.
 | --- | --- | --- |
 | Java + UI + jar | `MAVEN_OPTS="-Xmx3g" ./mvnw clean verify` | `Tests run: 723, Failures: 0, Errors: 0, Skipped: 9` · `BUILD SUCCESS` (05:49 min) |
 | Storybook | `(cd src/main/frontend && pnpm test:stories)` | `Test Files 9 passed (9)` · `Tests 45 passed (45)` |
-| Real-browser e2e | `(cd src/main/frontend && E2E_GATEWAY_PORT=18500 pnpm e2e)` | `20 passed (1.1m)` |
+| Real-browser e2e | `(cd src/main/frontend && pnpm e2e)` | `20 passed (1.1m)` — re-run after the rebase onto #461, with no port override |
 | Requirements | `reqstool status local -p docs/reqstool` | `253/253 complete · 0 incomplete · PASS` |
 | OpenSpec | `openspec validate --all --strict` | `Totals: 31 passed, 0 failed (31 items)` |
 | Docs | `mkdocs build --strict` | built clean |
@@ -78,8 +78,11 @@ claim that this change does not touch the API, verified rather than asserted.
 
 ## Notes on the runs
 
-- **`E2E_GATEWAY_PORT=18500` was required** — an unrelated process holds 8081.
-  That is #458, fixed in flight as #461, not on this branch.
+- **The port override is no longer needed** (updated after rebase). The run
+  tabled above needed `E2E_GATEWAY_PORT=18500`, because an unrelated process on
+  this machine holds 8081. #461 has since merged and this branch was rebased onto
+  it, so the default is 18081 and `pnpm e2e` was re-run on the new base with no
+  override at all: `20 passed (1.1m)`.
 - **The Storybook harness flake needed three attempts**, failing on story files
   this change does not touch (it touches no frontend file at all). Clearing
   `src/main/frontend/node_modules/.cache/storybook` after `mvnw clean verify` and
