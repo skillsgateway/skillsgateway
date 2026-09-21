@@ -2655,13 +2655,20 @@ shape, so a client has one body to parse rather than one per endpoint.</p>
 </table>
 <h2 id="session">Session<a class="headerlink" href="#session" title="Permanent link">&para;</a></h2>
 <p><code>GET /api/v1/me</code> returns the current principal, the session's effective roles
-with the <strong>source</strong> of each, and whether the identity provider truncated the
-membership claim. The portal uses it for the user menu and, with roles, to
-adapt its controls.</p>
+with the <strong>source</strong> of each, whether the identity provider truncated the
+membership claim, and the <strong>version of the running gateway build</strong>. The portal
+uses it for the user menu, to adapt its controls to the roles, and to state the
+build in the sidebar footer.</p>
+<p><code>version</code> is read from the build artifact and from no configurable source, so it
+cannot be set to something the gateway is not. It is <strong>absent</strong> — not an empty
+string, and not <code>"unknown"</code> — when the artifact carries no build information,
+which is the case for a gateway run from an exploded build rather than the
+packaged jar.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"alice@example.com"</span><span class="p">,</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w"> </span><span class="nt">"roles"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"approver"</span><span class="p">,</span><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"acme"</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"grant"</span><span class="p">},</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">           </span><span class="p">{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"auditor"</span><span class="p">,</span><span class="w"> </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"claim"</span><span class="p">}],</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w"> </span><span class="nt">"claimsTruncated"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">}</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w"> </span><span class="nt">"claimsTruncated"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w"> </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0.3.0"</span><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>
