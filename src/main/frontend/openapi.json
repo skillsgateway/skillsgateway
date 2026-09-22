@@ -1863,6 +1863,10 @@
             "description": "Identity that registered the marketplace, or null when it was not recorded",
             "type": "string"
           },
+          "servedSha": {
+            "description": "Commit the facade is serving for this marketplace right now, read from the published repository's served reference (GW_INGEST_0033). Null when the marketplace serves nothing — which is not the same as having no approved snapshot: a retraction leaves approved records behind while the facade serves none of them.",
+            "type": "string"
+          },
           "snapshots": {
             "description": "All snapshots of this marketplace, any state",
             "items": {

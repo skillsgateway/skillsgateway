@@ -30,6 +30,7 @@ import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.policy.PolicyDeniedException;
 import dev.skillsgateway.server.roles.RoleService;
+import dev.skillsgateway.server.storage.ServedTip;
 import dev.skillsgateway.server.vetting.LicenseReportService;
 import dev.skillsgateway.server.vetting.WaiverService;
 import dev.skillsgateway.server.webhook.WebhookEvent;
@@ -61,6 +62,7 @@ public class AdminController {
     /** The gateway ingests only the upstream default branch; this is not consumer-selectable. */
     private static final String DEFAULT_BRANCH = "main";
 
+    private final ServedTip servedTip;
     private final MarketplaceRegistrationService registrationService;
     private final MarketplaceRepository marketplaceRepository;
     private final SnapshotRepository snapshotRepository;
@@ -76,6 +78,7 @@ public class AdminController {
     private final RoleService roleService;
 
     public AdminController(
+            ServedTip servedTip,
             MarketplaceRegistrationService registrationService,
             MarketplaceRepository marketplaceRepository,
             SnapshotRepository snapshotRepository,
@@ -89,6 +92,7 @@ public class AdminController {
             WebhookService webhookService,
             WaiverService waiverService,
             RoleService roleService) {
+        this.servedTip = servedTip;
         this.registrationService = registrationService;
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
@@ -165,6 +169,13 @@ public class AdminController {
 
             @Schema(description = "Path publishers push a hosted marketplace to; null for an upstream one")
             String publishPath,
+
+            @Schema(
+                    description = "Commit the facade is serving for this marketplace right now, read from the"
+                            + " published repository's served reference (GW_INGEST_0033). Null when the marketplace"
+                            + " serves nothing — which is not the same as having no approved snapshot: a"
+                            + " retraction leaves approved records behind while the facade serves none of them.")
+            String servedSha,
 
             @Schema(description = "Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null")
             String forge,
@@ -352,6 +363,7 @@ public class AdminController {
                         marketplace.origin(),
                         marketplace.pushPolicy(),
                         marketplace.hosted() ? "/publish/" + marketplace.name() : null,
+                        servedTip.of(marketplace.name()).orElse(null),
                         marketplace.forge(),
                         marketplace.forgeProject(),
                         marketplace.description(),
