@@ -36,8 +36,13 @@ its principal's approver or admin role. See
  "createdAt":"2026-08-15T09:00:00Z","registeredBy":"dana",
  "forge":"github","forgeProject":"acme/skills",
  "description":"Acme internal skills","upstreamUpdatedAt":"2026-08-14T18:20:00Z",
- "snapshots":[]}
+ "servedSha":"3f9c2ab...","snapshots":[]}
 ```
+
+`servedSha` is the commit the facade currently serves for this marketplace, read
+from the published repository, or `null` when it serves nothing. It is **not** the
+newest approved snapshot: a withdrawal that serves nothing afterwards leaves an
+earlier snapshot recorded `approved` while `servedSha` is `null`.
 
 **Snapshot**
 

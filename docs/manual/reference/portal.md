@@ -326,40 +326,73 @@ saved yet.
 
 ### Snapshots
 
-One card per snapshot showing the short SHA (12 characters, monospace), the
-state badge, and the deciding principal once decided. A violation, when present,
-renders as destructive text beneath the header row.
+Snapshots are grouped by what they are for, not listed alike, and **one is open
+at a time** — so the page does not grow longer with every ingest.
 
-The **Show contents** toggle opens two sections.
+| Section | Holds | Shown as |
+| --- | --- | --- |
+| **Awaiting decision (n)** | Every `held` or `revoked` snapshot that is not deleted, newest first | The newest open as a card; the rest one line each, with its delta |
+| **Serving** | The snapshot whose commit the facade answers with, read from the marketplace's `servedSha` | One line. "Nothing is served." when `servedSha` is null — and, if a snapshot is still recorded approved, that it was withdrawn |
+| **Earlier snapshots (n)** | Everything else: rejected, deleted, approved but no longer served | A collapsed count |
 
-**What this snapshot ships** loads `GET /api/v1/snapshots/{id}/content` and renders
-one block per declared plugin: name, `source`, optional description, and one
-badge per skill found under it. Plugins with no skills show "no skills found".
+Awaiting comes first because it is the only section with a pending action. Two
+snapshots can await a decision at once. When nothing does, the served snapshot
+is the one open. **Open** on any line opens that snapshot's card in its place.
 
-**Changes since the last approved snapshot** loads
-`GET /api/v1/snapshots/{id}/content-diff` and lists only what differs from the
-marketplace's last approved snapshot, named above the list with its short SHA
-and summarised as count chips (added, changed, moved, removed). Each entry
-carries a status badge; a skill that moved between plugins is listed once,
-under its new plugin, with the plugin it came from. Unchanged skills are not
-repeated here — the section above already lists them. Two states replace the
-list where it would say nothing: a marketplace with nothing approved yet says
-there is no baseline and that approving publishes all of the snapshot, and a
-snapshot that changed nothing says so.
+The open snapshot, its tab and its file are in the address, so a link to the
+evidence restores all three:
+
+```text
+/marketplaces/acme?snapshot=41&tab=contents&path=plugins/hello/skills/hello/SKILL.md
+```
+
+#### The card
+
+Top to bottom, in this order on purpose:
+
+1. **Identity** — the short SHA, the state badge, when it was ingested and by
+   whom, who decided it, and the retention control
+   ([Delete / Restore](../guides/snapshot-retention.md)).
+2. **The delta line** — what is arriving, how big it is, and against what:
+
+    ```text
+    1 skill added, 1 modified · 3 files · +48 −7 · vs 65f64622
+    ```
+
+    File and line counts come from `GET /api/v1/snapshots/{id}/diff` (against
+    what is served); skill counts from `GET /api/v1/snapshots/{id}/content-diff`
+    (against the last approved snapshot). Skill counts are left out when those
+    two baselines differ, rather than mixing counts taken against two commits.
+    With nothing served the line says approving serves all of it; when a read
+    was cut at its limit it says the figures are lower bounds.
+3. The violation and, for an approved or revoked snapshot, the
+   [re-vetting panel](#re-vetting-panel).
+4. **Tabs** — the evidence. Only the open tab loads.
+
+    | Tab | Shows |
+    | --- | --- |
+    | **Vetting** (default) | The [vetting report](#the-chain-flow): chain outcome, verdicts, findings, waivers |
+    | **Contents** | The [file explorer](#snapshot-contents), inside the card |
+    | **Diff** | Changes since the last approved snapshot — plugins and skills marked added, changed, moved or removed, only what changed, from `content-diff`. With nothing approved yet it says there is no baseline |
+    | **Inventory** | What the snapshot ships: one block per declared plugin with its `source`, description and one badge per skill, from `GET /api/v1/snapshots/{id}/content` |
+    | **Provenance** | Upstream URL and SHA, the served SHA, who decided it and when, and the closure of external plugin sources |
+
+5. **The decision** — **Approve** (**Re-approve** for a revoked snapshot) and
+   **Reject**, only for a snapshot awaiting one.
+
+The decision is last because it rests on everything above it: an approval
+control is never shown above the evidence. When the gateway would refuse the
+approval — vetting blocked it, the minimum release age has not passed, or the
+four-eyes rule refuses you — **Approve** is disabled and the reason is on the
+card, rather than the press failing. **Approve** opens the same review dialog as
+the [Marketplaces](#marketplaces) page; **Reject** fires immediately.
+
+When other snapshots await a decision, the card names them. Approving this one
+does not retire them: they stay held, and approving an older one afterwards
+would serve content older than this.
 
 This is the review surface, and it works on `held` snapshots — inspecting a
 snapshot must not require serving it.
-
-### Contents glance
-
-Inside **Show contents**, below the inventory, a line names how many paths the
-snapshot carries, links to the one or two that identify it
-(`.claude-plugin/marketplace.json` and the first `SKILL.md`), and offers
-**Inspect contents**. Each of those links opens the snapshot contents page at
-that file.
-
-Reading a commit is not a job for a pane beside three other cards, so the
-reading happens on its own page.
 
 ### Set up a client
 
@@ -371,11 +404,12 @@ The card reads the marketplace's own state:
 
 | State | The card says | And |
 | --- | --- | --- |
-| At least one snapshot approved | **Use this marketplace** | offers the wizard |
-| No snapshot approved | **Not being served yet** | states that a clone is answered with `404` until one is, and that this is not a credential problem — a wrong or revoked token is answered with `401`. The wizard repeats it, for anyone who opens it without reading the page |
+| The facade serves a commit | **Use this marketplace** | offers the wizard |
+| Nothing served | **Not being served yet** | states that a clone is answered with `404` until one is, and that this is not a credential problem — a wrong or revoked token is answered with `401`. The wizard repeats it, for anyone who opens it without reading the page |
 
-The portal has no `serving` snapshot state; "serving" here is derived the way the
-[Adoption](#adoption) page derives it, from an approved snapshot existing.
+"Serving" is the marketplace read's `servedSha`, read from the published
+repository — not inferred from an approved snapshot existing, which is wrong
+after a withdrawal that left one approved and serves nothing.
 
 Inside the wizard:
 
@@ -405,9 +439,8 @@ snippets carry the `<YOUR_TOKEN>` placeholder.
 
 ### Vetting
 
-Each snapshot card carries a **Vetting** section fed by
-`GET /api/v1/snapshots/{id}/vetting`, above the contents toggle and always visible
-— the evidence is not behind a click.
+The snapshot card's **Vetting** tab — the tab a card opens on — is fed by
+`GET /api/v1/snapshots/{id}/vetting`.
 
 #### The chain flow
 
@@ -535,7 +568,7 @@ there is nothing published to retract.
 
 ### Re-vetting panel
 
-Above the vetting section, each snapshot card carries the re-vetting surface.
+Above the tabs, the snapshot card carries the re-vetting surface.
 
 | Snapshot | Shown |
 | --- | --- |
@@ -597,9 +630,10 @@ red here too. A **See the full ledger** link goes to `/audit`. Empty state:
 **Route:** `/marketplaces/:name/snapshots/:id/files` · **Heading:** Snapshot
 contents
 
-The reviewer's file explorer for one snapshot: exactly the commit it pins. It
-is reached from **Inspect contents** on a snapshot card, or from any of the
-quick-open links in that card's contents glance.
+The reviewer's file explorer for one snapshot: exactly the commit it pins. The
+same explorer is the **Contents** tab of the [snapshot card](#the-card); this
+full-width route renders it on its own, and keeps working for links already
+sent.
 
 **The address is the feature.** Approval is a two-person decision
 (see [Approving snapshots](../guides/approving-snapshots.md)), and this page is

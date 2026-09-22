@@ -25,7 +25,8 @@ are history. The reviewer has to reconstruct that from state badges.
   action — a *list*, newest first. Two snapshots can await a decision at once;
   confirmed on the live instance by ingesting twice without deciding. The newest
   opens; the rest are one line each, and the open card states that approving it
-  **supersedes** the older held ones.
+  leaves the older held ones awaiting — and that approving one of them afterwards
+  would serve content older than it.
 - **Serving**, one quiet line: who approved it, when, and who is pulling it.
 - **Earlier snapshots (n)**, a collapsed count. This is what stops page length
   growing with ingest count.
@@ -79,7 +80,7 @@ _None._
 
 - `snapshot-approval`: any surface offering the approval decision presents it
   after the evidence it rests on, presents a blocked decision as unavailable with
-  its reason, and names the snapshots the approval would supersede.
+  its reason, and names the snapshots that would still await a decision after it.
 - `marketplace-ingestion`: the marketplace read reports the commit the facade is
   currently serving, distinctly from the newest approved snapshot.
 

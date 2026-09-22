@@ -106,12 +106,39 @@ how big it is follows as context. A skill is not judged by line count, so leadin
 with `+48 −7` would lead with the weaker number — but it is kept, because it is
 the only sense of review size on the card.
 
-### Supersession is stated before it happens
+### What happens to the other awaiting snapshots is stated — accurately
 
-Approving the newest held snapshot retires the older held ones. Today that is
-invisible until it has happened. The open card names the snapshots it would
-supersede, in the decision row, so the consequence is read before the press
-rather than discovered after it.
+The wireframe said approving the newest "supersedes" the older held ones, meaning
+retires them. **That was wrong, and checking it before building is what caught
+it.** "Superseded" in this codebase is a retention-eligibility test only — a
+snapshot is superseded when a *newer* one is `approved` — and it changes nothing
+about the older snapshot's state. It stays `held`, still decidable, still
+approvable.
+
+So the true consequence is the more dangerous one: after approving the newest,
+the older held snapshot is still waiting, and approving it later would publish
+content *older* than what is then served — a rollback performed by an ordinary
+approval. The decision row says that, and names the snapshot, rather than
+claiming a retirement that does not happen.
+
+*Alternative: make approval actually retire older held snapshots.* Rejected
+here: it would change the state machine, which is out of scope for a layout
+change and worth its own argument if wanted.
+
+### "Awaiting decision" is the list page's own `decidable` rule
+
+`held` or `revoked`, exactly as `marketplaces.tsx` already defines it — a
+retraction made without a person needs a person to answer it. The wireframe
+showed only `held`; reusing the existing rule rather than writing a second one
+is what keeps the two pages from disagreeing about what needs a decision.
+
+### Approval is reused, not rebuilt
+
+The detail page had no Approve or Reject at all — approval lived only on the
+marketplaces list, in `ApproveDialog`, which already carries three independent
+refusal reasons: vetting blocked, the cooling-off window, and the four-eyes rule.
+The card's Approve opens *that* dialog. `ApproveDialog` moves to its own module
+so both pages import one implementation; none of its logic is copied.
 
 ### The file-explorer route stays, for now
 
@@ -125,6 +152,17 @@ it is a one-line router change in a follow-up, once the card has actually
 replaced it. Doing it inside this change would mean deleting a surface that
 shipped a day earlier, in the same commit as a large restructure, which makes
 both halves harder to review and harder to revert independently.
+
+### The decision surface is verified by unit tests, so their results must be matchable
+
+GW_APPROVAL_0018 — An approval control is presented only below the evidence it
+rests on is a property of rendered document order, which a component test states
+exactly and an e2e test only approximates. Until now no vitest test carried an
+`@SVCs` tag, because vitest's junit classname is a file path
+(`src/pages/marketplace-detail.test.tsx`) that never matches the FQN the tag
+extractor emits (`pages.marketplace-detail`). `fix-junit-classnames.mjs`, which
+already normalizes the Playwright report for the same reason, now also takes the
+vitest report, and `pnpm test` runs it. No new script, no new configuration.
 
 ## Risks / Trade-offs
 

@@ -2302,7 +2302,7 @@ cases:
 
   - id: SVC_GW_APPROVAL_0018
     requirement_ids: ["GW_APPROVAL_0018"]
-    title: The decision comes after its evidence, refuses visibly, and names what it supersedes
+    title: The decision comes after its evidence, refuses visibly, and names what still awaits one
     verification: automated-test
     description: |
       GIVEN a marketplace with two snapshots awaiting a decision, one whose vetting clears and
@@ -2310,7 +2310,8 @@ cases:
       WHEN the surface offering the decision is rendered for each
       THEN the approval control follows the change summary and the vetting outcome in document
       order, the blocked snapshot's control is unavailable and states why rather than accepting
-      the action, and the newest snapshot's decision names the older one it would supersede
+      the action, and the newest snapshot's decision names the older one that would still await a
+      decision afterwards and would then be older than what is served
     revision: "0.1.0"
 
   - id: SVC_GW_INGEST_0033
