@@ -91,7 +91,7 @@
 
 - [x] 8.1 `/impeccable audit` and `harden` on the rebuilt page. No `critique` —
       this rebuilds an existing page rather than adding one.
-- [ ] 8.2 Run all gates fresh after the last edit and write `evidence.md`,
+- [x] 8.2 Run all gates fresh after the last edit and write `evidence.md`,
       including a re-measurement of page height against the 3,220px baseline.
-- [ ] 8.3 Screenshot the rebuilt page from the live instance, light and dark, for
+- [x] 8.3 Screenshot the rebuilt page from the live instance, light and dark, for
       the PR.
