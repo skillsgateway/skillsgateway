@@ -82,6 +82,7 @@ polling, batch payload, signature, replay — is in
 | `principal` | The PAT principal for a fetch, the OIDC principal for an admin action, the credential's own principal for a machine API action. |
 | `actorType` / `actor_type` | What kind of actor acted: `human`, `machine` or `system` (GW_AUDIT_0007). See below. |
 | `marketplace` | The marketplace name, or `-` when not marketplace-scoped. |
+| `marketplaceId` / `marketplace_id` | Id of the marketplace the entry concerns, or null when it concerns none (GW_AUDIT_0009). A [removed](marketplaces.md#delete-marketplacesname) marketplace's name can be registered again, so the name alone does not say which marketplace an entry meant; the id does. Not a foreign key: the removed marketplace's record is kept, but the ledger does not depend on it. On `GET /api/v1/audit` and in the export. |
 | `event` | What happened — see below. |
 | `ref` | The ref involved, when there is one. For a facade fetch this is a ref the facade [advertised](../git-facade.md#what-is-served) for that request — see [Events](#events). |
 | `sha` | The commit involved, when there is one. |

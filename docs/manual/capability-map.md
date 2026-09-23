@@ -5,7 +5,7 @@ Every capability area the gateway has today, one row each. If you are asking
 
 | Area | What it does | Trust boundary | Requirements | Docs |
 | --- | --- | --- | --- | --- |
-| Registration | Registers an upstream marketplace against the URL-scheme allowlist and a gateway-pinned ref. | Registration | `GW_INGEST` | [Registering a marketplace](guides/registering-a-marketplace.md), [Trust boundaries](concepts/trust-boundaries.md) |
+| Registration | Registers an upstream marketplace against the URL-scheme allowlist and a gateway-pinned ref, and removes one — withdrawing what it serves — so its name can be registered again. | Registration | `GW_INGEST` | [Registering a marketplace](guides/registering-a-marketplace.md), [Trust boundaries](concepts/trust-boundaries.md) |
 | Ingestion | Clones a pinned commit into quarantine as an immutable snapshot with a provenance record and a content inventory. | Registration | `GW_INGEST` | [Lifecycle](concepts/lifecycle.md) |
 | Source resolution | Resolves a manifest's external plugin sources into the snapshot under address, redirect and resource bounds, producing one composite commit. | Resolution | `GW_INGEST` | [Trust boundaries](concepts/trust-boundaries.md) |
 | Upstream sync | Polls upstream or accepts an inbound forge webhook, and re-ingests when the pinned ref moves. | Inbound webhook | `GW_INGEST` | [Syncing from upstream](guides/upstream-sync.md) |

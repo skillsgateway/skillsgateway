@@ -14,7 +14,10 @@ What reconciliation guarantees:
   be overridden; declared grants pass the exact grant validation.
 - **Additive, never destructive.** Removing a line deregisters nothing. There
   is no prune mode: retracting content teams depend on is an explicit human
-  action, never a side effect of a deploy.
+  action, never a side effect of a deploy. [Removing a
+  marketplace](registering-a-marketplace.md#removing-a-marketplace) is such an
+  act, and API-only; remove its declaration first, or the next reconciliation
+  registers the name again as a new marketplace.
 - **Idempotent.** Only differences are applied. A converged estate reconciles
   with zero writes and zero ledger entries — booting twice writes nothing
   twice.
@@ -162,10 +165,10 @@ sharpest case of the rule above rather than an exception to it.
 
 !!! note "A provider cannot converge a marketplace's whole lifecycle"
 
-    There is no `PUT` or `DELETE /api/v1/marketplaces/{name}` — registration
-    exists, deregistration does not — so `terraform destroy` has nothing to
-    call. That is a pre-existing gap in the API rather than something machine
-    credentials introduce, but a provider author meets it immediately.
+    `DELETE /api/v1/marketplaces/{name}` exists, but no machine scope reaches it:
+    it withdraws served content, and that takes a person with a reason. So
+    `terraform destroy` still has nothing it may call, and there is no `PUT` —
+    a marketplace's URL is immutable.
 
 ## What stays interactive, and drift
 

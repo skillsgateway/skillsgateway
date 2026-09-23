@@ -138,6 +138,10 @@ Two namespaces, from `{data-dir}/published/{marketplace}.git`, and nothing else:
 `HEAD` is advertised too, because a clone reads it to learn which branch to check
 out.
 
+Only a registered marketplace is served. A [removed](api/marketplaces.md#delete-marketplacesname)
+marketplace answers as an unknown one does, whatever its published repository
+still holds.
+
 This is an **allowlist**, not a description of what the repositories happen to
 contain. Upload-pack advertises every ref it can see unless told otherwise, and
 every advertised tip is a legal `want`, so the facade states its surface
@@ -217,7 +221,10 @@ entries written before this behaviour shipped record.
 ## Checking content you already hold
 
 Withdrawing a snapshot removes it from the served refs; it does not reach a
-machine that cloned it earlier. `POST /status/v1/snapshots` is what such a machine
+machine that cloned it earlier. Removing a marketplace withdraws each of its
+approved snapshots the same way, so a holder asks the same question and is told
+`revoked` — unless the name has since been registered again and the new
+marketplace has approved the same commit. `POST /status/v1/snapshots` is what such a machine
 asks.
 
 It is not under `/git/`, because that prefix is a JGit servlet mapping and no

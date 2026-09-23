@@ -114,6 +114,43 @@ $ curl -X POST -u ... https://skills.corp.example/api/v1/marketplaces/acme/inges
     what clients receive. Ingesting frequently costs quarantine storage, never
     availability.
 
+## Removing a marketplace
+
+A marketplace registered with a typo, one whose upstream is abandoned, and one
+whose upstream moved all end the same way: remove it, and register again if
+there is anything to register.
+
+```console
+$ curl -X DELETE -u ... https://skills.corp.example/api/v1/marketplaces/acme \
+    -H 'Content-Type: application/json' -d '{"reason":"upstream moved"}'
+```
+
+Removal withdraws everything the marketplace serves and stops it being synced or
+fetched, but keeps its snapshots and their history. It is API-only and needs an
+administrator; see the [reference](../reference/api/marketplaces.md#delete-marketplacesname).
+
+**An upstream that moved.** The URL cannot be changed — that would relabel the
+provenance of content already approved from somewhere else — so remove the
+marketplace and register the same name against the new URL. Clients keep their
+clone URL. They see nothing served until a snapshot of the new upstream is
+approved: the old approvals were decisions about a different upstream and do not
+carry over.
+
+!!! warning "What does carry over is anything that names the marketplace"
+
+    - **Access tokens.** A token scoped to `acme` fetches — and, with a push
+      scope, publishes to — whichever marketplace is called `acme` now. That is
+      what keeps clients working; revoke a token that should not reach the new
+      one.
+    - **The declarative estate.** A marketplace still declared in
+      `skills-gateway.estate.marketplaces` is registered again, as a new
+      marketplace, on the next reconciliation. Remove the declaration first.
+
+    Approver grants do not carry over: grant again on the new marketplace.
+
+The ledger tells the two apart: every entry carries `marketplaceId` beside the
+name. See [Audit ledger](../reference/api/audit.md#entry-fields).
+
 ## Forge metadata
 
 Registration captures forge, project, description and last-upstream-update on a
