@@ -70,7 +70,7 @@ by route: `RoleEnforcementTests` (the route added to the role-gated set) and
 
 ## Mutation (manual; no mutation tool in the build)
 
-`python3 openspec/changes/remove-marketplace/mutants.py <ids>` applies one
+`python3 openspec/changes/archive/2026-09-23-remove-marketplace/mutants.py <ids>` applies one
 asserted replacement, runs `MarketplaceRemovalTests`, and restores the file
 with `git checkout`. The runner aborts if a mutation site is not found exactly
 once. Run against `94bf057d`.
