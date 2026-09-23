@@ -3342,9 +3342,9 @@ not one mechanism.</p>
 <ul>
 <li><strong>Fetch-level audit:</strong> every façade access logged <code>{identity, marketplace,
   plugin, SHA, client UA, timestamp}</code> → SIEM. This alone answers T6.</li>
-<li><strong>Install inventory:</strong> derived from fetch logs, optionally enriched with
-  client OTel telemetry (Claude Code exports usage metrics) for
-  <em>invocation</em>-level data — not just who has a skill, but who actually uses it.</li>
+<li><strong>Install inventory:</strong> derived from fetch logs — who holds a skill, never who
+  invokes it. Client-reported usage telemetry is not ingested
+  (<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md">ADR 0016 — Client invocation telemetry is not ingested; the gateway publishes presence instead</a>).</li>
 <li><strong>Blast radius as a query:</strong> "all identities that fetched
   <code>skill-x@*</code> in the last 90 days" is one ledger query, feeding recall (§5).</li>
 <li><strong>Drift &amp; threat-intel:</strong> dashboards for upstream-moved-but-held snapshots,
@@ -3514,7 +3514,7 @@ reference transitions at all — see
   gets one pass per interval however many replicas run, without leader election,
   without an advisory lock a pooled connection could leak, and without a
   property to set (GW_FACADE_0030).</li>
-<li><strong>Phase 3 — assurance &amp; scale.</strong> Client telemetry inventory, kill switch
+<li><strong>Phase 3 — assurance &amp; scale.</strong> Kill switch
   with fleet force-uninstall, signed attestations, additional tool adapters,
   repository-manager catalog federation, OCI re-publication.</li>
 </ul>
@@ -3527,7 +3527,11 @@ reference transitions at all — see
    governs MCP servers, not skill sources — so for Copilot, egress policy
    carries the load. The enterprise ask to press that vendor on is an
    equivalent managed allowlist for skill repositories. See
-   <a href="../guides/client-enforcement/">making the gateway the only door</a>.</li>
+   <a href="../guides/client-enforcement/">making the gateway the only door</a>. A second
+   ask sits beside it: an identifier for enterprise-configured marketplaces
+   that survives the clients' third-party redaction, so invocation can be
+   attributed inside the enterprise
+   (<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md">ADR 0016 — Client invocation telemetry is not ingested; the gateway publishes presence instead</a>).</li>
 <li><strong>LLM review confidence.</strong> Semantic scanning of prose will have false
    negatives; adversaries will optimize against it. It must gate <em>triage
    priority</em>, not substitute for tier-appropriate human review.
