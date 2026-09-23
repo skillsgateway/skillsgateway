@@ -1169,6 +1169,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#plugin-name-collisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin-name collisions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#reviewing-and-withdrawing-waivers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2569,6 +2580,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#plugin-name-collisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin-name collisions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#reviewing-and-withdrawing-waivers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2760,6 +2782,24 @@ request and no flags:</p>
 </code></pre></div>
 <p>Each waiver that was in force is written to the ledger as <code>waiver-applied</code>, with
 the rule, the location, the approver and the expiry.</p>
+<h2 id="plugin-name-collisions">Plugin-name collisions<a class="headerlink" href="#plugin-name-collisions" title="Permanent link">&para;</a></h2>
+<p>The approval gate also refuses a snapshot that introduces a plugin name looking
+like one another marketplace already serves
+(<a href="../../concepts/vetting/#not-a-vetter-either-plugin-names-already-in-use">how that is decided</a>).
+It is not a vetter's finding, but it is accepted the same way: a waiver on rule
+<strong><code>plugin-name-collision</code></strong>, located at the manifest line that declares the name.</p>
+<p>Waive it only when you can account for the name — a fork or a vendored copy of
+the incumbent — never because the refusal is in the way. The incumbent is named
+in the refusal and in the approve dialog.</p>
+<ul>
+<li><strong>Use snapshot scope.</strong> It accepts every collision that commit introduces.
+  Because a name already carried by an approved snapshot of the same marketplace
+  is not checked again, you accept each name once, not at every ingestion.</li>
+<li><strong>Avoid path scope.</strong> The location is the manifest, so a path waiver on
+  <code>.claude-plugin/marketplace.json</code> accepts every lookalike the marketplace
+  introduces until it expires. The API accepts it; the portal does not offer it.</li>
+<li><strong>The administrator's vetting override does not lift it.</strong></li>
+</ul>
 <h2 id="reviewing-and-withdrawing-waivers">Reviewing and withdrawing waivers<a class="headerlink" href="#reviewing-and-withdrawing-waivers" title="Permanent link">&para;</a></h2>
 <p>List what a marketplace has accepted — active and lapsed alike:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-sS<span class="w"> </span>localhost:8080/api/v1/marketplaces/corp-marketplace/waivers<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq

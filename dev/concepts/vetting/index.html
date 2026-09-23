@@ -2414,6 +2414,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#not-a-vetter-either-plugin-names-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not a vetter either: plugin names already in use
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2800,6 +2811,17 @@
     <span class="md-ellipsis">
       
         Not a vetter: the minimum release age
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-a-vetter-either-plugin-names-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not a vetter either: plugin names already in use
       
     </span>
   </a>
@@ -3224,7 +3246,7 @@ vetters is to accept each blocking finding individually with a
 <a href="#waivers-accepted-risks-with-a-scope-and-an-expiry">waiver</a>.</p>
 <p>An <strong>administrator</strong> — and only an administrator — can approve a blocked
 snapshot outright, by supplying a mandatory reason. The override lifts only the
-vetting block: the policy, minimum-release-age and four-eyes gates still decide,
+vetting block: the policy, name-collision, minimum-release-age and four-eyes gates still decide,
 and it lands on the ledger as its own event, so it is never indistinguishable
 from an approval the chain cleared. See
 <a href="../../reference/api/marketplaces/#administrative-override-of-a-blocked-outcome">Administrative override of a blocked outcome</a>.</p>
@@ -3240,6 +3262,40 @@ verdict it would keep blocking after the age had passed, until some later
 re-vetting run happened to replace it. Checked at the approval request instead,
 it clears itself and leaves nothing behind — the same reasoning that makes
 waiver expiry a comparison rather than a state.</p>
+<h3 id="not-a-vetter-either-plugin-names-already-in-use">Not a vetter either: plugin names already in use<a class="headerlink" href="#not-a-vetter-either-plugin-names-already-in-use" title="Permanent link">&para;</a></h3>
+<p>The gate also refuses a snapshot that would introduce a plugin name looking like
+one another marketplace already serves — the typosquat, <code>c0de-review</code> beside
+<code>code-review</code>. Every vetter answers a question about the pinned content; this
+asks whether <em>the rest of the estate</em> already has something called this, which
+is a fact about now, like the release age. Asked inside the chain it would make a
+verdict depend on an input no run records, and a changed verdict over unchanged
+content would stop meaning that the chain learned something — the property
+<a href="../../guides/re-vetting/">re-vetting</a> rests on. So a chain run never reads
+the estate, and this is checked at the approval request instead
+(<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md">ADR 0015</a>).</p>
+<p>What it compares, deliberately narrowly:</p>
+<ul>
+<li><strong>Plugin names, never skill names.</strong> Clients reach a skill under its
+  plugin's name, so <code>init</code> or <code>review</code> in several plugins impersonates nothing.</li>
+<li><strong>Only names new to the marketplace.</strong> A name one of the marketplace's
+  earlier approved snapshots already carried is not checked again, so a
+  collision is raised once, when the name first arrives, and accepted once.</li>
+<li><strong>Against approved snapshots of other marketplaces.</strong> First come wins: the
+  incumbent is never re-evaluated, and nothing here can withdraw what is
+  already served.</li>
+<li><strong>Lookalikes, not near-misses.</strong> Names are compared after Unicode
+  normalisation, the Unicode confusable skeleton (UTS #39 — <code>0</code> for <code>o</code>, a
+  Cyrillic <code>о</code> for a Latin one, <code>rn</code> for <code>m</code>), case folding and removal of
+  <code>-</code>, <code>_</code>, <code>.</code> and spaces. <code>Claude-Skills</code>, <code>claude_skills</code>, <code>claudeskills</code>
+  and <code>cIaude-skills</code> are one name. There is no edit distance: <code>code-review</code> and
+  <code>code-reviews</code> do not collide.</li>
+</ul>
+<p>A refusal is accepted with a waiver on rule <code>plugin-name-collision</code> — a fork is
+the legitimate case — and the vetting override does not lift it. Restoring a
+revoked snapshot runs the check again, so one whose name another marketplace
+took while it was revoked needs that waiver first. Two approvals racing each
+other with colliding names cannot both succeed: the second waits for the first
+and is refused as a collision with it.</p>
 <h2 id="waivers-accepted-risks-with-a-scope-and-an-expiry">Waivers: accepted risks with a scope and an expiry<a class="headerlink" href="#waivers-accepted-risks-with-a-scope-and-an-expiry" title="Permanent link">&para;</a></h2>
 <p>A <strong>waiver</strong> is an accepted-risk exception for <strong>one finding rule</strong>, on <strong>one
 marketplace</strong>, within <strong>one scope</strong>, until <strong>one date</strong>. All four are mandatory,

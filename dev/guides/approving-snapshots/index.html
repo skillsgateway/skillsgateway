@@ -1224,6 +1224,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#plugin-names-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin names already in use
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#waiting-out-the-minimum-release-age" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2846,6 +2857,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#plugin-names-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin names already in use
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#waiting-out-the-minimum-release-age" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3203,7 +3225,9 @@ snapshot's row on the <strong>Marketplaces</strong> page. <strong>Reject</strong
 snapshot the gateway would refuse — vetting blocked it, it is inside the
 minimum release age, or the four-eyes rule refuses you — has <strong>Approve</strong>
 disabled with the reason beside it; waive each blocking finding in the
-<strong>Vetting</strong> tab and it unblocks.</p>
+<strong>Vetting</strong> tab and it unblocks. A
+<a href="#plugin-names-already-in-use">plugin-name collision</a> is shown, and waived,
+in the dialog itself.</p>
 <p>When another snapshot also awaits a decision, the card names it. Approving
 this one does not retire it: it stays held, and approving an older one
 afterwards would serve content older than this one.</p>
@@ -3243,7 +3267,7 @@ already approved keeps serving.</p>
 </tr>
 <tr>
 <td>409</td>
-<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, its effective vetting outcome is blocked (see <code>uncoveredFindings</code>), a <a href="../policy-rules/">policy rule</a> denied it, it has not yet cleared the <a href="#waiting-out-the-minimum-release-age">minimum release age</a>, or an enforcing <a href="#separation-of-duties">four-eyes rule</a> refused it (see <code>conflicts</code>).</td>
+<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, its effective vetting outcome is blocked (see <code>uncoveredFindings</code>), a <a href="../policy-rules/">policy rule</a> denied it, a plugin name it introduces <a href="#plugin-names-already-in-use">looks like one already served</a> (see <code>collisions</code>), it has not yet cleared the <a href="#waiting-out-the-minimum-release-age">minimum release age</a>, or an enforcing <a href="#separation-of-duties">four-eyes rule</a> refused it (see <code>conflicts</code>).</td>
 </tr>
 </tbody>
 </table>
@@ -3329,6 +3353,37 @@ marketplace that needs deciding a second identity with approval rights —
 a second admin, or an approver scoped to it under
 <a href="../delegated-administration/">delegated administration</a> — before switching.</p>
 </div>
+<h2 id="plugin-names-already-in-use">Plugin names already in use<a class="headerlink" href="#plugin-names-already-in-use" title="Permanent link">&para;</a></h2>
+<p>A snapshot that introduces a plugin name looking like one another marketplace
+already serves — <code>c0de-review</code> arriving beside an approved <code>code-review</code> — is
+refused until the collision is accepted. It is the typosquat check: case,
+separators and Unicode lookalikes are folded away before names are compared, so
+<code>Claude-Skills</code> and <code>cIaude_skills</code> are the same name.</p>
+<p>The approve dialog lists each colliding name with the incumbent it resembles;
+the API answers <code>409</code> with <code>collisions</code>, and
+<code>GET /api/v1/snapshots/{id}/name-collisions</code> answers the same question without
+deciding anything. What to do:</p>
+<ul>
+<li><strong>An impersonation, or a name you cannot account for</strong> — reject the snapshot.</li>
+<li><strong>A fork or vendored copy you recognise</strong> — record a
+  <a href="../waiving-findings/#plugin-name-collisions">waiver on <code>plugin-name-collision</code></a>
+  for this snapshot, and approve.</li>
+</ul>
+<p>Four things about it are worth knowing.</p>
+<ul>
+<li><strong>The name is checked once.</strong> Once a marketplace has an approved snapshot
+  carrying a name, its later snapshots are not checked for that name again.</li>
+<li><strong>The incumbent is never touched.</strong> First come wins: nothing here withdraws or
+  re-checks what is already served.</li>
+<li><strong>Only plugin names are compared.</strong> Skill names such as <code>init</code> or <code>review</code>
+  recur across plugins legitimately and never collide.</li>
+<li><strong>Re-approving a revoked snapshot checks again</strong>, against the estate as it is
+  then. If another marketplace acquired a lookalike name meanwhile, the restore
+  needs a waiver.</li>
+</ul>
+<p>The refusal is on the <a href="../../concepts/snapshots-and-ledger/">audit ledger</a> as
+<code>snapshot-approval-refused</code> with the detail <code>plugin-name-collision: …</code>, and an
+accepted collision as the <code>waiver-applied</code> entry of the waiver that covered it.</p>
 <h2 id="waiting-out-the-minimum-release-age">Waiting out the minimum release age<a class="headerlink" href="#waiting-out-the-minimum-release-age" title="Permanent link">&para;</a></h2>
 <p>If your deployment configures
 <a href="../../reference/configuration/#minimum-release-age"><code>skills-gateway.vetting.minimum-release-age</code></a>,

@@ -2971,7 +2971,7 @@ artifacts actually work:</p>
 <td>T5</td>
 <td>Typosquatting / lookalikes</td>
 <td>No namespace authority in the git world; <code>owner/claude-skills</code> vs <code>0wner/claude-skills</code></td>
-<td>No</td>
+<td>No — the gateway covers the plugin-name half at approval (below)</td>
 </tr>
 <tr>
 <td>T6</td>
@@ -2989,13 +2989,17 @@ artifacts actually work:</p>
 </table>
 <p>T1–T4 are the ones no current product addresses; T3+T4 together are the reason
 naive mirroring is insufficient.</p>
-<p>T5 is the one row the gateway has no mitigation for at all. Covering it needs a
-rule that can ask a question of the <em>approved estate</em> rather than of the snapshot
-in front of it, which is a different shape from every control the gateway has —
-<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md">ADR 0015</a>
-proposes where such a question may be asked without costing the vetting chain the
-reproducibility that continuous re-vetting depends on. It is a proposed decision;
-nothing is implemented, and T5 remains uncovered until it is.</p>
+<p>T5 is covered in part. The approval gate refuses a snapshot that introduces a
+plugin name which, after folding case, separators and Unicode lookalikes, matches
+a plugin another marketplace already serves — a question about the <em>approved
+estate</em> rather than the snapshot in front of it, asked at the approval request
+and never inside the vetting chain, so re-vetting keeps its reproducibility
+(<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md">ADR 0015</a>;
+<a href="../concepts/vetting/#not-a-vetter-either-plugin-names-already-in-use">how it works</a>).
+Two halves remain open: a <em>marketplace</em> registered under a near-miss of an
+existing one's name, and the virtual catalog's merge, where a newcomer whose
+marketplace-prefixed plugin name clashes with an incumbent's takes both out of the
+catalog rather than being refused.</p>
 <h2 id="3-design-principles">3. Design principles<a class="headerlink" href="#3-design-principles" title="Permanent link">&para;</a></h2>
 <ol>
 <li><strong>Be the only door.</strong> Governance that depends on developers voluntarily
