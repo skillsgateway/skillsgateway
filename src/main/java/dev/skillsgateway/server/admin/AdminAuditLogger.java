@@ -5,6 +5,7 @@ import dev.skillsgateway.server.estate.EstateReconciler;
 import dev.skillsgateway.server.mirror.ForgeMirrorService;
 import dev.skillsgateway.server.persistence.ActorType;
 import dev.skillsgateway.server.persistence.FetchLogRepository;
+import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.sync.SyncService;
 import dev.skillsgateway.server.vetting.RevetService;
 import dev.skillsgateway.server.vetting.VettingService;
@@ -75,6 +76,20 @@ public class AdminAuditLogger {
     /** As {@link #record}, carrying the entry's free-text qualifier (a vetting outcome or reason). */
     @Requirements({"GW_AUDIT_0002", "GW_VETTING_0006", "GW_AUDIT_0007", "GW_VETTING_0022"})
     public void record(String principal, String marketplace, String event, String sha, String detail) {
+        record(principal, marketplace, null, event, sha, detail);
+    }
+
+    /**
+     * As {@link #record}, naming which marketplace by id (GW_AUDIT_0009). For a caller acting on a
+     * marketplace that may already be removed, whose name could by now belong to a successor.
+     */
+    @Requirements({"GW_AUDIT_0002", "GW_AUDIT_0007", "GW_AUDIT_0009"})
+    public void record(String principal, Marketplace marketplace, String event, String sha, String detail) {
+        record(principal, marketplace.name(), marketplace.id(), event, sha, detail);
+    }
+
+    private void record(
+            String principal, String marketplace, Long marketplaceId, String event, String sha, String detail) {
         Authentication authentication = current();
         MachineApiAuthentication machine = machineActor(authentication, principal);
         ActorType actorType = machine != null
@@ -84,6 +99,7 @@ public class AdminAuditLogger {
                 SOURCE,
                 principal,
                 marketplace,
+                marketplaceId,
                 event,
                 null,
                 sha,
@@ -91,7 +107,8 @@ public class AdminAuditLogger {
                 // A machine entry names the credential that produced it, so a leak trace has the
                 // same per-credential resolution the facade already has; NULL elsewhere, as today.
                 machine == null ? null : machine.token().id(),
-                actorType);
+                actorType,
+                null);
     }
 
     /**

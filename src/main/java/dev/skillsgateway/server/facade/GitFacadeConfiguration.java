@@ -1,5 +1,7 @@
 package dev.skillsgateway.server.facade;
 
+import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.storage.GitStorage;
 import io.github.reqstool.annotations.Requirements;
 import jakarta.servlet.http.HttpServletRequest;
@@ -66,10 +68,18 @@ public class GitFacadeConfiguration {
 
     private final GitStorage storage;
     private final FetchAuditHook auditHook;
+    private final MarketplaceRepository marketplaceRepository;
+    private final SkillsGatewayProperties properties;
 
-    public GitFacadeConfiguration(GitStorage storage, FetchAuditHook auditHook) {
+    public GitFacadeConfiguration(
+            GitStorage storage,
+            FetchAuditHook auditHook,
+            MarketplaceRepository marketplaceRepository,
+            SkillsGatewayProperties properties) {
         this.storage = storage;
         this.auditHook = auditHook;
+        this.marketplaceRepository = marketplaceRepository;
+        this.properties = properties;
     }
 
     /** Read-only by construction: receive-pack is disabled, so pushes are impossible. */
@@ -84,7 +94,7 @@ public class GitFacadeConfiguration {
     }
 
     /** The facade only ever opens published repositories; quarantine is unreachable from here. */
-    @Requirements({"GW_FACADE_0002", "GW_AUTH_0006"})
+    @Requirements({"GW_FACADE_0002", "GW_AUTH_0006", "GW_INGEST_0034"})
     Repository resolvePublished(HttpServletRequest request, String name)
             throws RepositoryNotFoundException, ServiceMayNotContinueException {
         String marketplace = name.endsWith(".git") ? name.substring(0, name.length() - 4) : name;
@@ -96,6 +106,14 @@ public class GitFacadeConfiguration {
         // else the gateway governs. An unscoped token permits everything.
         var token = auditHook.currentToken();
         if (token != null && !token.permitsMarketplace(marketplace)) {
+            throw new RepositoryNotFoundException(name);
+        }
+        // Only a registered, live marketplace is served (GW_INGEST_0034), whatever its storage still
+        // holds: removal withdraws through revocation, and this is what keeps "removed" meaning "not
+        // served" when an unpublish failed or an approval raced the removal. The virtual catalog is
+        // the one served repository that is not a marketplace row.
+        if (!marketplace.equals(properties.catalog().name())
+                && marketplaceRepository.findByName(marketplace).isEmpty()) {
             throw new RepositoryNotFoundException(name);
         }
         Optional<Repository> serving;

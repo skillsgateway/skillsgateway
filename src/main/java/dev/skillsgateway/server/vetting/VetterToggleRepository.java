@@ -80,9 +80,15 @@ public class VetterToggleRepository {
                 .optional();
     }
 
-    /** Every setting, globals and per-marketplace, in a stable order. */
+    /**
+     * Every setting, globals and per-marketplace, in a stable order. A removed marketplace's rows stay
+     * in the table and leave the listing (GW_INGEST_0034): they govern nothing any more.
+     */
+    @Requirements({"GW_INGEST_0034"})
     public List<VetterToggle> list() {
-        return jdbc.sql("SELECT * FROM vetter_toggles ORDER BY vetter, marketplace_id NULLS FIRST")
+        return jdbc.sql("SELECT * FROM vetter_toggles"
+                        + " WHERE marketplace_id IS NULL OR marketplace_id IN (SELECT id FROM marketplaces WHERE deleted_at IS NULL)"
+                        + " ORDER BY vetter, marketplace_id NULLS FIRST")
                 .query(VetterToggle.class)
                 .list();
     }

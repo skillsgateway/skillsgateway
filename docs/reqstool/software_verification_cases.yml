@@ -318,6 +318,18 @@ cases:
       AND a caller holding no role to read the ledger is refused
     revision: "0.1.0"
 
+  - id: SVC_GW_AUDIT_0009
+    requirement_ids: ["GW_AUDIT_0009"]
+    title: Ledger entries of two marketplaces that held one name carry different identities
+    verification: automated-test
+    description: |
+      GIVEN a marketplace with ledger entries that is removed and whose name is registered again
+      WHEN both marketplaces' entries are read through the ledger browse and the export
+      THEN every entry concerning a marketplace carries that marketplace's identity, the two
+      marketplaces' entries carry different identities under the same name, and an entry that
+      concerns no marketplace carries none
+    revision: "0.1.0"
+
   - id: SVC_GW_FACADE_0033
     requirement_ids: ["GW_FACADE_0033"]
     title: A shutdown drains in-flight transfers
@@ -2327,6 +2339,43 @@ cases:
       never published reports it as absent throughout
     revision: "0.1.0"
 
+  - id: SVC_GW_INGEST_0034
+    requirement_ids: ["GW_INGEST_0034"]
+    title: An administrator removes a marketplace, its content stops being served and its record survives
+    verification: automated-test
+    description: |
+      GIVEN a marketplace serving an approved snapshot, with a held snapshot beside it
+      WHEN an administrator removes it on a stated reason
+      THEN the approved snapshot is recorded withdrawn by administrative revocation, a clone of
+      the marketplace fails, a holder asking about the commit is told it was revoked, the
+      marketplace is absent from the listing and from every route addressed by its name, the
+      sync sweep does not select it, the held snapshot cannot be approved, and the marketplace's
+      record, its snapshots, their provenance and the ledger entries survive with the removal on
+      the ledger — while a removal by a non-administrator, one with no reason, one with an empty
+      reason and one naming no registered marketplace are each refused and change nothing, and
+      the facade refuses the removed name even where a served reference was left behind; a token
+      granted publication to the removed name loses that grant and no other, is recorded on the
+      ledger, and cannot push to a marketplace registered again under the name, while a token
+      granted fetch of the name still fetches it; and the removed marketplace's vetting settings
+      leave the administrative listings while their records remain
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0035
+    requirement_ids: ["GW_INGEST_0035"]
+    title: A removed marketplace's name comes back as a new marketplace that inherits nothing
+    verification: automated-test
+    description: |
+      GIVEN a marketplace that was approved, granted an approver, and then removed
+      WHEN its name is registered again
+      THEN the new marketplace has a different identity and serves nothing, a reference its
+      predecessor left published is not served, the predecessor's approver cannot approve for
+      it, a hosted successor carries none of its predecessor's pushed lineage, the same commit
+      ingested again is held and approvable, a holder of the predecessor's content is still told
+      it was revoked until the successor approves that commit, retention purging a predecessor
+      snapshot leaves the successor's copy of the same commit intact, and a second live
+      registration of the name is refused
+    revision: "0.1.0"
+
   - id: SVC_GW_AUTH_0047
     requirement_ids: ["GW_AUTH_0047"]
     title: The running build is reported on the session read, or reported absent
@@ -2940,6 +2989,17 @@ cases:
       GIVEN a subscriber whose filter names the marketplace registration, update and vetter-toggle events
       WHEN a marketplace is registered, its sync mode is changed, a vetter is disabled for it and a vetter is disabled globally, and then a registration with a disallowed url scheme, a sync-mode change for an unknown marketplace and a toggle of an unknown vetter are each attempted
       THEN the subscriber receives one delivery per successful action, each naming the marketplace, the acting identity, the time and a content-free description of what changed, the global toggle reports the gateway-wide scope rather than a marketplace, no delivery carries the operator-supplied reason, and none of the three refused actions queues any delivery at all
+    revision: "0.1.0"
+
+  - id: SVC_GW_WEBHOOK_0010
+    requirement_ids: ["GW_WEBHOOK_0010"]
+    title: Removing a marketplace is announced, and a refused removal is not
+    verification: automated-test
+    description: |
+      GIVEN a subscriber filtering for the marketplace removal event
+      WHEN an administrator removes a marketplace, and separately a removal is refused
+      THEN one delivery names the marketplace, the acting identity, the time and a description
+      carrying no operator-supplied reason, and the refused removal delivers nothing
     revision: "0.1.0"
 
   - id: SVC_GW_VETTING_0032

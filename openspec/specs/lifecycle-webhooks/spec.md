@@ -90,3 +90,8 @@ The system SHALL implement GW_API_0006.
 #### Scenario: SVC_GW_API_0006
 The system SHALL pass SVC_GW_API_0006.
 
+### Requirement: GW_WEBHOOK_0010
+The system SHALL implement GW_WEBHOOK_0010.
+
+#### Scenario: SVC_GW_WEBHOOK_0010
+The system SHALL pass SVC_GW_WEBHOOK_0010.

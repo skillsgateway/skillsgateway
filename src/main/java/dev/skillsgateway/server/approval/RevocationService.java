@@ -163,14 +163,14 @@ public class RevocationService {
         Snapshot revoked = snapshotRepository
                 .revoke(snapshotId, administrator, reason, Snapshot.REVOKED_ADMINISTRATIVELY)
                 .orElseThrow(() -> new NotApprovedException(snapshotId, Snapshot.REVOKED));
-        auditLogger.record(administrator, marketplace.name(), EVENT_REVOKED, revoked.sha(), reason);
+        auditLogger.record(administrator, marketplace, EVENT_REVOKED, revoked.sha(), reason);
 
         boolean stoppedServing = false;
         try {
             stoppedServing = storage.unpublish(marketplace.name(), revoked.sha());
             auditLogger.record(
                     administrator,
-                    marketplace.name(),
+                    marketplace,
                     EVENT_UNPUBLISHED,
                     revoked.sha(),
                     stoppedServing
@@ -226,7 +226,7 @@ public class RevocationService {
             storage.publish(marketplace.name(), target.sha());
             auditLogger.record(
                     administrator,
-                    marketplace.name(),
+                    marketplace,
                     EVENT_ROLLED_BACK,
                     target.sha(),
                     "returned to the previous approved snapshot after revoking " + revoked.sha());

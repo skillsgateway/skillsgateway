@@ -38,10 +38,9 @@ its ingestion, and which vetters run against it. They carry
 | `marketplace.registered` | A marketplace was registered, upstream or hosted. |
 | `marketplace.updated` | A registered marketplace changed. Today that is its sync mode; the detail names the new one. |
 | `marketplace.vetter_toggled` | A vetter was enabled or disabled, for one marketplace or across the gateway. |
+| `marketplace.removed` | A marketplace was [removed](registering-a-marketplace.md#removing-a-marketplace). The detail says how many approved snapshots it withdrew, never the reason; each withdrawal is also announced as `marketplace.snapshot.revoked`. |
 
-Those are all of them. There is no `marketplace.removed`: the gateway has no
-deregistration — there is no `DELETE /api/v1/marketplaces/{name}` — so there is
-nothing for it to announce.
+Those are all of them.
 
 An action taken by a scheduled pass rather than by a person carries a policy
 actor — `retention-policy` for deletions, `revet-policy` for re-vetting — so a

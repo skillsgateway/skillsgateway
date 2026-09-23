@@ -277,3 +277,15 @@ The system SHALL implement GW_INGEST_0033.
 
 #### Scenario: SVC_GW_INGEST_0033
 The system SHALL pass SVC_GW_INGEST_0033.
+
+### Requirement: GW_INGEST_0034
+The system SHALL implement GW_INGEST_0034.
+
+#### Scenario: SVC_GW_INGEST_0034
+The system SHALL pass SVC_GW_INGEST_0034.
+
+### Requirement: GW_INGEST_0035
+The system SHALL implement GW_INGEST_0035.
+
+#### Scenario: SVC_GW_INGEST_0035
+The system SHALL pass SVC_GW_INGEST_0035.

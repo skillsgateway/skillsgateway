@@ -102,6 +102,12 @@ public final class WebhookEvent {
     public static final String MARKETPLACE_VETTER_TOGGLED = "marketplace.vetter_toggled";
 
     /**
+     * A marketplace was removed (GW_WEBHOOK_0010). Its withdrawn snapshots are announced by
+     * {@link #SNAPSHOT_REVOKED} as they go; this says the marketplace itself is gone.
+     */
+    public static final String MARKETPLACE_REMOVED = "marketplace.removed";
+
+    /**
      * The one catalogue (GW_WEBHOOK_0008): the events a subscriber may filter on, in the order the
      * registry lists them, each paired with the body it delivers. The OpenAPI {@code webhooks}
      * entries, {@code GET /api/webhooks/events} and the filter validator all read this — an event
@@ -120,7 +126,8 @@ public final class WebhookEvent {
             new Definition(SNAPSHOT_APPROVAL_PENDING, Shape.APPROVAL_PENDING),
             new Definition(MARKETPLACE_REGISTERED, Shape.MARKETPLACE),
             new Definition(MARKETPLACE_UPDATED, Shape.MARKETPLACE),
-            new Definition(MARKETPLACE_VETTER_TOGGLED, Shape.MARKETPLACE));
+            new Definition(MARKETPLACE_VETTER_TOGGLED, Shape.MARKETPLACE),
+            new Definition(MARKETPLACE_REMOVED, Shape.MARKETPLACE));
 
     public static final List<String> ALL =
             CATALOGUE.stream().map(Definition::name).toList();

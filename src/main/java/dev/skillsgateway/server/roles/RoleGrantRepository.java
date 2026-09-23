@@ -11,10 +11,15 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class RoleGrantRepository {
 
-    /** Every read joins the marketplace name in: grants are shown and matched by name, not id. */
+    /**
+     * Every read joins the marketplace name in: grants are shown and matched by name, not id. So a
+     * grant on a removed marketplace is excluded from every read (GW_INGEST_0035), or it would match a
+     * new marketplace registered under the same name.
+     */
     private static final String SELECT = "SELECT g.id, g.principal, g.role, m.name AS marketplace,"
             + " g.granted_by, g.granted_at"
-            + " FROM role_grants g LEFT JOIN marketplaces m ON m.id = g.marketplace_id";
+            + " FROM role_grants g LEFT JOIN marketplaces m ON m.id = g.marketplace_id"
+            + " WHERE (g.marketplace_id IS NULL OR m.deleted_at IS NULL)";
 
     private final JdbcClient jdbc;
 
@@ -46,14 +51,15 @@ public class RoleGrantRepository {
     }
 
     public Optional<RoleGrant> findById(long id) {
-        return jdbc.sql(SELECT + " WHERE g.id = :id")
+        return jdbc.sql(SELECT + " AND g.id = :id")
                 .param("id", id)
                 .query(RoleGrant.class)
                 .optional();
     }
 
+    @Requirements({"GW_INGEST_0035"})
     public List<RoleGrant> findByPrincipal(String principal) {
-        return jdbc.sql(SELECT + " WHERE g.principal = :principal ORDER BY g.id")
+        return jdbc.sql(SELECT + " AND g.principal = :principal ORDER BY g.id")
                 .param("principal", principal)
                 .query(RoleGrant.class)
                 .list();

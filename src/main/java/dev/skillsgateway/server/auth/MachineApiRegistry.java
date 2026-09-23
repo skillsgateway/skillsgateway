@@ -144,6 +144,8 @@ public final class MachineApiRegistry {
             // is the whole of the accountability for an act that takes one identity and no second
             // reviewer, and a credential in a pipeline cannot supply one that means anything.
             post("/api/v1/snapshots/{id}/revoke"),
+            // Removes a marketplace, withdrawing everything it serves the same way (GW_INGEST_0034).
+            delete("/api/v1/marketplaces/{name}"),
             // Overrides the vetting chain, and withdraws that override; human judgement.
             post("/api/v1/snapshots/{id}/waivers"),
             delete("/api/v1/waivers/{id}"),

@@ -4,7 +4,10 @@ import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.ingestion.ForgeMetadataService;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
+import dev.skillsgateway.server.persistence.Snapshot;
+import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.storage.GitStorage;
+import dev.skillsgateway.server.storage.RefTransitions;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
@@ -13,6 +16,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.eclipse.jgit.lib.Repository;
@@ -42,6 +46,7 @@ public class MarketplaceRegistrationService {
     private final AdminAuditLogger auditLogger;
     private final GitStorage storage;
     private final WebhookService webhookService;
+    private final SnapshotRepository snapshotRepository;
 
     public MarketplaceRegistrationService(
             MarketplaceRepository marketplaceRepository,
@@ -49,13 +54,15 @@ public class MarketplaceRegistrationService {
             ForgeMetadataService forgeMetadataService,
             AdminAuditLogger auditLogger,
             GitStorage storage,
-            WebhookService webhookService) {
+            WebhookService webhookService,
+            SnapshotRepository snapshotRepository) {
         this.marketplaceRepository = marketplaceRepository;
         this.properties = properties;
         this.forgeMetadataService = forgeMetadataService;
         this.auditLogger = auditLogger;
         this.storage = storage;
         this.webhookService = webhookService;
+        this.snapshotRepository = snapshotRepository;
     }
 
     /** A successful registration, plus any non-blocking warnings about it (GW_INGEST_0029). */
@@ -105,6 +112,7 @@ public class MarketplaceRegistrationService {
         if (marketplaceRepository.findByName(name).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "marketplace '%s' already exists".formatted(name));
         }
+        startFromNothing(name, hosted);
         Marketplace marketplace = marketplaceRepository.register(
                 name,
                 url,
@@ -121,6 +129,38 @@ public class MarketplaceRegistrationService {
         webhookService.emitMarketplace(
                 WebhookEvent.MARKETPLACE_REGISTERED, marketplace.name(), actor, "origin=" + resolvedOrigin);
         return new RegistrationOutcome(marketplace, warnings);
+    }
+
+    /**
+     * A name that belonged to a removed marketplace comes back empty (GW_INGEST_0035). Storage is keyed
+     * by name, so before the new row exists: every predecessor snapshot's served references are removed
+     * — removal already did this through revocation, and this is what keeps a reference a failed
+     * unpublish left behind from being served under the successor — and a hosted successor's origin
+     * loses its predecessor's lineage, so it neither ingests the old pushes nor refuses its own first
+     * push as a rewrite. Quarantine is left alone: its pins are the predecessor's evidence.
+     */
+    @Requirements({"GW_INGEST_0035"})
+    private void startFromNothing(String name, boolean hosted) {
+        try {
+            for (Marketplace predecessor : marketplaceRepository.retiredByName(name)) {
+                for (Snapshot snapshot : snapshotRepository.listByMarketplace(predecessor.id())) {
+                    storage.unpublish(name, snapshot.sha());
+                }
+            }
+            if (hosted) {
+                Optional<Repository> origin = storage.hostedIfPresent(name);
+                if (origin.isPresent()) {
+                    try (Repository repository = origin.get()) {
+                        RefTransitions.delete(repository, Marketplace.LINEAGE_REF);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "could not clear what the removed marketplace '%s' left in storage".formatted(name),
+                    e);
+        }
     }
 
     /**
