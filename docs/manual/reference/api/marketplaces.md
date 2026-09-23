@@ -129,7 +129,7 @@ $ curl -X DELETE localhost:8080/api/v1/marketplaces/acme \
 
 ```json
 {"id":1,"name":"acme","removedAt":"2026-09-23T10:00:00Z","removedBy":"dana",
- "withdrawnSnapshotIds":[42]}
+ "withdrawnSnapshotIds":[42],"pushScopeRemovedFromTokenIds":[7]}
 ```
 
 Removal is a retirement, not a delete. Every approved snapshot is withdrawn by
@@ -141,16 +141,23 @@ From then on the marketplace is not served, synced, pushed to, listed, approved
 or reachable on any `/marketplaces/{name}/…` route. Its record, its snapshots,
 their provenance and content reads by snapshot id, and the ledger are kept.
 
+Every access token granted to **publish** to the name loses that grant, and only
+that one: `pushScopeRemovedFromTokenIds` lists them, and the ledger records it as
+`marketplace-push-scopes-removed`. Grants to **fetch** the name are kept. The
+marketplace's vetter toggles and chain settings stay in the database but leave
+`GET /vetting/vetter-toggles` and `GET /vetting/chain-settings`.
+
 | Status | Cause |
 | --- | --- |
-| 200 | Removed; returns the marketplace's id, when and by whom, and the snapshots withdrawn. |
+| 200 | Removed; returns the marketplace's id, when and by whom, the snapshots withdrawn, and the tokens that lost a publication grant. |
 | 403 | Not an administrator. |
 | 404 | No live marketplace has that name — including one already removed. |
 | 422 | No reason, or an empty one. |
 
 **The name is free again.** Registering it creates a new marketplace with a new
 id that serves nothing until one of its own snapshots is approved. It inherits
-no approval, no approver grant and, for a hosted marketplace, no pushed lineage;
+no approval, no approver grant, no publication grant and, for a hosted
+marketplace, no pushed lineage;
 the same commit ingested again comes back `held`, and the removal's withdrawals
 do not block approving it. See
 [Removing a marketplace](../../guides/registering-a-marketplace.md#removing-a-marketplace).

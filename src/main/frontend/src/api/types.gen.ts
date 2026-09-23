@@ -3178,6 +3178,8 @@ export interface components {
             id?: number;
             /** @description Its name, which may now be registered again */
             name?: string;
+            /** @description Tokens that lost their grant to publish to this name. Fetch grants are kept, so clients keep working if the name is registered again */
+            pushScopeRemovedFromTokenIds?: number[];
             /**
              * Format: date-time
              * @description When the removal was recorded

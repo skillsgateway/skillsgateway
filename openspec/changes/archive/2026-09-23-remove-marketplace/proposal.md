@@ -36,6 +36,9 @@ written before a disambiguator exists could never be separated afterwards.
 - **The ledger disambiguator is the marketplace's own id** (owner's decision):
   `fetch_log` gains `marketplace_id`, denormalised with no foreign key, beside
   the name. The audit browse and export carry it.
+- Removal takes the name out of every token's publication (push) grant and keeps
+  fetch grants, and hides the removed marketplace's vetting settings from the
+  admin listings (amended at the owner's decision).
 - A `marketplace.removed` lifecycle webhook event.
 - API-only: no portal control. Administrative revocation, the act removal is
   built from, is API-only too.

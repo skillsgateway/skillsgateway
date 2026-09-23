@@ -2353,7 +2353,11 @@ cases:
       record, its snapshots, their provenance and the ledger entries survive with the removal on
       the ledger — while a removal by a non-administrator, one with no reason, one with an empty
       reason and one naming no registered marketplace are each refused and change nothing, and
-      the facade refuses the removed name even where a served reference was left behind
+      the facade refuses the removed name even where a served reference was left behind; a token
+      granted publication to the removed name loses that grant and no other, is recorded on the
+      ledger, and cannot push to a marketplace registered again under the name, while a token
+      granted fetch of the name still fetches it; and the removed marketplace's vetting settings
+      leave the administrative listings while their records remain
     revision: "0.1.0"
 
   - id: SVC_GW_INGEST_0035

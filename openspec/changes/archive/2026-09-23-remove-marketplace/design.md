@@ -32,9 +32,10 @@ See `proposal.md` — Why. The constraints that shape the approach:
   built from it.
 - Moving storage off name keys. Quarantine is shared by the incarnations of a
   name deliberately (below), so no rename or copy is needed.
-- Tidying settings rows (waivers, vetter toggles, chain settings) of a retired
+- Deleting settings rows (waivers, vetter toggles, chain settings) of a retired
   marketplace. They are keyed by id and consulted only for that id, so they are
-  inert; waivers are also evidence.
+  inert, and waivers are also evidence. They are hidden from the listings
+  instead (see the amendment below).
 
 ## Decisions
 
@@ -152,9 +153,9 @@ A failure in either step refuses the registration and changes nothing.
   `revoked` until the successor approves the same commit, and `approved` after.
 - **Approver grants** are matched by name. A grant on a retired marketplace is
   excluded from every read, so it cannot confer authority over a successor.
-- **Token scopes** are names and carry over to a successor, deliberately: that
-  is how clients keep working. A push scope carries over too; its pushes land
-  held behind approval like any other.
+- **Token scopes** are names. Fetch scopes carry over to a successor,
+  deliberately: that is how clients keep working. Push scopes do not (see the
+  amendment below).
 
 ### Declarative estate gains nothing
 
@@ -171,3 +172,23 @@ reconciliation; the guide says to remove the declaration first.
   the id is on every row for a consumer that needs to split them.
 - [A token scoped to a removed name reaches its successor] → Intended; stated in
   the guide so an administrator re-registering knows it.
+
+## Amendment: publication grants and settings listings (owner decision)
+
+The first version let push scopes carry over and left the removed
+marketplace's settings in the admin listings, and put both to the owner. The
+owner decided both the other way:
+
+- **Removal cuts publication grants and keeps fetch grants.** Removal takes the
+  name out of every token's `push_scopes` with `array_remove`, turning an array
+  left empty into `NULL`, which is the only spelling of "none" the schema
+  allows. It does this right after the stamp and before the withdrawals, and
+  the ledger records the affected tokens as `marketplace-push-scopes-removed`.
+  A publication grant is supply-side authority over content, and a publisher of
+  the removed marketplace has none over its successor. Fetch grants are left
+  alone so that clients keep working.
+- **Settings leave the listings, not the table.** `GET /vetting/vetter-toggles`
+  and `GET /vetting/chain-settings` filter out rows keyed by a removed
+  marketplace's id. Waivers have no estate-wide listing. Their only listing,
+  `GET /marketplaces/{name}/waivers`, already answers 404 for a removed name.
+

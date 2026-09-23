@@ -136,17 +136,21 @@ clone URL. They see nothing served until a snapshot of the new upstream is
 approved: the old approvals were decisions about a different upstream and do not
 carry over.
 
-!!! warning "What does carry over is anything that names the marketplace"
+!!! warning "What carries over, and what does not"
 
-    - **Access tokens.** A token scoped to `acme` fetches — and, with a push
-      scope, publishes to — whichever marketplace is called `acme` now. That is
-      what keeps clients working; revoke a token that should not reach the new
-      one.
-    - **The declarative estate.** A marketplace still declared in
-      `skills-gateway.estate.marketplaces` is registered again, as a new
-      marketplace, on the next reconciliation. Remove the declaration first.
+    - **Fetch grants carry over.** A token scoped to fetch `acme` fetches
+      whichever marketplace is called `acme` now. That is what keeps clients
+      working; revoke a token that should not reach the new one.
+    - **Publication grants do not.** Removal takes `acme` out of every token's
+      push scope, and the ledger names the tokens. A publisher of the new `acme`
+      needs a token granted on it.
+    - **Approver grants do not.** Grant again on the new marketplace.
+    - **The declarative estate does, unless you change it.** A marketplace still
+      declared in `skills-gateway.estate.marketplaces` is registered again, as a
+      new marketplace, on the next reconciliation. Remove the declaration first.
 
-    Approver grants do not carry over: grant again on the new marketplace.
+    The removed marketplace's vetter toggles and chain settings are kept in the
+    database but no longer listed; set them again on the new marketplace.
 
 The ledger tells the two apart: every entry carries `marketplaceId` beside the
 name. See [Audit ledger](../reference/api/audit.md#entry-fields).

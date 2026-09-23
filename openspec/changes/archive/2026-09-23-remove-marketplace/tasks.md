@@ -53,3 +53,12 @@
 - [x] 9.3 `reqstool status local -p docs/reqstool` ends PASS
 - [x] 9.4 `openspec validate --all --strict` and `mkdocs build --strict`
 - [x] 9.5 `evidence.md` from one final fresh run of every gate
+
+## 10. Amendment (owner decision): publication grants and settings listings
+
+- [x] 10.1 Amend GW_INGEST_0034 — Administrative marketplace removal and GW_INGEST_0035 — Reuse of a removed marketplace's name, and SVC_GW_INGEST_0034, in `docs/reqstool/`
+- [x] 10.2 `TokenRepository.removePushScope`; removal calls it after the stamp and records `marketplace-push-scopes-removed`; the response lists the tokens
+- [x] 10.3 Vetter-toggle and chain-settings listings filter rows keyed by a removed marketplace
+- [x] 10.4 Tests (SVC_GW_INGEST_0034): the removed publisher cannot push into the successor, a two-name grant keeps the other name, a fetch grant still reads; settings leave the listings and stay in the tables; mutants M11–M15
+- [x] 10.5 Docs, regenerated OpenAPI, and one fresh run of every gate into `evidence.md`
+

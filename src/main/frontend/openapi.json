@@ -2441,6 +2441,14 @@
             "description": "Its name, which may now be registered again",
             "type": "string"
           },
+          "pushScopeRemovedFromTokenIds": {
+            "description": "Tokens that lost their grant to publish to this name. Fetch grants are kept, so clients keep working if the name is registered again",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
           "removedAt": {
             "description": "When the removal was recorded",
             "format": "date-time",
