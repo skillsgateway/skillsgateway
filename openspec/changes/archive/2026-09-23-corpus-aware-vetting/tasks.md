@@ -84,4 +84,4 @@
       `reqstool status local -p docs/reqstool`, `openspec validate --all --strict`,
       `mkdocs build --strict`
 - [x] 9.2 `evidence.md` from one fresh run of all six after the last code edit
-- [ ] 9.3 Archive the change as the final commit
+- [x] 9.3 Archive the change as the final commit
