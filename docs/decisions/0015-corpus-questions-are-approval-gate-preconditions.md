@@ -1,6 +1,6 @@
 # ADR 0015 — Corpus questions are approval-gate preconditions, not vetting connectors
 
-*Proposed, 2026-09-08.*
+*Accepted, 2026-09-23, with the refinements under “Owner decisions”. Proposed 2026-09-08.*
 
 ## Context
 
@@ -250,6 +250,14 @@ Deliberately narrow, and not fuzzy:
 - **Block on an exact match of that key** against a plugin name in an
   already-approved, non-deleted snapshot of a *different* marketplace. A snapshot
   never collides with its own marketplace's history.
+- **Only names new to the marketplace.** A plugin name that any earlier approved
+  snapshot of the same marketplace already carried is not checked again. A
+  collision is raised once, when the name first arrives, and accepted once; later
+  snapshots carrying it pass, and a plugin that enters another marketplace later
+  never re-flags this one.
+- **Plugin names only, never skill names.** Clients address a plugin's skills
+  under the plugin's name, so `init` or `review` in two plugins is not an
+  impersonation and is common.
 - **Nothing else.** In particular **no edit distance in the first slice.**
 
 Edit distance is where this becomes dangerous rather than merely hard. Its
@@ -269,12 +277,9 @@ The real one is a legitimate fork or vendored copy: two marketplaces genuinely
 carrying `code-review`. The waiver is the answer, and its cost should be stated
 plainly. A waiver keys on `(rule id, marketplace, scope)`, not on the *pair*, so
 waiving the collision rule at `SNAPSHOT` scope accepts every collision that
-snapshot has — including one against a plugin that enters the estate later. That
-is a genuine widening. It is bounded by `SNAPSHOT` scope dying with the commit
-SHA, so the acceptance is re-made deliberately at the next ingestion, and that is
-judged an acceptable trade for not inventing a second waiver dimension before
-anyone has hit the case. A finer waiver key is a follow-on if evidence shows it
-matters.
+snapshot has. Because only names new to the marketplace are checked, that
+acceptance is made once per name rather than at every ingestion, and a second
+waiver dimension is not needed.
 
 ## Consequences
 
@@ -310,7 +315,19 @@ matters.
   not-now for want of a corpus; a corpus existing is not by itself a reason to
   reopen it.
 
-## Decisions to confirm with the owner
+## Owner decisions, 2026-09-23
+
+All four questions below were answered as this ADR proposed: corpus questions
+stay out of the chain; a refusal is waivable; the full UTS #39 skeleton is used;
+and `revoked → approved` re-runs the precondition. The owner added one
+constraint — the rule must not fire on every approval because a similar plugin
+arrived elsewhere — which is where “only names new to the marketplace” and
+“plugin names only” in *What the first rule matches* come from.
+
+The owner chose to build it straight away, after marketplace removal (#447).
+The registration-time near-miss warning (Option D) is not part of that build.
+
+The questions, as they were put:
 
 1. **The reproducibility answer.** This ADR says corpus-aware verdicts do not
    belong in the chain, rather than making them reproducible against a recorded
