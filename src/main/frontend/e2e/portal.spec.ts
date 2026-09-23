@@ -115,6 +115,9 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
   const served = page.getByRole("region", { name: /^Snapshot \d+$/ });
   await served.getByRole("tab", { name: "Inventory" }).click();
   await expect(served.getByText("hello", { exact: true }).first()).toBeVisible();
+  // The tab strip scrolls sideways on a phone but never vertically: no scrollbar beside the tabs.
+  const strip = served.getByRole("tablist");
+  expect(await strip.evaluate((el) => el.scrollHeight - el.clientHeight)).toBe(0);
 
   // Beside it, what approving it would change (GW_INGEST_0022). This marketplace has exactly one
   // snapshot — the one on screen — so there is no approved baseline, and the panel says so
