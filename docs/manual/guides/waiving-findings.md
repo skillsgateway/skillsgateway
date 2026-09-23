@@ -126,6 +126,26 @@ $ curl -X POST localhost:8080/api/v1/snapshots/1/approve
 Each waiver that was in force is written to the ledger as `waiver-applied`, with
 the rule, the location, the approver and the expiry.
 
+## Plugin-name collisions
+
+The approval gate also refuses a snapshot that introduces a plugin name looking
+like one another marketplace already serves
+([how that is decided](../concepts/vetting.md#not-a-vetter-either-plugin-names-already-in-use)).
+It is not a vetter's finding, but it is accepted the same way: a waiver on rule
+**`plugin-name-collision`**, located at the manifest line that declares the name.
+
+Waive it only when you can account for the name — a fork or a vendored copy of
+the incumbent — never because the refusal is in the way. The incumbent is named
+in the refusal and in the approve dialog.
+
+- **Use snapshot scope.** It accepts every collision that commit introduces.
+  Because a name already carried by an approved snapshot of the same marketplace
+  is not checked again, you accept each name once, not at every ingestion.
+- **Avoid path scope.** The location is the manifest, so a path waiver on
+  `.claude-plugin/marketplace.json` accepts every lookalike the marketplace
+  introduces until it expires. The API accepts it; the portal does not offer it.
+- **The administrator's vetting override does not lift it.**
+
 ## Reviewing and withdrawing waivers
 
 List what a marketplace has accepted — active and lapsed alike:

@@ -71,12 +71,12 @@
 
 ## 8. Docs (same PR)
 
-- [ ] 8.1 `concepts/vetting.md`: the precondition beside the minimum release age
-- [ ] 8.2 `guides/approving-snapshots.md`: the refusal and what to do
-- [ ] 8.3 `guides/waiving-findings.md`: `plugin-name-collision`, and what each scope covers
-- [ ] 8.4 `reference/configuration.md`: `skills-gateway.approval.name-collision.enabled`
-- [ ] 8.5 `reference/api/snapshots.md`: the read endpoint and the 409
-- [ ] 8.6 `architecture.md`: the T5 row
+- [x] 8.1 `concepts/vetting.md`: the precondition beside the minimum release age
+- [x] 8.2 `guides/approving-snapshots.md`: the refusal and what to do
+- [x] 8.3 `guides/waiving-findings.md`: `plugin-name-collision`, and what each scope covers
+- [x] 8.4 `reference/configuration.md`: `skills-gateway.approval.name-collision.enabled`
+- [x] 8.5 `reference/api/marketplaces.md` (where the snapshot endpoints live): the read endpoint and the 409; `reference/portal.md`: the dialog
+- [x] 8.6 `architecture.md`: the T5 row
 
 ## 9. Gates and archive
 

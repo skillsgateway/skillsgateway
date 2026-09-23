@@ -12,8 +12,9 @@ the call returns.
 
 `CatalogService.mergePlugin` is not that rule. Its key is the
 *marketplace-prefixed* name, so the same plugin name in two marketplaces never
-collides; what it catches is the prefix ambiguity, and it runs after approval,
-when the content is already published.
+collides; what it catches is the prefix ambiguity — and it now publishes a
+contested name for neither claimant rather than the first — and it runs after
+approval, when the content is already published.
 
 [ADR 0015 — Corpus questions are approval-gate preconditions, not vetting
 connectors](../../../docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md)
@@ -122,7 +123,7 @@ approved snapshot are checked, only against approved, non-deleted snapshots of
   waiver form, snapshot scope only.
 - **Docs** (same PR): `concepts/vetting.md`, `guides/approving-snapshots.md`,
   `guides/waiving-findings.md`, `reference/configuration.md`,
-  `reference/api/snapshots.md`, `architecture.md` (T5 row).
+  `reference/api/marketplaces.md`, `reference/portal.md`, `architecture.md` (T5 row).
 
 ## Deliberately not in this slice
 
@@ -131,5 +132,7 @@ approved snapshot are checked, only against approved, non-deleted snapshots of
 - **Edit distance**, for the reason ADR 0015 gives.
 - **The registration-time near-miss warning** for marketplace names (ADR 0015's
   Option D) — out of scope by the owner's decision.
-- **The `mergePlugin` shadowing primitive** ADR 0015 describes — its own change.
+- **The catalog merge.** ADR 0015's Context describes it as first-wins shadowing;
+  it has since changed to publish a contested name for neither claimant, which
+  leaves a newcomer able to take an incumbent out of the catalog. Its own change.
 - **Anything corpus-aware inside the vetting chain.**

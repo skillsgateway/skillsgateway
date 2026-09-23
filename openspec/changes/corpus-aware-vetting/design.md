@@ -33,8 +33,7 @@ Three existing properties constrain the shape:
 **Non-Goals**
 
 - Not a search index, not a catalog table, not edit distance.
-- Not the registration-time near-miss warning, not the `mergePlugin` shadowing
-  fix.
+- Not the registration-time near-miss warning, not the catalog merge.
 
 ## Decisions
 

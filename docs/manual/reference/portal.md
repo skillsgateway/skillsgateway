@@ -209,6 +209,14 @@ type past it. The way to enable it is to waive each blocking finding from the
 report itself. The server enforces the same rule independently, with `409`, so
 the disabled button mirrors policy rather than replacing it.
 
+Below the report, a *Plugin names already in use* section lists each plugin
+name the snapshot introduces that looks like one another marketplace already
+serves, with the manifest line declaring it and the incumbents it resembles.
+While any is uncovered the confirm control stays disabled. Each carries a
+**Waive name collision for {name}** button opening the same waiver form, offering
+*This snapshot only* as the only scope. The snapshot card does not shut
+**Approve** for a collision, since this dialog is where it is waived.
+
 The dialog is also shut by the minimum release age, and says so in its own note:
 that one has no way past it in the portal at all, and needs none — it opens by
 itself at the stated time.

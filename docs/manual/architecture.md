@@ -86,20 +86,24 @@ artifacts actually work:
 | T2 | Auto-executing code | Claude Code plugins can register **hooks** (shell commands that fire automatically on events) and **MCP servers** (long-lived processes). Installing a plugin can mean arbitrary code execution without the user ever invoking a skill | Partially (generic malware scanning, if the code ever passes through a scanner — which git cloning skips) |
 | T3 | Rug pulls | Git refs are mutable. A marketplace reviewed on Monday can serve different content Tuesday at the same URL — `marketplace update` happily pulls it | No — this is exactly what pinned, immutable registry versions exist to prevent, and git distribution has none |
 | T4 | Transitive sources | `marketplace.json` plugin entries may point at *other* arbitrary git repositories. Vetting the marketplace repo does not vet what an install actually clones | No |
-| T5 | Typosquatting / lookalikes | No namespace authority in the git world; `owner/claude-skills` vs `0wner/claude-skills` | No |
+| T5 | Typosquatting / lookalikes | No namespace authority in the git world; `owner/claude-skills` vs `0wner/claude-skills` | No — the gateway covers the plugin-name half at approval (below) |
 | T6 | Inventory blindness | When a community skill is disclosed as malicious, no one can answer "which of our 4,000 developers has it installed, at which version?" | No |
 | T7 | License / compliance | Skills embed third-party content and code with licenses nobody recorded | Partially |
 
 T1–T4 are the ones no current product addresses; T3+T4 together are the reason
 naive mirroring is insufficient.
 
-T5 is the one row the gateway has no mitigation for at all. Covering it needs a
-rule that can ask a question of the *approved estate* rather than of the snapshot
-in front of it, which is a different shape from every control the gateway has —
-[ADR 0015](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md)
-proposes where such a question may be asked without costing the vetting chain the
-reproducibility that continuous re-vetting depends on. It is a proposed decision;
-nothing is implemented, and T5 remains uncovered until it is.
+T5 is covered in part. The approval gate refuses a snapshot that introduces a
+plugin name which, after folding case, separators and Unicode lookalikes, matches
+a plugin another marketplace already serves — a question about the *approved
+estate* rather than the snapshot in front of it, asked at the approval request
+and never inside the vetting chain, so re-vetting keeps its reproducibility
+([ADR 0015](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md);
+[how it works](concepts/vetting.md#not-a-vetter-either-plugin-names-already-in-use)).
+Two halves remain open: a *marketplace* registered under a near-miss of an
+existing one's name, and the virtual catalog's merge, where a newcomer whose
+marketplace-prefixed plugin name clashes with an incumbent's takes both out of the
+catalog rather than being refused.
 
 ## 3. Design principles
 

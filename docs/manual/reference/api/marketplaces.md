@@ -18,7 +18,7 @@ enabling or disabling a vetter. See
 **Machine reach.** `marketplaces:read` covers `GET /marketplaces`, `GET
 /catalog` and a snapshot's `/content`, `/content-diff`, `/licenses`,
 `/provenance` and `/release-age`; `snapshots:read` covers `/diff`, `/file`,
-`/files`, `/vetting`, `/fetchers` and `/four-eyes`; `marketplaces:register`,
+`/files`, `/vetting`, `/fetchers`, `/four-eyes` and `/name-collisions`; `marketplaces:register`,
 `marketplaces:ingest`, `vetting:run`, `sync:write` and `waivers:read` cover
 the corresponding mutations and the waiver listing. **Approve, reject, waiver
 create, waiver delete, snapshot delete and snapshot restore are reachable by no
@@ -944,6 +944,31 @@ approve. Under the default `warn` mode the same conflicts are detected, the
 approval succeeds, and a `four-eyes-conflict` entry is appended to the audit
 ledger beside `snapshot-approved`.
 
+A snapshot introducing a plugin name that looks like one another marketplace
+already serves is refused by the same status, until a
+[waiver](../../guides/waiving-findings.md#plugin-name-collisions) on rule
+`plugin-name-collision` covers it. Each colliding name is listed with the
+manifest line that declares it and every approved snapshot it collides with:
+
+```json
+{"status":409,"title":"A plugin name collides with the approved estate",
+ "detail":"snapshot 12 cannot be approved: plugin 'c0de-review' at .claude-plugin/marketplace.json:6 collides with …",
+ "ruleId":"plugin-name-collision",
+ "collisions":[{"pluginName":"c0de-review",
+                "location":".claude-plugin/marketplace.json:6",
+                "incumbents":[{"marketplace":"acme-tools","snapshotId":4,"pluginName":"code-review"}],
+                "finding":{"id":"plugin-name-collision","severity":"HIGH",
+                           "location":".claude-plugin/marketplace.json:6","message":"…"},
+                "waiver":null,"covered":false}]}
+```
+
+The administrative override of a blocked vetting outcome does not lift it. A
+snapshot whose plugin names cannot be read from its pinned manifest is refused
+too, with the title *The snapshot's plugin names could not be read* and no
+`collisions`: it cannot be shown not to collide. Both refusals are appended to
+the audit ledger as `snapshot-approval-refused`, the first with the detail
+`plugin-name-collision: …` naming the incumbents.
+
 Ahead of every gate above, a snapshot whose recorded
 [closure](../../concepts/snapshots-and-ledger.md#the-closure-record) does not
 describe the commit it pins is refused, and every discrepancy is named:
@@ -963,7 +988,7 @@ is appended to the audit ledger as `snapshot-approval-refused`.
 | --- | --- |
 | 200 | Approved; returns the snapshot with `decidedBy` and `decidedAt`. |
 | 404 | Unknown snapshot. |
-| 409 | The snapshot is neither `held` nor `revoked`, its recorded closure does not describe the commit it pins, its effective vetting outcome is blocked and no override was supplied, a [policy rule](policy.md) denied it, it has not reached the minimum release age, or an enforcing four-eyes rule refused it. |
+| 409 | The snapshot is neither `held` nor `revoked`, its recorded closure does not describe the commit it pins, its effective vetting outcome is blocked and no override was supplied, a [policy rule](policy.md) denied it, a plugin name it introduces collides with the approved estate and no waiver covers it, its plugin names could not be read, it has not reached the minimum release age, or an enforcing four-eyes rule refused it. |
 | 422 | An override was requested (`overrideVetting: true`) without a `reason`. |
 
 A `revoked` snapshot is approved through this same endpoint and no other — there
@@ -1138,6 +1163,38 @@ enforces the rule independently.
 The waiver clause is evaluated exactly as an approval would evaluate it, over
 the waivers that are actually suppressing findings on this snapshot right now —
 which is why this is answered by the server rather than derived by a client.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The record above. |
+| 404 | Unknown snapshot. |
+
+## `GET /snapshots/{id}/name-collisions`
+
+The plugin names this snapshot introduces to its marketplace that collide with a
+plugin of an approved snapshot of **another** marketplace, and whether each is
+covered by a waiver. Decides nothing; the approve endpoint runs the same
+evaluation and refuses while any collision is uncovered.
+
+```json
+{"enabled":true,"inventoryAvailable":true,"refused":true,
+ "collisions":[{"pluginName":"c0de-review",
+                "location":".claude-plugin/marketplace.json:6",
+                "incumbents":[{"marketplace":"acme-tools","snapshotId":4,"pluginName":"code-review"}],
+                "finding":{"id":"plugin-name-collision","severity":"HIGH",
+                           "location":".claude-plugin/marketplace.json:6","message":"…"},
+                "waiver":null,"covered":false}]}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `enabled` | Whether [`approval.name-collision.enabled`](../configuration.md#plugin-name-collisions) is on. Off, nothing is listed and nothing is refused. |
+| `inventoryAvailable` | False when the snapshot's plugin names could not be read; an approval is then refused. |
+| `collisions` | Each colliding name, where the manifest declares it, its incumbents, the `finding` a waiver accepts, and the covering `waiver` or null. |
+| `refused` | Whether an approval requested now would be refused by this rule. |
+
+What collides, and what is never compared, is in
+[Vetting](../../concepts/vetting.md#not-a-vetter-either-plugin-names-already-in-use).
 
 | Status | Cause |
 | --- | --- |
