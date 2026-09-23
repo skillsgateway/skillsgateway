@@ -3081,3 +3081,93 @@ cases:
       WHEN the scoped client asks about each of them, and an unauthenticated client asks about any of them
       THEN the out-of-scope marketplace and the nonexistent one are answered identically, the never-ingested, never-approved and no-longer-recorded commits are answered identically, none of those answers claims approval, no part of the revocation reason appears in any answer, the unauthenticated request is refused, and an unscoped token still reaches every marketplace
     revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0036
+    requirement_ids: ["GW_INGEST_0036"]
+    title: Facts are recorded once at ingestion, carry the current state on read, and are what the policy gate evaluates
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose manifest declares two plugins, a snapshot too large for its facts to be built, and an enabled policy rule over the facts
+      WHEN a snapshot is ingested, read back across a held, approved and revoked sequence, ingested again, has its recorded facts altered directly in the database, and is submitted for approval
+      THEN the recorded facts equal those built from the pinned commit except for the state, the state read back is always the current one, the plugin-name index names each plugin with the manifest line that declares it, a second ingestion rewrites nothing, the policy gate decides on the recorded facts rather than on a fresh build, and the oversized snapshot is ingested with its plugin names indexed and no facts recorded, while the policy gate still refuses it for the same reason as before
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0019
+    requirement_ids: ["GW_APPROVAL_0019"]
+    title: A colliding snapshot is refused with a conflict naming the incumbent, nothing is published, and the switch turns it off
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot of one marketplace declaring a plugin, a held snapshot of another marketplace declaring a lookalike of that name, a held snapshot whose plugin inventory cannot be read, and a gateway with the rule switched off
+      WHEN approval of each held snapshot is requested, through the API and through the service
+      THEN the colliding snapshot is refused with a conflict naming the colliding name, its manifest location, and the incumbent's marketplace and snapshot, it stays held and the marketplace serves nothing new, the unreadable snapshot is refused with a distinct reason that names no collision, and with the rule switched off the same colliding approval succeeds
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0019.1
+    requirement_ids: ["GW_APPROVAL_0019.1"]
+    title: The normalised key equates lookalikes and nothing else
+    verification: automated-test
+    description: |
+      GIVEN plugin names differing by case, by separators, by a digit standing for a letter, by a Cyrillic or other confusable letter, by a compatibility form, and by an invisible format character, and pairs of genuinely different names including ones a single edit apart
+      WHEN each name is reduced to its key
+      THEN every lookalike pair reduces to one key, every genuinely different pair — including those a single edit apart — reduces to different keys, and reducing a key again leaves it unchanged
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0019.2
+    requirement_ids: ["GW_APPROVAL_0019.2"]
+    title: Only new plugin names are checked, skill names never are, and the incumbent keeps being served
+    verification: automated-test
+    description: |
+      GIVEN an incumbent marketplace serving a plugin, a newcomer declaring a lookalike plugin name, a newcomer whose skill but not plugin shares the incumbent's name, and a marketplace whose own earlier approved snapshot already carried the name
+      WHEN each snapshot's approval is requested, the colliding one again after its collision has been waived and approved, and a later snapshot of each marketplace carrying the same names is approved
+      THEN only the snapshot introducing the lookalike plugin name is refused, the skill-name match and the marketplace's own history are not, a later snapshot of a marketplace that has already been admitted with the name passes without a new waiver, and the incumbent stays approved and served throughout
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0019.3
+    requirement_ids: ["GW_APPROVAL_0019.3"]
+    title: Two colliding approvals racing each other admit exactly one
+    verification: automated-test
+    description: |
+      GIVEN two held snapshots of different marketplaces declaring colliding plugin names, each approvable on its own
+      WHEN both approvals are requested concurrently and are held so that each has evaluated every earlier gate before either is recorded
+      THEN exactly one is approved and served, the other is refused as a collision with it and stays held with nothing published, and no snapshot is left recorded as approved without being served
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0019.4
+    requirement_ids: ["GW_APPROVAL_0019.4"]
+    title: A revoked snapshot whose name was taken meanwhile is refused on restore
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot that is then revoked, and a snapshot of another marketplace declaring a colliding plugin name approved while it was revoked
+      WHEN the revoked snapshot's approval is requested again
+      THEN it is refused as a collision with the snapshot approved in the meantime and stays revoked, and once the collision is waived it is restored
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0020
+    requirement_ids: ["GW_APPROVAL_0020"]
+    title: Only an active covering waiver lifts a collision, and the vetting override does not
+    verification: automated-test
+    description: |
+      GIVEN a snapshot refused for a name collision
+      WHEN approval is requested with a waiver on another rule, an expired waiver, a revoked waiver, the administrative vetting override with a reason, and finally an active snapshot-scoped waiver on the name-collision rule
+      THEN every attempt but the last is refused as a collision, the last succeeds, and its waiver is reported as applied, reaches the ledger as a waiver use, and makes a reviewer who wrote it a four-eyes conflict
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0021
+    requirement_ids: ["GW_APPROVAL_0021"]
+    title: The collision report agrees with the gate, and every refusal is on the ledger
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot with a name collision and a held snapshot with none
+      WHEN the collision report is read for each, the colliding one's approval is attempted, and the report is read again after a waiver is recorded
+      THEN the report lists the collision with its location and incumbent and says the approval would be refused, lists nothing for the other, the refused attempt is on the ledger naming the name-collision rule and the incumbent, and after the waiver the report shows the collision as covered and no longer refusing
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0039
+    requirement_ids: ["GW_VETTING_0039"]
+    title: A re-run over unchanged content is unchanged by changes to the estate
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot with a recorded chain run
+      WHEN other snapshots, including ones declaring colliding plugin names, are approved and revoked, and the snapshot is re-vetted
+      THEN the new run records the same chain and the same verdicts and findings as the first
+    revision: "0.1.0"

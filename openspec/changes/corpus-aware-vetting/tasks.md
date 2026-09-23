@@ -1,166 +1,87 @@
 # Tasks: corpus-aware-vetting
 
-**Blocked on ADR 0015 being accepted.** Nothing below is implemented. If the
-owner takes a different option from ADR 0015's "Decisions to confirm", most of
-sections 3–6 change shape and this list should be regenerated rather than
-patched.
-
-## 0. Prerequisite
-
-- [ ] 0.1 ADR 0015 — Corpus questions are approval-gate preconditions, not
-      vetting connectors — accepted, with the four "Decisions to confirm"
-      answered (waivability, confusable fold aggressiveness, un-revocation,
-      and whether a corpus-aware connector is wanted after all)
-
 ## 1. Requirements (SSOT first)
 
-Ids GW_0194–GW_0198 and their SVCs are **reserved but not yet written** — they
-are deliberately absent from `docs/reqstool/` so the reqstool gate stays green
-while this proposal is unimplemented. Task 1.1 is what puts them there.
+- [ ] 1.1 Add to `docs/reqstool/requirements.yml`: GW_INGEST_0036, GW_APPROVAL_0019,
+      GW_APPROVAL_0019.1–.4, GW_APPROVAL_0020, GW_APPROVAL_0021, GW_VETTING_0039
+- [ ] 1.2 Add their SVCs (GIVEN/WHEN/THEN) to `docs/reqstool/software_verification_cases.yml`
 
-- [ ] 1.1 Add to `docs/reqstool/requirements.yml`:
-      GW_0194 — Persisted snapshot facts;
-      GW_0195 — Approval is refused on a normalised plugin-name collision with
-      the approved estate;
-      GW_0196 — A collision refusal is acceptable only by a scoped, expiring
-      waiver;
-      GW_0197 — Collision refusals and their acceptances are audit-logged and
-      shown to the reviewer;
-      GW_0198 — Corpus state is never an input to a vetting chain run
-- [ ] 1.2 Add SVC_GW_0194, SVC_GW_0195.1–.3, SVC_GW_0196.1–.2, SVC_GW_0197 and
-      SVC_GW_0198 (GIVEN/WHEN/THEN) to
-      `docs/reqstool/software_verification_cases.yml`
+## 2. Schema (SVC_GW_INGEST_0036)
 
-## 2. Schema (SVC_GW_0194)
+- [ ] 2.1 In `V1__init.sql`: `snapshot_facts` (`snapshot_id` primary key, cascade from
+      `snapshots`; `facts JSONB` nullable; `built_at`) and `snapshot_plugin_names`
+      (`snapshot_id` referencing `snapshot_facts`, `plugin_name`, `location`)
+- [ ] 2.2 Comment both tables: why `state` is absent, why `facts` may be null, why no
+      normalised key is stored
 
-- [ ] 2.1 In `V1__init.sql` (not a new migration): `snapshot_facts` (`snapshot_id BIGINT NOT
-      NULL UNIQUE REFERENCES snapshots(id) ON DELETE CASCADE`, `facts JSONB`,
-      `builder_version TEXT NOT NULL`, `built_at TIMESTAMPTZ NOT NULL`,
-      `unavailable_reason TEXT`, `CHECK (facts IS NOT NULL OR unavailable_reason
-      IS NOT NULL)`)
-- [ ] 2.2 Same migration: `snapshot_plugin_names` (`snapshot_id` FK cascade,
-      `plugin_name TEXT NOT NULL`, `location TEXT`), index on `snapshot_id`.
-      No `normalized_key` column — design decision 4
-- [ ] 2.3 Comment both tables in the style of `V1__init.sql`: why `state` is
-      absent from `facts`, and why no normalised key is stored
+## 3. Facts as recorded state (SVC_GW_INGEST_0036)
 
-## 3. Facts as persisted state (SVC_GW_0194)
+- [ ] 3.1 `SnapshotFactsService`: `build` no longer puts `state`; `record` writes the facts
+      and the plugin-name index once; `load` returns recorded facts with the current state,
+      building when none were recorded. `@Requirements GW_INGEST_0036`
+- [ ] 3.2 `SnapshotFactsRepository` (new, `policy` package): insert-once, read, the name
+      index reads the gate needs
+- [ ] 3.3 Plugin-name locations: the manifest line of each plugin entry's `name`
+- [ ] 3.4 `IngestionService`: record after the row is created, before the chain; a failure
+      is logged, never rethrown
+- [ ] 3.5 `PolicyGate` and the rule playground read through `load`; the existing policy SVC
+      tests stay green unmodified
+- [ ] 3.6 `SnapshotFactsPersistenceTests` (`SVC_GW_INGEST_0036`), each observed failing first
 
-- [ ] 3.1 `SnapshotFactsService`: `build` stops putting `state` into the
-      `snapshot` map; a new `store(Snapshot, Marketplace)` persists the map and
-      the plugin-name rows; a new `load(Snapshot)` returns the stored map with
-      the current `state` re-injected. Annotate `@Requirements({"GW_0194"})`
-- [ ] 3.2 `SnapshotFactsRepository` (new, `dev.skillsgateway.server.policy`):
-      `store`, `load`, `approvedEstatePluginNames()`, `unindexedApprovedCount()`
-- [ ] 3.3 `IngestionService`: call `store` after closure resolution and before
-      `vettingService.vet`; a `PolicyEvaluationException` is caught and written
-      as `unavailable_reason`, never rethrown into ingestion
-- [ ] 3.4 `PolicyGate`: read via `load`; a row carrying `unavailable_reason`
-      produces the same per-rule `error: …` denials it produces today for a
-      build failure. Behaviour unchanged — assert it against the existing
-      policy SVC tests without weakening them
-- [ ] 3.5 Backfill `ApplicationRunner`: idempotent, bounded batches, logged, for
-      every approved non-deleted snapshot with no facts row (design decision 5)
-- [ ] 3.6 Fix the stale `CelPolicy` javadoc while here — it omits
-      `snapshot.upstreamSha`, `snapshot.externalSources` and the plugin
-      `origin`/`upstreamUrl`/`resolvedSha` fields the service already emits
+## 4. Normalisation (SVC_GW_APPROVAL_0019.1)
 
-## 4. Normalisation (SVC_GW_0195.1)
+- [ ] 4.1 Vendor `confusables.txt` (Unicode 18.0.0) under `src/main/resources/approval/`
+      with a README naming source, version and SHA-256; NOTICE attribution
+- [ ] 4.2 `NameNormalizer`: NFKC → drop Cf → skeleton/fold to a fixpoint → drop separators
+- [ ] 4.3 `NameNormalizerTests` (plain JUnit): lookalikes equal, near-misses different,
+      idempotent
 
-- [ ] 4.1 Vendor the UTS #39 confusables table as a dated resource under
-      `src/main/resources/vetting/`, following the `agentskills-*.json`
-      precedent — no runtime download
-- [ ] 4.2 `NameNormalizer` (new): NFKC → casefold → confusable skeleton →
-      collapse `-`, `_`, `.`, whitespace. Pure, no I/O, table loaded once
+## 5. The gate (SVC_GW_APPROVAL_0019, .2, .3, .4, SVC_GW_APPROVAL_0020, SVC_GW_APPROVAL_0021)
 
-## 5. The gate (SVC_GW_0195.1–.3, SVC_GW_0196.1–.2, SVC_GW_0197)
+- [ ] 5.1 `SkillsGatewayProperties.Approval`: `nameCollision.enabled`, default true
+- [ ] 5.2 `NameCollisionGate` (new, `approval` package): ensures the snapshot's index, finds
+      its new plugin names, compares with other marketplaces' approved snapshots, consults
+      waivers, returns findings and suppressions
+- [ ] 5.3 `ApprovalService.doApprove`: the gate after policy and before release age; its
+      suppressions join the applied waivers; refusals ledgered as `snapshot-approval-refused`
+- [ ] 5.4 The transition inside a transaction holding one advisory lock, with the gate's
+      final evaluation in it; an in-lock refusal is ledgered after the rollback
+- [ ] 5.5 The vetting override does not lift the gate; restore runs it (same path)
+- [ ] 5.6 `AdminController`: `GET /api/v1/snapshots/{id}/name-collisions`, the 409 problem
+      shape, the approve endpoint's documented 409 reasons
+- [ ] 5.7 Shared test context sets the rule off; the gate's suites share one enforcing
+      context; `ContextBudgetTests` and `ConfigSurfaceBudgetTests` raised by one each with
+      the reason written beside the number
+- [ ] 5.8 `NameCollisionTests` (`SVC_GW_APPROVAL_0019`, `.2`, `.4`, `SVC_GW_APPROVAL_0020`,
+      `SVC_GW_APPROVAL_0021`), each observed failing first
+- [ ] 5.9 `NameCollisionRaceTests` (`SVC_GW_APPROVAL_0019.3`): observed failing with the
+      lock removed, passing with it
 
-- [ ] 5.1 `SkillsGatewayProperties`: a `Collision(Mode mode)` component,
-      `skills-gateway.approval.collision.mode` ∈ `off | warn | enforce`,
-      **default `warn`** (design decision 8). Shared record — see Risks
-- [ ] 5.2 `CollisionGate` (new, `dev.skillsgateway.server.approval`): loads the
-      approved estate's plugin names, excludes the snapshot's own marketplace,
-      normalises both sides, returns the matches. Annotate
-      `@Requirements({"GW_0195"})`
-- [ ] 5.3 `CollisionGate` consults `WaiverService` with rule id
-      `plugin-name-collision`, location `.claude-plugin/marketplace.json`, and
-      suppresses a covered match. Annotate `@Requirements({"GW_0196"})`
-- [ ] 5.4 A distinct refusal when the estate is not fully indexed, never
-      reported as a collision (design decision 5)
-- [ ] 5.5 `ApprovalService.doApprove`: call the gate with the release-age gate,
-      before any state transition; `warn` mode returns the matches on `Approved`
-      for the ledger, `enforce` mode throws
-- [ ] 5.6 Post-transition re-check between `decide` and `publish`, reusing the
-      existing `repair`/`undecide` path (design decision 6). Annotate
-      `@Requirements({"GW_0195"})`
-- [ ] 5.7 The ADR 0010 override (`ApprovalOverride.vettingFailure`) does **not**
-      lift this gate — assert it, do not merely avoid wiring it
-- [ ] 5.8 `AdminController`: a `409` problem document type for the collision
-      refusal carrying the offending name, the normalised key, and the incumbent
-      marketplace and snapshot id. Additive; no existing field changes
-- [ ] 5.9 Ledger events `approval-collision-refused` and
-      `approval-collision-warned` via `AdminAuditLogger`. Annotate
-      `@Requirements({"GW_0197"})`
+## 6. Chain purity (SVC_GW_VETTING_0039)
 
-## 6. Frontend
+- [ ] 6.1 `ChainPurityTests`: a re-run over unchanged content is unchanged by estate
+      changes; proved non-vacuous with a throwaway estate-reading mutant
 
-- [ ] 6.1 Snapshot review surface: render a collision refusal with the incumbent
-      named, and offer the existing waiver flow at `SNAPSHOT` scope only
-      (design decision 7). JSDoc `@requirements GW_0197`
-- [ ] 6.2 Regenerate `src/main/frontend/openapi.json` and `types.gen.ts`
+## 7. Frontend (GW_APPROVAL_0021)
 
-## 7. Tests — trust boundary, so adversarial not happy-path
-
-Follow `.claude/skills/old-coder`: prove each test fails before the
-implementation lands. Never weaken an existing SVC test.
-
-- [ ] 7.1 `NameNormalizerTests` (plain JUnit, `SVC_GW_0195.1`): the case,
-      separator and confusable table, including pairs that must **not** match;
-      no edit-distance behaviour
-- [ ] 7.2 `CollisionGateTests` (`AbstractGatewayTest`, `SVC_GW_0195.2`): a
-      colliding snapshot is refused in `enforce`; the **incumbent stays approved
-      and served**; the same marketplace's own history never collides; `warn`
-      mode approves and records
-- [ ] 7.3 `CollisionRaceTests` (`SVC_GW_0195.3`): two colliding approvals issued
-      concurrently — at most one is approved, nothing is published for the
-      other, and no snapshot is left decided-but-unpublished. **This is the test
-      that decides whether design decision 6 survives**; if it does not, stop
-      and propose the advisory lock as its own change
-- [ ] 7.4 `CollisionWaiverTests` (`SVC_GW_0196.1`): a waiver on
-      `plugin-name-collision` at `SNAPSHOT` scope permits the approval; an
-      expired or revoked one does not
-- [ ] 7.5 `SVC_GW_0196.2`: the ADR 0010 vetting override does **not** lift a
-      collision refusal
-- [ ] 7.6 `SnapshotFactsPersistenceTests` (`SVC_GW_0194`): facts stored at
-      ingestion match what `build` returns; `state` is not stored and is current
-      on read across a `held → approved → revoked` sequence; a snapshot over
-      `MAX_FILES` stores `unavailable_reason` and its approval is refused
-- [ ] 7.7 `SVC_GW_0198`: a chain run over unchanged content produces an
-      identical `vetting_runs.chain` and identical verdicts before and after an
-      unrelated approval changes the estate — the purity `GW_VETTING_0012` depends on
-- [ ] 7.8 `SVC_GW_0197`: the ledger carries the refusal and the warning with the
-      incumbent named
-- [ ] 7.9 Annotate every test above with `@SVCs({...})`
+- [ ] 7.1 Regenerate `openapi.json` and `types.gen.ts`
+- [ ] 7.2 Query hook and a collision notice in the approve dialog, reusing the waiver form
+      at snapshot scope only; the confirm button stays shut while a collision is uncovered
+- [ ] 7.3 A story for the notice, and MSW handler data
 
 ## 8. Docs (same PR)
 
-- [ ] 8.1 `concepts/vetting.md`: the collision precondition, next to the
-      minimum-release-age section that states the same principle, and why it is
-      deliberately not a connector
-- [ ] 8.2 `guides/approving-snapshots.md`: the refusal and what to do about it
-- [ ] 8.3 `guides/waiving-findings.md`: `plugin-name-collision` as a waivable
-      rule id, and the `SNAPSHOT`-scope widening stated plainly
-- [ ] 8.4 `reference/configuration.md`: `skills-gateway.approval.collision.mode`
-- [ ] 8.5 `reference/api/snapshots.md`: the new `409` problem document type
-- [ ] 8.6 `architecture.md`: the T5 row moves off "No" — partially, and only for
-      the plugin-name half
-- [ ] 8.7 `reference/decisions.md`: flip ADR 0015 to *Accepted*
+- [ ] 8.1 `concepts/vetting.md`: the precondition beside the minimum release age
+- [ ] 8.2 `guides/approving-snapshots.md`: the refusal and what to do
+- [ ] 8.3 `guides/waiving-findings.md`: `plugin-name-collision`, and what each scope covers
+- [ ] 8.4 `reference/configuration.md`: `skills-gateway.approval.name-collision.enabled`
+- [ ] 8.5 `reference/api/snapshots.md`: the read endpoint and the 409
+- [ ] 8.6 `architecture.md`: the T5 row
 
 ## 9. Gates and archive
 
 - [ ] 9.1 `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`,
-      `reqstool status local -p docs/reqstool`, `openspec validate --all
-      --strict`, `mkdocs build --strict`
-- [ ] 9.2 `openspec/changes/corpus-aware-vetting/evidence.md` refreshed for the
-      implementation run
-- [ ] 9.3 Archive the change as the final commit of the implementing PR
+      `reqstool status local -p docs/reqstool`, `openspec validate --all --strict`,
+      `mkdocs build --strict`
+- [ ] 9.2 `evidence.md` from one fresh run of all six after the last code edit
+- [ ] 9.3 Archive the change as the final commit

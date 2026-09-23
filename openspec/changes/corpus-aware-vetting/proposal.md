@@ -1,29 +1,5 @@
 # Proposal: corpus-aware-vetting
 
-!!! warning "Queued — next after #447"
-
-    **Status: parked 2026-09-09; decided and queued 2026-09-23.** ADR 0015 is
-    accepted and its four questions were answered as it proposed, so sections
-    3–6 need no regeneration for them. The owner added one constraint the design
-    does not yet carry: only plugin names **new to the marketplace** are checked,
-    and **skill names never are** (see the ADR's “What the first rule matches”).
-    Update the design and tasks for that before starting. It is queued to start
-    after marketplace removal (#447).
-
-    **Why it still matters:** T5 — typosquatting and lookalikes — is the only
-    row of the threat model with no mitigation at all, and stays that way while
-    this is parked. `docs/manual/architecture.md` already says so plainly.
-
-    **The design's own sharpest risk**, in ADR 0015's words: two approvals racing
-    could each see an estate without the other. Its `CollisionRaceTests` is
-    described as the test that decides whether the design survives.
-
-    **Every `GW_NNNN` id below is a drafting artifact, not a reservation.** ADR
-    0018 retired the flat sequence and names this change: whoever implements it
-    mints a domain-prefixed id then. Nothing here is in `docs/reqstool/`, so
-    there is no traceability to clean up — and section 1 of its task list, which
-    tells an implementer to add ids in the old format, is stale on its face.
-
 ## Why
 
 T5 — typosquatting and lookalikes — is the only row of the threat model in
@@ -31,146 +7,128 @@ T5 — typosquatting and lookalikes — is the only row of the threat model in
 that can ask a question of the **approved estate**, not only of the snapshot in
 front of it, and the gateway has nowhere to ask one: plugin names exist only
 inside git trees, and the only service that extracts them —
-`SnapshotFactsService` — is called from `PolicyGate` at approval time and
-discards its answer when the call returns.
+`SnapshotFactsService` — is called at approval time and discards its answer when
+the call returns.
 
-`CatalogService.mergePlugin` is often cited as the existing collision check. It
-is not the one you would want. Its key is the *marketplace-prefixed* name, so the
-same plugin name in two marketplaces never collides at all; what it actually
-catches is the prefix ambiguity (`zed`/`tools-pro` versus `zed-tools`/`pro`), it
-resolves it as "first in marketplace-name order wins, the rest are dropped", and
-it runs after approval, when the content is already published. Detecting a
-collision post-approval is too late to gate on.
-
-The hard part is not the matching. It is that a vetting chain run is today a pure
-function of **(pinned content, chain identity)** — the two things `vetting_runs`
-records — and that purity is the entire answer to `GW_VETTING_0012 — Continuous
-re-vetting of approved snapshots`. Adding corpus state as a third input to a run
-would make a changed verdict over unchanged content mean nothing in particular.
+`CatalogService.mergePlugin` is not that rule. Its key is the
+*marketplace-prefixed* name, so the same plugin name in two marketplaces never
+collides; what it catches is the prefix ambiguity, and it runs after approval,
+when the content is already published.
 
 [ADR 0015 — Corpus questions are approval-gate preconditions, not vetting
 connectors](../../../docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md)
-weighs that and decides it. **This change implements ADR 0015's first slice and
-is blocked on the ADR being accepted.**
-
-Issue [#253](https://github.com/skillsgateway/skillsgateway/issues/253), split
-out of [#153](https://github.com/skillsgateway/skillsgateway/issues/153).
+decides where such a question may be asked, and the owner's decisions of
+2026-09-23 recorded there settle the rest: checked at the approval request and
+never in the chain, waivable, full UTS #39 skeleton with exact matching, re-run
+on restore, only plugin names new to the marketplace, never skill names, first
+come wins. This change builds it. Issue
+[#253](https://github.com/skillsgateway/skillsgateway/issues/253).
 
 ## What Changes
 
-- **Snapshot facts become persisted state** — `GW_0194 — Persisted snapshot
-  facts`. What `SnapshotFactsService` computes from a pinned commit is written
-  once per snapshot at ingestion into `snapshot_facts`, and a derived
-  `snapshot_plugin_names` row per plugin carries the plugin name, its manifest
-  location, and its normalised collision key. The facts are a pure function of
-  the pinned commit, so they are written once and never rewritten. The mutable
-  `snapshot.state` field is **not** persisted; it is re-injected at read time.
-- **`PolicyGate` reads the stored facts** instead of rebuilding them per
-  approval. Same CEL variable namespace, same values, one JGit walk fewer per
-  approval. Also extends `GW_0194 — Persisted snapshot facts`.
-- **A collision precondition on the approval gate** — `GW_0195 — Approval is
-  refused on a normalised plugin-name collision with the approved estate`. In
-  `ApprovalService.doApprove`, beside the minimum release age and before any
-  state transition: a plugin name in the snapshot whose normalised key equals
-  that of a plugin in an already-approved, non-deleted snapshot of a **different**
-  marketplace refuses the approval with `409` and a problem document naming the
-  incumbent. First-come-wins: the incumbent is never re-evaluated and this check
-  can never withdraw served content.
-- **Acceptance is the existing waiver** — `GW_0196 — A collision refusal is
-  acceptable only by a scoped, expiring waiver`. `vetting_waivers.rule_id` is an
-  opaque string and `WaiverService.create` already takes an arbitrary rule id, so
-  no waiver machinery changes; the precondition gains a waiver consultation. The
-  `GW_VETTING_0028 — Administrative override of a blocked vetting outcome` override does
-  **not** lift it, exactly as it does not lift the policy, release-age or
-  four-eyes gates.
-- **The decision is on the ledger and in the portal** — `GW_0197 — Collision
-  refusals and their acceptances are audit-logged and shown to the reviewer`.
-- **The chain's purity becomes a stated invariant** — `GW_0198 — Corpus state is
-  never an input to a vetting chain run`. Stated as a requirement rather than
-  left to the shape of the code, so a later change that hands a connector an
-  estate query is caught rather than reviewed as a reasonable-looking
-  improvement — the same reason `GW_FACADE_0021 — The mirror is never an enforcement
-  path` is written down.
+- **Snapshot facts become recorded state** — `GW_INGEST_0036 — Snapshot facts
+  are recorded once, at ingestion`. What `SnapshotFactsService` builds from a
+  pinned commit is written once per snapshot when it is ingested, beside an index
+  of the plugin names its manifest declares and where. The one field that is not a
+  function of the commit — the snapshot's state — is not stored and is supplied
+  at read time. `PolicyGate` and the rule playground read the recorded facts
+  instead of rebuilding them; what a policy rule sees does not change, so
+  `GW_APPROVAL_0007 — Fail-closed CEL policy gate at approval` is untouched.
+- **A name-collision precondition on the approval gate** — `GW_APPROVAL_0019 —
+  Approval is refused on a normalised plugin-name collision with the approved
+  estate`, with four parts:
+  `GW_APPROVAL_0019.1 — Plugin names are compared by an exact match of a
+  normalised key`,
+  `GW_APPROVAL_0019.2 — Only plugin names new to the marketplace are checked, and
+  the incumbent is never touched`,
+  `GW_APPROVAL_0019.3 — Concurrent approvals cannot both admit a colliding name`,
+  and `GW_APPROVAL_0019.4 — Restoring a revoked snapshot re-runs the check`.
+- **Acceptance is the existing waiver** — `GW_APPROVAL_0020 — A name-collision
+  refusal is lifted only by a scoped, expiring waiver`. The waiver machinery is
+  unchanged; the gate consults it. The administrative override of a blocked
+  vetting outcome does not lift this refusal.
+- **Visible before and after the decision** — `GW_APPROVAL_0021 — Name
+  collisions are shown to the reviewer and recorded on the ledger`: a read
+  endpoint the approve dialog uses, the refusal on the ledger, and an accepted
+  collision recorded as the waiver use it is.
+- **The chain's purity becomes a stated invariant** — `GW_VETTING_0039 — Corpus
+  state is never an input to a vetting chain run`, so that a later change handing
+  a vetter an estate query is caught rather than reviewed as an improvement.
+- **One configuration leaf**: `skills-gateway.approval.name-collision.enabled`,
+  default `true`.
 
-**No connector's verdict changes, and `SnapshotUnderVetting` is untouched.**
+**No vetter's verdict changes, and `SnapshotUnderVetting` is untouched.**
 
-### What the first rule matches, and what it does not
+### What the rule matches
 
-Normalise (Unicode NFKC, casefold, UTS #39 confusable skeleton, then collapse
-`-`, `_`, `.` and whitespace), then compare the keys **exactly**. `Claude-Skills`,
-`claude_skills`, `claudeskills` and `cIaude-skills` reduce to one key.
-
-**No edit distance in this slice.** Its false-positive rate scales with the size
-of the estate, so the control would get noisier exactly as it got more useful,
-which is the shape that trains reviewers to waive on sight. The evidence that
-would settle it — the fraction of names within Levenshtein 1 of another in a real
-multi-thousand-plugin estate, and how many of those pairs a reviewer judges
-distinct — does not exist here. Normalisation and confusables need no such
-measurement: the pairs they match are the same name in any practical namespace.
+A plugin name is normalised — NFKC, invisible format characters removed, the
+UTS #39 confusable skeleton and case folding applied until stable, then `-`,
+`_`, `.` and whitespace removed — and compared **exactly**. `Claude-Skills`,
+`claude_skills`, `claudeskills` and `cIaude-skills` reduce to one key. **No edit
+distance.** Only plugin names the marketplace has not carried in an earlier
+approved snapshot are checked, only against approved, non-deleted snapshots of
+**other** marketplaces, and skill names never are.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `snapshot-facts`: what a snapshot's pinned commit says about itself — files,
-  plugins, skills and their locations — recorded once at ingestion as queryable
-  state, so a question can be asked of the estate rather than of one tree walk.
+- `snapshot-facts`: what a snapshot's pinned commit says about itself, recorded
+  once at ingestion as queryable state.
 
 ### Modified Capabilities
 
-- `snapshot-approval`: the approval gate gains a precondition that consults the
-  approved estate, evaluated at the approval request with the release-age gate
-  and before any state transition, refusing a snapshot that would introduce a
-  normalised plugin-name collision.
-- `vetting-waivers`: the scoped, expiring waiver becomes the acceptance act for a
-  gate precondition as well as for a chain-run finding; nothing about a waiver's
-  shape, scope, expiry or lifecycle changes.
-- `policy-rules`: `PolicyGate` evaluates CEL rules against the persisted facts
-  rather than rebuilding them per approval.
+- `snapshot-approval`: the approval gate gains the name-collision precondition,
+  its waiver acceptance, its reviewer-facing read, and its ledger entries.
 - `snapshot-vetting`: the chain's inputs are fixed as (pinned content, chain
   identity) by a stated invariant.
 
+## Why the surface grows (the stop rule)
+
+- **One configuration leaf.** `docs/manual/capability-map.md` cannot absorb an
+  on/off switch for a new refusal, and the switch is not optional for this
+  repository's own test suite: every suite in the shared test context ingests the
+  same fixture plugin (`hello`) into its own marketplace and approves it, in one
+  shared database, so an enforcing gate there refuses the second approval of the
+  whole run. The shared context therefore turns the gate off, which is what makes
+  the leaf necessary rather than convenient. For an operator it is the answer to
+  an estate of deliberate forks — the documented false-positive shape — that
+  would rather have no control than one waived on sight. `ConfigSurfaceBudgetTests`
+  rises by one.
+- **One Spring test context.** The gate's enforcing posture — the default — cannot
+  be exercised in the shared context for the reason above, so its suites share one
+  context of their own. `ContextBudgetTests` rises by one.
+- **No new estate object type, grantable role, backend package or scheduled
+  sweep.** The facts are derived, the rule is code, and nothing sweeps: first
+  come wins by construction.
+
 ## Impact
 
-- **DB**: an edit to `V1__init.sql` — `snapshot_facts` (`snapshot_id` UNIQUE FK,
-  `facts` JSONB, `builder_version`, `built_at`, `unavailable_reason`) and
-  `snapshot_plugin_names` (`snapshot_id` FK, `plugin_name`, `location`,
-  `normalized_key`, index on `normalized_key`). Not a new versioned migration:
-  while pre-1.0 the schema is a single `V1__init.sql` edited in place.
-- **Backend**: `SnapshotFactsService` (state excluded from the built map, a
-  persisting entry point), `SnapshotFactsRepository` (new), `NameNormalizer`
-  (new), `CollisionGate` (new, `dev.skillsgateway.server.approval`),
-  `ApprovalService.doApprove` (one gate call), `PolicyGate` (reads stored facts),
-  `IngestionService` (builds and stores facts after closure resolution),
-  `SkillsGatewayProperties` (a new `collision` component — **shared record, see
-  Risks**).
-- **API**: additive. `POST /api/snapshots/{id}/approve` gains a `409` problem
-  document type for a collision refusal, carrying the offending name, its
-  normalised key, and the incumbent marketplace and snapshot. No existing field
-  changes. `src/main/frontend/openapi.json` regenerated.
-- **Trust boundary**: **crossed.** `ApprovalService` is a named trust boundary
-  and this adds a gate to it. The `.claude/skills/old-coder` discipline and
-  adversarial tests apply — specifically the concurrent-approval race named in
-  ADR 0015's consequences.
-- **Frontend**: the snapshot review surface shows a collision refusal and offers
-  the waiver flow that already exists for a finding.
-- **Docs** (same PR): `concepts/vetting.md` (the precondition, beside the
-  minimum-release-age section that states the same principle),
-  `guides/approving-snapshots.md`, `guides/waiving-findings.md`,
-  `reference/configuration.md`, `reference/api/snapshots.md`,
-  `architecture.md` (T5 row).
+- **DB** (edit to `V1__init.sql`, pre-1.0): `snapshot_facts` and
+  `snapshot_plugin_names`.
+- **Backend**: `SnapshotFactsService` (state excluded, record/load),
+  `SnapshotFactsRepository` (new), `NameNormalizer` and `NameCollisionGate` (new,
+  `approval` package), `ApprovalService.doApprove` (one gate, and the transition
+  moved inside a guarded transaction), `IngestionService` (records facts),
+  `PolicyGate` and `PolicyController` (read recorded facts),
+  `SkillsGatewayProperties.Approval` (one component), `AdminController` (read
+  endpoint and 409 handler). A vendored `confusables.txt` (Unicode 18.0.0).
+- **API**: additive. `GET /api/v1/snapshots/{id}/name-collisions`; the approve
+  endpoint's 409 gains a problem shape carrying `collisions`.
+- **Trust boundary**: crossed — `ApprovalService`. Old-coder discipline and
+  adversarial tests, including the concurrent-approval race.
+- **Frontend**: the approve dialog lists name collisions with the existing
+  waiver form, snapshot scope only.
+- **Docs** (same PR): `concepts/vetting.md`, `guides/approving-snapshots.md`,
+  `guides/waiving-findings.md`, `reference/configuration.md`,
+  `reference/api/snapshots.md`, `architecture.md` (T5 row).
 
 ## Deliberately not in this slice
 
-- **A search index.** `snapshot_facts` is a gating input. The search and
-  discovery half of #153 was closed as not-now for want of a corpus; a corpus
-  existing is not by itself a reason to reopen it.
-- **Edit distance**, for the reason above.
-- **The marketplace-name half of T5** — a registration-time near-miss warning
-  extending `GW_INGEST_0029 — Duplicate upstream URL is reported as a registration
-  warning`. Endorsed by ADR 0015, cheaper, and independent of this change.
-- **The `mergePlugin` shadowing primitive** — that a marketplace name sorting
-  earlier can silently displace an incumbent plugin from the virtual catalog is a
-  real T5 variant, described in ADR 0015's Context, and needs its own change.
-- **Anything corpus-aware inside the vetting chain.** That is what ADR 0015
-  decides against.
+- **A search index.** `snapshot_facts` is a gating input; the search half of
+  #153 stays closed.
+- **Edit distance**, for the reason ADR 0015 gives.
+- **The registration-time near-miss warning** for marketplace names (ADR 0015's
+  Option D) — out of scope by the owner's decision.
+- **The `mergePlugin` shadowing primitive** ADR 0015 describes — its own change.
+- **Anything corpus-aware inside the vetting chain.**

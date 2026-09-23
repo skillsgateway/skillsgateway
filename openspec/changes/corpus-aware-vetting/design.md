@@ -2,26 +2,22 @@
 
 ## Context
 
-ADR 0015 decides *where* a corpus question may be asked. This document decides
-how to build the corpus and how the gate behaves, and it records the four places
-where the obvious implementation is wrong.
+ADR 0015 decides *where* a corpus question may be asked, and its "Owner
+decisions" section settles what the first rule matches. This document decides how
+the corpus is built and how the gate behaves.
 
 Three existing properties constrain the shape:
 
-- **A chain run is a pure function of (pinned content, chain identity).** Those
-  are precisely the columns `vetting_runs` carries — `snapshot_id` and `chain` as
-  `connector@version` in chain order — and nothing in this change may add a
-  third. `GW_0198 — Corpus state is never an input to a vetting chain run` states
-  it so a later change cannot reintroduce it quietly.
+- **A chain run is a pure function of (pinned content, chain identity)** — the
+  two things `vetting_runs` records. Nothing here may add a third.
+  `GW_VETTING_0039 — Corpus state is never an input to a vetting chain run`
+  states it.
 - **`ApprovalService` is a named trust boundary**, and its concurrency
-  correctness lives in guarded single-statement updates, not transactions: ADR
-  0013 counts twenty `UPDATE … RETURNING *` statements against three
-  `@Transactional` annotations, zero `@Version` and zero `SELECT … FOR UPDATE`.
-  A gate that needs atomicity with the state transition is a change of *kind*,
-  not of degree.
-- **Absence of evidence is not evidence of safety.** The chain already blocks a
-  snapshot with no run at all. A corpus check over an incompletely-indexed estate
-  has the same property and must behave the same way.
+  correctness lives in guarded single-statement updates rather than
+  transactions. A check whose answer depends on *other* rows cannot be guarded
+  that way, which is the one place this change departs from the pattern.
+- **Absence of evidence is not evidence of safety.** A snapshot whose plugin
+  inventory cannot be read cannot be shown not to collide, so it is refused.
 
 ## Goals / Non-Goals
 
@@ -30,190 +26,176 @@ Three existing properties constrain the shape:
 - The approved estate's plugin names are queryable without a fan-out of JGit
   walks.
 - A snapshot that would introduce a normalised plugin-name collision cannot be
-  approved, and the refusal is acceptable only through the existing waiver.
-- The incumbent is never touched. This check can never withdraw served content.
-- No change to `SnapshotUnderVetting`, to any connector, or to what a run
-  records.
+  approved, and the refusal is accepted only through the existing waiver.
+- The incumbent is never touched; this check can never withdraw served content.
+- No change to `SnapshotUnderVetting`, to any vetter, or to what a run records.
 
 **Non-Goals**
 
-- Not a search index. Not full-text search over content. Not a catalog table.
-- Not edit-distance matching (see the proposal for what evidence would open it).
-- Not a fix for the `mergePlugin` shadowing primitive, which is separate work.
+- Not a search index, not a catalog table, not edit distance.
+- Not the registration-time near-miss warning, not the `mergePlugin` shadowing
+  fix.
 
 ## Decisions
 
-### 1. The persisted facts exclude the snapshot's state
+### 1. Two tables: the facts, and the plugin-name index
 
-`SnapshotFactsService.build` puts `state` into the `snapshot` map. It is the one
-field in the whole structure that is **not** a function of the pinned commit —
-`held → approved → revoked → approved` all mutate it. Persisting it would freeze a
-value that changes and hand `PolicyGate` a stale answer to the one question a
-deny rule is most likely to ask.
+`snapshot_facts` holds one row per indexed snapshot: the facts map as JSONB and
+when it was built. `snapshot_plugin_names` holds one row per plugin the manifest
+declares — its name and its manifest location — and references
+`snapshot_facts`, so a name cannot exist without its snapshot's row and a
+snapshot with zero plugins is still distinguishable from one never indexed.
 
-So `snapshot_facts.facts` stores everything except `state`, and the read path
-re-injects the current value from the `snapshots` row before handing the map to
-CEL. The CEL variable namespace is byte-for-byte what it is today; only where the
-value comes from changes.
+The two are built from different reads and fail differently. The plugin names
+come from the manifest alone. The full facts also walk every file (bounded at
+20 000) and read every `SKILL.md` (bounded at 256 KiB), and exceed a bound far
+more easily. Tying the name index to the full facts would make every snapshot
+over those bounds unapprovable once this gate exists, which today it is not. So:
 
-*Alternative rejected:* store `state` and refresh the row on every transition.
-That makes an immutable record mutable to carry one field, and every future
-transition acquires an obligation to remember it.
+- the row exists ⇔ the plugin names are indexed;
+- `facts` is **null** when the full facts could not be built, and a reader then
+  builds them itself — exactly today's behaviour, including the same fail-closed
+  error for `PolicyGate`.
 
-### 2. A failure to build facts is recorded, and both readers fail closed
+A failure to build is not stored as a reason. A deterministic failure (a bound)
+recurs identically on every rebuild; a transient one (a storage read) would
+otherwise be frozen into a permanent refusal.
 
-`SnapshotFactsService` throws `PolicyEvaluationException` rather than truncating
-when a snapshot exceeds `MAX_FILES` (20 000) or a `SKILL.md` exceeds 256 KiB.
-That is correct and stays. At ingestion the throw is caught and recorded as
-`snapshot_facts.unavailable_reason` with a null `facts`, so the failure is a
-durable fact rather than a log line.
+### 2. The stored facts exclude the snapshot's state
 
-Both readers then treat it as blocking:
+`state` is the one field of the map that is not a function of the pinned commit.
+Storing it would freeze a value that `held → approved → revoked → approved`
+changes, so it is left out and re-injected from the `snapshots` row on every read.
+The CEL namespace is unchanged; only where the value comes from changes.
 
-- `PolicyGate` behaves exactly as it does today when the build throws — every
-  enabled rule is recorded as a denial with `error: <reason>`. No behaviour
-  change; it just reads the reason instead of re-deriving it.
-- The collision gate refuses the approval. A snapshot whose plugin inventory
-  could not be read cannot be shown not to collide.
+### 3. Written at ingestion; written once; the approval indexes what is missing
 
-### 3. Facts are built at ingestion, after closure resolution, before the chain
+`IngestionService` records the facts after the snapshot row exists (the closure is
+written with it) and before the chain runs. A failure is logged and never fails
+the ingestion. Writes are `INSERT … ON CONFLICT DO NOTHING`, so nothing is ever
+rewritten.
 
-`SnapshotFactsService` reads `snapshot_closure_members` for each plugin's
-`origin` / `upstreamUrl` / `resolvedSha`, so it must run after external-source
-resolution has written the closure. It must run before `vettingService.vet`
-because the chain is the long pole and a facts failure should be visible without
-waiting for it. The chain does not read the facts and never will (`GW_0198`), so
-the ordering is about diagnosis, not correctness.
+At approval the gate first makes sure the snapshot's own names are indexed,
+building them if the row is missing, and refuses with a distinct
+*inventory-unavailable* reason when it cannot. With the rule enabled that
+makes **every approved snapshot indexed**: `decide`
+is the only write that produces `approved`, and it now runs behind the index.
 
-### 4. Plugin names are compared in memory; no normalised key is stored
+There is no backfill. The schema is pre-1.0 and every environment is rebuilt from
+`V1`, so there is no approved snapshot from before this change.
 
-The tempting shape is a `normalized_key` column with an index, and a join. It is
-the wrong shape here for one reason: **the key is derived from a vendored Unicode
-confusables table**, and the moment that table is updated every stored key is
-silently stale — a collision the gateway would now detect goes on not being
-detected, with no signal. Fixing that means a `normalizer_version` column, a
-recompute pass, and a startup check, all to avoid a scan.
+### 4. The normalised key is computed, not stored
 
-The scan is not worth avoiding. The estate is thousands of plugin names, and the
-gate runs once per approval, at human speed, on a path that already opens a git
-repository and runs four connectors. So `snapshot_plugin_names` stores the plugin
-name and its manifest location; the gate loads the approved estate's names,
-normalises both sides in memory, and compares. Normalisation is then a pure
-function applied at decision time and a table upgrade takes effect immediately.
+The key depends on a vendored Unicode table; a stored key would go silently stale
+the day the table is bumped. The gate loads the estate's names and normalises
+both sides in memory. The estate is thousands of names and the gate runs at human
+speed, once per approval.
 
-*Alternative kept in reserve:* the stored key plus index, if measurement ever
-shows the scan matters. It is an optimisation with a correctness obligation
-attached, and it should be bought only when it is needed.
+The key: NFKC; remove format characters (general category Cf — zero-width
+joiners and the like, invisible in a name a person reads); then the UTS #39
+skeleton and case folding, alternately, until the string stops changing; then
+remove `-`, `_`, `.` and whitespace. The alternation is needed because the table
+maps some characters to capitals (`0` → `O`) and others away from them
+(`I` → `l`): skeleton first and fold second catches `cIaude`, fold after catches
+`0wner`, and iterating makes the key stable whichever way a name mixes them.
+Case folding is `toUpperCase` then `toLowerCase` in the root locale, the JDK's
+closest approximation of full case folding.
 
-The vendored table follows the `skill-conformance` precedent —
-`src/main/resources/vetting/agentskills-2026-08-04.json` — as a dated resource
-file, not a runtime download.
+The table is Unicode's `confusables.txt`, version 18.0.0, vendored verbatim with
+its SHA-256 in a README under `src/main/resources/approval/`, as the
+`agentskills-*.json` precedent does. No runtime download.
 
-### 5. The estate must be fully indexed, or the gate refuses
+### 5. What is compared
 
-Facts are written at ingestion, so every snapshot approved before this change has
-no row. A collision query over a partially-indexed estate silently misses the
-incumbents it has not indexed, which is the failure mode a security control must
-not have.
+For the snapshot seeking approval, in marketplace M:
 
-- An idempotent **backfill** runs once at startup as a bounded, logged
-  `ApplicationRunner`, building facts for every approved, non-deleted snapshot
-  that has no row.
-- Until it completes, the collision gate refuses with a **distinct** reason
-  naming how many approved snapshots are unindexed — not the collision reason,
-  so an operator is never told a collision exists when the truth is that the
-  corpus is incomplete.
+- **Its plugin names**, never its skill names.
+- **Only the new ones**: a name whose key some other approved, non-deleted
+  snapshot of M already carries is not checked. A collision is raised once, when
+  the name first arrives, and accepted once.
+- **Against** every plugin name of every approved, non-deleted snapshot of any
+  marketplace other than M. Superseded but still approved snapshots count: they
+  are approved, and a client can still fetch them by SHA.
 
-*Alternative rejected:* lazy build-on-read. It indexes the snapshot being
-approved, not the incumbents it must be compared against, so it produces exactly
-the silent miss this decision exists to prevent.
+Each colliding new name is one finding: rule `plugin-name-collision`, severity
+`HIGH`, located at `.claude-plugin/marketplace.json:<line>` — the manifest entry
+that declares the name, so a waiver's path scope has something to match. The
+message names the incumbents.
 
-### 6. The race between the check and the transition is closed by the existing repair path
+### 6. The race is closed inside a guarded transaction
 
-The gate reads the estate, then `snapshotRepository.decide` transitions the row.
-Two approvals of colliding snapshots issued within that window both pass.
+The gate reads the estate and `decide` writes the row; two approvals of colliding
+names in that window would both pass. The final check therefore runs **inside the
+same transaction as the transition**, after taking one transaction-scoped
+PostgreSQL advisory lock (`pg_advisory_xact_lock`) that every approval takes:
+lock, re-evaluate, `decide`, commit. The second approval waits for the first to
+commit, then sees it, and is refused as a collision with it. First come wins,
+deterministically, and the loser is never recorded as approved at all.
 
-The shape that fits this codebase: **re-run the collision query after `decide`
-succeeds and before `storage.publish`.** If it now finds a collision, call
-`snapshotRepository.undecide(before)` and refuse — which is precisely the
-`ApprovalService.repair` path that already exists, is already tested, and already
-handles a failed publication. Nothing published, nothing left half-decided.
+Only that step is transactional — not `doApprove` — so every other gate's ledger
+entry is still written as it was. One lock for all approvals rather than one per
+key: approvals are human-speed and the locked section is a few queries, and a
+single lock cannot deadlock.
 
-Both racing approvals can lose this way, and neither is approved. That is a
-fail-closed outcome of a rare event, and it is stated here rather than discovered
-later.
+The same evaluation runs first *outside* the lock, in the gate order below, so a
+refusal is reported and ledgered where the other refusals are and a covering
+waiver is known to the four-eyes rule. The in-transaction evaluation is the
+authoritative one.
 
-*Alternatives, both real:*
+*Alternatives rejected:* re-checking after `decide` and undoing with the
+publication-repair path (both racing approvals can lose, and a row reads
+approved for content never served); a uniqueness constraint on the key (a waived
+collision is allowed to coexist, and "new to the marketplace" is not expressible
+as one).
 
-- `pg_advisory_xact_lock(hashtext(key))` around the check and the transition.
-  Cheapest correct answer, no schema change — but `doApprove` is not
-  `@Transactional`, so it would need to become so, and that changes when every
-  write in the method becomes visible at a trust boundary. Not a change to make
-  as a side effect.
-- `SELECT … FOR UPDATE` on the incumbent rows. The codebase has none, and ADR
-  0013 records that as deliberate.
+### 7. Where it sits among the gates
 
-**This is the sharpest risk in the change.** It is where the adversarial tests
-go, and if the repair-path approach does not survive them the advisory lock
-should be proposed on its own merits rather than smuggled in.
+Closure completeness, standing withdrawal, vetting (with its override), policy,
+**name collision**, minimum release age, four-eyes, then the guarded transition.
+After policy because it is also a question about content; before release age
+because it is actionable and the wait is not; before four-eyes because a covering
+waiver the reviewer wrote is a four-eyes conflict like any other waiver.
 
-### 7. The finding's location is the manifest entry, and the waiver widens
+The administrative override of a blocked vetting outcome lifts the vetting gate
+only; this gate runs regardless. A restore (`revoked → approved`) is the same
+`doApprove` path and re-runs it: a snapshot whose name another marketplace
+acquired while it was revoked is refused until the collision is waived.
 
-A waiver matches on rule id plus scope, and `PATH` scope is matched against the
-path part of the finding's location. A collision has no line in any file; its
-natural location is `.claude-plugin/marketplace.json`, the manifest entry that
-declares the name.
+### 8. Waivers
 
-Two consequences, both stated rather than hidden:
+A covering waiver is any active waiver of the marketplace on rule
+`plugin-name-collision` whose scope matches the finding — `Waiver.covers`,
+unchanged. Suppressions are returned with the vetting ones, so they reach the
+ledger as `waiver-applied` entries and the four-eyes rule.
 
-- `SNAPSHOT` scope — the portal's default — accepts every collision that commit
-  has, including one against a plugin that enters the estate later. It is bounded
-  by dying with the SHA, so the acceptance is re-made at the next ingestion.
-- `PATH` scope on the manifest path is effectively marketplace-wide for this
-  rule, and survives re-ingestion. The portal should not offer it for this rule
-  id in the first slice.
+Snapshot scope accepts every collision that commit has, and — because only new
+names are checked — is needed once per name. Path scope on the manifest path
+covers every future new collision of the marketplace until it expires; the API
+accepts it, as it accepts any path, and the portal does not offer it for this
+rule.
 
-A finer waiver key — one that names the *pair* rather than the rule — is the
-principled answer and is deliberately not built before anyone has hit the case.
+### 9. Configuration
 
-### 8. Default mode is `warn`, not `enforce`
+`skills-gateway.approval.name-collision.enabled`, default `true`. Off, the gate
+still tries to index the snapshot being approved (decision 3) but refuses
+nothing, reports nothing, and approvals proceed exactly as before. A snapshot
+approved while the rule is off and whose index could not be built is then an
+incumbent the rule cannot see once it is switched back on; the log line says so.
 
-`skills-gateway.approval.collision.mode` takes `off | warn | enforce`, default
-**`warn`**: the refusal is computed, recorded on the ledger and shown to the
-reviewer, but does not refuse the approval.
+### 10. Declarative estate and group mapping
 
-This follows `RevetMode` and the four-eyes gate, which both ship warn-first for
-the same reason: the false-positive posture of this rule is **unmeasured**. A
-control that blocks approvals on day one on the strength of an untested matcher
-is how an operator learns to set it to `off`. Warn mode is also how the evidence
-for `enforce` gets collected, and how the edit-distance question eventually gets
-a number attached to it.
-
-## Open questions
-
-- **Whether a collision refusal should be waivable at all** (ADR 0015, decision
-  to confirm 2). The release-age model — a refusal with no acceptance act — is
-  stricter and simpler, and it means a legitimate fork can never be approved.
-- **How aggressive the confusable fold should be.** UTS #39 skeleton maps
-  `0`→`o` and also `rn`→`m`. The second is a real typosquat vector and a real
-  false positive.
-- **Whether `revoked → approved` re-runs the precondition.** It is a permitted
-  transition and it re-admits content past a gate that ran when the estate looked
-  different. Re-running is the honest answer, and it means a snapshot can become
-  un-restorable through no act of its own.
+Nothing here is estate-managed. The facts are derived from content, the rule is
+code, and its switch is configuration. Waivers — the acceptance — are unchanged
+and remain API-managed as they are today.
 
 ## Risks
 
-- **`SkillsGatewayProperties` gains a component.** That record has broken tests
-  on other branches before, where a test constructs it positionally. Any
-  concurrent branch touching it conflicts semantically, not textually.
-- **`ApprovalService.doApprove` gains a gate.** Trust boundary; `old-coder`
-  discipline and adversarial tests, not happy-path coverage.
-- **The new tables are added to `V1__init.sql`.** While pre-1.0 the schema is a
-  single migration edited in place, so any concurrent branch touching the schema
-  conflicts textually in that one file — which is the intended trade: a visible
-  merge conflict rather than two migrations racing for a version number.
-- **Declarative estate (#65).** The collision mode is configuration, not
-  API-managed runtime state, so the `skills-gateway.estate.*` obligation does not
-  apply — for the same reason ADR 0009 gave for external connectors. Waivers,
-  which *are* API-managed, are unchanged by this proposal.
+- **The transition is now inside a transaction.** `decide` already was; the new
+  part is the lock and the check inside it. The ledger entry for an in-lock
+  refusal is written after the rollback, outside the transaction.
+- **`SkillsGatewayProperties.Approval` gains a component.** Constructed only in
+  the record's own compact constructor.
+- **`V1__init.sql` and `ApprovalService` are also edited by the marketplace
+  removal change (#477).** The edits here are additions in separate places; once
+  both land, the estate query should also exclude removed marketplaces.
+- **An operator can switch the rule off.** Stated in the configuration reference.
