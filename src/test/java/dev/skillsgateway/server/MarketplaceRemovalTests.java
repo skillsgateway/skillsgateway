@@ -14,11 +14,13 @@ import dev.skillsgateway.server.admin.MarketplaceRegistrationService;
 import dev.skillsgateway.server.admin.MarketplaceRemovalService;
 import dev.skillsgateway.server.admin.MissingRemovalReasonException;
 import dev.skillsgateway.server.approval.RevocationService;
+import dev.skillsgateway.server.auth.TokenService;
 import dev.skillsgateway.server.persistence.FetchLogRepository;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRemovedException;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
+import dev.skillsgateway.server.persistence.TokenRepository;
 import dev.skillsgateway.server.persistence.WebhookDelivery;
 import dev.skillsgateway.server.persistence.WebhookDeliveryRepository;
 import dev.skillsgateway.server.persistence.WebhookSubscriberRepository;
@@ -27,6 +29,9 @@ import dev.skillsgateway.server.roles.RoleGrant;
 import dev.skillsgateway.server.roles.RoleGrantRepository;
 import dev.skillsgateway.server.roles.RoleService;
 import dev.skillsgateway.server.storage.GitStorage;
+import dev.skillsgateway.server.vetting.ChainMode;
+import dev.skillsgateway.server.vetting.VetterToggleRepository;
+import dev.skillsgateway.server.vetting.VettingChainSettingsRepository;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import io.github.reqstool.annotations.SVCs;
 import java.nio.file.Path;
@@ -88,6 +93,15 @@ class MarketplaceRemovalTests extends AbstractGatewayTest {
 
     @Autowired
     private JdbcClient jdbc;
+
+    @Autowired
+    private TokenRepository tokenRepository;
+
+    @Autowired
+    private VetterToggleRepository toggleRepository;
+
+    @Autowired
+    private VettingChainSettingsRepository chainSettings;
 
     // --- GW_INGEST_0034 ---------------------------------------------------------------------
 
@@ -263,6 +277,107 @@ class MarketplaceRemovalTests extends AbstractGatewayTest {
                 .isInstanceOf(MarketplaceRemovedException.class);
         assertThat(snapshots.findById(registered.snapshot().id()).orElseThrow().state())
                 .isEqualTo(Snapshot.HELD);
+    }
+
+    /**
+     * Publication grants are cut at removal; fetch grants are kept (GW_INGEST_0034). Both are names, so
+     * the test is the one that matters: against the successor registered under the same name.
+     */
+    @Test
+    @SVCs({"SVC_GW_INGEST_0034"})
+    void removal_cuts_publication_grants_to_the_name_and_keeps_fetch_grants() throws Exception {
+        String name = uniqueName("rmpush");
+        String other = uniqueName("rmpushother");
+        registrationService.register(name, null, Marketplace.ORIGIN_HOSTED, null, "root");
+        registrationService.register(other, null, Marketplace.ORIGIN_HOSTED, null, "root");
+        TokenService.IssuedToken publisher = tokenService.create("alice", "publisher", List.of(), null, List.of(name));
+        TokenService.IssuedToken both =
+                tokenService.create("alice", "two-publisher", List.of(), null, List.of(name, other));
+        String reader =
+                tokenService.create("alice", "reader", List.of(name), null).token();
+        Path working = publisherWorkingCopy();
+        assertThat(git(working, "push", publishUrl(name, publisher.token()), "main")
+                        .exitCode())
+                .as("the publisher can push before the removal")
+                .isZero();
+
+        MarketplaceRemovalService.Removal removal = removalService.remove(name, REASON, "root");
+
+        assertThat(removal.pushScopeRemovedFromTokenIds()).containsExactlyInAnyOrder(publisher.id(), both.id());
+        assertThat(tokenRepository.findById(publisher.id()).orElseThrow().pushScopes())
+                .as("a grant left naming nothing is none")
+                .isNullOrEmpty();
+        assertThat(tokenRepository.findById(both.id()).orElseThrow().pushScopes())
+                .as("only the removed name is taken")
+                .containsExactly(other);
+        assertThat(ledger(name))
+                .filteredOn(e -> e.event().equals(MarketplaceRemovalService.EVENT_PUSH_SCOPES_REMOVED))
+                .singleElement()
+                .satisfies(e -> assertThat(e.detail()).contains(String.valueOf(publisher.id())));
+
+        Marketplace successor = registrationService
+                .register(name, null, Marketplace.ORIGIN_HOSTED, null, "root")
+                .marketplace();
+        assertThat(git(working, "push", publishUrl(name, publisher.token()), "main")
+                        .exitCode())
+                .as("the removed marketplace's publisher cannot push into its successor")
+                .isNotZero();
+        assertThat(git(working, "push", publishUrl(name, both.token()), "main").exitCode())
+                .isNotZero();
+        String newPublisher = tokenService
+                .create("alice", "new-publisher", List.of(), null, List.of(name))
+                .token();
+        assertThat(git(working, "push", publishUrl(name, newPublisher), "main").exitCode())
+                .as("while a publisher granted on the successor can")
+                .isZero();
+
+        List<Snapshot> pushed = snapshots.listByMarketplace(successor.id());
+        Snapshot toServe = pushed.isEmpty() ? ingestionService.ingest(successor, "alice") : pushed.getFirst();
+        approve(toServe.id());
+        assertThat(gitClone(facadeUrl(name, reader), newWorkDir("rmpush-read")).exitCode())
+                .as("the fetch grant still reads the name")
+                .isZero();
+    }
+
+    /** A removed marketplace's settings leave the administrative listings; the rows stay (GW_INGEST_0034). */
+    @Test
+    @SVCs({"SVC_GW_INGEST_0034"})
+    void a_removed_marketplaces_settings_leave_the_listings_but_stay_in_the_table() throws Exception {
+        String name = uniqueName("rmsettings");
+        String kept = uniqueName("rmsettingskept");
+        Registered removed = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
+        Registered live = registerAndIngest(kept, createUpstream(DEFAULT_MANIFEST));
+        for (Registered r : List.of(removed, live)) {
+            long id = r.marketplace().id();
+            toggleRepository.set("secret-scan", id, true, null, "root");
+            chainSettings.setMode(id, ChainMode.RUN_ALL, null, "root");
+            chainSettings.setOrder(id, List.of("secret-scan"), null, "root");
+        }
+        long removedId = removed.marketplace().id();
+        long liveId = live.marketplace().id();
+        assertThat(listedIds("/api/v1/vetting/vetter-toggles", null)).contains(removedId, liveId);
+
+        removalService.remove(name, REASON, "root");
+
+        assertThat(listedIds("/api/v1/vetting/vetter-toggles", null))
+                .contains(liveId)
+                .doesNotContain(removedId);
+        assertThat(listedIds("/api/v1/vetting/chain-settings", "modes"))
+                .contains(liveId)
+                .doesNotContain(removedId);
+        assertThat(listedIds("/api/v1/vetting/chain-settings", "orders"))
+                .contains(liveId)
+                .doesNotContain(removedId);
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/waivers", name).with(oidcLogin()))
+                .andExpect(status().isNotFound());
+        for (String table : List.of("vetter_toggles", "vetting_chain_modes", "vetting_chain_orders")) {
+            assertThat(jdbc.sql("SELECT COUNT(*) FROM " + table + " WHERE marketplace_id = :id")
+                            .param("id", removedId)
+                            .query(Long.class)
+                            .single())
+                    .as("%s keeps the removed marketplace's row", table)
+                    .isEqualTo(1L);
+        }
     }
 
     // --- GW_INGEST_0035 ---------------------------------------------------------------------
@@ -462,6 +577,39 @@ class MarketplaceRemovalTests extends AbstractGatewayTest {
     }
 
     // --- helpers ----------------------------------------------------------------------------
+
+    /** The marketplace ids an admin listing shows; {@code field} picks a nested array, or null for the root. */
+    private List<Long> listedIds(String path, String field) throws Exception {
+        String body = mockMvc.perform(get(path).with(oidcLogin()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        com.fasterxml.jackson.databind.JsonNode node = new ObjectMapper().readTree(body);
+        com.fasterxml.jackson.databind.JsonNode rows = field == null ? node : node.get(field);
+        List<Long> ids = new java.util.ArrayList<>();
+        rows.forEach(row -> {
+            if (!row.get("marketplaceId").isNull()) {
+                ids.add(row.get("marketplaceId").asLong());
+            }
+        });
+        return ids;
+    }
+
+    /** A local repository with one conformant commit on the lineage branch, ready to push. */
+    private static Path publisherWorkingCopy() throws Exception {
+        Path dir = newWorkDir("rmpublisher");
+        git(dir, "init", "--initial-branch=main");
+        git(dir, "config", "user.email", "publisher@example.com");
+        git(dir, "config", "user.name", "Publisher");
+        java.nio.file.Files.createDirectories(dir.resolve(".claude-plugin"));
+        java.nio.file.Files.writeString(dir.resolve(MANIFEST_PATH), DEFAULT_MANIFEST);
+        java.nio.file.Files.createDirectories(dir.resolve("plugins/hello/skills/hello"));
+        java.nio.file.Files.writeString(dir.resolve("plugins/hello/skills/hello/SKILL.md"), CONFORMANT_SKILL);
+        git(dir, "add", "-A");
+        git(dir, "-c", "commit.gpgsign=false", "commit", "-q", "-m", "first-party content");
+        return dir;
+    }
 
     private org.springframework.test.web.servlet.RequestBuilder removeRequest(String name, String reason) {
         return delete("/api/v1/marketplaces/{name}", name)

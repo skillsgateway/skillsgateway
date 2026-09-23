@@ -113,16 +113,22 @@ public class VettingChainSettingsRepository {
                 .optional();
     }
 
-    /** Every mode setting, globals first, in a stable order. */
+    /** Every mode setting, globals first, in a stable order; none of a removed marketplace (GW_INGEST_0034). */
+    @Requirements({"GW_INGEST_0034"})
     public List<ChainModeSetting> listModes() {
-        return jdbc.sql("SELECT * FROM vetting_chain_modes ORDER BY marketplace_id NULLS FIRST")
+        return jdbc.sql("SELECT * FROM vetting_chain_modes"
+                        + " WHERE marketplace_id IS NULL OR marketplace_id IN (SELECT id FROM marketplaces WHERE deleted_at IS NULL)"
+                        + " ORDER BY marketplace_id NULLS FIRST")
                 .query(VettingChainSettingsRepository::mapMode)
                 .list();
     }
 
-    /** Every order setting, globals first, in a stable order. */
+    /** Every order setting, globals first, in a stable order; none of a removed marketplace (GW_INGEST_0034). */
+    @Requirements({"GW_INGEST_0034"})
     public List<ChainOrderSetting> listOrders() {
-        return jdbc.sql("SELECT * FROM vetting_chain_orders ORDER BY marketplace_id NULLS FIRST")
+        return jdbc.sql("SELECT * FROM vetting_chain_orders"
+                        + " WHERE marketplace_id IS NULL OR marketplace_id IN (SELECT id FROM marketplaces WHERE deleted_at IS NULL)"
+                        + " ORDER BY marketplace_id NULLS FIRST")
                 .query(VettingChainSettingsRepository::mapOrder)
                 .list();
     }
