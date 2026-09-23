@@ -37,8 +37,8 @@ come wins. This change builds it. Issue
 - **A name-collision precondition on the approval gate** — `GW_APPROVAL_0019 —
   Approval is refused on a normalised plugin-name collision with the approved
   estate`, with four parts:
-  `GW_APPROVAL_0019.1 — Plugin names are compared by an exact match of a
-  normalised key`,
+  `GW_APPROVAL_0019.1 — Plugin names are compared by exact match of
+  normalised keys`,
   `GW_APPROVAL_0019.2 — Only plugin names new to the marketplace are checked, and
   the incumbent is never touched`,
   `GW_APPROVAL_0019.3 — Concurrent approvals cannot both admit a colliding name`,
@@ -63,7 +63,8 @@ come wins. This change builds it. Issue
 
 A plugin name is normalised — NFKC, invisible format characters removed, the
 UTS #39 confusable skeleton and case folding applied until stable, then `-`,
-`_`, `.` and whitespace removed — and compared **exactly**. `Claude-Skills`,
+`_`, `.` and whitespace removed — once with the skeleton first and once with
+folding first, and two names collide when they share a key **exactly**. `Claude-Skills`,
 `claude_skills`, `claudeskills` and `cIaude-skills` reduce to one key. **No edit
 distance.** Only plugin names the marketplace has not carried in an earlier
 approved snapshot are checked, only against approved, non-deleted snapshots of

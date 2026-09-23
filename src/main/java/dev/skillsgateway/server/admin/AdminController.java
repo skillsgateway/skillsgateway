@@ -8,8 +8,11 @@ import dev.skillsgateway.server.approval.MissingOverrideReasonException;
 import dev.skillsgateway.server.approval.MissingReversalReasonException;
 import dev.skillsgateway.server.approval.MissingRevocationReasonException;
 import dev.skillsgateway.server.approval.MissingServeAfterChoiceException;
+import dev.skillsgateway.server.approval.NameCollisionException;
+import dev.skillsgateway.server.approval.NameCollisionGate;
 import dev.skillsgateway.server.approval.NotApprovedException;
 import dev.skillsgateway.server.approval.NothingToReverseException;
+import dev.skillsgateway.server.approval.PluginInventoryUnavailableException;
 import dev.skillsgateway.server.approval.ReleaseAgeGate;
 import dev.skillsgateway.server.approval.RevocationService;
 import dev.skillsgateway.server.approval.RollbackUnavailableException;
@@ -421,7 +424,8 @@ public class AdminController {
         "GW_APPROVAL_0011",
         "GW_VETTING_0028",
         "GW_APPROVAL_0004.5",
-        "GW_VETTING_0038.1"
+        "GW_VETTING_0038.1",
+        "GW_APPROVAL_0020"
     })
     @Tag(name = "Snapshots")
     @Operation(
@@ -445,8 +449,10 @@ public class AdminController {
     @ApiResponse(
             responseCode = "409",
             description = "Snapshot is neither held nor revoked, its effective vetting outcome is blocked and no"
-                    + " override was supplied, it has not yet reached the configured minimum release age, or -"
-                    + " under an enforcing four-eyes rule - the reviewer is on the snapshot's supply side")
+                    + " override was supplied, a plugin name it introduces collides with the approved estate and"
+                    + " no waiver covers it, its plugin names could not be read, it has not yet reached the"
+                    + " configured minimum release age, or - under an enforcing four-eyes rule - the reviewer is"
+                    + " on the snapshot's supply side")
     @ApiResponse(responseCode = "422", description = "An override was requested without a reason")
     public Snapshot approve(
             @PathVariable long id,
@@ -619,6 +625,27 @@ public class AdminController {
     public FourEyesGate.FourEyesCheck fourEyes(@PathVariable long id, Authentication authentication) {
         return approvalService
                 .fourEyes(id, authentication.getName())
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "snapshot %d not found".formatted(id)));
+    }
+
+    @GetMapping("/snapshots/{id}/name-collisions")
+    @Requirements({"GW_APPROVAL_0021"})
+    @Tag(name = "Snapshots")
+    @Operation(
+            summary = "Plugin-name collisions an approval would meet",
+            description = "Every plugin name this snapshot introduces to its marketplace that collides with a"
+                    + " plugin name of an approved snapshot of another marketplace, after folding case,"
+                    + " separators and lookalike characters, each with the manifest line that declares it, its"
+                    + " incumbents, and the active waiver covering it if there is one. Names the marketplace"
+                    + " already carried in an earlier approved snapshot are not checked, and skill names never"
+                    + " are. The approval endpoint runs the same evaluation and refuses while any collision is"
+                    + " uncovered; this endpoint decides nothing.")
+    @ApiResponse(responseCode = "200", description = "The rule's answer for this snapshot now")
+    @ApiResponse(responseCode = "404", description = "Snapshot not found")
+    public NameCollisionGate.Check nameCollisions(@PathVariable long id) {
+        return approvalService
+                .nameCollisions(id)
                 .orElseThrow(
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "snapshot %d not found".formatted(id)));
     }
@@ -845,6 +872,29 @@ public class AdminController {
         problem.setTitle("Four-eyes rule refused this approval");
         problem.setProperty("configKey", SkillsGatewayProperties.FourEyes.CONFIG_KEY);
         problem.setProperty("conflicts", e.conflicts());
+        return problem;
+    }
+
+    /**
+     * The name-collision precondition (GW_APPROVAL_0019, GW_APPROVAL_0021). Every uncovered collision is
+     * named with its incumbents, and the rule id a waiver has to name is given, so the answer says what
+     * to accept if the name is a fork rather than an impersonation.
+     */
+    @Requirements({"GW_APPROVAL_0019", "GW_APPROVAL_0021"})
+    @ExceptionHandler(NameCollisionException.class)
+    public ProblemDetail nameCollision(NameCollisionException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("A plugin name collides with the approved estate");
+        problem.setProperty("ruleId", NameCollisionGate.RULE_ID);
+        problem.setProperty("collisions", e.collisions());
+        return problem;
+    }
+
+    /** A snapshot whose plugin names could not be read cannot be checked, so it is refused (GW_APPROVAL_0019). */
+    @ExceptionHandler(PluginInventoryUnavailableException.class)
+    public ProblemDetail pluginInventoryUnavailable(PluginInventoryUnavailableException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("The snapshot's plugin names could not be read");
         return problem;
     }
 

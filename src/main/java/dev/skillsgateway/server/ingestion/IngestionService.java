@@ -4,6 +4,7 @@ import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
+import dev.skillsgateway.server.policy.SnapshotFactsService;
 import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.storage.RefTransitions;
 import dev.skillsgateway.server.vetting.VettingService;
@@ -40,6 +41,7 @@ public class IngestionService {
     private final ManifestPolicy manifestPolicy;
     private final ExternalSourceResolver externalSourceResolver;
     private final ManifestRewriter manifestRewriter;
+    private final SnapshotFactsService factsService;
 
     /**
      * One lock per marketplace: with sync modes (GW_INGEST_0011, GW_INGEST_0012) a manual ingest, a scheduler
@@ -60,6 +62,7 @@ public class IngestionService {
             ManifestPolicy manifestPolicy,
             ExternalSourceResolver externalSourceResolver,
             ManifestRewriter manifestRewriter,
+            SnapshotFactsService factsService,
             GatewayMetrics metrics) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
@@ -67,6 +70,7 @@ public class IngestionService {
         this.manifestPolicy = manifestPolicy;
         this.externalSourceResolver = externalSourceResolver;
         this.manifestRewriter = manifestRewriter;
+        this.factsService = factsService;
         this.metrics = metrics;
     }
 
@@ -102,7 +106,8 @@ public class IngestionService {
         "GW_INGEST_0024.2",
         "GW_INGEST_0027",
         "GW_INGEST_0030",
-        "GW_INGEST_0030.3"
+        "GW_INGEST_0030.3",
+        "GW_INGEST_0036"
     })
     private Snapshot ingestLocked(Marketplace marketplace, String actor) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
@@ -140,6 +145,10 @@ public class IngestionService {
                         .orElseThrow(() -> raced);
             }
             if (Snapshot.HELD.equals(state)) {
+                // Recorded once, before the chain so a failure shows without waiting on it
+                // (GW_INGEST_0036). The chain never reads them (GW_VETTING_0039), and a failure here is
+                // logged by the service rather than failing the ingestion.
+                factsService.record(snapshot, marketplace);
                 // The chain runs against the content just pinned, and its outcome gates the
                 // approval — it never changes the snapshot's state. A rejected snapshot is already
                 // unapprovable, so there is nothing for the chain to protect there.

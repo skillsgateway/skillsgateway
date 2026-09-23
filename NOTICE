@@ -11,3 +11,9 @@ hand here: the authoritative one is the CycloneDX SBOM the build generates
 at target/classes/META-INF/sbom/application.cdx.json, which ships inside the
 distributed artifacts and which the running application serves from
 /actuator/sbom. Each component's declared license is recorded there.
+
+This product vendors Unicode data that is not a build dependency and so is
+not in the SBOM: src/main/resources/approval/confusables-18.0.0.txt, from
+the Unicode Security Mechanisms (UTS #39), version 18.0.0.
+Copyright © 2026 Unicode®, Inc. Distributed under the Unicode License v3,
+https://www.unicode.org/license.txt

@@ -2228,12 +2228,12 @@ requirements:
     revision: 0.1.0
 
   - id: GW_APPROVAL_0019.1
-    title: Plugin names are compared by an exact match of a normalised key
+    title: Plugin names are compared by exact match of normalised keys
     significance: shall
-    description: "The system shall reduce each plugin name to a key by Unicode compatibility normalisation, removal of invisible format characters, the confusable skeleton of Unicode Technical Standard 39 applied together with case folding until the key no longer changes, and removal of hyphens, underscores, full stops and whitespace, from a confusables table vendored with the gateway; and shall treat two names as colliding when, and only when, their keys are equal, with no measure of distance between names."
+    description: "The system shall reduce each plugin name to its keys by Unicode compatibility normalisation, removal of invisible format characters, the confusable skeleton of Unicode Technical Standard 39 applied together with case folding until the key no longer changes — once with the skeleton applied first and once with case folding applied first — and removal of hyphens, underscores, full stops and whitespace, from a confusables table vendored with the gateway; and shall treat two names as colliding when, and only when, they share a key, with no measure of distance between names."
     references:
       requirement_ids: ["GW_APPROVAL_0019"]
-    rationale: "Normalisation and confusable folding match pairs that are the same name in any practical namespace — a digit for a letter, a Cyrillic letter for a Latin one, a separator added or dropped — and so need no evidence about false positives. Edit distance does: its false-positive rate grows with the estate, so the control would become noisier exactly as it became more useful, and no measurement of that rate exists. A vendored table keeps the key reproducible from the repository alone."
+    rationale: "Normalisation and confusable folding match pairs that are the same name in any practical namespace — a digit for a letter, a Cyrillic letter for a Latin one, a separator added or dropped — and so need no evidence about false positives. Edit distance does: its false-positive rate grows with the estate, so the control would become noisier exactly as it became more useful, and no measurement of that rate exists. Two orders are needed because the table reads a capital I as a lower-case l, so whether a capital is folded before or after the skeleton decides whether cIaude or CLAUDE matches claude; each order is exact, and a name with no capitals has one key. A vendored table keeps the keys reproducible from the repository alone."
     categories: ["security"]
     revision: 0.1.0
 

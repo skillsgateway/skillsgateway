@@ -129,6 +129,10 @@ DATA_DIR="$(mktemp -d "${TMPDIR:-/tmp}/e2e-data.XXXXXX")"
 # Authorization is always enforced and a gateway that grants the admin role to nobody refuses to
 # start (GW_AUTH_0026), so the claim mapping below is what satisfies the bootstrap check as well as what
 # the role assertions exercise: remove it and the gateway will not boot at all.
+#
+# The name-collision rule is off: the specs register the same fixture repeatedly as marketplaces of
+# their own, so every approval after the first would meet a "hello" another marketplace serves. The
+# rule is exercised by the Java suite (AbstractNameCollisionTest) and its portal notice by stories.
 SERVER_PORT="$GATEWAY_PORT" \
 SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5433/skillsgateway" \
 SPRING_DATASOURCE_USERNAME=skillsgateway \
@@ -142,6 +146,7 @@ SKILLSGATEWAY_DATADIR="$DATA_DIR" \
 SKILLSGATEWAY_ALLOWEDURLSCHEMES="http,https,file" \
 SKILLSGATEWAY_VETTING_REVET_ENABLED=false \
 SKILLSGATEWAY_VETTING_REVET_MODE=enforce \
+SKILLSGATEWAY_APPROVAL_NAMECOLLISION_ENABLED=false \
 SKILLSGATEWAY_ROLES_CLAIM=groups \
 SKILLSGATEWAY_ROLES_MAPPINGS_0_CLAIMVALUE=sg-gateway-admins \
 SKILLSGATEWAY_ROLES_MAPPINGS_0_ROLE=admin \

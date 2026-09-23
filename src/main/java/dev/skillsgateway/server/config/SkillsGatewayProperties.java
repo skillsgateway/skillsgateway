@@ -55,7 +55,7 @@ public record SkillsGatewayProperties(
             vetting = new Vetting(null, null, null, null, null, null, null, null, null);
         }
         if (approval == null) {
-            approval = new Approval(null);
+            approval = new Approval(null, null);
         }
         if (sync == null) {
             sync = new Sync(null, null, null, null);
@@ -1038,14 +1038,37 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * The approval gate's own settings (GW_APPROVAL_0011). Only the separation-of-duties rule lives here so
-     * far; the vetting, policy and cooling-off preconditions predate it and stay where they are.
+     * The approval gate's own settings (GW_APPROVAL_0011, GW_APPROVAL_0019). The separation-of-duties and
+     * name-collision rules live here; the vetting, policy and cooling-off preconditions predate them and
+     * stay where they are.
      */
-    public record Approval(FourEyes fourEyes) {
+    public record Approval(FourEyes fourEyes, NameCollision nameCollision) {
 
         public Approval {
             if (fourEyes == null) {
                 fourEyes = new FourEyes(null);
+            }
+            if (nameCollision == null) {
+                nameCollision = new NameCollision(null);
+            }
+        }
+    }
+
+    /**
+     * The plugin-name collision precondition (GW_APPROVAL_0019). On by default: the refusal is waivable,
+     * checks only names new to a marketplace, and never touches what is already served, so enabling
+     * it over an estate that already contains collisions withdraws nothing.
+     *
+     * @param enabled {@code false} refuses nothing and reports nothing
+     */
+    public record NameCollision(Boolean enabled) {
+
+        /** The property an operator sets, quoted in the refusal so the answer is discoverable. */
+        public static final String CONFIG_KEY = "skills-gateway.approval.name-collision.enabled";
+
+        public NameCollision {
+            if (enabled == null) {
+                enabled = true;
             }
         }
     }

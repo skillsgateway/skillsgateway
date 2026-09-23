@@ -183,7 +183,10 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // reports whether the cooling-off window has passed, and approve itself stays
             // role-gated. Classified here so that stays a decision rather than an omission.
             "GET /api/v1/snapshots/{id}/release-age",
-            "GET /api/v1/snapshots/{id}/four-eyes");
+            "GET /api/v1/snapshots/{id}/four-eyes",
+            // What an approval would meet from the name-collision rule; it decides nothing, and the
+            // incumbents it names are marketplaces and plugin names the catalog already shows.
+            "GET /api/v1/snapshots/{id}/name-collisions");
 
     @Test
     @SVCs({"SVC_GW_AUTH_0010"})

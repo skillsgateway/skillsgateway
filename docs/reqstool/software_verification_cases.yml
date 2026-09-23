@@ -3104,12 +3104,12 @@ cases:
 
   - id: SVC_GW_APPROVAL_0019.1
     requirement_ids: ["GW_APPROVAL_0019.1"]
-    title: The normalised key equates lookalikes and nothing else
+    title: The normalised keys equate lookalikes and nothing else
     verification: automated-test
     description: |
       GIVEN plugin names differing by case, by separators, by a digit standing for a letter, by a Cyrillic or other confusable letter, by a compatibility form, and by an invisible format character, and pairs of genuinely different names including ones a single edit apart
-      WHEN each name is reduced to its key
-      THEN every lookalike pair reduces to one key, every genuinely different pair — including those a single edit apart — reduces to different keys, and reducing a key again leaves it unchanged
+      WHEN each name is reduced to its keys
+      THEN every lookalike pair shares a key, including an all-capitals spelling and one with a capital I standing for an l, no genuinely different pair does — including those a single edit apart — and every key reduces to itself alone
     revision: "0.1.0"
 
   - id: SVC_GW_APPROVAL_0019.2

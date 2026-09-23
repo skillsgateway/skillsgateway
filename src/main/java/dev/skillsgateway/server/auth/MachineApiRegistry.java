@@ -90,7 +90,11 @@ public final class MachineApiRegistry {
                         // Four-eyes eligibility is a read of the same evidence surface: it reports
                         // whether a second reviewer is required and who the first was. Approval
                         // itself stays unreachable, which is what keeps this a read.
-                        get("/api/v1/snapshots/{id}/four-eyes")));
+                        get("/api/v1/snapshots/{id}/four-eyes"),
+                        // The name-collision report is the same kind of read: what an approval would
+                        // meet, deciding nothing. It names incumbents' marketplaces and plugin names,
+                        // which the catalog already publishes.
+                        get("/api/v1/snapshots/{id}/name-collisions")));
         scopes.put("marketplaces:register", Set.of(post("/api/v1/marketplaces")));
         scopes.put("marketplaces:ingest", Set.of(post("/api/v1/marketplaces/{name}/ingest")));
         scopes.put(

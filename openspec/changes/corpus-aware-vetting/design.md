@@ -84,7 +84,7 @@ is the only write that produces `approved`, and it now runs behind the index.
 There is no backfill. The schema is pre-1.0 and every environment is rebuilt from
 `V1`, so there is no approved snapshot from before this change.
 
-### 4. The normalised key is computed, not stored
+### 4. The normalised keys are computed, not stored
 
 The key depends on a vendored Unicode table; a stored key would go silently stale
 the day the table is bumped. The gate loads the estate's names and normalises
@@ -96,8 +96,14 @@ joiners and the like, invisible in a name a person reads); then the UTS #39
 skeleton and case folding, alternately, until the string stops changing; then
 remove `-`, `_`, `.` and whitespace. The alternation is needed because the table
 maps some characters to capitals (`0` → `O`) and others away from them
-(`I` → `l`): skeleton first and fold second catches `cIaude`, fold after catches
-`0wner`, and iterating makes the key stable whichever way a name mixes them.
+(`I` → `l`), and iterating makes the key stable whichever way a name mixes them.
+
+A capital I is genuinely ambiguous: `cIaude` needs it read as `l` (skeleton
+before folding) and `CLAUDE-SKILLS` needs it read as `i` (folding first). No
+single order serves both, so each name gets **two keys**, one per order, and two
+names collide when they share one. For a name without capitals the two keys are
+the same. This is still exact matching; it widens nothing beyond the two
+readings of a capital letter.
 Case folding is `toUpperCase` then `toLowerCase` in the root locale, the JDK's
 closest approximation of full case folding.
 

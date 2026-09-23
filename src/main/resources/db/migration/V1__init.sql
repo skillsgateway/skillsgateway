@@ -188,6 +188,30 @@ CREATE TABLE snapshot_closure_members (
 -- at one in particular.
 CREATE INDEX idx_snapshot_closure_members_source ON snapshot_closure_members (clone_url, resolved_sha);
 
+-- What a snapshot's pinned commit says about itself (GW_INGEST_0036), recorded once at ingestion and
+-- never rewritten: it is a pure function of the commit. The snapshot's state is deliberately absent
+-- from `facts` -- it is the one value that is not -- and is supplied from `snapshots` on read.
+-- `facts` is NULL when they could not be built (an inventory over its bound, a storage error); a
+-- reader then builds them itself, so a transient failure is never frozen into a permanent one.
+-- The row existing means the plugin-name index below is complete, which is what the name-collision
+-- gate (GW_APPROVAL_0019) relies on.
+CREATE TABLE snapshot_facts (
+    snapshot_id BIGINT PRIMARY KEY REFERENCES snapshots (id) ON DELETE CASCADE,
+    facts JSONB,
+    built_at TIMESTAMPTZ NOT NULL
+);
+
+-- Every plugin name a snapshot's manifest declares, and the manifest line that declares it: the
+-- estate the name-collision gate compares against. No normalised key is stored -- it derives from a
+-- vendored Unicode table, and a stored key would go stale silently when the table is bumped.
+CREATE TABLE snapshot_plugin_names (
+    snapshot_id BIGINT NOT NULL REFERENCES snapshot_facts (snapshot_id) ON DELETE CASCADE,
+    plugin_name TEXT NOT NULL,
+    location TEXT NOT NULL
+);
+
+CREATE INDEX idx_snapshot_plugin_names_snapshot ON snapshot_plugin_names (snapshot_id);
+
 -- The compaction pass's only query: soft-deleted snapshots whose window has elapsed.
 CREATE INDEX idx_snapshots_purge_queue ON snapshots (purge_after) WHERE deleted_at IS NOT NULL;
 

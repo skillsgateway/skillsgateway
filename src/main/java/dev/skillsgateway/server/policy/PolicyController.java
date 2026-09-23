@@ -191,7 +191,7 @@ public class PolicyController {
             return new PlaygroundResult(null, e.getMessage());
         }
         try {
-            return new PlaygroundResult(CelPolicy.matches(compiled, factsService.build(snapshot, marketplace)), null);
+            return new PlaygroundResult(CelPolicy.matches(compiled, factsService.load(snapshot, marketplace)), null);
         } catch (PolicyEvaluationException e) {
             return new PlaygroundResult(null, e.getMessage());
         }

@@ -4,6 +4,7 @@ import {
   formatRemaining,
   useDecideSnapshot,
   useSnapshotFourEyes,
+  useSnapshotNameCollisions,
   useSnapshotReleaseAge,
   useSnapshotVetting,
 } from "@/api/queries";
@@ -16,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { NameCollisionNotice } from "@/components/name-collision-notice";
 import { VettingReport } from "@/components/vetting-report";
 
 /**
@@ -34,12 +36,17 @@ import { VettingReport } from "@/components/vetting-report";
  * nobody else to ask; under enforce it shuts the button and names the person who has to press it
  * instead. The server enforces all three independently.
  *
- * @Requirements GW_VETTING_0005, GW_VETTING_0010, GW_APPROVAL_0004.4, GW_APPROVAL_0010, GW_APPROVAL_0011
+ * A plugin name that looks like one another marketplace already serves shuts it too, until the
+ * reviewer waives it on this snapshot — the same act as accepting a vetting finding.
+ *
+ * @Requirements GW_VETTING_0005, GW_VETTING_0010, GW_APPROVAL_0004.4, GW_APPROVAL_0010, GW_APPROVAL_0011, GW_APPROVAL_0021
  */
 export function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onClose: () => void }) {
   const vetting = useSnapshotVetting(snapshotId);
   const releaseAge = useSnapshotReleaseAge(snapshotId);
   const fourEyes = useSnapshotFourEyes(snapshotId);
+  const nameCollisions = useSnapshotNameCollisions(snapshotId);
+  const collides = nameCollisions.data?.refused === true;
   const decide = useDecideSnapshot();
   const blocked = vetting.data?.outcome === "blocked" || vetting.data?.outcome === undefined;
   const tooYoung = releaseAge.data?.eligible === false;
@@ -60,6 +67,7 @@ export function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onC
           </DialogDescription>
         </DialogHeader>
         <VettingReport snapshotId={snapshotId} />
+        <NameCollisionNotice snapshotId={snapshotId} check={nameCollisions.data} />
         {blocked ? (
           <p className="text-xs text-muted-foreground">
             The vetting chain did not clear this snapshot. Waive each blocking finding above — with
@@ -91,7 +99,7 @@ export function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onC
         ) : null}
         <DialogFooter>
           <Button
-            disabled={decide.isPending || blocked || tooYoung || refused}
+            disabled={decide.isPending || blocked || collides || tooYoung || refused}
             aria-label={`Confirm approval of snapshot ${snapshotId}`}
             onClick={() =>
               decide.mutate(

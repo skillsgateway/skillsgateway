@@ -39,6 +39,8 @@ export type SnapshotAdoption = components["schemas"]["SnapshotAdoption"];
 export type StaleIdentity = components["schemas"]["StaleIdentity"];
 export type Eligibility = components["schemas"]["Eligibility"];
 export type FourEyesCheck = components["schemas"]["FourEyesCheck"];
+export type NameCollisionCheck = components["schemas"]["NameCollisionCheck"];
+export type NameCollision = components["schemas"]["NameCollision"];
 export type MeView = components["schemas"]["MeView"];
 export type EffectiveRole = components["schemas"]["EffectiveRole"];
 
@@ -96,6 +98,7 @@ export function useDecideSnapshot() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["marketplaces"] });
       void queryClient.invalidateQueries({ queryKey: ["snapshot-vetting"] });
+      void queryClient.invalidateQueries({ queryKey: ["snapshot-name-collisions"] });
       void queryClient.invalidateQueries({ queryKey: ["waivers"] });
     },
   });
@@ -129,6 +132,7 @@ export function useCreateWaiver() {
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["snapshot-vetting"] });
+      void queryClient.invalidateQueries({ queryKey: ["snapshot-name-collisions"] });
       void queryClient.invalidateQueries({ queryKey: ["waivers"] });
     },
   });
@@ -141,6 +145,7 @@ export function useRevokeWaiver() {
     mutationFn: (id: number) => api<Waiver>(`/api/v1/waivers/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["snapshot-vetting"] });
+      void queryClient.invalidateQueries({ queryKey: ["snapshot-name-collisions"] });
       void queryClient.invalidateQueries({ queryKey: ["waivers"] });
     },
   });
@@ -447,6 +452,19 @@ export function useSnapshotFourEyes(snapshotId: number | null) {
   return useQuery({
     queryKey: ["snapshot-four-eyes", snapshotId],
     queryFn: () => api<FourEyesCheck>(`/api/v1/snapshots/${snapshotId}/four-eyes`),
+    enabled: snapshotId !== null,
+  });
+}
+
+/**
+ * What the name-collision rule would say about approving this snapshot now.
+ *
+ * @Requirements GW_APPROVAL_0021
+ */
+export function useSnapshotNameCollisions(snapshotId: number | null) {
+  return useQuery({
+    queryKey: ["snapshot-name-collisions", snapshotId],
+    queryFn: () => api<NameCollisionCheck>(`/api/v1/snapshots/${snapshotId}/name-collisions`),
     enabled: snapshotId !== null,
   });
 }

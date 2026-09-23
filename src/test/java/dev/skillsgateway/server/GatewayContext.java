@@ -78,7 +78,12 @@ import org.springframework.context.annotation.Import;
             "skills-gateway.vetting.revet.cadence=0s",
             // Sync sweeps are driven explicitly by the tests: a live background sweep would ingest
             // other tests' scheduled fixtures mid-run.
-            "skills-gateway.sync.enabled=false"
+            "skills-gateway.sync.enabled=false",
+            // Every suite here ingests the same fixture plugin, "hello", into a marketplace of its own
+            // and approves it, all in one database; the name-collision rule would refuse the second of
+            // those approvals in the run. Its enforcing default is exercised in its own context by
+            // AbstractNameCollisionTest, whose fixtures carry unique plugin names.
+            "skills-gateway.approval.name-collision.enabled=false"
         })
 @Import(SyncMvcAsyncTestConfiguration.class)
 public @interface GatewayContext {}

@@ -804,6 +804,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/snapshots/{id}/name-collisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Plugin-name collisions an approval would meet
+         * @description Every plugin name this snapshot introduces to its marketplace that collides with a plugin name of an approved snapshot of another marketplace, after folding case, separators and lookalike characters, each with the manifest line that declares it, its incumbents, and the active waiver covering it if there is one. Names the marketplace already carried in an earlier approved snapshot are not checked, and skill names never are. The approval endpoint runs the same evaluation and refuses while any collision is uncovered; this endpoint decides nothing.
+         */
+        get: operations["nameCollisions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/snapshots/{id}/provenance": {
         parameters: {
             query?: never;
@@ -2897,6 +2917,44 @@ export interface components {
             staleOnMirror?: string[];
             /** @description Mirror clone URL; never carries a credential */
             url?: string;
+        };
+        /** @description A plugin name this snapshot introduces that collides with the approved estate */
+        NameCollision: {
+            /** @description Whether an active waiver covers this collision */
+            covered?: boolean;
+            /** @description The finding a waiver accepts; its id is the rule a waiver names */
+            finding?: components["schemas"]["Finding"];
+            /** @description Every approved snapshot of another marketplace carrying a colliding name */
+            incumbents?: components["schemas"]["NameCollisionIncumbent"][];
+            /** @description The manifest entry that declares it, as path:line */
+            location?: string;
+            /** @description The plugin name as this snapshot declares it */
+            pluginName?: string;
+            /** @description The active waiver covering this collision, or null when none does */
+            waiver?: components["schemas"]["Suppression"];
+        };
+        /** @description What the name-collision rule would say about approving this snapshot now */
+        NameCollisionCheck: {
+            /** @description Every plugin name this snapshot introduces that collides, covered or not */
+            collisions?: components["schemas"]["NameCollision"][];
+            /** @description Whether the rule is switched on (skills-gateway.approval.name-collision.enabled) */
+            enabled?: boolean;
+            /** @description False when the snapshot's plugin names could not be read; approval is then refused */
+            inventoryAvailable?: boolean;
+            /** @description Whether an approval requested now would be refused by this rule */
+            refused?: boolean;
+        };
+        /** @description An approved snapshot of another marketplace already carrying a colliding plugin name */
+        NameCollisionIncumbent: {
+            /** @description The incumbent's marketplace */
+            marketplace?: string;
+            /** @description The plugin name as the incumbent declares it */
+            pluginName?: string;
+            /**
+             * Format: int64
+             * @description The approved snapshot carrying the name
+             */
+            snapshotId?: number;
         };
         /** @description What an estate-wide change did to one marketplace */
         Outcome: {
@@ -5028,7 +5086,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
-            /** @description Snapshot is neither held nor revoked, its effective vetting outcome is blocked and no override was supplied, it has not yet reached the configured minimum release age, or - under an enforcing four-eyes rule - the reviewer is on the snapshot's supply side */
+            /** @description Snapshot is neither held nor revoked, its effective vetting outcome is blocked and no override was supplied, a plugin name it introduces collides with the approved estate and no waiver covers it, its plugin names could not be read, it has not yet reached the configured minimum release age, or - under an enforcing four-eyes rule - the reviewer is on the snapshot's supply side */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -5321,6 +5379,37 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["LicenseReport"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    nameCollisions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The rule's answer for this snapshot now */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NameCollisionCheck"];
                 };
             };
             /** @description Snapshot not found */

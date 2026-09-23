@@ -71,7 +71,10 @@ class ContextBudgetTests {
     // enabled — state those suites own. Sharing would have meant damaging their rows or weakening
     // the negative assertions that justify a change which deletes audit evidence. The change's
     // tasks.md asked for the shared context; this is the deliberate departure, and its reason.
-    private static final int BUDGET = 26;
+    // 27 since corpus-aware-vetting. The name-collision rule's enforcing default cannot run in the
+    // shared context, where every suite approves the same fixture plugin into one database; its suites
+    // share AbstractNameCollisionTest's context instead.
+    private static final int BUDGET = 27;
 
     /** Where the measured breakdown is written, so a run's numbers survive for a PR body. */
     private static final Path REPORT = Path.of("target", "context-budget.txt");
