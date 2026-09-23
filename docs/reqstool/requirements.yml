@@ -256,6 +256,16 @@ requirements:
     categories: ["functional-suitability", "performance-efficiency"]
     revision: 0.1.0
 
+  - id: GW_AUDIT_0009
+    title: Ledger entries identify the marketplace they concern by id
+    significance: shall
+    description: "The system shall record on every audit ledger entry that concerns a marketplace the identity of that marketplace in addition to its name, as a value that does not depend on the marketplace's record still existing, and shall carry it in the ledger's browse and export. Entries concerning two marketplaces that held the same name at different times shall carry different identities."
+    references:
+      requirement_ids: ["GW_INGEST_0035"]
+    rationale: "The ledger names marketplaces, and a removed marketplace's name can be registered again, so without a second value the record that answers which identities hold a piece of content — the query a malicious-skill recall depends on — would conflate two different upstreams under one label. A disambiguator could be added later as a column, but every row written before it would stay ambiguous for ever, so it has to exist before ledger data accumulates. It is denormalised, like the credential and actor columns, because an append-only ledger must not take its meaning from mutable state."
+    categories: ["security"]
+    revision: 0.1.0
+
   - id: GW_FACADE_0033
     title: A shutdown drains in-flight transfers rather than severing them
     significance: shall
@@ -1745,6 +1755,26 @@ requirements:
     categories: ["functional-suitability", "reliability"]
     revision: 0.1.0
 
+  - id: GW_INGEST_0034
+    title: Administrative marketplace removal
+    significance: shall
+    description: "The system shall let an administrator remove a registered marketplace on a stated, non-empty reason. It shall withdraw every approved snapshot of that marketplace by administrative revocation, leaving the marketplace serving nothing, and shall append the removal, with the acting identity, the time and the reason, to the append-only audit ledger. It shall keep the marketplace's record, its snapshots, their provenance and their ledger entries. From the moment of removal it shall not serve the marketplace through the git facade, sync or ingest it, accept a push to it, approve any of its snapshots, list it, or accept it on any route addressed by marketplace name. It shall refuse a removal requested by a caller who is not an administrator, one that states no reason or an empty reason, and one naming no registered marketplace, and a refused removal shall change nothing."
+    references:
+      requirement_ids: ["GW_APPROVAL_0015"]
+    rationale: "Nothing could remove a marketplace, so one registered by mistake, one whose upstream was abandoned and one whose upstream moved were all permanent rows the sync sweep kept polling. A hard delete is refused by the schema, and should be: the snapshots are the approval history, which is the compliance record, so removal is a retirement that behaves like removal. It must stop serving rather than merely hide, and withdrawing approved content is what administrative revocation already does correctly, so removal is built from it rather than beside it — which is also what makes a client that holds the content told it was withdrawn through the channel it already polls. The reason is mandatory because each withdrawal requires one, and because removal takes one administrator and no second reviewer: like revocation it only ever withdraws. Refusing approval from the moment of removal is what keeps a decision racing the removal from publishing under a marketplace that no longer exists."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_INGEST_0035
+    title: Reuse of a removed marketplace's name
+    significance: shall
+    description: "The system shall accept the registration of a name whose previous marketplace was removed, as a new marketplace with an identity of its own. The new marketplace shall serve nothing until one of its own snapshots is approved, and shall inherit none of its predecessor's served content, approvals, approver grants or, for a marketplace hosted by the gateway, pushed content. The predecessor's withdrawals shall not refuse the approval of the same commit ingested by the new marketplace. The system shall keep answering, for content its predecessor served, that the content was withdrawn, unless the new marketplace has itself approved that commit. It shall continue to refuse a second live marketplace of one name."
+    references:
+      requirement_ids: ["GW_INGEST_0034", "GW_FACADE_0031"]
+    rationale: "The name is the facade clone path, so re-registering an upstream that moved under a new name breaks every client that already cloned it; removal is useful for that case only if the name can come back. Coming back must not mean resurrecting: the predecessor's approvals were decisions about a different upstream, and serving or authorising anything on their strength would be the supply-chain swap an immutable URL exists to prevent. A withdrawal made because the marketplace was removed is not a verdict on the content, so it does not follow the commit into the new marketplace, where the content faces the approval gate afresh."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
   - id: GW_APPROVAL_0018
     title: An approval control is presented only below the evidence it rests on
     significance: shall
@@ -2074,6 +2104,16 @@ requirements:
     significance: shall
     description: "The system shall deliver an event to every subscriber whose filter includes it when a marketplace is registered, when a marketplace's ingestion trigger is changed, and when a vetter's enablement is changed, naming the marketplace, the acting identity, the time and a content-free description of what changed, and shall distinguish a change scoped to one marketplace from one that applies to the whole gateway. It shall emit no event for an administrative action that was refused."
     rationale: "The events the gateway sent were all about snapshots, so a system tracking the estate itself — which marketplaces exist, what triggers their ingestion, which vetters run against them — had to poll for it or read the ledger after the fact. These are the changes an inventory or a change-management system needs to hear about as they happen, and the ledger already records each one, so the emission belongs beside the ledger write where the two cannot disagree about whether the action happened. The description stays content-free and carries no operator-supplied free text for the same reason the approval-pending payload does: a webhook target is authorized by a URL scheme allowlist, not by an identity, so the event announces and the API discloses. Emitting nothing for a refused action is what keeps a receiver from acting on a change that was never made."
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_WEBHOOK_0010
+    title: Marketplace removal event
+    significance: shall
+    description: "The system shall deliver an event to every subscriber whose filter includes it when a marketplace is removed, naming the marketplace, the acting identity, the time and a content-free description of the removal, and shall emit none for a removal that was refused."
+    references:
+      requirement_ids: ["GW_INGEST_0034", "GW_WEBHOOK_0009"]
+    rationale: "Registration is announced to the systems that track the estate, so its inverse must be, or an inventory built from the events believes a removed marketplace still exists. The withdrawals the removal makes are announced by their own events already; this one says the marketplace itself is gone. The description carries no operator-supplied reason for the reason GW_WEBHOOK_0009 gives: a webhook target is authorised by a URL scheme allowlist, not by an identity."
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
 
