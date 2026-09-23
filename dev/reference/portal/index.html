@@ -2232,16 +2232,22 @@
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="Snapshots">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#contents-glance" class="md-nav__link">
+  <a href="#the-card" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Contents glance
+        The card
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -3098,16 +3104,22 @@
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="Snapshots">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#contents-glance" class="md-nav__link">
+  <a href="#the-card" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Contents glance
+        The card
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -3832,33 +3844,107 @@ not one per hop — and <strong>Discard changes</strong> puts it back. While an 
 unsaved the drawing above shows the proposed order and the list says it is not
 saved yet.</p>
 <h3 id="snapshots">Snapshots<a class="headerlink" href="#snapshots" title="Permanent link">&para;</a></h3>
-<p>One card per snapshot showing the short SHA (12 characters, monospace), the
-state badge, and the deciding principal once decided. A violation, when present,
-renders as destructive text beneath the header row.</p>
-<p>The <strong>Show contents</strong> toggle opens two sections.</p>
-<p><strong>What this snapshot ships</strong> loads <code>GET /api/v1/snapshots/{id}/content</code> and renders
-one block per declared plugin: name, <code>source</code>, optional description, and one
-badge per skill found under it. Plugins with no skills show "no skills found".</p>
-<p><strong>Changes since the last approved snapshot</strong> loads
-<code>GET /api/v1/snapshots/{id}/content-diff</code> and lists only what differs from the
-marketplace's last approved snapshot, named above the list with its short SHA
-and summarised as count chips (added, changed, moved, removed). Each entry
-carries a status badge; a skill that moved between plugins is listed once,
-under its new plugin, with the plugin it came from. Unchanged skills are not
-repeated here — the section above already lists them. Two states replace the
-list where it would say nothing: a marketplace with nothing approved yet says
-there is no baseline and that approving publishes all of the snapshot, and a
-snapshot that changed nothing says so.</p>
+<p>Snapshots are grouped by what they are for, not listed alike, and <strong>one is open
+at a time</strong> — so the page does not grow longer with every ingest.</p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Holds</th>
+<th>Shown as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Awaiting decision (n)</strong></td>
+<td>Every <code>held</code> or <code>revoked</code> snapshot that is not deleted, newest first</td>
+<td>The newest open as a card; the rest one line each, with its delta</td>
+</tr>
+<tr>
+<td><strong>Serving</strong></td>
+<td>The snapshot whose commit the facade answers with, read from the marketplace's <code>servedSha</code></td>
+<td>One line. "Nothing is served." when <code>servedSha</code> is null — and, if a snapshot is still recorded approved, that it was withdrawn</td>
+</tr>
+<tr>
+<td><strong>Earlier snapshots (n)</strong></td>
+<td>Everything else: rejected, deleted, approved but no longer served</td>
+<td>A collapsed count</td>
+</tr>
+</tbody>
+</table>
+<p>Awaiting comes first because it is the only section with a pending action. Two
+snapshots can await a decision at once. When nothing does, the served snapshot
+is the one open. <strong>Open</strong> on any line opens that snapshot's card in its place.</p>
+<p>The open snapshot, its tab and its file are in the address, so a link to the
+evidence restores all three:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>/marketplaces/acme?snapshot=41&amp;tab=contents&amp;path=plugins/hello/skills/hello/SKILL.md
+</code></pre></div>
+<h4 id="the-card">The card<a class="headerlink" href="#the-card" title="Permanent link">&para;</a></h4>
+<p>Top to bottom, in this order on purpose:</p>
+<ol>
+<li><strong>Identity</strong> — the short SHA, the state badge, when it was ingested and by
+   whom, who decided it, and the retention control
+   (<a href="../../guides/snapshot-retention/">Delete / Restore</a>).</li>
+<li>
+<p><strong>The delta line</strong> — what is arriving, how big it is, and against what:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>1 skill added, 1 modified · 3 files · +48 −7 · vs 65f64622
+</code></pre></div>
+<p>File and line counts come from <code>GET /api/v1/snapshots/{id}/diff</code> (against
+what is served); skill counts from <code>GET /api/v1/snapshots/{id}/content-diff</code>
+(against the last approved snapshot). Skill counts are left out when those
+two baselines differ, rather than mixing counts taken against two commits.
+With nothing served the line says approving serves all of it; when a read
+was cut at its limit it says the figures are lower bounds.
+3. The violation and, for an approved or revoked snapshot, the
+   <a href="#re-vetting-panel">re-vetting panel</a>.
+4. <strong>Tabs</strong> — the evidence. Only the open tab loads.</p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>Shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Vetting</strong> (default)</td>
+<td>The <a href="#the-chain-flow">vetting report</a>: chain outcome, verdicts, findings, waivers</td>
+</tr>
+<tr>
+<td><strong>Contents</strong></td>
+<td>The <a href="#snapshot-contents">file explorer</a>, inside the card</td>
+</tr>
+<tr>
+<td><strong>Diff</strong></td>
+<td>Changes since the last approved snapshot — plugins and skills marked added, changed, moved or removed, only what changed, from <code>content-diff</code>. With nothing approved yet it says there is no baseline</td>
+</tr>
+<tr>
+<td><strong>Inventory</strong></td>
+<td>What the snapshot ships: one block per declared plugin with its <code>source</code>, description and one badge per skill, from <code>GET /api/v1/snapshots/{id}/content</code></td>
+</tr>
+<tr>
+<td><strong>Provenance</strong></td>
+<td>Upstream URL and SHA, the served SHA, who decided it and when, and the closure of external plugin sources</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p><strong>The decision</strong> — <strong>Approve</strong> (<strong>Re-approve</strong> for a revoked snapshot) and
+   <strong>Reject</strong>, only for a snapshot awaiting one.</p>
+</li>
+</ol>
+<p>The decision is last because it rests on everything above it: an approval
+control is never shown above the evidence. When the gateway would refuse the
+approval — vetting blocked it, the minimum release age has not passed, or the
+four-eyes rule refuses you — <strong>Approve</strong> is disabled and the reason is on the
+card, rather than the press failing. <strong>Approve</strong> opens the same review dialog as
+the <a href="#marketplaces">Marketplaces</a> page; <strong>Reject</strong> fires immediately.</p>
+<p>When other snapshots await a decision, the card names them. Approving this one
+does not retire them: they stay held, and approving an older one afterwards
+would serve content older than this.</p>
 <p>This is the review surface, and it works on <code>held</code> snapshots — inspecting a
 snapshot must not require serving it.</p>
-<h3 id="contents-glance">Contents glance<a class="headerlink" href="#contents-glance" title="Permanent link">&para;</a></h3>
-<p>Inside <strong>Show contents</strong>, below the inventory, a line names how many paths the
-snapshot carries, links to the one or two that identify it
-(<code>.claude-plugin/marketplace.json</code> and the first <code>SKILL.md</code>), and offers
-<strong>Inspect contents</strong>. Each of those links opens the snapshot contents page at
-that file.</p>
-<p>Reading a commit is not a job for a pane beside three other cards, so the
-reading happens on its own page.</p>
 <h3 id="set-up-a-client">Set up a client<a class="headerlink" href="#set-up-a-client" title="Permanent link">&para;</a></h3>
 <p>A card at the <strong>top of the page</strong>, above the upstream metadata, opening a wizard
 that composes for this marketplace everything a consumer needs — every URL
@@ -3874,19 +3960,20 @@ derived from the address the browser is already on.</p>
 </thead>
 <tbody>
 <tr>
-<td>At least one snapshot approved</td>
+<td>The facade serves a commit</td>
 <td><strong>Use this marketplace</strong></td>
 <td>offers the wizard</td>
 </tr>
 <tr>
-<td>No snapshot approved</td>
+<td>Nothing served</td>
 <td><strong>Not being served yet</strong></td>
 <td>states that a clone is answered with <code>404</code> until one is, and that this is not a credential problem — a wrong or revoked token is answered with <code>401</code>. The wizard repeats it, for anyone who opens it without reading the page</td>
 </tr>
 </tbody>
 </table>
-<p>The portal has no <code>serving</code> snapshot state; "serving" here is derived the way the
-<a href="#adoption">Adoption</a> page derives it, from an approved snapshot existing.</p>
+<p>"Serving" is the marketplace read's <code>servedSha</code>, read from the published
+repository — not inferred from an approved snapshot existing, which is wrong
+after a withdrawal that left one approved and serves nothing.</p>
 <p>Inside the wizard:</p>
 <ol>
 <li><strong>Personal access token</strong> — the same show-once creation flow as the
@@ -3913,13 +4000,12 @@ derived from the address the browser is already on.</p>
 <p>The remaining snippets have icon copy buttons. Until a token is minted the
 snippets carry the <code>&lt;YOUR_TOKEN&gt;</code> placeholder.</p>
 <h3 id="vetting">Vetting<a class="headerlink" href="#vetting" title="Permanent link">&para;</a></h3>
-<p>Each snapshot card carries a <strong>Vetting</strong> section fed by
-<code>GET /api/v1/snapshots/{id}/vetting</code>, above the contents toggle and always visible
-— the evidence is not behind a click.</p>
+<p>The snapshot card's <strong>Vetting</strong> tab — the tab a card opens on — is fed by
+<code>GET /api/v1/snapshots/{id}/vetting</code>.</p>
 <h4 id="the-chain-flow">The chain flow<a class="headerlink" href="#the-chain-flow" title="Permanent link">&para;</a></h4>
 <p>Above the per-vetter list, the chain is drawn as an ordered flow — one node
 per step, left to right:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Ingest → secret-scan → prompt-injection → Outcome → Approval
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Ingest → secret-scan → prompt-injection → Outcome → Approval
 </code></pre></div>
 <p>The order is the order the vetters ran, taken from the run's own recorded
 positions; for a snapshot the chain has not run against yet, it is the configured
@@ -3930,11 +4016,11 @@ continues past — so the gate is never stranded on a line of its own, away from
 the result it follows.</p>
 <p>Above the nodes, one sentence states the answer and where the chain stopped, so
 it can be read without opening anything:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Blocked at step 1 · secret-scan found 1 critical finding
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Clear · 4 vetters, 0 findings
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Clear with waivers · 2 findings accepted
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>Stopped at step 1 · secret-scan found 1 critical finding, so 2 later vetters
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>                    did not run — re-vet to see what they say
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Blocked at step 1 · secret-scan found 1 critical finding
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Clear · 4 vetters, 0 findings
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Clear with waivers · 2 findings accepted
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Stopped at step 1 · secret-scan found 1 critical finding, so 2 later vetters
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>                    did not run — re-vet to see what they say
 </code></pre></div>
 <p>The last of those is the one a reader must not skim past: a chain that
 <a href="../../concepts/vetting/#stopping-the-chain-after-a-failure">stopped early</a> has a
@@ -4062,7 +4148,7 @@ snapshot that is a <em>refresh</em>, not a re-vetting: the chain runs, the run i
 recorded, the snapshot stays held, and nothing is announced or retracted —
 there is nothing published to retract.</p>
 <h3 id="re-vetting-panel">Re-vetting panel<a class="headerlink" href="#re-vetting-panel" title="Permanent link">&para;</a></h3>
-<p>Above the vetting section, each snapshot card carries the re-vetting surface.</p>
+<p>Above the tabs, the snapshot card carries the re-vetting surface.</p>
 <table>
 <thead>
 <tr>
@@ -4143,14 +4229,15 @@ red here too. A <strong>See the full ledger</strong> link goes to <code>/audit</
 <h2 id="snapshot-contents">Snapshot contents<a class="headerlink" href="#snapshot-contents" title="Permanent link">&para;</a></h2>
 <p><strong>Route:</strong> <code>/marketplaces/:name/snapshots/:id/files</code> · <strong>Heading:</strong> Snapshot
 contents</p>
-<p>The reviewer's file explorer for one snapshot: exactly the commit it pins. It
-is reached from <strong>Inspect contents</strong> on a snapshot card, or from any of the
-quick-open links in that card's contents glance.</p>
+<p>The reviewer's file explorer for one snapshot: exactly the commit it pins. The
+same explorer is the <strong>Contents</strong> tab of the <a href="#the-card">snapshot card</a>; this
+full-width route renders it on its own, and keeps working for links already
+sent.</p>
 <p><strong>The address is the feature.</strong> Approval is a two-person decision
 (see <a href="../../guides/approving-snapshots/">Approving snapshots</a>), and this page is
 addressed so the first reviewer can send the second a link to a <em>file</em> rather
 than directions for finding it. The selected path is in the query string:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>/marketplaces/acme/snapshots/41/files?path=plugins/hello/skills/hello/SKILL.md
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>/marketplaces/acme/snapshots/41/files?path=plugins/hello/skills/hello/SKILL.md
 </code></pre></div>
 <p>Opening that address restores the same file, with the directories above it
 already open. Back and forward walk the files visited. Which directories are

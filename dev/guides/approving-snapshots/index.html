@@ -3022,10 +3022,14 @@ the sophistication of the vetting; it comes from the fact that <strong>nothing i
 served until someone decides</strong>, and that the decision is recorded against an
 immutable SHA.</p>
 <h2 id="reviewing">Reviewing<a class="headerlink" href="#reviewing" title="Permanent link">&para;</a></h2>
-<p>A held snapshot gives you four things.</p>
+<p>A held snapshot gives you four things. In the portal they are the tabs of its
+card on the marketplace detail page, where the newest snapshot awaiting a
+decision is already open; its one-line delta — <code>1 skill added, 1 modified ·
+3 files · +48 −7 · vs 65f64622</code> — tells you the size of the review before you
+open any of them.</p>
 <h3 id="the-content-itself">The content itself<a class="headerlink" href="#the-content-itself" title="Permanent link">&para;</a></h3>
-<p><strong>Inspect contents</strong> on the snapshot card opens the
-<a href="../../reference/portal/#snapshot-contents">snapshot contents page</a>: the pinned
+<p>The card's <strong>Contents</strong> tab is the
+<a href="../../reference/portal/#snapshot-contents">file explorer</a>: the pinned
 commit as a real file tree, each file rendered inertly (Markdown without any
 HTML interpretation, binary files described rather than shown), with a filter
 over the paths and — the part that usually decides a successor snapshot — a
@@ -3035,7 +3039,7 @@ snapshot removes are in the tree too, marked. A snapshot of a marketplace
 serving nothing shows every path as new: approving it serves all of it.</p>
 <p><strong>Send the second approver a link, not directions.</strong> The address carries the
 file you are looking at:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>/marketplaces/acme/snapshots/41/files?path=plugins/hello/skills/hello/SKILL.md
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>/marketplaces/acme?snapshot=41&amp;tab=contents&amp;path=plugins/hello/skills/hello/SKILL.md
 </code></pre></div>
 <p>Approval is four-eyes, and this is what makes "we both looked at the same
 thing" checkable rather than assumed. The link needs the same roles the reads
@@ -3049,8 +3053,7 @@ held quarantine content.</p>
 <h3 id="contents">Contents<a class="headerlink" href="#contents" title="Permanent link">&para;</a></h3>
 <p><code>GET /api/v1/snapshots/{id}/content</code> enumerates what the snapshot declares — each
 plugin with its name, <code>source</code> and description, and the skills found under each.
-In the portal this is the <strong>Show contents</strong> toggle on the marketplace detail
-page.</p>
+In the portal this is the card's <strong>Inventory</strong> tab.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/snapshots/1/content
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span>
@@ -3069,7 +3072,7 @@ differs — not only its <code>SKILL.md</code>.</p>
 </code></pre></div>
 <p>On the tenth snapshot of a large marketplace this is the read worth starting
 from: it is the difference between reviewing two new skills and re-reading
-forty. In the portal it is the second half of the <strong>Show contents</strong> panel. See
+forty. In the portal it is the card's <strong>Diff</strong> tab. See
 <a href="../../reference/api/marketplaces/#get-snapshotsidcontent-diff">the API reference</a>.</p>
 <h3 id="provenance">Provenance<a class="headerlink" href="#provenance" title="Permanent link">&para;</a></h3>
 <p>Where it came from and who has touched it:</p>
@@ -3142,8 +3145,8 @@ a refusal titled <em>Snapshot closure is incomplete</em> means the snapshot's ro
 its pinned commit were altered by something other than the gateway. There is no
 override; re-ingest the marketplace and review the new snapshot.</p>
 <h3 id="vetting-verdicts">Vetting verdicts<a class="headerlink" href="#vetting-verdicts" title="Permanent link">&para;</a></h3>
-<p>Before anything else, read what the vetting chain concluded. The snapshot card
-on the marketplace detail page — and the approve dialog itself — shows the chain
+<p>Before anything else, read what the vetting chain concluded. The snapshot
+card's <strong>Vetting</strong> tab — the one it opens on — and the approve dialog itself show the chain
 outcome and, per vetter, its verdict and every finding with the file and line
 it came from.</p>
 <p>A <strong>blocked</strong> outcome means at least one vetter failed, errored or has not
@@ -3193,11 +3196,17 @@ they may have changed, which is the point.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Portal</label><label for="__tabbed_1_2">API</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<p>On the <strong>Marketplaces</strong> page, held snapshots show <strong>Approve</strong> and <strong>Reject</strong>
-buttons in their row. <strong>Reject</strong> fires immediately. <strong>Approve</strong> opens a
-dialog showing the vetting verdicts; if the chain blocked the snapshot, the
-confirm button stays disabled until every blocking finding is waived from
-that same dialog.</p>
+<p><strong>Approve</strong> and <strong>Reject</strong> sit at the foot of the snapshot card on the
+marketplace detail page, below the evidence they rest on, and in the
+snapshot's row on the <strong>Marketplaces</strong> page. <strong>Reject</strong> fires immediately.
+<strong>Approve</strong> opens a dialog showing the vetting verdicts. On the card, a
+snapshot the gateway would refuse — vetting blocked it, it is inside the
+minimum release age, or the four-eyes rule refuses you — has <strong>Approve</strong>
+disabled with the reason beside it; waive each blocking finding in the
+<strong>Vetting</strong> tab and it unblocks.</p>
+<p>When another snapshot also awaits a decision, the card names it. Approving
+this one does not retire it: it stays held, and approving an older one
+afterwards would serve content older than this one.</p>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/snapshots/1/approve
