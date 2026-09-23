@@ -1,14 +1,14 @@
 # Proposal: corpus-aware-vetting
 
-!!! warning "Parked — blocked on a decision, not on effort"
+!!! warning "Queued — next after #447"
 
-    **Status: parked, 2026-09-09.** Nothing is implemented. This is not idle
-    work: it cannot start until the owner accepts **ADR 0015**, which is still
-    *Proposed*, and answers its four open questions — whether a corpus-aware
-    connector is wanted after all, whether a corpus refusal is waivable at all,
-    how aggressive the confusable fold should be, and whether `revoked →
-    approved` re-runs the precondition. Its own task list says a different answer
-    to any of them means regenerating sections 3–6 rather than patching them.
+    **Status: parked 2026-09-09; decided and queued 2026-09-23.** ADR 0015 is
+    accepted and its four questions were answered as it proposed, so sections
+    3–6 need no regeneration for them. The owner added one constraint the design
+    does not yet carry: only plugin names **new to the marketplace** are checked,
+    and **skill names never are** (see the ADR's “What the first rule matches”).
+    Update the design and tasks for that before starting. It is queued to start
+    after marketplace removal (#447).
 
     **Why it still matters:** T5 — typosquatting and lookalikes — is the only
     row of the threat model with no mitigation at all, and stays that way while
