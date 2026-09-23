@@ -48,8 +48,8 @@
 
 ## 9. Gates and evidence
 
-- [ ] 9.1 `./mvnw clean verify`
-- [ ] 9.2 `pnpm test:stories` and `pnpm e2e`
-- [ ] 9.3 `reqstool status local -p docs/reqstool` ends PASS
-- [ ] 9.4 `openspec validate --all --strict` and `mkdocs build --strict`
-- [ ] 9.5 `evidence.md` from one final fresh run of every gate
+- [x] 9.1 `./mvnw clean verify`
+- [x] 9.2 `pnpm test:stories` and `pnpm e2e`
+- [x] 9.3 `reqstool status local -p docs/reqstool` ends PASS
+- [x] 9.4 `openspec validate --all --strict` and `mkdocs build --strict`
+- [x] 9.5 `evidence.md` from one final fresh run of every gate
