@@ -88,12 +88,12 @@ gate red, so the entries land with the code that satisfies them.
 - [ ] 7.3 `concepts/trust-boundaries.md` — client telemetry named under "What is
       not a boundary yet" as a boundary the gateway deliberately does not have
 - [ ] 7.4 `reference/portal.md` — the new section
-- [ ] 7.5 `architecture.md` §9 — rewrite the install-inventory bullet, which today
+- [x] 7.5 `architecture.md` §9 — rewrite the install-inventory bullet, which today
       offers enrichment "optionally … with client OTel telemetry"; §13's Phase 3
       line, which lists "client telemetry inventory"; and add the upstream ask
       (an identifier for enterprise-configured marketplaces that survives
       third-party redaction) beside the client-enforcement ask in §14
-- [ ] 7.6 Flip ADR 0016 to `accepted` and update its `docs/manual/reference/decisions.md`
+- [x] 7.6 Flip ADR 0016 to `accepted` and update its `docs/manual/reference/decisions.md`
       entry, if it has not already been accepted separately
 
 ## 8. Gates and archive

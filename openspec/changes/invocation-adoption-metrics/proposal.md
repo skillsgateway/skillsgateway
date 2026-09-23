@@ -1,11 +1,11 @@
 # Proposal: invocation-adoption-metrics
 
-!!! warning "Parked — and it is *not* a decision not to build"
+!!! warning "Parked — unblocked, next after #447"
 
-    **Status: parked, 2026-09-09.** It cannot start until the owner accepts
-    **ADR 0016**, which is still *Proposed*; its own task list says not to begin
-    section 2 before that, because implementing first would make the ADR a
-    description of something already built.
+    **Status: ADR 0016 accepted 2026-09-23.** The owner chose to build presence
+    once marketplace removal (#447) lands, because the ledger's marketplace id
+    that #447 adds is what lets presence tell a retired marketplace from a
+    re-registered one of the same name.
 
     **Read this before triaging it again.** The 2026-09-08 architecture
     assessment recommended archiving this as "a decision not to build". That
@@ -20,11 +20,8 @@
     **The finished "no" is ADR 0016 itself**, which already stands alone in
     `docs/decisions/` and needs nothing from this change to survive.
 
-    **One orphaned obligation lives only here:** `docs/manual/architecture.md`
-    §9 still offers install-inventory enrichment "optionally … with client OTel
-    telemetry", and §13 still lists client telemetry inventory. ADR 0016 says
-    both become wrong **on its acceptance**, so they are correct today and must
-    be rewritten the moment it is accepted. Nothing else tracks that.
+    Tasks 7.5 and 7.6 — the architecture rewrite and flipping the ADR — shipped
+    with the acceptance.
 
     **Every `GW_NNNN` id below is a drafting artifact, not a reservation.** ADR
     0018 retired the flat sequence and names this change: whoever implements it
