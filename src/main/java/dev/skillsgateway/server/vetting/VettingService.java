@@ -257,6 +257,9 @@ public class VettingService {
      * pinned content, and the snapshot's state is untouched whatever the answer. What a re-vetting
      * verdict <em>means</em> is decided by {@code RevetService}, not here, so this method stays the
      * one place the chain executes.
+     *
+     * <p>Its inputs are the pinned content and the chain's identity, and nothing else
+     * (GW_VETTING_0039): a question about the rest of the estate belongs to the approval gate.
      */
     @Requirements({
         "GW_VETTING_0001",
@@ -265,7 +268,8 @@ public class VettingService {
         "GW_VETTING_0012",
         "GW_VETTING_0029.2",
         "GW_VETTING_0032",
-        "GW_VETTING_0032.2"
+        "GW_VETTING_0032.2",
+        "GW_VETTING_0039"
     })
     public Run run(Snapshot snapshot, String marketplace, String trigger) {
         List<Vetter> chain = vetters(snapshot.marketplaceId());
