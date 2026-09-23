@@ -153,6 +153,23 @@ public class TokenRepository {
                 .optional();
     }
 
+    /**
+     * Takes one marketplace name out of every token's publication grant (GW_INGEST_0034), leaving fetch
+     * grants alone. The grant is a name and a removed marketplace's name can be registered again, so a
+     * publisher's token would otherwise push into the successor. A grant left naming nothing becomes
+     * NULL, the only spelling of "none" the schema accepts.
+     *
+     * @return the ids of the tokens that lost the grant
+     */
+    @Requirements({"GW_INGEST_0034"})
+    public List<Long> removePushScope(String marketplace) {
+        return jdbc.sql("UPDATE access_tokens SET push_scopes = NULLIF(array_remove(push_scopes, :name), '{}')"
+                        + " WHERE :name = ANY(push_scopes) RETURNING id")
+                .param("name", marketplace)
+                .query(Long.class)
+                .list();
+    }
+
     /** Administrative revocation: by id alone, for the reason {@link #listMachineCredentials} gives. */
     @Requirements({"GW_AUTH_0024"})
     public boolean revoke(long id) {

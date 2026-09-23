@@ -88,6 +88,11 @@
             "description": "Marketplace the entry concerns, or '-'",
             "type": "string"
           },
+          "marketplaceId": {
+            "description": "Id of the marketplace the entry concerns, or null when it concerns none. Tells apart two marketplaces that held the same name (GW_AUDIT_0009)",
+            "format": "int64",
+            "type": "integer"
+          },
           "principal": {
             "description": "Authenticated identity, when there was one",
             "type": "string"
@@ -2501,6 +2506,57 @@
         },
         "type": "object"
       },
+      "Removal": {
+        "description": "A removed marketplace and what its removal withdrew",
+        "properties": {
+          "id": {
+            "description": "Id of the removed marketplace",
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Its name, which may now be registered again",
+            "type": "string"
+          },
+          "pushScopeRemovedFromTokenIds": {
+            "description": "Tokens that lost their grant to publish to this name. Fetch grants are kept, so clients keep working if the name is registered again",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "removedAt": {
+            "description": "When the removal was recorded",
+            "format": "date-time",
+            "type": "string"
+          },
+          "removedBy": {
+            "description": "Identity that removed it",
+            "type": "string"
+          },
+          "withdrawnSnapshotIds": {
+            "description": "Approved snapshots the removal withdrew",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "RemoveMarketplaceRequest": {
+        "description": "Remove a marketplace, stating why",
+        "properties": {
+          "reason": {
+            "description": "Why the marketplace is being removed. Required and non-empty: it is recorded on the removal and on every withdrawal the removal makes",
+            "example": "upstream moved to https://git.example.com/acme/skills.git",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "RevetResult": {
         "description": "What one re-vetting run concluded about one approved snapshot",
         "properties": {
@@ -4239,6 +4295,77 @@
           }
         },
         "summary": "Register a marketplace",
+        "tags": [
+          "Marketplaces"
+        ]
+      }
+    },
+    "/api/v1/marketplaces/{name}": {
+      "delete": {
+        "description": "Retires the marketplace on a stated reason. Every approved snapshot is withdrawn by administrative revocation, leaving the marketplace serving nothing, and from that moment it is not served, synced, pushed to, listed, approved or reachable by name. Its record, its snapshots, their provenance and the audit ledger are kept. The name may then be registered again, as a new marketplace that inherits nothing. Admin-only.",
+        "operationId": "removeMarketplace",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveMarketplaceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Removal"
+                }
+              }
+            },
+            "description": "Marketplace removed"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "No registered marketplace has that name"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "No reason was stated"
+          }
+        },
+        "summary": "Remove a marketplace",
         "tags": [
           "Marketplaces"
         ]
@@ -7347,6 +7474,71 @@
           }
         },
         "summary": "Delivery of marketplace.registered",
+        "tags": [
+          "Webhooks"
+        ]
+      }
+    },
+    "marketplace.removed": {
+      "post": {
+        "description": "Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.removed`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.",
+        "operationId": "webhook-marketplace.removed",
+        "parameters": [
+          {
+            "description": "The lifecycle event name, identical to the payload's `event` field.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Event",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Delivery",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Time this attempt was sent, ISO-8601.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared.",
+            "in": "header",
+            "name": "X-Skills-Gateway-Signature",
+            "required": true,
+            "schema": {
+              "pattern": "^sha256=[0-9a-f]{64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarketplacePayload"
+              }
+            }
+          },
+          "description": "The event body, serialized once so every retry sends identical bytes.",
+          "required": true
+        },
+        "responses": {
+          "2XX": {
+            "description": "Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried."
+          }
+        },
+        "summary": "Delivery of marketplace.removed",
         "tags": [
           "Webhooks"
         ]

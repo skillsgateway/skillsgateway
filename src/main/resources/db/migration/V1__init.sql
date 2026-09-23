@@ -46,7 +46,9 @@ CREATE TABLE marketplaces (
     -- a bad name with a proper API error. The constraint is here so no *other* write path -- the
     -- estate reconciler, a later service method, a fixture -- can introduce a name that the facade's
     -- own route pattern would not accept. Do not move it on the assumption it is redundant.
-    name TEXT NOT NULL UNIQUE CHECK (name ~ '^[a-z0-9][a-z0-9_-]*$'),
+    -- Unique among live marketplaces only (GW_INGEST_0035): the partial index below, not a table
+    -- constraint, so a removed marketplace's name can be registered again as a new marketplace.
+    name TEXT NOT NULL CHECK (name ~ '^[a-z0-9][a-z0-9_-]*$'),
     -- The identity that registered the marketplace (GW_APPROVAL_0010): the supply-side decision the
     -- four-eyes rule compares an approving reviewer against. Nullable for the same reason as
     -- snapshots.ingested_by — an unrecorded registrant never conflicts.
@@ -78,6 +80,13 @@ CREATE TABLE marketplaces (
     -- Last sync attempt, success or failure (GW_INGEST_0011): stamping failures too is what keeps one
     -- dead upstream from monopolizing the sweep's oldest-first order.
     last_sync_at TIMESTAMPTZ,
+    -- Removal (GW_INGEST_0034) retires the row rather than deleting it: snapshots restrict deletion
+    -- because they are the approval history, and the ledger keeps this row's id as its referent.
+    deleted_at TIMESTAMPTZ,
+    deleted_by TEXT,
+    deleted_reason TEXT,
+    CONSTRAINT marketplaces_removal_is_recorded_whole CHECK (
+        (deleted_at IS NULL) = (deleted_by IS NULL) AND (deleted_at IS NULL) = (deleted_reason IS NULL)),
     -- An upstream marketplace is defined by its clone URL; a hosted one has none (GW_FACADE_0006).
     CONSTRAINT marketplaces_upstream_has_url CHECK (origin = 'hosted' OR url IS NOT NULL),
     -- A hosted marketplace has no upstream to poll or be notified about: its ingestion trigger is
@@ -85,8 +94,11 @@ CREATE TABLE marketplaces (
     CONSTRAINT marketplaces_hosted_is_on_demand CHECK (origin <> 'hosted' OR sync_mode = 'on-demand')
 );
 
+CREATE UNIQUE INDEX uq_marketplaces_live_name ON marketplaces (name) WHERE deleted_at IS NULL;
+
 -- The scheduled sync sweep's only query: scheduled marketplaces, least recently attempted first.
-CREATE INDEX idx_marketplaces_sync_queue ON marketplaces (last_sync_at) WHERE sync_mode = 'scheduled';
+CREATE INDEX idx_marketplaces_sync_queue ON marketplaces (last_sync_at)
+    WHERE sync_mode = 'scheduled' AND deleted_at IS NULL;
 
 CREATE TABLE snapshots (
     id BIGSERIAL PRIMARY KEY,
@@ -242,6 +254,10 @@ CREATE TABLE fetch_log (
     -- implicitly claimed; the gateway's own actors declare 'system' at their call sites.
     actor_type fetch_log_actor_type NOT NULL DEFAULT 'human',
     marketplace TEXT NOT NULL,
+    -- Which marketplace the name meant when the entry was written (GW_AUDIT_0009): a removed
+    -- marketplace's name can be registered again. Not a foreign key, for the reason token_id is not.
+    -- NULL on an entry that concerns no marketplace.
+    marketplace_id BIGINT,
     event TEXT NOT NULL,
     ref TEXT,
     sha TEXT,

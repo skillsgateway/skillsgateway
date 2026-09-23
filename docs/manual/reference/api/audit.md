@@ -82,6 +82,7 @@ polling, batch payload, signature, replay — is in
 | `principal` | The PAT principal for a fetch, the OIDC principal for an admin action, the credential's own principal for a machine API action. |
 | `actorType` / `actor_type` | What kind of actor acted: `human`, `machine` or `system` (GW_AUDIT_0007). See below. |
 | `marketplace` | The marketplace name, or `-` when not marketplace-scoped. |
+| `marketplaceId` / `marketplace_id` | Id of the marketplace the entry concerns, or null when it concerns none (GW_AUDIT_0009). A [removed](marketplaces.md#delete-marketplacesname) marketplace's name can be registered again, so the name alone does not say which marketplace an entry meant; the id does. Not a foreign key: the removed marketplace's record is kept, but the ledger does not depend on it. On `GET /api/v1/audit` and in the export. |
 | `event` | What happened — see below. |
 | `ref` | The ref involved, when there is one. For a facade fetch this is a ref the facade [advertised](../git-facade.md#what-is-served) for that request — see [Events](#events). |
 | `sha` | The commit involved, when there is one. |
@@ -155,6 +156,8 @@ the acting OIDC principal.
 | `machine-credential-created` | A machine API credential was provisioned. The actor is the administrator who provisioned it; the credential's own actions are recorded under its own principal. | `credential {id} '{name}' scopes=…; expires=…`. |
 | `machine-credential-rotated` | A machine API credential got a new secret with an identical grant. | As above. |
 | `machine-credential-revoked` | A machine API credential was revoked. | `credential {id} '{name}' principal=…`. |
+| `marketplace-removed` | A marketplace was [removed](marketplaces.md#delete-marketplacesname). Its withdrawals follow as `snapshot-revoked` and `snapshot-unpublished`. | `withdrew {n} approved snapshot(s); reason: …`. |
+| `marketplace-push-scopes-removed` | The same removal took the name out of tokens' publication grants. Written only when a token held one. | `tokens=[{id}, …]`. |
 
 Reads of the ledger itself record **nothing**, deliberately: an exporter polling
 on a cursor loop would otherwise append one entry per poll, and that entry is

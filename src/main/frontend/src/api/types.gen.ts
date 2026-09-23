@@ -252,6 +252,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/marketplaces/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a marketplace
+         * @description Retires the marketplace on a stated reason. Every approved snapshot is withdrawn by administrative revocation, leaving the marketplace serving nothing, and from that moment it is not served, synced, pushed to, listed, approved or reachable by name. Its record, its snapshots, their provenance and the audit ledger are kept. The name may then be registered again, as a new marketplace that inherits nothing. Admin-only.
+         */
+        delete: operations["removeMarketplace"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/marketplaces/{name}/ingest": {
         parameters: {
             query?: never;
@@ -1492,6 +1512,26 @@ export interface webhooks {
         patch?: never;
         trace?: never;
     };
+    "marketplace.removed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delivery of marketplace.removed
+         * @description Sent by the gateway to every enabled subscriber whose event filter includes `marketplace.removed`. Signed with the subscriber's secret; see the lifecycle webhooks guide for the verification scheme. Retried on failure, so a receiver must de-duplicate on the delivery header.
+         */
+        post: operations["webhook-marketplace.removed"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "marketplace.snapshot.approval_pending": {
         parameters: {
             query?: never;
@@ -1759,6 +1799,11 @@ export interface components {
             id?: number;
             /** @description Marketplace the entry concerns, or '-' */
             marketplace?: string;
+            /**
+             * Format: int64
+             * @description Id of the marketplace the entry concerns, or null when it concerns none. Tells apart two marketplaces that held the same name (GW_AUDIT_0009)
+             */
+            marketplaceId?: number;
             /** @description Authenticated identity, when there was one */
             principal?: string;
             /** @description For a fetch, the advertised ref the entry concerns (GW_FACADE_0018); null when unknown */
@@ -3182,6 +3227,35 @@ export interface components {
             /** @description Non-blocking warnings about this registration, e.g. the upstream url already being registered under another marketplace name (GW_INGEST_0029) */
             warnings?: string[];
         };
+        /** @description A removed marketplace and what its removal withdrew */
+        Removal: {
+            /**
+             * Format: int64
+             * @description Id of the removed marketplace
+             */
+            id?: number;
+            /** @description Its name, which may now be registered again */
+            name?: string;
+            /** @description Tokens that lost their grant to publish to this name. Fetch grants are kept, so clients keep working if the name is registered again */
+            pushScopeRemovedFromTokenIds?: number[];
+            /**
+             * Format: date-time
+             * @description When the removal was recorded
+             */
+            removedAt?: string;
+            /** @description Identity that removed it */
+            removedBy?: string;
+            /** @description Approved snapshots the removal withdrew */
+            withdrawnSnapshotIds?: number[];
+        };
+        /** @description Remove a marketplace, stating why */
+        RemoveMarketplaceRequest: {
+            /**
+             * @description Why the marketplace is being removed. Required and non-empty: it is recorded on the removal and on every withdrawal the removal makes
+             * @example upstream moved to https://git.example.com/acme/skills.git
+             */
+            reason?: string;
+        };
         /** @description What one re-vetting run concluded about one approved snapshot */
         RevetResult: {
             /** @description Identities that fetched this commit through the facade before the violation */
@@ -4334,6 +4408,59 @@ export interface operations {
                 };
             };
             /** @description Invalid marketplace name */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    removeMarketplace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RemoveMarketplaceRequest"];
+            };
+        };
+        responses: {
+            /** @description Marketplace removed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Removal"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No registered marketplace has that name */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No reason was stated */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -6673,6 +6800,38 @@ export interface operations {
         };
     };
     "webhook-marketplace.registered": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The lifecycle event name, identical to the payload's `event` field. */
+                "X-Skills-Gateway-Event": string;
+                /** @description Delivery id — stable across retries of the same delivery, and the receiver's de-duplication key. */
+                "X-Skills-Gateway-Delivery": string;
+                /** @description Time this attempt was sent, ISO-8601. */
+                "X-Skills-Gateway-Timestamp": string;
+                /** @description HMAC of the exact request body under the subscriber's signing secret, in the form `sha256=<hex>`. The guide states how it is computed and compared. */
+                "X-Skills-Gateway-Signature": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The event body, serialized once so every retry sends identical bytes. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarketplacePayload"];
+            };
+        };
+        responses: {
+            /** @description Accepted. Any 2xx marks the delivery delivered; the body is not read. Anything else is retried. */
+            "2XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "webhook-marketplace.removed": {
         parameters: {
             query?: never;
             header: {

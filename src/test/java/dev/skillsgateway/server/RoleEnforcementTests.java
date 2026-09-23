@@ -55,6 +55,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
      */
     private static final Set<String> ROLE_GATED_MUTATIONS = Set.of(
             "POST /api/v1/marketplaces",
+            "DELETE /api/v1/marketplaces/{name}",
             "PUT /api/v1/marketplaces/{name}/sync",
             "POST /api/v1/catalog/rebuild",
             "DELETE /api/v1/snapshots/{id}",

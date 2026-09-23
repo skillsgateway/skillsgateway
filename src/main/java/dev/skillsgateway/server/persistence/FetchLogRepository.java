@@ -83,11 +83,38 @@ public class FetchLogRepository {
             Long tokenId,
             ActorType actorType,
             CredentialKind credentialKind) {
+        append(source, principal, marketplace, null, event, ref, sha, detail, tokenId, actorType, credentialKind);
+    }
+
+    /**
+     * The one insert. {@code marketplaceId} names which marketplace {@code marketplace} meant
+     * (GW_AUDIT_0009); when the caller passes null it is resolved from the name in the same statement —
+     * the live marketplace of that name, else the most recently removed one. A caller acting on a
+     * marketplace that may already be removed passes the id, because once the name is registered
+     * again it would resolve to the successor.
+     */
+    @Requirements({"GW_AUTH_0041", "GW_AUDIT_0009"})
+    public void append(
+            String source,
+            String principal,
+            String marketplace,
+            Long marketplaceId,
+            String event,
+            String ref,
+            String sha,
+            String detail,
+            Long tokenId,
+            ActorType actorType,
+            CredentialKind credentialKind) {
         jdbc.sql("INSERT INTO fetch_log"
-                        + " (ts, source, principal, marketplace, event, ref, sha, detail, token_id, actor_type,"
-                        + " credential_kind)"
-                        + " VALUES (:now, :source, :principal, :marketplace, :event, :ref, :sha, :detail, :tokenId,"
+                        + " (ts, source, principal, marketplace, marketplace_id, event, ref, sha, detail, token_id,"
+                        + " actor_type, credential_kind)"
+                        + " VALUES (:now, :source, :principal, :marketplace,"
+                        + " COALESCE(:marketplaceId, (SELECT m.id FROM marketplaces m WHERE m.name = :marketplace"
+                        + " ORDER BY (m.deleted_at IS NULL) DESC, m.id DESC LIMIT 1)),"
+                        + " :event, :ref, :sha, :detail, :tokenId,"
                         + " :actorType::fetch_log_actor_type, :credentialKind::fetch_log_credential_kind)")
+                .param("marketplaceId", marketplaceId, java.sql.Types.BIGINT)
                 .param("actorType", actorType.value())
                 .param("credentialKind", credentialKind == null ? null : credentialKind.value())
                 .param("now", OffsetDateTime.now())
@@ -302,6 +329,11 @@ public class FetchLogRepository {
             @Schema(description = "Marketplace the entry concerns, or '-'")
             String marketplace,
 
+            @Schema(
+                    description = "Id of the marketplace the entry concerns, or null when it concerns none."
+                            + " Tells apart two marketplaces that held the same name (GW_AUDIT_0009)")
+            Long marketplaceId,
+
             @Schema(description = "What happened") String event,
 
             @Schema(
@@ -327,6 +359,7 @@ public class FetchLogRepository {
                 rs.getString("source"),
                 rs.getString("principal"),
                 rs.getString("marketplace"),
+                nullableLong(rs, "marketplace_id"),
                 rs.getString("event"),
                 rs.getString("ref"),
                 rs.getString("sha"),
@@ -335,7 +368,11 @@ public class FetchLogRepository {
     }
 
     private static Long tokenId(ResultSet rs) throws SQLException {
-        long value = rs.getLong("token_id");
+        return nullableLong(rs, "token_id");
+    }
+
+    private static Long nullableLong(ResultSet rs, String column) throws SQLException {
+        long value = rs.getLong(column);
         return rs.wasNull() ? null : value;
     }
 

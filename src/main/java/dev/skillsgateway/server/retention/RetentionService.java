@@ -245,7 +245,7 @@ public class RetentionService {
                 .restore(snapshotId)
                 .orElseThrow(() -> new IllegalStateException("snapshot %d is not deleted".formatted(snapshotId)));
         String marketplace = marketplaceName(restored);
-        auditLogger.record(actor, marketplace, "snapshot-restored", restored.sha());
+        ledger(actor, restored, "snapshot-restored");
         webhookService.emit(
                 WebhookEvent.SNAPSHOT_RESTORED, marketplace, restored.id(), restored.sha(), restored.state(), actor);
         return restored;
@@ -266,7 +266,12 @@ public class RetentionService {
         for (Snapshot snapshot : due) {
             String marketplace = names.computeIfAbsent(snapshot.marketplaceId(), id -> marketplaceName(snapshot));
             try {
-                removePin(marketplace, snapshot.sha());
+                // Quarantine is keyed by name, and a removed marketplace's name can be registered again
+                // (GW_INGEST_0035): the same commit ingested by the other one is pinned by the same
+                // reference, which is then that snapshot's to keep.
+                if (!snapshotRepository.pinnedByAnotherOfTheSameName(snapshot.id())) {
+                    removePin(marketplace, snapshot.sha());
+                }
             } catch (IOException e) {
                 // The record stays; the next pass retries. Deleting it while the ref survived would
                 // strand the objects with nothing left pointing at what they were.
@@ -278,7 +283,7 @@ public class RetentionService {
             }
             purged++;
             touched.add(marketplace);
-            auditLogger.record(actor, marketplace, "snapshot-purged", snapshot.sha());
+            ledger(actor, snapshot, "snapshot-purged");
         }
         touched.forEach(marketplace -> collectGarbage(GitStorage.Role.QUARANTINE, marketplace));
         // The other thing this pass reclaims, on the other side of the estate (GW_FACADE_0019). Its own
@@ -531,7 +536,7 @@ public class RetentionService {
     }
 
     private void recordDeletion(Snapshot snapshot, String marketplace, String reason, String actor) {
-        auditLogger.record(actor, marketplace, "snapshot-soft-deleted:" + reason, snapshot.sha());
+        ledger(actor, snapshot, "snapshot-soft-deleted:" + reason);
         webhookService.emit(
                 WebhookEvent.SNAPSHOT_SOFT_DELETED,
                 marketplace,
@@ -539,6 +544,19 @@ public class RetentionService {
                 snapshot.sha(),
                 snapshot.state(),
                 actor);
+    }
+
+    /**
+     * A snapshot-scoped entry names its marketplace by id as well as name (GW_AUDIT_0009): retention acts
+     * on snapshots of removed marketplaces too, whose name may by now belong to a successor.
+     */
+    private void ledger(String actor, Snapshot snapshot, String event) {
+        Optional<Marketplace> marketplace = marketplaceRepository.findById(snapshot.marketplaceId());
+        if (marketplace.isPresent()) {
+            auditLogger.record(actor, marketplace.get(), event, snapshot.sha(), null);
+        } else {
+            auditLogger.record(actor, NO_MARKETPLACE, event, snapshot.sha());
+        }
     }
 
     private String marketplaceName(Snapshot snapshot) {

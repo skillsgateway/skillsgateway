@@ -3,7 +3,7 @@
 The core API: registration, ingestion, the approval gate and provenance. All
 paths are relative to `/api`.
 
-Registration and sync-mode changes require **admin**; ingest, approve, reject,
+Registration, removal and sync-mode changes require **admin**; ingest, approve, reject,
 re-vet, and waiver create/delete require **approver of the marketplace** (or
 admin) — resolved server-side from the addressed snapshot or waiver where the
 route carries an id; every `GET` on this page stays open to any session, except
@@ -21,8 +21,8 @@ enabling or disabling a vetter. See
 `/files`, `/vetting`, `/fetchers`, `/four-eyes` and `/name-collisions`; `marketplaces:register`,
 `marketplaces:ingest`, `vetting:run`, `sync:write` and `waivers:read` cover
 the corresponding mutations and the waiver listing. **Approve, reject, waiver
-create, waiver delete, snapshot delete and snapshot restore are reachable by no
-scope at all** — they publish, refuse or retract content. A scope grants reach,
+create, waiver delete, snapshot delete, snapshot restore and marketplace removal
+are reachable by no scope at all** — they publish, refuse or retract content. A scope grants reach,
 not standing: a credential reaching one of the privileged reads above still needs
 its principal's approver or admin role. See
 [Machine API credentials](tokens.md#machine-api-credentials).
@@ -98,7 +98,7 @@ tips on the ledger. See
 | --- | --- |
 | 201 | Registered; returns the marketplace plus `warnings` (see below). |
 | 400 | URL scheme not allowlisted, `ref` present and not `main`, a hosted registration supplying a `url`, an upstream one omitting it, or a `pushPolicy` on an upstream marketplace. |
-| 409 | Name already exists. |
+| 409 | A live marketplace has that name. A [removed](#delete-marketplacesname) marketplace's name is free. |
 | 422 | Name fails `^[a-z0-9][a-z0-9_-]*$`, or an unknown `origin`/`pushPolicy`. |
 
 The 400 cases are trust-boundary rejections — see
@@ -115,9 +115,59 @@ marketplace](../../guides/registering-a-marketplace.md#duplicate-upstream-urls).
 
 ---
 
+## `DELETE /marketplaces/{name}`
+
+Remove a marketplace. **Admin**, and reachable by no machine scope.
+
+**Body** — `{reason}`, required and non-empty.
+
+```console
+$ curl -X DELETE localhost:8080/api/v1/marketplaces/acme \
+    -H 'Content-Type: application/json' \
+    -d '{"reason":"upstream moved to https://git.example.com/acme/skills.git"}'
+```
+
+```json
+{"id":1,"name":"acme","removedAt":"2026-09-23T10:00:00Z","removedBy":"dana",
+ "withdrawnSnapshotIds":[42],"pushScopeRemovedFromTokenIds":[7]}
+```
+
+Removal is a retirement, not a delete. Every approved snapshot is withdrawn by
+[administrative revocation](../../guides/approving-snapshots.md#withdrawing-content-you-have-already-approved) with the reason
+`marketplace removed: <reason>`, serving nothing afterwards, so each withdrawal
+is on the ledger, announced as `marketplace.snapshot.revoked`, and answered
+`revoked` by [`POST /status/v1/snapshots`](../git-facade.md#checking-content-you-already-hold).
+From then on the marketplace is not served, synced, pushed to, listed, approved
+or reachable on any `/marketplaces/{name}/…` route. Its record, its snapshots,
+their provenance and content reads by snapshot id, and the ledger are kept.
+
+Every access token granted to **publish** to the name loses that grant, and only
+that one: `pushScopeRemovedFromTokenIds` lists them, and the ledger records it as
+`marketplace-push-scopes-removed`. Grants to **fetch** the name are kept. The
+marketplace's vetter toggles and chain settings stay in the database but leave
+`GET /vetting/vetter-toggles` and `GET /vetting/chain-settings`.
+
+| Status | Cause |
+| --- | --- |
+| 200 | Removed; returns the marketplace's id, when and by whom, the snapshots withdrawn, and the tokens that lost a publication grant. |
+| 403 | Not an administrator. |
+| 404 | No live marketplace has that name — including one already removed. |
+| 422 | No reason, or an empty one. |
+
+**The name is free again.** Registering it creates a new marketplace with a new
+id that serves nothing until one of its own snapshots is approved. It inherits
+no approval, no approver grant, no publication grant and, for a hosted
+marketplace, no pushed lineage;
+the same commit ingested again comes back `held`, and the removal's withdrawals
+do not block approving it. See
+[Removing a marketplace](../../guides/registering-a-marketplace.md#removing-a-marketplace).
+
+---
+
 ## `GET /marketplaces`
 
-All marketplaces, each with its forge metadata and full snapshot list. This is
+All live marketplaces — a removed one is not listed — each with its forge
+metadata and full snapshot list. This is
 the portal's primary query; there is no per-marketplace endpoint.
 
 **200** — array of marketplaces.

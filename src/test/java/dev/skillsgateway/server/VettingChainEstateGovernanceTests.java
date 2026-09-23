@@ -134,12 +134,21 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
         // One entry per kind removed: mode, order, and the one vetter override.
         assertThat(clearEntries(name) - before).isEqualTo(3);
 
+        // Other tests may have set a global order; with the marketplace override gone, the
+        // arrangement in force is the global one, or none at all.
+        List<String> globalOverride = com.jayway.jsonpath.JsonPath.read(
+                mockMvc.perform(get("/api/v1/vetting/global-chain-settings").with(root))
+                        .andExpect(status().isOk())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString(),
+                "$.orderOverride");
         mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain-settings", name)
                         .with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.modeSource").value(org.hamcrest.Matchers.in(List.of("global", "default"))))
                 .andExpect(jsonPath("$.orderSource").value(org.hamcrest.Matchers.in(List.of("global", "default"))))
-                .andExpect(jsonPath("$.orderOverride.length()").value(0));
+                .andExpect(jsonPath("$.orderOverride").value(globalOverride));
         mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain", name).with(root))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.source == 'MARKETPLACE')]").isEmpty());

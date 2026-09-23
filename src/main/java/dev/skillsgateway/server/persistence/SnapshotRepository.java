@@ -126,10 +126,20 @@ public class SnapshotRepository {
      * stamps are cleared by the transition, so a re-published snapshot never carries a revocation
      * marker that no longer holds; what it was revoked for stays in the ledger.
      */
-    @Requirements({"GW_FACADE_0009"})
+    @Requirements({"GW_FACADE_0009", "GW_INGEST_0034"})
     @Transactional
     public Snapshot decide(long id, String newState, String reviewer) {
         Snapshot snapshot = findById(id).orElseThrow(() -> new SnapshotNotFoundException(id));
+        // Shares the marketplace row with a concurrent removal (GW_INGEST_0034), which takes it
+        // exclusively: a decision either commits before the removal stamps the row, and is withdrawn
+        // by it, or waits for the stamp and is refused here. Without the lock the two are write skew.
+        boolean live = jdbc.sql("SELECT deleted_at IS NULL FROM marketplaces WHERE id = :marketplaceId FOR SHARE")
+                .param("marketplaceId", snapshot.marketplaceId())
+                .query(Boolean.class)
+                .single();
+        if (!live) {
+            throw new MarketplaceRemovedException(id);
+        }
         if (!snapshot.decidable()) {
             throw new IllegalStateException("invalid transition %s -> %s".formatted(snapshot.state(), newState));
         }
@@ -441,6 +451,23 @@ public class SnapshotRepository {
     }
 
     /**
+     * Whether another snapshot of a marketplace with the same name pins the same commit
+     * (GW_INGEST_0035). Quarantine is keyed by name, so a removed marketplace and its successor share
+     * one repository and, for a commit both ingested, one pin.
+     */
+    @Requirements({"GW_INGEST_0035"})
+    public boolean pinnedByAnotherOfTheSameName(long snapshotId) {
+        return jdbc.sql("SELECT EXISTS (SELECT 1 FROM snapshots s"
+                        + " JOIN marketplaces m ON m.id = s.marketplace_id"
+                        + " JOIN snapshots o ON o.sha = s.sha AND o.id <> s.id"
+                        + " JOIN marketplaces om ON om.id = o.marketplace_id AND om.name = m.name"
+                        + " WHERE s.id = :id)")
+                .param("id", snapshotId)
+                .query(Boolean.class)
+                .single();
+    }
+
+    /**
      * What the gateway records about content a client says it holds (GW_FACADE_0031): one row per
      * {@code (marketplace name, sha)} pair it recognises, and no row at all for one it does not.
      *
@@ -456,7 +483,7 @@ public class SnapshotRepository {
      * order {@code GitFacadeConfiguration.resolvePublished} establishes (GW_AUTH_0006), so an
      * out-of-scope pair never reaches a query whose timing could distinguish it.
      */
-    @Requirements({"GW_FACADE_0031"})
+    @Requirements({"GW_FACADE_0031", "GW_INGEST_0035"})
     public List<HeldContent> heldContent(List<MarketplaceSha> pairs) {
         if (pairs.isEmpty()) {
             return List.of();
@@ -470,13 +497,18 @@ public class SnapshotRepository {
                     .append(i)
                     .append(")");
         }
-        var spec = jdbc.sql("SELECT m.name AS marketplace, s.sha AS sha, s.state AS state,"
-                + " s.revoked_at AS revoked_at, s.deleted_at AS deleted_at,"
+        // One row per pair even when two marketplaces have held the name (GW_INGEST_0035): the live one
+        // when it has approved the commit; otherwise the most recently removed one, whose withdrawal
+        // tells a holder more than the successor's not-yet-decided row would; otherwise the live one.
+        var spec = jdbc.sql("SELECT DISTINCT ON (m.name, s.sha) m.name AS marketplace, s.sha AS sha,"
+                + " s.state AS state, s.revoked_at AS revoked_at, s.deleted_at AS deleted_at,"
                 + " (r.id IS NOT NULL) AS approved_over_reversed_revocation"
                 + " FROM snapshots s"
                 + " JOIN marketplaces m ON m.id = s.marketplace_id"
                 + " LEFT JOIN snapshot_revocation_reversals r ON r.snapshot_id = s.id"
-                + " WHERE (m.name, s.sha) IN (" + tuples + ")");
+                + " WHERE (m.name, s.sha) IN (" + tuples + ")"
+                + " ORDER BY m.name, s.sha, (m.deleted_at IS NULL AND s.state = 'approved') DESC,"
+                + " (m.deleted_at IS NOT NULL) DESC, m.id DESC");
         for (int i = 0; i < pairs.size(); i++) {
             spec = spec.param("m" + i, pairs.get(i).marketplace())
                     .param("s" + i, pairs.get(i).sha());

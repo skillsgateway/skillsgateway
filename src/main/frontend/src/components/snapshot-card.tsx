@@ -421,8 +421,9 @@ export function SnapshotCard({
           <TabsList
             variant="line"
             aria-label={`Evidence for snapshot ${id}`}
-            // Five tabs outrun a phone's width; the strip scrolls rather than the page.
-            className="max-w-full justify-start overflow-x-auto"
+            // Five tabs outrun a phone's width; the strip scrolls rather than the page;
+            // the bottom room keeps the active underline from making it scroll vertically too.
+            className="max-w-full justify-start overflow-x-auto overflow-y-hidden pb-[7px] group-data-horizontal/tabs:h-9"
           >
             <TabsTrigger value="vetting">Vetting</TabsTrigger>
             <TabsTrigger value="contents">Contents</TabsTrigger>
