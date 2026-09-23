@@ -109,14 +109,17 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
   await expect(dialog.getByText("alice")).toBeVisible();
   await page.keyboard.press("Escape");
 
-  // Detail view: the snapshot's plugin/skill inventory (GW_INGEST_0008).
+  // Detail view: nothing awaits a decision, so the served snapshot is the open card, and its
+  // plugin/skill inventory is a tab on it (GW_INGEST_0008).
   await page.getByRole("link", { name, exact: true }).click();
-  await page.getByRole("button", { name: /Show contents of snapshot \d+/ }).click();
-  await expect(page.getByText("hello", { exact: true }).first()).toBeVisible();
+  const served = page.getByRole("region", { name: /^Snapshot \d+$/ });
+  await served.getByRole("tab", { name: "Inventory" }).click();
+  await expect(served.getByText("hello", { exact: true }).first()).toBeVisible();
 
   // Beside it, what approving it would change (GW_INGEST_0022). This marketplace has exactly one
   // snapshot — the one on screen — so there is no approved baseline, and the panel says so
   // rather than rendering an empty diff.
+  await served.getByRole("tab", { name: "Diff" }).click();
   await expect(
     page.getByRole("region", { name: /Changes in snapshot \d+ since the last approved snapshot/ }),
   ).toContainText("no baseline to compare against");
@@ -823,9 +826,9 @@ test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async 
 
 /**
  * The reviewer's file explorer on a real held-vs-served delta: approve one commit, advance the
- * upstream fixture (modify the skill, add a file), re-ingest, and inspect the held snapshot on
- * its own route — nested tree, inertly rendered SKILL.md, and the file's diff against the
- * served baseline.
+ * upstream fixture (modify the skill, add a file), re-ingest, and inspect the held snapshot in
+ * its card's Contents tab — nested tree, inertly rendered SKILL.md, and the file's diff against
+ * the served baseline.
  *
  * The address is asserted twice, because that is the claim: selecting a file puts it in the
  * URL, and opening that URL cold — a second approver following a pasted link — restores the
@@ -886,11 +889,13 @@ test("snapshot_contents_are_explored_on_an_address_that_restores_the_same_file",
   await expect(card.getByText("held", { exact: true })).toBeVisible();
 
   await page.getByRole("link", { name, exact: true }).click();
-  // The held snapshot is the newest: its card is the one we inspect.
-  const heldCard = page.locator("[data-slot=card]").filter({ hasText: "held" }).last();
-  await heldCard.getByRole("link", { name: /Inspect contents of snapshot \d+/ }).click();
+  // The held snapshot is the newest awaiting a decision, so it is the card that is open; its
+  // one-line delta is against the served commit, and names it.
+  const heldCard = page.getByRole("region", { name: /^Snapshot \d+$/ });
+  await expect(heldCard.getByTestId("snapshot-delta")).toContainText(/2 files · \+\d+ −\d+ · vs [0-9a-f]{8}/);
+  await heldCard.getByRole("tab", { name: "Contents" }).click();
 
-  await expect(page).toHaveURL(/\/marketplaces\/[^/]+\/snapshots\/\d+\/files$/);
+  await expect(page).toHaveURL(/\/marketplaces\/[^/?]+\?snapshot=\d+&tab=contents$/);
   const tree = page.getByRole("navigation", { name: /File tree of snapshot \d+/ });
   await expect(tree).toBeVisible();
 
@@ -907,7 +912,9 @@ test("snapshot_contents_are_explored_on_an_address_that_restores_the_same_file",
   await expect(page.locator("main img")).toHaveCount(0);
 
   // The selection is in the address — this is the link an approver sends to the second one.
-  await expect(page).toHaveURL(/\?path=plugins%2Fhello%2Fskills%2Fhello%2FSKILL\.md$/);
+  await expect(page).toHaveURL(
+    /\?snapshot=\d+&tab=contents&path=plugins%2Fhello%2Fskills%2Fhello%2FSKILL\.md$/,
+  );
   const deepLink = page.url();
 
   // And the link is enough on its own: opened cold, it restores the same file, revealed.
@@ -932,6 +939,13 @@ test("snapshot_contents_are_explored_on_an_address_that_restores_the_same_file",
   await expect(added).toContainText("added");
   await added.click();
   await expect(page.getByRole("region", { name: "Selected file" })).toContainText("added");
+
+  // Links sent before the card existed still open: the full-width route renders the same explorer.
+  const snapshotId = new URL(deepLink).searchParams.get("snapshot");
+  await page.goto(
+    `/marketplaces/${name}/snapshots/${snapshotId}/files?path=plugins%2Fhello%2Fskills%2Fhello%2FSKILL.md`,
+  );
+  await expect(page.getByRole("heading", { name: "Hello skill" })).toBeVisible();
 });
 
 /**

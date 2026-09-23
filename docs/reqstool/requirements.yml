@@ -1737,6 +1737,24 @@ requirements:
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.1.0
 
+  - id: GW_INGEST_0033
+    title: The marketplace read names the commit the facade serves
+    significance: shall
+    description: "The system shall report, on the read that describes a marketplace, the commit its facade is currently serving, resolved from the published repository's served reference rather than from the state of any snapshot record; and shall report that commit as absent where the marketplace serves nothing, including where it still holds snapshots recorded as approved."
+    rationale: "Which snapshots are approved and which commit consumers actually receive are two different questions, and they diverge exactly where the answer matters: a marketplace whose content has been retracted still holds approved rows while its facade serves nothing. A surface that infers the served commit from the newest approved record therefore points confidently at content nobody can fetch, at the moment an operator is trying to understand a retraction. The served reference is the only authority on what is being served, and it is what the adoption read already consults; making it part of the marketplace's own description means a reader does not have to borrow the answer from a windowed analytics report."
+    categories: ["functional-suitability", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0018
+    title: An approval control is presented only below the evidence it rests on
+    significance: shall
+    description: "The system shall present, on any surface that offers the decision to approve a snapshot, that decision only after the evidence the decision rests on — the snapshot's change against what is served and its vetting outcome — and never before it; shall present the approval control as unavailable, stating the reason on the surface, wherever the vetting outcome blocks approval, rather than accepting the action and refusing it afterwards; and shall state, before the decision is taken, which other snapshots of the same marketplace would still await a decision after it and would by then be older than the content served."
+    rationale: "Approval publishes content to every consumer of a marketplace, so the order in which a reviewer meets the evidence and the control is a property of the control, not of the layout: a control encountered before the evidence invites a decision taken before reading, which is the failure the whole held-until-approved model exists to prevent. Presenting a blocked control as unavailable with its reason, rather than letting it fail on use, keeps the refusal legible at the moment of decision instead of after it. Stating what happens to the others matters because more than one snapshot can await a decision at once and approving one does not decide the rest: they remain awaiting, and a later approval of one of them would publish content older than what is then served. That is a rollback performed by an ordinary approval, and it should be visible before the first decision rather than discovered after the second."
+    references:
+      requirement_ids: ["GW_APPROVAL_0001"]
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
   - id: GW_INGEST_0030.1
     title: Every closure and member field is recorded as a value copy taken at ingestion
     significance: shall

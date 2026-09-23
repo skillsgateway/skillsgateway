@@ -10,12 +10,16 @@ immutable SHA.
 
 ## Reviewing
 
-A held snapshot gives you four things.
+A held snapshot gives you four things. In the portal they are the tabs of its
+card on the marketplace detail page, where the newest snapshot awaiting a
+decision is already open; its one-line delta — `1 skill added, 1 modified ·
+3 files · +48 −7 · vs 65f64622` — tells you the size of the review before you
+open any of them.
 
 ### The content itself
 
-**Inspect contents** on the snapshot card opens the
-[snapshot contents page](../reference/portal.md#snapshot-contents): the pinned
+The card's **Contents** tab is the
+[file explorer](../reference/portal.md#snapshot-contents): the pinned
 commit as a real file tree, each file rendered inertly (Markdown without any
 HTML interpretation, binary files described rather than shown), with a filter
 over the paths and — the part that usually decides a successor snapshot — a
@@ -28,7 +32,7 @@ serving nothing shows every path as new: approving it serves all of it.
 file you are looking at:
 
 ```text
-/marketplaces/acme/snapshots/41/files?path=plugins/hello/skills/hello/SKILL.md
+/marketplaces/acme?snapshot=41&tab=contents&path=plugins/hello/skills/hello/SKILL.md
 ```
 
 Approval is four-eyes, and this is what makes "we both looked at the same
@@ -46,8 +50,7 @@ held quarantine content.
 
 `GET /api/v1/snapshots/{id}/content` enumerates what the snapshot declares — each
 plugin with its name, `source` and description, and the skills found under each.
-In the portal this is the **Show contents** toggle on the marketplace detail
-page.
+In the portal this is the card's **Inventory** tab.
 
 ```console
 $ curl localhost:8080/api/v1/snapshots/1/content
@@ -76,7 +79,7 @@ $ curl localhost:8080/api/v1/snapshots/1/content-diff
 
 On the tenth snapshot of a large marketplace this is the read worth starting
 from: it is the difference between reviewing two new skills and re-reading
-forty. In the portal it is the second half of the **Show contents** panel. See
+forty. In the portal it is the card's **Diff** tab. See
 [the API reference](../reference/api/marketplaces.md#get-snapshotsidcontent-diff).
 
 ### Provenance
@@ -147,8 +150,8 @@ override; re-ingest the marketplace and review the new snapshot.
 
 ### Vetting verdicts
 
-Before anything else, read what the vetting chain concluded. The snapshot card
-on the marketplace detail page — and the approve dialog itself — shows the chain
+Before anything else, read what the vetting chain concluded. The snapshot
+card's **Vetting** tab — the one it opens on — and the approve dialog itself show the chain
 outcome and, per vetter, its verdict and every finding with the file and line
 it came from.
 
@@ -206,11 +209,18 @@ The threats that matter here are the ones no scanner catches:
 
 === "Portal"
 
-    On the **Marketplaces** page, held snapshots show **Approve** and **Reject**
-    buttons in their row. **Reject** fires immediately. **Approve** opens a
-    dialog showing the vetting verdicts; if the chain blocked the snapshot, the
-    confirm button stays disabled until every blocking finding is waived from
-    that same dialog.
+    **Approve** and **Reject** sit at the foot of the snapshot card on the
+    marketplace detail page, below the evidence they rest on, and in the
+    snapshot's row on the **Marketplaces** page. **Reject** fires immediately.
+    **Approve** opens a dialog showing the vetting verdicts. On the card, a
+    snapshot the gateway would refuse — vetting blocked it, it is inside the
+    minimum release age, or the four-eyes rule refuses you — has **Approve**
+    disabled with the reason beside it; waive each blocking finding in the
+    **Vetting** tab and it unblocks.
+
+    When another snapshot also awaits a decision, the card names it. Approving
+    this one does not retire it: it stays held, and approving an older one
+    afterwards would serve content older than this one.
 
 === "API"
 

@@ -2300,6 +2300,33 @@ cases:
       itself below the value the gateway ships with
     revision: "0.1.0"
 
+  - id: SVC_GW_APPROVAL_0018
+    requirement_ids: ["GW_APPROVAL_0018"]
+    title: The decision comes after its evidence, refuses visibly, and names what still awaits one
+    verification: automated-test
+    description: |
+      GIVEN a marketplace with two snapshots awaiting a decision, one whose vetting clears and
+      one whose vetting blocks
+      WHEN the surface offering the decision is rendered for each
+      THEN the approval control follows the change summary and the vetting outcome in document
+      order, the blocked snapshot's control is unavailable and states why rather than accepting
+      the action, and the newest snapshot's decision names the older one that would still await a
+      decision afterwards and would then be older than what is served
+    revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0033
+    requirement_ids: ["GW_INGEST_0033"]
+    title: The served commit is read from the facade, not inferred from approvals
+    verification: automated-test
+    description: |
+      GIVEN a marketplace with an approved snapshot its facade is serving
+      WHEN the marketplace read is made, and again after that snapshot is revoked so that
+      the approved record still exists while nothing is served
+      THEN the first reports the served commit, the second reports it as absent rather than
+      naming the snapshot that is still recorded as approved, and a marketplace that has
+      never published reports it as absent throughout
+    revision: "0.1.0"
+
   - id: SVC_GW_AUTH_0047
     requirement_ids: ["GW_AUTH_0047"]
     title: The running build is reported on the session read, or reported absent

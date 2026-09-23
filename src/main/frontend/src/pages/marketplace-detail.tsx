@@ -1,26 +1,17 @@
-import { ArrowLeft, FileSearch, Puzzle } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { toast } from "sonner";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   useAudit,
   useIsAdmin,
   useMarketplaces,
-  useRestoreSnapshot,
-  useRevetSnapshot,
-  useSnapshotContent,
-  useSnapshotFetchers,
-  useSoftDeleteSnapshot,
   type Snapshot,
 } from "@/api/queries";
 import { AuditStatusBadge, auditRowClass } from "@/components/audit-status";
 import { auditStatus } from "@/lib/audit-status";
-import { cn } from "@/lib/utils";
 import { Timestamp } from "@/components/timestamp";
-import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
@@ -30,11 +21,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MarketplaceVettingChain } from "@/components/marketplace-vetting-chain";
-import { RevocationNote, SnapshotStateBadge } from "@/components/snapshot-state";
 import { HeldNotice, SetupWizard } from "@/components/setup-wizard";
-import { SnapshotContentDiff } from "@/components/snapshot-content-diff";
-import { SnapshotPreview } from "@/components/snapshot-preview";
-import { VettingReport } from "@/components/vetting-report";
+import { SnapshotCard, SnapshotLine } from "@/components/snapshot-card";
+import { isDecidable, parseSnapshotTab, type SnapshotTab } from "@/lib/snapshot-roles";
+
+/** Newest first: ingestion time, then id for two ingests in the same instant. */
+function newestFirst(a: Snapshot, b: Snapshot): number {
+  return (b.createdAt ?? "").localeCompare(a.createdAt ?? "") || (b.id ?? 0) - (a.id ?? 0);
+}
 
 /**
  * This marketplace's slice of the append-only ledger: every facade fetch and administrative
@@ -113,218 +107,22 @@ function MarketplaceAudit({ name }: { name: string }) {
 }
 
 /**
- * Retention state of one snapshot: whether it is deleted, until when it can be restored, and
- * the control that does it. An approved snapshot is served by the facade and the gateway
- * refuses to delete it (GW_RETENTION_0003), so no delete control is offered for one.
+ * Marketplace detail: the lead panel, forge metadata, and the snapshots — grouped by what they are
+ * for rather than listed alike. What awaits a decision comes first, because it is the only thing
+ * on the page with a pending action; what is served is one line; everything else is a count.
+ * Exactly one snapshot is open at a time, so page length does not grow with ingest count.
  *
- * @Requirements GW_RETENTION_0006
- */
-function RetentionControls({ snapshot }: { snapshot: Snapshot }) {
-  const softDelete = useSoftDeleteSnapshot();
-  const restore = useRestoreSnapshot();
-  const id = snapshot.id ?? 0;
-  const busy = softDelete.isPending || restore.isPending;
-
-  if (snapshot.deletedAt) {
-    return (
-      <>
-        <Badge variant="destructive">deleted</Badge>
-        <span className="text-xs text-muted-foreground">
-          restorable until <Timestamp value={snapshot.purgeAfter} dayOnly />
-        </span>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={busy}
-          aria-label={`Restore snapshot ${id}`}
-          onClick={() =>
-            restore.mutate(id, {
-              onSuccess: () => toast.success(`Snapshot ${id} restored`),
-              onError: (error) => toast.error(error.message),
-            })
-          }
-        >
-          Restore
-        </Button>
-      </>
-    );
-  }
-  if (snapshot.state === "approved") return null;
-  return (
-    <Button
-      size="sm"
-      variant="outline"
-      disabled={busy}
-      aria-label={`Delete snapshot ${id}`}
-      onClick={() =>
-        softDelete.mutate(id, {
-          onSuccess: () => toast.success(`Snapshot ${id} deleted; it can be restored`),
-          onError: (error) => toast.error(error.message),
-        })
-      }
-    >
-      Delete
-    </Button>
-  );
-}
-
-/**
- * Re-vetting of one snapshot: the control that asks for a fresh run, and — for a snapshot a
- * violation revoked — why it was taken back and who already had it.
+ * The open snapshot, its tab and its file are in the address (`?snapshot=&tab=&path=`), so a
+ * link to the evidence restores it.
  *
- * The affected list is the point of the panel. A revoked snapshot is not an incident the gateway
- * can close on its own: every identity named here has already cloned the content, so the operator's
- * next action is about them, not about the ref. It is fetched only for a revoked snapshot, so an
- * ordinary review never asks the ledger a question it does not need answered.
- *
- * @Requirements GW_VETTING_0018
- */
-function RevetPanel({ snapshot }: { snapshot: Snapshot }) {
-  const id = snapshot.id ?? 0;
-  const revet = useRevetSnapshot();
-  const revoked = snapshot.state === "revoked";
-  const fetchers = useSnapshotFetchers(revoked ? id : null);
-  const approved = snapshot.state === "approved";
-
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <RevocationNote snapshot={snapshot} />
-        {approved ? (
-          <Button
-            size="sm"
-            variant="outline"
-            className="ml-auto"
-            disabled={revet.isPending}
-            aria-label={`Re-vet snapshot ${id}`}
-            onClick={() =>
-              revet.mutate(id, {
-                onSuccess: (result) =>
-                  result.classification === "violation"
-                    ? toast.error(
-                        result.revoked
-                          ? `Snapshot ${id} revoked by a re-vetting violation`
-                          : `Snapshot ${id} has a re-vetting violation; it is still published`,
-                      )
-                    : toast.success(
-                        result.classification === "inconclusive"
-                          ? `Re-vetting of snapshot ${id} could not conclude`
-                          : `Snapshot ${id} re-vetted clear`,
-                      ),
-                onError: (error) => toast.error(error.message),
-              })
-            }
-          >
-            {revet.isPending ? "Re-vetting…" : "Re-vet now"}
-          </Button>
-        ) : null}
-      </div>
-      {revoked ? (
-        <section aria-label={`Identities that fetched snapshot ${id}`} className="rounded-md border p-3">
-          <h3 className="text-sm font-medium">Already fetched by</h3>
-          {fetchers.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading fetch history…</p>
-          ) : fetchers.isError ? (
-            <p role="alert" className="text-sm text-destructive">
-              {fetchers.error.message}
-            </p>
-          ) : (fetchers.data ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nobody fetched this snapshot's content through the facade.
-            </p>
-          ) : (
-            <ul className="mt-2 space-y-1">
-              {(fetchers.data ?? []).map((fetcher) => (
-                <li key={fetcher.principal} className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="font-medium">{fetcher.principal}</span>
-                  <span className="rounded-md border bg-muted px-2 py-0.5 text-xs">
-                    {fetcher.fetches} fetch{fetcher.fetches === 1 ? "" : "es"}
-                  </span>
-                  <span className="text-xs text-muted-foreground">last {fetcher.lastFetch}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      ) : null}
-    </div>
-  );
-}
-
-/**
- * Everything the snapshot ships. Its companion below — the diff against the last approved
- * snapshot — answers the other half of the reviewer's question, what approving it would add.
- *
- * @Requirements GW_INGEST_0008
- */
-function SnapshotContentView({ snapshotId }: { snapshotId: number }) {
-  const content = useSnapshotContent(snapshotId);
-  return (
-    <section aria-label={`Contents of snapshot ${snapshotId}`} className="space-y-3">
-      <h3 className="flex items-center gap-2 text-sm font-medium">
-        <Puzzle className="size-4 text-primary" aria-hidden />
-        What this snapshot ships
-      </h3>
-      <SnapshotContentBody content={content} />
-    </section>
-  );
-}
-
-function SnapshotContentBody({
-  content,
-}: {
-  content: ReturnType<typeof useSnapshotContent>;
-}) {
-  if (content.isLoading) return <p className="text-sm text-muted-foreground">Loading contents…</p>;
-  if (content.isError)
-    return (
-      <p role="alert" className="text-sm text-destructive">
-        {content.error.message}
-      </p>
-    );
-  const plugins = content.data?.plugins ?? [];
-  if (plugins.length === 0)
-    return <p className="text-sm text-muted-foreground">No plugins declared in this snapshot.</p>;
-  return (
-    <div className="space-y-3">
-      {plugins.map((plugin) => (
-        <div key={plugin.name} className="rounded-md border p-3">
-          <div className="flex items-center gap-2 font-medium">
-            <Puzzle className="size-4 text-primary" aria-hidden />
-            {plugin.name}
-            <span className="font-mono text-xs text-muted-foreground">{plugin.source}</span>
-          </div>
-          {plugin.description ? (
-            <p className="mt-1 text-sm text-muted-foreground">{plugin.description}</p>
-          ) : null}
-          <div className="mt-2 flex flex-wrap gap-2">
-            {(plugin.skills ?? []).length === 0 ? (
-              <span className="text-xs text-muted-foreground">no skills found</span>
-            ) : (
-              (plugin.skills ?? []).map((skill) => (
-                <Badge key={skill.path} variant="outline">
-                  {skill.name}
-                </Badge>
-              ))
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/**
- * Marketplace detail: forge metadata, snapshots, and each snapshot's plugin/skill
- * inventory — the future surface for limiting individual plugins or skills.
- *
- * @Requirements GW_INGEST_0007
+ * @Requirements GW_INGEST_0007, GW_INGEST_0032, GW_INGEST_0033
  */
 export function MarketplaceDetailPage() {
   const { name } = useParams<{ name: string }>();
   const marketplaces = useMarketplaces();
-  const [openSnapshot, setOpenSnapshot] = useState<number | null>(null);
+  const [params, setParams] = useSearchParams();
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [earlierShown, setEarlierShown] = useState(false);
   const isAdmin = useIsAdmin();
   const marketplace = marketplaces.data?.find((m) => m.name === name);
 
@@ -339,11 +137,64 @@ export function MarketplaceDetailPage() {
       </div>
     );
 
-  const snapshots = marketplace.snapshots ?? [];
-  // "Serving" is derived exactly as the adoption page derives it, and stated here rather than
-  // left implicit because the whole lead panel is gated on it: the portal's snapshot model has
-  // no `serving` state, only an approved snapshot that the facade then serves.
-  const serving = snapshots.some((snapshot) => snapshot.state === "approved");
+  const snapshots = [...(marketplace.snapshots ?? [])].sort(newestFirst);
+  // What the facade answers with, read from the served reference — not "the newest approved",
+  // which is wrong exactly after a withdrawal leaves an approved record serving nothing.
+  const servedSha = marketplace.servedSha ?? null;
+  const serving = servedSha !== null;
+  const awaiting = snapshots.filter(isDecidable);
+  const served = serving
+    ? snapshots.find((s) => s.sha === servedSha && s.state === "approved" && !s.deletedAt)
+    : undefined;
+  const earlier = snapshots.filter((s) => !isDecidable(s) && s !== served);
+  const approvedButDark = !serving && snapshots.some((s) => s.state === "approved" && !s.deletedAt);
+
+  const addressed = snapshots.find((s) => s.id === Number(params.get("snapshot")));
+  const open = addressed ?? awaiting[0] ?? served;
+  const tab = parseSnapshotTab(params.get("tab"));
+  const path = params.get("path");
+
+  // Each move names the snapshot explicitly, so the address never depends on which one happens
+  // to be newest when the link is opened.
+  const openSnapshot = (id: number) => setParams({ snapshot: String(id) });
+  const setTab = (id: number, next: SnapshotTab) =>
+    setParams(
+      next === "contents" && path ? { snapshot: String(id), tab: next, path } : { snapshot: String(id), tab: next },
+      { replace: true },
+    );
+  // Pushed, not replaced: back and forward walk the files the reviewer visited.
+  const setPath = (id: number, next: string) =>
+    setParams({ snapshot: String(id), tab: "contents", path: next });
+
+  const render = (snapshot: Snapshot, showDelta: boolean) => {
+    const id = snapshot.id ?? 0;
+    // A snapshot deleted or restored from here moves section; pinning it keeps it in view.
+    const pin = () => openSnapshot(id);
+    return snapshot === open ? (
+      <li key={id}>
+        <SnapshotCard
+          snapshot={snapshot}
+          tab={tab}
+          path={path}
+          onTab={(next) => setTab(id, next)}
+          onPath={(next) => setPath(id, next)}
+          others={awaiting.filter((other) => other !== snapshot)}
+          onRetentionChanged={pin}
+        />
+      </li>
+    ) : (
+      <SnapshotLine
+        key={id}
+        snapshot={snapshot}
+        onOpen={pin}
+        showDelta={showDelta}
+        onRetentionChanged={pin}
+      />
+    );
+  };
+
+  const earlierOpen = earlierShown || (open !== undefined && earlier.includes(open));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -384,7 +235,7 @@ export function MarketplaceDetailPage() {
           <CardDescription>
             {serving
               ? "An approved snapshot is being served. Set up a client against it in one step."
-              : "No snapshot has been approved, so the facade has nothing to serve for this marketplace."}
+              : "No snapshot is being served, so the facade has nothing to answer a clone with for this marketplace."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -422,72 +273,65 @@ export function MarketplaceDetailPage() {
           approvers, and the server refuses the read independently. */}
       {isAdmin ? <MarketplaceVettingChain marketplace={marketplace.name ?? ""} /> : null}
 
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Snapshots</h2>
-        {snapshots.length === 0 ? (
+      {snapshots.length === 0 ? (
+        <section aria-labelledby="snapshots-heading" className="space-y-3">
+          <h2 id="snapshots-heading" className="text-lg font-semibold">Snapshots</h2>
           <p className="text-sm text-muted-foreground">No snapshots yet.</p>
-        ) : (
-          snapshots.map((snapshot) => {
-            const id = snapshot.id ?? 0;
-            const open = openSnapshot === id;
-            return (
-              <Card key={id}>
-                <CardContent className="space-y-3 py-4">
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-sm">{snapshot.sha?.slice(0, 12)}</span>
-                    <SnapshotStateBadge state={snapshot.state} />
-                    {snapshot.ingestedBy ? (
-                      <span className="text-xs text-muted-foreground">
-                        ingested by {snapshot.ingestedBy}
-                      </span>
-                    ) : null}
-                    {snapshot.decidedBy ? (
-                      <span className="text-xs text-muted-foreground">
-                        decided by {snapshot.decidedBy}
-                      </span>
-                    ) : null}
-                    <div className="ml-auto flex items-center gap-2">
-                      <RetentionControls snapshot={snapshot} />
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      aria-label={`${open ? "Hide" : "Show"} contents of snapshot ${id}`}
-                      onClick={() => setOpenSnapshot(open ? null : id)}
-                    >
-                      {open ? "Hide contents" : "Show contents"}
-                    </Button>
-                    <Link
-                      to={`/marketplaces/${encodeURIComponent(marketplace.name ?? "")}/snapshots/${id}/files`}
-                      aria-label={`Inspect contents of snapshot ${id}`}
-                      className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-                    >
-                      <FileSearch className="size-4" aria-hidden />
-                      Inspect contents
-                    </Link>
-                  </div>
-                  {snapshot.violation ? (
-                    <p className="text-sm text-destructive">{snapshot.violation}</p>
-                  ) : null}
-                  <Separator />
-                  <RevetPanel snapshot={snapshot} />
-                  <VettingReport snapshotId={id} />
-                  {open ? (
-                    <>
-                      <Separator />
-                      <SnapshotContentView snapshotId={id} />
-                      <Separator />
-                      <SnapshotContentDiff snapshotId={id} />
-                      <Separator />
-                      <SnapshotPreview snapshotId={id} marketplace={marketplace.name ?? ""} />
-                    </>
-                  ) : null}
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </div>
+        </section>
+      ) : (
+        <>
+          <section aria-labelledby="awaiting-heading" className="space-y-3">
+            <h2 id="awaiting-heading" className="text-lg font-semibold">
+              Awaiting decision{awaiting.length > 0 ? ` (${awaiting.length})` : ""}
+            </h2>
+            {awaiting.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nothing awaits a decision.</p>
+            ) : (
+              <ul className="space-y-2">{awaiting.map((snapshot) => render(snapshot, true))}</ul>
+            )}
+          </section>
+
+          <section aria-labelledby="serving-heading" className="space-y-3">
+            <h2 id="serving-heading" className="text-lg font-semibold">Serving</h2>
+            {served ? (
+              <ul className="space-y-2">{render(served, false)}</ul>
+            ) : serving ? (
+              <p className="text-sm text-muted-foreground">
+                The facade serves <span className="font-mono text-foreground">{servedSha.slice(0, 12)}</span>.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground" data-testid="serving-nothing">
+                Nothing is served.
+                {approvedButDark
+                  ? " A snapshot is still recorded approved, but it was withdrawn from the facade — approving is what serves content again."
+                  : ""}
+              </p>
+            )}
+          </section>
+
+          {earlier.length > 0 ? (
+            <section aria-labelledby="earlier-heading" className="space-y-3">
+              <h2 id="earlier-heading" className="text-lg font-semibold">
+                <Button
+                  variant="ghost"
+                  className="-ml-2 px-2 text-lg font-semibold"
+                  aria-expanded={earlierOpen}
+                  onClick={() => setEarlierShown(!earlierOpen)}
+                >
+                  <ChevronRight
+                    className={earlierOpen ? "size-4 rotate-90 transition-transform" : "size-4 transition-transform"}
+                    aria-hidden
+                  />
+                  Earlier snapshots ({earlier.length})
+                </Button>
+              </h2>
+              {earlierOpen ? (
+                <ul className="space-y-2">{earlier.map((snapshot) => render(snapshot, false))}</ul>
+              ) : null}
+            </section>
+          ) : null}
+        </>
+      )}
 
       <MarketplaceAudit name={marketplace.name ?? ""} />
     </div>

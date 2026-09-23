@@ -1,11 +1,9 @@
 package dev.skillsgateway.server.adoption;
 
 import dev.skillsgateway.server.persistence.FetchLogRepository;
-import dev.skillsgateway.server.storage.GitStorage;
+import dev.skillsgateway.server.storage.ServedTip;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -14,8 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Repository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -26,14 +22,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class AdoptionService {
 
-    private static final String SERVED_REF = "refs/heads/main";
-
     private final FetchLogRepository fetchLogRepository;
-    private final GitStorage storage;
+    private final ServedTip servedTip;
 
-    public AdoptionService(FetchLogRepository fetchLogRepository, GitStorage storage) {
+    public AdoptionService(FetchLogRepository fetchLogRepository, ServedTip servedTip) {
         this.fetchLogRepository = fetchLogRepository;
-        this.storage = storage;
+        this.servedTip = servedTip;
     }
 
     /**
@@ -95,26 +89,9 @@ public class AdoptionService {
         return stale;
     }
 
-    /**
-     * The served tip of a marketplace, resolved from the published repository — the same read the
-     * facade serves from, so the report can never disagree with what a {@code git fetch} returns.
-     * Empty when the marketplace is not serving (never published, revoked, or unpublished).
-     */
+    /** The served tip, memoised for one report pass: a marketplace appears on many rows. */
     private Optional<String> servedTip(Map<String, Optional<String>> cache, String marketplace) {
-        return cache.computeIfAbsent(marketplace, name -> {
-            try {
-                Optional<Repository> serving = storage.publishedIfServing(name);
-                if (serving.isEmpty()) {
-                    return Optional.empty();
-                }
-                try (Repository repository = serving.get()) {
-                    ObjectId main = repository.resolve(SERVED_REF);
-                    return Optional.ofNullable(main).map(ObjectId::name);
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
+        return cache.computeIfAbsent(marketplace, servedTip::of);
     }
 
     /** One snapshot SHA's share of a marketplace's adoption over the report window. */

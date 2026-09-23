@@ -2799,6 +2799,8 @@ export interface components {
             pushPolicy?: "append-only" | "allow-rewrite";
             /** @description Identity that registered the marketplace, or null when it was not recorded */
             registeredBy?: string;
+            /** @description Commit the facade is serving for this marketplace right now, read from the published repository's served reference (GW_INGEST_0033). Null when the marketplace serves nothing — which is not the same as having no approved snapshot: a retraction leaves approved records behind while the facade serves none of them. */
+            servedSha?: string;
             /** @description All snapshots of this marketplace, any state */
             snapshots?: components["schemas"]["Snapshot"][];
             /**

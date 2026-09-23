@@ -19,21 +19,20 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
-  describeFourEyesConflicts,
   formatRemaining,
   useDecideSnapshot,
   useIngest,
   useMarketplaces,
-  useProvenance,
   useRegisterMarketplace,
   useSnapshotReleaseAge,
-  useSnapshotFourEyes,
   useSnapshotVetting,
   type MarketplaceView,
   type Snapshot,
 } from "@/api/queries";
 import { Timestamp } from "@/components/timestamp";
-import { OutcomeBadge, VettingReport } from "@/components/vetting-report";
+import { ApproveDialog } from "@/components/approve-dialog";
+import { ProvenanceDetails } from "@/components/provenance-details";
+import { OutcomeBadge } from "@/components/vetting-report";
 import { GATEWAY_NAME, GATEWAY_NAME_HINT, normalizeCloneUrl } from "@/lib/form-rules";
 import { SnapshotStateBadge } from "@/components/snapshot-state";
 import { Badge } from "@/components/ui/badge";
@@ -233,17 +232,8 @@ function RegisterMarketplaceDialog({ existing }: { existing: MarketplaceView[] }
   );
 }
 
-/**
- * What was served, from where, and who approved it — and, for a snapshot with resolved external
- * plugin sources, the closure: each external plugin with the URL it was fetched through and the
- * commit it resolved to, as recorded with the snapshot at ingestion.
- *
- * @Requirements GW_INGEST_0030.5
- */
+/** The list page's provenance, in a dialog; the snapshot card shows the same details in a tab. */
 function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose: () => void }) {
-  const provenance = useProvenance(snapshotId);
-  const p = provenance.data;
-  const members = p?.closure?.members ?? [];
   return (
     <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
       <DialogContent>
@@ -251,150 +241,7 @@ function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose
           <DialogTitle>Provenance of snapshot {snapshotId}</DialogTitle>
           <DialogDescription>What was served, from where, and who approved it.</DialogDescription>
         </DialogHeader>
-        {provenance.isLoading ? <p>Loading…</p> : null}
-        {provenance.isError ? (
-          <p role="alert" className="text-sm text-destructive">
-            {provenance.error.message}
-          </p>
-        ) : null}
-        {p ? (
-          <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
-            <dt className="font-medium">Marketplace</dt>
-            <dd>{p.marketplace}</dd>
-            <dt className="font-medium">Upstream URL</dt>
-            <dd className="break-all">{p.upstreamUrl}</dd>
-            <dt className="font-medium">Upstream SHA</dt>
-            <dd className="font-mono break-all">{p.upstreamSha}</dd>
-            <dt className="font-medium">Served SHA</dt>
-            <dd className="font-mono break-all">{p.sha}</dd>
-            <dt className="font-medium">State</dt>
-            <dd>{p.state}</dd>
-            <dt className="font-medium">Ingested</dt>
-            <dd><Timestamp value={p.ingestedAt} /></dd>
-            <dt className="font-medium">Decided by</dt>
-            <dd>{p.decidedBy ?? "—"}</dd>
-            <dt className="font-medium">Decided at</dt>
-            <dd><Timestamp value={p.decidedAt} /></dd>
-          </dl>
-        ) : null}
-        {members.length > 0 ? (
-          <section aria-labelledby={`closure-${snapshotId}`} className="text-sm">
-            <h3 id={`closure-${snapshotId}`} className="font-medium">
-              External plugin sources
-            </h3>
-            <p className="text-muted-foreground">
-              Resolved at ingestion and recorded with the snapshot; the served commit contains
-              exactly these.
-            </p>
-            <ul className="mt-1 space-y-1">
-              {members.map((member) => (
-                <li key={member.graftPath} className="grid grid-cols-[max-content_1fr] gap-x-4">
-                  <span className="font-medium">{member.pluginName}</span>
-                  <span className="break-all">
-                    <span>{member.cloneUrl}</span>{" "}
-                    <span className="font-mono">{member.resolvedSha}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-/**
- * The review step: the reviewer sees every vetter's verdict and its findings before deciding.
- * A snapshot whose effective outcome is blocked cannot be approved from here at all — the way
- * past it is to accept each blocking finding with a scoped, expiring waiver, recorded from the
- * finding itself in the report below. The server enforces the same rule independently.
- *
- * The cooling-off window is the second reason the confirm button can be shut, and it reads
- * differently on purpose: nothing here can open it, and nothing has to — it opens by itself at the
- * stated time. The server enforces both independently.
- *
- * Separation of duties is the third reason, and the only one the reviewer cannot resolve by doing
- * something to the snapshot: what disqualifies them is what they already did to it. Under warn —
- * the default — it says so and lets them through, because a single-administrator deployment has
- * nobody else to ask; under enforce it shuts the button and names the person who has to press it
- * instead. The server enforces all three independently.
- *
- * @Requirements GW_VETTING_0005, GW_VETTING_0010, GW_APPROVAL_0004.4, GW_APPROVAL_0010, GW_APPROVAL_0011
- */
-function ApproveDialog({ snapshotId, onClose }: { snapshotId: number; onClose: () => void }) {
-  const vetting = useSnapshotVetting(snapshotId);
-  const releaseAge = useSnapshotReleaseAge(snapshotId);
-  const fourEyes = useSnapshotFourEyes(snapshotId);
-  const decide = useDecideSnapshot();
-  const blocked = vetting.data?.outcome === "blocked" || vetting.data?.outcome === undefined;
-  const tooYoung = releaseAge.data?.eligible === false;
-  const remaining = formatRemaining(releaseAge.data?.remainingSeconds ?? 0);
-  const conflicted = (fourEyes.data?.conflicts ?? []).length > 0;
-  const refused = fourEyes.data?.refused === true;
-  const conflictSummary = describeFourEyesConflicts(fourEyes.data);
-
-  return (
-    <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
-      {/* Wider than the default: the review surface carries findings, their locations, and the
-          waiver form beside each one. */}
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Approve snapshot {snapshotId}</DialogTitle>
-          <DialogDescription>
-            Approving publishes this snapshot to the git facade. Review the vetting verdicts first.
-          </DialogDescription>
-        </DialogHeader>
-        <VettingReport snapshotId={snapshotId} />
-        {blocked ? (
-          <p className="text-xs text-muted-foreground">
-            The vetting chain did not clear this snapshot. Waive each blocking finding above — with
-            a justification and an expiry — and the approval unblocks. Every waiver is recorded in
-            the audit ledger with your identity.
-          </p>
-        ) : null}
-        {tooYoung ? (
-          <p className="text-xs text-muted-foreground">
-            This snapshot is inside the cooling-off window: the gateway first ingested its commit
-            less than the configured minimum release age ago. It becomes approvable in {remaining},
-            with nothing to do in the meantime. The age is counted from the gateway's own first
-            sighting, not from the commit's timestamp.
-          </p>
-        ) : null}
-        {conflicted ? (
-          <p
-            role={refused ? "alert" : undefined}
-            className={refused ? "text-xs text-destructive" : "text-xs text-muted-foreground"}
-          >
-            {refused
-              ? `Four-eyes rule: you ${conflictSummary}, so this approval is refused. Someone else with
-                 approval rights in this marketplace has to make the decision — approving content you
-                 supplied yourself is exactly what the rule exists to prevent.`
-              : `Four-eyes rule: you ${conflictSummary}. Approving is still allowed, but this will be
-                 recorded in the audit ledger as a self-approval. An independent reviewer is what the
-                 gate is worth.`}
-          </p>
-        ) : null}
-        <DialogFooter>
-          <Button
-            disabled={decide.isPending || blocked || tooYoung || refused}
-            aria-label={`Confirm approval of snapshot ${snapshotId}`}
-            onClick={() =>
-              decide.mutate(
-                { id: snapshotId, decision: "approve" },
-                {
-                  onSuccess: () => {
-                    toast.success(`Snapshot ${snapshotId} approved`);
-                    onClose();
-                  },
-                  onError: (error) => toast.error(error.message),
-                },
-              )
-            }
-          >
-            {decide.isPending ? "Approving…" : "Approve"}
-          </Button>
-        </DialogFooter>
+        <ProvenanceDetails snapshotId={snapshotId} />
       </DialogContent>
     </Dialog>
   );
