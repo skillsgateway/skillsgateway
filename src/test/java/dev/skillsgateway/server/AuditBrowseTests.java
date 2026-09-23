@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.jayway.jsonpath.JsonPath;
 import io.github.reqstool.annotations.SVCs;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -72,10 +73,30 @@ class AuditBrowseTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_AUDIT_0008"})
     void the_last_page_omits_the_cursor_rather_than_pointing_at_nothing() throws Exception {
         // A page that came back short is the oldest page there is; returning its own last id would
-        // invite a caller to request an empty page forever.
-        mockMvc.perform(get("/api/v1/audit").param("limit", "1000").with(oidcLogin()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nextBefore").doesNotExist());
+        // invite a caller to request an empty page forever. The ledger is shared with every other
+        // test and pages are capped server-side, so follow the cursor to the end: every cursor
+        // must lead to a non-empty page, and the walk must end on a page without one.
+        Long cursor = null;
+        for (int page = 0; page < 1000; page++) {
+            var request = get("/api/v1/audit").param("limit", "1000");
+            if (cursor != null) {
+                request = request.param("before", String.valueOf(cursor));
+            }
+            String body = mockMvc.perform(request.with(oidcLogin()))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+            if (cursor != null) {
+                assertThat(JsonPath.<Integer>read(body, "$.entries.length()")).isPositive();
+            }
+            Map<String, Object> response = JsonPath.read(body, "$");
+            if (!(response.get("nextBefore") instanceof Number next)) {
+                return;
+            }
+            cursor = next.longValue();
+        }
+        throw new AssertionError("the cursor never ran out");
     }
 
     @Test
