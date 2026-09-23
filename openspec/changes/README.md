@@ -21,12 +21,12 @@ at the top of its `proposal.md`, in one paragraph, naming the thing it waits on.
 | Change | State | Waiting on |
 | --- | --- | --- |
 | `corpus-aware-vetting` | parked | **ADR 0015** acceptance, and its four open questions |
-| `invocation-adoption-metrics` | parked | **ADR 0016** acceptance |
+| `invocation-adoption-metrics` | unblocked | #447 (marketplace removal) landing first |
 | `virtual-catalogs` | parked | nothing external — its defect half shipped; the rest is feature work |
 
-Two parked changes, two ADRs sitting at *Proposed*. **The backlog is not
-stalled on capacity. It is stalled on two decisions**, and either can be made
-without writing code.
+ADR 0016 was accepted on 2026-09-23, so one parked change is waiting on
+sequencing, not a decision. **ADR 0015 is the remaining decision**, and it can
+be made without writing code.
 
 `estate-import-export` was the third, and is gone: [ADR 0014 — Estate export](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-estate-import-export.md)
 was rejected, so its change was deleted rather than left parked. An unstarted
@@ -45,9 +45,3 @@ retired the flat sequence. None was ever entered in `docs/reqstool/`, so there
 is nothing to clean up — but each proposal's section 1 still instructs an
 implementer to use the old format, and is wrong.
 
-## One obligation that lives nowhere else
-
-`docs/manual/architecture.md` §9 still offers install-inventory enrichment
-"optionally … with client OTel telemetry", and §13 still lists client telemetry
-inventory. Both are correct **today** and become wrong the moment ADR 0016 is
-accepted. Only `invocation-adoption-metrics`' task list tracks the rewrite.

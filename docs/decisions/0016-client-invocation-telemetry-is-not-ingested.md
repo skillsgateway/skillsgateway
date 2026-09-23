@@ -1,6 +1,6 @@
 # ADR 0016 — Client invocation telemetry is not ingested; the gateway publishes presence instead
 
-*Proposed, 2026-09-08.*
+*Accepted, 2026-09-23. Proposed 2026-09-08.*
 
 ## Context
 
@@ -136,7 +136,9 @@ issue. Rejected. It would be the gateway's **first inbound write path from
 consumers** — today consumers only read, and every write path (registration,
 approval, publication, the machine API) is an operator or publisher behind OIDC or
 a deliberately minted scope. Authentication has no good answer inside the stated
-boundary: the facade is PATs only, the web surface is OIDC only, and the machine
+boundary: the facade is read-only and takes PATs or, where enabled, identity-provider
+bearer tokens ([ADR 0019](0019-facade-accepts-idp-bearer-tokens.md)), the web
+surface is OIDC only, and the machine
 API credential (GW_AUTH_0020–GW_AUTH_0024) was designed for pipelines, minted per concern
 over an allowlist. A telemetry write scope would have to be handed to every
 developer workstation — a standing gateway write credential on every measured
