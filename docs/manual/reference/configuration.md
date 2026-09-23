@@ -11,7 +11,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.webhooks.*`](#webhooks) | Outbound lifecycle-webhook dispatch: poll interval, retry budget and backoff. | No — all defaulted. |
 | [`skills-gateway.audit-export.*`](#audit-export) | Ledger export: the commit-settling lag, batch and page sizes. | No — all defaulted. |
 | [`skills-gateway.retention.*`](#retention) | Snapshot retention policies, the schedules that apply them, and the sweep of abandoned publication staging refs. **Off by default.** | No — all defaulted. |
-| [`skills-gateway.approval.*`](#separation-of-duties-four-eyes) | Separation of duties on approval: whether a reviewer may publish content they themselves supplied. **Records by default; enforcement is opt-in.** | No — all defaulted. |
+| [`skills-gateway.approval.*`](#separation-of-duties-four-eyes) | Separation of duties on approval: whether a reviewer may publish content they themselves supplied (**records by default; enforcement is opt-in**), and the [plugin-name collision](#plugin-name-collisions) rule (**on by default**). | No — all defaulted. |
 | [`skills-gateway.sync.*`](#upstream-sync) | Upstream sync: the polling sweep's schedule and batch, and the inbound webhook body bound. | No — all defaulted. |
 | [`skills-gateway.catalog.*`](#virtual-catalog) | The global virtual catalog and its reserved name. | No — all defaulted. |
 | [`skills-gateway.tokens.*`](#access-tokens) | Access-token policy: the maximum lifetime creation accepts. | No — defaulted (unlimited). |
@@ -903,6 +903,39 @@ refusing content quickly must not need a second pair of eyes.
 
 The rule as part of the approval boundary is described in
 [Approving snapshots](../guides/approving-snapshots.md).
+
+## Plugin-name collisions
+
+Whether an approval is refused when the snapshot introduces a plugin name that
+looks like one another marketplace already serves. Java-side default; nothing
+appears in `application.yaml`.
+
+```yaml
+skills-gateway:
+  approval:
+    name-collision:
+      # true (default): a lookalike of an approved plugin in another marketplace
+      # is refused until a waiver on rule plugin-name-collision covers it.
+      enabled: true
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.approval.name-collision.enabled` | boolean | `true` | `false` refuses nothing and reports nothing. |
+
+On by default, because enabling it withdraws nothing: only names new to a
+marketplace are checked, only the snapshot seeking approval is judged, and an
+estate that already contains lookalikes keeps serving them. What it matches is
+described in
+[Vetting](../concepts/vetting.md#not-a-vetter-either-plugin-names-already-in-use).
+
+!!! warning "Switching it off leaves typosquatting uncovered"
+
+    The switch exists for an estate built on deliberate forks, where every
+    lookalike is legitimate and a refusal would only be waived unread. Anywhere
+    else, accept a fork with a
+    [waiver](../guides/waiving-findings.md#plugin-name-collisions) rather than
+    turning the rule off.
 
 ---
 

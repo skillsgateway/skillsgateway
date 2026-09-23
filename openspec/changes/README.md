@@ -20,13 +20,13 @@ at the top of its `proposal.md`, in one paragraph, naming the thing it waits on.
 
 | Change | State | Waiting on |
 | --- | --- | --- |
-| `corpus-aware-vetting` | queued | #447 landing first — ADR 0015 accepted 2026-09-23; design needs the “new names only” refinement |
 | `invocation-adoption-metrics` | unblocked | #447 (marketplace removal) landing first |
 | `virtual-catalogs` | parked | nothing external — its defect half shipped; the rest is feature work |
 
-Both ADRs that held these changes are accepted (2026-09-23). **Nothing here
-waits on a decision any more**: two changes wait on sequencing, the third on
-there being users who need it.
+The ADR that held this change is accepted (2026-09-23). **Nothing here waits
+on a decision any more**: one change waits on sequencing, the other on there
+being users who need it. `corpus-aware-vetting`, the third, has been built and
+archived.
 
 `estate-import-export` was the third, and is gone: [ADR 0014 — Estate export](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0014-estate-import-export.md)
 was rejected, so its change was deleted rather than left parked. An unstarted

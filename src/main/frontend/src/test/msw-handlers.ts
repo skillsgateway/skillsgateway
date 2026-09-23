@@ -946,6 +946,15 @@ export const handlers = [
   http.get("/api/v1/snapshots/:id/four-eyes", () =>
     HttpResponse.json({ mode: "warn", conflicts: [], refused: false }),
   ),
+  // No plugin name of the default fixture looks like anything another marketplace serves.
+  http.get("/api/v1/snapshots/:id/name-collisions", () =>
+    HttpResponse.json<Schemas["NameCollisionCheck"]>({
+      enabled: true,
+      inventoryAvailable: true,
+      refused: false,
+      collisions: [],
+    }),
+  ),
   http.get("/api/v1/snapshots/:id/fetchers", () => HttpResponse.json(fetchers)),
   http.get("/api/v1/snapshots/:id/content", () => HttpResponse.json(snapshotContent)),
   http.get("/api/v1/snapshots/:id/provenance", () => HttpResponse.json(compositeProvenance)),

@@ -228,7 +228,7 @@ vetters is to accept each blocking finding individually with a
 
 An **administrator** — and only an administrator — can approve a blocked
 snapshot outright, by supplying a mandatory reason. The override lifts only the
-vetting block: the policy, minimum-release-age and four-eyes gates still decide,
+vetting block: the policy, name-collision, minimum-release-age and four-eyes gates still decide,
 and it lands on the ledger as its own event, so it is never indistinguishable
 from an approval the chain cleared. See
 [Administrative override of a blocked outcome](../reference/api/marketplaces.md#administrative-override-of-a-blocked-outcome).
@@ -247,6 +247,43 @@ verdict it would keep blocking after the age had passed, until some later
 re-vetting run happened to replace it. Checked at the approval request instead,
 it clears itself and leaves nothing behind — the same reasoning that makes
 waiver expiry a comparison rather than a state.
+
+### Not a vetter either: plugin names already in use
+
+The gate also refuses a snapshot that would introduce a plugin name looking like
+one another marketplace already serves — the typosquat, `c0de-review` beside
+`code-review`. Every vetter answers a question about the pinned content; this
+asks whether *the rest of the estate* already has something called this, which
+is a fact about now, like the release age. Asked inside the chain it would make a
+verdict depend on an input no run records, and a changed verdict over unchanged
+content would stop meaning that the chain learned something — the property
+[re-vetting](../guides/re-vetting.md) rests on. So a chain run never reads
+the estate, and this is checked at the approval request instead
+([ADR 0015](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md)).
+
+What it compares, deliberately narrowly:
+
+- **Plugin names, never skill names.** Clients reach a skill under its
+  plugin's name, so `init` or `review` in several plugins impersonates nothing.
+- **Only names new to the marketplace.** A name one of the marketplace's
+  earlier approved snapshots already carried is not checked again, so a
+  collision is raised once, when the name first arrives, and accepted once.
+- **Against approved snapshots of other marketplaces.** First come wins: the
+  incumbent is never re-evaluated, and nothing here can withdraw what is
+  already served.
+- **Lookalikes, not near-misses.** Names are compared after Unicode
+  normalisation, the Unicode confusable skeleton (UTS #39 — `0` for `o`, a
+  Cyrillic `о` for a Latin one, `rn` for `m`), case folding and removal of
+  `-`, `_`, `.` and spaces. `Claude-Skills`, `claude_skills`, `claudeskills`
+  and `cIaude-skills` are one name. There is no edit distance: `code-review` and
+  `code-reviews` do not collide.
+
+A refusal is accepted with a waiver on rule `plugin-name-collision` — a fork is
+the legitimate case — and the vetting override does not lift it. Restoring a
+revoked snapshot runs the check again, so one whose name another marketplace
+took while it was revoked needs that waiver first. Two approvals racing each
+other with colliding names cannot both succeed: the second waits for the first
+and is refused as a collision with it.
 
 ## Waivers: accepted risks with a scope and an expiry
 

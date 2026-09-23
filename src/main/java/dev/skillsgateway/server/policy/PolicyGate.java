@@ -10,8 +10,8 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 /**
- * The fail-closed policy gate (GW_APPROVAL_0007): every enabled rule, evaluated over freshly built facts at
- * the moment of approval. A rule that evaluates true denies; a rule that errors denies; facts
+ * The fail-closed policy gate (GW_APPROVAL_0007): every enabled rule, evaluated at the moment of approval
+ * over the facts recorded at ingestion (GW_INGEST_0036), or built then where none were. A rule that evaluates true denies; a rule that errors denies; facts
  * that cannot be built deny every enabled rule — an attacker who can provoke an evaluation error
  * must not thereby switch a rule off. Every denial lands on the append-only ledger (GW_APPROVAL_0008)
  * before the refusal propagates, so the decision is auditable even though nothing was approved.
@@ -38,7 +38,7 @@ public class PolicyGate {
      * them. All deciding rules are reported at once, the vetting gate's "see everything wrong at
      * once" principle.
      */
-    @Requirements({"GW_APPROVAL_0007", "GW_APPROVAL_0008"})
+    @Requirements({"GW_APPROVAL_0007", "GW_APPROVAL_0008", "GW_INGEST_0036"})
     public void enforce(Snapshot snapshot, Marketplace marketplace, String reviewer) {
         List<PolicyRule> enabled = repository.listEnabled();
         if (enabled.isEmpty()) {
@@ -47,7 +47,7 @@ public class PolicyGate {
         Map<String, Object> facts = null;
         String factsError = null;
         try {
-            facts = factsService.build(snapshot, marketplace);
+            facts = factsService.load(snapshot, marketplace);
         } catch (PolicyEvaluationException e) {
             factsError = e.getMessage();
         }

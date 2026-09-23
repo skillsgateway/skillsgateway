@@ -51,6 +51,7 @@ public class ApprovalService {
     private final ClosureCompletenessGate closureGate;
     private final SnapshotClosureRepository closureRepository;
     private final ApplicationEventPublisher events;
+    private final NameCollisionGate nameCollisionGate;
 
     public ApprovalService(
             GitStorage storage,
@@ -68,7 +69,8 @@ public class ApprovalService {
             RevocationReversalRepository revocationReversalRepository,
             ClosureCompletenessGate closureGate,
             SnapshotClosureRepository closureRepository,
-            ApplicationEventPublisher events) {
+            ApplicationEventPublisher events,
+            NameCollisionGate nameCollisionGate) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
@@ -85,6 +87,7 @@ public class ApprovalService {
         this.closureGate = closureGate;
         this.closureRepository = closureRepository;
         this.events = events;
+        this.nameCollisionGate = nameCollisionGate;
     }
 
     /** Ledger event for an approval refused because an administrator had withdrawn the commit. */
@@ -219,7 +222,15 @@ public class ApprovalService {
      * gate (policy, cooling-off, four-eyes) still runs. The admin-only nature of the override is
      * enforced by the caller; this method assumes an override request has already been authorized.
      */
-    @Requirements({"GW_APPROVAL_0002", "GW_APPROVAL_0003", "GW_VETTING_0013", "GW_APPROVAL_0004", "GW_VETTING_0028"})
+    @Requirements({
+        "GW_APPROVAL_0002",
+        "GW_APPROVAL_0003",
+        "GW_VETTING_0013",
+        "GW_APPROVAL_0004",
+        "GW_VETTING_0028",
+        "GW_APPROVAL_0019",
+        "GW_APPROVAL_0019.4"
+    })
     public Approved approve(long snapshotId, String reviewer, ApprovalOverride override) {
         // Observation only (GW_OBSERVABILITY_0003): timing and outcome around the unchanged decision — a
         // vetting-blocked refusal is the observation's error and still propagates untouched.
@@ -283,6 +294,11 @@ public class ApprovalService {
             // that matches, errors, or cannot see the facts refuses the approval, records the
             // decision on the ledger (GW_APPROVAL_0008), and leaves the snapshot held with nothing published.
             policyGate.enforce(current, marketplace, reviewer);
+            // The estate question (GW_APPROVAL_0019), with the content questions and before the wait: it
+            // is actionable — waive it or leave it held — and a waiver it relies on joins the others,
+            // so the four-eyes rule below sees it (GW_APPROVAL_0020). The vetting override above does
+            // not reach it. Re-evaluated authoritatively at the transition below.
+            applied = concat(applied, requireNoNameCollision(current, marketplace, reviewer));
             ingestionAge = requireReleaseAge(current, marketplace, reviewer);
             // Separation of duties last, and after waiver evaluation (GW_APPROVAL_0010): the set of waivers
             // this approval leans on is only known once the effective outcome has been computed,
@@ -291,7 +307,9 @@ public class ApprovalService {
             // with nothing published; in warn mode it returns what it found for the ledger.
             conflicts = requireFourEyes(current, marketplace, applied, reviewer);
         }
-        Snapshot decided = snapshotRepository.decide(snapshotId, Snapshot.APPROVED, reviewer);
+        Snapshot decided = current.decidable()
+                ? decideGuarded(current, marketplace, reviewer)
+                : snapshotRepository.decide(snapshotId, Snapshot.APPROVED, reviewer);
         String sha = decided.sha();
         try {
             // Publication is one seam operation (GW_FACADE_0015): both served references land or neither
@@ -519,6 +537,73 @@ public class ApprovalService {
     }
 
     /**
+     * The name-collision gate (GW_APPROVAL_0019), with its refusal on the ledger before it is raised
+     * (GW_APPROVAL_0021).
+     *
+     * @return the waivers it relied on
+     */
+    @Requirements({"GW_APPROVAL_0019", "GW_APPROVAL_0020", "GW_APPROVAL_0021"})
+    private List<WaiverEvaluation.Suppression> requireNoNameCollision(
+            Snapshot snapshot, Marketplace marketplace, String reviewer) {
+        try {
+            return nameCollisionGate.require(snapshot, marketplace).suppressions();
+        } catch (NameCollisionException | PluginInventoryUnavailableException refused) {
+            recordNameCollisionRefusal(snapshot, marketplace, reviewer, refused);
+            throw refused;
+        }
+    }
+
+    /**
+     * The transition, inside the transaction that re-asks the name-collision question under the
+     * approvals' lock (GW_APPROVAL_0019.3). A refusal there is ledgered here, after the rollback, so the
+     * entry is not rolled back with it.
+     */
+    @Requirements({"GW_APPROVAL_0019.3", "GW_APPROVAL_0021"})
+    private Snapshot decideGuarded(Snapshot current, Marketplace marketplace, String reviewer) {
+        try {
+            return nameCollisionGate.guarded(
+                    current, () -> snapshotRepository.decide(current.id(), Snapshot.APPROVED, reviewer));
+        } catch (NameCollisionException | PluginInventoryUnavailableException refused) {
+            recordNameCollisionRefusal(current, marketplace, reviewer, refused);
+            throw refused;
+        }
+    }
+
+    private void recordNameCollisionRefusal(
+            Snapshot snapshot, Marketplace marketplace, String reviewer, RuntimeException refused) {
+        String detail = refused instanceof NameCollisionException collision
+                ? NameCollisionGate.RULE_ID + ": " + NameCollisionException.describe(collision.collisions())
+                : "plugin-inventory-unavailable: the plugin names could not be read";
+        auditLogger.record(reviewer, marketplace.name(), EVENT_REFUSED, snapshot.sha(), detail);
+    }
+
+    private static List<WaiverEvaluation.Suppression> concat(
+            List<WaiverEvaluation.Suppression> first, List<WaiverEvaluation.Suppression> second) {
+        if (second.isEmpty()) {
+            return first;
+        }
+        List<WaiverEvaluation.Suppression> all = new java.util.ArrayList<>(first);
+        all.addAll(second);
+        return List.copyOf(all);
+    }
+
+    /**
+     * What the name-collision rule would say about approving this snapshot now, deciding nothing
+     * (GW_APPROVAL_0021): the same evaluation an approval runs.
+     */
+    @Requirements({"GW_APPROVAL_0021"})
+    public Optional<NameCollisionGate.Check> nameCollisions(long snapshotId) {
+        return snapshotRepository
+                .findById(snapshotId)
+                .map(snapshot -> nameCollisionGate.evaluate(
+                        snapshot,
+                        marketplaceRepository
+                                .findById(snapshot.marketplaceId())
+                                .orElseThrow(() -> new ApprovalException(
+                                        "marketplace %d not found".formatted(snapshot.marketplaceId())))));
+    }
+
+    /**
      * The four-eyes gate, with a refusal appended to the ledger before it is raised - for the same
      * reason the cooling-off refusal is: a control that turns approvals away invisibly cannot be
      * audited, and a refused self-approval is the one event an operator most needs to see.
@@ -549,8 +634,11 @@ public class ApprovalService {
         return snapshotRepository.findById(snapshotId).map(snapshot -> {
             Marketplace marketplace =
                     marketplaceRepository.findById(snapshot.marketplaceId()).orElse(null);
-            List<WaiverEvaluation.Suppression> applied =
-                    snapshot.decidable() ? waiverService.evaluate(snapshot).suppressions() : List.of();
+            List<WaiverEvaluation.Suppression> applied = snapshot.decidable() && marketplace != null
+                    ? concat(
+                            waiverService.evaluate(snapshot).suppressions(),
+                            nameCollisionGate.evaluate(snapshot, marketplace).suppressions())
+                    : List.of();
             List<FourEyesConflictException.Conflict> conflicts =
                     fourEyesGate.conflicts(snapshot, marketplace, applied, reviewer);
             return new FourEyesGate.FourEyesCheck(

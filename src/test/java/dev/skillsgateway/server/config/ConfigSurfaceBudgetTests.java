@@ -62,7 +62,9 @@ class ConfigSurfaceBudgetTests {
     // 107 since bound-ledger-growth: `retention.ledger-max-age`, the one policy in that change an
     // operator has an opinion about. Its chunk size and work budget are constants for that reason.
     // The argument the ratchet asks for is in that change's proposal, under Impact.
-    private static final int BUDGET = 107;
+    // 108 since corpus-aware-vetting: `approval.name-collision.enabled`. The argument the ratchet
+    // asks for is in that change's proposal, under "Why the surface grows".
+    private static final int BUDGET = 108;
 
     /** Where the measured breakdown is written, so a run's numbers survive for a PR body. */
     private static final Path REPORT = Path.of("target", "config-surface.txt");

@@ -96,16 +96,19 @@ function defaultExpiry() {
  * the tightest option — because a path waiver survives re-ingestion and covers content that does
  * not exist yet.
  */
-function WaiveForm({
+export function WaiveForm({
   snapshotId,
   finding,
   onDone,
   onCancel,
+  snapshotOnly = false,
 }: {
   snapshotId: number;
   finding: VettingFinding;
   onDone: () => void;
   onCancel: () => void;
+  /** Offer only this snapshot as the scope — for a rule whose path scope would cover a whole marketplace. */
+  snapshotOnly?: boolean;
 }) {
   const create = useCreateWaiver();
   const [scope, setScope] = useState<WaiverScope>("snapshot");
@@ -138,7 +141,9 @@ function WaiveForm({
             onChange={(event) => setScope(event.target.value as WaiverScope)}
           >
             <option value="snapshot">This snapshot only</option>
-            <option value="path">This path in the marketplace ({path || "—"})</option>
+            {snapshotOnly ? null : (
+              <option value="path">This path in the marketplace ({path || "—"})</option>
+            )}
           </select>
         </div>
         <div className="space-y-1">

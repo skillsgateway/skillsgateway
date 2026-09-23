@@ -216,7 +216,9 @@ The threats that matter here are the ones no scanner catches:
     snapshot the gateway would refuse — vetting blocked it, it is inside the
     minimum release age, or the four-eyes rule refuses you — has **Approve**
     disabled with the reason beside it; waive each blocking finding in the
-    **Vetting** tab and it unblocks.
+    **Vetting** tab and it unblocks. A
+    [plugin-name collision](#plugin-names-already-in-use) is shown, and waived,
+    in the dialog itself.
 
     When another snapshot also awaits a decision, the card names it. Approving
     this one does not retire it: it stays held, and approving an older one
@@ -246,7 +248,7 @@ already approved keeps serving.
 | --- | --- |
 | 200 | Decided. |
 | 404 | Unknown snapshot. |
-| 409 | The snapshot is neither `held` nor `revoked`, its effective vetting outcome is blocked (see `uncoveredFindings`), a [policy rule](policy-rules.md) denied it, it has not yet cleared the [minimum release age](#waiting-out-the-minimum-release-age), or an enforcing [four-eyes rule](#separation-of-duties) refused it (see `conflicts`). |
+| 409 | The snapshot is neither `held` nor `revoked`, its effective vetting outcome is blocked (see `uncoveredFindings`), a [policy rule](policy-rules.md) denied it, a plugin name it introduces [looks like one already served](#plugin-names-already-in-use) (see `collisions`), it has not yet cleared the [minimum release age](#waiting-out-the-minimum-release-age), or an enforcing [four-eyes rule](#separation-of-duties) refused it (see `conflicts`). |
 
 !!! warning "An approved snapshot cannot be re-decided"
 
@@ -326,6 +328,40 @@ A refused approval answers with the same list in its problem document, under
     marketplace that needs deciding a second identity with approval rights —
     a second admin, or an approver scoped to it under
     [delegated administration](delegated-administration.md) — before switching.
+
+## Plugin names already in use
+
+A snapshot that introduces a plugin name looking like one another marketplace
+already serves — `c0de-review` arriving beside an approved `code-review` — is
+refused until the collision is accepted. It is the typosquat check: case,
+separators and Unicode lookalikes are folded away before names are compared, so
+`Claude-Skills` and `cIaude_skills` are the same name.
+
+The approve dialog lists each colliding name with the incumbent it resembles;
+the API answers `409` with `collisions`, and
+`GET /api/v1/snapshots/{id}/name-collisions` answers the same question without
+deciding anything. What to do:
+
+- **An impersonation, or a name you cannot account for** — reject the snapshot.
+- **A fork or vendored copy you recognise** — record a
+  [waiver on `plugin-name-collision`](waiving-findings.md#plugin-name-collisions)
+  for this snapshot, and approve.
+
+Four things about it are worth knowing.
+
+- **The name is checked once.** Once a marketplace has an approved snapshot
+  carrying a name, its later snapshots are not checked for that name again.
+- **The incumbent is never touched.** First come wins: nothing here withdraws or
+  re-checks what is already served.
+- **Only plugin names are compared.** Skill names such as `init` or `review`
+  recur across plugins legitimately and never collide.
+- **Re-approving a revoked snapshot checks again**, against the estate as it is
+  then. If another marketplace acquired a lookalike name meanwhile, the restore
+  needs a waiver.
+
+The refusal is on the [audit ledger](../concepts/snapshots-and-ledger.md) as
+`snapshot-approval-refused` with the detail `plugin-name-collision: …`, and an
+accepted collision as the `waiver-applied` entry of the waiver that covered it.
 
 ## Waiting out the minimum release age
 

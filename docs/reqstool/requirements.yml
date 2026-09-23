@@ -2248,3 +2248,91 @@ requirements:
     rationale: "The check answers questions about the served estate to anyone holding a token, so every answer it gives is a disclosure decision. GW_AUTH_0006 already settled the shape for the fetch path — out of scope answers exactly like not found, so a leaked token limited to one marketplace cannot double as a directory of what else the gateway governs — and a second surface answering the same question differently would undo it; stating the rule here rather than restating the reasoning is what keeps the two from drifting apart. Collapsing never-held, no-longer-recorded and never-approved into one answer is the same decision applied to commits: distinguishing them would let a caller probe the ingestion and retention history of content it was never served. The consequence is that the negative answer means only the absence of a statement, which is why it must be stated as such and why it cannot be read as a pass — a holder that treats it as one has inverted the safe direction, and the meaning is part of the contract rather than a note for a client author. The reason is withheld because it is mandatory on a revocation and routinely names an undisclosed vulnerability or a compromised maintainer; an identity entitled to it reads it from the ledger, which is an auditor's read."
     categories: ["security"]
     revision: 0.1.0
+
+  - id: GW_INGEST_0036
+    title: Snapshot facts are recorded once, at ingestion
+    significance: shall
+    description: "The system shall record, when it ingests a snapshot that is held for review, the facts the policy gate evaluates over and an index of the plugin names the snapshot's manifest declares together with where each is declared; shall write each snapshot's record at most once and never rewrite it; shall not record the snapshot's state among those facts but supply its current state whenever the facts are read; shall let a failure to build the facts neither fail the ingestion nor be recorded as the snapshot's facts; and shall have the policy gate and the rule playground read the recorded facts, building them only where none were recorded, with the same outcome a rule reached when the facts were built at the moment of approval."
+    references:
+      requirement_ids: ["GW_APPROVAL_0007"]
+    rationale: "Every question the gateway could ask about a snapshot's content was a walk of its git tree whose answer was discarded when the call returned, so there was nothing to ask a question of the approved estate with. The facts are a pure function of the pinned commit, which is what makes recording them once correct and rewriting them never necessary; the state is the one value that is not, and freezing it would hand a rule a stale answer to the question it is most likely to ask. A failure is not recorded because a transient storage error would then become a permanent one, while a deterministic one — an inventory over its bound — recurs identically when the facts are rebuilt."
+    categories: ["functional-suitability", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0019
+    title: Approval is refused on a normalised plugin-name collision with the approved estate
+    significance: shall
+    description: "The system shall, when a snapshot's approval is requested, refuse it when a plugin name the snapshot declares collides with a plugin name of an approved snapshot of another marketplace, as a precondition evaluated at the request after the policy gate and before any state transition; shall name in the refusal each colliding name, where the snapshot declares it, and the marketplace and snapshot of each incumbent; shall refuse, distinctly from a collision, a snapshot whose plugin inventory cannot be read; shall evaluate this precondition only at an approval request and never in a vetting chain run or re-vetting sweep; and shall apply it unless an operator has switched it off in configuration."
+    rationale: "Typosquatting is the one threat the gateway had no control for, and the question it needs — is there already something called this — is about the rest of the estate rather than about the bytes in front of it. Asked at the approval request, it is a fact about now that gates the decision before anything is published; asked in the chain, it would make a verdict depend on an input nobody recorded. An unreadable inventory cannot be shown not to collide, so it refuses, and it says so rather than reporting a collision that nobody found. The switch exists for an estate of deliberate forks that would rather have no control than one reviewers learn to waive unread."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0019.1
+    title: Plugin names are compared by exact match of normalised keys
+    significance: shall
+    description: "The system shall reduce each plugin name to its keys by Unicode compatibility normalisation, removal of invisible format characters, the confusable skeleton of Unicode Technical Standard 39 applied together with case folding until the key no longer changes — once with the skeleton applied first and once with case folding applied first — and removal of hyphens, underscores, full stops and whitespace, from a confusables table vendored with the gateway; and shall treat two names as colliding when, and only when, they share a key, with no measure of distance between names."
+    references:
+      requirement_ids: ["GW_APPROVAL_0019"]
+    rationale: "Normalisation and confusable folding match pairs that are the same name in any practical namespace — a digit for a letter, a Cyrillic letter for a Latin one, a separator added or dropped — and so need no evidence about false positives. Edit distance does: its false-positive rate grows with the estate, so the control would become noisier exactly as it became more useful, and no measurement of that rate exists. Two orders are needed because the table reads a capital I as a lower-case l, so whether a capital is folded before or after the skeleton decides whether cIaude or CLAUDE matches claude; each order is exact, and a name with no capitals has one key. A vendored table keeps the keys reproducible from the repository alone."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0019.2
+    title: Only plugin names new to the marketplace are checked, and the incumbent is never touched
+    significance: shall
+    description: "The system shall check a plugin name only when no other approved, non-deleted snapshot of the same marketplace carries a name with the same key; shall compare it only with plugin names of approved, non-deleted snapshots of other marketplaces; shall never compare skill names; and shall never revoke, re-evaluate or otherwise change an already-approved snapshot because of a collision."
+    references:
+      requirement_ids: ["GW_APPROVAL_0019"]
+    rationale: "Typosquatting has an incumbent and a newcomer, and the incumbent is the victim, so the check belongs to the snapshot seeking admission and never to the estate already served — which is also what makes it safe to enable over an estate that already contains collisions. Checking only names new to the marketplace means a collision is raised once and accepted once rather than at every ingestion, and a plugin arriving elsewhere later never re-flags one already approved. Skill names are addressed under their plugin's name, so the same skill name in two plugins is common and impersonates nothing."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0019.3
+    title: Concurrent approvals cannot both admit a colliding name
+    significance: shall
+    description: "The system shall evaluate the name-collision precondition a final time within the same atomic step that records an approval, serialised against every other approval, so that of two approvals requested at the same time for snapshots whose names collide at most one is recorded, and the other is refused as a collision with it."
+    references:
+      requirement_ids: ["GW_APPROVAL_0019"]
+    rationale: "A precondition that depends on other rows is only as good as the moment it is read: two approvals that each read the estate before the other is recorded would both pass, and the collision the control exists to prevent would be admitted by the race it did not see. Serialising the final evaluation with the transition makes the first approval win deterministically, rather than leaving both refused or both admitted."
+    categories: ["security", "reliability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0019.4
+    title: Restoring a revoked snapshot re-runs the check
+    significance: shall
+    description: "The system shall evaluate the name-collision precondition when a revoked snapshot is approved again, against the estate as it stands at that request, exactly as for a held snapshot."
+    references:
+      requirement_ids: ["GW_APPROVAL_0019"]
+    rationale: "A revoked snapshot is not part of the served estate, so another marketplace may have acquired one of its names in the meantime; restoring it without asking again would re-admit content past a check that ran when the estate looked different. The cost, accepted deliberately, is that a snapshot can become unrestorable through no act of its own until the collision is waived."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0020
+    title: A name-collision refusal is lifted only by a scoped, expiring waiver
+    significance: shall
+    description: "The system shall let an approval proceed past a name collision only when an active waiver of the snapshot's marketplace names the name-collision rule and a scope that covers the collision's location, exactly as a waiver covers a vetting finding; shall report every waiver it relied on with the approval so that it reaches the ledger and the four-eyes rule as any other waiver does; and shall not let the administrative override of a blocked vetting outcome lift a name-collision refusal."
+    references:
+      requirement_ids: ["GW_APPROVAL_0019", "GW_VETTING_0007", "GW_VETTING_0028"]
+    rationale: "The real false positive is a legitimate fork, and a refusal with no acceptance would make one unapprovable; the waiver is already the gateway's single act of accepting a named risk — one rule, one marketplace, one scope, one expiry, a justification and an approver — so a second acceptance concept would only be a second thing to audit. The override is scoped to the vetting block and stays so, as it does for the policy, release-age and four-eyes gates."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0021
+    title: Name collisions are shown to the reviewer and recorded on the ledger
+    significance: shall
+    description: "The system shall report, for a snapshot and without deciding anything, the name collisions an approval would meet — each colliding name, where it is declared, its incumbents, and whether an active waiver covers it — so the reviewer can see and waive them before approving; and shall append a refusal on account of a name collision to the audit ledger before the refusal is returned."
+    references:
+      requirement_ids: ["GW_APPROVAL_0019"]
+    rationale: "A reviewer who meets an unexplained refusal suspects a defect and looks for a way round it; one who is shown which name collides with what, before pressing approve, has what they need to decide whether it is a fork or an impersonation. A refusal that left no trace would make the control unauditable, which is why every refusing gate records itself."
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0039
+    title: Corpus state is never an input to a vetting chain run
+    significance: shall
+    description: "The system shall produce each vetting chain run from the snapshot's pinned content and the chain's identity alone, so that a run over unchanged content by an unchanged chain records the same chain and the same verdicts whatever other snapshots have been approved, revoked or removed in the meantime."
+    references:
+      requirement_ids: ["GW_VETTING_0012"]
+    rationale: "Continuous re-vetting is worth running only because a changed verdict over unchanged content means the chain learned something; a third, unrecorded input would make it mean nothing in particular. Written down rather than left to the shape of the code so that a change handing a vetter a question about the estate is caught as a breach, not reviewed as a reasonable improvement."
+    categories: ["security", "reliability"]
+    revision: 0.1.0
