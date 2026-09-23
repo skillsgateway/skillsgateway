@@ -2718,7 +2718,10 @@ clicking or curling anything into being.</p>
   be overridden; declared grants pass the exact grant validation.</li>
 <li><strong>Additive, never destructive.</strong> Removing a line deregisters nothing. There
   is no prune mode: retracting content teams depend on is an explicit human
-  action, never a side effect of a deploy.</li>
+  action, never a side effect of a deploy. <a href="../registering-a-marketplace/#removing-a-marketplace">Removing a
+  marketplace</a> is such an
+  act, and API-only; remove its declaration first, or the next reconciliation
+  registers the name again as a new marketplace.</li>
 <li><strong>Idempotent.</strong> Only differences are applied. A converged estate reconciles
   with zero writes and zero ledger entries — booting twice writes nothing
   twice.</li>
@@ -2844,10 +2847,10 @@ the same need with the same validation and no credential to steal. This is the
 sharpest case of the rule above rather than an exception to it.</p>
 <div class="admonition note">
 <p class="admonition-title">A provider cannot converge a marketplace's whole lifecycle</p>
-<p>There is no <code>PUT</code> or <code>DELETE /api/v1/marketplaces/{name}</code> — registration
-exists, deregistration does not — so <code>terraform destroy</code> has nothing to
-call. That is a pre-existing gap in the API rather than something machine
-credentials introduce, but a provider author meets it immediately.</p>
+<p><code>DELETE /api/v1/marketplaces/{name}</code> exists, but no machine scope reaches it:
+it withdraws served content, and that takes a person with a reason. So
+<code>terraform destroy</code> still has nothing it may call, and there is no <code>PUT</code> —
+a marketplace's URL is immutable.</p>
 </div>
 <h2 id="what-stays-interactive-and-drift">What stays interactive, and drift<a class="headerlink" href="#what-stays-interactive-and-drift" title="Permanent link">&para;</a></h2>
 <p>Personal access tokens are user-owned credentials and stay API-only by

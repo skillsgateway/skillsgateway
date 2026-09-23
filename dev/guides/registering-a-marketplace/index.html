@@ -1068,6 +1068,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#removing-a-marketplace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removing a marketplace
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#forge-metadata" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2580,6 +2591,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#removing-a-marketplace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removing a marketplace
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#forge-metadata" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2760,6 +2782,41 @@ ingest endpoint:</p>
 what clients receive. Ingesting frequently costs quarantine storage, never
 availability.</p>
 </div>
+<h2 id="removing-a-marketplace">Removing a marketplace<a class="headerlink" href="#removing-a-marketplace" title="Permanent link">&para;</a></h2>
+<p>A marketplace registered with a typo, one whose upstream is abandoned, and one
+whose upstream moved all end the same way: remove it, and register again if
+there is anything to register.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>-u<span class="w"> </span>...<span class="w"> </span>https://skills.corp.example/api/v1/marketplaces/acme<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"reason":"upstream moved"}'</span>
+</code></pre></div>
+<p>Removal withdraws everything the marketplace serves and stops it being synced or
+fetched, but keeps its snapshots and their history. It is API-only and needs an
+administrator; see the <a href="../../reference/api/marketplaces/#delete-marketplacesname">reference</a>.</p>
+<p><strong>An upstream that moved.</strong> The URL cannot be changed — that would relabel the
+provenance of content already approved from somewhere else — so remove the
+marketplace and register the same name against the new URL. Clients keep their
+clone URL. They see nothing served until a snapshot of the new upstream is
+approved: the old approvals were decisions about a different upstream and do not
+carry over.</p>
+<div class="admonition warning">
+<p class="admonition-title">What carries over, and what does not</p>
+<ul>
+<li><strong>Fetch grants carry over.</strong> A token scoped to fetch <code>acme</code> fetches
+  whichever marketplace is called <code>acme</code> now. That is what keeps clients
+  working; revoke a token that should not reach the new one.</li>
+<li><strong>Publication grants do not.</strong> Removal takes <code>acme</code> out of every token's
+  push scope, and the ledger names the tokens. A publisher of the new <code>acme</code>
+  needs a token granted on it.</li>
+<li><strong>Approver grants do not.</strong> Grant again on the new marketplace.</li>
+<li><strong>The declarative estate does, unless you change it.</strong> A marketplace still
+  declared in <code>skills-gateway.estate.marketplaces</code> is registered again, as a
+  new marketplace, on the next reconciliation. Remove the declaration first.</li>
+</ul>
+<p>The removed marketplace's vetter toggles and chain settings are kept in the
+database but no longer listed; set them again on the new marketplace.</p>
+</div>
+<p>The ledger tells the two apart: every entry carries <code>marketplaceId</code> beside the
+name. See <a href="../../reference/api/audit/#entry-fields">Audit ledger</a>.</p>
 <h2 id="forge-metadata">Forge metadata<a class="headerlink" href="#forge-metadata" title="Permanent link">&para;</a></h2>
 <p>Registration captures forge, project, description and last-upstream-update on a
 best-effort basis. It is displayed on the marketplace detail page and is

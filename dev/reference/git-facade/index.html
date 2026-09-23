@@ -2870,6 +2870,9 @@ the web surface only an interactive session.</p>
 </table>
 <p><code>HEAD</code> is advertised too, because a clone reads it to learn which branch to check
 out.</p>
+<p>Only a registered marketplace is served. A <a href="../api/marketplaces/#delete-marketplacesname">removed</a>
+marketplace answers as an unknown one does, whatever its published repository
+still holds.</p>
 <p>This is an <strong>allowlist</strong>, not a description of what the repositories happen to
 contain. Upload-pack advertises every ref it can see unless told otherwise, and
 every advertised tip is a legal <code>want</code>, so the facade states its surface
@@ -2949,7 +2952,10 @@ it — see
 entries written before this behaviour shipped record.</p>
 <h2 id="checking-content-you-already-hold">Checking content you already hold<a class="headerlink" href="#checking-content-you-already-hold" title="Permanent link">&para;</a></h2>
 <p>Withdrawing a snapshot removes it from the served refs; it does not reach a
-machine that cloned it earlier. <code>POST /status/v1/snapshots</code> is what such a machine
+machine that cloned it earlier. Removing a marketplace withdraws each of its
+approved snapshots the same way, so a holder asks the same question and is told
+<code>revoked</code> — unless the name has since been registered again and the new
+marketplace has approved the same commit. <code>POST /status/v1/snapshots</code> is what such a machine
 asks.</p>
 <p>It is not under <code>/git/</code>, because that prefix is a JGit servlet mapping and no
 JSON endpoint is reachable beneath it. It is not under <code>/api/v1/</code> either, because

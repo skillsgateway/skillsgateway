@@ -2707,6 +2707,10 @@ polling, batch payload, signature, replay — is in
 <td>The marketplace name, or <code>-</code> when not marketplace-scoped.</td>
 </tr>
 <tr>
+<td><code>marketplaceId</code> / <code>marketplace_id</code></td>
+<td>Id of the marketplace the entry concerns, or null when it concerns none (GW_AUDIT_0009). A <a href="../marketplaces/#delete-marketplacesname">removed</a> marketplace's name can be registered again, so the name alone does not say which marketplace an entry meant; the id does. Not a foreign key: the removed marketplace's record is kept, but the ledger does not depend on it. On <code>GET /api/v1/audit</code> and in the export.</td>
+</tr>
+<tr>
 <td><code>event</code></td>
 <td>What happened — see below.</td>
 </tr>
@@ -2844,6 +2848,16 @@ the acting OIDC principal.</p>
 <td><code>machine-credential-revoked</code></td>
 <td>A machine API credential was revoked.</td>
 <td><code>credential {id} '{name}' principal=…</code>.</td>
+</tr>
+<tr>
+<td><code>marketplace-removed</code></td>
+<td>A marketplace was <a href="../marketplaces/#delete-marketplacesname">removed</a>. Its withdrawals follow as <code>snapshot-revoked</code> and <code>snapshot-unpublished</code>.</td>
+<td><code>withdrew {n} approved snapshot(s); reason: …</code>.</td>
+</tr>
+<tr>
+<td><code>marketplace-push-scopes-removed</code></td>
+<td>The same removal took the name out of tokens' publication grants. Written only when a token held one.</td>
+<td><code>tokens=[{id}, …]</code>.</td>
 </tr>
 </tbody>
 </table>

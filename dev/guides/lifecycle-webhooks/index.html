@@ -2841,11 +2841,13 @@ its ingestion, and which vetters run against it. They carry
 <td><code>marketplace.vetter_toggled</code></td>
 <td>A vetter was enabled or disabled, for one marketplace or across the gateway.</td>
 </tr>
+<tr>
+<td><code>marketplace.removed</code></td>
+<td>A marketplace was <a href="../registering-a-marketplace/#removing-a-marketplace">removed</a>. The detail says how many approved snapshots it withdrew, never the reason; each withdrawal is also announced as <code>marketplace.snapshot.revoked</code>.</td>
+</tr>
 </tbody>
 </table>
-<p>Those are all of them. There is no <code>marketplace.removed</code>: the gateway has no
-deregistration — there is no <code>DELETE /api/v1/marketplaces/{name}</code> — so there is
-nothing for it to announce.</p>
+<p>Those are all of them.</p>
 <p>An action taken by a scheduled pass rather than by a person carries a policy
 actor — <code>retention-policy</code> for deletions, <code>revet-policy</code> for re-vetting — so a
 receiver can tell the two apart. See
