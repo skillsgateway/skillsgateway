@@ -4,6 +4,7 @@ import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.catalog.CatalogService;
 import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.Marketplace;
+import dev.skillsgateway.server.persistence.MarketplaceRemovedException;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotClosureRepository;
@@ -235,6 +236,11 @@ public class ApprovalService {
                 .findById(current.marketplaceId())
                 .orElseThrow(
                         () -> new ApprovalException("marketplace %d not found".formatted(current.marketplaceId())));
+        // Before any gate writes to the ledger (GW_INGEST_0034): a removed marketplace has nothing to
+        // publish into. SnapshotRepository.decide re-checks under a lock, which is the guarantee.
+        if (marketplaceRepository.removed(marketplace.id())) {
+            throw new MarketplaceRemovedException(snapshotId);
+        }
         List<WaiverEvaluation.Suppression> applied = List.of();
         List<FourEyesConflictException.Conflict> conflicts = List.of();
         Duration ingestionAge = Duration.ZERO;

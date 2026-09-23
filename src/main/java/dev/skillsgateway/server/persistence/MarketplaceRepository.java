@@ -64,13 +64,20 @@ public class MarketplaceRepository {
     /** Forge metadata captured best-effort at registration. */
     public record ForgeMetadata(String forge, String project, String description, Instant updatedAt) {}
 
+    /**
+     * The live marketplace of a name. Every name-addressed read filters out removed marketplaces
+     * (GW_INGEST_0034): the name is how the facade, sync, push and every {@code /marketplaces/{name}}
+     * route reach a marketplace, so this one predicate is what takes a removed one out of all of them.
+     */
+    @Requirements({"GW_INGEST_0034"})
     public Optional<Marketplace> findByName(String name) {
-        return jdbc.sql("SELECT * FROM marketplaces WHERE name = :name")
+        return jdbc.sql("SELECT * FROM marketplaces WHERE name = :name AND deleted_at IS NULL")
                 .param("name", name)
                 .query(Marketplace.class)
                 .optional();
     }
 
+    /** Any marketplace, removed or not: a snapshot's provenance must outlive its marketplace's removal. */
     public Optional<Marketplace> findById(long id) {
         return jdbc.sql("SELECT * FROM marketplaces WHERE id = :id")
                 .param("id", id)
@@ -79,7 +86,7 @@ public class MarketplaceRepository {
     }
 
     public List<Marketplace> list() {
-        return jdbc.sql("SELECT * FROM marketplaces ORDER BY name")
+        return jdbc.sql("SELECT * FROM marketplaces WHERE deleted_at IS NULL ORDER BY name")
                 .query(Marketplace.class)
                 .list();
     }
@@ -92,7 +99,7 @@ public class MarketplaceRepository {
     @Requirements({"GW_INGEST_0010", "GW_FACADE_0009"})
     public Optional<Marketplace> updateSyncMode(String name, String mode, String webhookSecret) {
         return jdbc.sql("UPDATE marketplaces SET sync_mode = :mode::marketplace_sync_mode, webhook_secret = :secret"
-                        + " WHERE name = :name RETURNING *")
+                        + " WHERE name = :name AND deleted_at IS NULL RETURNING *")
                 .param("mode", mode)
                 .param("secret", webhookSecret)
                 .param("name", name)
@@ -102,7 +109,8 @@ public class MarketplaceRepository {
 
     /** The HMAC key for the inbound webhook; empty when the marketplace is not in webhook mode. */
     public Optional<String> webhookSecret(String name) {
-        return jdbc.sql("SELECT webhook_secret FROM marketplaces WHERE name = :name AND webhook_secret IS NOT NULL")
+        return jdbc.sql("SELECT webhook_secret FROM marketplaces WHERE name = :name AND deleted_at IS NULL"
+                        + " AND webhook_secret IS NOT NULL")
                 .param("name", name)
                 .query(String.class)
                 .optional();
@@ -111,7 +119,7 @@ public class MarketplaceRepository {
     /** The scheduled sweep's queue: scheduled marketplaces, least recently attempted first (GW_INGEST_0011). */
     @Requirements({"GW_INGEST_0011"})
     public List<Marketplace> dueScheduledSync(int limit) {
-        return jdbc.sql("SELECT * FROM marketplaces WHERE sync_mode = 'scheduled'"
+        return jdbc.sql("SELECT * FROM marketplaces WHERE sync_mode = 'scheduled' AND deleted_at IS NULL"
                         + " ORDER BY last_sync_at ASC NULLS FIRST, id ASC LIMIT :limit")
                 .param("limit", limit)
                 .query(Marketplace.class)
@@ -124,5 +132,42 @@ public class MarketplaceRepository {
                 .param("now", OffsetDateTime.now())
                 .param("id", id)
                 .update();
+    }
+
+    /**
+     * Retires a live marketplace (GW_INGEST_0034). Conditional on the row still being live, so of two
+     * concurrent removals exactly one wins; the row lock this update takes is also what an approval's
+     * decision waits on (see {@code SnapshotRepository.decide}).
+     *
+     * @return when the removal was recorded, or empty when the marketplace was no longer live
+     */
+    @Requirements({"GW_INGEST_0034"})
+    public Optional<Instant> retire(long id, String actor, String reason) {
+        return jdbc.sql("UPDATE marketplaces SET deleted_at = :now, deleted_by = :actor, deleted_reason = :reason"
+                        + " WHERE id = :id AND deleted_at IS NULL RETURNING deleted_at")
+                .param("now", OffsetDateTime.now())
+                .param("actor", actor)
+                .param("reason", reason)
+                .param("id", id)
+                .query(Instant.class)
+                .optional();
+    }
+
+    /** Removed marketplaces that held this name, most recent first (GW_INGEST_0035). */
+    @Requirements({"GW_INGEST_0035"})
+    public List<Marketplace> retiredByName(String name) {
+        return jdbc.sql("SELECT * FROM marketplaces WHERE name = :name AND deleted_at IS NOT NULL ORDER BY id DESC")
+                .param("name", name)
+                .query(Marketplace.class)
+                .list();
+    }
+
+    /** Whether the marketplace with this id has been removed (GW_INGEST_0034). */
+    public boolean removed(long id) {
+        return jdbc.sql("SELECT deleted_at IS NOT NULL FROM marketplaces WHERE id = :id")
+                .param("id", id)
+                .query(Boolean.class)
+                .optional()
+                .orElse(false);
     }
 }

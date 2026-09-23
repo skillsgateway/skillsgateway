@@ -147,9 +147,9 @@ A failure in either step refuses the registration and changes nothing.
 ### Other name-matched surfaces
 
 - **`POST /status/v1/snapshots`** answers about the live marketplace of the
-  name when it has the commit, else the most recent retired one — so a holder
-  of removed content is told `revoked`, and an identical commit the successor
-  approved is `approved`.
+  name when it has approved the commit, else about the most recent retired one
+  that has it, else the live one — so a holder of removed content is told
+  `revoked` until the successor approves the same commit, and `approved` after.
 - **Approver grants** are matched by name. A grant on a retired marketplace is
   excluded from every read, so it cannot confer authority over a successor.
 - **Token scopes** are names and carry over to a successor, deliberately: that

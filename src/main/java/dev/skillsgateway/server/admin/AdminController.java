@@ -24,6 +24,7 @@ import dev.skillsgateway.server.ingestion.IngestionService;
 import dev.skillsgateway.server.ingestion.SnapshotContentService;
 import dev.skillsgateway.server.persistence.FetchLogRepository;
 import dev.skillsgateway.server.persistence.Marketplace;
+import dev.skillsgateway.server.persistence.MarketplaceRemovedException;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
@@ -46,6 +47,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -64,6 +66,7 @@ public class AdminController {
 
     private final ServedTip servedTip;
     private final MarketplaceRegistrationService registrationService;
+    private final MarketplaceRemovalService removalService;
     private final MarketplaceRepository marketplaceRepository;
     private final SnapshotRepository snapshotRepository;
     private final IngestionService ingestionService;
@@ -80,6 +83,7 @@ public class AdminController {
     public AdminController(
             ServedTip servedTip,
             MarketplaceRegistrationService registrationService,
+            MarketplaceRemovalService removalService,
             MarketplaceRepository marketplaceRepository,
             SnapshotRepository snapshotRepository,
             IngestionService ingestionService,
@@ -94,6 +98,7 @@ public class AdminController {
             RoleService roleService) {
         this.servedTip = servedTip;
         this.registrationService = registrationService;
+        this.removalService = removalService;
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
         this.ingestionService = ingestionService;
@@ -217,6 +222,52 @@ public class AdminController {
                 request.name(), request.url(), request.origin(), request.pushPolicy(), authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(RegisteredMarketplace.of(outcome.marketplace(), outcome.warnings()));
+    }
+
+    @Schema(description = "Remove a marketplace, stating why")
+    public record RemoveMarketplaceRequest(
+            @Schema(
+                    description = "Why the marketplace is being removed. Required and non-empty: it is recorded on"
+                            + " the removal and on every withdrawal the removal makes",
+                    example = "upstream moved to https://git.example.com/acme/skills.git")
+            String reason) {}
+
+    @DeleteMapping("/marketplaces/{name}")
+    @Requirements({"GW_INGEST_0034"})
+    @Tag(name = "Marketplaces")
+    @Operation(
+            summary = "Remove a marketplace",
+            description = "Retires the marketplace on a stated reason. Every approved snapshot is withdrawn by"
+                    + " administrative revocation, leaving the marketplace serving nothing, and from that moment it"
+                    + " is not served, synced, pushed to, listed, approved or reachable by name. Its record, its"
+                    + " snapshots, their provenance and the audit ledger are kept. The name may then be registered"
+                    + " again, as a new marketplace that inherits nothing. Admin-only.")
+    @ApiResponse(responseCode = "200", description = "Marketplace removed")
+    @ApiResponse(responseCode = "403", description = "Caller does not hold the administrative role")
+    @ApiResponse(responseCode = "404", description = "No registered marketplace has that name")
+    @ApiResponse(responseCode = "422", description = "No reason was stated")
+    public MarketplaceRemovalService.Removal removeMarketplace(
+            @PathVariable String name,
+            @RequestBody(required = false) RemoveMarketplaceRequest request,
+            Authentication authentication) {
+        roleService.requireAdmin(authentication);
+        return removalService.remove(name, request == null ? null : request.reason(), authentication.getName());
+    }
+
+    /** A removal with no stated reason (GW_INGEST_0034). */
+    @ExceptionHandler(MissingRemovalReasonException.class)
+    public ProblemDetail missingRemovalReason(MissingRemovalReasonException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+        problem.setTitle("Removing a marketplace requires a reason");
+        return problem;
+    }
+
+    /** A decision about a snapshot of a removed marketplace (GW_INGEST_0034). */
+    @ExceptionHandler(MarketplaceRemovedException.class)
+    public ProblemDetail marketplaceRemoved(MarketplaceRemovedException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("The marketplace was removed");
+        return problem;
     }
 
     @Schema(description = "A registered marketplace, plus any non-blocking warnings about the registration")
