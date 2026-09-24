@@ -1,6 +1,7 @@
 import {
   ChevronDown,
   Home,
+  Inbox,
   KeyRound,
   LogOut,
   Monitor,
@@ -19,7 +20,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useLocation, useMatches, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useMatch, useMatches, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,7 +35,8 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/api/client";
-import { useIsAdmin, useMe, type EffectiveRole, type MeView } from "@/api/queries";
+import { useAwaitingDecision, useIsAdmin, useMe, type EffectiveRole, type MeView } from "@/api/queries";
+import { isDecidable } from "@/lib/snapshot-roles";
 
 type NavItem = {
   to: string;
@@ -44,6 +46,8 @@ type NavItem = {
   end?: boolean;
   /** Offered only to a session holding the administrative role. */
   adminOnly?: boolean;
+  /** Carries the count of snapshots awaiting a decision across marketplaces. */
+  awaiting?: boolean;
 };
 
 const groups: { label: string; items: NavItem[] }[] = [
@@ -51,7 +55,9 @@ const groups: { label: string; items: NavItem[] }[] = [
     label: "Gateway",
     items: [
       { to: "/", label: "Overview", icon: Home, end: true },
-      { to: "/marketplaces", label: "Marketplaces", icon: Store },
+      { to: "/review", label: "Review queue", icon: Inbox, awaiting: true },
+      // Exact: inside a marketplace, its section is the active entry, not the list above it.
+      { to: "/marketplaces", label: "Marketplaces", icon: Store, end: true },
     ],
   },
   {
@@ -93,10 +99,74 @@ function OutboundLink({ href, label, icon: Icon }: { href: string; label: string
   );
 }
 
+const SECTION_LABEL: Record<string, string> = {
+  "": "Review",
+  snapshots: "Snapshots",
+  activity: "Activity",
+  settings: "Settings",
+};
+
+const navItemClass = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent",
+    isActive && "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary",
+  );
+
+/** A count beside a nav entry; absent at zero, so a quiet sidebar means a quiet queue. */
+function NavCount({ count, label }: { count: number; label: string }) {
+  if (count === 0) return null;
+  return (
+    <>
+      <span
+        aria-hidden
+        className="ml-auto rounded-md border bg-muted px-1.5 font-mono text-[11px] text-foreground"
+      >
+        {count}
+      </span>
+      <span className="sr-only"> ({label})</span>
+    </>
+  );
+}
+
+/**
+ * The open marketplace's sections, nested beneath Marketplaces while the address is inside one.
+ * Derived from the route, never stored: leaving the marketplace is what closes it.
+ */
+export function MarketplaceSections({ name, awaiting }: { name: string; awaiting: number }) {
+  const base = `/marketplaces/${encodeURIComponent(name)}`;
+  const sections = [
+    { to: base, label: "Review", end: true },
+    { to: `${base}/snapshots`, label: "Snapshots" },
+    { to: `${base}/activity`, label: "Activity" },
+    { to: `${base}/settings`, label: "Settings" },
+  ];
+  return (
+    <div className="mt-0.5 ml-4 border-l pl-2">
+      <div className="truncate px-2.5 py-1 text-xs font-medium text-muted-foreground" title={name}>
+        {name}
+      </div>
+      <ul aria-label={`${name} sections`} className="space-y-0.5">
+        {sections.map((section) => (
+          <li key={section.to}>
+            <NavLink to={section.to} end={section.end} className={navItemClass}>
+              {section.label}
+              {section.label === "Review" ? (
+                <NavCount count={awaiting} label={`${awaiting} awaiting a decision`} />
+              ) : null}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function breadcrumb(pathname: string): string {
   if (pathname === "/") return "Overview";
   if (/^\/marketplaces\/[^/]+\/snapshots\//.test(pathname)) return "Snapshot contents";
-  if (pathname.startsWith("/marketplaces/")) return "Marketplace detail";
+  const section = /^\/marketplaces\/([^/]+)(?:\/([^/]+))?/.exec(pathname);
+  if (section) return `${decodeURIComponent(section[1]!)} · ${SECTION_LABEL[section[2] ?? ""] ?? "Review"}`;
+  if (pathname.startsWith("/review")) return "Review queue";
   if (pathname.startsWith("/marketplaces")) return "Marketplaces";
   if (pathname.startsWith("/audit")) return "Audit log";
   if (pathname.startsWith("/vetting")) return "Vetting";
@@ -369,12 +439,20 @@ export function AppLayout() {
   // paths: a workspace whose panes own their scroll cannot live inside the reading column.
   // Only from lg up — below that there is no room for two panes side by side, so the page
   // scrolls like every other one rather than clipping itself into a phone-sized viewport.
-  const wide = useMatches().some(
-    (match) => (match.handle as { layout?: string } | undefined)?.layout === "wide",
+  const layouts = useMatches().map(
+    (match) => (match.handle as { layout?: string } | undefined)?.layout,
   );
+  const wide = layouts.includes("wide");
+  // "full": the page scrolls like any other but uses the width — the review surfaces, where a
+  // diff or a file needs it. Capped so an ultrawide monitor does not pull a table's columns apart.
+  const full = !wide && layouts.includes("full");
   // A hint only: the administrator-only pages are protected by the server refusing their reads,
   // not by the sidebar declining to mention them.
   const isAdmin = useIsAdmin();
+  const queue = useAwaitingDecision();
+  const awaitingTotal = queue.rows.length;
+  const marketplaceMatch = useMatch("/marketplaces/:name/*");
+  const openMarketplace = marketplaceMatch?.params.name;
   return (
     <div
       className={cn(
@@ -396,21 +474,28 @@ export function AppLayout() {
               <ul className="space-y-0.5">
                 {group.items
                   .filter((item) => item.adminOnly !== true || isAdmin)
-                  .map(({ to, label, icon: Icon, end }) => (
+                  .map(({ to, label, icon: Icon, end, awaiting }) => (
                   <li key={to}>
-                    <NavLink
-                      to={to}
-                      end={end}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent",
-                          isActive && "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary",
-                        )
-                      }
-                    >
+                    <NavLink to={to} end={end} className={navItemClass}>
                       <Icon className="size-4" aria-hidden />
                       {label}
+                      {awaiting ? (
+                        <NavCount
+                          count={awaitingTotal}
+                          label={`${awaitingTotal} awaiting a decision`}
+                        />
+                      ) : null}
                     </NavLink>
+                    {to === "/marketplaces" && openMarketplace ? (
+                      <MarketplaceSections
+                        name={openMarketplace}
+                        awaiting={
+                          (queue.data?.find((m) => m.name === openMarketplace)?.snapshots ?? []).filter(
+                            isDecidable,
+                          ).length
+                        }
+                      />
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -442,7 +527,7 @@ export function AppLayout() {
         <main
           className={cn(
             "w-full flex-1 px-6 py-8",
-            wide ? "lg:min-h-0 lg:overflow-hidden" : "mx-auto max-w-6xl",
+            wide ? "lg:min-h-0 lg:overflow-hidden" : full ? "mx-auto max-w-[1600px]" : "mx-auto max-w-6xl",
           )}
         >
           <Outlet />

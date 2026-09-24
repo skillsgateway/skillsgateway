@@ -1,6 +1,7 @@
 import { GitCompareArrows, Link2, ShieldAlert } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { formatJson } from "@/lib/json-format";
 import { ApiError } from "@/api/client";
 import {
   useSnapshotDiff,
@@ -9,6 +10,7 @@ import {
   type SnapshotDiffEntry,
 } from "@/api/queries";
 import { MarkdownView } from "@/components/markdown-view";
+import { SegmentedGroup } from "@/components/segmented-group";
 import { SnapshotFileTree } from "@/components/snapshot-file-tree";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -97,10 +99,49 @@ function FileContent({ snapshotId, path }: { snapshotId: number; path: string })
       ) : null}
       {path.endsWith(".md") ? (
         <MarkdownView text={content.text ?? ""} />
+      ) : path.endsWith(".json") ? (
+        <JsonContent text={content.text ?? ""} truncated={content.truncated === true} />
       ) : (
         <pre className="overflow-x-auto rounded-md border bg-muted p-3 font-mono text-xs">
           {content.text ?? ""}
         </pre>
+      )}
+    </div>
+  );
+}
+
+const JSON_VIEWS = [
+  { value: "formatted", label: "Formatted" },
+  { value: "raw", label: "Raw" },
+] as const;
+
+/**
+ * JSON re-indented token for token, with the stored bytes one control away. A truncated blob or
+ * a document that does not tokenise is shown as stored — formatting half a document, or guessing
+ * at a broken one, would show the reviewer something the snapshot does not contain.
+ */
+function JsonContent({ text, truncated }: { text: string; truncated: boolean }) {
+  const [view, setView] = useState<"formatted" | "raw">("formatted");
+  const formatted = truncated ? null : formatJson(text);
+  const raw = (
+    <pre className="overflow-x-auto rounded-md border bg-muted p-3 font-mono text-xs">{text}</pre>
+  );
+  if (formatted === null)
+    return (
+      <div className="space-y-2">
+        {truncated ? null : (
+          <p className="text-xs text-muted-foreground">Not valid JSON — shown as stored.</p>
+        )}
+        {raw}
+      </div>
+    );
+  return (
+    <div className="space-y-2">
+      <SegmentedGroup label="JSON view" hideLabel value={view} options={JSON_VIEWS} onChange={setView} />
+      {view === "raw" ? (
+        raw
+      ) : (
+        <pre className="overflow-x-auto rounded-md border bg-muted p-3 font-mono text-xs">{formatted}</pre>
       )}
     </div>
   );
@@ -278,8 +319,8 @@ export function SnapshotExplorer({
       ) : (files.data?.entries ?? []).length === 0 && changes.size === 0 ? (
         <Notice>This snapshot contains no files.</Notice>
       ) : (
-        <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,22rem)_1fr]">
-          <div className="flex flex-col gap-2 rounded-lg border p-3 lg:min-h-0">
+        <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[18rem_minmax(0,1fr)]">
+          <div className="flex min-w-0 flex-col gap-2 rounded-lg border p-3 lg:min-h-0">
             <label htmlFor={`path-filter-${snapshotId}`} className="sr-only">
               Filter paths
             </label>

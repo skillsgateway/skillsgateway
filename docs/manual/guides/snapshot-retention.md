@@ -82,14 +82,14 @@ The selected snapshots are now **soft-deleted**: marked with a reason and a
 `purge_after` deadline, their vetting state untouched, and restorable for the
 whole restore window. Nothing has been removed from git.
 
-Check the portal — [Marketplace detail](../reference/portal.md#marketplace-detail)
+Check the portal — the marketplace's [Snapshots](../reference/portal.md#review-and-snapshots)
 shows each deleted snapshot with a `deleted` badge and its restore deadline.
 
 ## 4. Restore anything you did not mean to delete
 
 === "Portal"
 
-    On the marketplace detail page, the deleted snapshot's **Restore** button.
+    On the marketplace's **Snapshots**, the deleted snapshot's **Restore** button.
     It toasts *Snapshot {id} restored*.
 
 === "API"

@@ -1734,10 +1734,10 @@ requirements:
   - id: GW_INGEST_0032
     title: Addressable snapshot file inspection
     significance: shall
-    description: "The system shall present a snapshot's pinned contents on a surface addressed by a single address that names both the snapshot and, when one is selected, a path within it; shall restore from that address alone the same snapshot, the same selected path and its content; shall present the bounds of the underlying reads — a listing cut at its limit, a blob truncated at its size limit, a blob detected as binary, and a path that the snapshot removes relative to what is served — each as a stated condition rather than as an absence; shall report any narrowing of the listing against the size of the set it narrowed, and state when that set is itself cut; and shall apply to this surface the same role rule as the reads it presents, presenting a refusal as a stated condition."
-    rationale: "Approval is a two-person decision about specific bytes, and a surface that cannot be addressed makes the second reviewer's job a set of directions — expand this snapshot, scroll, click the eleventh row — rather than a link, which is both slow and unverifiable: there is no way to know the two people looked at the same thing. Restoring from the address alone is what makes the link worth sending. Stating each bound rather than letting it show as an absence matters more here than on an ordinary page because every one of these bounds exists to defend the reviewer against a hostile upstream, and a defence the reviewer cannot see reads as content that is simply not there; a narrowing reported against an already-cut set is the one case where a count could honestly mislead, so the cut is stated alongside it."
+    description: "The system shall present a snapshot's pinned contents on a surface addressed by a single address that names both the snapshot and, when one is selected, a path within it; shall restore from that address alone the same snapshot, the same selected path and its content; shall present the bounds of the underlying reads — a listing cut at its limit, a blob truncated at its size limit, a blob detected as binary, and a path that the snapshot removes relative to what is served — each as a stated condition rather than as an absence; shall report any narrowing of the listing against the size of the set it narrowed, and state when that set is itself cut; shall present a JSON document re-indented without dropping, adding or reordering any token, with its stored bytes one control away, and present a document that does not tokenise as JSON, or whose blob was truncated, as stored with that condition stated; and shall apply to this surface the same role rule as the reads it presents, presenting a refusal as a stated condition."
+    rationale: "Approval is a two-person decision about specific bytes, and a surface that cannot be addressed makes the second reviewer's job a set of directions — expand this snapshot, scroll, click the eleventh row — rather than a link, which is both slow and unverifiable: there is no way to know the two people looked at the same thing. Restoring from the address alone is what makes the link worth sending. Stating each bound rather than letting it show as an absence matters more here than on an ordinary page because every one of these bounds exists to defend the reviewer against a hostile upstream, and a defence the reviewer cannot see reads as content that is simply not there; a narrowing reported against an already-cut set is the one case where a count could honestly mislead, so the cut is stated alongside it. JSON is re-indented by its tokens rather than by parsing it into values because parsing silently keeps only one of a duplicated key and rewrites number spellings — the very differences a hostile manifest can use to show a reviewer one document and a client another."
     categories: ["security", "interaction-capability"]
-    revision: 0.1.0
+    revision: 0.3.0
 
   - id: GW_AUTH_0047
     title: The portal states the build it is running
@@ -2060,12 +2060,12 @@ requirements:
     revision: 0.2.0
 
   - id: GW_AUTH_0043
-    title: The client wizard leads on a serving marketplace and states the held-snapshot outcome
+    title: The client wizard is offered from every marketplace section and states the held-snapshot outcome
     significance: shall
-    description: "The portal shall present the client set-up wizard as the leading element of a marketplace that is serving approved content, with the credential-storage command as its primary copy target and a bounded default lifetime for a credential minted inside it; and shall state, on a marketplace with no approved snapshot, both on the marketplace's own page and within the wizard, that a clone will be answered with not-found until a snapshot is approved."
-    rationale: "The wizard is the shortest path from an approved snapshot to a working client, and it was reachable only through an unremarkable control competing with the page heading. The held case is worse than undiscoverable: the wizard composes a clone command that cannot work yet, and nothing on the screen says why, so the consumer reads a correct refusal as a broken gateway."
+    description: "The portal shall offer the client set-up wizard from the marketplace's header, present on every section of a marketplace's page, with the credential-storage command as its primary copy target and a bounded default lifetime for a credential minted inside it; and shall state, on a marketplace with no approved snapshot, both in the marketplace's header and within the wizard, that a clone will be answered with not-found until a snapshot is approved."
+    rationale: "The wizard is the shortest path from an approved snapshot to a working client, and it was once reachable only through an unremarkable control competing with the page heading. Making it the page's leading panel fixed that and cost the reviewer, whose daily job — deciding what awaits a decision — was pushed below the fold by a step each consumer takes once. A header action is found from every section without leading any of them. The held case is worse than undiscoverable: the wizard composes a clone command that cannot work yet, and nothing on the screen says why, so the consumer reads a correct refusal as a broken gateway."
     categories: ["interaction-capability"]
-    revision: 0.2.0
+    revision: 0.3.0
 
   - id: GW_AUTH_0044
     title: Portal user menu with identity and effective roles
@@ -2258,6 +2258,16 @@ requirements:
     rationale: "Every question the gateway could ask about a snapshot's content was a walk of its git tree whose answer was discarded when the call returned, so there was nothing to ask a question of the approved estate with. The facts are a pure function of the pinned commit, which is what makes recording them once correct and rewriting them never necessary; the state is the one value that is not, and freezing it would hand a rule a stale answer to the question it is most likely to ask. A failure is not recorded because a transient storage error would then become a permanent one, while a deterministic one — an inventory over its bound — recurs identically when the facts are rebuilt."
     categories: ["functional-suitability", "reliability"]
     revision: 0.1.0
+
+  - id: GW_INGEST_0037
+    title: Review queue across marketplaces
+    significance: shall
+    description: "The portal shall state, in its navigation on every page, the number of snapshots awaiting a decision across the marketplaces the session may read, and shall present a queue listing each such snapshot with its marketplace, commit, state, vetting outcome and ingestion, each entry opening that snapshot where its evidence is presented; the queue, and the list of marketplaces, shall offer no approve or reject control of their own."
+    references:
+      requirement_ids: ["GW_INGEST_0007"]
+    rationale: "Deciding what awaits a decision is the reviewer's most frequent task, and it was answerable only by opening each marketplace in turn. The queue gathers the work without becoming a second place to do it: an approval offered beside a single badge, away from the report, diff and contents it rests on, is a decision without its evidence."
+    categories: ["interaction-capability"]
+    revision: 0.3.0
 
   - id: GW_APPROVAL_0019
     title: Approval is refused on a normalised plugin-name collision with the approved estate

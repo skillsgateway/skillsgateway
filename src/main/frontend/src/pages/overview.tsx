@@ -31,7 +31,11 @@ function SectionCard({
           <div className="flex items-center gap-2 font-semibold">
             <span className="text-primary">{icon}</span>
             {title}
-            {status ? <Badge variant="secondary">{status}</Badge> : null}
+            {status ? (
+              <Badge variant="secondary" render={<Link to="/review" className="hover:underline" />}>
+                {status}
+              </Badge>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-2">{chips}</div>
         </div>

@@ -75,7 +75,7 @@ API directly.
 
 ## Ingesting the first snapshot
 
-Registration captures nothing. Press **Ingest** on the marketplace card, or:
+Registration captures nothing. Press **Ingest** in the marketplace's header, or:
 
 ```console
 $ curl -X POST localhost:8080/api/v1/marketplaces/acme/ingest
@@ -158,7 +158,7 @@ name. See [Audit ledger](../reference/api/audit.md#entry-fields).
 ## Forge metadata
 
 Registration captures forge, project, description and last-upstream-update on a
-best-effort basis. It is displayed on the marketplace detail page and is
+best-effort basis. It is displayed on the marketplace's **Settings** and is
 informational only; nothing depends on it.
 
 ## Next

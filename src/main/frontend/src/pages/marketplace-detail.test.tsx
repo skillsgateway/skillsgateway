@@ -1,13 +1,19 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { expect, test } from "vitest";
 import type { components } from "@/api/types.gen";
-import { clearVetting, heldSnapshot, marketplace } from "@/test/msw-handlers";
+import { clearVetting, compositeProvenance, heldSnapshot, marketplace, tooYoung } from "@/test/msw-handlers";
 import { server } from "@/test/msw-server";
-import { MarketplaceDetailPage } from "./marketplace-detail";
+import {
+  MarketplaceActivityPage,
+  MarketplaceLayout,
+  MarketplaceReviewPage,
+  MarketplaceSettingsPage,
+  MarketplaceSnapshotsPage,
+} from "./marketplace-detail";
 
 type Schemas = components["schemas"];
 
@@ -16,21 +22,34 @@ function Address() {
   return <output data-testid="address">{location.search}</output>;
 }
 
-function renderPage(search = "") {
+function Location() {
+  const location = useLocation();
+  return <output data-testid="location">{location.pathname + location.search}</output>;
+}
+
+/** The marketplace's routes as the portal declares them; `section` is "", "snapshots", … */
+function renderPage(search = "", section = "") {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const at = `/marketplaces/corp-marketplace${section ? `/${section}` : ""}${search}`;
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/marketplaces/corp-marketplace${search}`]}>
+      <MemoryRouter initialEntries={[at]}>
         <Routes>
           <Route
             path="/marketplaces/:name"
             element={
               <>
-                <MarketplaceDetailPage />
+                <MarketplaceLayout />
                 <Address />
+                <Location />
               </>
             }
-          />
+          >
+            <Route index element={<MarketplaceReviewPage />} />
+            <Route path="snapshots" element={<MarketplaceSnapshotsPage />} />
+            <Route path="activity" element={<MarketplaceActivityPage />} />
+            <Route path="settings" element={<MarketplaceSettingsPage />} />
+          </Route>
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -52,10 +71,9 @@ function held(id: number, day: number): Schemas["Snapshot"] {
 }
 
 test("deleted_snapshot_shows_its_restore_deadline_and_control", async () => {
-  const user = userEvent.setup();
-  renderPage();
-  // A deleted snapshot is history: it sits under the collapsed count until asked for.
-  await user.click(await screen.findByRole("button", { name: /Earlier snapshots \(1\)/ }));
+  // A deleted snapshot is history: it is listed under Snapshots, not on Review.
+  const snapshots = renderPage("", "snapshots");
+  await screen.findByRole("region", { name: /Earlier snapshots \(1\)/ });
   expect(await screen.findByText("deleted")).toBeInTheDocument();
   // The deadline reads as a formatted date, but the exact instant stays machine-readable
   // on the <time> element — the audit trail must survive the presentation change.
@@ -64,8 +82,10 @@ test("deleted_snapshot_shows_its_restore_deadline_and_control", async () => {
   expect(deadline.textContent).not.toBe("2026-08-28T11:00:00Z");
   expect(deadline.closest("span")).toHaveTextContent(/restorable until/);
   expect(screen.getByRole("button", { name: "Restore snapshot 2" })).toBeInTheDocument();
-  // A live snapshot offers the delete control instead.
-  expect(screen.getByRole("button", { name: "Delete snapshot 1" })).toBeInTheDocument();
+  snapshots.unmount();
+  // A live snapshot, on Review, offers the delete control instead.
+  renderPage();
+  expect(await screen.findByRole("button", { name: "Delete snapshot 1" })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Delete snapshot 2" })).not.toBeInTheDocument();
 });
 
@@ -232,11 +252,11 @@ test("serving_nothing_while_an_approved_row_exists_says_nothing_is_served", asyn
     servedSha: undefined,
     snapshots: [{ ...heldSnapshot, state: "approved", decidedBy: "alice" }],
   });
-  renderPage();
+  renderPage("", "snapshots");
   expect(await screen.findByTestId("serving-nothing")).toHaveTextContent(
     /Nothing is served\. A snapshot is still recorded approved, but it was withdrawn/,
   );
-  expect(screen.getByTestId("setup-lead")).toHaveTextContent("Not being served yet");
+  expect(screen.getByTestId("marketplace-served-status")).toHaveTextContent(/Not served.*404/);
   const serving = screen.getByRole("region", { name: "Serving" });
   expect(within(serving).queryByRole("listitem")).not.toBeInTheDocument();
 });
@@ -247,10 +267,12 @@ test("the_served_snapshot_is_the_one_the_marketplace_read_names", async () => {
     servedSha: heldSnapshot.sha,
     snapshots: [{ ...heldSnapshot, state: "approved", decidedBy: "alice" }, held(5, 20)],
   });
-  renderPage();
+  renderPage("", "snapshots");
   const serving = await screen.findByRole("region", { name: "Serving" });
   expect(within(serving).getByText(heldSnapshot.sha!.slice(0, 12))).toBeInTheDocument();
-  expect(screen.getByTestId("setup-lead")).toHaveTextContent("Use this marketplace");
+  expect(screen.getByTestId("marketplace-served-status")).toHaveTextContent(
+    `Serving ${heldSnapshot.sha!.slice(0, 12)}`,
+  );
 });
 
 /**
@@ -283,23 +305,197 @@ test("a_deep_link_restores_the_snapshot_the_tab_and_the_file", async () => {
 });
 
 /**
- * The regression test for the reason this layout exists: with twelve snapshots the page still
- * opens exactly one card and runs exactly one vetting report — the rest are one line each, and
- * history is a collapsed count.
+ * The regression test for the reason this layout exists: with twelve snapshots each section
+ * still opens at most one card and runs at most one vetting report — the rest are one line each.
+ * Review holds only what awaits a decision; history is on Snapshots.
  */
 test("page_length_does_not_grow_with_the_number_of_snapshots", async () => {
   const snapshots = Array.from({ length: 12 }, (_, i) =>
     i < 2 ? held(10 + i, 10 + i) : { ...held(10 + i, 10 + i), state: "rejected" as const },
   );
   withMarketplace({ ...marketplace, snapshots });
-  renderPage();
+  const review = renderPage();
 
   await screen.findByRole("region", { name: "Snapshot 11" });
   expect(screen.getAllByTestId("snapshot-card")).toHaveLength(1);
   expect(await screen.findAllByRole("region", { name: /Vetting of snapshot/ })).toHaveLength(1);
-  expect(screen.getByRole("button", { name: /Earlier snapshots \(10\)/ })).toHaveAttribute(
-    "aria-expanded",
-    "false",
-  );
   expect(screen.queryByRole("button", { name: "Open snapshot 12" })).not.toBeInTheDocument();
+  review.unmount();
+
+  renderPage("", "snapshots");
+  const earlier = await screen.findByRole("region", { name: /Earlier snapshots \(10\)/ });
+  expect(within(earlier).getAllByRole("button", { name: /Open snapshot/ })).toHaveLength(10);
+  expect(screen.queryAllByTestId("snapshot-card")).toHaveLength(0);
+});
+
+/**
+ * An older link to a snapshot that no longer awaits a decision still lands on it: Review opens
+ * the addressed snapshot in place and says where it now belongs, rather than dropping it.
+ */
+test("a_link_to_a_snapshot_not_awaiting_opens_it_on_review_and_points_to_snapshots", async () => {
+  renderPage("?snapshot=2");
+  const linked = await screen.findByRole("region", { name: "Linked snapshot" });
+  expect(within(linked).getByRole("region", { name: "Snapshot 2" })).toBeInTheDocument();
+  expect(within(linked).getByRole("link", { name: "See it among the snapshots" })).toHaveAttribute(
+    "href",
+    "/marketplaces/corp-marketplace/snapshots?snapshot=2",
+  );
+  // Only the addressed card is open: the awaiting list stays one line each.
+  expect(screen.getAllByTestId("snapshot-card")).toHaveLength(1);
+});
+
+/**
+ * The header is on every section, and carries the marketplace's actions — ingestion and the
+ * client wizard — with the served state stated beside them.
+ *
+ * @SVCs SVC_GW_AUTH_0043
+ */
+test("the_header_offers_ingest_and_the_client_wizard_on_every_section", async () => {
+  const user = userEvent.setup();
+  for (const section of ["", "snapshots", "activity", "settings"]) {
+    const view = renderPage("", section);
+    expect(await screen.findByRole("heading", { level: 1, name: "corp-marketplace" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ingest corp-marketplace" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Connect a client" })).toBeInTheDocument();
+    expect(screen.getByTestId("marketplace-served-status")).toHaveTextContent(/Not served.*404/);
+    view.unmount();
+  }
+  renderPage("", "settings");
+  await user.click(await screen.findByRole("button", { name: "Connect a client" }));
+  // The wizard says the held case again, inside itself.
+  expect(await screen.findByTestId("setup-held-notice")).toHaveTextContent("404");
+});
+
+test("ingest_opens_what_arrived_on_review", async () => {
+  server.use(
+    http.post("/api/v1/marketplaces/:name/ingest", () =>
+      HttpResponse.json({ ...held(9, 30) }, { status: 201 }),
+    ),
+  );
+  const user = userEvent.setup();
+  renderPage("", "settings");
+  await user.click(await screen.findByRole("button", { name: "Ingest corp-marketplace" }));
+  await expect
+    .poll(() => screen.getByTestId("location").textContent)
+    .toBe("/marketplaces/corp-marketplace?snapshot=9");
+});
+
+test("settings_shows_the_upstream_and_the_activity_section_shows_the_ledger", async () => {
+  const settings = renderPage("", "settings");
+  const upstream = await screen.findByText("Upstream");
+  expect(upstream).toBeInTheDocument();
+  expect(screen.getByText("https://github.com/corp/marketplace.git", { selector: "dd" })).toBeInTheDocument();
+  // No snapshot is rendered on Settings: the decision is not here.
+  expect(screen.queryByTestId("snapshot-card")).not.toBeInTheDocument();
+  settings.unmount();
+  renderPage("", "activity");
+  expect(await screen.findByRole("heading", { name: "Audit log" })).toBeInTheDocument();
+});
+
+async function openFile(user: ReturnType<typeof userEvent.setup>, path: string, text: string) {
+  server.use(
+    http.get("/api/v1/snapshots/:id/file", () =>
+      HttpResponse.json({ path, size: text.length, binary: false, truncated: false, text }),
+    ),
+  );
+  renderPage(`?snapshot=1&tab=contents&path=${encodeURIComponent(path)}`);
+  const card = await screen.findByRole("region", { name: "Snapshot 1" });
+  return { card, user };
+}
+
+/**
+ * JSON is re-indented by its tokens: a key declared twice is shown twice, in order, and the
+ * stored bytes are one control away.
+ *
+ * @SVCs SVC_GW_INGEST_0032
+ */
+test("a_json_manifest_is_shown_reindented_with_a_duplicated_key_kept", async () => {
+  const user = userEvent.setup();
+  const stored = '{"name":"demo","source":"./safe","source":"https://evil.example/x"}';
+  const { card } = await openFile(user, ".claude-plugin/marketplace.json", stored);
+  const formatted = await within(card).findByText(/"source": "\.\/safe"/);
+  expect(formatted.textContent).toBe(
+    '{\n  "name": "demo",\n  "source": "./safe",\n  "source": "https://evil.example/x"\n}',
+  );
+  const view = within(card).getByRole("group", { name: "JSON view" });
+  expect(within(view).getByRole("button", { name: "Formatted" })).toHaveAttribute("aria-pressed", "true");
+  await user.click(within(view).getByRole("button", { name: "Raw" }));
+  expect(within(card).getByText(stored)).toBeInTheDocument();
+});
+
+/** @SVCs SVC_GW_INGEST_0032 */
+test("a_file_named_json_that_does_not_tokenise_is_shown_as_stored", async () => {
+  const user = userEvent.setup();
+  const stored = "{'name': 'not json'}";
+  const { card } = await openFile(user, "plugins/hello/plugin.json", stored);
+  expect(await within(card).findByText("Not valid JSON — shown as stored.")).toBeInTheDocument();
+  expect(within(card).getByText(stored)).toBeInTheDocument();
+  expect(within(card).queryByRole("group", { name: "JSON view" })).not.toBeInTheDocument();
+});
+
+/**
+ * The cooling-off window (GW_APPROVAL_0004.4) as a reviewer meets it on the card: the control is
+ * shut and says when it opens. Untagged: SVC_GW_APPROVAL_0004.4 is verified by the Java suite.
+ */
+test("approve_is_disabled_with_the_remaining_time_inside_the_cooling_off_window", async () => {
+  server.use(
+    http.get("/api/v1/snapshots/:id/vetting", () => HttpResponse.json(clearVetting)),
+    http.get("/api/v1/snapshots/:id/release-age", () => HttpResponse.json(tooYoung)),
+  );
+  renderPage();
+  const card = await screen.findByRole("region", { name: "Snapshot 1" });
+  const approve = within(card).getByRole("button", { name: "Approve snapshot 1" });
+  expect(await within(card).findByText(/Inside the cooling-off window; it becomes approvable in 2d 4h/)).toBeInTheDocument();
+  expect(approve).toBeDisabled();
+  // Rejecting is never age-gated: suspicious content must be refusable at once.
+  expect(within(card).getByRole("button", { name: "Reject snapshot 1" })).toBeEnabled();
+});
+
+test("approve_is_offered_normally_once_the_window_has_passed", async () => {
+  server.use(http.get("/api/v1/snapshots/:id/vetting", () => HttpResponse.json(clearVetting)));
+  renderPage();
+  const card = await screen.findByRole("region", { name: "Snapshot 1" });
+  const approve = within(card).getByRole("button", { name: "Approve snapshot 1" });
+  await waitFor(() => expect(approve).toBeEnabled());
+});
+
+/**
+ * The provenance tab carries the closure (GW_INGEST_0030.5): the served commit beside the upstream
+ * one, and each external plugin with the URL it was fetched through and the commit it resolved
+ * to. Untagged: SVC_GW_INGEST_0030.5 is verified by the Java suite.
+ */
+test("provenance_lists_the_served_commit_and_the_resolved_closure", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  const card = await screen.findByRole("region", { name: "Snapshot 1" });
+  await user.click(within(card).getByRole("tab", { name: "Provenance" }));
+  const member = compositeProvenance.closure!.members![0]!;
+  expect(await within(card).findByText(member.cloneUrl!)).toBeInTheDocument();
+  expect(within(card).getByText(member.resolvedSha!)).toBeInTheDocument();
+  expect(within(card).getByText(compositeProvenance.upstreamSha!)).toBeInTheDocument();
+  expect(within(card).getByRole("heading", { name: "External plugin sources" })).toBeInTheDocument();
+});
+
+/** A blocking finding is waived where it is shown, and the form demands a live justification. */
+test("a_blocking_finding_is_waived_from_the_vetting_tab_with_a_justification", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  const card = await screen.findByRole("region", { name: "Snapshot 1" });
+  expect(await within(card).findByText(/an AWS access key id is committed/)).toBeInTheDocument();
+
+  await user.click(within(card).getByRole("button", { name: "Waive finding aws-access-key-id" }));
+  const record = within(card).getByRole("button", { name: "Record waiver for aws-access-key-id" });
+  expect(record).toBeDisabled();
+  expect(within(card).getByLabelText("Expires on")).toHaveValue();
+
+  await user.type(within(card).getByLabelText("Justification"), "documented dummy key");
+  expect(record).toBeEnabled();
+  // Approve stays shut until the waiver is actually recorded.
+  expect(within(card).getByRole("button", { name: "Approve snapshot 1" })).toBeDisabled();
+
+  // The server refuses a waiver that has already lapsed, so the control refuses it first.
+  const expiry = within(card).getByLabelText("Expires on");
+  await user.clear(expiry);
+  await user.type(expiry, "2020-01-01");
+  expect(record).toBeDisabled();
 });

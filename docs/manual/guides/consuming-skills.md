@@ -5,14 +5,14 @@ modification — only a credential and a URL.
 
 !!! tip "The wizard does steps 1–4 for you"
 
-    A marketplace's detail page in the portal leads with **Set up a client**,
-    which composes the exact commands below for that marketplace — token
+    Every section of a marketplace's page in the portal offers **Connect a
+    client** in its header, which composes the exact commands below for that marketplace — token
     creation (show-once, as always), the credential line, the `claude plugin
     marketplace add` command, and the clone URL. The rest of this guide is the
-    same procedure by hand. If the page says the marketplace is **not being
-    served yet**, the commands are correct but will be answered `404` until a
+    same procedure by hand. If the header says the marketplace is **not
+    served**, the commands are correct but will be answered `404` until a
     snapshot is approved. See
-    [the portal reference](../reference/portal.md#set-up-a-client).
+    [the portal reference](../reference/portal.md#connect-a-client).
 
 ## 1. Get a credential
 
