@@ -260,7 +260,7 @@ test("the_sidebar_counts_what_awaits_a_decision_and_opens_a_marketplace_into_its
   const outside = renderLayout("/audit");
   const main = screen.getByRole("navigation", { name: "Main" });
   expect(
-    await within(main).findByRole("link", { name: /Review queue, 2 awaiting a decision across marketplaces/ }),
+    await within(main).findByRole("link", { name: /^Review queue\s*\(2 awaiting a decision\)$/ }),
   ).toHaveAttribute("href", "/review");
   // Outside a marketplace no sections are listed.
   expect(within(main).queryByRole("list", { name: /sections/ })).not.toBeInTheDocument();
@@ -268,7 +268,7 @@ test("the_sidebar_counts_what_awaits_a_decision_and_opens_a_marketplace_into_its
 
   renderLayout("/marketplaces/corp-marketplace/settings");
   const sections = await screen.findByRole("list", { name: "corp-marketplace sections" });
-  expect(await within(sections).findByRole("link", { name: /Review, 2 awaiting a decision/ })).toHaveAttribute(
+  expect(await within(sections).findByRole("link", { name: /^Review\s*\(2 awaiting a decision\)$/ })).toHaveAttribute(
     "href",
     "/marketplaces/corp-marketplace",
   );

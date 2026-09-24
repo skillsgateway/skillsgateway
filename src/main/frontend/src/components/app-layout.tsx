@@ -123,7 +123,7 @@ function NavCount({ count, label }: { count: number; label: string }) {
       >
         {count}
       </span>
-      <span className="sr-only">, {label}</span>
+      <span className="sr-only"> ({label})</span>
     </>
   );
 }
@@ -482,7 +482,7 @@ export function AppLayout() {
                       {awaiting ? (
                         <NavCount
                           count={awaitingTotal}
-                          label={`${awaitingTotal} awaiting a decision across marketplaces`}
+                          label={`${awaitingTotal} awaiting a decision`}
                         />
                       ) : null}
                     </NavLink>

@@ -31,7 +31,7 @@ export const ReviewWithAwaiting: Story = {
   args: { name: "corp-marketplace", awaiting: 2 },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const review = canvas.getByRole("link", { name: /Review, 2 awaiting a decision/ });
+    const review = canvas.getByRole("link", { name: /^Review\s*\(2 awaiting a decision\)$/ });
     await expect(review).toHaveAttribute("aria-current", "page");
     await expect(canvas.getByRole("link", { name: "Settings" })).not.toHaveAttribute("aria-current");
   },
