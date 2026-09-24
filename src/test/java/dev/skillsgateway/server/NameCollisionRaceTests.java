@@ -64,7 +64,7 @@ class NameCollisionRaceTests extends AbstractNameCollisionTest {
             for (Registered registered : both) {
                 approvals.add(pool.submit(() -> approve(registered.snapshot().id())));
             }
-            awaitWaiters(blocker, 2);
+            awaitWaiters(approvals);
             blocker.rollback();
         } finally {
             pool.shutdown();
@@ -100,22 +100,34 @@ class NameCollisionRaceTests extends AbstractNameCollisionTest {
         });
     }
 
-    /** Until {@code count} other backends are waiting on a lock, or the patience runs out. */
-    private static void awaitWaiters(Connection connection, int count) throws Exception {
+    /**
+     * Until every approval has a backend waiting on a lock, or the patience runs out. Polled from a
+     * connection of its own: pg_stat_activity is a snapshot held for the rest of the transaction that
+     * first reads it, so polling from inside the blocker's would keep seeing the first answer.
+     */
+    private void awaitWaiters(List<Future<Snapshot>> approvals) throws Exception {
         Instant deadline = Instant.now().plus(PATIENCE);
         int waiting = 0;
-        while (Instant.now().isBefore(deadline)) {
-            try (PreparedStatement query = connection.prepareStatement("SELECT count(*) FROM pg_stat_activity"
-                            + " WHERE wait_event_type = 'Lock' AND pid <> pg_backend_pid()"
-                            + " AND datname = current_database()");
-                    ResultSet rows = query.executeQuery()) {
-                rows.next();
-                waiting = rows.getInt(1);
+        try (Connection observer = dataSource.getConnection()) {
+            observer.setAutoCommit(true);
+            while (Instant.now().isBefore(deadline)) {
+                for (Future<Snapshot> approval : approvals) {
+                    if (approval.isDone()) {
+                        approval.get();
+                        throw new AssertionError("an approval completed while its snapshot was locked");
+                    }
+                }
+                try (PreparedStatement query = observer.prepareStatement("SELECT count(*) FROM pg_stat_activity"
+                                + " WHERE wait_event_type = 'Lock' AND datname = current_database()");
+                        ResultSet rows = query.executeQuery()) {
+                    rows.next();
+                    waiting = rows.getInt(1);
+                }
+                if (waiting >= approvals.size()) {
+                    return;
+                }
+                Thread.sleep(20);
             }
-            if (waiting >= count) {
-                return;
-            }
-            Thread.sleep(20);
         }
         throw new AssertionError("only %d approvals reached the transition within %s".formatted(waiting, PATIENCE));
     }
