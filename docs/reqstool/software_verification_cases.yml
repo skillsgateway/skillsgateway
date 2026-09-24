@@ -2450,7 +2450,8 @@ cases:
     verification: automated-test
     description: |
       GIVEN a held snapshot whose pinned commit carries nested paths, a truncated blob, a
-      binary blob and a path the served commit still has
+      binary blob, a path the served commit still has, a JSON manifest declaring one key
+      twice, and a file named as JSON that does not tokenise
       WHEN the contents surface is opened at its address with no path selected, a file is
       selected, the resulting address is opened again from nothing, the listing is
       narrowed by a filter, and the surface is opened by a session holding no approver
@@ -2459,8 +2460,10 @@ cases:
       restores the same file and its content, the truncated blob states that it is cut,
       the binary blob is described rather than rendered, the removed path is shown as
       removed, the filter reports its matches against the size of the listing and states
-      when that listing is itself cut, and the roleless session is told it is refused
-    revision: "0.1.0"
+      when that listing is itself cut, the JSON manifest is shown re-indented with both
+      duplicated keys and its stored bytes one control away, the untokenisable file is shown
+      as stored with that stated, and the roleless session is told it is refused
+    revision: "0.3.0"
 
   - id: SVC_GW_INGEST_0030.1
     requirement_ids: ["GW_INGEST_0030.1"]
@@ -2922,16 +2925,17 @@ cases:
 
   - id: SVC_GW_AUTH_0043
     requirement_ids: ["GW_AUTH_0043"]
-    title: The wizard leads where content is served and says what held means
+    title: The wizard is in every section's header and says what held means
     verification: automated-test
     description: |
       GIVEN an authenticated portal session, a marketplace whose snapshot has been approved, and a
       marketplace whose only snapshot is still held
-      WHEN the consumer opens each marketplace's page and its client set-up wizard
-      THEN the serving marketplace leads with the set-up panel and offers the credential-storage
-      command as its primary copy target, and the held marketplace states on the page and inside the
-      wizard that a clone is answered with not-found until a snapshot is approved
-    revision: "0.2.0"
+      WHEN the consumer opens each marketplace's page, moves between its sections, and opens its
+      client set-up wizard from the header
+      THEN the wizard is offered from the header on every section and offers the credential-storage
+      command as its primary copy target, and the held marketplace states in its header and inside
+      the wizard that a clone is answered with not-found until a snapshot is approved
+    revision: "0.3.0"
 
   - id: SVC_GW_AUTH_0044
     requirement_ids: ["GW_AUTH_0044"]
@@ -3151,6 +3155,19 @@ cases:
       WHEN a snapshot is ingested, read back across a held, approved and revoked sequence, ingested again, has its recorded facts altered directly in the database, and is submitted for approval
       THEN the recorded facts equal those built from the pinned commit except for the state, the state read back is always the current one, the plugin-name index names each plugin with the manifest line that declares it, a second ingestion rewrites nothing, the policy gate decides on the recorded facts rather than on a fresh build, and the oversized snapshot is ingested with its plugin names indexed and no facts recorded, while the policy gate still refuses it for the same reason as before
     revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0037
+    requirement_ids: ["GW_INGEST_0037"]
+    title: The review queue gathers held snapshots across marketplaces and decides nothing itself
+    verification: automated-test
+    description: |
+      GIVEN two marketplaces, each with a snapshot awaiting a decision, and a third with none
+      WHEN a reviewer reads the portal navigation, opens the review queue, and opens an entry
+      THEN the navigation states two awaiting, the queue lists both snapshots with marketplace,
+      commit, state, vetting outcome and ingestion and no approve or reject control, the list of
+      marketplaces offers none either, and the entry opens that snapshot on its marketplace's
+      review beside its evidence
+    revision: "0.3.0"
 
   - id: SVC_GW_APPROVAL_0019
     requirement_ids: ["GW_APPROVAL_0019"]

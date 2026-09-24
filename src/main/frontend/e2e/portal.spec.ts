@@ -56,21 +56,42 @@ function uniqueName(prefix: string) {
   return `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/**
- * The marketplaces page is a table: each row expands in place to its snapshot review sub-table,
- * where Ingest and the Approve/Reject/Provenance actions live. Every test that acts on a
- * marketplace's snapshots opens its row first.
- */
-async function expandMarketplace(page: Page, name: string) {
-  await page.getByRole("button", { name: `Expand ${name}`, exact: true }).click();
+/** A marketplace's page, which opens on its Review section. */
+async function openMarketplace(page: Page, name: string) {
+  await page.goto(`/marketplaces/${name}`);
+  await expect(page.getByRole("heading", { level: 1, name, exact: true })).toBeVisible();
+}
+
+/** A section of the open marketplace, reached from the sidebar that lists them beneath it. */
+async function openSection(page: Page, name: string, section: "Review" | "Snapshots" | "Activity" | "Settings") {
+  await page
+    .getByRole("list", { name: `${name} sections` })
+    .getByRole("link", { name: new RegExp(`^${section}`) })
+    .click();
 }
 
 /**
- * The expanded snapshots region for one marketplace — the review sub-table. Scoping to it keeps
- * a test off the held/approved snapshots other tests in the same run leave on the page.
+ * Ingests from the marketplace's header. What arrived opens on Review, and the returned locator
+ * is its card — the one open card, so other tests' snapshots can never match inside it.
  */
-function marketplaceRegion(page: Page, name: string): Locator {
-  return page.getByRole("region", { name: `Snapshots of ${name}` });
+async function ingestOnReview(page: Page, name: string): Promise<Locator> {
+  if (!new URL(page.url()).pathname.startsWith(`/marketplaces/${name}`)) {
+    await openMarketplace(page, name);
+  }
+  const before = page.url();
+  await page.getByRole("button", { name: `Ingest ${name}` }).click();
+  await expect(page).not.toHaveURL(before);
+  await expect(page).toHaveURL(/\?snapshot=\d+$/);
+  const card = page.getByTestId("snapshot-card");
+  await expect(card.getByText("held", { exact: true }).first()).toBeVisible();
+  return card;
+}
+
+/** Approves the open card through the review dialog, and waits for it to say so. */
+async function approveCard(page: Page, card: Locator) {
+  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
+  await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
+  await expect(card.getByText("approved", { exact: true }).first()).toBeVisible();
 }
 
 /**
@@ -92,26 +113,20 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
   await submitRegister(page);
   await expect(page.getByText(`Marketplace '${name}' registered`)).toBeVisible();
 
-  // The review actions live in the row's expandable snapshot sub-table.
-  await expandMarketplace(page, name);
-  const region = marketplaceRegion(page, name);
-  await region.getByRole("button", { name: `Ingest ${name}` }).click();
-  await expect(region.getByText("held", { exact: true })).toBeVisible();
+  // The list is an index; the decision is made on the marketplace's Review, beside its evidence.
+  await page.getByRole("link", { name, exact: true }).click();
+  const card = await ingestOnReview(page, name);
 
   // Approval goes through the review dialog: the reviewer sees the verdicts first (GW_VETTING_0005).
-  await region.getByRole("button", { name: /Approve snapshot \d+/ }).click();
-  await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
-  await expect(region.getByText("approved", { exact: true })).toBeVisible();
+  await approveCard(page, card);
 
-  await region.getByRole("button", { name: /Provenance of snapshot \d+/ }).click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByText("Decided by")).toBeVisible();
-  await expect(dialog.getByText("alice")).toBeVisible();
-  await page.keyboard.press("Escape");
+  await card.getByRole("tab", { name: "Provenance" }).click();
+  await expect(card.getByText("Decided by")).toBeVisible();
+  await expect(card.getByText("alice").first()).toBeVisible();
 
-  // Detail view: nothing awaits a decision, so the served snapshot is the open card, and its
+  // Snapshots: nothing awaits a decision, so the served snapshot is the open card, and its
   // plugin/skill inventory is a tab on it (GW_INGEST_0008).
-  await page.getByRole("link", { name, exact: true }).click();
+  await page.goto(`/marketplaces/${name}/snapshots`);
   const served = page.getByRole("region", { name: /^Snapshot \d+$/ });
   await served.getByRole("tab", { name: "Inventory" }).click();
   await expect(served.getByText("hello", { exact: true }).first()).toBeVisible();
@@ -155,9 +170,7 @@ test("the_approve_dialog_warns_that_the_reviewer_supplied_the_content_and_still_
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
   await submitRegister(page);
   await expect(page.getByText(`Marketplace '${name}' registered`)).toBeVisible();
-  await expandMarketplace(page, name);
-  const card = marketplaceRegion(page, name);
-  await card.getByRole("button", { name: `Ingest ${name}` }).click();
+  const card = await ingestOnReview(page, name);
 
   await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
   const dialog = page.getByRole("dialog");
@@ -168,7 +181,7 @@ test("the_approve_dialog_warns_that_the_reviewer_supplied_the_content_and_still_
   const confirm = dialog.getByRole("button", { name: /Confirm approval of snapshot \d+/ });
   await expect(confirm).toBeEnabled();
   await confirm.click();
-  await expect(card.getByText("approved", { exact: true })).toBeVisible();
+  await expect(card.getByText("approved", { exact: true }).first()).toBeVisible();
 });
 
 /**
@@ -291,10 +304,7 @@ test("webhooks_page_lists_subscribers_and_delivery_attempts", async ({ page }) =
   await page.getByLabel("Name").fill(marketplaceName);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
   await submitRegister(page);
-  await expandMarketplace(page, marketplaceName);
-  const marketplaceRow = marketplaceRegion(page, marketplaceName);
-  await marketplaceRow.getByRole("button", { name: `Ingest ${marketplaceName}` }).click();
-  await expect(marketplaceRow.getByText("held", { exact: true })).toBeVisible();
+  await ingestOnReview(page, marketplaceName);
 
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Webhooks" }).click();
   await expect(
@@ -317,13 +327,8 @@ test("snapshot_soft_delete_and_restore_in_the_portal", async ({ page }) => {
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
   await submitRegister(page);
-  await expandMarketplace(page, name);
-  const region = marketplaceRegion(page, name);
-  await region.getByRole("button", { name: `Ingest ${name}` }).click();
-  await expect(region.getByText("held", { exact: true })).toBeVisible();
-
   // Retention lives with the snapshot, on the marketplace's own page.
-  await page.getByRole("link", { name, exact: true }).click();
+  await ingestOnReview(page, name);
   await page.getByRole("button", { name: /Delete snapshot \d+/ }).click();
   await expect(page.getByText("deleted", { exact: true })).toBeVisible();
   await expect(page.getByText(/restorable until/)).toBeVisible();
@@ -360,8 +365,8 @@ test("audit_page_exports_the_ledger_and_lists_sinks", async ({ page }) => {
 });
 
 /**
- * Registers the tainted fixture and ingests it, returning its marketplace card and the name it
- * was registered under — the name is what addresses its detail page.
+ * Registers the tainted fixture and ingests it, returning the snapshot's open card on Review and
+ * the name it was registered under — the name is what addresses the marketplace's page.
  */
 async function registerTaintedNamed(page: Page, prefix: string): Promise<{ card: Locator; name: string }> {
   await page
@@ -376,13 +381,7 @@ async function registerTaintedNamed(page: Page, prefix: string): Promise<{ card:
     .getByLabel("Clone URL")
     .fill(process.env.E2E_TAINTED_UPSTREAM_URL ?? "file:///tmp/e2e-tainted");
   await submitRegister(page);
-  await expandMarketplace(page, name);
-
-  // Scoped to this marketplace's own expanded snapshots region: earlier tests in the run
-  // leave their own held snapshots on the page.
-  const card = marketplaceRegion(page, name);
-  await card.getByRole("button", { name: `Ingest ${name}` }).click();
-  await expect(card.getByText("held", { exact: true })).toBeVisible();
+  const card = await ingestOnReview(page, name);
   return { card, name };
 }
 
@@ -458,19 +457,17 @@ test("vetting_verdicts_are_shown_and_a_blocked_snapshot_cannot_be_approved", asy
   await login(page, "alice");
   const card = await registerTainted(page, "tainted");
 
-  // The chain blocked it, and the table says so before anything is clicked.
-  await expect(card.getByText("vetting blocked")).toBeVisible();
+  // The chain blocked it, and the card says so before anything is clicked.
+  await expect(card.getByText("vetting blocked").first()).toBeVisible();
+  await expect(card.getByText("prompt-injection").first()).toBeVisible();
+  await expect(card.getByText("instruction-override").first()).toBeVisible();
 
-  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByText("prompt-injection").first()).toBeVisible();
-  await expect(dialog.getByText("instruction-override").first()).toBeVisible();
-
-  // Fail-closed at the surface too: there is no reason field to type past the gate with,
-  // and the confirm control stays disabled while anything is uncovered.
-  const confirm = dialog.getByRole("button", { name: /Confirm approval of snapshot \d+/ });
-  await expect(confirm).toBeDisabled();
-  await expect(dialog.getByLabel("Reason for approving anyway")).toHaveCount(0);
+  // Fail-closed at the surface too: there is no reason field to type past the gate with, and
+  // the approve control is shut, with the reason on screen, while anything is uncovered.
+  const approve = card.getByRole("button", { name: /Approve snapshot \d+/ });
+  await expect(approve).toBeDisabled();
+  await expect(card.getByText(/Vetting blocked this snapshot/)).toBeVisible();
+  await expect(page.getByLabel("Reason for approving anyway")).toHaveCount(0);
 });
 
 /**
@@ -482,7 +479,6 @@ test("vetting_verdicts_are_shown_and_a_blocked_snapshot_cannot_be_approved", asy
 test("the_vetting_chain_is_drawn_as_a_flow_and_a_node_opens_its_evidence", async ({ page }) => {
   await login(page, "alice");
   const { name } = await registerTaintedNamed(page, "flow");
-  await page.getByRole("link", { name, exact: true }).click();
 
   // The chain of the snapshot, in the order it ran: ingestion, the vetters, the aggregation,
   // and the gate the reviewer is standing at.
@@ -507,6 +503,7 @@ test("the_vetting_chain_is_drawn_as_a_flow_and_a_node_opens_its_evidence", async
   // And the administrator surface: the effective chain of the marketplace itself, with the
   // source of each vetter's state (GW_VETTING_0029.5).
   await detail.press("Escape");
+  await openSection(page, name, "Settings");
   const chain = page.getByRole("list", { name: `Vetting chain of ${name}` });
   await expect(chain).toBeVisible();
   await expect(chain.getByRole("button", { name: /prompt-injection, enabled$/ })).toBeVisible();
@@ -538,7 +535,8 @@ test("an_admin_sets_the_chain_mode_and_order_and_a_stopped_run_says_so", async (
     .getByLabel("Clone URL")
     .fill(process.env.E2E_TAINTED_UPSTREAM_URL ?? "file:///tmp/e2e-tainted");
   await submitRegister(page);
-  await page.getByRole("link", { name, exact: true }).click();
+  await openMarketplace(page, name);
+  await openSection(page, name, "Settings");
 
   // Stop the chain at the first failure for this marketplace.
   const mode = page.getByRole("group", { name: "When a vetter fails" });
@@ -559,16 +557,7 @@ test("an_admin_sets_the_chain_mode_and_order_and_a_stopped_run_says_so", async (
   await expect(page.getByRole("button", { name: "Save order" })).toBeDisabled();
 
   // The first snapshot therefore runs prompt-injection first, and the chain stops there.
-  await page
-    .getByRole("navigation", { name: "Main" })
-    .getByRole("link", { name: "Marketplaces" })
-    .click();
-  await expandMarketplace(page, name);
-  const card = marketplaceRegion(page, name);
-  await card.getByRole("button", { name: `Ingest ${name}` }).click();
-  await expect(card.getByText("held", { exact: true })).toBeVisible();
-
-  await page.getByRole("link", { name, exact: true }).click();
+  await ingestOnReview(page, name);
   const flow = page.getByRole("list", { name: /^Vetting chain of snapshot \d+$/ }).first();
   // The headline says the chain stopped early and where, so a shorter chain is not read as a
   // cleaner one, and the vetters it never reached say so on their own nodes.
@@ -585,25 +574,21 @@ test("an_admin_sets_the_chain_mode_and_order_and_a_stopped_run_says_so", async (
 test("a_finding_is_waived_from_the_review_surface_and_the_waiver_is_listed", async ({ page }) => {
   await login(page, "alice");
   const card = await registerTainted(page, "waived");
-  await expect(card.getByText("vetting blocked")).toBeVisible();
+  await expect(card.getByText("vetting blocked").first()).toBeVisible();
+  await expect(card.getByText("instruction-override").first()).toBeVisible();
 
-  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByText("instruction-override").first()).toBeVisible();
+  // Waive every blocking finding where it is shown; approval unblocks only when none is left.
+  const approve = card.getByRole("button", { name: /Approve snapshot \d+/ });
+  await expect(approve).toBeDisabled();
 
-  // Waive every blocking finding the server named; approval unblocks only when none is left.
-  const confirm = dialog.getByRole("button", { name: /Confirm approval of snapshot \d+/ });
-  await expect(confirm).toBeDisabled();
-
-  await waiveAllFindings(dialog);
+  await waiveAllFindings(card);
 
   // Cleared, but visibly by an acceptance rather than by a clean chain.
-  await expect(dialog.getByText("vetting clear with waivers")).toBeVisible();
-  await expect(dialog.getByText("accepted for the pilot ring").first()).toBeVisible();
+  await expect(card.getByText("vetting clear with waivers").first()).toBeVisible();
+  await expect(card.getByText("accepted for the pilot ring").first()).toBeVisible();
 
-  await expect(confirm).toBeEnabled();
-  await confirm.click();
-  await expect(card.getByText("approved", { exact: true })).toBeVisible();
+  await expect(approve).toBeEnabled();
+  await approveCard(page, card);
 });
 
 /**
@@ -619,21 +604,14 @@ test("a_finding_is_waived_from_the_review_surface_and_the_waiver_is_listed", asy
 test("a_revoked_snapshot_shows_its_violation_and_who_had_already_fetched_it", async ({ page }) => {
   await login(page, "alice");
   const card = await registerTainted(page, "revoked");
-  await expect(card.getByText("vetting blocked")).toBeVisible();
+  await expect(card.getByText("vetting blocked").first()).toBeVisible();
 
   // Publish it the only sanctioned way: an explicit, justified, expiring acceptance per finding.
-  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
-  const dialog = page.getByRole("dialog");
-  const confirm = dialog.getByRole("button", { name: /Confirm approval of snapshot \d+/ });
-  await waiveAllFindings(dialog);
-  await expect(confirm).toBeEnabled();
-  await confirm.click();
-  await expect(card.getByText("approved", { exact: true })).toBeVisible();
+  await waiveAllFindings(card);
+  await approveCard(page, card);
 
   // Withdraw every acceptance. The gate closes immediately; publication does not move yet —
   // that is exactly the gap continuous re-vetting exists to close.
-  await card.getByRole("link").first().click();
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   // Wait for the evidence to load before counting controls: an empty list here would silently
   // mean "revoked nothing", and the test would then be asserting against a still-waived snapshot.
   const waivers = page.getByRole("region", { name: "Waivers" });
@@ -664,19 +642,19 @@ test("a_revoked_snapshot_shows_its_violation_and_who_had_already_fetched_it", as
   await expect(affected.getByText(/Nobody fetched this snapshot/)).toBeVisible();
 
   // A revoked snapshot is not re-vetted again — it is not being served — and the way back is a
-  // fresh decision on the marketplaces page.
+  // fresh decision on the marketplace's Review.
   await expect(page.getByRole("button", { name: /^Re-vet snapshot \d+/ })).toHaveCount(0);
 });
 
 /**
- * The set-up panel leads on a marketplace that is serving, and on one that is not it says the
- * thing the portal could not say before: a clone is answered with 404 until a snapshot is
- * approved. Both states are exercised on the same marketplace, before and after the approval,
- * so the panel is shown to react to the estate rather than to the fixture.
+ * The client wizard is a header action on every section of a marketplace, and on one that serves
+ * nothing the header says what the portal could not say before: a clone is answered with 404
+ * until a snapshot is approved. Both states are exercised on the same marketplace, before and
+ * after the approval, so the header is shown to react to the estate rather than to the fixture.
  *
  * @SVCs SVC_GW_AUTH_0043
  */
-test("the_setup_panel_leads_when_serving_and_explains_the_held_case", async ({ page }) => {
+test("the_client_wizard_is_offered_on_every_section_and_explains_the_held_case", async ({ page }) => {
   await login(page, "alice");
   await page
     .getByRole("navigation", { name: "Main" })
@@ -688,13 +666,17 @@ test("the_setup_panel_leads_when_serving_and_explains_the_held_case", async ({ p
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
   await submitRegister(page);
 
-  // Nothing approved yet: the lead slot explains the refusal the consumer would otherwise read
-  // as a broken gateway, on the page and again inside the wizard.
+  // Nothing approved yet: the header explains the refusal the consumer would otherwise read as a
+  // broken gateway, and the wizard says it again inside itself.
   await page.getByRole("link", { name, exact: true }).click();
-  await expect(page.getByTestId("setup-lead")).toContainText("Not being served yet");
-  await expect(page.getByTestId("setup-held-notice").first()).toContainText("404");
-  await page.getByRole("button", { name: "Set up a client" }).click();
-  await expect(page.getByTestId("setup-held-notice").last()).toContainText("404");
+  await expect(page.getByTestId("marketplace-served-status")).toContainText("404");
+  for (const section of ["Snapshots", "Activity", "Settings", "Review"] as const) {
+    await openSection(page, name, section);
+    await expect(page.getByRole("button", { name: "Connect a client" })).toBeVisible();
+    await expect(page.getByTestId("marketplace-served-status")).toContainText("404");
+  }
+  await page.getByRole("button", { name: "Connect a client" }).click();
+  await expect(page.getByTestId("setup-held-notice")).toContainText("404");
   // The credential line is the primary copy target, held or not.
   await expect(page.getByRole("button", { name: "Copy credential command" })).toBeVisible();
   await expect(
@@ -702,21 +684,11 @@ test("the_setup_panel_leads_when_serving_and_explains_the_held_case", async ({ p
   ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Done" }).click();
 
-  // Ingest and approve, then the same slot leads with the way in.
-  await page
-    .getByRole("navigation", { name: "Main" })
-    .getByRole("link", { name: "Marketplaces" })
-    .click();
-  await expandMarketplace(page, name);
-  const card = marketplaceRegion(page, name);
-  await card.getByRole("button", { name: `Ingest ${name}` }).click();
-  await expect(card.getByText("held", { exact: true })).toBeVisible();
-  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
-  await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
-  await expect(card.getByText("approved", { exact: true })).toBeVisible();
-
-  await page.getByRole("link", { name, exact: true }).click();
-  await expect(page.getByTestId("setup-lead")).toContainText("Use this marketplace");
+  // Ingest and approve, then the header names what is served and the held statement is gone.
+  const card = await ingestOnReview(page, name);
+  await approveCard(page, card);
+  await expect(page.getByTestId("marketplace-served-status")).toContainText(/Serving [0-9a-f]{12}/);
+  await page.getByRole("button", { name: "Connect a client" }).click();
   await expect(page.getByTestId("setup-held-notice")).toHaveCount(0);
 });
 
@@ -736,13 +708,7 @@ test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
   await submitRegister(page);
-  await expandMarketplace(page, name);
-  const card = marketplaceRegion(page, name);
-  await card.getByRole("button", { name: `Ingest ${name}` }).click();
-  await expect(card.getByText("held", { exact: true })).toBeVisible();
-  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
-  await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
-  await expect(card.getByText("approved", { exact: true })).toBeVisible();
+  await approveCard(page, await ingestOnReview(page, name));
 
   // A PAT minted in the portal, then a real `git clone` through the facade with it.
   await openTokens(page);
@@ -798,7 +764,7 @@ test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async 
   await submitRegister(page);
   await page.getByRole("link", { name, exact: true }).click();
 
-  await page.getByRole("button", { name: "Set up a client" }).click();
+  await page.getByRole("button", { name: "Connect a client" }).click();
   const origin = new URL(page.url()).origin;
   await expect(page.getByTestId("wizard-add-command")).toHaveText(
     `claude plugin marketplace add ${origin}/git/${name}`,
@@ -822,7 +788,7 @@ test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async 
 
   // Close and reopen: the secret is gone with the wizard; nothing re-displays it.
   await page.getByRole("button", { name: "Done" }).click();
-  await page.getByRole("button", { name: "Set up a client" }).click();
+  await page.getByRole("button", { name: "Connect a client" }).click();
   await expect(page.getByTestId("wizard-clone-command")).toContainText("<YOUR_TOKEN>");
   await expect(page.getByText(token ?? "__never__")).toHaveCount(0);
 });
@@ -857,13 +823,7 @@ test("snapshot_contents_are_explored_on_an_address_that_restores_the_same_file",
     .getByLabel("Clone URL")
     .fill(process.env.E2E_PREVIEW_UPSTREAM_URL ?? `file://${upstream}`);
   await submitRegister(page);
-  await expandMarketplace(page, name);
-  const card = marketplaceRegion(page, name);
-  await card.getByRole("button", { name: `Ingest ${name}` }).click();
-  await expect(card.getByText("held", { exact: true })).toBeVisible();
-  await card.getByRole("button", { name: /Approve snapshot \d+/ }).click();
-  await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
-  await expect(card.getByText("approved", { exact: true })).toBeVisible();
+  await approveCard(page, await ingestOnReview(page, name));
 
   // Advance the upstream the way its owner would: a real commit with git (host-config isolated,
   // exactly like run-e2e.sh builds the fixtures).
@@ -887,13 +847,9 @@ test("snapshot_contents_are_explored_on_an_address_that_restores_the_same_file",
   git("add", "-A");
   git("-c", "commit.gpgsign=false", "commit", "-q", "-m", "e2e preview delta");
 
-  // A second ingest pins the new commit as a held snapshot beside the served one.
-  await card.getByRole("button", { name: `Ingest ${name}` }).click();
-  await expect(card.getByText("held", { exact: true })).toBeVisible();
-
-  await page.getByRole("link", { name, exact: true }).click();
-  // The held snapshot is the newest awaiting a decision, so it is the card that is open; its
-  // one-line delta is against the served commit, and names it.
+  // A second ingest pins the new commit as a held snapshot beside the served one, and opens it on
+  // Review; its one-line delta is against the served commit, and names it.
+  await ingestOnReview(page, name);
   const heldCard = page.getByRole("region", { name: /^Snapshot \d+$/ });
   await expect(heldCard.getByTestId("snapshot-delta")).toContainText(/2 files · \+\d+ −\d+ · vs [0-9a-f]{8}/);
   await heldCard.getByRole("tab", { name: "Contents" }).click();
@@ -942,6 +898,18 @@ test("snapshot_contents_are_explored_on_an_address_that_restores_the_same_file",
   await expect(added).toContainText("added");
   await added.click();
   await expect(page.getByRole("region", { name: "Selected file" })).toContainText("added");
+
+  // JSON is re-indented by its tokens, with the stored bytes one control away.
+  await page
+    .getByRole("navigation", { name: /File tree of snapshot \d+/ })
+    .getByRole("button", { name: ".claude-plugin" })
+    .click();
+  await page.getByRole("button", { name: /marketplace\.json/ }).click();
+  const jsonView = page.getByRole("group", { name: "JSON view" });
+  await expect(jsonView.getByRole("button", { name: "Formatted" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("main pre").last()).toContainText('"plugins": [\n');
+  await jsonView.getByRole("button", { name: "Raw" }).click();
+  await expect(jsonView.getByRole("button", { name: "Raw" })).toHaveAttribute("aria-pressed", "true");
 
   // Links sent before the card existed still open: the full-width route renders the same explorer.
   const snapshotId = new URL(deepLink).searchParams.get("snapshot");
@@ -1070,14 +1038,8 @@ test("a_chain_change_marks_held_evidence_superseded_and_the_reviewer_refreshes_i
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
   await submitRegister(page);
 
-  await expandMarketplace(page, name);
-  const card = marketplaceRegion(page, name);
-  await card.getByRole("button", { name: `Ingest ${name}` }).click();
-  await expect(card.getByText("held", { exact: true })).toBeVisible();
-
-  // The vetting evidence is read on the marketplace detail page, which is also where the chain
-  // is configured — the two facts this test is about live on one screen.
-  await page.getByRole("link", { name, exact: true }).click();
+  // The evidence is read on Review; the chain is configured on Settings, one section away.
+  const card = await ingestOnReview(page, name);
   const vetting = page.getByRole("region", { name: /Vetting of snapshot \d+/ }).first();
   await expect(vetting).toBeVisible();
   // Vetted against the chain in force, so nothing is said about it.
@@ -1085,6 +1047,7 @@ test("a_chain_change_marks_held_evidence_superseded_and_the_reviewer_refreshes_i
 
   // An administrator changes the chain. The mode is part of its identity, so this is a chain
   // change in exactly the sense the requirement means — and it re-runs nothing.
+  await openSection(page, name, "Settings");
   const mode = page.getByRole("group", { name: "When a vetter fails" });
   await mode.getByRole("button", { name: "Stop after a failure" }).click();
   await expect(mode.getByRole("button", { name: "Stop after a failure" })).toHaveAttribute(
@@ -1094,6 +1057,7 @@ test("a_chain_change_marks_held_evidence_superseded_and_the_reviewer_refreshes_i
 
   // The stored run is now evidence from a superseded chain, and the reviewer is told so — with
   // both chains named, because "it is stale" without saying how is not actionable.
+  await openSection(page, name, "Review");
   const detailVetting = page.getByRole("region", { name: /Vetting of snapshot \d+/ }).first();
   await expect(detailVetting.getByText(/different chain than this marketplace runs now/)).toBeVisible();
   await expect(detailVetting.getByText(/mode=run-all/).first()).toBeVisible();
@@ -1107,13 +1071,5 @@ test("a_chain_change_marks_held_evidence_superseded_and_the_reviewer_refreshes_i
   ).toHaveCount(0);
 
   // And the approval was never blocked by any of it.
-  await page
-    .getByRole("navigation", { name: "Main" })
-    .getByRole("link", { name: "Marketplaces" })
-    .click();
-  await expandMarketplace(page, name);
-  const after = marketplaceRegion(page, name);
-  await after.getByRole("button", { name: /Approve snapshot \d+/ }).click();
-  await page.getByRole("button", { name: /Confirm approval of snapshot \d+/ }).click();
-  await expect(after.getByText("approved", { exact: true })).toBeVisible();
+  await approveCard(page, card);
 });

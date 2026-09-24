@@ -11,8 +11,9 @@ immutable SHA.
 ## Reviewing
 
 A held snapshot gives you four things. In the portal they are the tabs of its
-card on the marketplace detail page, where the newest snapshot awaiting a
-decision is already open; its one-line delta — `1 skill added, 1 modified ·
+card on the marketplace's **Review** — reached from the **Review queue**, which
+lists what awaits a decision across every marketplace — where the newest
+snapshot awaiting a decision is already open; its one-line delta — `1 skill added, 1 modified ·
 3 files · +48 −7 · vs 65f64622` — tells you the size of the review before you
 open any of them.
 
@@ -210,8 +211,8 @@ The threats that matter here are the ones no scanner catches:
 === "Portal"
 
     **Approve** and **Reject** sit at the foot of the snapshot card on the
-    marketplace detail page, below the evidence they rest on, and in the
-    snapshot's row on the **Marketplaces** page. **Reject** fires immediately.
+    marketplace's **Review**, below the evidence they rest on, and nowhere
+    else. **Reject** fires immediately.
     **Approve** opens a dialog showing the vetting verdicts. On the card, a
     snapshot the gateway would refuse — vetting blocked it, it is inside the
     minimum release age, or the four-eyes rule refuses you — has **Approve**

@@ -79,6 +79,14 @@ export function OutcomeBadge({ outcome }: { outcome?: string }) {
   return <Badge variant="destructive">vetting blocked</Badge>;
 }
 
+/** A snapshot's chain outcome, read on its own — for the tables that list snapshots side by side. */
+export function SnapshotVettingBadge({ snapshotId }: { snapshotId: number }) {
+  const vetting = useSnapshotVetting(snapshotId);
+  if (vetting.isLoading) return <span className="text-xs text-muted-foreground">…</span>;
+  if (vetting.isError) return <span className="text-xs text-muted-foreground">unavailable</span>;
+  return <OutcomeBadge outcome={vetting.data?.outcome} />;
+}
+
 /** Stable identity of a finding within a run, so a suppression can be matched to its row. */
 function findingKey(vetter: string | undefined, finding: VettingFinding) {
   return `${vetter ?? ""}|${finding.id ?? ""}|${finding.location ?? ""}`;

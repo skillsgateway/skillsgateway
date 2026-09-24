@@ -6,10 +6,17 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AppLayout } from "@/components/app-layout";
 import { AdoptionPage } from "@/pages/adoption";
 import { AuditPage } from "@/pages/audit";
-import { MarketplaceDetailPage } from "@/pages/marketplace-detail";
+import {
+  MarketplaceActivityPage,
+  MarketplaceLayout,
+  MarketplaceReviewPage,
+  MarketplaceSettingsPage,
+  MarketplaceSnapshotsPage,
+} from "@/pages/marketplace-detail";
 import { MarketplacesPage } from "@/pages/marketplaces";
 import { SnapshotFilesPage } from "@/pages/snapshot-files";
 import { OverviewPage } from "@/pages/overview";
+import { ReviewQueuePage } from "@/pages/review-queue";
 import { TokensPage } from "@/pages/tokens";
 import { VettingPage } from "@/pages/vetting";
 import { WebhooksPage } from "@/pages/webhooks";
@@ -27,7 +34,19 @@ const router = createBrowserRouter([
     children: [
       { path: "/", element: <OverviewPage /> },
       { path: "/marketplaces", element: <MarketplacesPage /> },
-      { path: "/marketplaces/:name", element: <MarketplaceDetailPage /> },
+      { path: "/review", element: <ReviewQueuePage />, handle: { layout: "full" } },
+      {
+        path: "/marketplaces/:name",
+        element: <MarketplaceLayout />,
+        handle: { layout: "full" },
+        // Absolute child paths, so SpaRoutesTests reads every one of them from this file.
+        children: [
+          { index: true, element: <MarketplaceReviewPage /> },
+          { path: "/marketplaces/:name/snapshots", element: <MarketplaceSnapshotsPage /> },
+          { path: "/marketplaces/:name/activity", element: <MarketplaceActivityPage /> },
+          { path: "/marketplaces/:name/settings", element: <MarketplaceSettingsPage /> },
+        ],
+      },
       // Wide, self-scrolling: two panes that own their scroll, in a page that does not.
       {
         path: "/marketplaces/:name/snapshots/:id/files",

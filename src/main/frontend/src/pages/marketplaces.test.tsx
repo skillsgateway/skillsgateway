@@ -1,11 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router-dom";
 import { toast } from "sonner";
 import { expect, test, vi } from "vitest";
-import { compositeProvenance, tooYoung } from "@/test/msw-handlers";
 import { server } from "@/test/msw-server";
 import { MarketplacesPage } from "./marketplaces";
 
@@ -24,72 +23,25 @@ function renderPage() {
   );
 }
 
-test("lists_registered_marketplaces_and_reveals_snapshots_on_expand", async () => {
-  const user = userEvent.setup();
+/**
+ * The list is an index: it says how many snapshots await a decision and links to where the
+ * evidence is, and it offers no decision of its own.
+ *
+ * @SVCs SVC_GW_INGEST_0037
+ */
+test("lists_marketplaces_with_their_awaiting_count_and_no_decision_controls", async () => {
   renderPage();
   expect(await screen.findByText("corp-marketplace")).toBeInTheDocument();
-  // The latest snapshot's state is shown on the collapsed row.
+  // The latest snapshot's state is shown on the row.
   expect(screen.getByText("held")).toBeInTheDocument();
-  // The review actions live in the row's expandable snapshots table.
-  expect(screen.queryByRole("button", { name: "Approve snapshot 1" })).not.toBeInTheDocument();
-  await user.click(screen.getByRole("button", { name: "Expand corp-marketplace" }));
-  expect(await screen.findByRole("button", { name: "Approve snapshot 1" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Reject snapshot 1" })).toBeInTheDocument();
-});
-
-/**
- * The provenance dialog carries the closure (GW_INGEST_0030.5): a reviewer sees the served commit beside
- * the upstream one, and each external plugin with the URL it was fetched through and the commit it
- * resolved to. Untagged for the reason given below: SVC_GW_INGEST_0030.5 is verified by the Java suite.
- */
-test("provenance_dialog_lists_the_served_commit_and_the_resolved_closure", async () => {
-  const user = userEvent.setup();
-  renderPage();
-  await user.click(await screen.findByRole("button", { name: "Expand corp-marketplace" }));
-  await user.click(await screen.findByRole("button", { name: "Provenance of snapshot 1" }));
-  const dialog = await screen.findByRole("dialog", { name: "Provenance of snapshot 1" });
-  const member = compositeProvenance.closure!.members![0]!;
-  expect(await within(dialog).findByText(member.cloneUrl!)).toBeInTheDocument();
-  expect(within(dialog).getByText(member.resolvedSha!)).toBeInTheDocument();
-  expect(within(dialog).getByText(compositeProvenance.sha!)).toBeInTheDocument();
-  expect(within(dialog).getByText(compositeProvenance.upstreamSha!)).toBeInTheDocument();
-  expect(within(dialog).getByRole("heading", { name: "External plugin sources" })).toBeInTheDocument();
-});
-
-/**
- * The cooling-off window (GW_APPROVAL_0004.4) as a reviewer meets it: the control is shut and says
- * when it opens, rather than opening a dialog that would only refuse. Nothing in the portal can
- * shorten the wait — that is the point of the control — so the copy says what happens instead of
- * offering a way past it.
- *
- * Untagged on purpose: SVC_GW_APPROVAL_0004.4 is verified by the Java suite, and only Playwright
- * results are matched back to SVC ids (vitest classnames are not normalised to the tag FQN style).
- * Tagging it here would register a verification the traceability gate could never see pass.
- */
-test("approve_is_disabled_with_the_remaining_time_inside_the_cooling_off_window", async () => {
-  const user = userEvent.setup();
-  server.use(http.get("/api/v1/snapshots/:id/release-age", () => HttpResponse.json(tooYoung)));
-  renderPage();
-  await user.click(await screen.findByRole("button", { name: "Expand corp-marketplace" }));
-
-  const approve = await screen.findByRole("button", { name: "Approve snapshot 1" });
-  await waitFor(() => expect(approve).toHaveTextContent("Eligible in 2d 4h"));
-  expect(approve).toBeDisabled();
-  // Rejecting is never age-gated: suspicious content must be refusable at once.
-  expect(screen.getByRole("button", { name: "Reject snapshot 1" })).toBeEnabled();
-});
-
-test("approve_is_offered_normally_once_the_window_has_passed", async () => {
-  const user = userEvent.setup();
-  renderPage();
-  await user.click(await screen.findByRole("button", { name: "Expand corp-marketplace" }));
-
-  const approve = await screen.findByRole("button", { name: "Approve snapshot 1" });
-  // Never shut merely because the answer has not arrived: the server is the gate, and a portal
-  // that guessed "not eligible" while loading would block every approval on a slow request.
-  expect(approve).toBeEnabled();
-  await waitFor(() => expect(approve).toHaveTextContent("Approve"));
-  expect(approve).toBeEnabled();
+  // Snapshot 1 is held and snapshot 3 revoked: both await a decision.
+  expect(screen.getByRole("link", { name: "2 awaiting a decision in corp-marketplace" })).toHaveAttribute(
+    "href",
+    "/marketplaces/corp-marketplace",
+  );
+  expect(screen.queryByRole("button", { name: /Expand corp-marketplace/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /^Approve snapshot/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /^Reject snapshot/ })).not.toBeInTheDocument();
 });
 
 test("register_is_disabled_until_the_name_and_url_are_valid", async () => {
@@ -134,38 +86,6 @@ test("register_dialog_rejects_invalid_name_and_malformed_url", async () => {
  * vetter's finding, keeps the confirm control disabled, and offers the only way past it —
  * accepting that finding with a justification and an expiry.
  */
-test("approving_a_blocked_snapshot_shows_the_findings_and_offers_a_waiver", async () => {
-  const user = userEvent.setup();
-  renderPage();
-  await user.click(await screen.findByRole("button", { name: "Expand corp-marketplace" }));
-  await user.click(await screen.findByRole("button", { name: "Approve snapshot 1" }));
-
-  const dialog = await screen.findByRole("dialog");
-  expect((await within(dialog).findAllByText("secret-scan")).length).toBeGreaterThan(0);
-  expect(await within(dialog).findByText(/an AWS access key id is committed/)).toBeInTheDocument();
-
-  // No reason field exists any more, and no amount of typing enables the button.
-  const confirm = within(dialog).getByRole("button", { name: "Confirm approval of snapshot 1" });
-  expect(confirm).toBeDisabled();
-  expect(within(dialog).queryByLabelText("Reason for approving anyway")).not.toBeInTheDocument();
-
-  // The waiver form demands a justification before it will record anything.
-  await user.click(within(dialog).getByRole("button", { name: "Waive finding aws-access-key-id" }));
-  const record = within(dialog).getByRole("button", { name: "Record waiver for aws-access-key-id" });
-  expect(record).toBeDisabled();
-  expect(within(dialog).getByLabelText("Expires on")).toHaveValue();
-
-  await user.type(within(dialog).getByLabelText("Justification"), "documented dummy key");
-  expect(record).toBeEnabled();
-  expect(confirm).toBeDisabled();
-
-  // The server refuses a waiver that has already lapsed, so the control refuses it first.
-  const expiry = within(dialog).getByLabelText("Expires on");
-  await user.clear(expiry);
-  await user.type(expiry, "2020-01-01");
-  expect(record).toBeDisabled();
-});
-
 /**
  * Registering an already-registered upstream is legitimate but usually a mistake, so the form
  * warns and holds Register shut until the collision is acknowledged — a deliberate choice, not a

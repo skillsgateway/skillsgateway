@@ -11,6 +11,7 @@ A fixed sidebar, grouped:
 | Group | Item | Destination |
 | --- | --- | --- |
 | Gateway | Overview | [`/`](#overview) |
+| Gateway | Review queue | [`/review`](#review-queue) — with the count of snapshots awaiting a decision, absent at zero |
 | Gateway | Marketplaces | [`/marketplaces`](#marketplaces) |
 | Governance | Audit log | [`/audit`](#audit-log) |
 | Governance | Vetting | [`/vetting`](#vetting-governance) — **shown only to administrators** |
@@ -20,9 +21,12 @@ A fixed sidebar, grouped:
 | Reference | Documentation | this manual — leaves the portal, opens in a new tab |
 | Reference | Source code | the project repository — leaves the portal, opens in a new tab |
 
-[Marketplace detail](#marketplace-detail) is reached by clicking a marketplace,
-not from the sidebar, and [Snapshot contents](#snapshot-contents) from a
-snapshot on that page. [Access tokens](#access-tokens) is a per-user concern, not
+Inside a marketplace, the sidebar lists that marketplace beneath **Marketplaces**
+with its [sections](#marketplace-detail) — **Review** (with its own awaiting
+count), **Snapshots**, **Activity** and **Settings** — and the current section
+is the one highlighted entry. Leaving the marketplace closes the list; it is
+read from the address, never remembered. [Snapshot contents](#snapshot-contents)
+is reached from a snapshot's card. [Access tokens](#access-tokens) is a per-user concern, not
 estate-wide navigation — it is reached from the user menu, described next, and
 from the Overview page's Access tokens card; `/tokens` remains a resolvable
 address for existing bookmarks and links.
@@ -105,8 +109,8 @@ action leading elsewhere. Read-only — nothing here changes state.
 
 **Marketplaces** — chips for the total marketplace count and how many snapshots
 are `held`, `approved` and `rejected` across all of them. When any snapshot is
-held, a secondary badge reads *"{n} awaiting review"*: the review-queue signal.
-Action: **Manage marketplaces**.
+held, a secondary badge reads *"{n} awaiting review"* and links to the
+[review queue](#review-queue). Action: **Manage marketplaces**.
 
 **Fetch ledger** — chip with the total recorded fetches. Action: **Open audit
 log**.
@@ -117,6 +121,25 @@ tokens**.
 Data comes from `GET /api/v1/marketplaces`, `GET /api/v1/tokens` and `GET /api/v1/audit`;
 counts are computed in the browser, as there is no summary endpoint. While the
 queries are in flight the chips show an ellipsis.
+
+---
+
+## Review queue
+
+**Route:** `/review` · **Heading:** Review queue
+
+Every snapshot awaiting a decision — `held` or `revoked`, not deleted — across
+every marketplace, newest first. One row each: **Marketplace** (a link to it),
+**Commit** (12 characters, a link that opens the snapshot on its marketplace's
+[Review](#marketplace-detail)), **State**, **Vetting** outcome, and **Ingested**
+(when, and by whom).
+
+The queue offers **no Approve or Reject**. A decision is made on the snapshot's
+card, below the verdicts, diff and contents it rests on; the queue is where the
+work is found, not where it is done. Empty: "Nothing awaits a decision."
+
+Data comes from `GET /api/v1/marketplaces`, the same read the sidebar count uses,
+and one `GET /api/v1/snapshots/{id}/vetting` per row.
 
 ---
 
@@ -160,124 +183,67 @@ One sortable row per marketplace:
 
 | Column | Contents |
 | --- | --- |
-| (expander) | A chevron; clicking the row (or the chevron) reveals the marketplace's snapshot table in place. |
-| Name | The marketplace name, a link to its [detail page](#marketplace-detail). |
+| Name | The marketplace name, a link to its [page](#marketplace-detail). |
 | Source | The detected forge (or the clone URL's host), with the clone URL beneath. |
 | Latest snapshot | The newest snapshot's state badge and its vetting outcome badge. |
 | Upstream updated | The last upstream update if known, else "—". Sortable. |
 | Snapshots | A count badge. |
+| Awaiting | How many snapshots await a decision, a link to the marketplace's Review; "—" at zero. Sortable. |
 
-Expanding a row reveals **Ingest**
-(`POST /api/v1/marketplaces/{name}/ingest`, toasting *Snapshot {sha12} is {state}*),
-an **Open detail** link, and the [snapshot table](#snapshot-table) with its
-review actions.
+The table is an index. It does not expand, and it offers no Approve, Reject or
+Ingest: ingestion is on the marketplace's header, and a decision is made on its
+Review, beside the evidence.
 
-### Snapshot table
-
-| Column | Contents |
-| --- | --- |
-| Commit | First 12 characters of the SHA, monospace. |
-| State | Badge — `approved` (primary), `held` (secondary), `rejected` and `revoked` (destructive). |
-| Vetting | Badge from `GET /api/v1/snapshots/{id}/vetting`: `vetting clear` (primary), `vetting clear with waivers` (secondary) or `vetting blocked` (destructive). A snapshot the chain never ran against reads *blocked*. The waived case is a separate badge on purpose — an accepted risk must not read as a clean chain. |
-| Violation | The ingestion violation, or "—". |
-| Decided by | The deciding principal, or "—". |
-| Actions | Right-aligned buttons. |
-
-**Approve** and **Reject** appear while the state is `held` or `revoked`; on a
-revoked snapshot the approve control reads **Re-approve** and goes through the
-same gate. **Reject**
-fires immediately and toasts *Snapshot {id} rejected*.
-
-**Approve** opens the review dialog rather than acting immediately — approve is
-the moment content becomes reachable by clients, so the verdicts come first.
-
-While a snapshot is inside the configured
-[minimum release age](configuration.md#minimum-release-age), the approve control
-is disabled and reads **Eligible in {remaining}** — from
-`GET /api/v1/snapshots/{id}/release-age`, so the portal never computes the deadline
-from the browser's clock. **Reject** stays enabled: rejection is never age-gated.
-With the gate off (the default) the control reads **Approve** as before, and a
-snapshot whose eligibility has not been fetched yet is never disabled on
-suspicion — the server is the gate.
-
-#### Approve dialog
-
-Titled *Approve snapshot {id}*, it renders the [vetting report](#vetting) for
-the snapshot. The confirm control (*Confirm approval of snapshot {id}*) is
-disabled for as long as the effective outcome is `BLOCKED`; there is no field to
-type past it. The way to enable it is to waive each blocking finding from the
-report itself. The server enforces the same rule independently, with `409`, so
-the disabled button mirrors policy rather than replacing it.
-
-Below the report, a *Plugin names already in use* section lists each plugin
-name the snapshot introduces that looks like one another marketplace already
-serves, with the manifest line declaring it and the incumbents it resembles.
-While any is uncovered the confirm control stays disabled. Each carries a
-**Waive name collision for {name}** button opening the same waiver form, offering
-*This snapshot only* as the only scope. The snapshot card does not shut
-**Approve** for a collision, since this dialog is where it is waived.
-
-The dialog is also shut by the minimum release age, and says so in its own note:
-that one has no way past it in the portal at all, and needs none — it opens by
-itself at the stated time.
-
-Confirming calls `POST /api/v1/snapshots/{id}/approve` with no body and toasts
-*Snapshot {id} approved*.
-
-#### Waiving a finding
-
-Each blocking finding in the report carries a **Waive finding {rule}** button
-that opens an inline form beside it:
-
-| Control | Notes |
-| --- | --- |
-| **Scope** | *This snapshot only* (default) or *This path in the marketplace* |
-| **Expires on** | date input, defaulting to 30 days out; must be in the future — the waiver lapses at the end of the chosen day |
-| **Justification** | required; whitespace does not count |
-
-*Record waiver for {rule}* stays disabled until the justification is non-blank
-**and** the expiry is still in the future, which is exactly what the server
-requires.
-
-*Record waiver for {rule}* calls `POST /api/v1/snapshots/{id}/waivers` and toasts
-*Waiver recorded for {rule}*. The finding is then struck through and badged
-**waived by {approver} until {date}**, and the outcome badge becomes
-**vetting clear with waivers** once nothing is left uncovered.
-
-Below the verdicts, **Accepted risks** lists every waiver whose rule appears in
-this run — active, expired and revoked alike — with its rule, scope,
-justification, approver and expiry. An active one carries
-*Revoke waiver {id}*, which calls `DELETE /api/v1/waivers/{id}`.
-
-**Provenance** is always available, opening a dialog fed by
-`GET /api/v1/snapshots/{id}/provenance`: marketplace, upstream URL, upstream SHA,
-served SHA, state, ingested time, decided by, decided at — and, for a snapshot
-with resolved external plugin sources, the closure: each external plugin with
-the URL it was fetched through and the commit it resolved to.
-
-Empty states: "No marketplaces registered yet." and, in an expanded row, "No
-snapshots yet — ingest to fetch the upstream default branch."
+Empty state: "No marketplaces registered yet."
 
 ---
 
 ## Marketplace detail
 
-**Route:** `/marketplaces/{name}` · **Heading:** the marketplace name
+**Routes:** `/marketplaces/{name}` (Review), `/marketplaces/{name}/snapshots`,
+`/marketplaces/{name}/activity`, `/marketplaces/{name}/settings` · **Heading:**
+the marketplace name
 
-Reached by clicking a marketplace name. The page resolves `{name}` from the
-marketplace list already held in the browser — there is no per-marketplace
-endpoint — so an unknown name renders "Marketplace '{name}' not found." with a
-link back.
+Reached from a marketplace's name, from the review queue, or from the sidebar
+once inside. The page resolves `{name}` from the marketplace list already held
+in the browser — there is no per-marketplace endpoint — so an unknown name
+renders "Marketplace '{name}' not found." with a link back.
 
-### Upstream card
+A marketplace is divided by what a visit is for, most frequent first:
 
-Forge metadata captured at registration, best effort: **Forge**, **Project**,
-**Description**, **Last upstream update**, **Registered**. Anything not captured
-shows "—".
+| Section | Holds |
+| --- | --- |
+| **Review** (default) | What awaits a decision — the [snapshot cards](#the-card) and the decision |
+| **Snapshots** | What is served, and every earlier snapshot |
+| **Activity** | This marketplace's slice of the [audit log](#audit-log) |
+| **Settings** | The [upstream](#upstream) facts and, for an administrator, the [vetting chain](#vetting-chain-administrators) |
+
+### Header
+
+On every section: the name, the clone URL, and one line stating what the facade
+serves — *Serving {sha12}*, or *Not served — a clone is answered with `404`
+until a snapshot is approved*. "Serving" is the marketplace read's `servedSha`,
+read from the published repository, not inferred from an approved snapshot
+existing — which is wrong after a withdrawal that left one approved and serves
+nothing.
+
+Two actions, both outline buttons so that **Approve** stays the page's one
+primary control:
+
+- **Ingest** (`POST /api/v1/marketplaces/{name}/ingest`) toasts *Snapshot {sha12}
+  is {state}* and opens what arrived on Review.
+- **Connect a client** opens the [client wizard](#connect-a-client) under the
+  header.
+
+### Upstream
+
+On **Settings**. Forge metadata captured at registration, best effort: **Clone
+URL**, **Forge**, **Project**, **Description**, **Last upstream update**,
+**Registered**, **Registered by**. Anything not captured shows "—".
 
 ### Vetting chain (administrators)
 
-**Shown only to a session holding the `admin` role**, above the snapshots. Fed by
+On **Settings**, **shown only to a session holding the `admin` role**. Fed by
 `GET /api/v1/marketplaces/{name}/vetting-chain`, which the server refuses to anyone
 else — the switch that governs the chain, and the visibility of its settings, sit
 above the content they govern.
@@ -332,27 +298,28 @@ not one per hop — and **Discard changes** puts it back. While an arrangement i
 unsaved the drawing above shows the proposed order and the list says it is not
 saved yet.
 
-### Snapshots
+### Review and Snapshots
 
-Snapshots are grouped by what they are for, not listed alike, and **one is open
-at a time** — so the page does not grow longer with every ingest.
+**One snapshot is open at a time** in either section, so neither grows longer
+with every ingest; the rest are one line each, and **Open** on a line opens that
+snapshot's card in its place.
 
 | Section | Holds | Shown as |
 | --- | --- | --- |
-| **Awaiting decision (n)** | Every `held` or `revoked` snapshot that is not deleted, newest first | The newest open as a card; the rest one line each, with its delta |
-| **Serving** | The snapshot whose commit the facade answers with, read from the marketplace's `servedSha` | One line. "Nothing is served." when `servedSha` is null — and, if a snapshot is still recorded approved, that it was withdrawn |
-| **Earlier snapshots (n)** | Everything else: rejected, deleted, approved but no longer served | A collapsed count |
+| Review — **Awaiting decision (n)** | Every `held` or `revoked` snapshot that is not deleted, newest first | The newest open as a card; the rest one line each, with its delta. Empty: "Nothing awaits a decision." |
+| Snapshots — **Serving** | The snapshot whose commit the facade answers with | Open by default. "Nothing is served." when `servedSha` is null — and, if a snapshot is still recorded approved, that it was withdrawn |
+| Snapshots — **Earlier snapshots (n)** | Everything else: rejected, deleted, approved but no longer served | One line each |
 
-Awaiting comes first because it is the only section with a pending action. Two
-snapshots can await a decision at once. When nothing does, the served snapshot
-is the one open. **Open** on any line opens that snapshot's card in its place.
-
-The open snapshot, its tab and its file are in the address, so a link to the
-evidence restores all three:
+Two snapshots can await a decision at once. The open snapshot, its tab and its
+file are in the address, so a link to the evidence restores all three:
 
 ```text
 /marketplaces/acme?snapshot=41&tab=contents&path=plugins/hello/skills/hello/SKILL.md
 ```
+
+An address naming a snapshot that no longer awaits a decision — an older link to
+one since approved — still opens it on Review, under **Linked snapshot**, with a
+link to it among the snapshots.
 
 #### The card
 
@@ -392,8 +359,11 @@ The decision is last because it rests on everything above it: an approval
 control is never shown above the evidence. When the gateway would refuse the
 approval — vetting blocked it, the minimum release age has not passed, or the
 four-eyes rule refuses you — **Approve** is disabled and the reason is on the
-card, rather than the press failing. **Approve** opens the same review dialog as
-the [Marketplaces](#marketplaces) page; **Reject** fires immediately.
+card, rather than the press failing — inside the minimum release age the reason
+names when it opens, read from `GET /api/v1/snapshots/{id}/release-age` rather
+than the browser's clock, and **Reject** is never age-gated. **Approve** opens
+the [review dialog](#approve-dialog); **Reject** fires immediately and toasts
+*Snapshot {id} rejected*.
 
 When other snapshots await a decision, the card names them. Approving this one
 does not retire them: they stay held, and approving an older one afterwards
@@ -402,22 +372,68 @@ would serve content older than this.
 This is the review surface, and it works on `held` snapshots — inspecting a
 snapshot must not require serving it.
 
-### Set up a client
+#### Approve dialog
 
-A card at the **top of the page**, above the upstream metadata, opening a wizard
+Titled *Approve snapshot {id}*, it renders the [vetting report](#vetting) for
+the snapshot. The confirm control (*Confirm approval of snapshot {id}*) is
+disabled for as long as the effective outcome is `BLOCKED`; there is no field to
+type past it. The way to enable it is to waive each blocking finding from the
+report itself. The server enforces the same rule independently, with `409`, so
+the disabled button mirrors policy rather than replacing it.
+
+Below the report, a *Plugin names already in use* section lists each plugin
+name the snapshot introduces that looks like one another marketplace already
+serves, with the manifest line declaring it and the incumbents it resembles.
+While any is uncovered the confirm control stays disabled. Each carries a
+**Waive name collision for {name}** button opening the same waiver form, offering
+*This snapshot only* as the only scope. The snapshot card does not shut
+**Approve** for a collision, since this dialog is where it is waived.
+
+The dialog is also shut by the minimum release age, and says so in its own note:
+that one has no way past it in the portal at all, and needs none — it opens by
+itself at the stated time.
+
+Confirming calls `POST /api/v1/snapshots/{id}/approve` with no body and toasts
+*Snapshot {id} approved*.
+
+#### Waiving a finding
+
+Each blocking finding in the report carries a **Waive finding {rule}** button
+that opens an inline form beside it:
+
+| Control | Notes |
+| --- | --- |
+| **Scope** | *This snapshot only* (default) or *This path in the marketplace* |
+| **Expires on** | date input, defaulting to 30 days out; must be in the future — the waiver lapses at the end of the chosen day |
+| **Justification** | required; whitespace does not count |
+
+*Record waiver for {rule}* stays disabled until the justification is non-blank
+**and** the expiry is still in the future, which is exactly what the server
+requires.
+
+*Record waiver for {rule}* calls `POST /api/v1/snapshots/{id}/waivers` and toasts
+*Waiver recorded for {rule}*. The finding is then struck through and badged
+**waived by {approver} until {date}**, and the outcome badge becomes
+**vetting clear with waivers** once nothing is left uncovered.
+
+Below the verdicts, **Accepted risks** lists every waiver whose rule appears in
+this run — active, expired and revoked alike — with its rule, scope,
+justification, approver and expiry. An active one carries
+*Revoke waiver {id}*, which calls `DELETE /api/v1/waivers/{id}`.
+
+
+### Connect a client
+
+**Connect a client**, in the [header](#header) of every section, opens a wizard
 that composes for this marketplace everything a consumer needs — every URL
-derived from the address the browser is already on.
+derived from the address the browser is already on. It is a header action
+rather than the page's first panel because a consumer takes this step once,
+while the reviewer's work is on Review every visit.
 
-The card reads the marketplace's own state:
-
-| State | The card says | And |
-| --- | --- | --- |
-| The facade serves a commit | **Use this marketplace** | offers the wizard |
-| Nothing served | **Not being served yet** | states that a clone is answered with `404` until one is, and that this is not a credential problem — a wrong or revoked token is answered with `401`. The wizard repeats it, for anyone who opens it without reading the page |
-
-"Serving" is the marketplace read's `servedSha`, read from the published
-repository — not inferred from an approved snapshot existing, which is wrong
-after a withdrawal that left one approved and serves nothing.
+When nothing is served, the header already says a clone is answered with `404`;
+the wizard repeats it, adding that this is not a credential problem — a wrong or
+revoked token is answered with `401` — for anyone who opens it without reading
+the header.
 
 Inside the wizard:
 
@@ -540,7 +556,7 @@ is nothing to waive — a snapshot with no evidence cannot be approved at all.
 A collapsed *What these vetters can and cannot see* disclosure lists each
 configured vetter and its self-description, so the limits of the heuristics
 are readable at the point of decision. The same section is embedded in the
-[approve dialog](#approve-dialog) on the marketplaces page.
+[approve dialog](#approve-dialog).
 
 ### Chain staleness
 
@@ -687,6 +703,18 @@ Every bound of these reads is a state this page renders on purpose:
 | Nothing served yet | No baseline; approving serves all of it |
 | No approver role | "You cannot read this snapshot's contents.", naming the role needed |
 | Snapshot is not this marketplace's | "Snapshot N is not a snapshot of X." |
+| A `.json` file that does not tokenise as JSON | "Not valid JSON — shown as stored.", with the stored bytes |
+
+The tree keeps one width whatever file is open; a long line scrolls inside the
+file pane rather than taking width from the tree.
+
+**JSON** is shown re-indented, with a **Formatted / Raw** control switching to the
+stored bytes. It is re-indented by its tokens, not parsed: parsing would keep only
+the last of a key declared twice and rewrite number spellings (`1.0` to `1`) —
+the very differences a hostile manifest can use to show a reviewer one document
+and a client another — so every token is copied as written, in order, and only
+the whitespace between them changes. A truncated blob is shown as stored, since
+half a document cannot be formatted honestly.
 
 Markdown renders inertly — there is no HTML pipeline at all, so HTML embedded in
 a hostile file appears as visible text and links are shown but never navigable.

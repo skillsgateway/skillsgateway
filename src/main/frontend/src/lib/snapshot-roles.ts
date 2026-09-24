@@ -13,3 +13,8 @@ export function parseSnapshotTab(value: string | null): SnapshotTab {
 export function isDecidable(snapshot: Snapshot): boolean {
   return (snapshot.state === "held" || snapshot.state === "revoked") && !snapshot.deletedAt;
 }
+
+/** Newest first: ingestion time, then id for two ingests in the same instant. */
+export function newestFirst(a: Snapshot, b: Snapshot): number {
+  return (b.createdAt ?? "").localeCompare(a.createdAt ?? "") || (b.id ?? 0) - (a.id ?? 0);
+}

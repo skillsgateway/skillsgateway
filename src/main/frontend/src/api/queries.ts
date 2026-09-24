@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
 import type { components } from "./types.gen";
+import { isDecidable, newestFirst } from "@/lib/snapshot-roles";
 
 export type MarketplaceView = components["schemas"]["MarketplaceView"];
 export type Snapshot = components["schemas"]["Snapshot"];
@@ -741,4 +742,17 @@ export function useDeleteWebhookSubscriber() {
       void queryClient.invalidateQueries({ queryKey: ["webhook-deliveries"] });
     },
   });
+}
+
+export type Awaiting = { marketplace: string; snapshot: Snapshot };
+
+/** Every snapshot awaiting a decision, across marketplaces, newest first. */
+export function useAwaitingDecision() {
+  const marketplaces = useMarketplaces();
+  const rows: Awaiting[] = (marketplaces.data ?? [])
+    .flatMap((m) =>
+      (m.snapshots ?? []).filter(isDecidable).map((snapshot) => ({ marketplace: m.name ?? "", snapshot })),
+    )
+    .sort((a, b) => newestFirst(a.snapshot, b.snapshot));
+  return { ...marketplaces, rows };
 }

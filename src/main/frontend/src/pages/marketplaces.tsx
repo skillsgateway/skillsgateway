@@ -1,42 +1,33 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   type ColumnDef,
-  type ExpandedState,
   type SortingState,
   columnVisibilityFeature,
-  createExpandedRowModel,
   createSortedRowModel,
   flexRender,
-  rowExpandingFeature,
   rowSortingFeature,
   tableFeatures,
   useTable,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ChevronRight, ChevronsUpDown, TriangleAlert } from "lucide-react";
-import { Fragment, useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, TriangleAlert } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
-  formatRemaining,
-  useDecideSnapshot,
-  useIngest,
   useMarketplaces,
   useRegisterMarketplace,
-  useSnapshotReleaseAge,
-  useSnapshotVetting,
   type MarketplaceView,
   type Snapshot,
 } from "@/api/queries";
 import { Timestamp } from "@/components/timestamp";
-import { ApproveDialog } from "@/components/approve-dialog";
-import { ProvenanceDetails } from "@/components/provenance-details";
-import { OutcomeBadge } from "@/components/vetting-report";
+import { SnapshotVettingBadge } from "@/components/vetting-report";
+import { isDecidable } from "@/lib/snapshot-roles";
 import { GATEWAY_NAME, GATEWAY_NAME_HINT, normalizeCloneUrl } from "@/lib/form-rules";
 import { SnapshotStateBadge } from "@/components/snapshot-state";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -60,14 +51,10 @@ import {
 
 // v9 requires the row-model factories and their feature flags to be declared up front, in a
 // `features` object shared by the table's types and its runtime config.
-const alwaysExpandable = () => true;
-
 const marketplacesTableFeatures = tableFeatures({
   columnVisibilityFeature,
   rowSortingFeature,
-  rowExpandingFeature,
   sortedRowModel: createSortedRowModel(),
-  expandedRowModel: createExpandedRowModel(),
 });
 
 const registerSchema = z.object({
@@ -232,103 +219,15 @@ function RegisterMarketplaceDialog({ existing }: { existing: MarketplaceView[] }
   );
 }
 
-/** The list page's provenance, in a dialog; the snapshot card shows the same details in a tab. */
-function ProvenanceDialog({ snapshotId, onClose }: { snapshotId: number; onClose: () => void }) {
-  return (
-    <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Provenance of snapshot {snapshotId}</DialogTitle>
-          <DialogDescription>What was served, from where, and who approved it.</DialogDescription>
-        </DialogHeader>
-        <ProvenanceDetails snapshotId={snapshotId} />
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-/** The chain outcome next to the snapshot's own state, so the table shows both at a glance. */
-function VettingOutcomeCell({ snapshotId }: { snapshotId: number }) {
-  const vetting = useSnapshotVetting(snapshotId);
-  if (vetting.isLoading) return <span className="text-xs text-muted-foreground">…</span>;
-  if (vetting.isError) return <span className="text-xs text-muted-foreground">unavailable</span>;
-  return <OutcomeBadge outcome={vetting.data?.outcome} />;
-}
-
-function SnapshotRow({ snapshot, onProvenance }: { snapshot: Snapshot; onProvenance: (id: number) => void }) {
-  const decide = useDecideSnapshot();
-  const [approving, setApproving] = useState(false);
-  const id = snapshot.id ?? 0;
-  // A revoked snapshot is decidable again: the retraction was made without a person, so a person
-  // has to be able to answer it — by re-approving behind the same gate, or by rejecting for good.
-  const decidable = snapshot.state === "held" || snapshot.state === "revoked";
-  // Asked only for a snapshot someone could decide on, and only about approval: rejecting is never
-  // gated by age.
-  const releaseAge = useSnapshotReleaseAge(decidable ? id : null);
-  const tooYoung = releaseAge.data?.eligible === false;
-  const remaining = formatRemaining(releaseAge.data?.remainingSeconds ?? 0);
-  const act = (decision: "reject") =>
-    decide.mutate(
-      { id, decision },
-      {
-        onSuccess: () => toast.success(`Snapshot ${id} rejected`),
-        onError: (error) => toast.error(error.message),
-      },
-    );
-  return (
-    <TableRow>
-      <TableCell className="font-mono">{snapshot.sha?.slice(0, 12)}</TableCell>
-      <TableCell><SnapshotStateBadge state={snapshot.state} /></TableCell>
-      <TableCell>
-        <VettingOutcomeCell snapshotId={id} />
-      </TableCell>
-      <TableCell className="text-muted-foreground">{snapshot.violation ?? "—"}</TableCell>
-      <TableCell>{snapshot.decidedBy ?? "—"}</TableCell>
-      <TableCell className="space-x-2 text-right">
-        {decidable ? (
-          <>
-            <Button
-              size="sm"
-              onClick={() => setApproving(true)}
-              disabled={decide.isPending || tooYoung}
-              aria-label={`Approve snapshot ${id}`}
-              title={
-                tooYoung
-                  ? `Inside the minimum release age; eligible in ${remaining}`
-                  : undefined
-              }
-            >
-              {tooYoung
-                ? `Eligible in ${remaining}`
-                : snapshot.state === "revoked"
-                  ? "Re-approve"
-                  : "Approve"}
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => act("reject")}
-              disabled={decide.isPending}
-              aria-label={`Reject snapshot ${id}`}
-            >
-              Reject
-            </Button>
-          </>
-        ) : null}
-        <Button size="sm" variant="outline" onClick={() => onProvenance(id)} aria-label={`Provenance of snapshot ${id}`}>
-          Provenance
-        </Button>
-        {approving ? <ApproveDialog snapshotId={id} onClose={() => setApproving(false)} /> : null}
-      </TableCell>
-    </TableRow>
-  );
-}
-
 /** The snapshot a reviewer means by "the latest one": newest by ingestion time. */
 function latestSnapshot(marketplace: MarketplaceView): Snapshot | undefined {
   const snapshots = marketplace.snapshots ?? [];
   if (snapshots.length === 0) return undefined;
   return [...snapshots].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))[0];
+}
+
+function awaitingCount(marketplace: MarketplaceView): number {
+  return (marketplace.snapshots ?? []).filter(isDecidable).length;
 }
 
 /** The forge label for the row: the detected forge, else the bare host of the clone URL. */
@@ -339,82 +238,6 @@ function forgeLabel(marketplace: MarketplaceView): string {
   } catch {
     return "—";
   }
-}
-
-/**
- * The snapshots of one marketplace, revealed when its row is expanded: the same review table
- * as before — commit, state, vetting outcome, and the Approve/Reject/Provenance actions — plus
- * the Ingest control that fetches a fresh snapshot of the upstream default branch.
- */
-function MarketplaceSnapshots({ marketplace }: { marketplace: MarketplaceView }) {
-  const ingest = useIngest();
-  const [provenanceId, setProvenanceId] = useState<number | null>(null);
-  const snapshots = marketplace.snapshots ?? [];
-  return (
-    <section
-      aria-label={`Snapshots of ${marketplace.name}`}
-      className="space-y-3 bg-muted/30 p-4"
-    >
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">Snapshots of {marketplace.name}</h3>
-        <div className="flex items-center gap-2">
-          <Link
-            to={`/marketplaces/${marketplace.name}`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Open detail
-          </Link>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              ingest.mutate(marketplace.name ?? "", {
-                onSuccess: (snapshot) =>
-                  toast.success(`Snapshot ${snapshot.sha?.slice(0, 12)} is ${snapshot.state}`),
-                onError: (error) => toast.error(error.message),
-              })
-            }
-            disabled={ingest.isPending}
-            aria-label={`Ingest ${marketplace.name}`}
-          >
-            {ingest.isPending ? "Ingesting…" : "Ingest"}
-          </Button>
-        </div>
-      </div>
-      {snapshots.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No snapshots yet — ingest to fetch the upstream default branch.
-        </p>
-      ) : (
-        <div className="overflow-x-auto rounded-md border bg-background">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Commit</TableHead>
-                <TableHead>State</TableHead>
-                <TableHead>Vetting</TableHead>
-                <TableHead>Violation</TableHead>
-                <TableHead>Decided by</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {snapshots.map((snapshot) => (
-                <SnapshotRow
-                  key={snapshot.id}
-                  snapshot={snapshot}
-                  onProvenance={setProvenanceId}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-      {provenanceId !== null ? (
-        <ProvenanceDialog snapshotId={provenanceId} onClose={() => setProvenanceId(null)} />
-      ) : null}
-    </section>
-  );
 }
 
 /** A sortable column header; the arrow shows the current direction, if any. */
@@ -446,39 +269,20 @@ function MarketHeader({
 }
 
 /**
- * Marketplace administration: register, ingest, review snapshots, approve/reject. One compact,
- * sortable row per marketplace — name, forge, its latest snapshot's state and vetting outcome,
- * and when upstream last moved — that expands in place to the snapshot review table. The name
- * links to the marketplace's full detail page.
+ * Marketplace index: register, and one sortable row per marketplace — name, forge, its latest
+ * snapshot's state and vetting outcome, when upstream last moved, and how many snapshots await a
+ * decision. No decision is offered here: approve and reject live on the marketplace's review,
+ * beside the evidence they rest on (GW_INGEST_0037).
  *
- * @Requirements GW_INGEST_0007
+ * @Requirements GW_INGEST_0007, GW_INGEST_0037
  */
 export function MarketplacesPage() {
   const marketplaces = useMarketplaces();
   const [sorting, setSorting] = useState<SortingState>([{ id: "name", desc: false }]);
-  const [expanded, setExpanded] = useState<ExpandedState>({});
   const data = useMemo(() => marketplaces.data ?? [], [marketplaces.data]);
 
   const columns = useMemo<ColumnDef<typeof marketplacesTableFeatures, MarketplaceView, unknown>[]>(
     () => [
-      {
-        id: "expander",
-        header: () => null,
-        cell: ({ row }) => (
-          <button
-            type="button"
-            aria-label={row.getIsExpanded() ? `Collapse ${row.original.name}` : `Expand ${row.original.name}`}
-            aria-expanded={row.getIsExpanded()}
-            onClick={() => row.toggleExpanded()}
-            className="flex size-6 items-center justify-center rounded hover:bg-muted"
-          >
-            <ChevronRight
-              className={`size-4 transition-transform ${row.getIsExpanded() ? "rotate-90" : ""}`}
-              aria-hidden
-            />
-          </button>
-        ),
-      },
       {
         id: "name",
         header: ({ column }) => (
@@ -519,7 +323,7 @@ export function MarketplacesPage() {
           return (
             <div className="flex flex-wrap items-center gap-2">
               <SnapshotStateBadge state={snapshot.state} />
-              <VettingOutcomeCell snapshotId={snapshot.id ?? 0} />
+              <SnapshotVettingBadge snapshotId={snapshot.id ?? 0} />
             </div>
           );
         },
@@ -551,6 +355,27 @@ export function MarketplacesPage() {
           <Badge variant="outline">{(row.original.snapshots ?? []).length}</Badge>
         ),
       },
+      {
+        id: "awaiting",
+        header: ({ column }) => (
+          <MarketHeader label="Awaiting" sorted={column.getIsSorted()} onToggle={() => column.toggleSorting()} />
+        ),
+        accessorFn: (row) => awaitingCount(row),
+        cell: ({ row }) => {
+          const count = awaitingCount(row.original);
+          return count === 0 ? (
+            <span className="text-xs text-muted-foreground">—</span>
+          ) : (
+            <Link
+              to={`/marketplaces/${row.original.name}`}
+              aria-label={`${count} awaiting a decision in ${row.original.name}`}
+              className="font-medium text-primary hover:underline"
+            >
+              {count}
+            </Link>
+          );
+        },
+      },
     ],
     [],
   );
@@ -559,18 +384,9 @@ export function MarketplacesPage() {
     features: marketplacesTableFeatures,
     data,
     columns,
-    state: { sorting, expanded },
+    state: { sorting },
     getRowId: (row) => String(row.id),
     onSortingChange: setSorting,
-    onExpandedChange: setExpanded,
-    // Every row expands to its own snapshots table — there are no real sub-rows for the
-    // expanded row model to detect, so every row must report itself as expandable.
-    getRowCanExpand: alwaysExpandable,
-    // v9 auto-collapses every row whenever `data` changes (a new row model recomputation) —
-    // exactly what Ingest/Approve/Reject do via query invalidation. This table's rows are
-    // never structurally regrouped, so there is nothing for that reset to protect here; without
-    // it, ingesting a snapshot immediately collapses the row you just opened to watch it in.
-    autoResetExpanded: false,
   });
 
   return (
@@ -611,30 +427,13 @@ export function MarketplacesPage() {
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <Fragment key={row.id}>
-                  <TableRow
-                    data-state={row.getIsExpanded() ? "expanded" : undefined}
-                    className="cursor-pointer"
-                    onClick={(event) => {
-                      // A click on the name link or an action must not also toggle the row.
-                      if ((event.target as HTMLElement).closest("a,button")) return;
-                      row.toggleExpanded();
-                    }}
-                  >
-                    {row.getVisibleCells().map((visibleCell) => (
-                      <TableCell key={visibleCell.id}>
-                        {flexRender(visibleCell.column.columnDef.cell, visibleCell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                  {row.getIsExpanded() ? (
-                    <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={row.getVisibleCells().length} className="p-0">
-                        <MarketplaceSnapshots marketplace={row.original} />
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </Fragment>
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((visibleCell) => (
+                    <TableCell key={visibleCell.id}>
+                      {flexRender(visibleCell.column.columnDef.cell, visibleCell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
               ))}
             </TableBody>
           </Table>

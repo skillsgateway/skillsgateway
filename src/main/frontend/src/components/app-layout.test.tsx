@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "next-themes";
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router-dom";
@@ -247,4 +247,42 @@ test("a_build_that_reports_no_version_renders_no_footer_rather_than_the_word_unk
   // Silence is the honest rendering of "I do not know"; "unknown" reads like a shipped version.
   expect(screen.queryByText(/unknown/i)).not.toBeInTheDocument();
   expect(screen.queryByText("0.3.0")).not.toBeInTheDocument();
+});
+
+/**
+ * The navigation states what awaits a decision across marketplaces on every page, and inside a
+ * marketplace it lists that marketplace's sections with its own count. The fixture marketplace
+ * has two decidable snapshots (one held, one revoked).
+ *
+ * @SVCs SVC_GW_INGEST_0037
+ */
+test("the_sidebar_counts_what_awaits_a_decision_and_opens_a_marketplace_into_its_sections", async () => {
+  const outside = renderLayout("/audit");
+  const main = screen.getByRole("navigation", { name: "Main" });
+  expect(
+    await within(main).findByRole("link", { name: /Review queue, 2 awaiting a decision across marketplaces/ }),
+  ).toHaveAttribute("href", "/review");
+  // Outside a marketplace no sections are listed.
+  expect(within(main).queryByRole("list", { name: /sections/ })).not.toBeInTheDocument();
+  outside.unmount();
+
+  renderLayout("/marketplaces/corp-marketplace/settings");
+  const sections = await screen.findByRole("list", { name: "corp-marketplace sections" });
+  expect(await within(sections).findByRole("link", { name: /Review, 2 awaiting a decision/ })).toHaveAttribute(
+    "href",
+    "/marketplaces/corp-marketplace",
+  );
+  // Exactly one entry is current: the section, not the Marketplaces list above it.
+  expect(within(sections).getByRole("link", { name: "Settings" })).toHaveAttribute("aria-current", "page");
+  expect(
+    within(screen.getByRole("navigation", { name: "Main" })).getByRole("link", { name: "Marketplaces" }),
+  ).not.toHaveAttribute("aria-current");
+  expect(screen.getByText("corp-marketplace · Settings")).toBeInTheDocument();
+});
+
+test("a_quiet_queue_shows_no_count", async () => {
+  server.use(http.get("/api/v1/marketplaces", () => HttpResponse.json([])));
+  renderLayout("/");
+  const link = await screen.findByRole("link", { name: "Review queue" });
+  expect(link).not.toHaveTextContent(/\d/);
 });
