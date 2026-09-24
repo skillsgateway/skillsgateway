@@ -42,5 +42,5 @@
 
 ## 7. Close
 
-- [ ] 7.1 Run every gate fresh after the last edit; write `evidence.md` with commands, result tails and SHA
-- [ ] 7.2 Archive the change as the final commit
+- [x] 7.1 Run every gate fresh after the last edit; write `evidence.md` with commands, result tails and SHA
+- [x] 7.2 Archive the change as the final commit
