@@ -121,7 +121,7 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
   await approveCard(page, card);
 
   await card.getByRole("tab", { name: "Provenance" }).click();
-  await expect(card.getByText("Decided by")).toBeVisible();
+  await expect(card.getByText("Decided by", { exact: true })).toBeVisible();
   await expect(card.getByText("alice").first()).toBeVisible();
 
   // Snapshots: nothing awaits a decision, so the served snapshot is the open card, and its
