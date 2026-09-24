@@ -899,12 +899,14 @@ test("snapshot_contents_are_explored_on_an_address_that_restores_the_same_file",
   await added.click();
   await expect(page.getByRole("region", { name: "Selected file" })).toContainText("added");
 
-  // JSON is re-indented by its tokens, with the stored bytes one control away.
+  // JSON is re-indented by its tokens, with the stored bytes one control away. The pane is still
+  // comparing against what is served from above, so it is put back to the file itself first.
   await page
     .getByRole("navigation", { name: /File tree of snapshot \d+/ })
     .getByRole("button", { name: ".claude-plugin" })
     .click();
   await page.getByRole("button", { name: /marketplace\.json/ }).click();
+  await page.getByRole("region", { name: "Selected file" }).getByRole("button", { name: "File" }).click();
   const jsonView = page.getByRole("group", { name: "JSON view" });
   await expect(jsonView.getByRole("button", { name: "Formatted" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("main pre").last()).toContainText('"plugins": [\n');
@@ -973,7 +975,8 @@ test("an_admin_sets_the_default_chain_and_clears_a_marketplaces_override", async
     .getByLabel("Clone URL")
     .fill(process.env.E2E_TAINTED_UPSTREAM_URL ?? "file:///tmp/e2e-tainted");
   await submitRegister(page);
-  await page.getByRole("link", { name, exact: true }).click();
+  await openMarketplace(page, name);
+  await openSection(page, name, "Settings");
 
   const marketplaceMode = page.getByRole("group", { name: "When a vetter fails" });
   await marketplaceMode.getByRole("button", { name: "Stop after a failure" }).click();
@@ -1009,11 +1012,7 @@ test("an_admin_sets_the_default_chain_and_clears_a_marketplaces_override", async
   await expect(page.getByRole("row", { name: new RegExp(name) })).toHaveCount(0);
 
   // And the marketplace now resolves from the global setting, which is what "cleared" has to mean.
-  await page
-    .getByRole("navigation", { name: "Main" })
-    .getByRole("link", { name: "Marketplaces" })
-    .click();
-  await page.getByRole("link", { name, exact: true }).click();
+  await page.goto(`/marketplaces/${name}/settings`);
   await expect(page.getByText(/Currently from the global setting/)).toBeVisible();
 });
 
@@ -1038,8 +1037,10 @@ test("a_chain_change_marks_held_evidence_superseded_and_the_reviewer_refreshes_i
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
   await submitRegister(page);
 
-  // The evidence is read on Review; the chain is configured on Settings, one section away.
+  // The evidence is read on Review; the chain is configured on Settings, one section away. The
+  // snapshot's own address is kept, so the card stays open once it no longer awaits a decision.
   const card = await ingestOnReview(page, name);
+  const review = page.url();
   const vetting = page.getByRole("region", { name: /Vetting of snapshot \d+/ }).first();
   await expect(vetting).toBeVisible();
   // Vetted against the chain in force, so nothing is said about it.
@@ -1057,7 +1058,7 @@ test("a_chain_change_marks_held_evidence_superseded_and_the_reviewer_refreshes_i
 
   // The stored run is now evidence from a superseded chain, and the reviewer is told so — with
   // both chains named, because "it is stale" without saying how is not actionable.
-  await openSection(page, name, "Review");
+  await page.goto(review);
   const detailVetting = page.getByRole("region", { name: /Vetting of snapshot \d+/ }).first();
   await expect(detailVetting.getByText(/different chain than this marketplace runs now/)).toBeVisible();
   await expect(detailVetting.getByText(/mode=run-all/).first()).toBeVisible();
