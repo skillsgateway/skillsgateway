@@ -2414,3 +2414,63 @@ requirements:
     rationale: "A successful ingest was ledgered and a failed one was not, so the ledger could not answer why content had stopped arriving, or which trigger kept failing. The marketplace keeps only the last attempt; the ledger is where the sequence lives."
     categories: ["functional-suitability", "reliability"]
     revision: 0.3.0
+
+  - id: GW_INGEST_0050
+    title: A private upstream is read with the credential configured for its URL prefix
+    significance: shall
+    description: "The system shall read a marketplace upstream — at registration and at every ingestion — with the configured upstream credential whose URL prefix is the longest match for the marketplace's clone URL, matching scheme and host without regard to case, the port after defaults, and the path by whole segments; and shall read an upstream that no prefix matches without any credential."
+    references:
+      requirement_ids: ["GW_INGEST_0002", "GW_INGEST_0040"]
+    rationale: "Private and internal repositories could not be ingested at all, because every fetch was anonymous. Prefixes rather than hosts, because a forge's fine-grained token is commonly limited to one owner, so two owners on one host need two tokens; whole segments, so that a prefix for one owner cannot match another owner whose name merely begins the same way. Registration and ingestion read through one path, so an upstream registration can read is one ingestion can fetch."
+    categories: ["functional-suitability", "security"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0051
+    title: An upstream credential is sent only under its own prefix
+    significance: shall
+    description: "The system shall attach an upstream credential to an HTTP request only when that request's URL is under the prefix of the credential the marketplace's clone URL selected; shall send no credential on a request — including one reached by a redirect — whose scheme, host, port or path lies outside that prefix, even when another configured prefix matches it; and shall send no credential on a request whose URL carries userinfo, dot segments, encoded path separators or encoded dots."
+    references:
+      requirement_ids: ["GW_INGEST_0050"]
+    rationale: "Git's HTTP client follows redirects, and the one the gateway embeds keeps an established credential across a redirect to the same host name on another port, scheme or path. A token is a grant from its issuer to read what the prefix names; carrying it anywhere else, or switching to another prefix's token because a server said so, lets an upstream's answer decide where a secret goes. Non-canonical paths are the spellings that read as inside a prefix to a comparison and outside it to a server."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0052
+    title: An upstream credential is never repeated by the gateway
+    significance: shall
+    description: "The system shall not write an upstream credential's token to its logs, the audit ledger, the fetch log, the marketplace record, any error or failure reason, or any API response, including text quoted from the git transport's own errors; and shall not store it in the database."
+    references:
+      requirement_ids: ["GW_INGEST_0050", "GW_INGEST_0038"]
+    rationale: "Every place a failure is recorded is read by more people, and kept longer, than the secret store the token came from. A token that reaches a ledger entry or an API response has been published to everyone who can read those and must be rotated."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0053
+    title: The gateway refuses to start with an unusable upstream credential
+    significance: shall
+    description: "The system shall refuse to start when a configured upstream credential has a blank username or token, a username or token that still holds an unresolved configuration reference, a URL prefix whose scheme is not https (http is accepted only to a loopback host), a prefix carrying userinfo, a query or a fragment, or a prefix that another credential also declares; and shall name the offending entry by its position and prefix, never by its token."
+    references:
+      requirement_ids: ["GW_INGEST_0050", "GW_INGEST_0052"]
+    rationale: "A reference to an environment variable that is not set is left as its own literal text by the configuration binder, so without this the gateway would send the reference itself as a password and report the upstream as private. A token over cleartext to anything but the local host is published to the network path. Two entries for one prefix leave which token applies to an accident of ordering. Each of these is an operator's mistake that is cheapest to see at startup."
+    categories: ["security", "reliability"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0054
+    title: Registration refuses a clone URL that embeds a credential
+    significance: shall
+    description: "The system shall refuse to register an upstream marketplace whose clone URL carries userinfo, before contacting the upstream and without creating anything."
+    references:
+      requirement_ids: ["GW_INGEST_0005", "GW_INGEST_0050"]
+    rationale: "A credential in a clone URL is stored in the marketplace record and repeated by every API response and diagnostic that shows the URL. Upstream credentials have a home in configuration, so a URL no longer needs to carry one."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0055
+    title: The registration ledger entry names the credential prefix it used
+    significance: shall
+    description: "The system shall record, in the audit ledger entry for a marketplace's registration, the URL prefix of the upstream credential its clone URL selected, when one did, and never the credential's token."
+    references:
+      requirement_ids: ["GW_INGEST_0050", "GW_INGEST_0052", "GW_AUDIT_0002"]
+    rationale: "Registering under a credentialed prefix can pull anything the token reads into quarantine, and the token's scope is the only limit on that. The ledger is where an auditor can see which marketplaces were registered under which credential, and by whom."
+    categories: ["security"]
+    revision: 0.3.0
