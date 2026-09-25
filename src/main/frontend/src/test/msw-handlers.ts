@@ -824,6 +824,38 @@ export const snapshotContent: Schemas["SnapshotContent"] = {
       description: "review skills",
       source: "./plugins/review",
       skills: [{ name: "critique", path: "plugins/review/skills/critique/SKILL.md" }],
+      commands: [],
+      agents: [
+        { name: "asset-producer", path: "plugins/review/agents/asset-producer.md" },
+        { name: "documenter", path: "plugins/review/agents/documenter.md" },
+        { name: "finish-reviewer", path: "plugins/review/agents/finish-reviewer.md" },
+        { name: "edit-applier", path: "plugins/review/agents/edit-applier.md" },
+      ],
+      hooks: [
+        {
+          event: "SessionStart",
+          type: "command",
+          runs: '"${CLAUDE_PLUGIN_ROOT}/scripts/engine" hook',
+          location: "plugins/review/hooks/hooks.json:8",
+          declaredBy: "plugin",
+        },
+        {
+          event: "PostToolUse",
+          matcher: "Edit|Write",
+          type: "command",
+          runs: '"${CLAUDE_PLUGIN_ROOT}/scripts/engine" hook',
+          location: "plugins/review/hooks/hooks.json:21",
+          declaredBy: "plugin",
+        },
+        {
+          event: "Stop",
+          type: "command",
+          runs: '"${CLAUDE_PLUGIN_ROOT}/scripts/engine" hook',
+          location: "plugins/review/hooks/hooks.json:33",
+          declaredBy: "plugin",
+        },
+      ],
+      mcpServers: [],
     },
   ],
 };
