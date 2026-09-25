@@ -3505,6 +3505,7 @@ cases:
       GIVEN a GitHub App entry, an upstream that redirects to another port and another path, and an API that redirects the token request elsewhere
       WHEN each is registered
       THEN no git request carries an assertion, no request outside the prefix carries the installation token, and the API's redirect is not followed
+    revision: "0.3.0"
 
   - id: SVC_GW_INGEST_0063
     requirement_ids: ["GW_INGEST_0063"]

@@ -2593,6 +2593,7 @@ requirements:
       requirement_ids: ["GW_INGEST_0055", "GW_AUTH_0049"]
     rationale: "An auditor reading which marketplaces were registered under which credential needs to know whether the scope limit was a person's token or an organisation's App installation, because the two are revoked in different places."
     categories: ["security"]
+    revision: 0.3.0
 
   - id: GW_INGEST_0063
     title: Marketplace names are one bounded facade path segment
