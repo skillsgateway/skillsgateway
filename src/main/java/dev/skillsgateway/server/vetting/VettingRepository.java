@@ -81,14 +81,15 @@ public class VettingRepository {
                 .query(Long.class)
                 .single();
         for (Finding finding : verdict.findings()) {
-            jdbc.sql(
-                            "INSERT INTO vetting_findings (verdict_id, finding_id, severity, location, message)"
-                                    + " VALUES (:verdictId, :findingId, :severity::vetting_finding_severity, :location, :message)")
+            jdbc.sql("INSERT INTO vetting_findings (verdict_id, finding_id, severity, location, message, content_id)"
+                            + " VALUES (:verdictId, :findingId, :severity::vetting_finding_severity, :location,"
+                            + " :message, :content)")
                     .param("verdictId", verdictId)
                     .param("findingId", finding.id())
                     .param("severity", finding.severity().stored())
                     .param("location", finding.location())
                     .param("message", finding.message())
+                    .param("content", finding.content())
                     .update();
         }
     }
@@ -97,7 +98,8 @@ public class VettingRepository {
      * A one-line summary so the verdict row is readable without joining the findings (GW_VETTING_0023).
      * When there are findings it names how many and the worst severity; when there are none it
      * falls back to the vetter's coverage summary — what it examined — so a clean pass records
-     * substance rather than a null that reads the same as "the vetter never ran".
+     * substance rather than a null that reads the same as "the vetter never ran". A verdict whose
+     * findings are all informational reads the same way, so a pass that skipped files says so.
      */
     private static String detailOf(Verdict verdict) {
         // A vetter the chain did not reach carries one purely bookkeeping finding, so the finding
@@ -106,7 +108,7 @@ public class VettingRepository {
         if (verdict.state() == VerdictState.NOT_REACHED && verdict.summary() != null) {
             return verdict.summary();
         }
-        if (verdict.findings().isEmpty()) {
+        if (verdict.findings().isEmpty() || (informational(verdict) && verdict.summary() != null)) {
             return verdict.summary();
         }
         return "%d finding(s); worst %s"
@@ -117,6 +119,15 @@ public class VettingRepository {
                                 .max(Severity::compareTo)
                                 .orElseThrow()
                                 .stored());
+    }
+
+    /**
+     * Whether every finding on a verdict is informational. Such a verdict is a pass, and its row
+     * shows the coverage summary — including any files it skipped (GW_VETTING_0043) — rather than a
+     * count of bookkeeping entries.
+     */
+    static boolean informational(Verdict verdict) {
+        return verdict.findings().stream().allMatch(finding -> finding.severity() == Severity.INFO);
     }
 
     @Requirements({"GW_FACADE_0009"})
@@ -211,7 +222,8 @@ public class VettingRepository {
                                 rs.getString("finding_id"),
                                 Severity.of(rs.getString("severity")),
                                 rs.getString("location"),
-                                rs.getString("message"))))
+                                rs.getString("message"),
+                                rs.getString("content_id"))))
                 .list()
                 .forEach(entry -> byVerdict
                         .computeIfAbsent(entry.getKey(), key -> new ArrayList<>())
@@ -237,7 +249,25 @@ public class VettingRepository {
             @Schema(description = "External report URL, when the vetter produced one")
             String reportUrl,
 
-            @Schema(description = "What the vetter found") List<Finding> findings) {}
+            @Schema(description = "What the vetter found, one entry per location")
+            List<Finding> findings,
+
+            @Schema(
+                    description = "The same findings with those on identical content collapsed into one entry"
+                            + " listing every location (GW_VETTING_0041); derived from findings, never stored")
+            List<FindingGroup> groups) {
+
+        public VerdictView(
+                long verdictId,
+                String vetter,
+                int position,
+                VerdictState state,
+                String detail,
+                String reportUrl,
+                List<Finding> findings) {
+            this(verdictId, vetter, position, state, detail, reportUrl, findings, FindingGroup.of(findings));
+        }
+    }
 
     @Schema(description = "One execution of the vetting chain against a snapshot")
     public record Run(

@@ -87,32 +87,27 @@ public class SecretScanVetter implements Vetter {
     }
 
     @Override
-    @Requirements({"GW_VETTING_0003", "GW_VETTING_0023"})
+    @Requirements({"GW_VETTING_0003", "GW_VETTING_0023", "GW_VETTING_0043"})
     public Verdict vet(SnapshotUnderVetting snapshot) {
         List<Finding> findings = new ArrayList<>();
-        int[] counts = new int[2]; // {scanned, skipped}
+        List<String> oversize = new ArrayList<>();
+        List<String> binary = new ArrayList<>();
+        int[] scanned = new int[1];
         try {
             // No path selection: a credential is as likely in a script or a config file as in
             // prose, so this vetter is the one that genuinely wants the whole tree.
             snapshot.walk((path, content) -> {
                 if (content == null) {
-                    counts[1]++;
-                    findings.add(new Finding(
-                            "file-not-scanned",
-                            Severity.INFO,
-                            path,
-                            "file exceeds the configured scan size limit and was not scanned"));
+                    oversize.add(path);
                     return;
                 }
                 String text = ContentRules.text(content);
                 if (text == null) {
                     // Binary: reported, not silently dropped, so a reviewer knows the coverage gap.
-                    counts[1]++;
-                    findings.add(new Finding(
-                            "file-not-scanned", Severity.INFO, path, "binary file; text rules do not apply"));
+                    binary.add(path);
                     return;
                 }
-                counts[0]++;
+                scanned[0]++;
                 findings.addAll(ContentRules.apply(RULES, path, text));
                 findings.addAll(highEntropyAssignments(path, text));
             });
@@ -120,16 +115,18 @@ public class SecretScanVetter implements Vetter {
             // Reading the snapshot failed midway; the chain records this as an error, which blocks.
             throw new IllegalStateException("cannot read snapshot content", e);
         }
-        return Verdict.of(findings, summary(counts[0], counts[1]));
+        findings.addAll(ContentRules.notScanned(oversize, "not scanned: over the scan size limit"));
+        findings.addAll(ContentRules.notScanned(binary, "not scanned: binary, so text rules do not apply"));
+        return Verdict.of(findings, summary(scanned[0], oversize.size(), binary.size()));
     }
 
-    /** What the scan examined (GW_VETTING_0023): a clean pass records this so it is not read as "did not run". */
-    private static String summary(int scanned, int skipped) {
+    /**
+     * What the scan examined (GW_VETTING_0023): a clean pass records this so it is not read as "did
+     * not run", and one that skipped files says how many and why (GW_VETTING_0043).
+     */
+    private static String summary(int scanned, int oversize, int binary) {
         return "scanned %d text file(s)%s; applied %d secret-shape rules plus high-entropy assignment analysis"
-                .formatted(
-                        scanned,
-                        skipped == 0 ? "" : " (%d skipped as binary or oversize)".formatted(skipped),
-                        RULES.size());
+                .formatted(scanned, ContentRules.skipped(oversize, binary, "binary"), RULES.size());
     }
 
     /** Assignment-shaped values that are random enough to be credentials rather than identifiers. */

@@ -3,6 +3,7 @@ package dev.skillsgateway.server.vetting;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,6 +44,7 @@ final class QuarantineSnapshot implements SnapshotUnderVetting, AutoCloseable {
     private final long maxFileBytes;
     private final Repository repository;
     private final List<Entry> entries;
+    private final Map<String, ObjectId> blobs;
     private final Map<ObjectId, byte[]> cache = new ConcurrentHashMap<>();
     private final AtomicLong cacheBudget;
 
@@ -65,6 +67,9 @@ final class QuarantineSnapshot implements SnapshotUnderVetting, AutoCloseable {
             commit = walk.parseCommit(ObjectId.fromString(sha));
         }
         this.entries = index(repository, commit);
+        Map<String, ObjectId> byPath = new HashMap<>();
+        entries.forEach(entry -> byPath.put(entry.path(), entry.blob()));
+        this.blobs = Map.copyOf(byPath);
     }
 
     @Override
@@ -90,6 +95,27 @@ final class QuarantineSnapshot implements SnapshotUnderVetting, AutoCloseable {
                 visitor.visit(entry.path(), content(entry.blob()));
             }
         }
+    }
+
+    /**
+     * {@code verdict} with each finding's content identity set from this pinned tree
+     * (GW_VETTING_0041): the blob at the path the finding's location names, or none when it names no
+     * file. Whatever content a vetter put on a finding is replaced, so the identity a group waiver
+     * is matched against is the gateway's reading of the tree, never a vetter's claim.
+     */
+    @Requirements({"GW_VETTING_0041"})
+    Verdict identify(Verdict verdict) {
+        if (verdict.findings().isEmpty()) {
+            return verdict;
+        }
+        List<Finding> identified = verdict.findings().stream()
+                .map(finding -> {
+                    String path = WaiverScope.pathOf(finding.location());
+                    ObjectId blob = path == null ? null : blobs.get(path);
+                    return finding.withContent(blob == null ? null : blob.name());
+                })
+                .toList();
+        return new Verdict(verdict.state(), identified, verdict.reportUrl(), verdict.summary());
     }
 
     @Override

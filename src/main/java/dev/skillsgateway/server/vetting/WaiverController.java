@@ -78,7 +78,13 @@ public class WaiverController {
             String revokedBy,
 
             @Schema(description = "Whether the waiver suppresses anything right now")
-            boolean active) {
+            boolean active,
+
+            @Schema(description = "For a finding-group waiver, the git blob id it is limited to; null otherwise")
+            String content,
+
+            @Schema(description = "For a finding-group waiver, the line within that blob; null when none")
+            Integer line) {
 
         public static WaiverView of(Waiver waiver) {
             return new WaiverView(
@@ -93,7 +99,9 @@ public class WaiverController {
                     waiver.expiresAt(),
                     waiver.revokedAt(),
                     waiver.revokedBy(),
-                    waiver.active(Instant.now()));
+                    waiver.active(Instant.now()),
+                    waiver.content(),
+                    waiver.line());
         }
     }
 
@@ -127,10 +135,20 @@ public class WaiverController {
                             + " unlimited waivers.",
                     requiredMode = Schema.RequiredMode.REQUIRED,
                     example = "2026-12-31T00:00:00Z")
-            Instant expiresAt) {}
+            Instant expiresAt,
+
+            @Schema(
+                    description = "Limits the waiver to one finding group (GW_VETTING_0042): the git blob id the"
+                            + " group's findings are in, as the vetting report gives it. The waiver then covers"
+                            + " every location of that group and nothing else. Only with SNAPSHOT scope.",
+                    example = "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
+            String content,
+
+            @Schema(description = "The finding group's line within that blob; omitted when the group has none")
+            Integer line) {}
 
     @PostMapping("/snapshots/{id}/waivers")
-    @Requirements({"GW_VETTING_0007"})
+    @Requirements({"GW_VETTING_0007", "GW_VETTING_0042"})
     @Tag(name = "Vetting")
     @Operation(
             summary = "Accept a vetting finding on this snapshot's marketplace",
@@ -139,7 +157,8 @@ public class WaiverController {
                     + " mis-scoped to content it does not belong to. A justification, the acting identity and a"
                     + " future expiry are all mandatory; an unlimited waiver cannot be expressed. While an active"
                     + " waiver covers a finding, that finding no longer contributes to the snapshot's effective"
-                    + " vetting outcome.")
+                    + " vetting outcome. Naming a finding group's content (and line) limits the waiver to every"
+                    + " location of that one group.")
     @ApiResponse(responseCode = "201", description = "Waiver recorded")
     @ApiResponse(
             responseCode = "400",
@@ -158,7 +177,9 @@ public class WaiverController {
                 request.path(),
                 request.justification(),
                 request.expiresAt(),
-                authentication.getName());
+                authentication.getName(),
+                request.content(),
+                request.line());
         return ResponseEntity.status(HttpStatus.CREATED).body(WaiverView.of(waiver));
     }
 

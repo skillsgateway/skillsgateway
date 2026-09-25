@@ -77,6 +77,28 @@ public class WaiverService {
             String justification,
             Instant expiresAt,
             String approver) {
+        return create(snapshotId, ruleId, scope, scopeValue, justification, expiresAt, approver, null, null);
+    }
+
+    /**
+     * {@link #create(long, String, WaiverScope, String, String, Instant, String)}, optionally narrowed
+     * to one finding group (GW_VETTING_0042): with {@code content} set the waiver covers only findings
+     * of the rule on that blob and line, and it must be snapshot-scoped.
+     *
+     * @param content the group's git blob id, or {@code null} for a waiver on the rule alone
+     * @param line the group's line, or {@code null} when it has none
+     */
+    @Requirements({"GW_VETTING_0007", "GW_VETTING_0011", "GW_VETTING_0042"})
+    public Waiver create(
+            long snapshotId,
+            String ruleId,
+            WaiverScope scope,
+            String scopeValue,
+            String justification,
+            Instant expiresAt,
+            String approver,
+            String content,
+            Integer line) {
         Snapshot snapshot =
                 snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
         if (ruleId == null || ruleId.isBlank()) {
@@ -98,6 +120,15 @@ public class WaiverService {
         if (!expiresAt.isAfter(Instant.now())) {
             throw new WaiverValidationException("a waiver's expiry must be in the future");
         }
+        if (content != null && scope != WaiverScope.SNAPSHOT) {
+            throw new WaiverValidationException("a finding-group waiver is scoped to this snapshot only");
+        }
+        if (content != null && !Waiver.BLOB_ID.matcher(content).matches()) {
+            throw new WaiverValidationException("a finding-group waiver must name the group's git blob id");
+        }
+        if (line != null && (content == null || line < 1)) {
+            throw new WaiverValidationException("a finding-group line must be positive and come with the blob id");
+        }
         String value = scope == WaiverScope.SNAPSHOT ? snapshot.sha() : normalizePath(scopeValue);
         Marketplace marketplace = marketplaceRepository
                 .findById(snapshot.marketplaceId())
@@ -105,13 +136,22 @@ public class WaiverService {
                         new WaiverValidationException("marketplace %d not found".formatted(snapshot.marketplaceId())));
 
         Waiver waiver = waiverRepository.create(
-                snapshot.marketplaceId(), ruleId.trim(), scope, value, justification.trim(), approver, expiresAt);
+                snapshot.marketplaceId(),
+                ruleId.trim(),
+                scope,
+                value,
+                justification.trim(),
+                approver,
+                expiresAt,
+                content,
+                line);
         auditLogger.record(
                 approver,
                 marketplace.name(),
                 EVENT_CREATED,
                 snapshot.sha(),
-                "rule=%s; scope=%s:%s; expires=%s".formatted(ruleId.trim(), scope.stored(), value, expiresAt));
+                "rule=%s; scope=%s:%s%s; expires=%s"
+                        .formatted(ruleId.trim(), scope.stored(), value, groupDetail(waiver), expiresAt));
         return waiver;
     }
 
@@ -128,7 +168,8 @@ public class WaiverService {
                 waiver.marketplace(),
                 EVENT_REVOKED,
                 waiver.scope() == WaiverScope.SNAPSHOT ? waiver.scopeValue() : null,
-                "rule=%s; scope=%s:%s".formatted(waiver.ruleId(), waiver.scope().stored(), waiver.scopeValue()));
+                "rule=%s; scope=%s:%s%s"
+                        .formatted(waiver.ruleId(), waiver.scope().stored(), waiver.scopeValue(), groupDetail(waiver)));
         // Re-read so the caller sees the revocation stamp rather than the pre-revocation row.
         return waiverRepository.findById(waiverId);
     }
@@ -227,6 +268,16 @@ public class WaiverService {
             recorded++;
         }
         return recorded;
+    }
+
+    /** The group qualifier as the ledger records it, or nothing for a waiver on the rule alone. */
+    private static String groupDetail(Waiver waiver) {
+        if (waiver.content() == null) {
+            return "";
+        }
+        return waiver.line() == null
+                ? "; content=%s".formatted(waiver.content())
+                : "; content=%s:%d".formatted(waiver.content(), waiver.line());
     }
 
     /**

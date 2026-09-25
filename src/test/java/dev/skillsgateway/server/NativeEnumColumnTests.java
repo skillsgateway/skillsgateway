@@ -270,7 +270,9 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
                     scope == WaiverScope.SNAPSHOT ? "abc123" : "plugins/hello",
                     "accepted for the test",
                     "alice",
-                    Instant.now().plus(Duration.ofDays(1)));
+                    Instant.now().plus(Duration.ofDays(1)),
+                    null,
+                    null);
             assertThat(waiver.scope()).isEqualTo(scope);
             assertThat(waiverRepository.findById(waiver.id()).orElseThrow().scope())
                     .isEqualTo(scope);

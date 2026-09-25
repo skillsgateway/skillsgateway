@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.approval;
 
 import dev.skillsgateway.server.vetting.WaiverEvaluation;
+import io.github.reqstool.annotations.Requirements;
 import java.util.List;
 
 /**
@@ -33,6 +34,7 @@ public class VettingBlockedException extends RuntimeException {
         return uncoveredFindings;
     }
 
+    @Requirements({"GW_APPROVAL_0022"})
     private static String message(
             long snapshotId, List<String> blockingVetters, List<WaiverEvaluation.UncoveredFinding> uncoveredFindings) {
         String cause = blockingVetters.isEmpty()
@@ -42,10 +44,10 @@ public class VettingBlockedException extends RuntimeException {
                 ? ""
                 : " Uncovered findings: %s."
                         .formatted(uncoveredFindings.stream()
-                                .map(finding -> "%s at %s".formatted(finding.ruleId(), finding.location()))
-                                .collect(java.util.stream.Collectors.joining(", ")));
+                                .map(WaiverEvaluation.UncoveredFinding::describe)
+                                .collect(java.util.stream.Collectors.joining("; ")));
         return ("snapshot %d cannot be approved: %s.%s Record a scoped, expiring waiver for each blocking"
-                        + " finding — with a justification and an expiry — and approve again.")
+                        + " finding group — with a justification and an expiry — and approve again.")
                 .formatted(snapshotId, cause, uncovered);
     }
 }

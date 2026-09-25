@@ -24,7 +24,7 @@ public class WaiverRepository {
     private static final String COLUMNS =
             "w.id, w.marketplace_id, m.name AS marketplace, w.rule_id, w.scope_kind, w.scope_value,"
                     + " w.justification, w.approved_by, w.created_at, w.expires_at, w.revoked_at, w.revoked_by,"
-                    + " w.expired_recorded_at";
+                    + " w.expired_recorded_at, w.content_id, w.content_line";
 
     private final JdbcClient jdbc;
 
@@ -40,11 +40,13 @@ public class WaiverRepository {
             String scopeValue,
             String justification,
             String approvedBy,
-            Instant expiresAt) {
+            Instant expiresAt,
+            String content,
+            Integer line) {
         long id = jdbc.sql("INSERT INTO vetting_waivers (marketplace_id, rule_id, scope_kind, scope_value,"
-                        + " justification, approved_by, created_at, expires_at) VALUES (:marketplaceId, :ruleId,"
-                        + " :scopeKind::vetting_waiver_scope_kind, :scopeValue, :justification, :approvedBy, :now,"
-                        + " :expiresAt) RETURNING id")
+                        + " justification, approved_by, created_at, expires_at, content_id, content_line)"
+                        + " VALUES (:marketplaceId, :ruleId, :scopeKind::vetting_waiver_scope_kind, :scopeValue,"
+                        + " :justification, :approvedBy, :now, :expiresAt, :content, :line) RETURNING id")
                 .param("marketplaceId", marketplaceId)
                 .param("ruleId", ruleId)
                 .param("scopeKind", scope.stored())
@@ -53,6 +55,8 @@ public class WaiverRepository {
                 .param("approvedBy", approvedBy)
                 .param("now", OffsetDateTime.now())
                 .param("expiresAt", expiresAt.atOffset(ZoneOffset.UTC))
+                .param("content", content)
+                .param("line", line)
                 .query(Long.class)
                 .single();
         return findById(id).orElseThrow();
@@ -133,7 +137,9 @@ public class WaiverRepository {
                 instant(rs, "expires_at"),
                 instant(rs, "revoked_at"),
                 rs.getString("revoked_by"),
-                instant(rs, "expired_recorded_at"));
+                instant(rs, "expired_recorded_at"),
+                rs.getString("content_id"),
+                rs.getObject("content_line", Integer.class));
     }
 
     private static Instant instant(ResultSet rs, String column) throws SQLException {

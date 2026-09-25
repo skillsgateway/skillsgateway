@@ -42,6 +42,9 @@ import java.util.List;
  */
 public final class WaiverEvaluation {
 
+    /** How many locations of one group a refusal spells out before counting the rest. */
+    static final int DESCRIBED_LOCATIONS = 10;
+
     private WaiverEvaluation() {}
 
     /** One finding a waiver is currently suppressing, and which waiver is doing it. */
@@ -63,21 +66,53 @@ public final class WaiverEvaluation {
             @Schema(description = "When the acceptance lapses")
             Instant expiresAt) {}
 
-    /** A finding that still blocks, with the vetter it came from — the reviewer's worklist. */
-    @Schema(description = "A blocking finding that no active waiver covers")
+    /**
+     * A blocking finding group that still blocks, with the vetter it came from — the reviewer's
+     * worklist, one entry per group of identical content rather than one per copy (GW_APPROVAL_0022).
+     */
+    @Schema(description = "A blocking finding group that no active waiver covers, with every uncovered location")
     public record UncoveredFinding(
             @Schema(description = "Vetter whose verdict carried the finding")
             String vetter,
 
             @Schema(description = "Finding rule identifier") String ruleId,
 
-            @Schema(description = "Where the finding was located")
+            @Schema(description = "The first uncovered location of the group, path:line")
             String location,
 
             @Schema(description = "How much it matters") Severity severity,
 
             @Schema(description = "Reviewer-facing explanation")
-            String message) {}
+            String message,
+
+            @Schema(description = "Every uncovered location of the group, path:line")
+            List<String> locations,
+
+            @Schema(description = "Git blob id the group is in, to name in a group waiver; null when none")
+            String content,
+
+            @Schema(description = "Line within that blob, or null")
+            Integer line) {
+
+        public UncoveredFinding {
+            locations = locations == null ? List.of() : List.copyOf(locations);
+        }
+
+        /**
+         * How the refusal and the ledger name the group: its rule at each {@code path:line} it
+         * stands for, the first {@value #DESCRIBED_LOCATIONS} spelled out and the rest counted.
+         */
+        public String describe() {
+            if (locations.isEmpty()) {
+                return "%s at —".formatted(ruleId);
+            }
+            String shown = String.join(", ", locations.subList(0, Math.min(DESCRIBED_LOCATIONS, locations.size())));
+            int more = locations.size() - DESCRIBED_LOCATIONS;
+            return more > 0
+                    ? "%s at %s (+%d more)".formatted(ruleId, shown, more)
+                    : "%s at %s".formatted(ruleId, shown);
+        }
+    }
 
     /**
      * The result of evaluating one run against a set of waivers.
@@ -120,7 +155,7 @@ public final class WaiverEvaluation {
      * @param sha the commit SHA the snapshot is pinned to, matched by snapshot-scoped waivers
      * @param now the instant expiry is decided against
      */
-    @Requirements({"GW_VETTING_0008", "GW_VETTING_0009", "GW_VETTING_0032.3"})
+    @Requirements({"GW_VETTING_0008", "GW_VETTING_0009", "GW_VETTING_0032.3", "GW_APPROVAL_0022"})
     public static Effect evaluate(VettingRepository.Run run, List<Waiver> waivers, String sha, Instant now) {
         if (run == null) {
             return noRun();
@@ -151,15 +186,21 @@ public final class WaiverEvaluation {
             effectiveStates.add(effective);
             if (!effective.clearing()) {
                 blockingVetters.add(verdict.vetter());
-                for (Finding finding : residual) {
-                    if (finding.severity().atLeast(Severity.HIGH)) {
-                        uncovered.add(new UncoveredFinding(
-                                verdict.vetter(),
-                                finding.id(),
-                                finding.location(),
-                                finding.severity(),
-                                finding.message()));
-                    }
+                List<Finding> blocking = residual.stream()
+                        .filter(finding -> finding.severity().atLeast(Severity.HIGH))
+                        .toList();
+                for (FindingGroup group : FindingGroup.of(blocking)) {
+                    uncovered.add(new UncoveredFinding(
+                            verdict.vetter(),
+                            group.ruleId(),
+                            group.locations().isEmpty()
+                                    ? null
+                                    : group.locations().getFirst(),
+                            group.severity(),
+                            group.message(),
+                            group.locations(),
+                            group.content(),
+                            group.line()));
                 }
             }
         }

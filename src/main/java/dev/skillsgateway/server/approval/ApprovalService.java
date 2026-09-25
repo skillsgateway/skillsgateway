@@ -379,7 +379,7 @@ public class ApprovalService {
         static OverrideCapture of(String reason, WaiverEvaluation.Effect effect) {
             List<String> vetters = effect.blockingVetters();
             List<String> findings = effect.uncovered().stream()
-                    .map(finding -> "%s at %s".formatted(finding.ruleId(), finding.location()))
+                    .map(WaiverEvaluation.UncoveredFinding::describe)
                     .toList();
             return new OverrideCapture(
                     reason, vetters.isEmpty() ? null : List.copyOf(vetters), findings.isEmpty() ? null : findings);

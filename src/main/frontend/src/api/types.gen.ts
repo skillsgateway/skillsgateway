@@ -997,7 +997,7 @@ export interface paths {
         put?: never;
         /**
          * Accept a vetting finding on this snapshot's marketplace
-         * @description Records a scoped, expiring waiver for one finding rule. The marketplace — and, for SNAPSHOT scope, the commit SHA — are taken from the snapshot, so a waiver cannot be mis-scoped to content it does not belong to. A justification, the acting identity and a future expiry are all mandatory; an unlimited waiver cannot be expressed. While an active waiver covers a finding, that finding no longer contributes to the snapshot's effective vetting outcome.
+         * @description Records a scoped, expiring waiver for one finding rule. The marketplace — and, for SNAPSHOT scope, the commit SHA — are taken from the snapshot, so a waiver cannot be mis-scoped to content it does not belong to. A justification, the acting identity and a future expiry are all mandatory; an unlimited waiver cannot be expressed. While an active waiver covers a finding, that finding no longer contributes to the snapshot's effective vetting outcome. Naming a finding group's content (and line) limits the waiver to every location of that one group.
          */
         post: operations["create_3"];
         delete?: never;
@@ -2560,6 +2560,11 @@ export interface components {
         /** @description One thing a vetter found in a snapshot */
         Finding: {
             /**
+             * @description Git blob id of the file the finding is in, set by the gateway from the pinned tree; null when the location names no file. Findings on identical content share it.
+             * @example e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+             */
+            content?: string;
+            /**
              * @description Stable rule identifier, e.g. aws-access-key-id
              * @example aws-access-key-id
              */
@@ -2570,6 +2575,27 @@ export interface components {
             message?: string;
             /**
              * @description How much the finding matters
+             * @enum {string}
+             */
+            severity?: "info" | "low" | "medium" | "high" | "critical";
+        };
+        /** @description Findings on identical content (the same git blob and line), collapsed into one entry */
+        FindingGroup: {
+            /** @description Git blob id the findings are in; null when the finding could not be tied to one */
+            content?: string;
+            /**
+             * Format: int32
+             * @description Line within that blob, or null
+             */
+            line?: number;
+            /** @description Every path:line this group stands for */
+            locations?: string[];
+            /** @description Reviewer-facing explanation */
+            message?: string;
+            /** @description Finding rule identifier */
+            ruleId?: string;
+            /**
+             * @description How much it matters
              * @enum {string}
              */
             severity?: "info" | "low" | "medium" | "high" | "critical";
@@ -3714,10 +3740,19 @@ export interface components {
              */
             size?: number;
         };
-        /** @description A blocking finding that no active waiver covers */
+        /** @description A blocking finding group that no active waiver covers, with every uncovered location */
         UncoveredFinding: {
-            /** @description Where the finding was located */
+            /** @description Git blob id the group is in, to name in a group waiver; null when none */
+            content?: string;
+            /**
+             * Format: int32
+             * @description Line within that blob, or null
+             */
+            line?: number;
+            /** @description The first uncovered location of the group, path:line */
             location?: string;
+            /** @description Every uncovered location of the group, path:line */
+            locations?: string[];
             /** @description Reviewer-facing explanation */
             message?: string;
             /** @description Finding rule identifier */
@@ -3743,8 +3778,10 @@ export interface components {
         VerdictView: {
             /** @description One-line summary: how many findings and the worst severity, or — for a clean pass with no findings — what the vetter examined */
             detail?: string;
-            /** @description What the vetter found */
+            /** @description What the vetter found, one entry per location */
             findings?: components["schemas"]["Finding"][];
+            /** @description The same findings with those on identical content collapsed into one entry listing every location (GW_VETTING_0041); derived from findings, never stored */
+            groups?: components["schemas"]["FindingGroup"][];
             /**
              * Format: int32
              * @description Position of the vetter in the chain
@@ -3898,6 +3935,11 @@ export interface components {
         /** @description Request to accept one finding rule on a snapshot's marketplace, until an expiry */
         WaiverRequest: {
             /**
+             * @description Limits the waiver to one finding group (GW_VETTING_0042): the git blob id the group's findings are in, as the vetting report gives it. The waiver then covers every location of that group and nothing else. Only with SNAPSHOT scope.
+             * @example e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+             */
+            content?: string;
+            /**
              * Format: date-time
              * @description When the acceptance lapses. Required and must be in the future: there are no unlimited waivers.
              * @example 2026-12-31T00:00:00Z
@@ -3905,6 +3947,11 @@ export interface components {
             expiresAt: string;
             /** @description Why this risk is accepted; recorded and shown to the next reviewer */
             justification: string;
+            /**
+             * Format: int32
+             * @description The finding group's line within that blob; omitted when the group has none
+             */
+            line?: number;
             /**
              * @description Repository-relative path for PATH scope; ignored for SNAPSHOT scope, which always takes the snapshot's own SHA
              * @example plugins/hello
@@ -3927,6 +3974,8 @@ export interface components {
             active?: boolean;
             /** @description Identity that accepted the risk */
             approvedBy?: string;
+            /** @description For a finding-group waiver, the git blob id it is limited to; null otherwise */
+            content?: string;
             /**
              * Format: date-time
              * @description When the waiver was created
@@ -3944,6 +3993,11 @@ export interface components {
             id?: number;
             /** @description Why the risk is accepted */
             justification?: string;
+            /**
+             * Format: int32
+             * @description For a finding-group waiver, the line within that blob; null when none
+             */
+            line?: number;
             /** @description Marketplace the waiver belongs to */
             marketplace?: string;
             /**
