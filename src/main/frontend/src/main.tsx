@@ -2,10 +2,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 import { AppLayout } from "@/components/app-layout";
 import { AdoptionPage } from "@/pages/adoption";
 import { AuditPage } from "@/pages/audit";
+import { AuditSinksPage } from "@/pages/audit-sinks";
 import {
   MarketplaceActivityPage,
   MarketplaceLayout,
@@ -57,7 +58,11 @@ const router = createBrowserRouter([
       { path: "/vetting", element: <VettingPage /> },
       { path: "/adoption", element: <AdoptionPage /> },
       { path: "/tokens", element: <TokensPage /> },
-      { path: "/webhooks", element: <WebhooksPage /> },
+      { path: "/integrations", element: <Navigate to="/integrations/webhooks" replace /> },
+      { path: "/integrations/webhooks", element: <WebhooksPage /> },
+      { path: "/integrations/sinks", element: <AuditSinksPage /> },
+      // Moved under Integrations; the old address is published and bookmarked (GW_AUTH_0048).
+      { path: "/webhooks", element: <Navigate to="/integrations/webhooks" replace /> },
     ],
   },
 ]);

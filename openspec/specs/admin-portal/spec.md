@@ -86,3 +86,9 @@ The system SHALL implement GW_INGEST_0037.
 
 #### Scenario: SVC_GW_INGEST_0037
 The system SHALL pass SVC_GW_INGEST_0037.
+
+### Requirement: GW_AUTH_0048
+The system SHALL implement GW_AUTH_0048.
+
+#### Scenario: SVC_GW_AUTH_0048
+The system SHALL pass SVC_GW_AUTH_0048.

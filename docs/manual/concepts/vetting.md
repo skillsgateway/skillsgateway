@@ -181,7 +181,7 @@ marketplace when there is one, otherwise the global setting, otherwise the
 default. The administrative surface reports which of the three decided, so a
 default is never mistaken for a decision somebody made. The global level and the
 marketplaces that depart from it are governed together on the portal's
-[Vetting page](../reference/portal.md#vetting-governance).
+[Vetting chain page](../reference/portal.md#vetting-chain-governance).
 
 Both are recorded with every run, in the run's **chain identity**, alongside each
 vetter's rule-set version — `secret-scan@3,prompt-injection@1;mode=run-all`. That

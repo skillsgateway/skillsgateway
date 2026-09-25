@@ -27,6 +27,9 @@ public class SpaController {
         "/vetting",
         "/adoption",
         "/tokens",
+        "/integrations",
+        "/integrations/webhooks",
+        "/integrations/sinks",
         "/webhooks"
     })
     public String spa() {

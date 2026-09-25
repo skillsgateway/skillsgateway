@@ -276,13 +276,17 @@ test("token_cleartext_is_shown_once_and_revocation_marks_it_revoked", async ({ p
 });
 
 /**
- * @SVCs SVC_GW_WEBHOOK_0004
+ * @SVCs SVC_GW_WEBHOOK_0004, SVC_GW_AUTH_0048
  */
 test("webhooks_page_lists_subscribers_and_delivery_attempts", async ({ page }) => {
   await login(page, "alice");
-  await page.getByRole("link", { name: "Webhooks" }).click();
+  // The address the page had before it moved under Integrations still reaches it, opened cold.
+  await page.goto("/webhooks");
+  await expect(page).toHaveURL(/\/integrations\/webhooks$/);
+  await expect(page.getByRole("heading", { name: "Webhooks", level: 1 })).toBeVisible();
 
   const subscriberName = uniqueName("hook");
+  await page.getByRole("button", { name: "New subscriber" }).click();
   await expect(page.getByRole("button", { name: "Add subscriber" })).toBeDisabled();
   await page.getByLabel("Subscriber name").fill(subscriberName);
   // Nothing listens there: the delivery is still recorded, which is what this page shows.
@@ -343,9 +347,11 @@ test("snapshot_soft_delete_and_restore_in_the_portal", async ({ page }) => {
  */
 test("audit_page_exports_the_ledger_and_lists_sinks", async ({ page }) => {
   await login(page, "alice");
-  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Audit log" }).click();
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await nav.getByRole("link", { name: "Audit sinks" }).click();
 
   const sinkName = uniqueName("sink");
+  await page.getByRole("button", { name: "New sink" }).click();
   await expect(page.getByRole("button", { name: "Add sink" })).toBeDisabled();
   // Nothing listens there: the sink still registers, and its position is what this page shows.
   await page.getByLabel("Sink name").fill(sinkName);
@@ -358,6 +364,7 @@ test("audit_page_exports_the_ledger_and_lists_sinks", async ({ page }) => {
   await expect(sinkRow).toBeVisible();
   await expect(sinkRow.getByText(/entries/)).toBeVisible();
 
+  await nav.getByRole("link", { name: "Audit log" }).click();
   // The export affordance is a real download of the NDJSON stream.
   const download = page.waitForEvent("download");
   await page.getByRole("link", { name: /Download ledger/ }).click();
@@ -984,12 +991,12 @@ test("an_admin_sets_the_default_chain_and_clears_a_marketplaces_override", async
 
   // The page that governs the estate is one hop from the card that governs one marketplace.
   await page.getByRole("link", { name: "Govern the chain across the estate" }).click();
-  await expect(page.getByRole("heading", { name: "Vetting", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Vetting chain", level: 1 })).toBeVisible();
 
   // And it is a real address, not only a client-side hop: a bookmarked /vetting has to resolve
   // through the gateway's SPA forward rather than 404.
   await page.goto("/vetting");
-  await expect(page.getByRole("heading", { name: "Vetting", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Vetting chain", level: 1 })).toBeVisible();
 
   // The default chain, written globally. What the assertion can see is the source: a setting now
   // exists where none did. It is then put back to run-all, so the estate this shared gateway serves

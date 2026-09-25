@@ -111,7 +111,7 @@ export function VettingRefusal() {
 function PageHeading() {
   return (
     <div className="space-y-1">
-      <h1 className="text-2xl font-semibold">Vetting</h1>
+      <h1 className="text-2xl font-semibold">Vetting chain</h1>
       <p className="text-sm text-muted-foreground">
         The chain every marketplace runs unless it says otherwise, and the ones that say otherwise.
       </p>

@@ -23,7 +23,7 @@ those take the approver's standing, listed above.
 The **vetting chain settings** are admin-only in both directions and are not an
 auditor read: the per-marketplace card on
 [Marketplace detail](../reference/portal.md#vetting-chain-administrators) and the
-estate-wide [Vetting page](../reference/portal.md#vetting-governance) are shown
+estate-wide [Vetting chain page](../reference/portal.md#vetting-chain-governance) are shown
 to an `admin` and to nobody else. They decide how much evidence stands behind
 every approval, and a marketplace-scoped approver is frequently the owner of the
 content the chain governs.

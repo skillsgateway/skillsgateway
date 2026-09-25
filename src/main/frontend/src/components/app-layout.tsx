@@ -48,6 +48,8 @@ type NavItem = {
   adminOnly?: boolean;
   /** Carries the count of snapshots awaiting a decision across marketplaces. */
   awaiting?: boolean;
+  /** Fixed sections, always listed beneath the entry; the entry itself then names them, not a page. */
+  sections?: { to: string; label: string }[];
 };
 
 const groups: { label: string; items: NavItem[] }[] = [
@@ -60,16 +62,30 @@ const groups: { label: string; items: NavItem[] }[] = [
       { to: "/marketplaces", label: "Marketplaces", icon: Store, end: true },
     ],
   },
+  // What a reader consults, apart from what an administrator sets (GW_AUTH_0048).
   {
-    label: "Governance",
+    label: "Oversight",
     items: [
       { to: "/audit", label: "Audit log", icon: ScrollText },
+      { to: "/adoption", label: "Adoption", icon: TrendingUp },
+    ],
+  },
+  {
+    label: "Configuration",
+    items: [
       // Admin-only: the chain settings decide how much evidence stands behind every approval, so
       // neither they nor their values are shown to approvers or auditors. Hiding the entry is a
       // courtesy — the server refuses every read behind it independently.
-      { to: "/vetting", label: "Vetting", icon: ShieldCheck, adminOnly: true },
-      { to: "/adoption", label: "Adoption", icon: TrendingUp },
-      { to: "/webhooks", label: "Webhooks", icon: Webhook },
+      { to: "/vetting", label: "Vetting chain", icon: ShieldCheck, adminOnly: true },
+      {
+        to: "/integrations",
+        label: "Integrations",
+        icon: Webhook,
+        sections: [
+          { to: "/integrations/webhooks", label: "Webhooks" },
+          { to: "/integrations/sinks", label: "Audit sinks" },
+        ],
+      },
     ],
   },
 ];
@@ -161,6 +177,35 @@ export function MarketplaceSections({ name, awaiting }: { name: string; awaiting
   );
 }
 
+/** An entry that names a fixed set of sections rather than a page of its own; the sections are the links. */
+function NavSections({
+  label,
+  icon: Icon,
+  sections,
+}: {
+  label: string;
+  icon: typeof Home;
+  sections: { to: string; label: string }[];
+}) {
+  return (
+    <>
+      <div className="flex items-center gap-2.5 px-2.5 py-1.5 text-sm font-medium text-sidebar-foreground">
+        <Icon className="size-4" aria-hidden />
+        {label}
+      </div>
+      <ul aria-label={label} className="mt-0.5 ml-4 space-y-0.5 border-l pl-2">
+        {sections.map((section) => (
+          <li key={section.to}>
+            <NavLink to={section.to} className={navItemClass}>
+              {section.label}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 function breadcrumb(pathname: string): string {
   if (pathname === "/") return "Overview";
   if (/^\/marketplaces\/[^/]+\/snapshots\//.test(pathname)) return "Snapshot contents";
@@ -169,10 +214,13 @@ function breadcrumb(pathname: string): string {
   if (pathname.startsWith("/review")) return "Review queue";
   if (pathname.startsWith("/marketplaces")) return "Marketplaces";
   if (pathname.startsWith("/audit")) return "Audit log";
-  if (pathname.startsWith("/vetting")) return "Vetting";
+  if (pathname.startsWith("/vetting")) return "Vetting chain";
   if (pathname.startsWith("/adoption")) return "Adoption";
   if (pathname.startsWith("/tokens")) return "Access tokens";
-  if (pathname.startsWith("/webhooks")) return "Webhooks";
+  if (pathname.startsWith("/integrations/sinks")) return "Integrations · Audit sinks";
+  if (pathname.startsWith("/integrations") || pathname.startsWith("/webhooks")) {
+    return "Integrations · Webhooks";
+  }
   return "";
 }
 
@@ -431,7 +479,7 @@ function GatewayVersion() {
  * Portal shell: grouped sidebar navigation, breadcrumb top bar, and the signed-in user's
  * menu — identity, roles, theme, personal tokens and sign out.
  *
- * @Requirements GW_INGEST_0007, GW_AUTH_0044
+ * @Requirements GW_INGEST_0007, GW_AUTH_0044, GW_AUTH_0048
  */
 export function AppLayout() {
   const location = useLocation();
@@ -474,8 +522,11 @@ export function AppLayout() {
               <ul className="space-y-0.5">
                 {group.items
                   .filter((item) => item.adminOnly !== true || isAdmin)
-                  .map(({ to, label, icon: Icon, end, awaiting }) => (
+                  .map(({ to, label, icon: Icon, end, awaiting, sections }) => (
                   <li key={to}>
+                    {sections ? (
+                      <NavSections label={label} icon={Icon} sections={sections} />
+                    ) : (
                     <NavLink to={to} end={end} className={navItemClass}>
                       <Icon className="size-4" aria-hidden />
                       {label}
@@ -486,6 +537,7 @@ export function AppLayout() {
                         />
                       ) : null}
                     </NavLink>
+                    )}
                     {to === "/marketplaces" && openMarketplace ? (
                       <MarketplaceSections
                         name={openMarketplace}

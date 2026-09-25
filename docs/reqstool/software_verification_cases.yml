@@ -296,13 +296,13 @@ cases:
 
   - id: SVC_GW_AUDIT_0006
     requirement_ids: ["GW_AUDIT_0006"]
-    title: Portal audit page offers the export download and lists sinks
+    title: Portal audit page offers the export download, and the audit sinks page lists sinks
     verification: automated-test
     description: |
       GIVEN an authenticated portal session and a registered audit export sink
-      WHEN the administrator opens the audit page
-      THEN the ledger export download control is present and the sink is listed with its target and current ledger position
-    revision: "0.1.0"
+      WHEN the administrator opens the audit page, and then the audit sinks section of the integrations surface
+      THEN the ledger export download control is present on the audit page, and the sink is listed on the audit sinks section with its target and current ledger position
+    revision: "0.2.0"
 
   - id: SVC_GW_AUDIT_0008
     requirement_ids: ["GW_AUDIT_0008"]
@@ -2386,6 +2386,19 @@ cases:
       THEN the first reports the version the build carries and the shell states it, the
       second reports it as absent and the shell states nothing in its place, and no
       configuration exists that can set the reported value
+    revision: "0.1.0"
+
+  - id: SVC_GW_AUTH_0048
+    requirement_ids: ["GW_AUTH_0048"]
+    title: The navigation groups records apart from configuration, nests the integrations, and keeps the webhooks address
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session, with and without the administrative role
+      WHEN the portal shell is rendered, and the earlier webhooks address is opened
+      THEN the audit log and adoption entries are grouped apart from the configuration entries,
+      webhooks and audit sinks are listed as sections beneath one integrations entry, the vetting
+      chain entry is offered only to the administrator, and the earlier webhooks address shows
+      the webhook subscribers at their new address
     revision: "0.1.0"
 
   - id: SVC_GW_RETENTION_0009
