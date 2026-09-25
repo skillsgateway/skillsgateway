@@ -28,10 +28,10 @@ recorded in `evidence.md`.
 ## 4. Documentation
 
 - [x] 4.1 `reference/configuration.md`: the new list, its validation, rotation by restart. Verify with `mkdocs build --strict`
-- [x] 4.2 `guides/registering-a-marketplace.md`: private upstreams, the token-scope warning, and examples for local development, Helm (`config` plus `extraEnv` with `secretKeyRef`) and ECS/Fargate (`secrets` from Secrets Manager, `secretsmanager:GetSecretValue` on the execution role). Verify with `mkdocs build --strict`
+- [x] 4.2 `guides/registering-a-marketplace.md` and a new how-to, `guides/private-upstreams.md`: private upstreams, the token-scope warning, and examples for local development, Helm (`config` plus `extraEnv` with `secretKeyRef`) and ECS/Fargate (`secrets` from Secrets Manager, `secretsmanager:GetSecretValue` on the execution role). Verify with `mkdocs build --strict`
 - [x] 4.3 `concepts/trust-boundaries.md` and the capability map's Registration row. Verify with `mkdocs build --strict`
 
 ## 5. Gates and evidence
 
-- [ ] 5.1 Run all six gates from CLAUDE.md fresh after the last code edit, and record them with the SHA in `evidence.md`
+- [x] 5.1 Run all six gates from CLAUDE.md fresh after the last code edit, and record them with the SHA in `evidence.md`
 - [ ] 5.2 Archive the change as the PR's final commit, and verify with `openspec validate --all --strict`
