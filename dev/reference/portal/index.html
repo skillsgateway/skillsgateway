@@ -3967,8 +3967,9 @@ link to it among the snapshots.</p>
 what is served); skill counts from <code>GET /api/v1/snapshots/{id}/content-diff</code>
 (against the last approved snapshot). Skill counts are left out when those
 two baselines differ, rather than mixing counts taken against two commits.
-With nothing served the line says approving serves all of it; when a read
-was cut at its limit it says the figures are lower bounds.
+The file and line counts are the gateway's own totals over the whole diff,
+however large. With nothing served the line says approving serves all of
+it.
 3. The violation and, for an approved or revoked snapshot, the
    <a href="#re-vetting-panel">re-vetting panel</a>.
 4. <strong>Tabs</strong> — the evidence. Only the open tab loads.</p>
@@ -3990,7 +3991,7 @@ was cut at its limit it says the figures are lower bounds.
 </tr>
 <tr>
 <td><strong>Diff</strong></td>
-<td>Changes since the last approved snapshot — plugins and skills marked added, changed, moved or removed, only what changed, from <code>content-diff</code>. With nothing approved yet it says there is no baseline</td>
+<td>Changes since the last approved snapshot — plugins and skills marked added, changed, moved or removed, only what changed, from <code>content-diff</code>. With nothing approved yet it says there is no baseline. Below it, <strong>Files changed against the served commit</strong> lists every changed path from <code>diff</code>, 500 at a time, with <strong>Show N more</strong>, the totals over the whole diff, and each file's diff opened in place</td>
 </tr>
 <tr>
 <td><strong>Inventory</strong></td>
@@ -4368,18 +4369,27 @@ open is not in the address — it is derived from the selection and from what yo
 have since toggled.</p>
 <p>The page takes the whole window, and each pane scrolls on its own; the page
 itself does not scroll.</p>
-<p><strong>Left pane — the tree.</strong> The paths of the pinned commit
-(<code>GET /api/v1/snapshots/{id}/files</code>), nested into real directories, directories
-before files, sizes on the right. Paths this snapshot <em>removes</em> relative to what
-is served are merged in and marked <code>removed</code>: a surface for reading a change
+<p><strong>Left pane — the tree.</strong> The pinned commit, read one folder at a time
+(<code>GET /api/v1/snapshots/{id}/tree</code>). A folder's contents load when you open it.
+A folder with more than 500 entries shows the first 500 and a <strong>Show N more</strong>
+control, so every path of a snapshot of any size can be reached. Directories
+come before files. A file shows its size, or how it stands against what is
+served (<code>added</code>, <code>modified</code>, <code>removed</code>). A folder shows how many changed paths
+are beneath it, or how many files when none changed, so you can find the
+change without opening every folder. Paths this snapshot <em>removes</em> relative to
+what is served are listed and marked <code>removed</code>: a surface for reading a change
 that hid the deletions would be the wrong surface.</p>
-<p>Above it, a filter over the loaded tree. Its count is stated against the set it
-searched — "12 matching of 2000" — and when the listing was cut at its limit the
-line says that too, so a search is never read as complete when it cannot be.</p>
+<p>Above the tree, a count line gives the snapshot's true totals, for example
+"3261 files, 12 changed". Below that is a <strong>search</strong> over every path in the
+snapshot (<code>GET /api/v1/snapshots/{id}/files?q=</code>). A search matches any part of
+the full path, regardless of case. The matches replace the tree while the
+search is up, each shown by its full path, and the count reads "12 matching of
+3261 files". Clearing the search gives back the folders you had open.</p>
 <p><strong>Right pane — the file.</strong> The selected blob
 (<code>GET /api/v1/snapshots/{id}/file?path=</code>), with a <strong>vs served</strong> toggle for that
-one file, read out of <code>GET /api/v1/snapshots/{id}/diff</code>. Files and the diff no
-longer compete for one box: switching to the diff leaves the tree where it is.</p>
+one file, read from <code>GET /api/v1/snapshots/{id}/diff?path=</code>. Files and the diff
+no longer compete for one box: switching to the diff leaves the tree where it
+is.</p>
 <p>Every bound of these reads is a state this page renders on purpose:</p>
 <table>
 <thead>
@@ -4390,12 +4400,16 @@ longer compete for one box: switching to the diff leaves the tree where it is.</
 </thead>
 <tbody>
 <tr>
-<td>Listing cut at 2000 paths</td>
-<td>"…, and the listing is cut at its limit", beside the count</td>
+<td>Folder wider than 500 entries</td>
+<td>"Show N more (500 of M shown)" beneath it</td>
+</tr>
+<tr>
+<td>Search with more than 2000 matches</td>
+<td>"Show N more (2000 of M shown)" beneath the matches</td>
 </tr>
 <tr>
 <td>Blob over 128 KiB</td>
-<td>"Truncated: showing the first part of N bytes.", with the first part</td>
+<td>"Truncated: showing the first part of N bytes.", with the first part; the full blob is not shown in the portal</td>
 </tr>
 <tr>
 <td>Binary blob</td>
