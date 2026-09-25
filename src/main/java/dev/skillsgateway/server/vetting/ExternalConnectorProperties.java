@@ -58,7 +58,7 @@ public record ExternalConnectorProperties(
 
     /** Built-in vetter names an external vetter may not shadow. */
     public static final Set<String> RESERVED_NAMES =
-            Set.of("secret-scan", "prompt-injection", "license-scan", "skill-conformance");
+            Set.of("secret-scan", "prompt-injection", "executable-surface", "license-scan", "skill-conformance");
 
     public ExternalConnectorProperties {
         if (name == null || name.isBlank()) {

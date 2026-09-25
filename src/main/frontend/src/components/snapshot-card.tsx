@@ -1,4 +1,3 @@
-import { Puzzle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -7,7 +6,6 @@ import {
   useDecideSnapshot,
   useRestoreSnapshot,
   useRevetSnapshot,
-  useSnapshotContent,
   useSnapshotContentDiff,
   useSnapshotDiff,
   useSnapshotFetchers,
@@ -23,6 +21,7 @@ import { SnapshotContentDiff } from "@/components/snapshot-content-diff";
 import { SnapshotDelta } from "@/components/snapshot-delta";
 import { SnapshotExplorer } from "@/components/snapshot-explorer";
 import { SnapshotFileChanges } from "@/components/snapshot-file-changes";
+import { SnapshotInventory } from "@/components/snapshot-inventory";
 import { RevocationNote, SnapshotStateBadge } from "@/components/snapshot-state";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
@@ -183,54 +182,6 @@ function RevetPanel({ snapshot }: { snapshot: Snapshot }) {
         </section>
       ) : null}
     </div>
-  );
-}
-
-/**
- * Everything the snapshot ships, plugin by plugin.
- *
- * @Requirements GW_INGEST_0008
- */
-function SnapshotInventory({ snapshotId }: { snapshotId: number }) {
-  const content = useSnapshotContent(snapshotId);
-  let body: React.ReactNode;
-  if (content.isLoading) body = <p className="text-sm text-muted-foreground">Loading contents…</p>;
-  else if (content.isError)
-    body = (
-      <p role="alert" className="text-sm text-destructive">
-        {content.error.message}
-      </p>
-    );
-  else if ((content.data?.plugins ?? []).length === 0)
-    body = <p className="text-sm text-muted-foreground">No plugins declared in this snapshot.</p>;
-  else
-    body = (content.data?.plugins ?? []).map((plugin) => (
-      <div key={plugin.name} className="rounded-md border p-3">
-        <div className="flex items-center gap-2 font-medium">
-          <Puzzle className="size-4 text-primary" aria-hidden />
-          {plugin.name}
-          <span className="font-mono text-xs text-muted-foreground">{plugin.source}</span>
-        </div>
-        {plugin.description ? (
-          <p className="mt-1 text-sm text-muted-foreground">{plugin.description}</p>
-        ) : null}
-        <div className="mt-2 flex flex-wrap gap-2">
-          {(plugin.skills ?? []).length === 0 ? (
-            <span className="text-xs text-muted-foreground">no skills found</span>
-          ) : (
-            (plugin.skills ?? []).map((skill) => (
-              <Badge key={skill.path} variant="outline">
-                {skill.name}
-              </Badge>
-            ))
-          )}
-        </div>
-      </div>
-    ));
-  return (
-    <section aria-label={`Contents of snapshot ${snapshotId}`} className="space-y-3">
-      {body}
-    </section>
   );
 }
 

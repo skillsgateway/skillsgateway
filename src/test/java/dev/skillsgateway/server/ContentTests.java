@@ -60,6 +60,59 @@ class ContentTests extends AbstractGatewayTest {
     }
 
     @Test
+    @SVCs({"SVC_GW_INGEST_0045"})
+    void snapshotContentListsEveryComponentWithEachHooksTrigger() throws Exception {
+        String hooks = """
+                {"hooks": {"SessionStart": [{"hooks": [
+                  {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/start.sh"}]}],
+                 "PostToolUse": [{"matcher": "Edit|Write", "hooks": [
+                  {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/check.sh"}]}]}}
+                """;
+        Path upstream = createUpstream(
+                TWO_PLUGIN_MANIFEST,
+                java.util.Map.of(
+                        "plugins/review/commands/review.md", "# review\n",
+                        "plugins/review/agents/critic.md", "# critic\n",
+                        "plugins/review/agents/editor.md", "# editor\n",
+                        "plugins/review/hooks/hooks.json", hooks,
+                        "plugins/review/scripts/start.sh", "#!/bin/sh\necho start\n",
+                        "plugins/review/scripts/check.sh", "#!/bin/sh\necho check\n",
+                        "plugins/review/.mcp.json", "{\"mcpServers\": {\"notes\": {\"command\": \"notes\"}}}",
+                        // A malformed declaration elsewhere costs only that plugin's hooks.
+                        "plugins/hello/hooks/hooks.json", "{ not json"));
+
+        Registered registered = registerAndIngest(uniqueName("corp"), upstream);
+
+        String body = mockMvc.perform(get("/api/v1/snapshots/%d/content"
+                                .formatted(registered.snapshot().id()))
+                        .with(oidcLogin()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String review = "$.plugins[?(@.name == 'review')]";
+        assertThat((List<String>) JsonPath.read(body, review + ".commands[*].name"))
+                .containsExactly("review");
+        assertThat((List<String>) JsonPath.read(body, review + ".agents[*].name"))
+                .containsExactlyInAnyOrder("critic", "editor");
+        assertThat((List<String>) JsonPath.read(body, review + ".mcpServers[*].name"))
+                .containsExactly("notes");
+        assertThat((List<String>) JsonPath.read(body, review + ".hooks[*].event"))
+                .containsExactly("SessionStart", "PostToolUse");
+        assertThat((List<String>) JsonPath.read(body, review + ".hooks[*].matcher"))
+                .containsExactly(null, "Edit|Write");
+        assertThat((List<String>) JsonPath.read(body, review + ".hooks[*].location"))
+                .containsExactly("plugins/review/hooks/hooks.json:2", "plugins/review/hooks/hooks.json:4");
+        assertThat((List<String>) JsonPath.read(body, review + ".hooks[*].runs"))
+                .containsExactly("${CLAUDE_PLUGIN_ROOT}/scripts/start.sh", "${CLAUDE_PLUGIN_ROOT}/scripts/check.sh");
+        String hello = "$.plugins[?(@.name == 'hello')]";
+        assertThat((List<String>) JsonPath.read(body, hello + ".skills[*].name"))
+                .containsExactly("hello");
+        assertThat((List<Object>) JsonPath.read(body, hello + ".hooks[*]")).isEmpty();
+    }
+
+    @Test
     @SVCs({"SVC_GW_INGEST_0009"})
     void forgeMetadataIsCapturedAtRegistrationWhenAvailable() throws Exception {
         // A forge whose REST API and git service share one origin: registration reads the git

@@ -364,7 +364,7 @@ Top to bottom, in this order on purpose:
     | **Vetting** (default) | The [vetting report](#the-chain-flow): chain outcome, verdicts, findings, waivers |
     | **Contents** | The [file explorer](#snapshot-contents), inside the card |
     | **Diff** | Changes since the last approved snapshot — plugins and skills marked added, changed, moved or removed, only what changed, from `content-diff`. With nothing approved yet it says there is no baseline. Below it, **Files changed against the served commit** lists every changed path from `diff`, 500 at a time, with **Show N more**, the totals over the whole diff, and each file's diff opened in place |
-    | **Inventory** | What the snapshot ships: one block per declared plugin with its `source`, description and one badge per skill, from `GET /api/v1/snapshots/{id}/content` |
+    | **Inventory** | What the snapshot ships: one block per declared plugin with its `source` and description. Below them is one count per component kind the plugin has, for example "1 skill · 4 agents · 3 hooks". Each count is collapsed and expands its own list in place. A hook row shows its trigger (the event, and the tool matcher when there is one), what it runs, and where it is declared. Read from `GET /api/v1/snapshots/{id}/content` |
     | **Provenance** | Upstream URL and SHA, the served SHA, who decided it and when, and the closure of external plugin sources |
 
 5. **The decision** — **Approve** (**Re-approve** for a revoked snapshot) and
@@ -515,7 +515,7 @@ it can be read without opening anything:
 
 ```text
 Blocked at step 1 · secret-scan found 1 critical finding
-Clear · 4 vetters, 0 findings
+Clear · 5 vetters, 0 findings
 Clear with waivers · 2 findings accepted
 Stopped at step 1 · secret-scan found 1 critical finding, so 2 later vetters
                     did not run — re-vet to see what they say

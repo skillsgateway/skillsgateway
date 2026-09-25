@@ -307,8 +307,29 @@ because reviewing must not require serving.
 {"snapshotId":42,"sha":"3f9c2ab...","state":"held",
  "plugins":[{"name":"acme-tools","description":"Deployment helpers",
              "source":"./plugins/acme-tools",
-             "skills":[{"name":"deploy","path":"skills/deploy/SKILL.md"}]}]}
+             "skills":[{"name":"deploy","path":"skills/deploy/SKILL.md"}],
+             "commands":[{"name":"release","path":"plugins/acme-tools/commands/release.md"}],
+             "agents":[{"name":"reviewer","path":"plugins/acme-tools/agents/reviewer.md"}],
+             "hooks":[{"event":"PostToolUse","matcher":"Edit|Write","type":"command",
+                       "runs":"${CLAUDE_PLUGIN_ROOT}/scripts/format.sh",
+                       "location":"plugins/acme-tools/hooks/hooks.json:9","declaredBy":"plugin"}],
+             "mcpServers":[{"name":"tickets","path":"plugins/acme-tools/.mcp.json:3"}]}]}
 ```
+
+Every list is present and empty when the plugin has none.
+
+- **Commands and agents** come from `commands/` and `agents/`, or from the
+  paths `plugin.json` declares instead.
+- **Hooks** merge `hooks/hooks.json` with the hook files and inline hooks
+  declared in `plugin.json` and the marketplace entry, plus hooks in skill and
+  agent frontmatter. For those, `declaredBy` is `skill <name>` or
+  `agent <name>`.
+- **MCP servers** merge `.mcp.json` with `plugin.json`'s `mcpServers`.
+
+A path that escapes the plugin is ignored. A declaration that cannot be parsed
+leaves that component out; it does not fail the call. The
+[`executable-surface`](../../concepts/vetting.md#executable-surface) vetter
+reports it.
 
 **200** · **404** unknown snapshot.
 

@@ -129,7 +129,11 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
   await page.goto(`/marketplaces/${name}/snapshots`);
   const served = page.getByRole("region", { name: /^Snapshot \d+$/ });
   await served.getByRole("tab", { name: "Inventory" }).click();
-  await expect(served.getByText("hello", { exact: true }).first()).toBeVisible();
+  // Each component kind is a collapsed count that expands in place (GW_INGEST_0046).
+  const skills = served.getByRole("button", { name: "1 skill" });
+  await expect(skills).toHaveAttribute("aria-expanded", "false");
+  await skills.click();
+  await expect(served.getByRole("region", { name: "skills of hello" })).toContainText("hello");
   // The tab strip scrolls sideways on a phone but never vertically: no scrollbar beside the tabs.
   const strip = served.getByRole("tablist");
   expect(await strip.evaluate((el) => el.scrollHeight - el.clientHeight)).toBe(0);

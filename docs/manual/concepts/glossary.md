@@ -131,6 +131,13 @@ pointer; the page it points at is where the mechanism is explained.
 :   The state every snapshot starts in. Stored, inspectable, and serving
     nothing. See [Lifecycle — quarantine to serve](lifecycle.md).
 
+**Hook**
+:   A command, prompt or request that a plugin has Claude Code run on an
+    event — session start, after an edit, end of turn — without anyone
+    invoking it. The inventory lists every hook with its trigger, and the
+    [`executable-surface`](vetting.md#executable-surface) vetter flags each
+    one. It blocks a hook that fetches code at run time.
+
 **Hosted marketplace**
 :   A marketplace whose content is pushed straight to the gateway rather than
     fetched, so it has **no upstream** and takes no clone URL. Everything after
@@ -279,7 +286,7 @@ pointer; the page it points at is where the mechanism is explained.
 **Vetter**
 :   The element of the vetting chain: whatever examines a snapshot and answers
     with a verdict and findings. Built in — `secret-scan`, `prompt-injection`,
-    `license-scan`, `skill-conformance` — or external, reached over a
+    `executable-surface`, `license-scan`, `skill-conformance` — or external, reached over a
     connector. It is handed the snapshot's identity and a
     read-only walk over its files, and nothing else. An administrator can switch
     one off globally or for one marketplace — an audited act that records a

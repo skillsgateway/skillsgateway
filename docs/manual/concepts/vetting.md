@@ -23,7 +23,7 @@ flowchart TD
 
     subgraph C["Vetting chain — ordered; every vetter by default"]
         direction TB
-        C1["secret-scan (order 100)"] --> C2["prompt-injection (order 200)"] --> C3["license-scan (order 300)"] --> C4["skill-conformance (order 400)"]
+        C1["secret-scan (order 100)"] --> C2["prompt-injection (order 200)"] --> C5["executable-surface (order 250)"] --> C3["license-scan (order 300)"] --> C4["skill-conformance (order 400)"]
     end
 
     C --> A["Aggregate verdicts<br/>clear iff every verdict is pass or warn"]
@@ -397,8 +397,8 @@ rather than merely observable in it.
 
 ## The built-in vetters
 
-All four vetters ship in the gateway and run in every chain. The first three ask
-whether the content is dangerous; the fourth asks whether it is well formed.
+All five vetters ship in the gateway and run in every chain. The first four ask
+whether the content is dangerous; the fifth asks whether it is well formed.
 
 ### `secret-scan`
 
@@ -435,6 +435,54 @@ such as `ignore-rule` or `--all-values` are not prose. The price is a known
 blind spot: "do not show the user the command you ran" is not caught unless it
 also says *hide*, *without telling* or *don't let … know*. A paraphrase walks
 past pattern rules anyway, which is why this vetter is triage.
+
+### `executable-surface`
+
+Reads each plugin's hooks and flags the code a plugin runs without anyone
+invoking it. A plugin's hooks come from its `hooks/hooks.json`, from the hook
+files or inline hooks that its `plugin.json` and its marketplace entry declare,
+and from the frontmatter of its skills and agents. The vetter reads the same
+[inventory](../reference/portal.md#review-and-snapshots) the portal shows.
+
+Plugins come from two places: those the manifest lists, and any directory that
+holds a `.claude-plugin/plugin.json`. A plugin left out of the manifest is still
+served, so its hooks are still read.
+
+| Rule | What it means | Severity |
+| --- | --- | --- |
+| `auto-run-hook` | A hook runs automatically. The finding names its trigger (the event and the tool matcher) and what it runs, at the `path:line` where it is declared | medium: warns |
+| `runtime-fetch-exec` | A hook's command, or a file of the snapshot the hook launches, downloads code and executes it. That covers three shapes: a download piped into an interpreter; an interpreter fed a download through `$(…)` or `<(…)`; and a file that both downloads to a file and makes that same file executable | high: blocks |
+| `runtime-package-run` | A hook runs a package runner (`npx`, `uvx`, `pnpm dlx`, `pipx run`, …) or installs packages (`pip install`, `npm install`, …). Either way, it fetches its code from a registry at run time | high: blocks |
+| `hook-config-unreadable` | A hook file, a `plugin.json` or the manifest could not be parsed, so the hooks it declares could not be read | medium: warns |
+| `hook-target-unscanned` | A hook runs a file that is binary or over the scan size limit, so no rule could read it | medium: warns |
+
+**Why a hook only warns.** A hook is a legitimate plugin feature. Its code is in
+the snapshot, and the rest of the chain reads it. Blocking every hook would
+teach reviewers to waive hooks unread. Medium puts each hook on the verdict row
+with its trigger, and does not hold the snapshot.
+
+**Why runtime fetching blocks.** Code fetched at run time was never in the
+snapshot the gateway pinned. It bypasses quarantine, vetting and approval
+entirely. A reviewer who has decided that the source is trusted waives the
+finding group like any other.
+
+**Precision.** Only the hook's own command and the files it launches are
+examined, so documentation that mentions `curl` is never a finding. A launched
+file is one the command names that exists in the snapshot under the plugin: a
+`${CLAUDE_PLUGIN_ROOT}/…` reference, or a path-shaped token. Launched files are
+followed to a depth of three, through the files they name in turn. Comment lines
+are skipped. So are a download that is never made executable, and a
+`command -v curl` probe. Quoting inserted into a command name (`c''url`,
+`"cu"rl`) is removed before matching. Several hooks that reach the same script
+yield one finding per line of it, not one per hook.
+
+!!! warning "What it does not see"
+
+    It matches shapes. A fetch reached through variable indirection
+    (`$FETCH "$url" | sh`) or an encoded payload walks past it. MCP server and
+    monitor commands are listed in the inventory but not examined for runtime
+    fetches. Hook files for other harnesses (`.codex/`, `.cursor/`) are not
+    Claude Code plugin hooks and are not read.
 
 ### `license-scan`
 
@@ -535,7 +583,7 @@ under `skills-gateway.vetting.external` (see
 [Configuration → External connectors](../reference/configuration.md#external-connectors)).
 Each configured connector contributes exactly one vetter to the chain — an LLM
 reviewer, a sandbox detonator, a corporate scanner — and that is the only thing
-the word means here; the four built-ins are vetters with no connector.
+the word means here; the five built-ins are vetters with no connector.
 
 A vetter that arrives over a connector runs in the chain at its position and is
 recorded, aggregated and waivable exactly like a built-in one — its findings and
@@ -568,7 +616,10 @@ twenty and counts the rest. The vetter's coverage summary also states the gap
 binary)"). A verdict whose findings are all informational shows that summary on
 its row rather than a count, so a pass that skipped files says so where the pass
 is read. `skill-conformance`, which reads only `SKILL.md` files, records
-`skill-not-scanned` for each skill it could not read. Informational findings do
+`skill-not-scanned` for each skill it could not read. `executable-surface`
+records `hook-target-unscanned` for a file a hook runs that it could not read,
+and that one is medium, not informational: it is code that runs unattended and
+that no rule has read. Informational findings do
 not change the verdict, but they are visible, so "the scanner did not look at
 this" is never invisible.
 

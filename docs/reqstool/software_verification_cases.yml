@@ -3486,3 +3486,53 @@ cases:
       WHEN the diff is read page by page, narrowed to one file, to one directory, and to a traversal-shaped path
       THEN the pages together hold every changed path once and each names the baseline, the narrowed reads hold exactly that file or that directory's changes and the traversal shape holds nothing, and the portal's Diff tab lists every changed file with its diff
     revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0045
+    requirement_ids: ["GW_INGEST_0045"]
+    title: The inventory lists commands, agents, hooks and MCP servers from every declaration source
+    verification: automated-test
+    description: |
+      GIVEN a snapshot whose plugins declare commands, agents, hooks and MCP servers in their default locations, in plugin manifest paths and inline configuration, in a marketplace entry, and in skill and agent frontmatter, and one plugin with a malformed hook file
+      WHEN the snapshot's content inventory is read
+      THEN each plugin lists every component with its declaring location, each hook carries its trigger, matcher, type and command, a manifest path that replaces a default location replaces it, a path escaping the plugin root is ignored, and the malformed file leaves only that plugin's hooks out
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0046
+    requirement_ids: ["GW_INGEST_0046"]
+    title: The inventory shows collapsed counts per component kind that expand in place
+    verification: automated-test
+    description: |
+      GIVEN a snapshot whose plugin has one skill, four agents and three hooks
+      WHEN the reviewer opens the Inventory tab and expands the hooks
+      THEN the plugin reads one count per kind it has and none for a kind it lacks, every list is collapsed, and expanding the hooks shows each trigger and command in place while the others stay collapsed
+    revision: "0.3.0"
+
+  - id: SVC_GW_VETTING_0047
+    requirement_ids: ["GW_VETTING_0047"]
+    title: Every auto-running hook warns with its trigger at its declaration, from every source
+    verification: automated-test
+    description: |
+      GIVEN a snapshot whose plugins declare hooks in the default hook file, in a hook file and inline in the plugin manifest, inline in the marketplace entry, and in skill and agent frontmatter, and one snapshot with no hooks
+      WHEN the chain runs
+      THEN the executable-surface verdict warns with one medium finding per hook naming its trigger and command at its declaration's path:line, the snapshot without hooks passes with a coverage summary, and the vetter can be switched off like any built-in
+    revision: "0.3.0"
+
+  - id: SVC_GW_VETTING_0048
+    requirement_ids: ["GW_VETTING_0048"]
+    title: Download-and-execute and package runners reached by a hook block; the negatives stay silent
+    verification: automated-test
+    description: |
+      GIVEN hooks whose command pipes a download into a shell, feeds one through substitution, runs a package runner, or launches a script (directly, in a subdirectory, or through a second script) that downloads a binary into a cache and makes it executable, including through quoting inserted into the command name; and negatives: documentation mentioning curl, a script with the same text that no hook launches, a comment line, a hook that only runs a local script, and a script that downloads without executing
+      WHEN the chain runs
+      THEN each positive raises one high finding at its path:line, blocks the snapshot, groups and waives like any finding, and every negative raises none
+    revision: "0.3.0"
+
+  - id: SVC_GW_VETTING_0049
+    requirement_ids: ["GW_VETTING_0049"]
+    title: An unparseable hook file and a binary or oversized launched file are reported
+    verification: automated-test
+    description: |
+      GIVEN a plugin whose hook file is not valid JSON, and a hook that launches a binary file of the snapshot and one over the scan size limit
+      WHEN the chain runs
+      THEN each yields one medium finding naming the file, and none is passed silently
+    revision: "0.3.0"

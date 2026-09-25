@@ -1,7 +1,6 @@
 package dev.skillsgateway.server.ingestion;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
@@ -39,7 +38,6 @@ import org.springframework.stereotype.Service;
 public class SnapshotContentService {
 
     private static final String MANIFEST_PATH = ".claude-plugin/marketplace.json";
-    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /** Diff status vocabulary; {@code moved} and {@code unchanged} apply to skills only. */
     private static final String ADDED = "added";
@@ -79,7 +77,27 @@ public class SnapshotContentService {
             String source,
 
             @Schema(description = "Skills found under <source>/skills/")
-            List<SkillInfo> skills) {}
+            List<SkillInfo> skills,
+
+            @Schema(description = "Commands the plugin provides (GW_INGEST_0045); empty when there are none")
+            List<PluginComponents.Component> commands,
+
+            @Schema(description = "Agents the plugin provides (GW_INGEST_0045); empty when there are none")
+            List<PluginComponents.Component> agents,
+
+            @Schema(
+                    description = "Hooks the plugin declares, each with its trigger (GW_INGEST_0045): the code Claude"
+                            + " Code runs without the user invoking it")
+            List<PluginComponents.Hook> hooks,
+
+            @Schema(description = "MCP servers the plugin provides (GW_INGEST_0045); empty when there are none")
+            List<PluginComponents.Component> mcpServers) {
+
+        /** A plugin with skills only: what the content diff compares, which has no use for components. */
+        PluginContent(String name, String description, String source, List<SkillInfo> skills) {
+            this(name, description, source, skills, List.of(), List.of(), List.of(), List.of());
+        }
+    }
 
     @Schema(description = "What a snapshot ships: the manifest's plugins and their skills")
     public record SnapshotContent(
@@ -170,30 +188,87 @@ public class SnapshotContentService {
         try (Repository repo = storage.quarantine(marketplace.name());
                 RevWalk walk = new RevWalk(repo)) {
             RevCommit commit = walk.parseCommit(ObjectId.fromString(snapshot.sha()));
-            return new SnapshotContent(snapshot.id(), snapshot.sha(), snapshot.state(), plugins(repo, commit));
+            return new SnapshotContent(snapshot.id(), snapshot.sha(), snapshot.state(), plugins(repo, commit, true));
         } catch (IOException e) {
             throw new IngestionException(
                     "cannot read content of snapshot %d (%s)".formatted(snapshotId, snapshot.sha()), e);
         }
     }
 
-    /** The manifest's plugins with their skills, at one commit. */
-    private static List<PluginContent> plugins(Repository repo, RevCommit commit) throws IOException {
-        byte[] manifest = readFile(repo, commit, MANIFEST_PATH);
-        if (manifest == null) {
+    /**
+     * The manifest's plugins with their skills, at one commit, and — when {@code withComponents} —
+     * every other component each provides (GW_INGEST_0045). The diff compares skills only, so it
+     * does not pay for reading component declarations.
+     */
+    @Requirements({"GW_INGEST_0008", "GW_INGEST_0045"})
+    private static List<PluginContent> plugins(Repository repo, RevCommit commit, boolean withComponents)
+            throws IOException {
+        byte[] manifestBytes = readFile(repo, commit, MANIFEST_PATH);
+        if (manifestBytes == null) {
             return List.of();
         }
+        PluginComponents.Manifest manifest = PluginComponents.Manifest.parse(MANIFEST_PATH, manifestBytes);
+        TreeFiles files = withComponents ? TreeFiles.of(repo, commit) : null;
         List<PluginContent> plugins = new ArrayList<>();
-        JsonNode root = MAPPER.readTree(manifest);
-        for (JsonNode plugin : root.path("plugins")) {
+        JsonNode entries = manifest.root().path("plugins");
+        for (int i = 0; i < entries.size(); i++) {
+            JsonNode plugin = entries.get(i);
             String name = plugin.path("name").asText(null);
             String description = plugin.path("description").asText(null);
             String source =
                     plugin.path("source").isTextual() ? plugin.get("source").asText() : null;
             List<SkillInfo> skills = source == null ? List.of() : skills(repo, commit, source);
-            plugins.add(new PluginContent(name, description, source, skills));
+            String root = PluginComponents.normalizeRoot(source);
+            if (files == null || root == null) {
+                plugins.add(new PluginContent(name, description, source, skills));
+                continue;
+            }
+            PluginComponents.Components components = PluginComponents.read(files, root, manifest, "/plugins/" + i);
+            plugins.add(new PluginContent(
+                    name,
+                    description,
+                    source,
+                    skills,
+                    components.commands(),
+                    components.agents(),
+                    components.hooks(),
+                    components.mcpServers()));
         }
         return List.copyOf(plugins);
+    }
+
+    /** {@link PluginComponents.Files} over one commit's tree, indexed once and read on demand. */
+    private record TreeFiles(Repository repo, Map<String, ObjectId> blobs) implements PluginComponents.Files {
+
+        /** Component declarations are small; anything larger is reported unread rather than inflated. */
+        private static final long MAX_BYTES = 1024 * 1024;
+
+        static TreeFiles of(Repository repo, RevCommit commit) throws IOException {
+            Map<String, ObjectId> blobs = new java.util.LinkedHashMap<>();
+            try (TreeWalk tree = new TreeWalk(repo)) {
+                tree.addTree(commit.getTree());
+                tree.setRecursive(true);
+                while (tree.next()) {
+                    blobs.put(tree.getPathString(), tree.getObjectId(0).copy());
+                }
+            }
+            return new TreeFiles(repo, java.util.Collections.unmodifiableMap(blobs));
+        }
+
+        @Override
+        public java.util.Collection<String> paths() {
+            return blobs.keySet();
+        }
+
+        @Override
+        public byte[] read(String path) throws IOException {
+            ObjectId blob = blobs.get(path);
+            if (blob == null) {
+                return null;
+            }
+            org.eclipse.jgit.lib.ObjectLoader loader = repo.open(blob);
+            return loader.getSize() > MAX_BYTES ? null : loader.getBytes();
+        }
     }
 
     /**
@@ -234,7 +309,7 @@ public class SnapshotContentService {
     private record Side(List<PluginContent> plugins, Map<String, ObjectId> skillTrees) {}
 
     private static Side side(Repository repo, RevCommit commit) throws IOException {
-        List<PluginContent> plugins = plugins(repo, commit);
+        List<PluginContent> plugins = plugins(repo, commit, false);
         Map<String, ObjectId> trees = new HashMap<>();
         for (PluginContent plugin : plugins) {
             for (SkillInfo skill : plugin.skills()) {
