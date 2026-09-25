@@ -110,6 +110,11 @@ public record UpstreamFailure(String reason, String nextStep, String rootCause) 
                 rootCause(failure));
     }
 
+    /** STUB — RED phase. */
+    public UpstreamFailure scrub(java.util.Collection<String> secrets) {
+        return this;
+    }
+
     /** One line for the marketplace record, the ledger and the log. */
     public String describe() {
         return "%s (%s). %s".formatted(reason, rootCause, nextStep);
