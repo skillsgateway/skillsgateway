@@ -2850,6 +2850,16 @@ the acting OIDC principal.</p>
 <td><code>credential {id} '{name}' principal=…</code>.</td>
 </tr>
 <tr>
+<td><code>ingest-failed</code></td>
+<td>An ingest attempt failed, whatever triggered it. The principal is whoever or whatever triggered it: a person, <code>scheduler</code>, <code>webhook</code>, or the pushing principal.</td>
+<td>The reason, root cause and next step, in one line.</td>
+</tr>
+<tr>
+<td><code>marketplace-upstream-unreachable</code></td>
+<td>A marketplace declared in the estate was registered although its upstream could not be read. The principal is <code>config-reconciler</code>.</td>
+<td>As above.</td>
+</tr>
+<tr>
 <td><code>marketplace-removed</code></td>
 <td>A marketplace was <a href="../marketplaces/#delete-marketplacesname">removed</a>. Its withdrawals follow as <code>snapshot-revoked</code> and <code>snapshot-unpublished</code>.</td>
 <td><code>withdrew {n} approved snapshot(s); reason: …</code>.</td>

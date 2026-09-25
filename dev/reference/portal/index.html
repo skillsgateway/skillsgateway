@@ -3722,7 +3722,7 @@ ingests the upstream default branch; the ref is not selectable."</p>
 </tr>
 <tr>
 <td>Clone URL</td>
-<td>Must be a valid URL. The scheme allowlist is enforced server-side and surfaces as an error toast.</td>
+<td>Must be a valid URL. The scheme allowlist, and whether the gateway can read the upstream, are checked server-side. A refusal surfaces as an error toast that gives the reason and a next step.</td>
 </tr>
 </tbody>
 </table>
@@ -3823,6 +3823,11 @@ until a snapshot is approved</em>. "Serving" is the marketplace read's <code>ser
 read from the published repository, not inferred from an approved snapshot
 existing — which is wrong after a withdrawal that left one approved and serves
 nothing.</p>
+<p>When the last ingest failed, a further line reads <em>Last ingest failed {when}:
+{reason}</em>. The reason includes the root cause and a next step. It is the
+marketplace read's <code>lastIngestReason</code>, so it covers ingests by the sync sweep,
+a webhook or a push as well as by hand. A failed <strong>Ingest</strong> also refreshes the
+line, and the next successful ingest removes it.</p>
 <p>Two actions, both outline buttons so that <strong>Approve</strong> stays the page's one
 primary control:</p>
 <ul>
@@ -3834,7 +3839,8 @@ primary control:</p>
 <h3 id="upstream">Upstream<a class="headerlink" href="#upstream" title="Permanent link">&para;</a></h3>
 <p>On <strong>Settings</strong>. Forge metadata captured at registration, best effort: <strong>Clone
 URL</strong>, <strong>Forge</strong>, <strong>Project</strong>, <strong>Description</strong>, <strong>Last upstream update</strong>,
-<strong>Registered</strong>, <strong>Registered by</strong>. Anything not captured shows "—".</p>
+<strong>Last ingest</strong> (its outcome and time, or "never"), <strong>Registered</strong>, <strong>Registered
+by</strong>. Anything not captured shows "—".</p>
 <h3 id="vetting-chain-administrators">Vetting chain (administrators)<a class="headerlink" href="#vetting-chain-administrators" title="Permanent link">&para;</a></h3>
 <p>On <strong>Settings</strong>, <strong>shown only to a session holding the <code>admin</code> role</strong>. Fed by
 <code>GET /api/v1/marketplaces/{name}/vetting-chain</code>, which the server refuses to anyone

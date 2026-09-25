@@ -2797,7 +2797,8 @@ happy-path coverage.</p>
     Rel(facade, db, "Appends fetch entries")</code></pre>
 <h2 id="1-registration-an-operators-url-becomes-an-outbound-fetch">1. Registration — an operator's URL becomes an outbound fetch<a class="headerlink" href="#1-registration-an-operators-url-becomes-an-outbound-fetch" title="Permanent link">&para;</a></h2>
 <p>Registering a marketplace hands the gateway a URL it will later clone. Two gates
-apply before the row is written.</p>
+apply before the upstream is contacted at all. After them, a reachability check
+runs before the row is written.</p>
 <p><strong>URL scheme allowlist.</strong> The URL is parsed and its scheme lower-cased and
 matched against <code>skills-gateway.allowed-url-schemes</code> (default <code>http</code>, <code>https</code>).
 Anything else — <code>file:</code>, <code>ssh:</code>, <code>ext:</code>, and any URL that fails to parse or
@@ -2809,6 +2810,14 @@ publication is a designed future feature and will arrive as promotion per
 <code>(upstream, ref)</code> — not by relaxing this check.</p>
 <p>Marketplace names are additionally constrained to <code>^[a-z0-9][a-z0-9_-]*$</code>, which
 is also what makes them safe as path segments on the facade.</p>
+<p><strong>Reachability.</strong> Only after those checks pass does the gateway list the
+upstream's references, resolve the default branch it will pin, and refuse the
+registration when it cannot. The listing goes through the same connection path
+as ingestion's fetch, so registration opens no second route to the network. That
+path is also where upstream credentials will attach. It is the scheme allowlist
+that bounds where the gateway may connect. Address-level egress controls apply
+to external plugin sources only, not to a marketplace upstream an administrator
+names.</p>
 <p>See <a href="../../reference/compatibility/">Compatibility and allowlists</a> for the full
 matrix.</p>
 <p><strong>Declared marketplaces enter through the same gate.</strong> The
@@ -2816,7 +2825,9 @@ matrix.</p>
 is a second <em>caller</em> of this boundary, never a second implementation: a
 declared marketplace faces the same name rules, reserved name and scheme
 allowlist as an API registration, has no ref key to declare, and a failing
-entry is reported rather than registered. Reconciliation is additive — the
+entry is reported rather than registered. The exception is an unreadable
+upstream: a declared marketplace is registered anyway, and the failure is
+reported, so the estate does not depend on the network at startup. Reconciliation is additive — the
 declaration can create and converge, never deregister.</p>
 <p><strong>A manifest's plugin sources reach for this boundary too.</strong> A registered
 upstream's <code>marketplace.json</code> is attacker-influenceable content that names

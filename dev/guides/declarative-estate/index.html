@@ -786,6 +786,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#an-unreachable-upstream" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An unreachable upstream
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#when-an-entry-fails" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2586,6 +2597,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#an-unreachable-upstream" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An unreachable upstream
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#when-an-entry-fails" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2803,6 +2825,22 @@ running process reads, or rotating an environment secret:</p>
 </code></pre></div>
 <p>The report read is auditor-or-admin and the trigger is admin-only; the
 trigger itself is always on the ledger as <code>estate-reconcile-triggered</code>.</p>
+<h2 id="an-unreachable-upstream">An unreachable upstream<a class="headerlink" href="#an-unreachable-upstream" title="Permanent link">&para;</a></h2>
+<p>A marketplace registered through the API is refused when its upstream cannot be
+read. A declared one is <strong>not</strong> refused. At startup an upstream can be briefly
+unreachable for reasons that have nothing to do with the declaration. So the
+marketplace is registered, and the failure is reported:</p>
+<ul>
+<li>the entry's <code>detail</code> in <a href="../../reference/api/estate/"><code>GET /api/v1/estate</code></a>
+  reads <code>upstream unreachable: &lt;reason&gt; (&lt;root cause&gt;). &lt;next step&gt;</code>, and its
+  action stays <code>created</code>;</li>
+<li><code>marketplace-upstream-unreachable</code> is recorded on the ledger by
+  <code>config-reconciler</code>, with the same reason;</li>
+<li>a <code>WARN</code> line is logged, and startup continues.</li>
+</ul>
+<p>The first ingest of that marketplace records the same failure on the marketplace
+itself (see
+<a href="../registering-a-marketplace/#when-an-ingest-fails">When an ingest fails</a>).</p>
 <h2 id="when-an-entry-fails">When an entry fails<a class="headerlink" href="#when-an-entry-fails" title="Permanent link">&para;</a></h2>
 <p>The gateway starts and serves anyway — a broken declaration must never take a
 working estate down — and the entry fails loudly, every run, until it

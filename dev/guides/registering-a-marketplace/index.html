@@ -1057,6 +1057,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#when-an-ingest-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When an ingest fails
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#keeping-it-current" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2580,6 +2591,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#when-an-ingest-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When an ingest fails
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#keeping-it-current" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2650,7 +2672,9 @@
 
 <h1 id="registering-a-marketplace">Registering a marketplace<a class="headerlink" href="#registering-a-marketplace" title="Permanent link">&para;</a></h1>
 <p>Registration tells the gateway which upstream repository it is willing to talk
-to. It is the first trust boundary, and it fetches nothing.</p>
+to. It is the first trust boundary. It reads the upstream's list of references,
+to confirm the gateway can read it and has a default branch to pin, and it
+fetches no content.</p>
 <p>If the skills are your organisation's own and there is no upstream to point at,
 register a <strong>hosted</strong> marketplace instead and push to the gateway directly —
 see <a href="../publishing-first-party-skills/">Publishing first-party skills</a>. The rest
@@ -2709,6 +2733,10 @@ selectable."</p>
 <td>422</td>
 <td>The name fails the pattern.</td>
 </tr>
+<tr>
+<td>502</td>
+<td>The upstream could not be read, or has no default branch. Nothing was registered; see below.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="what-is-validated-and-why">What is validated, and why<a class="headerlink" href="#what-is-validated-and-why" title="Permanent link">&para;</a></h2>
@@ -2721,6 +2749,56 @@ no scheme at all, is rejected rather than passed through. This is what keeps
 <a href="../../reference/compatibility/">Compatibility and allowlists</a>.</p>
 <p><strong>The name</strong> doubles as a path segment on the facade (<code>/git/acme</code>), so it is
 constrained to a character set that cannot traverse directories.</p>
+<p><strong>The upstream must be readable.</strong> Once every check above has passed, the
+gateway lists the upstream's references and resolves its default branch. It uses
+the same connection path that ingestion uses to fetch. A request refused by an
+earlier check never contacts the upstream. If the upstream cannot be read, the
+registration is refused with <code>502</code> and nothing is created. The problem says why,
+in three properties:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">502</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Upstream not readable"</span><span class="p">,</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"the upstream could not be read, so nothing was registered: repository not found or requires authentication (…). Check the clone URL for typos; if the repository is private, the gateway has no credentials to read it."</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w"> </span><span class="nt">"reason"</span><span class="p">:</span><span class="s2">"repository not found or requires authentication"</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w"> </span><span class="nt">"rootCause"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skils.git/info/refs?service=git-upload-pack not found: Not Found"</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w"> </span><span class="nt">"nextStep"</span><span class="p">:</span><span class="s2">"Check the clone URL for typos; if the repository is private, the gateway has no credentials to read it."</span><span class="p">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th><code>reason</code></th>
+<th>Typical cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>repository not found or requires authentication</code></td>
+<td>A typo in the URL, or a private repository. Forges answer both with 401 or 404, so the gateway does not guess which.</td>
+</tr>
+<tr>
+<td><code>the upstream host could not be resolved</code></td>
+<td>A typo in the host name, or DNS the gateway cannot use.</td>
+</tr>
+<tr>
+<td><code>the upstream could not be reached</code></td>
+<td>The host refused or did not answer: it is down, or a proxy or firewall blocks it.</td>
+</tr>
+<tr>
+<td><code>the TLS connection to the upstream failed</code></td>
+<td>The upstream's certificate is not trusted by the gateway's Java trust store.</td>
+</tr>
+<tr>
+<td><code>the upstream has no default branch</code></td>
+<td>An empty repository. Push a commit first.</td>
+</tr>
+<tr>
+<td><code>the upstream fetch failed</code></td>
+<td>Anything else. <code>rootCause</code> carries the detail.</td>
+</tr>
+</tbody>
+</table>
+<p>A credential embedded in the URL is never repeated in a response, the log or the
+ledger. There is no separate "test connection" call: registering is the test.
+For marketplaces declared in the estate, see
+<a href="../declarative-estate/#an-unreachable-upstream">Declaring the estate</a>.</p>
 <h2 id="duplicate-upstream-urls">Duplicate upstream URLs<a class="headerlink" href="#duplicate-upstream-urls" title="Permanent link">&para;</a></h2>
 <p>Tracking one upstream repository under two marketplace names is legitimate —
 it is how you test a marketplace before promoting it — so the gateway never
@@ -2739,10 +2817,10 @@ response is what reaches every other caller, including a script calling the
 API directly.</p>
 <h2 id="ingesting-the-first-snapshot">Ingesting the first snapshot<a class="headerlink" href="#ingesting-the-first-snapshot" title="Permanent link">&para;</a></h2>
 <p>Registration captures nothing. Press <strong>Ingest</strong> in the marketplace's header, or:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/marketplaces/acme/ingest
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/marketplaces/acme/ingest
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"marketplaceId"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w"> </span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"marketplaceId"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w"> </span><span class="nt">"violation"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"decidedBy"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"decidedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
 </code></pre></div>
 <p>The gateway clones the upstream default branch into quarantine, pins the tip
 commit as <code>refs/snapshots/{sha}</code>, and creates a snapshot in state <code>held</code>.
@@ -2757,7 +2835,7 @@ Nothing is served yet.</p>
 <tbody>
 <tr>
 <td>201</td>
-<td>Snapshot captured.</td>
+<td>Snapshot captured. A manifest that breaks policy still captures one, in state <code>rejected</code>.</td>
 </tr>
 <tr>
 <td>404</td>
@@ -2765,16 +2843,30 @@ Nothing is served yet.</p>
 </tr>
 <tr>
 <td>502</td>
-<td>Ingestion failed — upstream unreachable, or the manifest was rejected.</td>
+<td>Ingestion failed. The problem carries <code>reason</code>, <code>rootCause</code> and <code>nextStep</code>, as for registration above.</td>
 </tr>
 </tbody>
 </table>
 <p>Ingesting the same upstream commit twice does not create a second snapshot.</p>
+<h2 id="when-an-ingest-fails">When an ingest fails<a class="headerlink" href="#when-an-ingest-fails" title="Permanent link">&para;</a></h2>
+<p>Every ingest attempt is recorded, whether it was run by hand, by the
+<a href="../upstream-sync/">sync sweep</a>, by a forge webhook or by a push:</p>
+<ul>
+<li><strong>On the marketplace:</strong> <code>lastIngestAt</code>, <code>lastIngestOutcome</code> (<code>succeeded</code> or
+  <code>failed</code>) and <code>lastIngestReason</code> on
+  <a href="../../reference/api/marketplaces/#representations"><code>GET /api/v1/marketplaces</code></a>.
+  The portal states a failed last ingest in the marketplace's header, with when
+  it happened and why.</li>
+<li><strong>On the ledger:</strong> an <code>ingest-failed</code> entry, by whoever or whatever triggered
+  the attempt, with the reason as its <code>detail</code>.</li>
+<li><strong>In the log:</strong> a <code>WARN</code> line naming the marketplace and the reason.</li>
+</ul>
+<p>The next successful ingest replaces the record.</p>
 <h2 id="keeping-it-current">Keeping it current<a class="headerlink" href="#keeping-it-current" title="Permanent link">&para;</a></h2>
 <p>There is no upstream watcher. Something outside the gateway decides when to look
 for new commits — a cron job, a CI schedule, or a forge webhook calling the
 ingest endpoint:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-u<span class="w"> </span>...<span class="w"> </span>https://skills.corp.example/api/v1/marketplaces/acme/ingest
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-u<span class="w"> </span>...<span class="w"> </span>https://skills.corp.example/api/v1/marketplaces/acme/ingest
 </code></pre></div>
 <div class="admonition info">
 <p class="admonition-title">Ingestion is always safe to run</p>
@@ -2786,8 +2878,8 @@ availability.</p>
 <p>A marketplace registered with a typo, one whose upstream is abandoned, and one
 whose upstream moved all end the same way: remove it, and register again if
 there is anything to register.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>-u<span class="w"> </span>...<span class="w"> </span>https://skills.corp.example/api/v1/marketplaces/acme<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"reason":"upstream moved"}'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>-u<span class="w"> </span>...<span class="w"> </span>https://skills.corp.example/api/v1/marketplaces/acme<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"reason":"upstream moved"}'</span>
 </code></pre></div>
 <p>Removal withdraws everything the marketplace serves and stops it being synced or
 fetched, but keeps its snapshots and their history. It is API-only and needs an

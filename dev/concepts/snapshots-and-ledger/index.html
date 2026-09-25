@@ -2791,8 +2791,9 @@ update) captured at registration.</p>
 <p>The name must match <code>^[a-z0-9][a-z0-9_-]*$</code>. It is the identity of the
 marketplace everywhere: the portal route, the API path, and the facade URL
 <code>/git/{name}</code>.</p>
-<p>Registration does <strong>not</strong> fetch anything. It only establishes that this URL is
-one the gateway is willing to talk to.</p>
+<p>Registration does <strong>not</strong> fetch any content. It establishes that this URL is one
+the gateway is willing to talk to, and that the gateway can actually read it: it
+lists the upstream's references and resolves the default branch it will pin.</p>
 <h2 id="snapshot">Snapshot<a class="headerlink" href="#snapshot" title="Permanent link">&para;</a></h2>
 <p>A <em>snapshot</em> is one upstream commit, captured at one moment, with a vetting
 decision attached. It is the unit of review, approval, serving, audit and

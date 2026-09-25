@@ -3166,9 +3166,9 @@ of a distroless image.</p>
 </table>
 <p>Ingestion is a plain clone and fetch, so a rule for the <strong>git host</strong> is what it
 needs — <code>github.com</code>, not <code>api.github.com</code>, and no archive host: nothing fetches
-tarballs. Registering a marketplace performs no clone, so registration succeeds
-with no git egress at all and only ingestion fails, which makes the two easy to
-commission separately.</p>
+tarballs. Registration lists the upstream before it creates anything, so a
+missing rule for the git host already shows at registration, as a refusal that
+names the unreachable upstream.</p>
 <p>If your manifests declare <a href="../../reference/compatibility/">external plugin sources</a>,
 those clone URLs are additional destinations. They are refused by default;
 leaving <code>skills-gateway.ingestion.allow-external-sources</code> unset is what keeps
