@@ -6,6 +6,14 @@ anything is **exported** is a deployment decision. There is no
 `skills-gateway.*` property for this — there is nothing to configure on the
 gateway's side.
 
+!!! note "Metrics are pushed over OTLP, not scraped"
+
+    The actuator exposes only `health` and `sbom`. There is no `/actuator/metrics`
+    or `/actuator/prometheus` endpoint to scrape, so a deployment that has not
+    [enabled export](#exporting) has no way to read the metrics below. Point the
+    exporter at an OpenTelemetry collector; a collector can re-expose them for
+    Prometheus if that is what you run.
+
 ## Metrics
 
 All gateway metrics live under the `skills_gateway` prefix. Every tag is a
@@ -17,7 +25,7 @@ a time series.
 
 | Metric | Type | Tags | Recorded around |
 | --- | --- | --- | --- |
-| `skills_gateway.ingestion` | timer (observation) | `outcome=success\|error` | Each ingestion — upstream fetch, pin, snapshot record, vetting trigger. |
+| `skills_gateway.ingestion` | timer (observation) | `outcome=success\|error` | Each ingestion — upstream fetch, pin, snapshot record, vetting trigger. Which marketplace failed, and why, is not a tag: the marketplace read carries its last ingest (`lastIngestOutcome`, `lastIngestReason`) and the ledger an `ingest-failed` entry. |
 | `skills_gateway.approval` | timer (observation) | `decision=approve\|reject`, `outcome=success\|error` | Each approval decision. A vetting-blocked approval lands on `outcome=error` and still surfaces its refusal unchanged. |
 | `skills_gateway.facade.fetches` | counter | `event=info-refs\|upload-pack` | Every facade fetch entry as it is appended to the ledger. |
 | `skills_gateway.catalog.collisions` | counter | — | Each catalog name a rebuild withheld because more than one plugin claimed it. Untagged for the reason above: *which* name is a [ledger](api/audit.md) question. |

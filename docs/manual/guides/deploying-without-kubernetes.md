@@ -313,6 +313,22 @@ check — the kind that runs a command inside the container — cannot be writte
 The probe has to come from outside: your load balancer's target health check,
 your platform's HTTP probe, or an external monitor.
 
+## Metrics and traces
+
+The health endpoint is the only thing the gateway serves about itself. Its
+metrics (ingestion, approvals, facade fetches, ledger export lag) are pushed
+over OTLP and only once export is switched on:
+
+```bash
+ARCONIA_OTEL_ENABLED=true
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+OTEL_SERVICE_NAME=skills-gateway
+```
+
+On ECS the endpoint is typically an OpenTelemetry collector sidecar in the same
+task. The metric names, and the two worth alerting on, are in
+[Observability](../reference/observability.md).
+
 ## A worked example: plain Docker
 
 ```bash
