@@ -3386,3 +3386,63 @@ cases:
       WHEN both are registered
       THEN the credentialed registration's ledger detail names the prefix and not the token, and the anonymous one names no credential
     revision: "0.3.0"
+
+  - id: SVC_GW_VETTING_0040
+    requirement_ids: ["GW_VETTING_0040"]
+    title: The lines that raised false positives raise nothing, and the payloads the rules exist for still fail
+    verification: automated-test
+    description: |
+      GIVEN instruction files carrying, one each, the lines from a real skill repository that raised false positives, and lines carrying concealment and instruction-override payloads
+      WHEN the prompt-injection vetter scans them
+      THEN the first raise no finding, and each payload raises exactly one high finding of its rule at its path and line
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0041
+    requirement_ids: ["GW_VETTING_0041"]
+    title: Copies of one blob collapse into one group, and nothing else does
+    verification: automated-test
+    description: |
+      GIVEN findings on the same blob and line at several paths, and findings differing in blob, line, rule, or carrying no blob; and a vetter claiming a blob id for its findings
+      WHEN the findings are grouped and the chain identifies their content from the pinned tree
+      THEN the copies form one group listing every location, every other finding is a group of its own, and each finding's blob is the one the pinned tree holds at its path, or none where the location names no file
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0042
+    requirement_ids: ["GW_VETTING_0042"]
+    title: A group waiver covers every copy of its content and nothing else
+    verification: automated-test
+    description: |
+      GIVEN a snapshot with one file vendored at two paths and a third file carrying the same rule on different bytes
+      WHEN a group waiver is recorded for the vendored group, and near-miss findings are evaluated against it
+      THEN both copies are suppressed, the third file still blocks, a finding on another blob, another line, another rule, another snapshot or with no blob is not covered, a lapsed or revoked group waiver covers nothing, and a group waiver on a path scope or with a malformed blob id is refused
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0043
+    requirement_ids: ["GW_VETTING_0043"]
+    title: Unscanned files are one entry per reason, and a pass that skipped files says so
+    verification: automated-test
+    description: |
+      GIVEN a snapshot with files over the size limit and binary files, and one with neither
+      WHEN the secret and prompt-injection vetters scan them and the verdict is recorded and shown
+      THEN each reason yields one informational entry naming the first files and counting the rest, the coverage summary on the passing verdict row and in the ledger states how many files were not scanned and why, and the snapshot with neither carries no entry and no such clause
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0044
+    requirement_ids: ["GW_VETTING_0044"]
+    title: A vendored group is one row with every location and one waive action defaulting to the group
+    verification: automated-test
+    description: |
+      GIVEN a snapshot whose vetting run has a group of identical content at several locations and a group at one location
+      WHEN the reviewer opens the vetting surface and waives the first group
+      THEN each group is one row listing its locations, each blocking group's action says what it waives, the waiver form defaults to the group, offers no path for a group of several locations, and records a waiver naming the group's blob and line
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0022
+    requirement_ids: ["GW_APPROVAL_0022"]
+    title: The refusal names each blocking group at its locations
+    verification: automated-test
+    description: |
+      GIVEN a blocked snapshot with a group of twelve identical locations and a group of one
+      WHEN approval is attempted and the portal shows what blocks it
+      THEN the refusal names two groups, each with its rule and its path:line locations, the first ten spelled out and the rest counted, and the portal lists each group once with its locations
+    revision: "0.1.0"
