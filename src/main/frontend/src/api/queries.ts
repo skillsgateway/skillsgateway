@@ -78,6 +78,34 @@ export function useRegisterMarketplace() {
   });
 }
 
+export type MarketplaceRemoval = components["schemas"]["Removal"];
+
+/**
+ * Removes a marketplace on a stated reason. The listing is not refreshed here: the caller leaves
+ * the marketplace's page first, so the page never re-renders as "not found".
+ */
+export function useRemoveMarketplace() {
+  return useMutation({
+    mutationFn: ({ name, reason }: { name: string; reason: string }) =>
+      api<MarketplaceRemoval>(`/api/v1/marketplaces/${encodeURIComponent(name)}`, {
+        method: "DELETE",
+        body: JSON.stringify({ reason }),
+      }),
+  });
+}
+
+export type EstateReconciliation = components["schemas"]["EstateReconciliation"];
+
+/** The last estate reconciliation report: which objects the configuration declares. Admin or auditor. */
+export function useEstateReport(enabled = true) {
+  return useQuery({
+    queryKey: ["estate"],
+    queryFn: () => api<EstateReconciliation>("/api/v1/estate"),
+    enabled,
+    retry: false,
+  });
+}
+
 export function useIngest() {
   const queryClient = useQueryClient();
   return useMutation({
