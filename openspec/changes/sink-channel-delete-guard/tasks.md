@@ -25,13 +25,13 @@ recorded in `evidence.md`.
 - [x] 3.3 Subscriber-to-sink lookup (`AuditSinkRepository.findBySubscriberId`, and a map for the listing)
 - [x] 3.4 `WebhookController.delete`: 409 ProblemDetail naming the sink and the sink delete call; map a RESTRICT violation to the same 409; `@ApiResponse(409)`; `@Requirements GW_WEBHOOK_0011`
 - [x] 3.5 `SubscriberView.auditSink` (nullable, `@Schema`); `EstateReconciler.reconcileWebhook` refusal
-- [ ] 3.6 Regenerate `openapi.json` and `types.gen.ts`; the contract gate reports additions only
+- [x] 3.6 Regenerate `openapi.json` and `types.gen.ts`; the contract gate reports additions only
 
 ## 4. Portal
 
-- [ ] 4.1 Webhooks page: leave `auditSink` subscribers out of Subscribers; label their delivery rows "{name} · audit sink" linking to `/integrations/sinks`
-- [ ] 4.2 `webhooks.test.tsx`: a sink's channel is not listed and cannot be deleted from the page; its delivery reads as the sink's and links to Audit sinks (@SVCs SVC_GW_WEBHOOK_0004)
+- [x] 4.1 Webhooks page: leave `auditSink` subscribers out of Subscribers; label their delivery rows "{name} · audit sink" linking to `/integrations/sinks`
+- [x] 4.2 `webhooks.test.tsx`: a sink's channel is not listed and cannot be deleted from the page; its delivery reads as the sink's and links to Audit sinks (@SVCs SVC_GW_WEBHOOK_0004)
 
 ## 5. Docs
 
-- [ ] 5.1 Portal reference (Webhooks), the lifecycle-webhooks guide's API section (the 409 and `auditSink`), and the audit export guide (a sink is removed only through the sinks API)
+- [x] 5.1 Portal reference (Webhooks), the lifecycle-webhooks guide's API section (the 409 and `auditSink`), and the audit export guide (a sink is removed only through the sinks API)

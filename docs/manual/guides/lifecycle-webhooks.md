@@ -380,3 +380,11 @@ $ curl -X DELETE localhost:8080/api/v1/webhooks/1
 history go with it, and no further events are queued for it. Subscriber creation
 and deletion are themselves recorded in the ledger as
 `webhook-subscriber-created` and `webhook-subscriber-deleted`.
+
+An [audit export sink](exporting-the-audit-ledger.md#push-sinks) delivers
+through a subscriber of its own. `GET /api/v1/webhooks` lists it with
+`auditSink` set to the sink's name, and deleting it here is **409**: the
+answer names the sink and `DELETE /api/v1/audit/sinks/{id}`, which removes
+both. A declared webhook in the [estate](../reference/api/estate.md) whose
+name is a sink's fails its entry for the same reason, rather than rewriting
+the sink's channel.

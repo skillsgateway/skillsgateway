@@ -3580,6 +3580,8 @@ export interface components {
         StreamingResponseBody: unknown;
         /** @description A webhook subscriber without its signing secret */
         SubscriberView: {
+            /** @description The audit export sink this subscriber is the delivery channel of; absent for a lifecycle subscriber. Such a subscriber is removed only with its sink. */
+            auditSink?: string | null;
             /**
              * Format: date-time
              * @description Creation time
@@ -6659,6 +6661,15 @@ export interface operations {
             };
             /** @description Subscriber not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The subscriber is an audit sink's delivery channel; remove the sink instead */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
