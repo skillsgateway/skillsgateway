@@ -257,6 +257,22 @@ ingress:
 Both the portal and `/git/**` are served by the same container on the same port,
 so one host and one `/` path is the normal configuration.
 
+**Raise the read timeout.** A first ingest of a repository with a long history
+runs inside one request for minutes, and the ingress-nginx default of 60 seconds
+cuts the response off while the ingest carries on
+([why](registering-a-marketplace.md#ingesting-the-first-snapshot)). With
+ingress-nginx:
+
+```yaml
+ingress:
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+```
+
+Other controllers have an equivalent; on the AWS Load Balancer Controller it is
+`alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600`.
+
 ## Identity and security context
 
 The chart creates a ServiceAccount for the release and runs the pod under it,
