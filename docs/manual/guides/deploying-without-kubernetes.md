@@ -386,9 +386,9 @@ Two outbound destinations matter where egress is filtered:
 
 Ingestion is a plain clone and fetch, so a rule for the **git host** is what it
 needs — `github.com`, not `api.github.com`, and no archive host: nothing fetches
-tarballs. Registering a marketplace performs no clone, so registration succeeds
-with no git egress at all and only ingestion fails, which makes the two easy to
-commission separately.
+tarballs. Registration lists the upstream before it creates anything, so a
+missing rule for the git host already shows at registration, as a refusal that
+names the unreachable upstream.
 
 If your manifests declare [external plugin sources](../reference/compatibility.md),
 those clone URLs are additional destinations. They are refused by default;
