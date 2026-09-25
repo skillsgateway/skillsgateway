@@ -132,6 +132,16 @@ SGW_OIDC_REDIRECT_URI=https://<your-host>/login/oauth2/code/idp
 It fixes the login and nothing else — every other URL built from the request
 still names the container — so it is the escape hatch, not the fix.
 
+### The proxy's timeout
+
+A first ingest of a repository with a long history runs inside one request for
+minutes ([why](registering-a-marketplace.md#ingesting-the-first-snapshot)). An AWS Application Load Balancer's
+idle timeout and nginx's `proxy_read_timeout` both default to 60 seconds; raise
+them, to 600 seconds for example. On ECS behind an ALB that is the load
+balancer attribute `idle_timeout.timeout_seconds`. A timeout that is too short
+loses only the response: the ingest still finishes and is recorded on the
+marketplace.
+
 ## Property names as environment variables
 
 Spring's relaxed binding maps a property to a variable by upper-casing it,

@@ -135,6 +135,22 @@ Nothing is served yet.
 
 Ingesting the same upstream commit twice does not create a second snapshot.
 
+!!! note "A first ingest can outlast your proxy's timeout"
+
+    The ingest runs inside the request, and the first one downloads the
+    upstream's whole history. For a repository with a long history that takes
+    minutes, not seconds: one with 1,900 commits and a 370 MiB pack took about
+    100 seconds, nearly all of it the download (vetting took 6). A later ingest
+    fetches only what changed and returns in under a second.
+
+    A proxy in front of the gateway may give up first. An nginx ingress and an
+    AWS Application Load Balancer both default to 60 seconds, and the portal then
+    shows a timeout. **The ingest carries on regardless**: it finishes in the
+    gateway and is recorded as the last ingest (below), so refresh rather than
+    press **Ingest** again. To keep the response, raise the proxy's timeout; see
+    [Deploying on Kubernetes](deploying-on-kubernetes.md#ingress-and-tls) and
+    [Deploying without Kubernetes](deploying-without-kubernetes.md#running-behind-a-proxy).
+
 ## When an ingest fails
 
 Every ingest attempt is recorded, whether it was run by hand, by the
