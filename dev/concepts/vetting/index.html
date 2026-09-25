@@ -2545,6 +2545,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#executable-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        executable-surface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#license-scan" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2959,6 +2970,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#executable-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        executable-surface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#license-scan" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3074,7 +3096,7 @@ outcome that gates approval.</p>
 
     subgraph C["Vetting chain — ordered; every vetter by default"]
         direction TB
-        C1["secret-scan (order 100)"] --&gt; C2["prompt-injection (order 200)"] --&gt; C3["license-scan (order 300)"] --&gt; C4["skill-conformance (order 400)"]
+        C1["secret-scan (order 100)"] --&gt; C2["prompt-injection (order 200)"] --&gt; C5["executable-surface (order 250)"] --&gt; C3["license-scan (order 300)"] --&gt; C4["skill-conformance (order 400)"]
     end
 
     C --&gt; A["Aggregate verdicts&lt;br/&gt;clear iff every verdict is pass or warn"]
@@ -3481,8 +3503,8 @@ consequential thing a reviewer can write here, and the ledger names the rule
 so it can be found.</p>
 </div>
 <h2 id="the-built-in-vetters">The built-in vetters<a class="headerlink" href="#the-built-in-vetters" title="Permanent link">&para;</a></h2>
-<p>All four vetters ship in the gateway and run in every chain. The first three ask
-whether the content is dangerous; the fourth asks whether it is well formed.</p>
+<p>All five vetters ship in the gateway and run in every chain. The first four ask
+whether the content is dangerous; the fifth asks whether it is well formed.</p>
 <h3 id="secret-scan"><code>secret-scan</code><a class="headerlink" href="#secret-scan" title="Permanent link">&para;</a></h3>
 <p>Regex and entropy rules over every UTF-8 text file in the snapshot: AWS access
 key ids and secret keys, PEM private-key blocks, GitHub, Slack and Google
@@ -3544,6 +3566,76 @@ such as <code>ignore-rule</code> or <code>--all-values</code> are not prose. The
 blind spot: "do not show the user the command you ran" is not caught unless it
 also says <em>hide</em>, <em>without telling</em> or <em>don't let … know</em>. A paraphrase walks
 past pattern rules anyway, which is why this vetter is triage.</p>
+<h3 id="executable-surface"><code>executable-surface</code><a class="headerlink" href="#executable-surface" title="Permanent link">&para;</a></h3>
+<p>Reads each plugin's hooks and flags the code a plugin runs without anyone
+invoking it. A plugin's hooks come from its <code>hooks/hooks.json</code>, from the hook
+files or inline hooks that its <code>plugin.json</code> and its marketplace entry declare,
+and from the frontmatter of its skills and agents. The vetter reads the same
+<a href="../../reference/portal/#review-and-snapshots">inventory</a> the portal shows.</p>
+<p>Plugins come from two places: those the manifest lists, and any directory that
+holds a <code>.claude-plugin/plugin.json</code>. A plugin left out of the manifest is still
+served, so its hooks are still read.</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>What it means</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>auto-run-hook</code></td>
+<td>A hook runs automatically. The finding names its trigger (the event and the tool matcher) and what it runs, at the <code>path:line</code> where it is declared</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>runtime-fetch-exec</code></td>
+<td>A hook's command, or a file of the snapshot the hook launches, downloads code and executes it. That covers three shapes: a download piped into an interpreter; an interpreter fed a download through <code>$(…)</code> or <code>&lt;(…)</code>; and a file that both downloads to a file and makes that same file executable</td>
+<td>high: blocks</td>
+</tr>
+<tr>
+<td><code>runtime-package-run</code></td>
+<td>A hook runs a package runner (<code>npx</code>, <code>uvx</code>, <code>pnpm dlx</code>, <code>pipx run</code>, …) or installs packages (<code>pip install</code>, <code>npm install</code>, …). Either way, it fetches its code from a registry at run time</td>
+<td>high: blocks</td>
+</tr>
+<tr>
+<td><code>hook-config-unreadable</code></td>
+<td>A hook file, a <code>plugin.json</code> or the manifest could not be parsed, so the hooks it declares could not be read</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>hook-target-unscanned</code></td>
+<td>A hook runs a file that is binary or over the scan size limit, so no rule could read it</td>
+<td>medium: warns</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why a hook only warns.</strong> A hook is a legitimate plugin feature. Its code is in
+the snapshot, and the rest of the chain reads it. Blocking every hook would
+teach reviewers to waive hooks unread. Medium puts each hook on the verdict row
+with its trigger, and does not hold the snapshot.</p>
+<p><strong>Why runtime fetching blocks.</strong> Code fetched at run time was never in the
+snapshot the gateway pinned. It bypasses quarantine, vetting and approval
+entirely. A reviewer who has decided that the source is trusted waives the
+finding group like any other.</p>
+<p><strong>Precision.</strong> Only the hook's own command and the files it launches are
+examined, so documentation that mentions <code>curl</code> is never a finding. A launched
+file is one the command names that exists in the snapshot under the plugin: a
+<code>${CLAUDE_PLUGIN_ROOT}/…</code> reference, or a path-shaped token. Launched files are
+followed to a depth of three, through the files they name in turn. Comment lines
+are skipped. So are a download that is never made executable, and a
+<code>command -v curl</code> probe. Quoting inserted into a command name (<code>c''url</code>,
+<code>"cu"rl</code>) is removed before matching. Several hooks that reach the same script
+yield one finding per line of it, not one per hook.</p>
+<div class="admonition warning">
+<p class="admonition-title">What it does not see</p>
+<p>It matches shapes. A fetch reached through variable indirection
+(<code>$FETCH "$url" | sh</code>) or an encoded payload walks past it. MCP server and
+monitor commands are listed in the inventory but not examined for runtime
+fetches. Hook files for other harnesses (<code>.codex/</code>, <code>.cursor/</code>) are not
+Claude Code plugin hooks and are not read.</p>
+</div>
 <h3 id="license-scan"><code>license-scan</code><a class="headerlink" href="#license-scan" title="Permanent link">&para;</a></h3>
 <p>Deterministic license detection over the pinned content, evaluated against the
 <a href="../../reference/configuration/#vetting">configured allow/ban lists</a>: SPDX ids
@@ -3693,7 +3785,7 @@ under <code>skills-gateway.vetting.external</code> (see
 <a href="../../reference/configuration/#external-connectors">Configuration → External connectors</a>).
 Each configured connector contributes exactly one vetter to the chain — an LLM
 reviewer, a sandbox detonator, a corporate scanner — and that is the only thing
-the word means here; the four built-ins are vetters with no connector.</p>
+the word means here; the five built-ins are vetters with no connector.</p>
 <p>A vetter that arrives over a connector runs in the chain at its position and is
 recorded, aggregated and waivable exactly like a built-in one — its findings and
 its external report link surface wherever a built-in's do. The administrative
@@ -3721,7 +3813,10 @@ twenty and counts the rest. The vetter's coverage summary also states the gap
 binary)"). A verdict whose findings are all informational shows that summary on
 its row rather than a count, so a pass that skipped files says so where the pass
 is read. <code>skill-conformance</code>, which reads only <code>SKILL.md</code> files, records
-<code>skill-not-scanned</code> for each skill it could not read. Informational findings do
+<code>skill-not-scanned</code> for each skill it could not read. <code>executable-surface</code>
+records <code>hook-target-unscanned</code> for a file a hook runs that it could not read,
+and that one is medium, not informational: it is code that runs unattended and
+that no rule has read. Informational findings do
 not change the verdict, but they are visible, so "the scanner did not look at
 this" is never invisible.</p>
 <p>The one exception is deliberate: under

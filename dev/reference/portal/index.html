@@ -3995,7 +3995,7 @@ it.
 </tr>
 <tr>
 <td><strong>Inventory</strong></td>
-<td>What the snapshot ships: one block per declared plugin with its <code>source</code>, description and one badge per skill, from <code>GET /api/v1/snapshots/{id}/content</code></td>
+<td>What the snapshot ships: one block per declared plugin with its <code>source</code> and description. Below them is one count per component kind the plugin has, for example "1 skill · 4 agents · 3 hooks". Each count is collapsed and expands its own list in place. A hook row shows its trigger (the event, and the tool matcher when there is one), what it runs, and where it is declared. Read from <code>GET /api/v1/snapshots/{id}/content</code></td>
 </tr>
 <tr>
 <td><strong>Provenance</strong></td>
@@ -4141,7 +4141,7 @@ the result it follows.</p>
 <p>Above the nodes, one sentence states the answer and where the chain stopped, so
 it can be read without opening anything:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Blocked at step 1 · secret-scan found 1 critical finding
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Clear · 4 vetters, 0 findings
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Clear · 5 vetters, 0 findings
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Clear with waivers · 2 findings accepted
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Stopped at step 1 · secret-scan found 1 critical finding, so 2 later vetters
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>                    did not run — re-vet to see what they say

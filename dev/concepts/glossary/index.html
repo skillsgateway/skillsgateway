@@ -2543,6 +2543,12 @@ on opt-in. See
 <dt><strong>Held</strong></dt>
 <dd>The state every snapshot starts in. Stored, inspectable, and serving
 nothing. See <a href="../lifecycle/">Lifecycle — quarantine to serve</a>.</dd>
+<dt><strong>Hook</strong></dt>
+<dd>A command, prompt or request that a plugin has Claude Code run on an
+event — session start, after an edit, end of turn — without anyone
+invoking it. The inventory lists every hook with its trigger, and the
+<a href="../vetting/#executable-surface"><code>executable-surface</code></a> vetter flags each
+one. It blocks a hook that fetches code at run time.</dd>
 <dt><strong>Hosted marketplace</strong></dt>
 <dd>A marketplace whose content is pushed straight to the gateway rather than
 fetched, so it has <strong>no upstream</strong> and takes no clone URL. Everything after
@@ -2667,7 +2673,7 @@ one state that neither clears nor blocks. See
 <dt><strong>Vetter</strong></dt>
 <dd>The element of the vetting chain: whatever examines a snapshot and answers
 with a verdict and findings. Built in — <code>secret-scan</code>, <code>prompt-injection</code>,
-<code>license-scan</code>, <code>skill-conformance</code> — or external, reached over a
+<code>executable-surface</code>, <code>license-scan</code>, <code>skill-conformance</code> — or external, reached over a
 connector. It is handed the snapshot's identity and a
 read-only walk over its files, and nothing else. An administrator can switch
 one off globally or for one marketplace — an audited act that records a

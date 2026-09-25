@@ -3994,8 +3994,28 @@ because reviewing must not require serving.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="mi">42</span><span class="p">,</span><span class="nt">"sha"</span><span class="p">:</span><span class="s2">"3f9c2ab..."</span><span class="p">,</span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"held"</span><span class="p">,</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w"> </span><span class="nt">"plugins"</span><span class="p">:[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acme-tools"</span><span class="p">,</span><span class="nt">"description"</span><span class="p">:</span><span class="s2">"Deployment helpers"</span><span class="p">,</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">             </span><span class="nt">"source"</span><span class="p">:</span><span class="s2">"./plugins/acme-tools"</span><span class="p">,</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">             </span><span class="nt">"skills"</span><span class="p">:[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"deploy"</span><span class="p">,</span><span class="nt">"path"</span><span class="p">:</span><span class="s2">"skills/deploy/SKILL.md"</span><span class="p">}]}]}</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">             </span><span class="nt">"skills"</span><span class="p">:[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"deploy"</span><span class="p">,</span><span class="nt">"path"</span><span class="p">:</span><span class="s2">"skills/deploy/SKILL.md"</span><span class="p">}],</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">             </span><span class="nt">"commands"</span><span class="p">:[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"release"</span><span class="p">,</span><span class="nt">"path"</span><span class="p">:</span><span class="s2">"plugins/acme-tools/commands/release.md"</span><span class="p">}],</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">             </span><span class="nt">"agents"</span><span class="p">:[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"reviewer"</span><span class="p">,</span><span class="nt">"path"</span><span class="p">:</span><span class="s2">"plugins/acme-tools/agents/reviewer.md"</span><span class="p">}],</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">             </span><span class="nt">"hooks"</span><span class="p">:[{</span><span class="nt">"event"</span><span class="p">:</span><span class="s2">"PostToolUse"</span><span class="p">,</span><span class="nt">"matcher"</span><span class="p">:</span><span class="s2">"Edit|Write"</span><span class="p">,</span><span class="nt">"type"</span><span class="p">:</span><span class="s2">"command"</span><span class="p">,</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">                       </span><span class="nt">"runs"</span><span class="p">:</span><span class="s2">"${CLAUDE_PLUGIN_ROOT}/scripts/format.sh"</span><span class="p">,</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">                       </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/acme-tools/hooks/hooks.json:9"</span><span class="p">,</span><span class="nt">"declaredBy"</span><span class="p">:</span><span class="s2">"plugin"</span><span class="p">}],</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">             </span><span class="nt">"mcpServers"</span><span class="p">:[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"tickets"</span><span class="p">,</span><span class="nt">"path"</span><span class="p">:</span><span class="s2">"plugins/acme-tools/.mcp.json:3"</span><span class="p">}]}]}</span>
 </code></pre></div>
+<p>Every list is present and empty when the plugin has none.</p>
+<ul>
+<li><strong>Commands and agents</strong> come from <code>commands/</code> and <code>agents/</code>, or from the
+  paths <code>plugin.json</code> declares instead.</li>
+<li><strong>Hooks</strong> merge <code>hooks/hooks.json</code> with the hook files and inline hooks
+  declared in <code>plugin.json</code> and the marketplace entry, plus hooks in skill and
+  agent frontmatter. For those, <code>declaredBy</code> is <code>skill &lt;name&gt;</code> or
+  <code>agent &lt;name&gt;</code>.</li>
+<li><strong>MCP servers</strong> merge <code>.mcp.json</code> with <code>plugin.json</code>'s <code>mcpServers</code>.</li>
+</ul>
+<p>A path that escapes the plugin is ignored. A declaration that cannot be parsed
+leaves that component out; it does not fail the call. The
+<a href="../../../concepts/vetting/#executable-surface"><code>executable-surface</code></a> vetter
+reports it.</p>
 <p><strong>200</strong> · <strong>404</strong> unknown snapshot.</p>
 <hr />
 <h2 id="get-snapshotsidcontent-diff"><code>GET /snapshots/{id}/content-diff</code><a class="headerlink" href="#get-snapshotsidcontent-diff" title="Permanent link">&para;</a></h2>
