@@ -2,17 +2,17 @@
 
 ## 1. Requirements (reqstool)
 
-- [ ] 1.1 Add GW_INGEST_0048 and GW_INGEST_0049, each with its SVC
+- [x] 1.1 Add GW_INGEST_0048 and GW_INGEST_0049, each with its SVC
   (SVC_GW_INGEST_0048, SVC_GW_INGEST_0049), to `docs/reqstool/`. These are
   the only ids reserved for this change. Verify that `reqstool status` lists
   them.
 
 ## 2. Portal (SVC_GW_INGEST_0048, SVC_GW_INGEST_0049)
 
-- [ ] 2.1 `queries.ts`: `useRemoveMarketplace` (a `DELETE` with a reason body)
+- [x] 2.1 `queries.ts`: `useRemoveMarketplace` (a `DELETE` with a reason body)
   and `useEstateReport` (reads `GET /api/v1/estate`, admin only). Verify with
   `pnpm verify`.
-- [ ] 2.2 `components/remove-marketplace.tsx`: the card and the confirmation
+- [x] 2.2 `components/remove-marketplace.tsx`: the card and the confirmation
   dialog, annotated `@Requirements GW_INGEST_0048, GW_INGEST_0049`. The dialog
   names the marketplace, states the consequences, has a required reason, shows
   "Removing…" while the request is in flight, and on success navigates to
@@ -24,19 +24,19 @@
   reason, then the page lands on `/marketplaces`; a refusal keeps the dialog
   open; a declared marketplace's control is disabled with its explanation.
   Tag the tests `@SVCs`.
-- [ ] 2.3 A story for the card, covering the enabled and declared states, with
+- [x] 2.3 A story for the card, covering the enabled and declared states, with
   axe. Verify with `pnpm test:stories`.
-- [ ] 2.4 An e2e test in `e2e/portal.spec.ts`, tagged `SVC_GW_INGEST_0048`:
+- [x] 2.4 An e2e test in `e2e/portal.spec.ts`, tagged `SVC_GW_INGEST_0048`:
   alice registers, ingests and approves a marketplace, then removes it from
   Settings. The test checks that confirm is disabled until a reason is written,
   that the portal lands on the marketplace list, and that the name is gone from
   it. Verify with `pnpm e2e`.
-- [ ] 2.5 Run `/impeccable audit` and `/impeccable harden` on the Settings
+- [x] 2.5 Run `/impeccable audit` and `/impeccable harden` on the Settings
   section and the dialog. Fix each finding, or dismiss it in the PR body.
 
 ## 3. Documentation
 
-- [ ] 3.1 Update `reference/portal.md` (Settings), the "Removing a marketplace"
+- [x] 3.1 Update `reference/portal.md` (Settings), the "Removing a marketplace"
   section of `guides/registering-a-marketplace.md` (portal and API tabs), and
   the estate guide's statement that removal is API-only. Verify with
   `mkdocs build --strict`.

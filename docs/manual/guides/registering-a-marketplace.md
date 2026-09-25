@@ -173,14 +173,24 @@ A marketplace registered with a typo, one whose upstream is abandoned, and one
 whose upstream moved all end the same way: remove it, and register again if
 there is anything to register.
 
-```console
-$ curl -X DELETE -u ... https://skills.corp.example/api/v1/marketplaces/acme \
-    -H 'Content-Type: application/json' -d '{"reason":"upstream moved"}'
-```
+=== "Portal"
+
+    On the marketplace's **Settings**, choose **Remove _name_…**, write the
+    reason, and confirm. The portal returns to **Marketplaces**. See
+    [Remove marketplace](../reference/portal.md#remove-marketplace-administrators).
+
+=== "API"
+
+    ```console
+    $ curl -X DELETE -u ... https://skills.corp.example/api/v1/marketplaces/acme \
+        -H 'Content-Type: application/json' -d '{"reason":"upstream moved"}'
+    ```
+
+    See the [reference](../reference/api/marketplaces.md#delete-marketplacesname).
 
 Removal withdraws everything the marketplace serves and stops it being synced or
-fetched, but keeps its snapshots and their history. It is API-only and needs an
-administrator; see the [reference](../reference/api/marketplaces.md#delete-marketplacesname).
+fetched, but keeps its snapshots and their history. It needs an administrator,
+and it states a reason, which the ledger records.
 
 **An upstream that moved.** The URL cannot be changed — that would relabel the
 provenance of content already approved from somewhere else — so remove the
@@ -200,7 +210,8 @@ carry over.
     - **Approver grants do not.** Grant again on the new marketplace.
     - **The declarative estate does, unless you change it.** A marketplace still
       declared in `skills-gateway.estate.marketplaces` is registered again, as a
-      new marketplace, on the next reconciliation. Remove the declaration first.
+      new marketplace, on the next reconciliation. Remove the declaration first;
+      until then the portal does not offer the removal.
 
     The removed marketplace's vetter toggles and chain settings are kept in the
     database but no longer listed; set them again on the new marketplace.
