@@ -611,10 +611,10 @@ test("a_vendored_copy_is_one_group_with_every_location_and_one_waiver_covers_it"
   const card = await registerTainted(page, "vendored");
   await expect(card.getByText("vetting blocked").first()).toBeVisible();
 
-  // The gate names every location of the group, not a bare rule id.
+  // The gate names every location of the group (in tree order), not a bare rule id.
   const blocking = card.getByRole("list", { name: "Blocking findings" });
   await expect(
-    blocking.getByText("plugins/hello/skills/hello/SKILL.md:3, plugins/hello/skills/copy/SKILL.md:3"),
+    blocking.getByText("plugins/hello/skills/copy/SKILL.md:3, plugins/hello/skills/hello/SKILL.md:3"),
   ).toBeVisible();
 
   // One row and one action for both copies; the narrowest acceptance is the default.
@@ -628,7 +628,7 @@ test("a_vendored_copy_is_one_group_with_every_location_and_one_waiver_covers_it"
   await expect(card.getByText(/waived by alice until/).first()).toBeVisible();
   // The other group is untouched by that waiver, so approval stays shut.
   await expect(
-    blocking.getByText("plugins/hello/skills/hello/SKILL.md:5, plugins/hello/skills/copy/SKILL.md:5"),
+    blocking.getByText("plugins/hello/skills/copy/SKILL.md:5, plugins/hello/skills/hello/SKILL.md:5"),
   ).toBeVisible();
   await expect(card.getByRole("button", { name: /Approve snapshot \d+/ })).toBeDisabled();
 });
