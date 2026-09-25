@@ -48,15 +48,15 @@ spec is reviewed after the fact.
   SVC_GW_VETTING_0051`) so an MCP download-and-execute blocks at approval, its
   finding carries a blob and a group waiver clears it, and an `npx` server
   alone warns. Verify with the test class.
-- [ ] 3.4 Manual mutation: at least five mutants over the new code in
+- [x] 3.4 Manual mutation: at least five mutants over the new code in
   `mutants.sh` in this change. Each is killed.
-- [ ] 3.5 Measure on `anthropics/claude-plugins-official` at a pinned SHA with
+- [x] 3.5 Measure on `anthropics/claude-plugins-official` at a pinned SHA with
   `VettingPrecisionMeasurement` and record MCP findings by severity, and
   whether any high one is real, in `evidence.md`.
 
 ## 4. Docs (same PR)
 
-- [ ] 4.1 `concepts/vetting.md`: the `executable-surface` section says MCP
+- [x] 4.1 `concepts/vetting.md`: the `executable-surface` section says MCP
   commands are scanned, with the two rules and severities, and the known
   limits (indirection, encoded payloads, monitors, package-manager scripts,
   container images, bundles). Update the glossary if it lists the rule ids.
