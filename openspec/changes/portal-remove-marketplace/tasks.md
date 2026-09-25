@@ -43,5 +43,5 @@
 
 ## 4. Gates and evidence
 
-- [ ] 4.1 Run all six gates fresh after the last code edit. Record the
+- [x] 4.1 Run all six gates fresh after the last code edit. Record the
   commands, the result tails and the SHA in `evidence.md`.
