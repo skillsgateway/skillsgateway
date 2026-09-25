@@ -713,7 +713,7 @@ export interface paths {
         };
         /**
          * Diff against the currently served commit
-         * @description Added, modified and removed paths between the pinned commit and the marketplace's currently served commit (the published repository's served tip), with a unified text diff per non-binary entry under the same size caps as file reads. When the marketplace serves nothing the baseline is null and every path is reported as added. Privileged.
+         * @description Added, modified and removed paths between the pinned commit and the marketplace's currently served commit (the published repository's served tip), with a unified text diff per non-binary entry under the same size caps as file reads. When the marketplace serves nothing the baseline is null and every path is reported as added. Paged: 500 entries per response from offset; total and summary count the whole diff, not the page. path narrows the diff as a git pathspec does, to one file or everything beneath one directory. Privileged.
          */
         get: operations["diff"];
         put?: never;
@@ -772,8 +772,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * File tree of the pinned commit
-         * @description Every path in exactly the commit the snapshot pins, resolved through the quarantine repository's object store, capped at 2000 entries with an explicit marker when cut. Privileged: admin or an approver of the snapshot's marketplace.
+         * Paths of the pinned commit, or a path search over them
+         * @description The paths of exactly the commit the snapshot pins, in tree order, resolved through the quarantine repository's object store. With q, only the paths whose full path contains it, compared without regard to case. Paged: 2000 paths per response from offset, with total counting every match and nextOffset naming the next page. Privileged: admin or an approver of the snapshot's marketplace.
          */
         get: operations["files"];
         put?: never;
@@ -960,6 +960,26 @@ export interface paths {
          * @description Takes an approved snapshot off the facade on a stated reason, records the withdrawal on the append-only ledger and announces it. Admin-only, and deliberately without a four-eyes rule: withdrawing cannot publish anything, so a second reviewer buys no safety while costing time during an incident. It withdraws whatever the vetting chain would currently conclude and whatever mode re-vetting is configured in — the point is that the reason is knowledge the chain does not hold. The request must say what the marketplace serves afterwards; a return to the previous approved snapshot is refused before anything is withdrawn when there is none, rather than quietly serving nothing. Afterwards the commit cannot be approved again by an ordinary approval: reversing the withdrawal takes an administrator other than the one who made it (GW_APPROVAL_0017), and the record is kept by retention even once the content is reclaimed (GW_RETENTION_0008). This stops the gateway serving the content; it does not reach clients that already hold it.
          */
         post: operations["revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/snapshots/{id}/tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One directory of the pinned commit
+         * @description The direct children of dir (the root when absent), directories first and then files, each by name. Each child carries its change against the marketplace's currently served commit, and paths the snapshot removes are listed too; a directory child carries the files beneath it and how many of them changed, and the response carries the same two totals for dir itself. Paged: 500 children per response from offset. A directory in neither tree, traversal shapes included, is not found. Privileged.
+         */
+        get: operations["tree"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2374,6 +2394,44 @@ export interface components {
              */
             unchanged?: number;
         };
+        /** @description One directory of the pinned commit: a page of its direct children, with totals */
+        DirectoryListing: {
+            /** @description The served commit the statuses are against, or null when nothing is served */
+            baselineSha?: string;
+            /**
+             * Format: int32
+             * @description Paths beneath the directory that differ from the served commit, removed included
+             */
+            changed?: number;
+            /** @description The listed directory; empty for the root */
+            dir?: string;
+            /** @description Direct children in this page: directories first, then files, each by name */
+            entries?: components["schemas"]["TreeChild"][];
+            /**
+             * Format: int32
+             * @description Files beneath the directory in the snapshot, at any depth
+             */
+            files?: number;
+            /**
+             * Format: int32
+             * @description The offset of the next page, or null when this page reaches the end
+             */
+            nextOffset?: number;
+            /** @description Pinned commit SHA */
+            sha?: string;
+            /**
+             * Format: int64
+             * @description Snapshot id
+             */
+            snapshotId?: number;
+            /**
+             * Format: int32
+             * @description How many direct children the directory has
+             */
+            total?: number;
+            /** @description True when this page does not hold every child; see nextOffset */
+            truncated?: boolean;
+        };
         /** @description An effective role held by the current session */
         EffectiveRole: {
             /** @description Marketplace an approver role is scoped to; null for the global roles */
@@ -2543,10 +2601,48 @@ export interface components {
             /** @description True when the text was cut at the per-file size limit */
             truncated?: boolean;
         };
-        /** @description The file tree of exactly the commit the snapshot pins */
+        /** @description Counts over the whole diff, not the page */
+        FileDiffSummary: {
+            /**
+             * Format: int32
+             * @description Paths added
+             */
+            added?: number;
+            /**
+             * Format: int32
+             * @description Changed paths with a binary side, which carry no line counts
+             */
+            binary?: number;
+            /**
+             * Format: int64
+             * @description Lines added across every text entry; zero when nothing is served
+             */
+            linesAdded?: number;
+            /**
+             * Format: int64
+             * @description Lines removed across every text entry; zero when nothing is served
+             */
+            linesRemoved?: number;
+            /**
+             * Format: int32
+             * @description Paths modified
+             */
+            modified?: number;
+            /**
+             * Format: int32
+             * @description Paths removed
+             */
+            removed?: number;
+        };
+        /** @description A page of the pinned commit's paths, optionally narrowed by a path search */
         FileTree: {
-            /** @description Paths in the pinned commit's tree */
+            /** @description Paths in this page, in tree order */
             entries?: components["schemas"]["TreeEntry"][];
+            /**
+             * Format: int32
+             * @description The offset of the next page, or null when this page reaches the end
+             */
+            nextOffset?: number;
             /** @description Pinned commit SHA */
             sha?: string;
             /**
@@ -2554,7 +2650,12 @@ export interface components {
              * @description Snapshot id
              */
             snapshotId?: number;
-            /** @description True when the listing was cut at the tree-size limit */
+            /**
+             * Format: int32
+             * @description How many paths match, over the whole snapshot rather than this page
+             */
+            total?: number;
+            /** @description True when this page does not hold every matching path; see nextOffset */
             truncated?: boolean;
         };
         /** @description One thing a vetter found in a snapshot */
@@ -3595,12 +3696,17 @@ export interface components {
             /** @description held, approved, or rejected */
             state?: string;
         };
-        /** @description The snapshot's delta against the marketplace's currently served commit */
+        /** @description The snapshot's delta against the marketplace's currently served commit, a page at a time */
         SnapshotDiff: {
             /** @description The served commit the diff is against, or null when nothing is served */
             baselineSha?: string;
-            /** @description Changed paths; with no baseline, every path of the snapshot, all added */
+            /** @description Changed paths in this page; with no baseline, the snapshot's paths, all added */
             entries?: components["schemas"]["DiffEntryView"][];
+            /**
+             * Format: int32
+             * @description The offset of the next page, or null when this page reaches the end
+             */
+            nextOffset?: number;
             /** @description Pinned commit SHA */
             sha?: string;
             /**
@@ -3608,7 +3714,14 @@ export interface components {
              * @description Snapshot id
              */
             snapshotId?: number;
-            /** @description True when the entry list was cut at the diff-size limit */
+            /** @description Counts over the whole (path-narrowed) diff */
+            summary?: components["schemas"]["FileDiffSummary"];
+            /**
+             * Format: int32
+             * @description How many paths changed, over the whole (path-narrowed) diff
+             */
+            total?: number;
+            /** @description True when this page does not hold every changed path; see nextOffset */
             truncated?: boolean;
         };
         /** @description An identity whose most recent fetch is not the currently served tip */
@@ -3729,6 +3842,38 @@ export interface components {
             scopes?: string[];
             /** @description Whether the credential was derived from a browser session rather than deliberately provisioned; its lifetime was the gateway's to set */
             sessionDerived?: boolean;
+        };
+        /** @description One direct child of a listed directory */
+        TreeChild: {
+            /**
+             * Format: int32
+             * @description For a directory: paths beneath it that differ from the served commit, removed ones included; null for a file
+             */
+            changed?: number;
+            /**
+             * Format: int32
+             * @description For a directory: files beneath it in the snapshot; null for a file
+             */
+            files?: number;
+            /**
+             * @description Whether the child is a file or a directory
+             * @enum {string}
+             */
+            kind?: "file" | "directory";
+            /** @description Last path segment */
+            name?: string;
+            /** @description Full path within the snapshot */
+            path?: string;
+            /**
+             * Format: int64
+             * @description Blob size in bytes; null for a directory and for a path the snapshot removes
+             */
+            size?: number;
+            /**
+             * @description How the path stands against the served commit; null when identical, and for a directory. With nothing served, every path is added.
+             * @enum {string}
+             */
+            status?: "added" | "modified" | "removed";
         };
         /** @description One path in the pinned commit's tree */
         TreeEntry: {
@@ -5386,7 +5531,10 @@ export interface operations {
     };
     diff: {
         parameters: {
-            query?: never;
+            query?: {
+                path?: string;
+                offset?: number;
+            };
             header?: never;
             path: {
                 id: number;
@@ -5395,13 +5543,22 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The delta a reviewer decides */
+            /** @description A page of the delta a reviewer decides, with its totals */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "*/*": components["schemas"]["SnapshotDiff"];
+                };
+            };
+            /** @description A negative offset */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description The session holds no applicable role */
@@ -5508,7 +5665,10 @@ export interface operations {
     };
     files: {
         parameters: {
-            query?: never;
+            query?: {
+                q?: string;
+                offset?: number;
+            };
             header?: never;
             path: {
                 id: number;
@@ -5517,13 +5677,22 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Paths and sizes of the pinned commit's tree */
+            /** @description A page of paths and sizes, with the total */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "*/*": components["schemas"]["FileTree"];
+                };
+            };
+            /** @description A negative offset */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description The session holds no applicable role */
@@ -5865,6 +6034,58 @@ export interface operations {
             };
             /** @description No reason was stated, or no served-content choice was made */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    tree: {
+        parameters: {
+            query?: {
+                dir?: string;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of the directory's children, with totals */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DirectoryListing"];
+                };
+            };
+            /** @description A negative offset */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The session holds no applicable role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Snapshot not found, or dir is not a directory of the pinned or served tree */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

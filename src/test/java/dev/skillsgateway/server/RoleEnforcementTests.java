@@ -165,6 +165,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "GET /api/v1/snapshots/{id}/diff",
             "GET /api/v1/snapshots/{id}/file",
             "GET /api/v1/snapshots/{id}/files",
+            "GET /api/v1/snapshots/{id}/tree",
             "GET /api/v1/snapshots/{id}/fetchers");
 
     /** A session's own things: open to any authenticated session, scoped to that session. */
@@ -417,6 +418,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                     .andExpect(status().isForbidden());
             mockMvc.perform(get("/api/v1/snapshots/{id}/diff", onA).with(session))
                     .andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/v1/snapshots/{id}/tree", onA).with(session))
+                    .andExpect(status().isForbidden());
         }
         // The owning approver and the admin read; the same approver is refused another
         // marketplace's snapshot through its bare id.
@@ -429,6 +432,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                     .andExpect(status().isOk());
             mockMvc.perform(get("/api/v1/snapshots/{id}/diff", onA).with(session))
                     .andExpect(status().isOk());
+            mockMvc.perform(get("/api/v1/snapshots/{id}/tree", onA).with(session))
+                    .andExpect(status().isOk());
         }
         mockMvc.perform(get("/api/v1/snapshots/{id}/files", onB).with(frank)).andExpect(status().isForbidden());
         mockMvc.perform(get("/api/v1/snapshots/{id}/file", onB)
@@ -436,6 +441,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                         .with(frank))
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/v1/snapshots/{id}/diff", onB).with(frank)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/snapshots/{id}/tree", onB).with(frank)).andExpect(status().isForbidden());
     }
 
     /**

@@ -1026,6 +1026,60 @@
         },
         "type": "object"
       },
+      "DirectoryListing": {
+        "description": "One directory of the pinned commit: a page of its direct children, with totals",
+        "properties": {
+          "baselineSha": {
+            "description": "The served commit the statuses are against, or null when nothing is served",
+            "type": "string"
+          },
+          "changed": {
+            "description": "Paths beneath the directory that differ from the served commit, removed included",
+            "format": "int32",
+            "type": "integer"
+          },
+          "dir": {
+            "description": "The listed directory; empty for the root",
+            "type": "string"
+          },
+          "entries": {
+            "description": "Direct children in this page: directories first, then files, each by name",
+            "items": {
+              "$ref": "#/components/schemas/TreeChild"
+            },
+            "type": "array"
+          },
+          "files": {
+            "description": "Files beneath the directory in the snapshot, at any depth",
+            "format": "int32",
+            "type": "integer"
+          },
+          "nextOffset": {
+            "description": "The offset of the next page, or null when this page reaches the end",
+            "format": "int32",
+            "type": "integer"
+          },
+          "sha": {
+            "description": "Pinned commit SHA",
+            "type": "string"
+          },
+          "snapshotId": {
+            "description": "Snapshot id",
+            "format": "int64",
+            "type": "integer"
+          },
+          "total": {
+            "description": "How many direct children the directory has",
+            "format": "int32",
+            "type": "integer"
+          },
+          "truncated": {
+            "description": "True when this page does not hold every child; see nextOffset",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "EffectiveRole": {
         "description": "An effective role held by the current session",
         "properties": {
@@ -1303,15 +1357,56 @@
         },
         "type": "object"
       },
+      "FileDiffSummary": {
+        "description": "Counts over the whole diff, not the page",
+        "properties": {
+          "added": {
+            "description": "Paths added",
+            "format": "int32",
+            "type": "integer"
+          },
+          "binary": {
+            "description": "Changed paths with a binary side, which carry no line counts",
+            "format": "int32",
+            "type": "integer"
+          },
+          "linesAdded": {
+            "description": "Lines added across every text entry; zero when nothing is served",
+            "format": "int64",
+            "type": "integer"
+          },
+          "linesRemoved": {
+            "description": "Lines removed across every text entry; zero when nothing is served",
+            "format": "int64",
+            "type": "integer"
+          },
+          "modified": {
+            "description": "Paths modified",
+            "format": "int32",
+            "type": "integer"
+          },
+          "removed": {
+            "description": "Paths removed",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "FileTree": {
-        "description": "The file tree of exactly the commit the snapshot pins",
+        "description": "A page of the pinned commit's paths, optionally narrowed by a path search",
         "properties": {
           "entries": {
-            "description": "Paths in the pinned commit's tree",
+            "description": "Paths in this page, in tree order",
             "items": {
               "$ref": "#/components/schemas/TreeEntry"
             },
             "type": "array"
+          },
+          "nextOffset": {
+            "description": "The offset of the next page, or null when this page reaches the end",
+            "format": "int32",
+            "type": "integer"
           },
           "sha": {
             "description": "Pinned commit SHA",
@@ -1322,8 +1417,13 @@
             "format": "int64",
             "type": "integer"
           },
+          "total": {
+            "description": "How many paths match, over the whole snapshot rather than this page",
+            "format": "int32",
+            "type": "integer"
+          },
           "truncated": {
-            "description": "True when the listing was cut at the tree-size limit",
+            "description": "True when this page does not hold every matching path; see nextOffset",
             "type": "boolean"
           }
         },
@@ -3086,18 +3186,23 @@
         "type": "object"
       },
       "SnapshotDiff": {
-        "description": "The snapshot's delta against the marketplace's currently served commit",
+        "description": "The snapshot's delta against the marketplace's currently served commit, a page at a time",
         "properties": {
           "baselineSha": {
             "description": "The served commit the diff is against, or null when nothing is served",
             "type": "string"
           },
           "entries": {
-            "description": "Changed paths; with no baseline, every path of the snapshot, all added",
+            "description": "Changed paths in this page; with no baseline, the snapshot's paths, all added",
             "items": {
               "$ref": "#/components/schemas/DiffEntryView"
             },
             "type": "array"
+          },
+          "nextOffset": {
+            "description": "The offset of the next page, or null when this page reaches the end",
+            "format": "int32",
+            "type": "integer"
           },
           "sha": {
             "description": "Pinned commit SHA",
@@ -3108,8 +3213,17 @@
             "format": "int64",
             "type": "integer"
           },
+          "summary": {
+            "$ref": "#/components/schemas/FileDiffSummary",
+            "description": "Counts over the whole (path-narrowed) diff"
+          },
+          "total": {
+            "description": "How many paths changed, over the whole (path-narrowed) diff",
+            "format": "int32",
+            "type": "integer"
+          },
           "truncated": {
-            "description": "True when the entry list was cut at the diff-size limit",
+            "description": "True when this page does not hold every changed path; see nextOffset",
             "type": "boolean"
           }
         },
@@ -3309,6 +3423,52 @@
           "sessionDerived": {
             "description": "Whether the credential was derived from a browser session rather than deliberately provisioned; its lifetime was the gateway's to set",
             "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "TreeChild": {
+        "description": "One direct child of a listed directory",
+        "properties": {
+          "changed": {
+            "description": "For a directory: paths beneath it that differ from the served commit, removed ones included; null for a file",
+            "format": "int32",
+            "type": "integer"
+          },
+          "files": {
+            "description": "For a directory: files beneath it in the snapshot; null for a file",
+            "format": "int32",
+            "type": "integer"
+          },
+          "kind": {
+            "description": "Whether the child is a file or a directory",
+            "enum": [
+              "file",
+              "directory"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "description": "Last path segment",
+            "type": "string"
+          },
+          "path": {
+            "description": "Full path within the snapshot",
+            "type": "string"
+          },
+          "size": {
+            "description": "Blob size in bytes; null for a directory and for a path the snapshot removes",
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "description": "How the path stands against the served commit; null when identical, and for a directory. With nothing served, every path is added.",
+            "enum": [
+              "added",
+              "modified",
+              "removed"
+            ],
+            "type": "string"
           }
         },
         "type": "object"
@@ -5581,7 +5741,7 @@
     },
     "/api/v1/snapshots/{id}/diff": {
       "get": {
-        "description": "Added, modified and removed paths between the pinned commit and the marketplace's currently served commit (the published repository's served tip), with a unified text diff per non-binary entry under the same size caps as file reads. When the marketplace serves nothing the baseline is null and every path is reported as added. Privileged.",
+        "description": "Added, modified and removed paths between the pinned commit and the marketplace's currently served commit (the published repository's served tip), with a unified text diff per non-binary entry under the same size caps as file reads. When the marketplace serves nothing the baseline is null and every path is reported as added. Paged: 500 entries per response from offset; total and summary count the whole diff, not the page. path narrows the diff as a git pathspec does, to one file or everything beneath one directory. Privileged.",
         "operationId": "diff",
         "parameters": [
           {
@@ -5590,6 +5750,24 @@
             "required": true,
             "schema": {
               "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "format": "int32",
               "type": "integer"
             }
           }
@@ -5603,7 +5781,17 @@
                 }
               }
             },
-            "description": "The delta a reviewer decides"
+            "description": "A page of the delta a reviewer decides, with its totals"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "A negative offset"
           },
           "403": {
             "content": {
@@ -5751,7 +5939,7 @@
     },
     "/api/v1/snapshots/{id}/files": {
       "get": {
-        "description": "Every path in exactly the commit the snapshot pins, resolved through the quarantine repository's object store, capped at 2000 entries with an explicit marker when cut. Privileged: admin or an approver of the snapshot's marketplace.",
+        "description": "The paths of exactly the commit the snapshot pins, in tree order, resolved through the quarantine repository's object store. With q, only the paths whose full path contains it, compared without regard to case. Paged: 2000 paths per response from offset, with total counting every match and nextOffset naming the next page. Privileged: admin or an approver of the snapshot's marketplace.",
         "operationId": "files",
         "parameters": [
           {
@@ -5760,6 +5948,24 @@
             "required": true,
             "schema": {
               "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "format": "int32",
               "type": "integer"
             }
           }
@@ -5773,7 +5979,17 @@
                 }
               }
             },
-            "description": "Paths and sizes of the pinned commit's tree"
+            "description": "A page of paths and sizes, with the total"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "A negative offset"
           },
           "403": {
             "content": {
@@ -5796,7 +6012,7 @@
             "description": "Snapshot not found"
           }
         },
-        "summary": "File tree of the pinned commit",
+        "summary": "Paths of the pinned commit, or a path search over them",
         "tags": [
           "Snapshot preview"
         ]
@@ -6245,6 +6461,87 @@
         "summary": "Withdraw an approved snapshot",
         "tags": [
           "Snapshots"
+        ]
+      }
+    },
+    "/api/v1/snapshots/{id}/tree": {
+      "get": {
+        "description": "The direct children of dir (the root when absent), directories first and then files, each by name. Each child carries its change against the marketplace's currently served commit, and paths the snapshot removes are listed too; a directory child carries the files beneath it and how many of them changed, and the response carries the same two totals for dir itself. Paged: 500 children per response from offset. A directory in neither tree, traversal shapes included, is not found. Privileged.",
+        "operationId": "tree",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dir",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectoryListing"
+                }
+              }
+            },
+            "description": "A page of the directory's children, with totals"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "A negative offset"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "The session holds no applicable role"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Snapshot not found, or dir is not a directory of the pinned or served tree"
+          }
+        },
+        "summary": "One directory of the pinned commit",
+        "tags": [
+          "Snapshot preview"
         ]
       }
     },
