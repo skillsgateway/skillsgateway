@@ -33,22 +33,29 @@ $ curl -sS -X POST localhost:8080/api/v1/snapshots/1/approve | jq
 {
   "status": 409,
   "title": "Vetting chain blocked this snapshot",
-  "detail": "snapshot 1 cannot be approved: the vetting vetters secret-scan did not clear it. Uncovered findings: aws-access-key-id at plugins/hello/DEPLOY.md:5. Record a scoped, expiring waiver for each blocking finding — with a justification and an expiry — and approve again.",
+  "detail": "snapshot 1 cannot be approved: the vetters secret-scan did not clear it. Uncovered findings: aws-access-key-id at plugins/hello/DEPLOY.md:5, plugins/copy/DEPLOY.md:5. Record a scoped, expiring waiver for each blocking finding group — with a justification and an expiry — and approve again.",
   "blockingVetters": ["secret-scan"],
   "uncoveredFindings": [
     {
       "vetter": "secret-scan",
       "ruleId": "aws-access-key-id",
       "location": "plugins/hello/DEPLOY.md:5",
-      "severity": "CRITICAL",
+      "locations": ["plugins/hello/DEPLOY.md:5", "plugins/copy/DEPLOY.md:5"],
+      "content": "3b18e512dba79e4c8300dd08aeb37f8e728b8dad",
+      "line": 5,
+      "severity": "critical",
       "message": "an AWS access key id is committed in this file"
     }
   ]
 }
 ```
 
-`uncoveredFindings` is the complete list. Every entry needs a waiver before the
-approval will succeed — covering some of them changes nothing.
+`uncoveredFindings` is the complete list, with one entry per **finding group**.
+A group is the findings of one rule on one line of identical content, which is
+the same git blob. A file vendored into two plugins is therefore one entry with
+both locations. The refusal spells out the first ten locations of each group and
+counts the rest. Every entry needs a waiver before the approval will succeed.
+Covering only some of them changes nothing.
 
 !!! warning "Read the file before you accept the finding"
 
@@ -60,16 +67,22 @@ approval will succeed — covering some of them changes nothing.
 
 === "Portal"
 
-    In the approve dialog, each blocking finding carries a **Waive…** button.
-    It opens a small form beside the finding itself:
+    In the approve dialog, each blocking group carries a button: **Waive
+    finding** for a single location, or **Waive all N locations** for a group.
+    The button opens a small form beside the group, with these controls:
 
-    - **Scope** — *This snapshot only* (the default) or *This path in the
-      marketplace*.
+    - **Scope** — one of the following:
+        - *These N identical copies, in this snapshot* (or *This finding, in
+          this snapshot*). This is the default, and it covers the group and
+          nothing else.
+        - *Every {rule} finding in this snapshot*.
+        - For a single location, *Every {rule} finding under {path}, in later
+          snapshots too*.
     - **Expires on** — defaults to 30 days out.
     - **Justification** — required; the confirm button stays disabled without it.
 
-    **Record waiver** applies it immediately. The finding is struck through and
-    badged with who accepted it and until when, and the outcome badge changes to
+    **Record waiver** applies it immediately. The group is struck through and
+    badged with who accepted it and until when. The outcome badge changes to
     **vetting clear with waivers** once nothing is left uncovered.
 
 === "API"
@@ -81,6 +94,23 @@ approval will succeed — covering some of them changes nothing.
               "ruleId": "aws-access-key-id",
               "scope": "SNAPSHOT",
               "justification": "documented dummy key in the fixtures directory",
+              "expiresAt": "2026-09-30T23:59:59Z"
+            }'
+    ```
+
+    To accept one finding group and nothing else, name its `content` and
+    `line` as the vetting report gives them. A group waiver is always
+    `SNAPSHOT`-scoped:
+
+    ```console
+    $ curl -X POST localhost:8080/api/v1/snapshots/1/waivers \
+        -H 'Content-Type: application/json' \
+        -d '{
+              "ruleId": "aws-access-key-id",
+              "scope": "SNAPSHOT",
+              "content": "3b18e512dba79e4c8300dd08aeb37f8e728b8dad",
+              "line": 5,
+              "justification": "documented dummy key, vendored into two plugins",
               "expiresAt": "2026-09-30T23:59:59Z"
             }'
     ```
@@ -102,17 +132,21 @@ approval will succeed — covering some of them changes nothing.
 
 ## 3. Choose the scope deliberately
 
-| | `SNAPSHOT` | `PATH` |
-| --- | --- | --- |
-| Covers | exactly this commit | this path and everything under it |
-| Survives re-ingestion | no | yes |
-| Covers content added later | no | **yes** |
-| Use it when | you accepted *this* content | the same benign pattern will recur at this path |
+| | Group (`SNAPSHOT` + `content`) | `SNAPSHOT` | `PATH` |
+| --- | --- | --- | --- |
+| Covers | this rule on this line of this blob, at every path it occurs, in this commit | this rule anywhere in this commit | this rule at this path and everything under it |
+| Survives re-ingestion | no | no | yes |
+| Covers content added later | no | no | **yes** |
+| Use it when | you read *this* content | you read every finding of the rule in this commit | the same benign pattern will recur at this path |
 
-`SNAPSHOT` is the default because it is the tighter one: it dies with the SHA,
-so the next ingestion asks again. Reach for `PATH` when re-approving the same
-finding on every ingestion would be busywork — and give it a short expiry, since
-it will also cover files that do not exist yet.
+The group is the portal's default because it is the tightest. It covers exactly
+the content you read, wherever that content was copied, and nothing else. A new
+file with the same rule, a different line of the same file, and the same bytes
+in the next commit are all outside it. A snapshot waiver on the rule alone is
+wider: it accepts every finding of that rule in the commit, including ones in
+files you have not opened. Reach for `PATH` when re-approving the same finding
+on every ingestion would be busywork. Give it a short expiry, since it will
+also cover files that do not exist yet.
 
 ## 4. Approve
 

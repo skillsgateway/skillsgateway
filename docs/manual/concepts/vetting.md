@@ -304,9 +304,34 @@ that evaporates on an unrelated edit trains reviewers to re-waive without
 reading. Path matching is a prefix on a segment boundary — `plugins/a` covers
 `plugins/a/x.md` but never `plugins/ab.md` — and there is no glob syntax.
 
-`SNAPSHOT` scope is the tighter of the two and is what the portal offers first:
-it dies with the SHA, so the next ingestion blocks again and the acceptance has
-to be made deliberately a second time. A `PATH` waiver survives re-ingestion,
+### Finding groups, and the waiver on one group
+
+Every finding whose location names a file of the snapshot is identified by the
+**git blob** that file has in the pinned tree. The gateway reads that identity
+from the tree it pinned, after the vetter answers. It is never taken from the
+vetter. The vetting report then shows the findings of one verdict that share
+rule, severity, message, blob and line as one **finding group**, with every
+location. A file vendored into nineteen plugins is one group with nineteen
+locations, not nineteen rows. The recorded run keeps one finding per location.
+Content that differs by a single byte is a different blob, so it is a different
+group. A finding the gateway could not tie to a blob, such as an error verdict,
+is never grouped.
+
+A `SNAPSHOT` waiver may be narrowed to one group by naming its `content` (the
+blob id) and `line`. It then covers a finding only where the rule, the blob and
+the line all match, in that commit. So a new file carrying the same rule, another
+line of the same file, and the same bytes in the next snapshot are all outside
+it. A group waiver on `PATH` scope is refused, because it would outlive the
+content it was judged on. This is how a vendored finding is accepted in one
+step without a bulk waive: a bulk waive would accept content nobody opened.
+
+The approval refusal and the portal name each uncovered group once, with its
+rule and its `path:line` locations.
+
+`SNAPSHOT` scope, narrowed to a group, is what the portal offers first. It dies
+with the SHA, so the next ingestion blocks again and the acceptance has to be
+made deliberately a second time. Without a group, a `SNAPSHOT` waiver accepts
+every finding of its rule in that commit. A `PATH` waiver survives re-ingestion,
 which is its purpose and also its cost — it covers content that does not exist
 under that path yet. That is why an expiry is mandatory rather than advisory.
 
@@ -395,11 +420,21 @@ Pattern heuristics over the snapshot's Markdown instruction content
 | `instruction-override` | "ignore all previous instructions" and its close relatives |
 | `system-prompt-disclosure` | Asking the agent to reveal its prompt or instructions |
 | `credential-path-reference` | `~/.aws/credentials`, `~/.ssh`, `.npmrc`, `/etc/passwd`, … |
-| `concealment-instruction` | Telling the agent not to tell the user or the reviewer |
+| `concealment-instruction` | Telling the agent to keep something from a person, within one clause: "do not tell / inform / mention / report / reveal … the user", "hide … from the reviewer", "without telling the user", "don't let the user know" |
 | `pipe-to-shell` | `curl … \| sh` inside instructions |
 | `exfiltration-instruction` | Sending credentials or environment values to a host |
 | `hidden-html-instruction` | Agent-directed text inside an HTML comment |
 | `invisible-characters` | Zero-width, bidirectional, and Unicode-tag characters used to hide text from a human reading the diff |
+
+The rules are tuned against real skill repositories as well as against payloads.
+A negation never reaches into the next sentence, so "do not silently overwrite
+it. Show the user the file" is not a finding. Verbs of *displaying* do not
+count as concealment: "do not show the user the raw JSON" is a formatting
+instruction and by far the commoner use of the phrase. Command names and flags
+such as `ignore-rule` or `--all-values` are not prose. The price is a known
+blind spot: "do not show the user the command you ran" is not caught unless it
+also says *hide*, *without telling* or *don't let … know*. A paraphrase walks
+past pattern rules anyway, which is why this vetter is triage.
 
 ### `license-scan`
 
@@ -525,9 +560,15 @@ wire contract and a minimal working example.
 ## Coverage gaps are reported, not hidden
 
 A file larger than the configured size limit, or one that is not valid UTF-8, is
-not silently skipped: the vetter records an informational
-`file-not-scanned` finding naming the path — `skill-not-scanned` for
-`skill-conformance`, which reads only `SKILL.md` files. Informational findings do
+not silently skipped. `secret-scan` and `prompt-injection` record one
+informational `file-not-scanned` finding per reason (over the size limit, or
+binary / not UTF-8). The finding says how many files it covers, names the first
+twenty and counts the rest. The vetter's coverage summary also states the gap
+("scanned 3210 text file(s); 51 file(s) not scanned (22 over the size limit, 29
+binary)"). A verdict whose findings are all informational shows that summary on
+its row rather than a count, so a pass that skipped files says so where the pass
+is read. `skill-conformance`, which reads only `SKILL.md` files, records
+`skill-not-scanned` for each skill it could not read. Informational findings do
 not change the verdict, but they are visible, so "the scanner did not look at
 this" is never invisible.
 

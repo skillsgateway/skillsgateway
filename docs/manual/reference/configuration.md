@@ -611,7 +611,8 @@ skills-gateway:
     timeout: 30s
 
     # Files larger than this are handed to vetters unread. They are reported
-    # as an informational 'file-not-scanned' finding, never skipped in silence.
+    # in one informational 'file-not-scanned' finding per vetter and reason,
+    # and in the verdict's coverage summary; never skipped in silence.
     max-file-bytes: 1048576
 
     # How much of a snapshot's content one chain run may hold so that the
