@@ -39,6 +39,17 @@ public record UpstreamFailure(String reason, String nextStep, String rootCause) 
     public static final String NO_DEFAULT_BRANCH = "the upstream has no default branch";
     public static final String OTHER = "the upstream fetch failed";
 
+    /** Why a GitHub App could not mint an installation token (GW_INGEST_0059). */
+    public static final String APP_NOT_INSTALLED = "the GitHub App is not installed for this repository";
+
+    public static final String APP_INSTALLATION_NOT_FOUND = "the GitHub App installation was not found";
+    public static final String APP_SUSPENDED = "the GitHub App installation is suspended";
+    public static final String APP_KEY_REFUSED = "the GitHub API refused the App's key";
+    public static final String APP_CLOCK_SKEW = "the gateway's clock differs from the GitHub API's";
+    public static final String APP_API_UNREACHABLE = "the GitHub API could not be reached";
+    public static final String APP_NO_TOKEN = "the GitHub API did not issue a token";
+    public static final String NOT_A_GITHUB_REPOSITORY = "the upstream URL does not name a GitHub repository";
+
     /** Userinfo in a URL: {@code scheme://user:secret@}. Never repeated anywhere a failure is recorded. */
     private static final Pattern USERINFO = Pattern.compile("(?i)([a-z][a-z0-9+.-]*://)[^/@\\s]+@");
 

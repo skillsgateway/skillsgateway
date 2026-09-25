@@ -9,6 +9,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Comparator;
@@ -48,15 +49,19 @@ public class UpstreamCredentials {
     }
 
     UpstreamCredentials(List<UpstreamCredential> configured) {
-        this.entries = validated(configured);
+        this(configured, Clock.systemUTC());
+    }
+
+    UpstreamCredentials(List<UpstreamCredential> configured, Clock clock) {
+        this.entries = validated(configured, clock);
     }
 
     /** Validates every entry; one that cannot work as written stops startup (GW_INGEST_0053). */
     @Requirements({"GW_INGEST_0053"})
-    private static List<Selected> validated(List<UpstreamCredential> configured) {
+    private static List<Selected> validated(List<UpstreamCredential> configured, Clock clock) {
         List<Selected> loaded = new ArrayList<>();
         for (int i = 0; i < configured.size(); i++) {
-            Selected entry = load(i, configured.get(i));
+            Selected entry = load(i, configured.get(i), clock);
             for (Selected earlier : loaded) {
                 if (earlier.prefix.equals(entry.prefix)) {
                     throw new IllegalStateException("%s[%d] declares the URL prefix '%s', which %s[%d] already declares"
@@ -80,16 +85,33 @@ public class UpstreamCredentials {
                 .max(Comparator.comparingInt(entry -> entry.prefix.path().length()));
     }
 
-    /** Every configured token, for scrubbing from anything that is recorded (GW_INGEST_0052). */
+    /**
+     * Every configured token and App key, and every installation token currently cached, for
+     * scrubbing from anything that is recorded (GW_INGEST_0052, GW_AUTH_0049).
+     */
+    @Requirements({"GW_INGEST_0052", "GW_AUTH_0049"})
     public List<String> secrets() {
-        return entries.stream().map(entry -> entry.token).toList();
+        List<String> secrets = new ArrayList<>();
+        for (Selected entry : entries) {
+            if (entry.app == null) {
+                secrets.add(entry.token);
+            } else {
+                secrets.addAll(entry.app.secrets());
+            }
+        }
+        return secrets;
     }
 
-    private static Selected load(int index, UpstreamCredential credential) {
+    private static Selected load(int index, UpstreamCredential credential, Clock clock) {
         String prefixText = credential.urlPrefix();
         String name = "%s[%d] (%s)".formatted(PROPERTY, index, prefixText);
-        requireUsable(name, "username", credential.username());
-        requireUsable(name, "token", credential.token());
+        GitHubAppTokens app = null;
+        if (credential.githubApp() == null) {
+            requireUsable(name, "username", credential.username());
+            requireUsable(name, "token", credential.token());
+        } else {
+            app = GitHubAppTokens.load(name, credential.githubApp(), clock);
+        }
         Target prefix = Target.of(prefixText);
         if (prefix == null || prefix.query() != null || prefix.fragment() != null) {
             throw new IllegalStateException(name
@@ -102,10 +124,10 @@ public class UpstreamCredentials {
                     + ": url-prefix must use https; http is accepted only to a loopback host, where no network"
                     + " carries the token");
         }
-        return new Selected(index, prefixText, prefix, credential.username(), credential.token());
+        return new Selected(index, prefixText, prefix, credential.username(), credential.token(), app);
     }
 
-    private static void requireUsable(String name, String field, String value) {
+    static void requireUsable(String name, String field, String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalStateException("%s: %s is blank".formatted(name, field));
         }
@@ -117,33 +139,85 @@ public class UpstreamCredentials {
         }
     }
 
-    private static boolean isLoopback(String host) {
+    static boolean isLoopback(String host) {
         return "localhost".equals(host)
                 || "[::1]".equals(host)
                 || LOOPBACK_V4.matcher(host).matches();
     }
 
+    /**
+     * What one upstream operation authenticates with: the {@code Authorization} value for requests
+     * under the selected prefix, the secret inside it (for scrubbing), and whether it came from the
+     * cache and may therefore be renewed once after a refusal (GW_INGEST_0058). {@link #NONE} for an
+     * upstream under no prefix.
+     */
+    public record Access(Selected selected, String header, String secret, boolean renewable) {
+
+        public static final Access NONE = new Access(null, null, null, false);
+
+        @Override
+        public String toString() {
+            return "Access[" + (selected == null ? "anonymous" : selected.urlPrefix) + "]";
+        }
+    }
+
     /** One configured credential, as selected by a marketplace URL. */
     public static final class Selected {
+
+        /** The Basic user GitHub expects with an installation token. */
+        static final String APP_USER = "x-access-token";
 
         private final int index;
         private final String urlPrefix;
         private final Target prefix;
         private final String token;
         private final String header;
+        private final GitHubAppTokens app;
 
-        private Selected(int index, String urlPrefix, Target prefix, String username, String token) {
+        private Selected(
+                int index, String urlPrefix, Target prefix, String username, String token, GitHubAppTokens app) {
             this.index = index;
             this.urlPrefix = urlPrefix;
             this.prefix = prefix;
             this.token = token;
-            this.header = "Basic "
-                    + Base64.getEncoder().encodeToString((username + ":" + token).getBytes(StandardCharsets.UTF_8));
+            this.app = app;
+            this.header = app == null ? basic(username, token) : null;
+        }
+
+        private static String basic(String username, String secret) {
+            return "Basic "
+                    + Base64.getEncoder().encodeToString((username + ":" + secret).getBytes(StandardCharsets.UTF_8));
         }
 
         /** The prefix as configured: what the ledger names (GW_INGEST_0055). */
         public String urlPrefix() {
             return urlPrefix;
+        }
+
+        /** Whether this entry mints GitHub App installation tokens rather than holding a token. */
+        public boolean isGitHubApp() {
+            return app != null;
+        }
+
+        /**
+         * The credential one upstream operation on {@code url} uses (GW_INGEST_0056): the static
+         * token, or an installation token for that repository — the cached one unless {@code renew}.
+         * A token that cannot be minted leaves as an {@link UpstreamException} with its reason.
+         */
+        @Requirements({"GW_INGEST_0056", "GW_INGEST_0058"})
+        public Access access(String url, boolean renew) {
+            if (app == null) {
+                return new Access(this, header, token, false);
+            }
+            GitHubAppTokens.Minted minted = app.token(url, renew);
+            return new Access(this, basic(APP_USER, minted.token()), minted.token(), minted.cached());
+        }
+
+        /** Drops the cached installation token for {@code url}, after the upstream refused it. */
+        public void forget(String url) {
+            if (app != null) {
+                app.forget(url);
+            }
         }
 
         /** Whether this request may carry the credential (GW_INGEST_0051). */
@@ -158,9 +232,14 @@ public class UpstreamCredentials {
             return target != null && prefix.covers(target);
         }
 
-        /** A factory for one fetch or listing; install it on that transport only. */
+        /** A factory for one fetch or listing with the static credential; install it on that transport only. */
         HttpConnectionFactory connectionFactory() {
-            return new Factory();
+            return connectionFactory(header);
+        }
+
+        /** A factory for one fetch or listing that sends {@code authorization} under the prefix. */
+        HttpConnectionFactory connectionFactory(String authorization) {
+            return new Factory(authorization);
         }
 
         @Override
@@ -169,6 +248,12 @@ public class UpstreamCredentials {
         }
 
         private final class Factory implements HttpConnectionFactory {
+
+            private final String authorization;
+
+            private Factory(String authorization) {
+                this.authorization = authorization;
+            }
 
             @Override
             public HttpConnection create(URL url) throws IOException {
@@ -181,7 +266,7 @@ public class UpstreamCredentials {
                 HttpConnection connection = proxy == null ? DELEGATE.create(url) : DELEGATE.create(url, proxy);
                 connection.setInstanceFollowRedirects(false);
                 if (covers(url)) {
-                    connection.setRequestProperty("Authorization", header);
+                    connection.setRequestProperty("Authorization", authorization);
                 }
                 return new Credentialed(connection);
             }

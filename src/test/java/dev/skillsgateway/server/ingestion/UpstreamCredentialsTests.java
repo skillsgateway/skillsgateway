@@ -66,7 +66,7 @@ class UpstreamCredentialsTests {
     }
 
     private static UpstreamCredential entry(String prefix, String token) {
-        return new UpstreamCredential(prefix, "sgw", token);
+        return new UpstreamCredential(prefix, "sgw", token, null);
     }
 
     private static URL url(String spec) throws Exception {
@@ -204,23 +204,23 @@ class UpstreamCredentialsTests {
     void an_unusable_entry_is_refused_naming_the_entry_and_never_the_token() {
         String secret = "tok-never-printed-91d2";
         List<UpstreamCredential> refused = List.of(
-                new UpstreamCredential("https://forge.example/acme", "sgw", "${SGW_MISSING}"),
-                new UpstreamCredential("https://forge.example/acme", "${SGW_USER}", secret),
-                new UpstreamCredential("https://forge.example/acme", "sgw", " "),
-                new UpstreamCredential("https://forge.example/acme", "sgw", null),
-                new UpstreamCredential("https://forge.example/acme", "", secret),
-                new UpstreamCredential("http://forge.example/acme", "sgw", secret),
-                new UpstreamCredential("http://10.0.0.5/acme", "sgw", secret),
-                new UpstreamCredential("ssh://forge.example/acme", "sgw", secret),
-                new UpstreamCredential("file:///srv/git/", "sgw", secret),
-                new UpstreamCredential("https://u:p@forge.example/acme", "sgw", secret),
-                new UpstreamCredential("https://forge.example/acme?x=1", "sgw", secret),
-                new UpstreamCredential("https://forge.example/acme#f", "sgw", secret),
-                new UpstreamCredential("https://forge.example/acme/../evil", "sgw", secret),
-                new UpstreamCredential("https://forge.example/%2e%2e/evil", "sgw", secret),
-                new UpstreamCredential("forge.example/acme", "sgw", secret),
-                new UpstreamCredential(null, "sgw", secret),
-                new UpstreamCredential("not a url at all", "sgw", secret));
+                new UpstreamCredential("https://forge.example/acme", "sgw", "${SGW_MISSING}", null),
+                new UpstreamCredential("https://forge.example/acme", "${SGW_USER}", secret, null),
+                new UpstreamCredential("https://forge.example/acme", "sgw", " ", null),
+                new UpstreamCredential("https://forge.example/acme", "sgw", null, null),
+                new UpstreamCredential("https://forge.example/acme", "", secret, null),
+                new UpstreamCredential("http://forge.example/acme", "sgw", secret, null),
+                new UpstreamCredential("http://10.0.0.5/acme", "sgw", secret, null),
+                new UpstreamCredential("ssh://forge.example/acme", "sgw", secret, null),
+                new UpstreamCredential("file:///srv/git/", "sgw", secret, null),
+                new UpstreamCredential("https://u:p@forge.example/acme", "sgw", secret, null),
+                new UpstreamCredential("https://forge.example/acme?x=1", "sgw", secret, null),
+                new UpstreamCredential("https://forge.example/acme#f", "sgw", secret, null),
+                new UpstreamCredential("https://forge.example/acme/../evil", "sgw", secret, null),
+                new UpstreamCredential("https://forge.example/%2e%2e/evil", "sgw", secret, null),
+                new UpstreamCredential("forge.example/acme", "sgw", secret, null),
+                new UpstreamCredential(null, "sgw", secret, null),
+                new UpstreamCredential("not a url at all", "sgw", secret, null));
 
         for (UpstreamCredential bad : refused) {
             assertThatThrownBy(() -> credentials(entry("https://ok.example/", HOST_TOKEN), bad))
