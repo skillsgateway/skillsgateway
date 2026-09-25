@@ -1,9 +1,13 @@
 package dev.skillsgateway.server.ingestion;
 
+import dev.skillsgateway.server.ingestion.UpstreamCredentials.Access;
+import dev.skillsgateway.server.ingestion.UpstreamCredentials.Selected;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -38,12 +42,7 @@ public class UpstreamGit {
     /** Lists the upstream and resolves its default branch, or says why it cannot. */
     @Requirements({"GW_INGEST_0040", "GW_INGEST_0038"})
     public Probe probe(String url) {
-        Map<String, Ref> refs;
-        try {
-            refs = listRefs(url);
-        } catch (GitAPIException | RuntimeException e) {
-            throw new UpstreamException(translate(e), e);
-        }
+        Map<String, Ref> refs = read(url, access -> listRefs(url, access));
         String branch = defaultBranch(url, refs);
         return new Probe(branch, refs.get(Constants.HEAD).getObjectId());
     }
@@ -56,34 +55,94 @@ public class UpstreamGit {
     @Requirements({"GW_INGEST_0002", "GW_INGEST_0038"})
     public ObjectId fetchDefaultBranch(Repository repo, String url, String targetRef) {
         try (Git git = new Git(repo)) {
-            try {
-                connect(git.fetch().setRemote(url).setRefSpecs(new RefSpec("+HEAD:" + targetRef)), url)
-                        .call();
-            } catch (GitAPIException | RuntimeException first) {
+            read(url, access -> {
                 try {
-                    String branch = defaultBranch(url, listRefs(url));
-                    connect(git.fetch().setRemote(url).setRefSpecs(new RefSpec("+" + branch + ":" + targetRef)), url)
+                    connect(git.fetch().setRemote(url).setRefSpecs(new RefSpec("+HEAD:" + targetRef)), access)
                             .call();
-                } catch (UpstreamException second) {
-                    second.addSuppressed(first);
-                    throw second;
-                } catch (GitAPIException | RuntimeException second) {
-                    second.addSuppressed(first);
-                    throw new UpstreamException(translate(second), second);
+                } catch (GitAPIException | RuntimeException first) {
+                    try {
+                        String branch = defaultBranch(url, listRefs(url, access));
+                        connect(
+                                        git.fetch()
+                                                .setRemote(url)
+                                                .setRefSpecs(new RefSpec("+" + branch + ":" + targetRef)),
+                                        access)
+                                .call();
+                    } catch (GitAPIException | RuntimeException second) {
+                        second.addSuppressed(first);
+                        throw second;
+                    }
                 }
-            }
+                return null;
+            });
             ObjectId sha = repo.resolve(targetRef);
             if (sha == null) {
                 throw new UpstreamException(UpstreamFailure.noDefaultBranch("the fetch produced no commit"), null);
             }
             return sha;
         } catch (IOException e) {
-            throw new UpstreamException(translate(e), e);
+            throw new UpstreamException(translate(e, Access.NONE), e);
         }
     }
 
-    private Map<String, Ref> listRefs(String url) throws GitAPIException {
-        return connect(Git.lsRemoteRepository().setRemote(url), url).callAsMap();
+    /** One upstream operation, given the credential it runs with. */
+    @FunctionalInterface
+    private interface Operation<T> {
+        T run(Access access) throws GitAPIException;
+    }
+
+    /**
+     * Runs one upstream operation with the credential its URL selects, and translates its failure.
+     * A GitHub App token taken from the cache that the upstream refuses is dropped and minted again,
+     * and the operation retried once — never more (GW_INGEST_0058).
+     */
+    @Requirements({"GW_INGEST_0050", "GW_INGEST_0056", "GW_INGEST_0058"})
+    private <T> T read(String url, Operation<T> operation) {
+        Optional<Selected> selected = credentials.select(url);
+        Access access = selected.map(entry -> entry.access(url, false)).orElse(Access.NONE);
+        try {
+            return operation.run(access);
+        } catch (GitAPIException | RuntimeException first) {
+            UpstreamFailure failure = failureOf(first, access);
+            if (selected.isEmpty() || !selected.get().isGitHubApp() || !refused(failure)) {
+                throw asUpstream(first, failure);
+            }
+            if (!access.renewable()) {
+                selected.get().forget(url);
+                throw asUpstream(first, failure);
+            }
+            // Renewing drops the refused token itself, and scrubs it from a failure to mint.
+            Access renewed = selected.get().access(url, true);
+            try {
+                return operation.run(renewed);
+            } catch (GitAPIException | RuntimeException second) {
+                second.addSuppressed(first);
+                UpstreamFailure again = failureOf(second, renewed, access);
+                if (refused(again)) {
+                    selected.get().forget(url);
+                }
+                throw asUpstream(second, again);
+            }
+        }
+    }
+
+    private static boolean refused(UpstreamFailure failure) {
+        return UpstreamFailure.NOT_FOUND_OR_AUTH.equals(failure.reason());
+    }
+
+    private UpstreamFailure failureOf(Throwable failure, Access... accesses) {
+        if (failure instanceof UpstreamException upstream && upstream.failure() != null) {
+            return upstream.failure();
+        }
+        return translate(failure, accesses);
+    }
+
+    private static UpstreamException asUpstream(Throwable failure, UpstreamFailure translated) {
+        return failure instanceof UpstreamException upstream ? upstream : new UpstreamException(translated, failure);
+    }
+
+    private Map<String, Ref> listRefs(String url, Access access) throws GitAPIException {
+        return connect(Git.lsRemoteRepository().setRemote(url), access).callAsMap();
     }
 
     /**
@@ -93,21 +152,30 @@ public class UpstreamGit {
      * upstream under no prefix gets no factory at all: JGit's own transport, anonymous.
      */
     @Requirements({"GW_INGEST_0050", "GW_INGEST_0051"})
-    private <C extends TransportCommand<C, ?>> C connect(C command, String url) {
+    private static <C extends TransportCommand<C, ?>> C connect(C command, Access access) {
         command.setTimeout(TIMEOUT_SECONDS);
-        credentials
-                .select(url)
-                .ifPresent(selected -> command.setTransportConfigCallback(transport -> {
-                    if (transport instanceof TransportHttp http) {
-                        http.setHttpConnectionFactory(selected.connectionFactory());
-                    }
-                }));
+        if (access.selected() != null) {
+            command.setTransportConfigCallback(transport -> {
+                if (transport instanceof TransportHttp http) {
+                    http.setHttpConnectionFactory(access.selected().connectionFactory(access.header()));
+                }
+            });
+        }
         return command;
     }
 
-    /** The translation, with every configured token scrubbed from it (GW_INGEST_0052). */
-    private UpstreamFailure translate(Throwable failure) {
-        return UpstreamFailure.of(failure).scrub(credentials.secrets());
+    /**
+     * The translation, with every configured secret and this operation's own token scrubbed from it
+     * (GW_INGEST_0052, GW_AUTH_0049).
+     */
+    private UpstreamFailure translate(Throwable failure, Access... accesses) {
+        List<String> secrets = new ArrayList<>(credentials.secrets());
+        for (Access access : accesses) {
+            if (access.secret() != null) {
+                secrets.add(access.secret());
+            }
+        }
+        return UpstreamFailure.of(failure).scrub(secrets);
     }
 
     private static String defaultBranch(String url, Map<String, Ref> refs) {

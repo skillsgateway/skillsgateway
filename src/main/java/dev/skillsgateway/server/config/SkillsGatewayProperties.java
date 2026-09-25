@@ -196,19 +196,40 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * One upstream credential (GW_INGEST_0050). The token arrives by environment reference and is
-     * never stored, logged or echoed (GW_INGEST_0052).
+     * One upstream credential (GW_INGEST_0050): a static token, or a GitHub App that mints one per
+     * fetch (GW_INGEST_0056) — exactly one of the two. Secrets arrive by environment reference and are
+     * never stored, logged or echoed (GW_INGEST_0052, GW_AUTH_0049).
      *
      * @param urlPrefix the upstream URLs this credential is for, matched by whole path segments
      * @param username the account or token name, sent as the HTTP Basic user
      * @param token the secret, sent as the HTTP Basic password
+     * @param githubApp the GitHub App to mint installation tokens with, instead of a static token
      */
-    public record UpstreamCredential(String urlPrefix, String username, String token) {
+    public record UpstreamCredential(String urlPrefix, String username, String token, GitHubApp githubApp) {
 
         /** The token is deliberately absent: a record's generated toString would print it. */
         @Override
         public String toString() {
-            return "UpstreamCredential[urlPrefix=%s, username=%s]".formatted(urlPrefix, username);
+            return "UpstreamCredential[urlPrefix=%s, username=%s, githubApp=%s]"
+                    .formatted(urlPrefix, username, githubApp);
+        }
+    }
+
+    /**
+     * A GitHub App an upstream credential mints installation tokens with (GW_INGEST_0056); validated
+     * by {@code UpstreamCredentials} at startup (GW_INGEST_0060).
+     *
+     * @param appId the App's numeric id, the assertion's issuer
+     * @param privateKey the App's RSA private key as PEM, PKCS#1 or PKCS#8
+     * @param installationId the installation to mint from; looked up per repository when absent
+     * @param apiUrl the GitHub REST API base; {@code https://api.github.com} when absent
+     */
+    public record GitHubApp(String appId, String privateKey, String installationId, String apiUrl) {
+
+        /** The key is deliberately absent: a record's generated toString would print it. */
+        @Override
+        public String toString() {
+            return "GitHubApp[appId=%s, installationId=%s, apiUrl=%s]".formatted(appId, installationId, apiUrl);
         }
     }
 

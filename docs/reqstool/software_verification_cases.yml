@@ -3407,6 +3407,106 @@ cases:
       THEN the credentialed registration's ledger detail names the prefix and not the token, and the anonymous one names no credential
     revision: "0.3.0"
 
+  - id: SVC_GW_INGEST_0056
+    requirement_ids: ["GW_INGEST_0056"]
+    title: A private upstream registers and ingests with a minted installation token
+    verification: automated-test
+    description: |
+      GIVEN an upstream that answers 401 without the installation token, a GitHub App entry for its prefix with and without an installation id, and a fake GitHub API
+      WHEN it is registered and ingested
+      THEN every git request under the prefix carries x-access-token and the minted token, the installation is looked up when none is configured, and both succeed
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0057
+    requirement_ids: ["GW_INGEST_0057"]
+    title: The token request names one repository and read-only contents
+    verification: automated-test
+    description: |
+      GIVEN a GitHub App entry whose prefix covers an owner
+      WHEN a repository under it is registered
+      THEN the token request's body names that repository alone and contents read alone
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0058
+    requirement_ids: ["GW_INGEST_0058"]
+    title: A cached token is reused, a near-expiry one renewed, and a refused one renewed once
+    verification: automated-test
+    description: |
+      GIVEN a fake GitHub API that issues tokens expiring in an hour, then in two minutes, then a different token the upstream wants
+      WHEN the same repository is read repeatedly
+      THEN an hour-long token is minted once, a two-minute one on every read, a refused cached token is renewed exactly once and the read succeeds, and a refused fresh token is reported without another mint
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0059
+    requirement_ids: ["GW_INGEST_0059"]
+    title: Each GitHub API refusal is reported with its own reason
+    verification: automated-test
+    description: |
+      GIVEN a fake GitHub API that answers 404 for the installation lookup, 422, 404 and 403 for the token, 401 with and without a clock message, a closed port, and a URL with a third path segment
+      WHEN each is registered
+      THEN registration answers 502 with the reason for that case and nothing is created
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0060
+    requirement_ids: ["GW_INGEST_0060"]
+    title: An unusable GitHub App entry stops startup and names the entry, not the key
+    verification: automated-test
+    description: |
+      GIVEN GitHub App entries with both kinds, neither, a missing or non-numeric id, a malformed, truncated, encrypted or non-RSA key, an unresolved reference, and an http or query-carrying API URL
+      WHEN the credentials are loaded
+      THEN each is refused with a message naming its position and prefix and not its key, while PKCS#1 and PKCS#8 keys load
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0061
+    requirement_ids: ["GW_INGEST_0061"]
+    title: The API is contacted only at the configured URL
+    verification: automated-test
+    description: |
+      GIVEN a GitHub App entry whose API is a separate server from the upstream
+      WHEN a repository is registered, and when a URL with a non-plain owner or repository is registered
+      THEN every API request reached the configured server and none reached the upstream's host, and the non-plain name reached no API at all
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0062
+    requirement_ids: ["GW_INGEST_0062"]
+    title: The registration ledger entry names the GitHub App kind
+    verification: automated-test
+    description: |
+      GIVEN a GitHub App credential and a static one
+      WHEN an upstream under each is registered
+      THEN the App registration's ledger detail names the prefix and the kind, and the static one names the prefix alone
+    revision: "0.3.0"
+
+  - id: SVC_GW_AUTH_0049
+    requirement_ids: ["GW_AUTH_0049"]
+    title: The key, assertion and installation token appear nowhere
+    verification: automated-test
+    description: |
+      GIVEN a GitHub App entry, an upstream that refuses its token, and an API whose error quotes the token
+      WHEN registrations and ingestions succeed and fail
+      THEN the key, any assertion sent and any token issued are absent from every API response, the marketplace record, the ledger, the fetch log, the captured log output and the configuration's string form
+    revision: "0.3.0"
+
+  - id: SVC_GW_AUTH_0050
+    requirement_ids: ["GW_AUTH_0050"]
+    title: The assertion verifies against the App's key and expires within ten minutes
+    verification: automated-test
+    description: |
+      GIVEN a GitHub App key
+      WHEN an assertion is signed, twice
+      THEN it verifies with the public key under RS256, names the App as issuer, is issued sixty seconds in the past, expires within ten minutes, and the two differ
+    revision: "0.3.0"
+
+  - id: SVC_GW_AUTH_0051
+    requirement_ids: ["GW_AUTH_0051"]
+    title: The assertion goes only to the API, never across a redirect or on a git request
+    verification: automated-test
+    description: |
+      GIVEN a GitHub App entry, an upstream that redirects to another port and another path, and an API that redirects the token request elsewhere
+      WHEN each is registered
+      THEN no git request carries an assertion, no request outside the prefix carries the installation token, and the API's redirect is not followed
+    revision: "0.3.0"
+
   - id: SVC_GW_VETTING_0040
     requirement_ids: ["GW_VETTING_0040"]
     title: The lines that raised false positives raise nothing, and the payloads the rules exist for still fail

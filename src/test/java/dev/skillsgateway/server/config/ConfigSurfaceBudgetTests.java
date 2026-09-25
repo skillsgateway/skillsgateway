@@ -66,6 +66,8 @@ class ConfigSurfaceBudgetTests {
     // asks for is in that change's proposal, under "Why the surface grows".
     // 109 since upstream-credentials: `ingestion.upstream-credentials`, the one list a private
     // upstream's token can live in. The argument is in that change's proposal, "Why the surface grows".
+    // Still 109 after upstream-github-app: its `github-app` block sits inside that list's element, which
+    // this walk does not descend into. Its proposal argues the growth anyway, "Why the surface grows".
     private static final int BUDGET = 109;
 
     /** Where the measured breakdown is written, so a run's numbers survive for a PR body. */

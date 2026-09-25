@@ -53,6 +53,14 @@ final class GitHttpFixture implements AutoCloseable {
     private volatile String basicPrefix;
     private volatile String basicExpected;
     private final List<String[]> authorizations = new CopyOnWriteArrayList<>();
+    private final Map<String, Route> routes = new ConcurrentHashMap<>();
+    private final List<ApiRequest> apiRequests = new CopyOnWriteArrayList<>();
+
+    /** A canned answer to one method and path: a forge's REST API, including its refusals. */
+    private record Route(int status, String body, String[] headers) {}
+
+    /** One request a {@link #respond} route answered, as the API saw it. */
+    record ApiRequest(String method, String path, String authorization, String body) {}
 
     GitHttpFixture() throws IOException {
         this.root = Files.createTempDirectory(prepared(Path.of("target", "test-workdirs")), "forge");
@@ -157,6 +165,20 @@ final class GitHttpFixture implements AutoCloseable {
         return List.copyOf(authorizations);
     }
 
+    /**
+     * Answers {@code method path} with this status and JSON body, and records every such request
+     * with its {@code Authorization} and body. {@code headers} are name/value pairs, e.g. a
+     * {@code Location}. Replaces any earlier answer for the same route.
+     */
+    void respond(String method, String path, int status, String body, String... headers) {
+        routes.put(method + " " + path, new Route(status, body, headers));
+    }
+
+    /** Every request a {@link #respond} route answered, in order. */
+    List<ApiRequest> apiRequests() {
+        return List.copyOf(apiRequests);
+    }
+
     /** Answers {@code path} with this JSON body: a forge's REST API beside its git service. */
     void respondJson(String path, String body) {
         json.put(path, body);
@@ -167,6 +189,8 @@ final class GitHttpFixture implements AutoCloseable {
         basicPrefix = null;
         basicExpected = null;
         authorizations.clear();
+        routes.clear();
+        apiRequests.clear();
         redirectTo = null;
         redirectsRemaining = 0;
         truncatePrefix = null;
@@ -219,6 +243,22 @@ final class GitHttpFixture implements AutoCloseable {
             }
             if (truncatePrefix != null && path.startsWith(truncatePrefix)) {
                 truncated(exchange);
+                return;
+            }
+            Route route = routes.get(exchange.getRequestMethod() + " " + path);
+            if (route != null) {
+                String sent = new String(requestBody(exchange), StandardCharsets.UTF_8);
+                apiRequests.add(new ApiRequest(
+                        exchange.getRequestMethod(), path, authorization == null ? "" : authorization, sent));
+                for (int i = 0; i + 1 < route.headers().length; i += 2) {
+                    exchange.getResponseHeaders().add(route.headers()[i], route.headers()[i + 1]);
+                }
+                byte[] bytes = route.body() == null ? new byte[0] : route.body().getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.sendResponseHeaders(route.status(), bytes.length == 0 ? -1 : bytes.length);
+                if (bytes.length > 0) {
+                    exchange.getResponseBody().write(bytes);
+                }
                 return;
             }
             String body = json.get(path);

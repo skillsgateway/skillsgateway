@@ -6,7 +6,10 @@ import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotClosureRepository;
 import dev.skillsgateway.server.storage.GitStorage;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.nio.file.Path;
+import java.security.KeyPair;
 import java.util.Map;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
@@ -35,7 +38,10 @@ import org.springframework.test.context.TestPropertySource;
  * UpstreamCredentialsIntegrationTests} can use it rather than start a context of its own: a
  * host-wide one, and one each for {@code /private/} and {@code /other/}. They change nothing for the
  * external-source suites, whose fetches never carry an upstream credential and whose forge answers
- * any request without one.
+ * any request without one. Three more are GitHub App entries (GW_INGEST_0056) for {@code
+ * UpstreamGitHubAppIntegrationTests}: {@code /appco/} (installation looked up), {@code /pinned/}
+ * (installation 77) and {@code /deadapi/} (an API on a closed port), all minting at {@link
+ * #GITHUB_API}, a second fixture playing GitHub's REST API with a key generated here.
  *
  * <p>The forge is started in a static initialiser because the context reads
  * {@code github-base-url} and the credential prefixes while it starts, and it is closed by a shutdown hook rather than an
@@ -60,11 +66,31 @@ abstract class AbstractExternalSourceTest extends AbstractGatewayTest {
 
     protected static final GitHttpFixture FORGE = startForge();
 
+    /** GitHub's REST API, on its own port, for the GitHub App entries. */
+    protected static final GitHttpFixture GITHUB_API = startForge();
+
+    protected static final String APP_ID = "4242";
+
+    /** Generated per run; never committed. Served to the gateway as PKCS#1, the form GitHub issues. */
+    protected static final KeyPair APP_KEY = TestKeys.rsa();
+
+    protected static final String APP_PEM = TestKeys.pkcs1Pem(APP_KEY);
+
+    private static final int DEAD_PORT = closedPort();
+
     /** Made-up tokens, one per configured prefix. */
     protected static final String HOST_TOKEN = "tok-host-5b1e0c";
 
     protected static final String PRIVATE_TOKEN = "tok-private-a93f27";
     protected static final String OTHER_TOKEN = "tok-other-0d64b8";
+
+    private static int closedPort() {
+        try (ServerSocket socket = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
+            return socket.getLocalPort();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     private static GitHttpFixture startForge() {
         try {
@@ -91,6 +117,22 @@ abstract class AbstractExternalSourceTest extends AbstractGatewayTest {
             registry.add(entry + "username", () -> "sgw");
             registry.add(entry + "token", () -> credential[1]);
         }
+        String[][] apps = {
+            {FORGE.baseUrl() + "/appco/", "", GITHUB_API.baseUrl()},
+            {FORGE.baseUrl() + "/pinned/", "77", GITHUB_API.baseUrl()},
+            {FORGE.baseUrl() + "/deadapi/", "77", "http://127.0.0.1:" + DEAD_PORT}
+        };
+        for (int i = 0; i < apps.length; i++) {
+            String entry = "skills-gateway.ingestion.upstream-credentials[" + (credentials.length + i) + "].";
+            String[] app = apps[i];
+            registry.add(entry + "url-prefix", () -> app[0]);
+            registry.add(entry + "github-app.app-id", () -> APP_ID);
+            registry.add(entry + "github-app.private-key", () -> APP_PEM);
+            if (!app[1].isEmpty()) {
+                registry.add(entry + "github-app.installation-id", () -> app[1]);
+            }
+            registry.add(entry + "github-app.api-url", () -> app[2]);
+        }
     }
 
     @Autowired
@@ -105,6 +147,7 @@ abstract class AbstractExternalSourceTest extends AbstractGatewayTest {
     @BeforeEach
     void resetForge() {
         FORGE.reset();
+        GITHUB_API.reset();
     }
 
     /** A marketplace manifest declaring one local plugin and one external source. */
