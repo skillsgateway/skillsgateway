@@ -483,7 +483,7 @@ test("a_blocking_finding_is_waived_from_the_vetting_tab_with_a_justification", a
   const card = await screen.findByRole("region", { name: "Snapshot 1" });
   expect(await within(card).findByText(/an AWS access key id is committed/)).toBeInTheDocument();
 
-  await user.click(within(card).getByRole("button", { name: "Waive finding aws-access-key-id" }));
+  await user.click(within(card).getByRole("button", { name: "Waive finding aws-access-key-id at plugins/hello/DEPLOY.md:5" }));
   const record = within(card).getByRole("button", { name: "Record waiver for aws-access-key-id" });
   expect(record).toBeDisabled();
   expect(within(card).getByLabelText("Expires on")).toHaveValue();

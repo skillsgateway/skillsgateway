@@ -17,6 +17,7 @@ export type VettingView = components["schemas"]["VettingView"];
 export type VettingRun = components["schemas"]["Run"];
 export type VettingVerdict = components["schemas"]["VerdictView"];
 export type VettingFinding = components["schemas"]["Finding"];
+export type FindingGroup = components["schemas"]["FindingGroup"];
 export type VetterInfo = components["schemas"]["VetterView"];
 export type ChainVetter = components["schemas"]["ChainVetterView"];
 export type ChainSettings = components["schemas"]["ChainSettingsView"];
@@ -120,6 +121,8 @@ export function useCreateWaiver() {
       path,
       justification,
       expiresAt,
+      content,
+      line,
     }: {
       snapshotId: number;
       ruleId: string;
@@ -127,10 +130,13 @@ export function useCreateWaiver() {
       path?: string;
       justification: string;
       expiresAt: string;
+      /** A finding group's blob: the waiver then covers that group's locations and nothing else. */
+      content?: string;
+      line?: number;
     }) =>
       api<Waiver>(`/api/v1/snapshots/${snapshotId}/waivers`, {
         method: "POST",
-        body: JSON.stringify({ ruleId, scope, path, justification, expiresAt }),
+        body: JSON.stringify({ ruleId, scope, path, justification, expiresAt, content, line }),
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["snapshot-vetting"] });

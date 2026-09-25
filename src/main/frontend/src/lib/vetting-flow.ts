@@ -11,6 +11,7 @@ import type {
   ChainVetter,
   UncoveredFinding,
   VetterInfo,
+  VettingFinding,
   VettingVerdict,
   VettingView,
   WaiverSuppression,
@@ -160,7 +161,7 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
   ordered.forEach((verdict, index) => {
     const name = verdict.vetter ?? "";
     const vetter = byName.get(name);
-    const findings = verdict.findings ?? [];
+    const findings = entriesOf(verdict);
     nodes.push({
       id: `vetter-${name}`,
       kind: "vetter",
@@ -315,12 +316,20 @@ export interface FlowHeadline {
   detail: string;
 }
 
+/**
+ * What a verdict counts as findings: its groups — identical content at several locations is one
+ * thing to judge (GW_VETTING_0041) — or its findings, for a view that carries no groups.
+ */
+function entriesOf(verdict: VettingVerdict | undefined): { severity?: string }[] {
+  return verdict?.groups ?? verdict?.findings ?? [];
+}
+
 /** The headline for a snapshot's chain. */
 export function snapshotHeadline(nodes: FlowNode[]): FlowHeadline {
   const vetters = nodes.filter((node) => node.kind === "vetter");
   const outcome = nodes.find((node) => node.kind === "outcome");
   const ran = vetters.filter((node) => node.state !== "not run" && node.state !== "not reached");
-  const findings = vetters.reduce((total, node) => total + (node.verdict?.findings ?? []).length, 0);
+  const findings = vetters.reduce((total, node) => total + entriesOf(node.verdict).length, 0);
   const waived = vetters.reduce((total, node) => total + (node.waived ?? 0), 0);
 
   if (outcome?.state === "clear") {
@@ -372,7 +381,7 @@ export function snapshotHeadline(nodes: FlowNode[]): FlowHeadline {
 function stoppedReason(node: FlowNode): string {
   if (node.state === "pending") return "has not answered yet";
   if (node.state === "error") return "did not produce a verdict";
-  const findings = node.verdict?.findings ?? [];
+  const findings = entriesOf(node.verdict);
   if (findings.length === 0) return "objected";
   const worst = worstSeverity(findings.map((finding) => finding.severity));
   return `found ${findings.length} ${worst ? `${worst.toLowerCase()} ` : ""}${plural(findings.length, "finding")}`;
@@ -422,5 +431,36 @@ export function marketplaceHeadline(
     // that stops early is narrower still, so it cannot read as a pass either.
     tone: off.length === 0 && !stops ? "pass" : "idle",
     detail: stops ? `${what} — and the chain stops at the first failure` : what,
+  };
+}
+
+/** How many locations a list spells out before counting the rest. */
+const SHOWN_LOCATIONS = 3;
+
+/** `a:1, b:1, c:1 and 4 more` — every location a reviewer is being asked about, never a bare rule. */
+export function describeLocations(locations: readonly string[]) {
+  if (locations.length === 0) return "—";
+  const shown = locations.slice(0, SHOWN_LOCATIONS).join(", ");
+  const more = locations.length - SHOWN_LOCATIONS;
+  return more > 0 ? `${shown} and ${more} more` : shown;
+}
+
+/** What a waiver form accepts: one finding, or one group of findings on identical content. */
+export interface WaiveTarget {
+  ruleId: string;
+  /** Every `path:line` the target stands for; one entry for a single finding. */
+  locations: string[];
+  /** The group's git blob id. Present only when the gateway tied the finding to content. */
+  content?: string;
+  line?: number;
+}
+
+/** A single finding as a waiver target — for a finding that did not come from a group. */
+export function targetOf(finding: VettingFinding): WaiveTarget {
+  return {
+    ruleId: finding.id ?? "",
+    locations: finding.location ? [finding.location] : [],
+    content: finding.content,
+    line: finding.location ? Number(/:(\d+)$/.exec(finding.location)?.[1]) || undefined : undefined,
   };
 }

@@ -410,7 +410,8 @@ async function registerTainted(page: Page, prefix: string): Promise<Locator> {
  * finding's own button disappear.
  */
 async function waiveAllFindings(dialog: Locator) {
-  const waiveButtons = dialog.getByRole("button", { name: /^Waive finding / });
+  // "Waive finding <rule> at <path:line>", or "Waive all <n> locations of <rule>" for a group.
+  const waiveButtons = dialog.getByRole("button", { name: /^Waive (finding|all) / });
   // A finding shown as accepted rather than blocking. The badge appears only when
   // the waiver POST's refetch has committed, which makes its count the loop's
   // settle signal: a waive button is HIDDEN while its inline form is open and
@@ -433,7 +434,11 @@ async function waiveAllFindings(dialog: Locator) {
     if (label == null) {
       throw new Error("Waive button has no aria-label; cannot name the finding to waive");
     }
-    const rule = label.replace("Waive finding ", "");
+    const named = /^Waive (?:finding (\S+) at |all \d+ locations of (\S+)$)/.exec(label);
+    const rule = named?.[1] ?? named?.[2];
+    if (rule == null) {
+      throw new Error(`Cannot read the rule from the waive button label: ${label}`);
+    }
     const waivedBefore = await waivedBadges.count();
     const justification = dialog.getByLabel("Justification").first();
     // Open the inline waive form. A stray re-render can still detach or move the
@@ -596,6 +601,36 @@ test("a_finding_is_waived_from_the_review_surface_and_the_waiver_is_listed", asy
 
   await expect(approve).toBeEnabled();
   await approveCard(page, card);
+});
+
+/**
+ * @SVCs SVC_GW_VETTING_0044, SVC_GW_APPROVAL_0022
+ */
+test("a_vendored_copy_is_one_group_with_every_location_and_one_waiver_covers_it", async ({ page }) => {
+  await login(page, "alice");
+  const card = await registerTainted(page, "vendored");
+  await expect(card.getByText("vetting blocked").first()).toBeVisible();
+
+  // The gate names every location of the group, not a bare rule id.
+  const blocking = card.getByRole("list", { name: "Blocking findings" });
+  await expect(
+    blocking.getByText("plugins/hello/skills/hello/SKILL.md:3, plugins/hello/skills/copy/SKILL.md:3"),
+  ).toBeVisible();
+
+  // One row and one action for both copies; the narrowest acceptance is the default.
+  const waive = card.getByRole("button", { name: "Waive all 2 locations of instruction-override" });
+  await waive.click();
+  await expect(card.getByLabel("Scope")).toHaveValue("group");
+  await card.getByLabel("Justification").fill("vendored copy of a reviewed skill");
+  await card.getByRole("button", { name: "Record waiver for instruction-override" }).click();
+
+  await expect(waive).toHaveCount(0);
+  await expect(card.getByText(/waived by alice until/).first()).toBeVisible();
+  // The other group is untouched by that waiver, so approval stays shut.
+  await expect(
+    blocking.getByText("plugins/hello/skills/hello/SKILL.md:5, plugins/hello/skills/copy/SKILL.md:5"),
+  ).toBeVisible();
+  await expect(card.getByRole("button", { name: /Approve snapshot \d+/ })).toBeDisabled();
 });
 
 /**

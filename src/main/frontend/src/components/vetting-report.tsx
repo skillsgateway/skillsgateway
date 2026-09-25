@@ -15,10 +15,9 @@ import {
   useRevokeWaiver,
   useSnapshotVetting,
   type VettingView,
-  type VettingFinding,
+  type FindingGroup,
   type VettingVerdict,
   type Waiver,
-  type WaiverScope,
   type WaiverSuppression,
 } from "@/api/queries";
 import { Timestamp } from "@/components/timestamp";
@@ -27,7 +26,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { snapshotFlow, snapshotHeadline } from "@/lib/vetting-flow";
+import {
+  describeLocations,
+  snapshotFlow,
+  snapshotHeadline,
+  type WaiveTarget,
+} from "@/lib/vetting-flow";
 
 function verdictIcon(state?: string) {
   switch (state) {
@@ -87,9 +91,9 @@ export function SnapshotVettingBadge({ snapshotId }: { snapshotId: number }) {
   return <OutcomeBadge outcome={vetting.data?.outcome} />;
 }
 
-/** Stable identity of a finding within a run, so a suppression can be matched to its row. */
-function findingKey(vetter: string | undefined, finding: VettingFinding) {
-  return `${vetter ?? ""}|${finding.id ?? ""}|${finding.location ?? ""}`;
+/** Stable identity of one finding within a run, so a suppression can be matched to its location. */
+function suppressionKey(vetter: string | undefined, rule: string | undefined, location: string | undefined) {
+  return `${vetter ?? ""}|${rule ?? ""}|${location ?? ""}`;
 }
 
 /** The default expiry offered when accepting a risk: near enough to come back around. */
@@ -99,31 +103,40 @@ function defaultExpiry() {
   return date.toISOString().slice(0, 10);
 }
 
+type WaiveChoice = "group" | "snapshot" | "path";
+
 /**
- * Accepting one finding, inline beside the finding itself. Scope defaults to this snapshot —
- * the tightest option — because a path waiver survives re-ingestion and covers content that does
- * not exist yet.
+ * Accepting one finding group, inline beside it. The default is the narrowest acceptance on
+ * offer: the group itself — every location of this identical content in this snapshot, and
+ * nothing else (GW_VETTING_0042). The rule across the whole snapshot and a path in the
+ * marketplace are the wider choices, spelled out as such.
+ *
+ * @Requirements GW_VETTING_0010, GW_VETTING_0044
  */
 export function WaiveForm({
   snapshotId,
-  finding,
+  target,
   onDone,
   onCancel,
   snapshotOnly = false,
 }: {
   snapshotId: number;
-  finding: VettingFinding;
+  target: WaiveTarget;
   onDone: () => void;
   onCancel: () => void;
-  /** Offer only this snapshot as the scope — for a rule whose path scope would cover a whole marketplace. */
+  /** Offer no path scope — for a rule whose path scope would cover a whole marketplace. */
   snapshotOnly?: boolean;
 }) {
   const create = useCreateWaiver();
-  const [scope, setScope] = useState<WaiverScope>("snapshot");
+  const rule = target.ruleId;
+  const count = target.locations.length;
+  const groupable = Boolean(target.content);
+  // A path scope names one path, so it is offered only for a single location.
+  const pathable = !snapshotOnly && count === 1;
+  const [choice, setChoice] = useState<WaiveChoice>(groupable ? "group" : "snapshot");
   const [justification, setJustification] = useState("");
   const [expiresAt, setExpiresAt] = useState(defaultExpiry());
-  const path = (finding.location ?? "").replace(/:\d+$/, "");
-  const rule = finding.id ?? "";
+  const path = (target.locations[0] ?? "").replace(/:\d+$/, "");
   // The API takes an instant; a date control gives a day, so the waiver lapses at its end.
   // This is the exact value posted below, and the exact value WaiverService compares
   // against now — so the client's "is it still in the future?" is the server's own test
@@ -131,33 +144,43 @@ export function WaiveForm({
   const expiryInstant = new Date(`${expiresAt}T23:59:59Z`).getTime();
   const expiryIsFuture = Number.isFinite(expiryInstant) && expiryInstant > Date.now();
   const incomplete = justification.trim().length === 0 || !expiryIsFuture;
-  const hintId = `waiver-hint-${snapshotId}-${rule}`;
+  const idBase = `${snapshotId}-${rule}-${target.content ?? "rule"}-${target.line ?? 0}`;
+  const hintId = `waiver-hint-${idBase}`;
 
   return (
     <div className="mt-2 space-y-2 rounded-md border bg-muted/40 p-3">
       <p className="text-xs text-muted-foreground">
-        Accepting <span className="font-mono">{rule}</span>. The acceptance is recorded with your
-        identity, and it lapses on the date you choose — there are no unlimited waivers.
+        Accepting <span className="font-mono">{rule}</span>
+        {count > 1 ? ` at ${count} locations` : null}. The acceptance is recorded with your identity,
+        and it lapses on the date you choose — there are no unlimited waivers.
       </p>
       <div className="grid gap-2 sm:grid-cols-2">
-        <div className="space-y-1">
-          <Label htmlFor={`waiver-scope-${snapshotId}-${rule}`}>Scope</Label>
+        {/* Full width: the scope options say how far each one reaches, and that text must not be cut. */}
+        <div className="space-y-1 sm:col-span-2">
+          <Label htmlFor={`waiver-scope-${idBase}`}>Scope</Label>
           <select
-            id={`waiver-scope-${snapshotId}-${rule}`}
+            id={`waiver-scope-${idBase}`}
             className="h-9 w-full rounded-md border bg-background px-2 text-sm"
-            value={scope}
-            onChange={(event) => setScope(event.target.value as WaiverScope)}
+            value={choice}
+            onChange={(event) => setChoice(event.target.value as WaiveChoice)}
           >
-            <option value="snapshot">This snapshot only</option>
-            {snapshotOnly ? null : (
-              <option value="path">This path in the marketplace ({path || "—"})</option>
-            )}
+            {groupable ? (
+              <option value="group">
+                {count > 1
+                  ? `These ${count} identical copies, in this snapshot`
+                  : "This finding, in this snapshot"}
+              </option>
+            ) : null}
+            <option value="snapshot">Every {rule} finding in this snapshot</option>
+            {pathable ? (
+              <option value="path">Every {rule} finding under {path || "—"}, in later snapshots too</option>
+            ) : null}
           </select>
         </div>
         <div className="space-y-1">
-          <Label htmlFor={`waiver-expiry-${snapshotId}-${rule}`}>Expires on</Label>
+          <Label htmlFor={`waiver-expiry-${idBase}`}>Expires on</Label>
           <Input
-            id={`waiver-expiry-${snapshotId}-${rule}`}
+            id={`waiver-expiry-${idBase}`}
             type="date"
             value={expiresAt}
             // The native control refuses a past day for the same reason the server does.
@@ -169,9 +192,9 @@ export function WaiveForm({
         </div>
       </div>
       <div className="space-y-1">
-        <Label htmlFor={`waiver-justification-${snapshotId}-${rule}`}>Justification</Label>
+        <Label htmlFor={`waiver-justification-${idBase}`}>Justification</Label>
         <Input
-          id={`waiver-justification-${snapshotId}-${rule}`}
+          id={`waiver-justification-${idBase}`}
           autoComplete="off"
           value={justification}
           aria-describedby={hintId}
@@ -193,8 +216,9 @@ export function WaiveForm({
               {
                 snapshotId,
                 ruleId: rule,
-                scope,
-                ...(scope === "path" ? { path } : {}),
+                scope: choice === "path" ? "path" : "snapshot",
+                ...(choice === "path" ? { path } : {}),
+                ...(choice === "group" ? { content: target.content, line: target.line } : {}),
                 justification: justification.trim(),
                 expiresAt: new Date(expiryInstant).toISOString(),
               },
@@ -218,47 +242,88 @@ export function WaiveForm({
   );
 }
 
-function FindingRow({
+/**
+ * One finding group: a rule on identical content, with every location it occurs at. The copies
+ * of a vendored file are one thing to judge, so they are one row with one waive action
+ * (GW_VETTING_0041, GW_VETTING_0044).
+ */
+function GroupRow({
   snapshotId,
-  finding,
-  suppression,
+  vetter,
+  group,
+  suppressions,
 }: {
   snapshotId: number;
-  finding: VettingFinding;
-  suppression?: WaiverSuppression;
+  vetter?: string;
+  group: FindingGroup;
+  suppressions: Map<string, WaiverSuppression>;
 }) {
   const [waiving, setWaiving] = useState(false);
-  const high = finding.severity === "high" || finding.severity === "critical";
-  const waived = suppression !== undefined;
+  const rule = group.ruleId ?? "";
+  const locations = group.locations ?? [];
+  const covering = locations
+    .map((location) => suppressions.get(suppressionKey(vetter, rule, location)))
+    .filter((suppression): suppression is WaiverSuppression => suppression !== undefined);
+  const waived = locations.length > 0 && covering.length === locations.length;
+  const high = group.severity === "high" || group.severity === "critical";
+  const first = locations[0] ?? "—";
+  const rest = locations.slice(1);
+  const actionLabel = locations.length > 1 ? `Waive all ${locations.length} locations` : "Waive finding";
   return (
     <div className="text-sm">
       <div className="flex flex-wrap items-baseline gap-2">
         <Badge variant={waived ? "outline" : high ? "destructive" : "outline"}>
-          {finding.severity?.toLowerCase()}
+          {group.severity?.toLowerCase()}
         </Badge>
-        <span className={`font-mono text-xs ${waived ? "line-through" : ""}`}>{finding.id}</span>
-        <span className="font-mono text-xs text-muted-foreground">{finding.location ?? "—"}</span>
-        <span className="text-muted-foreground">{finding.message}</span>
+        <span className={`font-mono text-xs ${waived ? "line-through" : ""}`}>{group.ruleId}</span>
+        <span className="font-mono text-xs break-all text-muted-foreground">{first}</span>
+        <span className="text-muted-foreground">{group.message}</span>
         {waived ? (
           <Badge variant="secondary">
-            waived by {suppression.approvedBy} until{" "}
-            <Timestamp value={suppression.expiresAt} dayOnly />
+            waived by {covering[0]!.approvedBy} until{" "}
+            <Timestamp value={covering[0]!.expiresAt} dayOnly />
           </Badge>
-        ) : high && !waiving ? (
+        ) : covering.length > 0 ? (
+          <Badge variant="outline">
+            {covering.length} of {locations.length} waived
+          </Badge>
+        ) : null}
+        {!waived && high && !waiving ? (
           <Button
             size="sm"
             variant="outline"
-            aria-label={`Waive finding ${finding.id}`}
+            aria-label={
+              locations.length > 1
+                ? `${actionLabel} of ${rule}`
+                : `Waive finding ${rule} at ${first}`
+            }
             onClick={() => setWaiving(true)}
           >
-            Waive…
+            {actionLabel}
           </Button>
         ) : null}
       </div>
+      {rest.length > 0 ? (
+        <details className="mt-1 text-xs text-muted-foreground">
+          <summary className="cursor-pointer">
+            {rest.length} more {rest.length === 1 ? "copy" : "copies"} of the same content
+          </summary>
+          <ul className="mt-1 space-y-0.5 font-mono break-all">
+            {rest.map((location) => (
+              <li key={location}>{location}</li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
       {waiving && !waived ? (
         <WaiveForm
           snapshotId={snapshotId}
-          finding={finding}
+          target={{
+            ruleId: rule,
+            locations,
+            content: group.content,
+            line: group.line,
+          }}
           onDone={() => setWaiving(false)}
           onCancel={() => setWaiving(false)}
         />
@@ -276,7 +341,7 @@ function VerdictCard({
   verdict: VettingVerdict;
   suppressions: Map<string, WaiverSuppression>;
 }) {
-  const findings = verdict.findings ?? [];
+  const groups = verdict.groups ?? [];
   return (
     <div className="rounded-md border p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -287,14 +352,15 @@ function VerdictCard({
           <span className="text-xs text-muted-foreground">{verdict.detail}</span>
         ) : null}
       </div>
-      {findings.length > 0 ? (
+      {groups.length > 0 ? (
         <ul className="mt-2 space-y-1">
-          {findings.map((finding, index) => (
-            <li key={`${finding.id}-${finding.location}-${index}`} className="list-none">
-              <FindingRow
+          {groups.map((group, index) => (
+            <li key={`${group.ruleId}-${group.content ?? ""}-${group.locations?.[0] ?? ""}-${index}`} className="list-none">
+              <GroupRow
                 snapshotId={snapshotId}
-                finding={finding}
-                suppression={suppressions.get(findingKey(verdict.vetter, finding))}
+                vetter={verdict.vetter}
+                group={group}
+                suppressions={suppressions}
               />
             </li>
           ))}
@@ -358,7 +424,7 @@ function WaiverList({ waivers }: { waivers: Waiver[] }) {
  * findings behind it, and which of those findings an accepted risk is currently suppressing.
  * Rendered before any approve/reject decision.
  *
- * @Requirements GW_VETTING_0005, GW_VETTING_0010
+ * @Requirements GW_VETTING_0005, GW_VETTING_0010, GW_VETTING_0044, GW_APPROVAL_0022
  */
 /**
  * Whether the evidence below was produced by the chain this marketplace runs now
@@ -446,7 +512,7 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
   const verdicts = run?.verdicts ?? [];
   const suppressions = new Map<string, WaiverSuppression>(
     (vetting.data?.suppressed ?? []).map((suppression) => [
-      `${suppression.vetter ?? ""}|${suppression.ruleId ?? ""}|${suppression.location ?? ""}`,
+      suppressionKey(suppression.vetter, suppression.ruleId, suppression.location),
       suppression,
     ]),
   );
@@ -482,10 +548,20 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
         suppressions={suppressions}
       />
       {uncovered.length > 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Approval is blocked until each of these is waived:{" "}
-          {uncovered.map((finding) => finding.ruleId).join(", ")}.
-        </p>
+        <div className="space-y-1 text-sm">
+          <p className="text-muted-foreground">Approval is blocked until each of these is waived:</p>
+          <ul aria-label="Blocking findings" className="space-y-0.5">
+            {uncovered.map((finding, index) => (
+              <li key={`${finding.ruleId}-${finding.location ?? ""}-${index}`} className="list-none">
+                <span className="font-mono text-xs">{finding.ruleId}</span>{" "}
+                <span className="text-muted-foreground">at</span>{" "}
+                <span className="font-mono text-xs break-all text-muted-foreground">
+                  {describeLocations(finding.locations ?? (finding.location ? [finding.location] : []))}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
       {verdicts.length === 0 ? (
         <p className="text-sm text-muted-foreground">

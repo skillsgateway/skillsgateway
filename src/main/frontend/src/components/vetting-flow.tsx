@@ -10,7 +10,7 @@ import {
   PackageOpen,
   ShieldCheck,
 } from "lucide-react";
-import type { VettingFinding, WaiverSuppression } from "@/api/queries";
+import type { FindingGroup, WaiverSuppression } from "@/api/queries";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  describeLocations,
   sourceChip,
   sourceWord,
   type FlowHeadline,
@@ -77,27 +78,33 @@ function NodeChip({ children }: { children: ReactNode }) {
 }
 
 /** Stable identity of a finding within a run, matching the report's own key. */
-function findingKey(vetter: string | undefined, finding: VettingFinding) {
-  return `${vetter ?? ""}|${finding.id ?? ""}|${finding.location ?? ""}`;
+function suppressionKey(vetter: string | undefined, rule: string | undefined, location: string | undefined) {
+  return `${vetter ?? ""}|${rule ?? ""}|${location ?? ""}`;
 }
 
-function FindingLine({
-  finding,
-  suppression,
+/** One finding group — identical content at every location it lists (GW_VETTING_0041). */
+function GroupLine({
+  group,
+  covering,
 }: {
-  finding: VettingFinding;
-  suppression?: WaiverSuppression;
+  group: FindingGroup;
+  covering: WaiverSuppression[];
 }) {
-  const waived = suppression !== undefined;
+  const locations = group.locations ?? [];
+  const waived = locations.length > 0 && covering.length === locations.length;
   return (
     <div className="flex flex-wrap items-baseline gap-2 text-sm">
-      <Badge variant="outline">{finding.severity?.toLowerCase()}</Badge>
-      <span className={`font-mono text-xs ${waived ? "line-through" : ""}`}>{finding.id}</span>
-      <span className="font-mono text-xs text-muted-foreground">{finding.location ?? "—"}</span>
-      <span className="text-muted-foreground">{finding.message}</span>
+      <Badge variant="outline">{group.severity?.toLowerCase()}</Badge>
+      <span className={`font-mono text-xs ${waived ? "line-through" : ""}`}>{group.ruleId}</span>
+      <span className="font-mono text-xs break-all text-muted-foreground">{describeLocations(locations)}</span>
+      <span className="text-muted-foreground">{group.message}</span>
       {waived ? (
         <Badge variant="secondary">
-          waived by {suppression.approvedBy} until <Timestamp value={suppression.expiresAt} dayOnly />
+          waived by {covering[0]!.approvedBy} until <Timestamp value={covering[0]!.expiresAt} dayOnly />
+        </Badge>
+      ) : covering.length > 0 ? (
+        <Badge variant="outline">
+          {covering.length} of {locations.length} waived
         </Badge>
       ) : null}
     </div>
@@ -113,7 +120,7 @@ function NodeDetail({
   suppressions: Map<string, WaiverSuppression>;
 }) {
   if (node.kind === "vetter") {
-    const findings = node.verdict?.findings ?? [];
+    const groups = node.verdict?.groups ?? [];
     return (
       <div className="space-y-3">
         <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-1 text-sm">
@@ -147,13 +154,17 @@ function NodeDetail({
             never a clearing verdict, and a run with nothing left to clear it stays blocked.
           </p>
         ) : null}
-        {findings.length > 0 ? (
+        {groups.length > 0 ? (
           <div className="space-y-1">
-            {findings.map((finding, index) => (
-              <FindingLine
-                key={`${finding.id}-${finding.location}-${index}`}
-                finding={finding}
-                suppression={suppressions.get(findingKey(node.verdict?.vetter, finding))}
+            {groups.map((group, index) => (
+              <GroupLine
+                key={`${group.ruleId}-${group.content ?? ""}-${group.locations?.[0] ?? ""}-${index}`}
+                group={group}
+                covering={(group.locations ?? [])
+                  .map((location) =>
+                    suppressions.get(suppressionKey(node.verdict?.vetter, group.ruleId, location)),
+                  )
+                  .filter((suppression): suppression is WaiverSuppression => suppression !== undefined)}
               />
             ))}
           </div>
@@ -207,8 +218,8 @@ function NodeDetail({
               >
                 <Badge variant="outline">{finding.severity?.toLowerCase()}</Badge>
                 <span className="font-mono text-xs">{finding.ruleId}</span>
-                <span className="font-mono text-xs text-muted-foreground">
-                  {finding.location ?? "—"}
+                <span className="font-mono text-xs break-all text-muted-foreground">
+                  {describeLocations(finding.locations ?? (finding.location ? [finding.location] : []))}
                 </span>
                 <span className="text-muted-foreground">{finding.message}</span>
               </div>

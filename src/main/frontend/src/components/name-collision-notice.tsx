@@ -5,6 +5,7 @@ import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { WaiveForm } from "@/components/vetting-report";
+import { targetOf } from "@/lib/vetting-flow";
 
 function CollisionRow({ snapshotId, collision }: { snapshotId: number; collision: NameCollision }) {
   const [waiving, setWaiving] = useState(false);
@@ -32,14 +33,14 @@ function CollisionRow({ snapshotId, collision }: { snapshotId: number; collision
             aria-label={`Waive name collision for ${collision.pluginName}`}
             onClick={() => setWaiving(true)}
           >
-            Waive…
+            Waive name collision
           </Button>
         ) : null}
       </div>
       {waiving && !waiver && collision.finding ? (
         <WaiveForm
           snapshotId={snapshotId}
-          finding={collision.finding}
+          target={targetOf(collision.finding)}
           snapshotOnly
           onDone={() => setWaiving(false)}
           onCancel={() => setWaiving(false)}
