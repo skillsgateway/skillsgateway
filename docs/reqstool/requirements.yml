@@ -2572,3 +2572,53 @@ requirements:
     rationale: "A diff cut at 500 entries leaves the rest of the delta unreviewable in exactly the large changes where review matters most. Narrowing by path lets the explorer read one file's change without receiving the whole diff to find it."
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
+
+  - id: GW_INGEST_0045
+    title: The snapshot inventory lists every component a plugin declares
+    significance: shall
+    description: "The system shall expose, for each plugin of a snapshot's content inventory, beside its skills, the commands, agents, hooks and MCP servers the plugin provides, read from the plugin's default component locations and from what its plugin manifest and its marketplace entry declare; shall give each hook its trigger event, its matcher when it has one, its handler type, what it runs, and the path:line at which it is declared, including a hook declared in the frontmatter of a skill or an agent; and shall leave out a component whose declaration cannot be read rather than fail the inventory."
+    references:
+      requirement_ids: ["GW_INGEST_0008"]
+    rationale: "A trial deployment reviewed a plugin with one skill, four agents and three hooks, and the inventory showed the skill. The hooks were the part that ran code on every session, every edit and every turn. A reviewer approves what the inventory shows them, so an inventory that stops at skills hides exactly the components that execute. The inventory feeds the policy gate's facts too, so one malformed declaration must cost the listing of that component, not the whole inventory."
+    categories: ["security", "functional-suitability"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0046
+    title: The portal inventory shows each plugin's components as expandable counts
+    significance: shall
+    description: "The system shall show, in the portal's snapshot inventory, each plugin's components as one count per kind it has — skills, commands, agents, hooks and MCP servers — collapsed by default, each count expanding its own list in place; and shall show for each hook its trigger and what it runs."
+    references:
+      requirement_ids: ["GW_INGEST_0045"]
+    rationale: "Counts give the shape of a plugin at a glance: one skill and three hooks is a different review from forty skills. Collapsed lists keep a large marketplace readable, and a hook's trigger and command are the two things a reviewer needs to judge it without opening a file."
+    categories: ["interaction-capability", "security"]
+    revision: 0.3.0
+
+  - id: GW_VETTING_0047
+    title: Hooks that run automatically are flagged with their trigger
+    significance: shall
+    description: "The system shall provide a built-in vetter, enabled by default and switchable like every other vetter, that raises a medium-severity finding for every hook a plugin of the snapshot declares, whether in the plugin's default hook file, in hook files or inline hook configuration its plugin manifest or marketplace entry declares, or in the frontmatter of one of its skills or agents; each finding shall name the hook's trigger event and matcher and what it runs, located at the path:line of its declaration."
+    references:
+      requirement_ids: ["GW_VETTING_0001"]
+    rationale: "A hook runs code without anyone invoking it: at session start, after every edit, at the end of every turn. That is legitimate plugin behaviour, so on its own it warns rather than blocks; blocking every hook would teach reviewers to waive them unread. It still has to be in front of the reviewer, with its trigger, because the approval is also an approval of what runs unattended."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_VETTING_0048
+    title: Code a hook fetches at run time is a high-severity finding
+    significance: shall
+    description: "The system shall raise a high-severity finding, located at path:line, wherever a hook's command, or a file of the snapshot that the hook launches directly or through another launched file, downloads content and executes it — by piping a download into an interpreter, by feeding one to an interpreter through command or process substitution, or by downloading to a file in a file that also makes a file executable — or runs a package runner that fetches its package from a registry at run time; shall recognise such a download through quoting and escaping inserted inside the command name; and shall not raise one for text that no hook launches, for a comment line, or for a hook that only runs files of the snapshot."
+    references:
+      requirement_ids: ["GW_VETTING_0047"]
+    rationale: "Code fetched at run time is never in the snapshot the gateway pinned and a reviewer approved, so it bypasses quarantine entirely; in the trial the three hooks all reached a launcher that downloads an engine binary into a cache and runs it. That makes it a blocking finding, waivable like any other once a reviewer has decided the source is trusted. The finding is only worth its block if it is precise: documentation that mentions curl, and a hook that runs a local script, must stay silent, or the gate teaches its reviewer to click past it."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_VETTING_0049
+    title: Hook declarations and launched files the vetter cannot read are reported
+    significance: shall
+    description: "The system shall raise a medium-severity finding, rather than pass silently, for a hook declaration file or inline hook configuration that cannot be parsed, and for a file of the snapshot a hook launches that is binary or over the scan size limit, naming the file."
+    references:
+      requirement_ids: ["GW_VETTING_0023", "GW_VETTING_0048"]
+    rationale: "A vetter that cannot read what a hook runs has not shown that the hook fetches nothing, and a pass would say it had. A binary a hook runs automatically is code no rule of the chain can read, which is exactly what a reviewer needs to know before approving it."
+    categories: ["security"]
+    revision: 0.3.0
