@@ -418,6 +418,20 @@ reports the last run, and the audit ledger carries its entries under the
 `config-reconciler` principal. See
 [Declarative estate configuration](declarative-estate.md).
 
+## Metrics and traces
+
+A default install records its metrics and exports none of them. The chart's
+`otel` values switch on OTLP export to your collector:
+
+```yaml
+otel:
+  enabled: true
+  endpoint: http://otel-collector.observability:4318
+```
+
+There is no metrics endpoint to scrape. The metric names, and the two worth
+alerting on, are in [Observability](../reference/observability.md#from-the-helm-chart).
+
 ## Backups and upgrades
 
 The database and the git storage are one estate and have to be backed up and restored
