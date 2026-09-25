@@ -6,6 +6,8 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 git diff --quiet || { echo "tree is dirty; commit first"; exit 2; }
+# Whatever ends the run, the mutated sources go back to the committed state.
+trap 'git checkout -- src/main' EXIT
 
 JAVA_TESTS='SinkChannelGuardTests'
 SVC=src/main/java/dev/skillsgateway/server/webhook/WebhookService.java
@@ -27,8 +29,8 @@ open(path, "w").write(text.replace(old, new))
 EOF
 }
 
-# A kill counts only when the named test fails on an assertion; a compile error, a broken
-# database or any other test failing is reported as INVALID, never as a kill.
+# A kill counts only when the named test fails (assertion or error); a run with no test report --
+# a compile error, a database that never started -- is INVALID, never a kill.
 java_killed() { # id expected-test
   local report=target/surefire-reports/dev.skillsgateway.server.$JAVA_TESTS.txt
   rm -f "$report"
@@ -37,8 +39,8 @@ java_killed() { # id expected-test
     return 1
   fi
   [ -f "$report" ] || { echo "$1: INVALID (no test report; see /tmp/mutant-$1.log)"; exit 4; }
-  grep -q "$2 .*<<< FAILURE!" "$report" \
-    || { echo "$1: INVALID ($2 did not fail on an assertion; see $report)"; exit 4; }
+  grep -qE "$2 .*<<< (FAILURE|ERROR)!" "$report" \
+    || { echo "$1: INVALID ($2 did not fail; see $report)"; exit 4; }
 }
 
 ui_killed() { # id expected-test
