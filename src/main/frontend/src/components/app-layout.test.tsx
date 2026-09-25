@@ -286,3 +286,55 @@ test("a_quiet_queue_shows_no_count", async () => {
   const link = await screen.findByRole("link", { name: "Review queue" });
   expect(link).not.toHaveTextContent(/\d/);
 });
+
+/**
+ * What a reader consults is grouped apart from what an administrator sets, and the two outbound
+ * integrations are sections of one entry. The estate-wide chain is offered to an administrator
+ * only; everything else is offered to every session, and the server refuses what it must.
+ *
+ * @SVCs SVC_GW_AUTH_0048
+ */
+test("the_sidebar_groups_records_apart_from_configuration_and_nests_the_integrations", async () => {
+  const signedInAs = (role: string | null) =>
+    server.use(
+      http.get("/api/v1/me", () =>
+        HttpResponse.json({
+          username: "alice",
+          roles: role ? [{ role, source: "config" }] : [],
+          claimsTruncated: false,
+        }),
+      ),
+    );
+
+  signedInAs(null);
+  const withoutRole = renderLayout("/integrations/sinks");
+  let main = await screen.findByRole("navigation", { name: "Main" });
+  const groupOf = (name: string) =>
+    within(main).getByRole("link", { name }).closest("ul")?.previousElementSibling?.textContent;
+
+  expect(await within(main).findByRole("link", { name: "Audit log" })).toBeInTheDocument();
+  expect(groupOf("Audit log")).toBe("Oversight");
+  expect(groupOf("Adoption")).toBe("Oversight");
+  expect(within(main).queryByText("Governance")).not.toBeInTheDocument();
+
+  const integrations = within(main).getByRole("list", { name: "Integrations" });
+  expect(within(integrations).getByRole("link", { name: "Webhooks" })).toHaveAttribute(
+    "href",
+    "/integrations/webhooks",
+  );
+  expect(within(integrations).getByRole("link", { name: "Audit sinks" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  expect(screen.getByText("Integrations · Audit sinks")).toBeInTheDocument();
+  expect(within(main).queryByRole("link", { name: "Vetting chain" })).not.toBeInTheDocument();
+  withoutRole.unmount();
+
+  signedInAs("admin");
+  renderLayout("/vetting");
+  main = await screen.findByRole("navigation", { name: "Main" });
+  const chain = await within(main).findByRole("link", { name: "Vetting chain" });
+  expect(chain).toHaveAttribute("aria-current", "page");
+  expect(groupOf("Vetting chain")).toBe("Configuration");
+  expect(within(main).getByRole("list", { name: "Integrations" })).toBeInTheDocument();
+});

@@ -4,11 +4,13 @@ import { toast } from "sonner";
 import {
   useCreateWebhookSubscriber,
   useDeleteWebhookSubscriber,
+  useIsAdmin,
   useWebhookDeliveries,
   useWebhookEvents,
   useWebhookSubscribers,
   type CreatedSubscriber,
 } from "@/api/queries";
+import { IntegrationSection } from "@/components/integration-section";
 import { GATEWAY_NAME_HINT, isAbsoluteUrl, isValidGatewayName } from "@/lib/form-rules";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
@@ -91,12 +93,6 @@ function deliveryBadge(state: string | undefined) {
   return <Badge variant="secondary">{state ?? "pending"}</Badge>;
 }
 
-/**
- * Webhook administration: registered subscribers with their event filters, and the
- * recent delivery attempts with state, attempt count, and last response.
- *
- * @Requirements GW_WEBHOOK_0004
- */
 /** Every event selected is the wildcard, not an enumeration: a filter written as `*` keeps
  *  receiving events added to the registry after the subscriber was registered. */
 export const ALL_EVENTS = "*";
@@ -195,6 +191,12 @@ function StoredFilter({ filter, registry }: { filter: string[] | undefined; regi
   );
 }
 
+/**
+ * Webhook administration: registered subscribers with their event filters, and the
+ * recent delivery attempts with state, attempt count, and last response.
+ *
+ * @Requirements GW_WEBHOOK_0004, GW_AUTH_0048
+ */
 export function WebhooksPage() {
   const subscribers = useWebhookSubscribers();
   const deliveries = useWebhookDeliveries();
@@ -209,6 +211,8 @@ export function WebhooksPage() {
   // when the registry arrives, and again if it changes.
   useEffect(() => setSelected(new Set(registry)), [registry]);
   const [created, setCreated] = useState<CreatedSubscriber | null>(null);
+  const [adding, setAdding] = useState(false);
+  const isAdmin = useIsAdmin();
 
   const subscriberName = (id: number | undefined) =>
     subscribers.data?.find((subscriber) => subscriber.id === id)?.name ?? String(id ?? "");
@@ -234,6 +238,7 @@ export function WebhooksPage() {
       { name: trimmedName, url: trimmedUrl, events: toWireFilter(selected, registry) },
       {
         onSuccess: (subscriber) => {
+          setAdding(false);
           setCreated(subscriber);
           setName("");
           setUrl("");
@@ -244,60 +249,58 @@ export function WebhooksPage() {
     );
   };
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Webhooks</h1>
-        <p className="text-sm text-muted-foreground">
-          Snapshot lifecycle events are POSTed to each subscriber that filters for them, signed with
-          HMAC-SHA256 and retried with backoff until delivered.
-        </p>
-      </div>
-
-      <form onSubmit={onCreate} className="space-y-2">
-        {/* Top-align every control so the short inputs and the button read as one row against
-            the taller Events picker, rather than staggering off its bottom edge. The button
-            carries an invisible label so it lines up with the inputs, not with the labels. */}
-        <div className="flex flex-wrap items-start gap-3">
-          <div className="space-y-2">
-            <Label htmlFor="subscriber-name">Subscriber name</Label>
-            <Input
-              id="subscriber-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              autoComplete="off"
-              placeholder="ci-bot"
-              aria-describedby="subscriber-form-hint"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="subscriber-url">Target URL</Label>
-            <Input
-              id="subscriber-url"
-              value={url}
-              onChange={(event) => setUrl(event.target.value)}
-              autoComplete="off"
-              placeholder="https://ci.example.com/hooks/skills-gateway"
-              aria-describedby="subscriber-form-hint"
-            />
-          </div>
-          <EventFilterField registry={registry} selected={selected} onSelectedChange={setSelected} />
-          <div className="space-y-2">
-            <Label className="invisible" aria-hidden>
-              Add subscriber
-            </Label>
-            <Button type="submit" className="w-full" disabled={!canCreate}>
-              {create.isPending ? "Adding…" : "Add subscriber"}
-            </Button>
-          </div>
+  const form = (
+    <form onSubmit={onCreate} className="space-y-3">
+      <div className="space-y-3">
+        <div className="space-y-2">
+          <Label htmlFor="subscriber-name">Subscriber name</Label>
+          <Input
+            id="subscriber-name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            autoComplete="off"
+            placeholder="ci-bot"
+            aria-describedby="subscriber-form-hint"
+          />
         </div>
-        <p id="subscriber-form-hint" className="text-xs text-muted-foreground">
-          A name, a target URL and at least one event are required — Add subscriber enables
-          once all three hold. {GATEWAY_NAME_HINT} With every event ticked the filter is stored
-          as <code>*</code>, so events added to the gateway later are delivered too.
-        </p>
-      </form>
+        <div className="space-y-2">
+          <Label htmlFor="subscriber-url">Target URL</Label>
+          <Input
+            id="subscriber-url"
+            value={url}
+            onChange={(event) => setUrl(event.target.value)}
+            autoComplete="off"
+            placeholder="https://ci.example.com/hooks/skills-gateway"
+            aria-describedby="subscriber-form-hint"
+          />
+        </div>
+        <EventFilterField registry={registry} selected={selected} onSelectedChange={setSelected} />
+      </div>
+      <p id="subscriber-form-hint" className="text-xs text-muted-foreground">
+        A name, a target URL and at least one event are required — Add subscriber enables
+        once all three hold. {GATEWAY_NAME_HINT} With every event ticked the filter is stored
+        as <code>*</code>, so events added to the gateway later are delivered too.
+      </p>
+      <DialogFooter>
+        <Button type="submit" disabled={!canCreate}>
+          {create.isPending ? "Adding…" : "Add subscriber"}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
 
+  return (
+    <IntegrationSection
+      title="Webhooks"
+      description="Snapshot lifecycle events are POSTed to each subscriber that filters for them, signed with HMAC-SHA256 and retried with backoff until delivered."
+      addLabel="New subscriber"
+      addTitle="New webhook subscriber"
+      addDescription="Choose the events it receives. Its signing secret is shown once, after it is added."
+      canAdd={isAdmin}
+      adding={adding}
+      onAddingChange={setAdding}
+      form={form}
+    >
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Subscribers</h2>
         {subscribers.isLoading ? <p>Loading…</p> : null}
@@ -317,7 +320,7 @@ export function WebhooksPage() {
                 <TableHead>Target URL</TableHead>
                 <TableHead>Events</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {isAdmin ? <TableHead className="text-right">Actions</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -331,22 +334,24 @@ export function WebhooksPage() {
                   <TableCell>
                     {subscriber.enabled ? <Badge>enabled</Badge> : <Badge variant="secondary">disabled</Badge>}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      aria-label={`Delete subscriber ${subscriber.name}`}
-                      disabled={remove.isPending}
-                      onClick={() =>
-                        remove.mutate(subscriber.id ?? 0, {
-                          onSuccess: () => toast.success(`Subscriber '${subscriber.name}' deleted`),
-                          onError: (error) => toast.error(error.message),
-                        })
-                      }
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
+                  {isAdmin ? (
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        aria-label={`Delete subscriber ${subscriber.name}`}
+                        disabled={remove.isPending}
+                        onClick={() =>
+                          remove.mutate(subscriber.id ?? 0, {
+                            onSuccess: () => toast.success(`Subscriber '${subscriber.name}' deleted`),
+                            onError: (error) => toast.error(error.message),
+                          })
+                        }
+                      >
+                        Delete
+                      </Button>
+                    </TableCell>
+                  ) : null}
                 </TableRow>
               ))}
             </TableBody>
@@ -396,6 +401,6 @@ export function WebhooksPage() {
       </section>
 
       {created ? <SubscriberSecretDialog created={created} onClose={() => setCreated(null)} /> : null}
-    </div>
+    </IntegrationSection>
   );
 }

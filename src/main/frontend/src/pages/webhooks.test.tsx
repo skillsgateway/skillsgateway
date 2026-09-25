@@ -6,13 +6,26 @@ import { expect, test } from "vitest";
 import { server } from "@/test/msw-server";
 import { WebhooksPage } from "./webhooks";
 
-function renderPage() {
+/**
+ * The session is seeded rather than fetched, so an assertion that a control is absent cannot pass
+ * merely because the roles have not arrived yet.
+ */
+function renderPage({ admin = true } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  queryClient.setQueryData(["me"], {
+    username: "alice",
+    roles: [{ role: admin ? "admin" : "auditor", source: "config" }],
+    claimsTruncated: false,
+  });
   return render(
     <QueryClientProvider client={queryClient}>
       <WebhooksPage />
     </QueryClientProvider>,
   );
+}
+
+async function openAdd(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole("button", { name: "New subscriber" }));
 }
 
 test("subscribers_and_their_delivery_attempts_are_listed", async () => {
@@ -26,6 +39,7 @@ test("subscribers_and_their_delivery_attempts_are_listed", async () => {
 test("add_subscriber_is_disabled_until_the_name_and_url_are_valid", async () => {
   const user = userEvent.setup();
   renderPage();
+  await openAdd(user);
   const nameField = await screen.findByLabelText("Subscriber name");
   const urlField = screen.getByLabelText("Target URL");
   const addButton = screen.getByRole("button", { name: "Add subscriber" });
@@ -58,6 +72,7 @@ test("add_subscriber_is_disabled_until_the_name_and_url_are_valid", async () => 
 test("created_subscriber_secret_is_shown_once_in_a_dialog", async () => {
   const user = userEvent.setup();
   renderPage();
+  await openAdd(user);
   await user.type(await screen.findByLabelText("Subscriber name"), "new-bot");
   await user.type(screen.getByLabelText("Target URL"), "https://ci.example.com/hooks/skills-gateway");
   await user.click(screen.getByRole("button", { name: "Add subscriber" }));
@@ -81,6 +96,7 @@ test("every_event_selected_submits_the_wildcard_filter", async () => {
     }),
   );
   renderPage();
+  await openAdd(user);
 
   // Every event is ticked by default, matching the wildcard the old free-text field defaulted to.
   await waitFor(() =>
@@ -107,6 +123,7 @@ test("a_partial_selection_submits_the_selected_names", async () => {
     }),
   );
   renderPage();
+  await openAdd(user);
 
   await waitFor(() =>
     expect(screen.getByRole("checkbox", { name: "All events" })).toBeChecked(),
@@ -130,6 +147,7 @@ test("a_partial_selection_submits_the_selected_names", async () => {
 test("add_subscriber_is_disabled_when_no_event_is_selected", async () => {
   const user = userEvent.setup();
   renderPage();
+  await openAdd(user);
   await waitFor(() =>
     expect(screen.getByRole("checkbox", { name: "All events" })).toBeChecked(),
   );
@@ -145,6 +163,7 @@ test("add_subscriber_is_disabled_when_no_event_is_selected", async () => {
 test("typing_narrows_the_offered_events_without_changing_the_selection", async () => {
   const user = userEvent.setup();
   renderPage();
+  await openAdd(user);
   expect(await screen.findByRole("checkbox", { name: "marketplace.snapshot.revoked" })).toBeInTheDocument();
 
   await user.type(screen.getByLabelText("Events"), "approved");
@@ -165,4 +184,11 @@ test("a_stored_filter_naming_an_unknown_event_is_marked", async () => {
   );
   renderPage();
   expect(await screen.findByText("unknown event")).toBeInTheDocument();
+});
+
+test("a_session_without_the_administrative_role_reads_the_subscribers_but_is_offered_no_change", async () => {
+  renderPage({ admin: false });
+  expect(await screen.findByRole("row", { name: /ci-bot.*snapshot\.approved.*enabled/ })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "New subscriber" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Delete subscriber/ })).not.toBeInTheDocument();
 });

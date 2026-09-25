@@ -243,10 +243,10 @@ requirements:
   - id: GW_AUDIT_0006
     title: Portal audit export surface
     significance: shall
-    description: The system shall provide, on the portal audit page behind the OIDC session, a control that downloads the ledger export stream and a listing of the registered audit export sinks with their target and current ledger position.
-    rationale: An operator must be able to hand an auditor a ledger extract and to see whether each configured sink is keeping up, without database or raw HTTP access.
+    description: "The system shall provide, behind the OIDC session, a control on the portal audit page that downloads the ledger export stream, and a listing of the registered audit export sinks, with their target and current ledger position, on the portal's integrations surface beside the webhook subscribers."
+    rationale: "An operator must be able to hand an auditor a ledger extract and to see whether each configured sink is keeping up, without database or raw HTTP access. A sink is a configured outbound target, the same kind of object as a webhook subscriber, so it is listed where those are, and the audit page stays the record an auditor opens to read rather than leading with a configuration form."
     categories: ["functional-suitability", "interaction-capability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_AUDIT_0008
     title: The ledger browse read is bounded, typed and stably paged
@@ -1745,6 +1745,14 @@ requirements:
     description: "The system shall report, on the authenticated session read the portal makes when it loads, the build version of the running gateway, taken from the build artifact itself and from no source a deployment can set; shall report that version as absent rather than as any substitute value when the running build carries none; and shall state it in the portal shell, stating nothing where it is absent."
     rationale: "An operator looking at a console whose whole purpose is answering which content this gateway serves and on whose authority cannot answer the prior question — which build is answering — without leaving the portal for a shell, and that is the question every incident starts with. It rides on the session read because the portal already makes that call once per load, so the fact costs no endpoint, no request and no new failure mode. It is not configurable because a version a deployment can retype is a version that can lie, and a dishonest answer here is worse than no answer; for the same reason an absent version is reported as absent rather than as invented text, since a build without build information is a fact about that build."
     categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_AUTH_0048
+    title: Portal navigation separates records from configuration and keeps moved addresses
+    significance: shall
+    description: "The portal's estate-wide navigation shall group the records a reader consults — the audit ledger and the adoption report — apart from the configuration an administrator sets — the estate-wide vetting chain and the outbound integrations; shall list the outbound integrations, webhook subscribers and audit export sinks, as sections beneath a single integrations entry; and shall keep the earlier address of a page it moves resolvable, so that an existing link reaches the page at its new address."
+    rationale: "A group that mixes what an auditor reads with what an administrator configures makes neither easy to find, and put a sink form above the ledger it exports. Webhook subscribers and export sinks are the same kind of object — a named outbound target with a signing secret shown once and a delivery position — so managing them in two unrelated places, in two layouts, obscures that. Addresses are published in the documentation and bookmarked, and reorganising the navigation is not a reason to break them."
+    categories: ["interaction-capability", "compatibility"]
     revision: 0.1.0
 
   - id: GW_INGEST_0033

@@ -13,13 +13,20 @@ A fixed sidebar, grouped:
 | Gateway | Overview | [`/`](#overview) |
 | Gateway | Review queue | [`/review`](#review-queue) — with the count of snapshots awaiting a decision, absent at zero |
 | Gateway | Marketplaces | [`/marketplaces`](#marketplaces) |
-| Governance | Audit log | [`/audit`](#audit-log) |
-| Governance | Vetting | [`/vetting`](#vetting-governance) — **shown only to administrators** |
-| Governance | Adoption | [`/adoption`](#adoption) |
-| Governance | Webhooks | [`/webhooks`](#webhooks) |
+| Oversight | Audit log | [`/audit`](#audit-log) |
+| Oversight | Adoption | [`/adoption`](#adoption) |
+| Configuration | Vetting chain | [`/vetting`](#vetting-chain-governance) — **shown only to administrators** |
+| Configuration | Integrations → Webhooks | [`/integrations/webhooks`](#webhooks) |
+| Configuration | Integrations → Audit sinks | [`/integrations/sinks`](#audit-sinks) |
 | Reference | API reference | `/docs` — the Scalar API reference, not a portal route |
 | Reference | Documentation | this manual — leaves the portal, opens in a new tab |
 | Reference | Source code | the project repository — leaves the portal, opens in a new tab |
+
+**Oversight** holds what is read; **Configuration** holds what is set. The
+outbound integrations — webhook subscribers and audit export sinks, the same kind
+of object — are two sections listed beneath **Integrations** on every page;
+`/integrations` opens the first. The earlier address `/webhooks` redirects to
+`/integrations/webhooks`, so existing links keep working.
 
 Inside a marketplace, the sidebar lists that marketplace beneath **Marketplaces**
 with its [sections](#marketplace-detail) — **Review** (with its own awaiting
@@ -248,7 +255,7 @@ On **Settings**, **shown only to a session holding the `admin` role**. Fed by
 else — the switch that governs the chain, and the visibility of its settings, sit
 above the content they govern.
 
-The card's description links to [Vetting](#vetting-governance), which governs the
+The card's description links to [Vetting chain](#vetting-chain-governance), which governs the
 default every setting here falls back to and lists every marketplace that departs
 from it.
 
@@ -727,9 +734,9 @@ page is gated by the server refusing them, not by the link being hidden.
 
 ---
 
-## Vetting (governance)
+## Vetting chain (governance)
 
-**Route:** `/vetting` · **Heading:** Vetting
+**Route:** `/vetting` · **Heading:** Vetting chain
 
 **Administrator-only.** The sidebar offers the entry only to a session holding
 the `admin` role, and the page itself renders a stated refusal —
@@ -802,42 +809,15 @@ with an error toast and an `alert`; it is never reported as a success.
 
 **Route:** `/audit` · **Heading:** Audit log
 
-The ledger and its export surface. Subtitle: "Append-only ledger of every facade
-fetch and administrative action, exportable to an external compliance system."
+The ledger. Subtitle: "Append-only ledger of every facade fetch and
+administrative action, exportable to an external compliance system."
 
 ### Export
 
-A **Download ledger (NDJSON)** link pointing at `/api/v1/audit/export` — a plain
-same-origin, session-authenticated download, not a fetch through the API client.
-
-### Export sinks
-
-An inline form with **Sink name** and **Target URL** posts to
-`POST /api/v1/audit/sinks`. **Add sink** stays disabled until the name matches
-`^[a-z0-9][a-z0-9_-]*$` and the target URL parses with a scheme; the scheme
-allowlist itself stays server-side. The response opens the same show-once secret dialog as
-[Access tokens](#access-tokens) and [Webhooks](#webhooks).
-
-| Column | Contents |
-| --- | --- |
-| Name | The sink name. |
-| Target URL | Where batches are POSTed. |
-| Position | The sink's cursor — the last ledger sequence handed to it, monospace. |
-| Behind | Entries not yet handed over, as "{n} entries". |
-| Status | `enabled` (primary badge) or `disabled` (secondary). |
-| Actions | **Replay** and **Delete**, both firing immediately. |
-
-**Replay** sets the cursor to `0` — the whole ledger, from the beginning — and
-toasts *Sink '{name}' will replay the ledger*. Replaying to an arbitrary
-position is API-only (`PUT /api/v1/audit/sinks/{id}/cursor`).
-
-**Delete** calls `DELETE /api/v1/audit/sinks/{id}`, taking the sink's delivery
-channel with it, and toasts *Sink '{name}' deleted*.
-
-Sink deliveries are ordinary webhook deliveries, so their attempts appear on the
-[Webhooks](#webhooks) page rather than here.
-
-Empty state: "No export sinks yet."
+**Download ledger (NDJSON)**, the page's header action, points at
+`/api/v1/audit/export` — a plain same-origin, session-authenticated download,
+not a fetch through the API client. The line beneath it states how many
+[audit sinks](#audit-sinks) push the same feed onwards and links to them.
 
 ### Ledger
 
@@ -918,14 +898,17 @@ Empty state: "Every identity is on the served tip."
 
 ## Webhooks
 
-**Route:** `/webhooks` · **Heading:** Webhooks
+**Route:** `/integrations/webhooks` (`/webhooks` redirects here) · **Heading:** Webhooks
 
 "Snapshot lifecycle events are POSTed to each subscriber that filters for them,
 signed with HMAC-SHA256 and retried with backoff until delivered."
 
-### Add subscriber
+Reading requires the auditor role; adding and deleting require an administrator,
+and the page offers those controls to an administrator only.
 
-An inline form with **Subscriber name**, **Target URL** and **Events**. Events is
+### New subscriber
+
+**New subscriber** opens a dialog with **Subscriber name**, **Target URL** and **Events**. Events is
 a checkbox list built from `GET /api/v1/webhooks/events`, so the portal offers exactly
 the names this gateway emits rather than asking for them: **All events** ticks or
 clears every one, and the box above the list narrows what is shown without
@@ -938,7 +921,7 @@ the target URL parses with a scheme, and at least one event is ticked; only then
 `POST /api/v1/webhooks` called. The scheme allowlist remains server-side and surfaces
 as an error toast.
 
-The response opens a show-once dialog — "This signing secret is shown exactly
+On success the dialog closes and a show-once dialog opens — "This signing secret is shown exactly
 once — copy it now." — with the `whsec_…` value in a code block and a clipboard
 button that flips to a checkmark for two seconds, the same pattern as
 [Access tokens](#access-tokens).
@@ -951,7 +934,7 @@ button that flips to a checkmark for two seconds, the same pattern as
 | Target URL | The registered endpoint. |
 | Events | The filter, rendered as a chip; `*` displays as "all events". A name absent from the served registry is flagged with an **unknown event** badge, whose tooltip names it. |
 | Status | `enabled` (primary badge) or `disabled` (secondary). |
-| Actions | **Delete**, which fires immediately. |
+| Actions | **Delete**, which fires immediately — administrators only. |
 
 **Delete** calls `DELETE /api/v1/webhooks/{id}` and toasts *Subscriber '{name}'
 deleted*. It removes the delivery history with the subscriber.
@@ -978,6 +961,49 @@ deliveries yet."
 The secret is never re-displayed anywhere on this page. See
 [Receiving lifecycle webhooks](../guides/lifecycle-webhooks.md) for the payload,
 headers and signature verification.
+
+
+---
+
+## Audit sinks
+
+**Route:** `/integrations/sinks` · **Heading:** Audit sinks
+
+The audit ledger pushed to an external compliance system, each sink with its
+position in it. Reading the list requires the auditor role; adding, replaying
+and deleting require an administrator, and the page offers those controls to an
+administrator only.
+
+### New sink
+
+**New sink** opens a dialog with **Sink name** and **Target URL**, which posts to
+`POST /api/v1/audit/sinks`. **Add sink** stays disabled until the name matches
+`^[a-z0-9][a-z0-9_-]*$` and the target URL parses with a scheme; the scheme
+allowlist itself stays server-side. On success the dialog closes and the same show-once secret dialog opens as
+[Access tokens](#access-tokens) and [Webhooks](#webhooks).
+
+### Sinks
+
+| Column | Contents |
+| --- | --- |
+| Name | The sink name. |
+| Target URL | Where batches are POSTed. |
+| Position | The sink's cursor — the last ledger sequence handed to it, monospace. |
+| Behind | Entries not yet handed over, as "{n} entries". |
+| Status | `enabled` (primary badge) or `disabled` (secondary). |
+| Actions | **Replay** and **Delete**, both firing immediately — administrators only. |
+
+**Replay** sets the cursor to `0` — the whole ledger, from the beginning — and
+toasts *Sink '{name}' will replay the ledger*. Replaying to an arbitrary
+position is API-only (`PUT /api/v1/audit/sinks/{id}/cursor`).
+
+**Delete** calls `DELETE /api/v1/audit/sinks/{id}`, taking the sink's delivery
+channel with it, and toasts *Sink '{name}' deleted*.
+
+Sink deliveries are ordinary webhook deliveries, so their attempts appear on the
+[Webhooks](#webhooks) page rather than here.
+
+Empty state: "No export sinks yet."
 
 ---
 

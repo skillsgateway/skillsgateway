@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router-dom";
 import { expect, test } from "vitest";
@@ -18,15 +17,17 @@ function renderPage() {
   );
 }
 
-test("export_download_and_sink_positions_are_shown", async () => {
+test("the_ledger_download_is_the_page_action_and_the_sinks_are_linked", async () => {
   renderPage();
   // The download link points at the NDJSON stream, not at a rendered table.
   expect(screen.getByRole("link", { name: /Download ledger/ })).toHaveAttribute(
     "href",
     "/api/v1/audit/export",
   );
-  // The sink row carries its target and its position in the ledger.
-  expect(await screen.findByRole("row", { name: /siem.*42.*3 entries/ })).toBeInTheDocument();
+  // The sinks are an integration now; the audit page says how many there are and where.
+  expect(await screen.findByText(/Pushed onwards to 1 sink/)).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Audit sinks" })).toHaveAttribute("href", "/integrations/sinks");
+  expect(screen.queryByLabelText("Sink name")).not.toBeInTheDocument();
 });
 
 /**
@@ -113,41 +114,6 @@ test("column_filters_offer_completion_from_present_values", async () => {
     );
     expect(marketplaceOptions).toEqual(["corp-marketplace", "ri-2"]);
   });
-});
-
-test("add_sink_is_disabled_until_the_name_and_url_are_valid", async () => {
-  const user = userEvent.setup();
-  renderPage();
-  const nameField = await screen.findByLabelText("Sink name");
-  const urlField = screen.getByLabelText("Target URL");
-  const addButton = screen.getByRole("button", { name: "Add sink" });
-
-  expect(addButton).toBeDisabled();
-
-  await user.type(nameField, "   ");
-  expect(addButton).toBeDisabled();
-
-  await user.clear(nameField);
-  await user.type(nameField, "new-siem");
-  expect(addButton).toBeDisabled();
-
-  await user.type(urlField, "siem.example.com/ingest");
-  expect(addButton).toBeDisabled();
-
-  await user.clear(urlField);
-  await user.type(urlField, "https://siem.example.com/ingest");
-  expect(addButton).toBeEnabled();
-});
-
-test("created_sink_secret_is_shown_once_in_a_dialog", async () => {
-  const user = userEvent.setup();
-  renderPage();
-  await user.type(await screen.findByLabelText("Sink name"), "new-siem");
-  await user.type(screen.getByLabelText("Target URL"), "https://siem.example.com/ingest");
-  await user.click(screen.getByRole("button", { name: "Add sink" }));
-  expect(await screen.findByTestId("sink-secret")).toHaveTextContent("whsec_sink_shown_once");
-  await user.click(screen.getByRole("button", { name: "Done" }));
-  expect(screen.queryByTestId("sink-secret")).not.toBeInTheDocument();
 });
 
 /**

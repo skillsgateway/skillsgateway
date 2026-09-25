@@ -65,7 +65,8 @@ delivery listings require **auditor** (or admin). See
 
 === "Portal"
 
-    **Webhooks** → fill in **Subscriber name** and **Target URL**, tick the **Events**
+    **Integrations** → **Webhooks** → **New subscriber** → fill in
+    **Subscriber name** and **Target URL**, tick the **Events**
     to receive (all of them by default; the box above the list narrows it) →
     **Add subscriber**. The signing secret appears in a dialog with a copy
     button.

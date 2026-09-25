@@ -190,4 +190,4 @@ then incomplete; see [Identity providers](../../guides/identity-providers.md).
 | `/actuator/sbom` | CycloneDX SBOM. Authenticated. |
 | `/v3/api-docs`, `/docs` | OpenAPI document and Scalar UI. Authenticated. |
 | `/oauth2/authorization/idp`, `/login/oauth2/code/idp` | OIDC login and callback. |
-| `/`, `/marketplaces`, `/marketplaces/{name}`, `/audit`, `/adoption`, `/tokens`, `/webhooks` | Forwarded to the single-page application. |
+| `/`, `/marketplaces`, `/marketplaces/{name}`, `/review`, `/audit`, `/vetting`, `/adoption`, `/tokens`, `/integrations`, `/integrations/webhooks`, `/integrations/sinks`, `/webhooks` | Forwarded to the single-page application. |

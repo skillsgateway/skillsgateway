@@ -96,8 +96,8 @@ engine.
 
 === "Portal"
 
-    **Audit log** → **Export sinks** → **Sink name** and **Target URL** →
-    **Add sink**. The signing secret appears in a show-once dialog.
+    **Integrations** → **Audit sinks** → **New sink** → **Sink name** and
+    **Target URL** → **Add sink**. The signing secret appears in a show-once dialog.
 
 === "API"
 
