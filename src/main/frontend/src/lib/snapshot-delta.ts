@@ -2,11 +2,11 @@
  * The one-line answer to "how big is this review, and what is arriving?" — assembled from two reads
  * the portal already makes, so the snapshot card can say it before anything is expanded.
  *
- * `GET /snapshots/{id}/diff` gives the changed paths and a unified diff per path; lines are counted
- * from that text. `GET /snapshots/{id}/content-diff` already carries per-status skill counts in its
+ * `GET /snapshots/{id}/diff` gives the changed paths and, in `total` and `summary`, the gateway's
+ * own counts over the whole diff; a response without them is counted here from the page's text. `GET /snapshots/{id}/content-diff` already carries per-status skill counts in its
  * `summary`. Nothing here is asked of the server that it does not already answer.
  *
- * @Requirements GW_APPROVAL_0018
+ * @Requirements GW_APPROVAL_0018, GW_APPROVAL_0026
  */
 
 type DiffEntry = {
@@ -17,7 +17,14 @@ type DiffEntry = {
   diff?: string;
 };
 
-type FileDiff = { baselineSha?: string; truncated?: boolean; entries?: readonly DiffEntry[] };
+type FileDiff = {
+  baselineSha?: string;
+  truncated?: boolean;
+  entries?: readonly DiffEntry[];
+  /** Changed paths over the whole diff, not the page. */
+  total?: number;
+  summary?: { binary?: number; linesAdded?: number; linesRemoved?: number };
+};
 
 type ContentDiff = {
   baselineSha?: string;
@@ -87,19 +94,29 @@ export function countDiffLines(diff: string): { added: number; removed: number }
  */
 export function snapshotDelta(diff: FileDiff, content: ContentDiff | undefined): SnapshotDelta {
   const entries = diff.entries ?? [];
+  let files = entries.length;
   let added = 0;
   let removed = 0;
   let binary = 0;
   let cut = diff.truncated === true;
-  for (const entry of entries) {
-    if (entry.truncated) cut = true;
-    if (entry.binary || !entry.diff) {
-      binary += entry.binary ? 1 : 0;
-      continue;
+  if (diff.summary && diff.total !== undefined) {
+    // The gateway counted the whole diff, so nothing here is taken over a cut set.
+    files = diff.total;
+    added = diff.summary.linesAdded ?? 0;
+    removed = diff.summary.linesRemoved ?? 0;
+    binary = diff.summary.binary ?? 0;
+    cut = false;
+  } else {
+    for (const entry of entries) {
+      if (entry.truncated) cut = true;
+      if (entry.binary || !entry.diff) {
+        binary += entry.binary ? 1 : 0;
+        continue;
+      }
+      const lines = countDiffLines(entry.diff);
+      added += lines.added;
+      removed += lines.removed;
     }
-    const lines = countDiffLines(entry.diff);
-    added += lines.added;
-    removed += lines.removed;
   }
 
   const baseline = diff.baselineSha ?? null;
@@ -113,5 +130,5 @@ export function snapshotDelta(diff: FileDiff, content: ContentDiff | undefined):
       }
     : null;
 
-  return { baseline, files: entries.length, added, removed, binary, skills, cut };
+  return { baseline, files, added, removed, binary, skills, cut };
 }

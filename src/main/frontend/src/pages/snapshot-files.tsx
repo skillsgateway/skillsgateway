@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { useMarketplaces, useSnapshotFiles } from "@/api/queries";
+import { useMarketplaces, useSnapshotDirectory } from "@/api/queries";
 import { SnapshotExplorer } from "@/components/snapshot-explorer";
 import { SnapshotStateBadge } from "@/components/snapshot-state";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,8 @@ export function SnapshotFilesPage() {
   const marketplaces = useMarketplaces();
   // A malformed id addresses nothing, so nothing is asked of the gateway.
   const readable = Number.isInteger(snapshotId) && snapshotId > 0 ? snapshotId : null;
-  const files = useSnapshotFiles(readable);
+  // The root listing is the readability probe; the explorer reads the same cached query.
+  const files = useSnapshotDirectory(readable, "");
 
   const select = (path: string) => {
     const next = new URLSearchParams(params);

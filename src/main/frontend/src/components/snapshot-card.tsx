@@ -22,6 +22,7 @@ import { ProvenanceDetails } from "@/components/provenance-details";
 import { SnapshotContentDiff } from "@/components/snapshot-content-diff";
 import { SnapshotDelta } from "@/components/snapshot-delta";
 import { SnapshotExplorer } from "@/components/snapshot-explorer";
+import { SnapshotFileChanges } from "@/components/snapshot-file-changes";
 import { RevocationNote, SnapshotStateBadge } from "@/components/snapshot-state";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
@@ -440,8 +441,9 @@ export function SnapshotCard({
               <SnapshotExplorer snapshotId={id} selectedPath={path} onSelect={onPath} />
             </div>
           </TabsContent>
-          <TabsContent value="diff" className="pt-2">
+          <TabsContent value="diff" className="space-y-6 pt-2">
             <SnapshotContentDiff snapshotId={id} />
+            <SnapshotFileChanges snapshotId={id} />
           </TabsContent>
           <TabsContent value="inventory" className="pt-2">
             <SnapshotInventory snapshotId={id} />

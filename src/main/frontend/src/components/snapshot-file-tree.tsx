@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronRight, File, FilePlus2, FilePen, FileX2, Folder, FolderOpen } from "lucide-react";
-import type { TreeFile, TreeNode } from "@/lib/snapshot-tree";
+import type { ReactNode } from "react";
+import type { SnapshotTreeChild } from "@/api/queries";
 
 const STATUS_ICON = {
   added: FilePlus2,
@@ -15,14 +16,17 @@ function size(bytes: number | undefined): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
 }
 
+function plural(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
 /**
  * The right slot of a file row: what changed, or how big it is.
  *
- * The change is what the reviewer is deciding, so it takes the slot when there is one — a
- * status the page already knows and used to make the reviewer find by clicking. Only
+ * The change is what the reviewer is deciding, so it takes the slot when there is one. Only
  * `removed` is destructive; added and modified are facts, not objections, and stay muted.
  */
-function FileMarker({ node }: { node: TreeFile }) {
+function FileMarker({ node }: { node: SnapshotTreeChild }) {
   if (!node.status) {
     return <span className="shrink-0 text-muted-foreground">{size(node.size)}</span>;
   }
@@ -38,80 +42,95 @@ function FileMarker({ node }: { node: TreeFile }) {
 }
 
 /**
- * The snapshot's paths as a collapsible tree.
+ * The right slot of a directory row: how many changes are beneath it, or how many files — so a
+ * reviewer can find the change without opening every folder.
+ */
+function DirectoryMarker({ node }: { node: SnapshotTreeChild }) {
+  const changed = node.changed ?? 0;
+  return (
+    <span className="shrink-0 text-muted-foreground">
+      {changed > 0 ? `${changed} changed` : (node.files ?? 0)}
+    </span>
+  );
+}
+
+/**
+ * One level of the snapshot's tree: directories as disclosures, files as selectable rows.
+ *
+ * A directory's contents are the caller's to render (`renderChildren`), because they are loaded
+ * only when it opens — a snapshot of any size is read one folder at a time.
  *
  * Built from nested lists of buttons rather than the ARIA `tree` role: a real tree widget owes
  * its users roving tabindex and the full arrow-key contract, and a half-implemented one is
  * worse for a screen reader than the disclosure pattern here, which every browser already
  * operates with Tab and Enter.
  *
- * @Requirements GW_INGEST_0032
+ * @Requirements GW_INGEST_0032, GW_APPROVAL_0025
  */
 export function SnapshotFileTree({
-  nodes,
+  entries,
   selectedPath,
   expanded,
   onToggle,
   onSelect,
+  renderChildren,
+  fullPaths = false,
 }: {
-  nodes: readonly TreeNode[];
+  entries: readonly SnapshotTreeChild[];
   selectedPath: string | null;
   /** Paths of the directories currently open. */
   expanded: ReadonlySet<string>;
   onToggle: (path: string) => void;
   onSelect: (path: string) => void;
+  renderChildren: (path: string) => ReactNode;
+  /** Label files with their full path rather than their name — for a flat list of search matches. */
+  fullPaths?: boolean;
 }) {
   return (
     <ul className="space-y-0.5">
-      {nodes.map((node) =>
-        node.kind === "directory" ? (
-          <li key={`d:${node.path}`}>
+      {entries.map((node) => {
+        const path = node.path ?? "";
+        const name = node.name ?? path;
+        return node.kind === "directory" ? (
+          <li key={`d:${path}`}>
             <button
               type="button"
-              aria-expanded={expanded.has(node.path)}
-              onClick={() => onToggle(node.path)}
+              aria-expanded={expanded.has(path)}
+              aria-label={`${name}, ${plural(node.files ?? 0, "file")}${
+                (node.changed ?? 0) > 0 ? `, ${node.changed} changed` : ""
+              }`}
+              onClick={() => onToggle(path)}
               className="flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs hover:bg-muted outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             >
-              {expanded.has(node.path) ? (
+              {expanded.has(path) ? (
                 <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
               ) : (
                 <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
               )}
-              {expanded.has(node.path) ? (
+              {expanded.has(path) ? (
                 <FolderOpen className="size-3.5 shrink-0 text-primary" aria-hidden />
               ) : (
                 <Folder className="size-3.5 shrink-0 text-primary" aria-hidden />
               )}
-              <span className="min-w-0 flex-1 truncate font-medium">{node.name}</span>
+              <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
+              <DirectoryMarker node={node} />
             </button>
-            {expanded.has(node.path) ? (
-              <div className="ml-3 border-l pl-2">
-                <SnapshotFileTree
-                  nodes={node.children}
-                  selectedPath={selectedPath}
-                  expanded={expanded}
-                  onToggle={onToggle}
-                  onSelect={onSelect}
-                />
-              </div>
+            {expanded.has(path) ? (
+              <div className="ml-3 border-l pl-2">{renderChildren(path)}</div>
             ) : null}
           </li>
         ) : (
-          <li key={`f:${node.path}`}>
+          <li key={`f:${path}`}>
             <button
               type="button"
-              aria-current={node.path === selectedPath ? "true" : undefined}
-              aria-label={
-                node.status
-                  ? `${node.path}, ${node.status}`
-                  : `${node.path}, ${size(node.size)}`
-              }
-              onClick={() => onSelect(node.path)}
+              aria-current={path === selectedPath ? "true" : undefined}
+              aria-label={node.status ? `${path}, ${node.status}` : `${path}, ${size(node.size)}`}
+              onClick={() => onSelect(path)}
               // Selected is a violet tint, hover is the neutral one. They have to differ by hue
               // rather than by token, because `--accent` and `--muted` are the same value in both
               // themes — so "use a different background token" would have been a visual no-op.
               className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left font-mono text-xs hover:bg-muted outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 ${
-                node.path === selectedPath ? "bg-primary/10 font-semibold" : ""
+                path === selectedPath ? "bg-primary/10 font-semibold" : ""
               }`}
             >
               {(() => {
@@ -125,12 +144,12 @@ export function SnapshotFileTree({
                   />
                 );
               })()}
-              <span className="min-w-0 flex-1 truncate">{node.name}</span>
+              <span className="min-w-0 flex-1 truncate">{fullPaths ? path : name}</span>
               <FileMarker node={node} />
             </button>
           </li>
-        ),
-      )}
+        );
+      })}
     </ul>
   );
 }
