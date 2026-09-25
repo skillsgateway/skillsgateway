@@ -2912,12 +2912,24 @@ availability.</p>
 <p>A marketplace registered with a typo, one whose upstream is abandoned, and one
 whose upstream moved all end the same way: remove it, and register again if
 there is anything to register.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Portal</label><label for="__tabbed_1_2">API</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>On the marketplace's <strong>Settings</strong>, choose <strong>Remove <em>name</em>…</strong>, write the
+reason, and confirm. The portal returns to <strong>Marketplaces</strong>. See
+<a href="../../reference/portal/#remove-marketplace-administrators">Remove marketplace</a>.</p>
+</div>
+<div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>-u<span class="w"> </span>...<span class="w"> </span>https://skills.corp.example/api/v1/marketplaces/acme<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"reason":"upstream moved"}'</span>
 </code></pre></div>
+<p>See the <a href="../../reference/api/marketplaces/#delete-marketplacesname">reference</a>.</p>
+</div>
+</div>
+</div>
 <p>Removal withdraws everything the marketplace serves and stops it being synced or
-fetched, but keeps its snapshots and their history. It is API-only and needs an
-administrator; see the <a href="../../reference/api/marketplaces/#delete-marketplacesname">reference</a>.</p>
+fetched, but keeps its snapshots and their history. It needs an administrator,
+and it states a reason, which the ledger records.</p>
 <p><strong>An upstream that moved.</strong> The URL cannot be changed — that would relabel the
 provenance of content already approved from somewhere else — so remove the
 marketplace and register the same name against the new URL. Clients keep their
@@ -2936,7 +2948,8 @@ carry over.</p>
 <li><strong>Approver grants do not.</strong> Grant again on the new marketplace.</li>
 <li><strong>The declarative estate does, unless you change it.</strong> A marketplace still
   declared in <code>skills-gateway.estate.marketplaces</code> is registered again, as a
-  new marketplace, on the next reconciliation. Remove the declaration first.</li>
+  new marketplace, on the next reconciliation. Remove the declaration first;
+  until then the portal does not offer the removal.</li>
 </ul>
 <p>The removed marketplace's vetter toggles and chain settings are kept in the
 database but no longer listed; set them again on the new marketplace.</p>

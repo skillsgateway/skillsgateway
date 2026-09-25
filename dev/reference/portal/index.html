@@ -2237,6 +2237,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#remove-marketplace-administrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remove marketplace (administrators)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#review-and-snapshots" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3142,6 +3153,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#remove-marketplace-administrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remove marketplace (administrators)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#review-and-snapshots" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3842,7 +3864,7 @@ renders "Marketplace '{name}' not found." with a link back.</p>
 </tr>
 <tr>
 <td><strong>Settings</strong></td>
-<td>The <a href="#upstream">upstream</a> facts and, for an administrator, the <a href="#vetting-chain-administrators">vetting chain</a></td>
+<td>The <a href="#upstream">upstream</a> facts and, for an administrator, the <a href="#vetting-chain-administrators">vetting chain</a> and <a href="#remove-marketplace-administrators">removal</a></td>
 </tr>
 </tbody>
 </table>
@@ -3916,6 +3938,28 @@ are local until <strong>Save order</strong> writes the whole arrangement through
 not one per hop — and <strong>Discard changes</strong> puts it back. While an arrangement is
 unsaved the drawing above shows the proposed order and the list says it is not
 saved yet.</p>
+<h3 id="remove-marketplace-administrators">Remove marketplace (administrators)<a class="headerlink" href="#remove-marketplace-administrators" title="Permanent link">&para;</a></h3>
+<p>On <strong>Settings</strong>, last, and <strong>shown only to a session holding the <code>admin</code>
+role</strong>. <strong>Remove <em>name</em>…</strong> opens a confirmation titled with the marketplace's
+name. The confirmation states what removal does: every approved snapshot is
+withdrawn, so the facade serves nothing under the name; tokens lose their grant
+to publish to it and keep their grant to fetch it; the record, the snapshots and
+the ledger are kept; and the name can be registered again as a new marketplace.
+It also asks for a <strong>Reason</strong>, which is recorded on the removal and on each
+withdrawal. <strong>Remove <em>name</em></strong> is disabled until the reason holds something
+other than whitespace, and reads <em>Removing…</em> while the request is in flight.</p>
+<p>The confirmation calls
+<a href="../api/marketplaces/#delete-marketplacesname"><code>DELETE /api/v1/marketplaces/{name}</code></a>.
+On success the portal goes to <strong>Marketplaces</strong> and a toast states how many
+approved snapshots were withdrawn. A refusal is shown as a toast with the
+server's reason, and the confirmation stays open.</p>
+<p>A marketplace that the <a href="../../guides/declarative-estate/">declarative estate</a>
+declares is not offered for removal. The next reconciliation would register the
+name again as a new, empty marketplace. The button is disabled, and a line
+beneath it says to remove the declaration and restart the gateway first. The
+portal reads this from the last reconciliation report,
+<a href="../api/estate/"><code>GET /api/v1/estate</code></a>. If that report cannot be read, the
+button stays available, because the server accepts the removal.</p>
 <h3 id="review-and-snapshots">Review and Snapshots<a class="headerlink" href="#review-and-snapshots" title="Permanent link">&para;</a></h3>
 <p><strong>One snapshot is open at a time</strong> in either section, so neither grows longer
 with every ingest; the rest are one line each, and <strong>Open</strong> on a line opens that
