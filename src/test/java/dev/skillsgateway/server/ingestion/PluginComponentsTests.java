@@ -6,6 +6,7 @@ import dev.skillsgateway.server.ingestion.PluginComponents.Component;
 import dev.skillsgateway.server.ingestion.PluginComponents.Components;
 import dev.skillsgateway.server.ingestion.PluginComponents.Hook;
 import dev.skillsgateway.server.ingestion.PluginComponents.Manifest;
+import dev.skillsgateway.server.ingestion.PluginComponents.McpCommand;
 import io.github.reqstool.annotations.SVCs;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -332,5 +333,54 @@ class PluginComponentsTests {
         assertThat(PluginComponents.normalizeRoot("a//b/")).isEqualTo("a/b");
         assertThat(PluginComponents.normalizeRoot("../escape")).isNull();
         assertThat(PluginComponents.normalizeRoot("/abs")).isNull();
+    }
+
+    @Test
+    void localMcpServerCommandsAreReadFromEverySourceAtTheirCommandLine() throws IOException {
+        String marketplace = """
+                {"name": "m", "plugins": [{"name": "p", "source": "./p",
+                  "mcpServers": {"entry": {
+                    "command": "uvx", "args": ["entry-server"]}}}]}
+                """;
+        Map<String, String> files =
+                files("p/.mcp.json", """
+                {"mcpServers": {
+                  "wrapped": {"type": "stdio",
+                    "command": "npx", "args": ["-y", "pkg@1", 3]},
+                  "remote": {"type": "http", "url": "https://mcp.example/api", "command": "ignored"},
+                  "sse": {"type": "sse", "url": "https://mcp.example/sse"}
+                }}
+                """, "p/.claude-plugin/plugin.json", """
+                {"mcpServers": ["./cfg/bare.json", "./bundle.mcpb", {
+                  "inline": {"command": "${CLAUDE_PLUGIN_ROOT}/bin/srv"}}]}
+                """, "p/cfg/bare.json", """
+                {"bare": {
+                  "command": "sh", "args": ["-c", "echo hi"]}}
+                """);
+        Manifest manifest =
+                Manifest.parse(".claude-plugin/marketplace.json", marketplace.getBytes(StandardCharsets.UTF_8));
+
+        Components components = PluginComponents.read(new MapFiles(files), "p", manifest, "/plugins/0");
+
+        assertThat(components.mcpServers())
+                .extracting(Component::name)
+                .containsExactly("wrapped", "remote", "sse", "bare", "bundle", "inline", "entry");
+        assertThat(components.mcpCommands())
+                .extracting(McpCommand::name, McpCommand::command, McpCommand::args, McpCommand::location)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(
+                                "wrapped", "npx", java.util.List.of("-y", "pkg@1", "3"), "p/.mcp.json:3"),
+                        org.assertj.core.groups.Tuple.tuple(
+                                "bare", "sh", java.util.List.of("-c", "echo hi"), "p/cfg/bare.json:2"),
+                        org.assertj.core.groups.Tuple.tuple(
+                                "inline",
+                                "${CLAUDE_PLUGIN_ROOT}/bin/srv",
+                                java.util.List.of(),
+                                "p/.claude-plugin/plugin.json:2"),
+                        org.assertj.core.groups.Tuple.tuple(
+                                "entry",
+                                "uvx",
+                                java.util.List.of("entry-server"),
+                                ".claude-plugin/marketplace.json:3"));
     }
 }

@@ -14,17 +14,17 @@ spec is reviewed after the fact.
 
 ## 2. Local server commands in the layout reader
 
-- [ ] 2.1 `PluginComponentsTests`: local servers from `.mcp.json` (wrapped and
+- [x] 2.1 `PluginComponentsTests`: local servers from `.mcp.json` (wrapped and
   bare map), inline `plugin.json` `mcpServers`, a referenced JSON file and the
   marketplace entry, each with its command, arguments and the `path:line` of
   its `command`; remote and bundle servers carry none. Watch it fail.
-- [ ] 2.2 `PluginComponents.Components.mcpCommands`, annotated
+- [x] 2.2 `PluginComponents.Components.mcpCommands`, annotated
   `@Requirements GW_VETTING_0050`. Make 2.1 green. The inventory API is
   unchanged: `OpenApiContractTests` passes without regenerating.
 
 ## 3. Scanning (SVC_GW_VETTING_0050–0052)
 
-- [ ] 3.1 `ExecutableSurfaceVetterTests`, over `InMemorySnapshot`:
+- [x] 3.1 `ExecutableSurfaceVetterTests`, over `InMemorySnapshot`:
   - 0050: `npx -y`, `uvx --from git+…`, `pnpm dlx`, `bunx`, `pip install`
     through `sh -c`, `cmd /c npx`, `/usr/local/bin/npx`, `env X=1 npx`, and
     `${RUNNER:-npx}` are one medium `mcp-package-run` each at the command's
@@ -41,10 +41,10 @@ spec is reviewed after the fact.
     launch keeps the hook's high finding.
 
   Watch each fail against the current vetter.
-- [ ] 3.2 Extend `ExecutableSurfaceVetter` (`@Requirements GW_VETTING_0050,
+- [x] 3.2 Extend `ExecutableSurfaceVetter` (`@Requirements GW_VETTING_0050,
   0051, 0052`), with the summary and description updated. Make 3.1 green, and
   keep every existing test green unchanged.
-- [ ] 3.3 Integration: extend `ExecutableSurfaceTests` (`@SVCs
+- [x] 3.3 Integration: extend `ExecutableSurfaceTests` (`@SVCs
   SVC_GW_VETTING_0051`) so an MCP download-and-execute blocks at approval, its
   finding carries a blob and a group waiver clears it, and an `npx` server
   alone warns. Verify with the test class.

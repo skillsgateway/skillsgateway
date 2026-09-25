@@ -2,6 +2,7 @@ package dev.skillsgateway.server.vetting;
 
 import dev.skillsgateway.server.ingestion.PluginComponents;
 import dev.skillsgateway.server.ingestion.PluginComponents.Hook;
+import dev.skillsgateway.server.ingestion.PluginComponents.McpCommand;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -12,6 +13,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -33,9 +35,13 @@ import org.springframework.stereotype.Component;
  * {@code .claude-plugin/plugin.json}: shape, not manifest, as {@link SkillConformanceVetter} does,
  * so a plugin cannot keep its hooks out of view by being left out of the manifest.
  *
+ * <p>Every local MCP server's command is scanned with the same rules under its own ids
+ * (GW_VETTING_0050 - GW_VETTING_0052): a package runner warns, because nearly every published
+ * server starts that way, and download-and-execute blocks, as in a hook.
+ *
  * <p><b>What it cannot do.</b> It matches shapes. A fetch reached through variable indirection or
- * an encoded payload walks past it, and MCP server and monitor commands are listed in the
- * inventory but not examined here.
+ * an encoded payload walks past it, and monitor commands are listed in the inventory but not
+ * examined here.
  */
 @Component
 public class ExecutableSurfaceVetter implements Vetter {
@@ -55,6 +61,15 @@ public class ExecutableSurfaceVetter implements Vetter {
     private static final Pattern SCRIPT =
             Pattern.compile(".*\\.(?:sh|bash|zsh|py|js|mjs|cjs|ts|ps1|cmd|bat|rb|pl|php)$");
 
+    static final String MCP_FETCH_EXEC = "mcp-fetch-exec";
+    static final String MCP_PACKAGE_RUN = "mcp-package-run";
+
+    /** {@code ${VAR:-default}}: what runs when the variable is unset, which is what is approved. */
+    private static final Pattern VARIABLE_DEFAULT = Pattern.compile("\\$\\{\\w+:-([^}]*)}");
+
+    private static final Set<String> SHELLS = Set.of("sh", "bash", "zsh", "dash", "ksh");
+    private static final Set<String> RUNNERS = Set.of("npx", "bunx", "pnpx", "uvx");
+
     @Override
     public String name() {
         return "executable-surface";
@@ -68,12 +83,21 @@ public class ExecutableSurfaceVetter implements Vetter {
     @Override
     public String description() {
         return "Lists every hook a plugin declares with its trigger, and blocks where a hook — or a script it"
-                + " launches — downloads code and executes it, or runs a package fetched at run time. Shape-based:"
-                + " indirection and encoding walk past it, and MCP server and monitor commands are not examined.";
+                + " launches — downloads code and executes it, or runs a package fetched at run time. Scans local"
+                + " MCP server commands too: a package runner warns, download-and-execute blocks. Shape-based:"
+                + " indirection and encoding walk past it, and monitor commands are not examined.";
     }
 
     @Override
-    @Requirements({"GW_VETTING_0047", "GW_VETTING_0048", "GW_VETTING_0049", "GW_VETTING_0023"})
+    @Requirements({
+        "GW_VETTING_0047",
+        "GW_VETTING_0048",
+        "GW_VETTING_0049",
+        "GW_VETTING_0023",
+        "GW_VETTING_0050",
+        "GW_VETTING_0051",
+        "GW_VETTING_0052"
+    })
     public Verdict vet(SnapshotUnderVetting snapshot) {
         try {
             return new Run(SnapshotFiles.of(snapshot)).vet();
@@ -89,7 +113,10 @@ public class ExecutableSurfaceVetter implements Vetter {
         private final SnapshotFiles files;
         private final Map<String, Finding> findings = new LinkedHashMap<>();
         private final Set<String> scanned = new HashSet<>();
+        // Apart from the hooks' set, so a server's medium scan never hides a hook's high one.
+        private final Set<String> mcpScanned = new HashSet<>();
         private int hooks;
+        private int servers;
 
         Run(SnapshotFiles files) {
             this.files = files;
@@ -115,12 +142,17 @@ public class ExecutableSurfaceVetter implements Vetter {
                 for (Hook hook : components.hooks()) {
                     hook(root.getKey(), hook);
                 }
+                for (McpCommand server : components.mcpCommands()) {
+                    mcp(root.getKey(), server);
+                }
             }
+            Set<String> launched = new HashSet<>(scanned);
+            launched.addAll(mcpScanned);
             return Verdict.of(
                     List.copyOf(findings.values()),
-                    "examined %d plugin root(s): %d hook(s), %d launched file(s) scanned for runtime fetches;"
-                                    .formatted(roots.size(), hooks, scanned.size())
-                            + " MCP server and monitor commands are not examined");
+                    ("examined %d plugin root(s): %d hook(s), %d MCP server command(s), %d launched file(s)"
+                                    + " scanned for runtime fetches; monitor commands are not examined")
+                            .formatted(roots.size(), hooks, servers, launched.size()));
         }
 
         /** The manifest's plugin roots into {@code roots}, keyed to their entry's JSON pointer. */
@@ -164,28 +196,95 @@ public class ExecutableSurfaceVetter implements Vetter {
             for (RuntimeFetch.Match match : RuntimeFetch.scan(hook.runs(), false)) {
                 add(new Finding(match.rule(), Severity.HIGH, hook.location(), "this hook " + match.message()));
             }
-            String declaring = pathOf(hook.location());
+            follow(hook.runs(), root, hook.location(), false);
+        }
+
+        /**
+         * A local MCP server's command: package runners warn and download-and-execute blocks, under
+         * ids of their own, and the files of the plugin it names are followed as a hook's are.
+         */
+        @Requirements({"GW_VETTING_0050", "GW_VETTING_0051", "GW_VETTING_0052"})
+        private void mcp(String root, McpCommand server) throws IOException {
+            servers++;
+            List<String> words = new ArrayList<>();
+            words.add(withDefaults(server.command()));
+            server.args().forEach(arg -> words.add(withDefaults(arg)));
+            dropEnv(words);
+            if (words.isEmpty()) {
+                return;
+            }
+            if (words.getFirst().startsWith("/")) {
+                words.set(0, words.getFirst().substring(words.getFirst().lastIndexOf('/') + 1));
+            }
+            String text = String.join(" ", words);
+            String script = wrappedScript(words);
+            if (script != null) {
+                text = text + "\n" + script;
+            }
+            boolean localRunner = localRunner(words, root);
+            Set<String> rules = new HashSet<>();
+            for (RuntimeFetch.Match match : RuntimeFetch.scan(text, false)) {
+                boolean runner = RuntimeFetch.PACKAGE_RUN.equals(match.rule());
+                if (runner && localRunner && match.line() == 1) {
+                    continue;
+                }
+                if (rules.add(match.rule())) {
+                    add(new Finding(
+                            runner ? MCP_PACKAGE_RUN : MCP_FETCH_EXEC,
+                            runner ? Severity.MEDIUM : Severity.HIGH,
+                            server.location(),
+                            "MCP server '%s' %s".formatted(server.name(), match.message())));
+                }
+            }
+            follow(text, root, server.location(), true);
+        }
+
+        /** Files of the plugin that {@code text} names, scanned and followed to {@link #MAX_DEPTH}. */
+        private void follow(String text, String root, String location, boolean mcp) throws IOException {
+            String declaring = pathOf(location);
             String base = declaring.contains("/") ? declaring.substring(0, declaring.lastIndexOf('/')) : "";
+            Set<String> visited = mcp ? mcpScanned : scanned;
             Deque<Launched> queue = new ArrayDeque<>();
-            for (String path : references(hook.runs(), root, base)) {
+            for (String path : references(text, root, base)) {
                 queue.add(new Launched(path, 1));
             }
             while (!queue.isEmpty()) {
                 Launched next = queue.poll();
-                if (!scanned.add(next.path())) {
+                if (!visited.add(next.path())) {
                     continue;
                 }
-                String text = launchedText(next);
-                if (text == null || next.depth() >= MAX_DEPTH) {
+                String content = mcp ? mcpLaunchedText(next) : launchedText(next);
+                if (content == null || next.depth() >= MAX_DEPTH) {
                     continue;
                 }
                 String directory = next.path().contains("/")
                         ? next.path().substring(0, next.path().lastIndexOf('/'))
                         : "";
-                for (String path : references(text, root, directory)) {
+                for (String path : references(content, root, directory)) {
                     queue.add(new Launched(path, next.depth() + 1));
                 }
             }
+        }
+
+        /**
+         * A file an MCP server launches, scanned at the MCP severities. A binary or oversized one is
+         * not reported: a server shipped as a compiled binary is ordinary, and its bytes are pinned.
+         */
+        @Requirements({"GW_VETTING_0052"})
+        private String mcpLaunchedText(Launched launched) throws IOException {
+            String text = ContentRules.text(files.read(launched.path()));
+            if (text == null) {
+                return null;
+            }
+            for (RuntimeFetch.Match match : RuntimeFetch.scan(text, true)) {
+                boolean runner = RuntimeFetch.PACKAGE_RUN.equals(match.rule());
+                add(new Finding(
+                        runner ? MCP_PACKAGE_RUN : MCP_FETCH_EXEC,
+                        runner ? Severity.MEDIUM : Severity.HIGH,
+                        "%s:%d".formatted(launched.path(), match.line()),
+                        "a script an MCP server launches " + match.message()));
+            }
+            return text;
         }
 
         /** A launched file's text after scanning it, or {@code null} when it could not be read. */
@@ -262,6 +361,80 @@ public class ExecutableSurfaceVetter implements Vetter {
     }
 
     private record Launched(String path, int depth) {}
+
+    private static String withDefaults(String word) {
+        return VARIABLE_DEFAULT.matcher(word).replaceAll(match -> Matcher.quoteReplacement(match.group(1)));
+    }
+
+    /** {@code env} launches the program after its assignments and options; it is not the program. */
+    private static void dropEnv(List<String> words) {
+        while (!words.isEmpty() && "env".equals(program(words.getFirst()))) {
+            words.removeFirst();
+            while (!words.isEmpty()
+                    && (words.getFirst().startsWith("-") || words.getFirst().matches("\\w+=.*"))) {
+                String option = words.removeFirst();
+                if (option.matches("-[uCS]|--unset|--chdir") && !words.isEmpty()) {
+                    words.removeFirst();
+                }
+            }
+        }
+    }
+
+    /** The script a shell wrapper is handed as an argument, or {@code null}. */
+    private static String wrappedScript(List<String> words) {
+        String program = program(words.getFirst());
+        for (int i = 1; i < words.size() - 1; i++) {
+            String flag = words.get(i).toLowerCase(Locale.ROOT);
+            if (SHELLS.contains(program) && flag.matches("-[a-z]*c")) {
+                return words.get(i + 1);
+            }
+            if ((program.equals("cmd") && (flag.equals("/c") || flag.equals("/k")))
+                    || ((program.equals("powershell") || program.equals("pwsh"))
+                            && (flag.equals("-c") || flag.equals("-command")))) {
+                return String.join(" ", words.subList(i + 1, words.size()));
+            }
+        }
+        return null;
+    }
+
+    /** A runner whose package is a path inside the plugin fetches nothing from a registry. */
+    private static boolean localRunner(List<String> words, String root) {
+        String program = program(words.getFirst());
+        int operand = 1;
+        if (!RUNNERS.contains(program)) {
+            boolean dlx = (program.equals("pnpm") || program.equals("yarn"))
+                    && words.size() > 1
+                    && words.get(1).equals("dlx");
+            boolean exec =
+                    program.equals("npm") && words.size() > 1 && words.get(1).equals("exec");
+            if (!dlx && !exec) {
+                return false;
+            }
+            operand = 2;
+        }
+        while (operand < words.size() && words.get(operand).startsWith("-")) {
+            operand++;
+        }
+        if (operand >= words.size()) {
+            return false;
+        }
+        String target = words.get(operand);
+        Matcher pluginRoot = PLUGIN_ROOT.matcher(target);
+        if (pluginRoot.find()) {
+            return PluginComponents.resolve(root, target.substring(pluginRoot.end())) != null;
+        }
+        if (!target.startsWith("./") && !target.startsWith("../")) {
+            return false;
+        }
+        String path = PluginComponents.resolve(root, target);
+        return path != null && (root.isEmpty() || path.startsWith(root + "/"));
+    }
+
+    /** A command's file name, lower-cased and without {@code .exe}: {@code /usr/bin/npx} is {@code npx}. */
+    private static String program(String word) {
+        String name = word.substring(word.lastIndexOf('/') + 1).toLowerCase(Locale.ROOT);
+        return name.endsWith(".exe") ? name.substring(0, name.length() - 4) : name;
+    }
 
     private static boolean within(String path, String root) {
         return root.isEmpty() || path.startsWith(root + "/");

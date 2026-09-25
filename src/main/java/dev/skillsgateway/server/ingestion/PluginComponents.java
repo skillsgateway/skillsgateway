@@ -86,12 +86,19 @@ public final class PluginComponents {
     /** A hook declaration that could not be read. */
     public record Problem(String path, String message) {}
 
+    /**
+     * A local (stdio) MCP server: what Claude Code runs to start it, located at its {@code command}
+     * value. A server reached over a URL runs nothing locally and has none.
+     */
+    public record McpCommand(String name, String location, String command, List<String> args) {}
+
     /** Everything one plugin root provides beside its skills. */
     public record Components(
             List<Component> commands,
             List<Component> agents,
             List<Hook> hooks,
             List<Component> mcpServers,
+            List<McpCommand> mcpCommands,
             List<Problem> hookProblems) {}
 
     /**
@@ -159,6 +166,7 @@ public final class PluginComponents {
         List<Component> agents = new ArrayList<>();
         List<Hook> hooks = new ArrayList<>();
         List<Component> mcp = new ArrayList<>();
+        List<McpCommand> mcpCommands = new ArrayList<>();
 
         declared(reader, plugin, entry, manifest, entryPointer, "commands", "commands", commands);
         declared(reader, plugin, entry, manifest, entryPointer, "agents", "agents", agents);
@@ -176,13 +184,13 @@ public final class PluginComponents {
 
         Manifest defaultMcp = reader.json(join(root, ".mcp.json"), false);
         if (defaultMcp != null) {
-            reader.mcpFile(defaultMcp, mcp);
+            reader.mcpFile(defaultMcp, mcp, mcpCommands);
         }
         if (plugin != null) {
-            reader.mcpDeclaration(plugin.root().path("mcpServers"), plugin, "/mcpServers", mcp);
+            reader.mcpDeclaration(plugin.root().path("mcpServers"), plugin, "/mcpServers", mcp, mcpCommands);
         }
         if (entry != null) {
-            reader.mcpDeclaration(entry.path("mcpServers"), manifest, entryPointer + "/mcpServers", mcp);
+            reader.mcpDeclaration(entry.path("mcpServers"), manifest, entryPointer + "/mcpServers", mcp, mcpCommands);
         }
 
         for (String skill : reader.skillFiles(plugin, entry)) {
@@ -198,6 +206,7 @@ public final class PluginComponents {
                 List.copyOf(agents),
                 List.copyOf(hooks),
                 List.copyOf(mcp),
+                List.copyOf(mcpCommands),
                 List.copyOf(reader.problems));
     }
 
@@ -382,35 +391,53 @@ public final class PluginComponents {
         }
 
         /** {@code .mcp.json}: the {@code mcpServers} map, or the bare map. */
-        void mcpFile(Manifest file, List<Component> out) {
+        void mcpFile(Manifest file, List<Component> out, List<McpCommand> commands) {
             JsonNode servers =
                     file.root().path("mcpServers").isObject() ? file.root().get("mcpServers") : file.root();
-            String base = servers == file.root() ? "" : "/mcpServers";
-            servers.fieldNames()
-                    .forEachRemaining(name -> out.add(new Component(name, file.locate(base + "/" + escape(name)))));
+            mcpServers(servers, file, servers == file.root() ? "" : "/mcpServers", out, commands);
         }
 
-        void mcpDeclaration(JsonNode value, Manifest doc, String pointer, List<Component> out) {
+        void mcpDeclaration(
+                JsonNode value, Manifest doc, String pointer, List<Component> out, List<McpCommand> commands) {
             if (value.isTextual()) {
                 String declared = value.asText();
                 if (declared.endsWith(".json")) {
                     Manifest file = json(resolve(root, declared), false);
                     if (file != null) {
-                        mcpFile(file, out);
+                        mcpFile(file, out, commands);
                     }
                 } else {
                     // A bundle (.mcpb, .dxt) or a bundle URL: one server, named by its file.
                     out.add(new Component(baseName(declared), doc.locate(pointer)));
                 }
             } else if (value.isObject()) {
-                value.fieldNames()
-                        .forEachRemaining(
-                                name -> out.add(new Component(name, doc.locate(pointer + "/" + escape(name)))));
+                mcpServers(value, doc, pointer, out, commands);
             } else if (value.isArray()) {
                 for (int i = 0; i < value.size(); i++) {
-                    mcpDeclaration(value.get(i), doc, pointer + "/" + i, out);
+                    mcpDeclaration(value.get(i), doc, pointer + "/" + i, out, commands);
                 }
             }
+        }
+
+        /** A map of servers: every one is listed; a local one also yields what it runs. */
+        @Requirements({"GW_VETTING_0050"})
+        private void mcpServers(
+                JsonNode servers, Manifest doc, String pointer, List<Component> out, List<McpCommand> commands) {
+            servers.fieldNames().forEachRemaining(name -> {
+                String at = pointer + "/" + escape(name);
+                out.add(new Component(name, doc.locate(at)));
+                JsonNode server = servers.get(name);
+                String type = server.path("type").asText("stdio");
+                if ("stdio".equals(type) && server.path("command").isTextual()) {
+                    List<String> args = new ArrayList<>();
+                    server.path("args").forEach(arg -> args.add(arg.asText()));
+                    commands.add(new McpCommand(
+                            name,
+                            doc.locate(at + "/command"),
+                            server.get("command").asText(),
+                            List.copyOf(args)));
+                }
+            });
         }
 
         /** SKILL.md files under the default {@code skills/} and under every declared skills directory. */
