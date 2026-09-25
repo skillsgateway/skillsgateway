@@ -239,7 +239,7 @@ public class VettingService {
                         worst,
                         runId));
         if (verdict.summary() != null
-                && (verdict.findings().isEmpty() || verdict.state() == VerdictState.NOT_REACHED)) {
+                && (VettingRepository.informational(verdict) || verdict.state() == VerdictState.NOT_REACHED)) {
             detail.append("; ").append(verdict.summary());
         }
         return detail.toString();
@@ -269,7 +269,8 @@ public class VettingService {
         "GW_VETTING_0029.2",
         "GW_VETTING_0032",
         "GW_VETTING_0032.2",
-        "GW_VETTING_0039"
+        "GW_VETTING_0039",
+        "GW_VETTING_0041"
     })
     public Run run(Snapshot snapshot, String marketplace, String trigger) {
         List<Vetter> chain = vetters(snapshot.marketplaceId());
@@ -300,7 +301,8 @@ public class VettingService {
                 } else if (stoppedBy != null) {
                     verdict = Verdict.notReached(vetter.name(), stoppedBy);
                 } else {
-                    verdict = runGuarded(vetter, content);
+                    // Identified before the stop test below, so a group waiver counts there too.
+                    verdict = content.identify(runGuarded(vetter, content));
                     // Only a FAIL stops the chain. An ERROR is a fact about the gateway rather than
                     // about the content, and letting a crash silence the rest of the chain would
                     // turn a flaky vetter into a coverage outage; a PENDING has concluded nothing.

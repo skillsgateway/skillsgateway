@@ -12,6 +12,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
  *     verdict
  * @param location where in the snapshot it was found, normally {@code path:line}
  * @param message what a reviewer needs to read, never containing the matched secret itself
+ * @param content the git blob id of the file the finding is located in, stamped by the gateway
+ *     from the pinned tree after the vetter answers (GW_VETTING_0041) — never taken from a vetter —
+ *     or {@code null} when the location names no file of the snapshot
  */
 @Schema(description = "One thing a vetter found in a snapshot")
 public record Finding(
@@ -25,7 +28,18 @@ public record Finding(
         String location,
 
         @Schema(description = "Reviewer-facing explanation; never echoes the matched secret")
-        String message) {
+        String message,
+
+        @Schema(
+                description = "Git blob id of the file the finding is in, set by the gateway from the pinned tree;"
+                        + " null when the location names no file. Findings on identical content share it.",
+                example = "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
+        String content) {
+
+    /** A finding as a vetter reports it: the gateway, not the vetter, identifies the content. */
+    public Finding(String id, Severity severity, String location, String message) {
+        this(id, severity, location, message, null);
+    }
 
     public Finding {
         if (id == null || id.isBlank()) {
@@ -36,6 +50,27 @@ public record Finding(
         }
         if (message == null || message.isBlank()) {
             throw new IllegalArgumentException("finding message is required");
+        }
+    }
+
+    /** This finding with its content identity set, or cleared when {@code blob} is null. */
+    public Finding withContent(String blob) {
+        return new Finding(id, severity, location, message, blob);
+    }
+
+    /**
+     * The line number in {@link #location()}, or {@code null} when the location carries none —
+     * the same reading of {@code path:line} that {@link WaiverScope#pathOf} makes.
+     */
+    public Integer line() {
+        String path = WaiverScope.pathOf(location);
+        if (location == null || path.length() == location.length()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(location.substring(path.length() + 1));
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 }

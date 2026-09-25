@@ -7,6 +7,7 @@ import {
   disabledAndPendingVetting,
   marketplaceChain,
   shortCircuitedVetting,
+  vendoredVetting,
   waivedVetting,
 } from "@/test/msw-handlers";
 import { marketplaceFlow, marketplaceHeadline, snapshotFlow, snapshotHeadline } from "@/lib/vetting-flow";
@@ -81,6 +82,25 @@ export const WithWaivers: Story = {
     await expect(canvas.getByText("1 waived")).toBeInTheDocument();
     // Accepted risk is never redrawn as a clean result.
     await expect(canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: secret-scan, fail` })).toBeInTheDocument();
+  },
+};
+
+/**
+ * One file vendored into four plugins: the vetter counts two things to judge, not five, and its
+ * evidence lists the group once with every location (GW_VETTING_0041, GW_VETTING_0044).
+ */
+export const VendoredCopies: Story = {
+  args: snapshotStory(vendoredVetting),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText("· prompt-injection found 2 high findings")).toBeInTheDocument();
+    await userEvent.click(canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: prompt-injection, fail` }));
+    const dialog = within(await within(document.body).findByRole("dialog"));
+    await expect(
+      dialog.getByText(
+        "plugins/a/skills/x/SKILL.md:12, plugins/b/skills/x/SKILL.md:12, plugins/c/skills/x/SKILL.md:12 and 1 more",
+      ),
+    ).toBeInTheDocument();
   },
 };
 

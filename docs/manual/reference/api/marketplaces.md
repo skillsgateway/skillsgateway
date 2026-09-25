@@ -480,7 +480,12 @@ chain has never run against reports `"outcome":"BLOCKED"` and `"run":null`.
            "detail":"1 finding(s); worst critical","reportUrl":null,
            "findings":[{"id":"aws-access-key-id","severity":"CRITICAL",
                         "location":"plugins/hello/DEPLOY.md:5",
-                        "message":"an AWS access key id is committed in this file"}]},
+                        "message":"an AWS access key id is committed in this file",
+                        "content":"3b18e512dba79e4c8300dd08aeb37f8e728b8dad"}],
+           "groups":[{"ruleId":"aws-access-key-id","severity":"CRITICAL",
+                      "message":"an AWS access key id is committed in this file",
+                      "content":"3b18e512dba79e4c8300dd08aeb37f8e728b8dad","line":5,
+                      "locations":["plugins/hello/DEPLOY.md:5"]}]},
           {"verdictId":10,"vetter":"prompt-injection","position":1,
            "state":"PASS","detail":null,"reportUrl":null,"findings":[]}]},
  "suppressed":[{"vetter":"secret-scan","ruleId":"aws-access-key-id",
@@ -500,10 +505,16 @@ chain has never run against reports `"outcome":"BLOCKED"` and `"run":null`.
 | `outcome` | The **effective** outcome — the one that gates approval: `CLEAR`, `CLEAR_WITH_WAIVERS`, or `BLOCKED`. Recomputed on every request from the run and the waivers active at that instant. |
 | `recordedOutcome` | What the vetters themselves concluded: `CLEAR` or `BLOCKED`. Never rewritten by a waiver. |
 | `suppressed` | The findings an active waiver is currently removing from the computation. |
-| `uncovered` | The blocking findings no active waiver covers — the waivers approval still needs. |
+| `uncovered` | The blocking finding **groups** no active waiver covers — the waivers approval still needs. One entry per group: `location` is its first location, `locations` all of them, and `content` and `line` name the group for a group waiver. |
 | `waivers` | The marketplace's waivers whose rule appears in this run, active and lapsed alike. |
 | `vetters` | The configured chain, in the order it runs: `name`, `order`, `description`, `version` (the rule set the vetter currently carries) and `external` (the verdict is delegated to an operator-configured service rather than reached by a built-in vetter). |
 | `override` | Present when an administrator approved this snapshot over a blocked outcome (`reason`, `blockingVetters`, `uncoveredFindings`, `overriddenBy`, `overriddenAt`); `null` otherwise. Its presence is what surfaces the override so it is never indistinguishable from a clean approval. See [The vetting override](#administrative-override-of-a-blocked-outcome). |
+
+Each finding carries `content`, the git blob id of its file in the pinned tree.
+The gateway sets it; a vetter cannot. It is `null` when the location names no
+file. Each verdict's `groups` are its findings with identical content collapsed:
+the findings that share rule, severity, message, `content` and line become one
+entry listing every location. `groups` is derived on read and never stored.
 
 `state` is one of `PASS`, `WARN`, `FAIL`, `ERROR`, `PENDING`, `DISABLED`;
 `severity` is one of `INFO`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`. A `DISABLED`
@@ -822,6 +833,8 @@ for the matching rules.
 | `path` | for `PATH` | Repository-relative; must not contain `..`. Ignored for `SNAPSHOT`. |
 | `justification` | yes | Free text; blank is refused. |
 | `expiresAt` | yes | Must be in the future. There is no unlimited waiver. |
+| `content` | no | A finding group's git blob id (40 or 64 lower-case hex characters), as `groups` or `uncovered` give it. It limits the waiver to that group: the rule on that blob and line, in this snapshot, and nothing else. Only with `SNAPSHOT`. |
+| `line` | no | The group's line; omit it for a group without one. Needs `content`. |
 
 The marketplace — and, for `SNAPSHOT` scope, the commit SHA — are taken from the
 snapshot, so a waiver cannot be scoped to content it does not belong to. The
@@ -830,7 +843,7 @@ approver is the acting session.
 | Status | Cause |
 | --- | --- |
 | 201 | Waiver recorded; returns it with `active`. |
-| 400 | Missing justification or expiry, an expiry in the past, or an unusable scope. |
+| 400 | Missing justification or expiry, an expiry in the past, an unusable scope, or a group qualifier that is malformed or not on `SNAPSHOT` scope. |
 | 404 | Unknown snapshot. |
 
 ### `GET /marketplaces/{name}/waivers`
@@ -966,12 +979,18 @@ and `uncoveredFindings`:
  "detail":"snapshot 12 cannot be approved: …",
  "blockingVetters":["secret-scan"],
  "uncoveredFindings":[{"vetter":"secret-scan","ruleId":"aws-access-key-id",
-                       "location":"plugins/hello/DEPLOY.md:5","severity":"CRITICAL",
+                       "location":"plugins/hello/DEPLOY.md:5",
+                       "locations":["plugins/hello/DEPLOY.md:5"],
+                       "content":"3b18e512dba79e4c8300dd08aeb37f8e728b8dad","line":5,
+                       "severity":"CRITICAL",
                        "message":"an AWS access key id is committed in this file"}]}
 ```
 
-`uncoveredFindings` is the complete worklist: record a waiver for each entry and
-the approval succeeds. Every waiver that was in force is appended to the audit
+`uncoveredFindings` is the complete worklist, one entry per finding group (one
+rule on one line of identical content, with every `path:line` it occurs at).
+`detail` names each group at its locations, the first ten spelled out. Record a
+waiver for each entry (a [group waiver](#post-snapshotsidwaivers) covers every
+location of one) and the approval succeeds. Every waiver that was in force is appended to the audit
 ledger as `waiver-applied`.
 
 A snapshot inside the configured

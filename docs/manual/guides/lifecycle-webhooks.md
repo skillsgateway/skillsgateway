@@ -250,7 +250,7 @@ The first seven fields are the ones every event carries, unchanged. The
 | `outcome` | The **effective** outcome, the one that gates approval: `CLEAR`, `CLEAR_WITH_WAIVERS` or `BLOCKED`. |
 | `recordedOutcome` | What the vetters concluded before any waiver was applied: `CLEAR` or `BLOCKED`. |
 | `blockingVetters` | Names of the vetters that are the reason it blocks. Empty when nothing objects. |
-| `uncoveredFindings` | How many blocking findings no active waiver covers — the reviewer's worklist size. |
+| `uncoveredFindings` | How many blocking finding groups no active waiver covers — the reviewer's worklist size. A group is one rule on one line of identical content, however many copies of it the snapshot holds. |
 | `waivedFindings` | How many findings an active waiver is currently suppressing. |
 
 `outcome` is what tells your system what to offer. `CLEAR` means

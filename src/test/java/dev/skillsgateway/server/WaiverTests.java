@@ -2,11 +2,16 @@ package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import dev.skillsgateway.server.approval.VettingBlockedException;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.vetting.Finding;
+import dev.skillsgateway.server.vetting.FindingGroup;
 import dev.skillsgateway.server.vetting.Severity;
 import dev.skillsgateway.server.vetting.VerdictState;
 import dev.skillsgateway.server.vetting.VettingChain;
@@ -24,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 
 /**
  * Verification of vetting waivers (GW_VETTING_0007–GW_VETTING_0011).
@@ -128,6 +134,87 @@ class WaiverTests extends AbstractGatewayTest {
         assertThat(waiverRepository.byMarketplace(marketplaceId)).hasSize(1);
     }
 
+    /**
+     * The group waiver end to end (GW_VETTING_0041, GW_VETTING_0042, GW_APPROVAL_0022): one file vendored
+     * into two plugins is one group with two locations, one waiver on that group covers both, and a
+     * third file carrying the same rule on different bytes is untouched by it and still named, with
+     * its path and line, in the refusal.
+     */
+    @Test
+    @SVCs({"SVC_GW_VETTING_0041", "SVC_GW_VETTING_0042", "SVC_GW_APPROVAL_0022"})
+    void aGroupWaiverCoversEveryCopyOfItsContentAndNothingElse() throws Exception {
+        String other = PLANTED_SECRET + "\nA different file, the same rule.\n";
+        Registered blocked = registerAndIngest(
+                uniqueName("waivgroup"),
+                createUpstream(
+                        DEFAULT_MANIFEST,
+                        Map.of(
+                                "plugins/hello/DEPLOY.md", PLANTED_SECRET,
+                                "plugins/copy/DEPLOY.md", PLANTED_SECRET,
+                                "plugins/other/DEPLOY.md", other)));
+        long id = blocked.snapshot().id();
+        String name = blocked.marketplace().name();
+
+        VettingRepository.VerdictView secrets = vettingRepository.latestRun(id).orElseThrow().verdicts().stream()
+                .filter(verdict -> verdict.vetter().equals("secret-scan"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(secrets.findings())
+                .filteredOn(finding -> RULE.equals(finding.id()))
+                .hasSize(3);
+        FindingGroup vendored = secrets.groups().stream()
+                .filter(group -> group.locations().size() == 2)
+                .findFirst()
+                .orElseThrow();
+        assertThat(vendored.locations())
+                .containsExactlyInAnyOrder("plugins/hello/DEPLOY.md:3", "plugins/copy/DEPLOY.md:3");
+        assertThat(vendored.content()).matches("[0-9a-f]{40}");
+
+        // A group waiver outliving its commit, or naming something that is not a blob, is refused.
+        assertThatThrownBy(() -> waiverService.create(
+                        id, RULE, WaiverScope.PATH, "plugins", "vendored", soon(), "alice", vendored.content(), 3))
+                .isInstanceOf(WaiverValidationException.class);
+        mockMvc.perform(post("/api/v1/snapshots/{id}/waivers", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"ruleId": "%s", "scope": "snapshot", "content": "not-a-blob", "line": 3,
+                                 "justification": "vendored copy", "expiresAt": "%s"}
+                                """.formatted(RULE, soon()))
+                        .with(oidcLogin().idToken(token -> token.subject("root"))))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/v1/snapshots/{id}/waivers", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"ruleId": "%s", "scope": "snapshot", "content": "%s", "line": %d,
+                                 "justification": "documented dummy key, vendored", "expiresAt": "%s"}
+                                """.formatted(RULE, vendored.content(), vendored.line(), soon()))
+                        .with(oidcLogin().idToken(token -> token.subject("root"))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.content").value(vendored.content()))
+                .andExpect(jsonPath("$.line").value(3));
+
+        WaiverEvaluation.Effect effect = waiverService.evaluate(id);
+        assertThat(effect.suppressions())
+                .extracting(WaiverEvaluation.Suppression::location)
+                .containsExactlyInAnyOrder("plugins/hello/DEPLOY.md:3", "plugins/copy/DEPLOY.md:3");
+        assertThat(effect.outcome()).isEqualTo(VettingChain.Outcome.BLOCKED);
+        assertThatThrownBy(() -> approvalService.approve(id, "alice"))
+                .isInstanceOf(VettingBlockedException.class)
+                .hasMessageContaining(RULE + " at plugins/other/DEPLOY.md:3")
+                .satisfies(thrown -> assertThat(((VettingBlockedException) thrown).uncoveredFindings())
+                        .singleElement()
+                        .satisfies(
+                                group -> assertThat(group.locations()).containsExactly("plugins/other/DEPLOY.md:3")));
+
+        assertThat(fetchLogRepository.list().stream()
+                        .filter(entry -> name.equals(entry.get("marketplace")))
+                        .filter(entry -> WaiverService.EVENT_CREATED.equals(entry.get("event"))))
+                .singleElement()
+                .satisfies(entry -> assertThat(String.valueOf(entry.get("detail")))
+                        .contains("content=" + vendored.content() + ":3"));
+    }
+
     /** Every near-miss scope: right rule wrong commit, right rule wrong path, wrong rule entirely. */
     @Test
     @SVCs({"SVC_GW_VETTING_0008"})
@@ -148,7 +235,9 @@ class WaiverTests extends AbstractGatewayTest {
                 OTHER_SHA,
                 "accepted on another snapshot",
                 "alice",
-                soon());
+                soon(),
+                null,
+                null);
         assertThat(waiverService.evaluate(id).outcome()).isEqualTo(VettingChain.Outcome.BLOCKED);
 
         // 3. The right rule under a path the finding is not under — including the prefix trap,
@@ -288,7 +377,9 @@ class WaiverTests extends AbstractGatewayTest {
                 other.snapshot().sha(),
                 "already lapsed",
                 "alice",
-                Instant.now().minus(Duration.ofDays(1)));
+                Instant.now().minus(Duration.ofDays(1)),
+                null,
+                null);
         assertThat(waiverService.sweepExpired(50)).isPositive();
         assertThat(waiverService.sweepExpired(50)).isZero();
         assertThat(fetchLogRepository.list().stream()
@@ -319,7 +410,9 @@ class WaiverTests extends AbstractGatewayTest {
                 subject.snapshot().sha(),
                 "already lapsed",
                 "alice",
-                Instant.now().minus(Duration.ofDays(1)));
+                Instant.now().minus(Duration.ofDays(1)),
+                null,
+                null);
 
         List<Waiver> batch = waiverRepository.newlyExpired(Instant.now(), 50).stream()
                 .filter(waiver ->

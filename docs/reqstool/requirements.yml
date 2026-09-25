@@ -2474,3 +2474,61 @@ requirements:
     rationale: "Registering under a credentialed prefix can pull anything the token reads into quarantine, and the token's scope is the only limit on that. The ledger is where an auditor can see which marketplaces were registered under which credential, and by whom."
     categories: ["security"]
     revision: 0.3.0
+
+  - id: GW_VETTING_0040
+    title: Prompt-injection markers do not fire on formatting instructions or command names
+    significance: shall
+    description: "The system shall raise a concealment finding in the prompt-injection vetter only where, within a single clause, a negated verb of telling or informing, a verb of hiding followed by a person, a construction of acting without telling a person, or a construction of not letting a person know addresses the user, the reviewer, a human, an operator, security or anyone; shall not raise one where the negation and the person lie in different sentences or clauses, or where the verb is one of displaying output; and shall match the words of the instruction-override marker only as whole words that are not part of a hyphenated or underscored identifier."
+    references:
+      requirement_ids: ["GW_VETTING_0004"]
+    rationale: "A trial deployment vetting a public skill repository raised 66 high findings, every one of them a false positive: a formatting instruction such as 'do not show the user the raw output', a negation reaching into the next sentence, and command names such as 'ignore-rule' in documentation. A gate that cries wolf that often teaches its reviewer to click past it, and then it protects nothing. The fix is precision rather than scope: the concealment forms that remain are the ones that address a person about the agent's own activity, and the lines that raised the false positives are kept as regression fixtures."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0041
+    title: Findings on identical content are collapsed into one group with every location
+    significance: shall
+    description: "The system shall identify every finding whose location names a file of the snapshot by the git blob that file has in the pinned tree, determining that identity itself and never taking it from the vetter, and shall present the findings of one verdict that share rule, severity, message, blob and line as a single group listing every location, while never grouping a finding it could not tie to a blob."
+    rationale: "A file vendored into nineteen plugins is one thing for a reviewer to judge, and nineteen identical rows bury the finding that is different. The same git blob is the only equality the gateway can prove without reading intent into content, so it is the grouping key; the gateway reads it from the tree it pinned because the identity a waiver will be matched against must not be something a vetter can claim. The recorded run keeps one finding per location, so the raw evidence is unchanged."
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0042
+    title: A waiver on a finding group covers exactly that group
+    significance: shall
+    description: "The system shall allow a reviewer to limit a waiver to one finding group by naming the group's git blob and line; shall scope such a waiver to a single snapshot commit SHA; shall let it cover a finding only where the finding's rule, blob and line all equal the waiver's, so that it never covers a finding on other content, on another line, of another rule or in another snapshot, nor a finding the system could not tie to a blob; and shall reject a group waiver scoped to a path or naming a value that is not a git object id."
+    references:
+      requirement_ids: ["GW_VETTING_0007"]
+    rationale: "Reviewers asked for a bulk waive. A free-form bulk waive accepts content nobody has looked at; a waiver on a collapsed group accepts one piece of content, judged once, wherever it was copied. Tying it to the snapshot keeps it no wider than what the reviewer saw: the next ingestion re-blocks and the acceptance is made again, deliberately."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0043
+    title: Unscanned files are reported once per reason and stated in the coverage summary
+    significance: shall
+    description: "The system shall report the files a pattern vetter did not scan as at most one informational finding per reason — over the size limit, or not readable as text — stating how many files it covers and naming the first of them; shall state in the vetter's coverage summary, on every verdict including a pass, how many files were not scanned and for which reasons; and shall show, for a verdict whose findings are all informational, its coverage summary rather than a count of findings."
+    references:
+      requirement_ids: ["GW_VETTING_0023"]
+    rationale: "One informational row per unscanned file put 51 rows above the findings that mattered, while the pass itself read as clean: the fact that files went unexamined was present but not visible. A single entry per reason keeps the record of the gap and gives the reviewer back the list, and a summary that states the gap on the verdict row is where a reviewer reading a pass will actually see it."
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_VETTING_0044
+    title: The portal presents each finding group once with a waive action that says what it covers
+    significance: shall
+    description: "The system shall present, in the portal vetting surface, each finding group once with every location it stands for; shall offer for a blocking group a waive action whose label states what it waives; and shall default a waiver created from a group to that group alone, offering the rule across the snapshot and, for a group of a single location, a path in the marketplace as wider choices that are described as such."
+    references:
+      requirement_ids: ["GW_VETTING_0010"]
+    rationale: "A label reading 'Waive…' looks truncated and says nothing about what will be accepted, and a scope named 'This snapshot only' concealed that it accepted the rule everywhere in the snapshot. The narrowest acceptance is the one a reviewer should reach for first, so it is the default, and every wider one says how wide it is."
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0022
+    title: The vetting refusal names each blocking finding group at its path:line locations
+    significance: shall
+    description: "The system shall name, in a refusal of approval on account of the effective vetting outcome and in the portal's statement of what blocks approval, each uncovered blocking finding group once, with its rule and the path:line of the locations it stands for — in the refusal the first ten and a count of the rest — rather than naming the rule once per location or without a location."
+    references:
+      requirement_ids: ["GW_APPROVAL_0003"]
+    rationale: "The refusal is the reviewer's worklist. The same rule name repeated 66 times with no location is not a worklist, it is noise; a group at its locations is something a reviewer can open, judge and waive."
+    categories: ["security", "interaction-capability"]
+    revision: 0.1.0

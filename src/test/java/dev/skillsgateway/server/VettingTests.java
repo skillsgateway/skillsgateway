@@ -420,6 +420,33 @@ class VettingTests extends AbstractGatewayTest {
                         entry -> assertThat(String.valueOf(entry.get("detail"))).contains("scanned"));
     }
 
+    /**
+     * A pass that skipped files says so where the pass is read — the verdict row and the ledger —
+     * and carries one entry for them rather than one per file (GW_VETTING_0043).
+     */
+    @Test
+    @SVCs({"SVC_GW_VETTING_0043"})
+    void aPassThatSkippedFilesSaysSoOnItsRowAndInTheLedger() throws Exception {
+        String name = uniqueName("vetskipped");
+        String oversize = "x".repeat(Math.toIntExact(properties.vetting().maxFileBytes() + 1));
+        Registered registered = registerAndIngest(
+                name,
+                createUpstream(DEFAULT_MANIFEST, Map.of("assets/one.bin", oversize, "assets/two.bin", oversize + "y")));
+
+        VettingRepository.VerdictView secret = verdictOf(registered, "secret-scan");
+        assertThat(secret.state()).isEqualTo(VerdictState.PASS);
+        assertThat(secret.findings()).singleElement().satisfies(finding -> assertThat(finding.message())
+                .startsWith("2 file(s) not scanned: over the scan size limit"));
+        assertThat(secret.detail()).contains("2 file(s) not scanned (2 over the size limit)");
+        assertThat(fetchLogRepository.list().stream()
+                        .filter(entry -> name.equals(entry.get("marketplace")))
+                        .filter(entry -> "vetting-verdict".equals(entry.get("event")))
+                        .map(entry -> String.valueOf(entry.get("detail")))
+                        .filter(detail -> detail.startsWith("secret-scan=pass")))
+                .singleElement()
+                .satisfies(detail -> assertThat(detail).contains("2 file(s) not scanned"));
+    }
+
     /** A chain with exactly the given vetters, over the real repository and storage. */
     private VettingService chainOf(Vetter... vetters) {
         return new VettingService(

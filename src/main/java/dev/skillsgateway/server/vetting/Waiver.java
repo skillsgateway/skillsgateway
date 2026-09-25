@@ -1,7 +1,9 @@
 package dev.skillsgateway.server.vetting;
 
+import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * A scoped, expiring accepted-risk exception against one vetting rule (GW_VETTING_0007).
@@ -20,6 +22,10 @@ import java.time.Instant;
  * @param revokedAt when a reviewer withdrew it, or null
  * @param expiredRecordedAt when the sweep first noted the expiry in the ledger; never consulted
  *     by the gate
+ * @param content for a group waiver (GW_VETTING_0042), the git blob id the accepted findings are in;
+ *     {@code null} for a waiver on the rule alone
+ * @param line for a group waiver, the line within that blob, or {@code null} when the group's
+ *     findings carry none
  */
 @Schema(description = "A scoped, expiring accepted-risk exception against one vetting rule")
 public record Waiver(
@@ -56,7 +62,13 @@ public record Waiver(
         String revokedBy,
 
         @Schema(description = "When the expiry sweep first recorded the expiry in the ledger, or null")
-        Instant expiredRecordedAt) {
+        Instant expiredRecordedAt,
+
+        @Schema(description = "For a group waiver, the git blob id of the accepted findings; null otherwise")
+        String content,
+
+        @Schema(description = "For a group waiver, the line within that blob; null when the group has none")
+        Integer line) {
 
     public Waiver {
         if (ruleId == null || ruleId.isBlank()) {
@@ -77,6 +89,51 @@ public record Waiver(
         if (expiresAt == null) {
             throw new IllegalArgumentException("waiver expiry is required; unlimited waivers do not exist");
         }
+        if (content != null && scope != WaiverScope.SNAPSHOT) {
+            throw new IllegalArgumentException("a group waiver is scoped to one snapshot");
+        }
+        if (content != null && !BLOB_ID.matcher(content).matches()) {
+            throw new IllegalArgumentException("a group waiver's content must be a git blob id");
+        }
+        if (line != null && (content == null || line < 1)) {
+            throw new IllegalArgumentException("a group waiver's line must be positive and name content");
+        }
+    }
+
+    /** A git object id as the gateway writes one: SHA-1 or SHA-256, lower-case hex. */
+    static final java.util.regex.Pattern BLOB_ID = java.util.regex.Pattern.compile("[0-9a-f]{40}|[0-9a-f]{64}");
+
+    /** A waiver on the rule alone, with no content qualifier. */
+    public Waiver(
+            long id,
+            long marketplaceId,
+            String marketplace,
+            String ruleId,
+            WaiverScope scope,
+            String scopeValue,
+            String justification,
+            String approvedBy,
+            Instant createdAt,
+            Instant expiresAt,
+            Instant revokedAt,
+            String revokedBy,
+            Instant expiredRecordedAt) {
+        this(
+                id,
+                marketplaceId,
+                marketplace,
+                ruleId,
+                scope,
+                scopeValue,
+                justification,
+                approvedBy,
+                createdAt,
+                expiresAt,
+                revokedAt,
+                revokedBy,
+                expiredRecordedAt,
+                null,
+                null);
     }
 
     /**
@@ -90,13 +147,24 @@ public record Waiver(
 
     /**
      * Whether this waiver covers {@code finding} in a snapshot pinned to {@code sha}, at
-     * {@code now}. Every conjunct must hold: an inactive waiver, a different rule, or a scope
-     * that does not name this content all answer no.
+     * {@code now}. Every conjunct must hold: an inactive waiver, a different rule, a scope that
+     * does not name this content, or — for a group waiver — a different blob or line all answer no.
      */
+    @Requirements({"GW_VETTING_0042"})
     public boolean covers(Finding finding, String sha, Instant now) {
         return active(now)
                 && finding != null
                 && ruleId.equals(finding.id())
-                && scope.matches(scopeValue, sha, WaiverScope.pathOf(finding.location()));
+                && scope.matches(scopeValue, sha, WaiverScope.pathOf(finding.location()))
+                && coversContent(finding);
+    }
+
+    /**
+     * The group half (GW_VETTING_0042): a waiver with no content qualifier places no constraint here,
+     * and one with it covers only a finding on that very blob and line. A finding the gateway could
+     * not tie to a blob is never covered by a group waiver.
+     */
+    private boolean coversContent(Finding finding) {
+        return content == null || (content.equals(finding.content()) && Objects.equals(line, finding.line()));
     }
 }

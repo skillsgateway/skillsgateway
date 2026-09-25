@@ -476,7 +476,10 @@ CREATE TABLE vetting_findings (
     finding_id TEXT NOT NULL,
     severity vetting_finding_severity NOT NULL,
     location TEXT,
-    message TEXT NOT NULL
+    message TEXT NOT NULL,
+    -- Git blob id of the file the finding is in, set by the gateway from the pinned tree
+    -- (GW_VETTING_0041); NULL when the location names no file. Findings sharing it collapse.
+    content_id TEXT
 );
 
 CREATE INDEX idx_vetting_verdicts_run ON vetting_verdicts (run_id);
@@ -510,7 +513,13 @@ CREATE TABLE vetting_waivers (
     -- Stamped by the expiry sweep the first time it observes this waiver past its expiry, so
     -- the ledger entry is written once. The gate never reads it: expiry is decided by
     -- comparing expires_at to now, whether or not the sweep has ever run.
-    expired_recorded_at TIMESTAMPTZ
+    expired_recorded_at TIMESTAMPTZ,
+    -- A group waiver (GW_VETTING_0042) also names the git blob and line of the findings it accepts,
+    -- and covers nothing else. Only a snapshot-scoped waiver may carry one.
+    content_id TEXT CHECK (content_id IS NULL OR content_id ~ '^([0-9a-f]{40}|[0-9a-f]{64})$'),
+    content_line INTEGER CHECK (content_line IS NULL OR content_line > 0),
+    CHECK (content_id IS NULL OR scope_kind = 'snapshot'),
+    CHECK (content_line IS NULL OR content_id IS NOT NULL)
 );
 
 -- The evaluation query: every waiver of one marketplace, filtered in memory by rule and scope.

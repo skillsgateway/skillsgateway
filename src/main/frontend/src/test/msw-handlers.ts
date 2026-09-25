@@ -255,6 +255,10 @@ export const createdAuditSink: Schemas["CreatedSink"] = {
   createdAt: "2026-08-14T10:00:00Z",
 };
 
+/** The git blob id the fixtures' findings are in. */
+const DEPLOY_BLOB = "3b18e512dba79e4c8300dd08aeb37f8e728b8dad";
+const VENDORED_BLOB = "8cda9ad203d3da62a297cbe080a926db44328715";
+
 /** A blocked chain run: one vetter failed, one passed — the reviewer's evidence. */
 export const blockedVetting: Schemas["VettingView"] = {
   snapshotId: 1,
@@ -271,6 +275,9 @@ export const blockedVetting: Schemas["VettingView"] = {
       vetter: "secret-scan",
       ruleId: "aws-access-key-id",
       location: "plugins/hello/DEPLOY.md:5",
+      locations: ["plugins/hello/DEPLOY.md:5"],
+      content: DEPLOY_BLOB,
+      line: 5,
       severity: "critical",
       message: "an AWS access key id is committed in this file",
     },
@@ -296,6 +303,17 @@ export const blockedVetting: Schemas["VettingView"] = {
             severity: "critical",
             location: "plugins/hello/DEPLOY.md:5",
             message: "an AWS access key id is committed in this file",
+            content: DEPLOY_BLOB,
+          },
+        ],
+        groups: [
+          {
+            ruleId: "aws-access-key-id",
+            severity: "critical",
+            message: "an AWS access key id is committed in this file",
+            content: DEPLOY_BLOB,
+            line: 5,
+            locations: ["plugins/hello/DEPLOY.md:5"],
           },
         ],
       },
@@ -324,6 +342,95 @@ export const blockedVetting: Schemas["VettingView"] = {
       external: false,
     },
   ],
+};
+
+const concealment = "the instructions tell the agent to conceal its actions from the user or reviewer";
+
+/**
+ * One instruction file vendored into three plugins, and one file of its own: two groups, the
+ * first standing for three locations of identical content (GW_VETTING_0041).
+ */
+export const vendoredVetting: Schemas["VettingView"] = {
+  ...blockedVetting,
+  uncovered: [
+    {
+      vetter: "prompt-injection",
+      ruleId: "concealment-instruction",
+      location: "plugins/a/skills/x/SKILL.md:12",
+      locations: [
+        "plugins/a/skills/x/SKILL.md:12",
+        "plugins/b/skills/x/SKILL.md:12",
+        "plugins/c/skills/x/SKILL.md:12",
+        "plugins/d/skills/x/SKILL.md:12",
+      ],
+      content: VENDORED_BLOB,
+      line: 12,
+      severity: "high",
+      message: concealment,
+    },
+    {
+      vetter: "prompt-injection",
+      ruleId: "concealment-instruction",
+      location: "plugins/e/skills/y/SKILL.md:4",
+      locations: ["plugins/e/skills/y/SKILL.md:4"],
+      content: DEPLOY_BLOB,
+      line: 4,
+      severity: "high",
+      message: concealment,
+    },
+  ],
+  run: {
+    ...blockedVetting.run,
+    verdicts: [
+      {
+        verdictId: 9,
+        vetter: "secret-scan",
+        position: 0,
+        state: "pass",
+        detail: "scanned 40 text file(s); 2 file(s) not scanned (2 over the size limit); applied 7 secret-shape rules",
+        findings: [],
+        groups: [
+          {
+            ruleId: "file-not-scanned",
+            severity: "info",
+            message: "2 file(s) not scanned: over the scan size limit: assets/demo.mp4, assets/hero.png",
+            locations: [],
+          },
+        ],
+      },
+      {
+        verdictId: 10,
+        vetter: "prompt-injection",
+        position: 1,
+        state: "fail",
+        detail: "5 finding(s); worst high",
+        findings: [],
+        groups: [
+          {
+            ruleId: "concealment-instruction",
+            severity: "high",
+            message: concealment,
+            content: VENDORED_BLOB,
+            line: 12,
+            locations: [
+              "plugins/a/skills/x/SKILL.md:12",
+              "plugins/b/skills/x/SKILL.md:12",
+              "plugins/c/skills/x/SKILL.md:12",
+              "plugins/d/skills/x/SKILL.md:12",
+            ],
+          },
+          {
+            ruleId: "concealment-instruction",
+            severity: "high",
+            message: concealment,
+            content: DEPLOY_BLOB,
+            line: 4,
+            locations: ["plugins/e/skills/y/SKILL.md:4"],
+          },
+        ],
+      },
+    ],
+  },
 };
 
 /**

@@ -399,8 +399,9 @@ Below the report, a *Plugin names already in use* section lists each plugin
 name the snapshot introduces that looks like one another marketplace already
 serves, with the manifest line declaring it and the incumbents it resembles.
 While any is uncovered the confirm control stays disabled. Each carries a
-**Waive name collision for {name}** button opening the same waiver form, offering
-*This snapshot only* as the only scope. The snapshot card does not shut
+**Waive name collision** button (accessible name *Waive name collision for
+{name}*) opening the same waiver form, offering *Every plugin-name-collision
+finding in this snapshot* as the only scope. The snapshot card does not shut
 **Approve** for a collision, since this dialog is where it is waived.
 
 The dialog is also shut by the minimum release age, and says so in its own note:
@@ -412,12 +413,21 @@ Confirming calls `POST /api/v1/snapshots/{id}/approve` with no body and toasts
 
 #### Waiving a finding
 
-Each blocking finding in the report carries a **Waive finding {rule}** button
-that opens an inline form beside it:
+The report lists each verdict's findings as **finding groups**. A group is the
+findings of one rule on one line of identical content (the same git blob). It
+shows its first location and, under *N more copies of the same content*, the
+rest. Above the verdicts, *Approval is blocked until each of these is waived*
+lists every uncovered group, as *{rule} at {path:line}, …*, with the first
+three locations spelled out and the rest counted.
+
+Each blocking group carries a button that opens an inline form beside it:
+**Waive finding** (accessible name *Waive finding {rule} at {path:line}*) for a
+single location, or **Waive all N locations** (*Waive all N locations of
+{rule}*) for a group.
 
 | Control | Notes |
 | --- | --- |
-| **Scope** | *This snapshot only* (default) or *This path in the marketplace* |
+| **Scope** | *These N identical copies, in this snapshot* (or *This finding, in this snapshot*) — the default, covering the group and nothing else; *Every {rule} finding in this snapshot*; and, for a single location, *Every {rule} finding under {path}, in later snapshots too* |
 | **Expires on** | date input, defaulting to 30 days out; must be in the future — the waiver lapses at the end of the chosen day |
 | **Justification** | required; whitespace does not count |
 
@@ -426,8 +436,9 @@ that opens an inline form beside it:
 requires.
 
 *Record waiver for {rule}* calls `POST /api/v1/snapshots/{id}/waivers` and toasts
-*Waiver recorded for {rule}*. The finding is then struck through and badged
-**waived by {approver} until {date}**, and the outcome badge becomes
+*Waiver recorded for {rule}*. The group is then struck through and badged
+**waived by {approver} until {date}** (or **k of N waived** when a wider waiver
+covers only some of its locations), and the outcome badge becomes
 **vetting clear with waivers** once nothing is left uncovered.
 
 Below the verdicts, **Accepted risks** lists every waiver whose rule appears in

@@ -29,12 +29,35 @@ public class PromptInjectionVetter implements Vetter {
     /** Instruction content: Markdown is where skills, commands and agents carry their prose. */
     private static final List<String> INSTRUCTION_SUFFIXES = List.of(".md", ".mdc", ".markdown", ".txt");
 
+    /**
+     * A whole word that is not part of a hyphenated or underscored identifier: {@code ignore} but not
+     * {@code ignore-rule}, {@code all} but not {@code --all-values} (GW_VETTING_0040). CLI flags and
+     * command names in documentation are not prose addressed to the agent.
+     */
+    private static String word(String alternatives) {
+        return "(?<![-\\w])(?:" + alternatives + ")(?![-\\w])";
+    }
+
+    /**
+     * Up to {@code max} characters that stay inside one clause: the gap never crosses a sentence or
+     * clause break ({@code ". "}, {@code "; "} and the like), so a negation cannot reach a verb in the
+     * next sentence — "do not silently overwrite it. Show the user the file" (GW_VETTING_0040).
+     */
+    private static String sameClause(int max) {
+        return "(?:(?![.!?;:]\\s)[^\\n]){0," + max + "}";
+    }
+
+    private static final String PERSON = word("user|reviewer|human|operator|security|anyone");
+
+    private static final String CONCEALMENT_MESSAGE =
+            "the instructions tell the agent to conceal its actions from the user or reviewer";
+
     private static final List<ContentRules.Rule> RULES = List.of(
             new ContentRules.Rule(
                     "instruction-override",
                     Severity.HIGH,
-                    "(?i)\\b(?:ignore|disregard|forget)\\b[^\\n]{0,40}\\b(?:previous|prior|above|earlier|all)\\b"
-                            + "[^\\n]{0,40}\\b(?:instruction|instructions|prompt|prompts|rule|rules|guidance)\\b",
+                    "(?i)" + word("ignore|disregard|forget") + "[^\\n]{0,40}" + word("previous|prior|above|earlier|all")
+                            + "[^\\n]{0,40}" + word("instruction|instructions|prompt|prompts|rule|rules|guidance"),
                     "instruction-override phrasing: the text tells the agent to discard its prior instructions"),
             new ContentRules.Rule(
                     "system-prompt-disclosure",
@@ -48,13 +71,32 @@ public class PromptInjectionVetter implements Vetter {
                     "(?:~/\\.aws|\\.aws/credentials|~/\\.ssh|\\bid_rsa\\b|~/\\.config/gh|/etc/passwd|"
                             + "\\.npmrc\\b|\\.netrc\\b|~/\\.kube/config|\\.git-credentials)",
                     "the instructions reference a credential file location"),
+            // Concealment (GW_VETTING_0040): a verb of telling, not of displaying. "Do not show the user the
+            // raw JSON" is a formatting instruction and is by far the commoner use of "show" in skill
+            // prose; hiding an action is covered by the explicit hide/without-telling/let-know forms.
             new ContentRules.Rule(
                     "concealment-instruction",
                     Severity.HIGH,
-                    "(?i)\\b(?:do not|don'?t|never)\\b[^\\n]{0,30}"
-                            + "\\b(?:tell|inform|mention|report|reveal|show|log)\\b[^\\n]{0,30}"
-                            + "\\b(?:user|reviewer|human|operator|security|anyone)\\b",
-                    "the instructions tell the agent to conceal its actions from the user or reviewer"),
+                    "(?i)" + word("do not|don'?t|never|must not") + sameClause(30)
+                            + word("tell|inform|mention|report|reveal|disclose|notify|alert") + sameClause(30) + PERSON,
+                    CONCEALMENT_MESSAGE),
+            new ContentRules.Rule(
+                    "concealment-instruction",
+                    Severity.HIGH,
+                    "(?i)" + word("hide|conceal") + sameClause(40) + word("from") + "\\s+(?:the\\s+)?" + PERSON,
+                    CONCEALMENT_MESSAGE),
+            new ContentRules.Rule(
+                    "concealment-instruction",
+                    Severity.HIGH,
+                    "(?i)" + word("without") + "\\s+" + word("telling|informing|notifying|alerting") + sameClause(20)
+                            + PERSON,
+                    CONCEALMENT_MESSAGE),
+            new ContentRules.Rule(
+                    "concealment-instruction",
+                    Severity.HIGH,
+                    "(?i)" + word("do not|don'?t|never") + "\\s+let\\s+(?:the\\s+)?" + PERSON + sameClause(20)
+                            + word("know|see|notice|find out"),
+                    CONCEALMENT_MESSAGE),
             new ContentRules.Rule(
                     "pipe-to-shell",
                     Severity.HIGH,
@@ -98,6 +140,12 @@ public class PromptInjectionVetter implements Vetter {
         return 200;
     }
 
+    /** 2: the concealment and instruction-override rules were narrowed (GW_VETTING_0040). */
+    @Override
+    public String version() {
+        return "2";
+    }
+
     @Override
     public String description() {
         return "Pattern heuristics over the snapshot's Markdown instruction content: instruction-override"
@@ -107,49 +155,47 @@ public class PromptInjectionVetter implements Vetter {
     }
 
     @Override
-    @Requirements({"GW_VETTING_0004", "GW_VETTING_0023"})
+    @Requirements({"GW_VETTING_0004", "GW_VETTING_0023", "GW_VETTING_0040", "GW_VETTING_0043"})
     public Verdict vet(SnapshotUnderVetting snapshot) {
         List<Finding> findings = new ArrayList<>();
-        int[] counts = new int[2]; // {scanned, skipped}
+        List<String> oversize = new ArrayList<>();
+        List<String> undecodable = new ArrayList<>();
+        int[] scanned = new int[1];
         try {
             snapshot.walk(PromptInjectionVetter::instructionContent, (path, content) -> {
                 if (content == null) {
-                    counts[1]++;
-                    findings.add(new Finding(
-                            "file-not-scanned",
-                            Severity.INFO,
-                            path,
-                            "instruction file exceeds the configured scan size limit and was not scanned"));
+                    oversize.add(path);
                     return;
                 }
                 String text = ContentRules.text(content);
                 if (text == null) {
-                    counts[1]++;
-                    findings.add(new Finding(
-                            "file-not-scanned",
-                            Severity.INFO,
-                            path,
-                            "instruction file is not valid UTF-8 and was not scanned"));
+                    undecodable.add(path);
                     return;
                 }
-                counts[0]++;
+                scanned[0]++;
                 findings.addAll(ContentRules.apply(RULES, path, text));
                 findings.addAll(invisibleCharacters(path, text));
             });
         } catch (java.io.IOException e) {
             throw new IllegalStateException("cannot read snapshot content", e);
         }
-        return Verdict.of(findings, summary(counts[0], counts[1]));
+        findings.addAll(
+                ContentRules.notScanned(oversize, "of instruction content not scanned: over the scan size limit"));
+        findings.addAll(ContentRules.notScanned(undecodable, "of instruction content not scanned: not valid UTF-8"));
+        return Verdict.of(findings, summary(scanned[0], oversize.size(), undecodable.size()));
     }
 
-    /** What the scan examined (GW_VETTING_0023): a clean pass records this so it is not read as "did not run". */
-    private static String summary(int scanned, int skipped) {
+    /**
+     * What the scan examined (GW_VETTING_0023): a clean pass records this so it is not read as "did
+     * not run", and one that skipped files says how many and why (GW_VETTING_0043).
+     */
+    private static String summary(int scanned, int oversize, int undecodable) {
         return "scanned %d instruction file(s) (%s)%s; applied %d injection-marker rules plus"
                         .formatted(
                                 scanned,
                                 String.join(", ", INSTRUCTION_SUFFIXES),
-                                skipped == 0 ? "" : " (%d skipped as oversize or non-UTF-8)".formatted(skipped),
-                                RULES.size())
+                                ContentRules.skipped(oversize, undecodable, "not valid UTF-8"),
+                                ContentRules.ruleCount(RULES))
                 + " invisible-character analysis";
     }
 

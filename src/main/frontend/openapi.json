@@ -1332,6 +1332,11 @@
       "Finding": {
         "description": "One thing a vetter found in a snapshot",
         "properties": {
+          "content": {
+            "description": "Git blob id of the file the finding is in, set by the gateway from the pinned tree; null when the location names no file. Findings on identical content share it.",
+            "example": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+            "type": "string"
+          },
           "id": {
             "description": "Stable rule identifier, e.g. aws-access-key-id",
             "example": "aws-access-key-id",
@@ -1347,6 +1352,47 @@
           },
           "severity": {
             "description": "How much the finding matters",
+            "enum": [
+              "info",
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "FindingGroup": {
+        "description": "Findings on identical content (the same git blob and line), collapsed into one entry",
+        "properties": {
+          "content": {
+            "description": "Git blob id the findings are in; null when the finding could not be tied to one",
+            "type": "string"
+          },
+          "line": {
+            "description": "Line within that blob, or null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "locations": {
+            "description": "Every path:line this group stands for; empty for an entry with no location",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "message": {
+            "description": "Reviewer-facing explanation",
+            "type": "string"
+          },
+          "ruleId": {
+            "description": "Finding rule identifier",
+            "type": "string"
+          },
+          "severity": {
+            "description": "How much it matters",
             "enum": [
               "info",
               "low",
@@ -3283,11 +3329,27 @@
         "type": "object"
       },
       "UncoveredFinding": {
-        "description": "A blocking finding that no active waiver covers",
+        "description": "A blocking finding group that no active waiver covers, with every uncovered location",
         "properties": {
-          "location": {
-            "description": "Where the finding was located",
+          "content": {
+            "description": "Git blob id the group is in, to name in a group waiver; null when none",
             "type": "string"
+          },
+          "line": {
+            "description": "Line within that blob, or null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "location": {
+            "description": "The first uncovered location of the group, path:line",
+            "type": "string"
+          },
+          "locations": {
+            "description": "Every uncovered location of the group, path:line",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "message": {
             "description": "Reviewer-facing explanation",
@@ -3341,9 +3403,16 @@
             "type": "string"
           },
           "findings": {
-            "description": "What the vetter found",
+            "description": "What the vetter found, one entry per location",
             "items": {
               "$ref": "#/components/schemas/Finding"
+            },
+            "type": "array"
+          },
+          "groups": {
+            "description": "The same findings with those on identical content collapsed into one entry listing every location (GW_VETTING_0041); derived from findings, never stored",
+            "items": {
+              "$ref": "#/components/schemas/FindingGroup"
             },
             "type": "array"
           },
@@ -3612,6 +3681,11 @@
       "WaiverRequest": {
         "description": "Request to accept one finding rule on a snapshot's marketplace, until an expiry",
         "properties": {
+          "content": {
+            "description": "Limits the waiver to one finding group (GW_VETTING_0042): the git blob id the group's findings are in, as the vetting report gives it. The waiver then covers every location of that group and nothing else. Only with SNAPSHOT scope.",
+            "example": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+            "type": "string"
+          },
           "expiresAt": {
             "description": "When the acceptance lapses. Required and must be in the future: there are no unlimited waivers.",
             "example": "2026-12-31T00:00:00Z",
@@ -3621,6 +3695,11 @@
           "justification": {
             "description": "Why this risk is accepted; recorded and shown to the next reviewer",
             "type": "string"
+          },
+          "line": {
+            "description": "The finding group's line within that blob; omitted when the group has none",
+            "format": "int32",
+            "type": "integer"
           },
           "path": {
             "description": "Repository-relative path for PATH scope; ignored for SNAPSHOT scope, which always takes the snapshot's own SHA",
@@ -3660,6 +3739,10 @@
             "description": "Identity that accepted the risk",
             "type": "string"
           },
+          "content": {
+            "description": "For a finding-group waiver, the git blob id it is limited to; null otherwise",
+            "type": "string"
+          },
           "createdAt": {
             "description": "When the waiver was created",
             "format": "date-time",
@@ -3678,6 +3761,11 @@
           "justification": {
             "description": "Why the risk is accepted",
             "type": "string"
+          },
+          "line": {
+            "description": "For a finding-group waiver, the line within that blob; null when none",
+            "format": "int32",
+            "type": "integer"
           },
           "marketplace": {
             "description": "Marketplace the waiver belongs to",
@@ -6205,7 +6293,7 @@
     },
     "/api/v1/snapshots/{id}/waivers": {
       "post": {
-        "description": "Records a scoped, expiring waiver for one finding rule. The marketplace — and, for SNAPSHOT scope, the commit SHA — are taken from the snapshot, so a waiver cannot be mis-scoped to content it does not belong to. A justification, the acting identity and a future expiry are all mandatory; an unlimited waiver cannot be expressed. While an active waiver covers a finding, that finding no longer contributes to the snapshot's effective vetting outcome.",
+        "description": "Records a scoped, expiring waiver for one finding rule. The marketplace — and, for SNAPSHOT scope, the commit SHA — are taken from the snapshot, so a waiver cannot be mis-scoped to content it does not belong to. A justification, the acting identity and a future expiry are all mandatory; an unlimited waiver cannot be expressed. While an active waiver covers a finding, that finding no longer contributes to the snapshot's effective vetting outcome. Naming a finding group's content (and line) limits the waiver to every location of that one group.",
         "operationId": "create_3",
         "parameters": [
           {

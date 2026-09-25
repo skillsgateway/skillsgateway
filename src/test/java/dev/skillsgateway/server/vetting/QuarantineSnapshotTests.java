@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
@@ -130,6 +131,42 @@ class QuarantineSnapshotTests {
 
             assertThat(visited).containsOnlyKeys("LICENSE", "copy/LICENSE");
             assertThat(visited.get("copy/LICENSE")).isSameAs(visited.get("LICENSE"));
+        }
+    }
+
+    /**
+     * The content identity a group waiver is matched against is the gateway's reading of the
+     * pinned tree (GW_VETTING_0041): copies share it, a location that names no file gets none, and
+     * whatever a vetter claimed is replaced.
+     */
+    @Test
+    @SVCs({"SVC_GW_VETTING_0041"})
+    void findingsAreIdentifiedByTheBlobThePinnedTreeHoldsAtTheirPath() throws Exception {
+        write("copy/LICENSE", LICENSE);
+        try (Git git = Git.open(work.toFile())) {
+            git.add().addFilepattern(".").call();
+            sha = commit(git, "copy");
+        }
+        String forged = "f".repeat(40);
+
+        try (QuarantineSnapshot snapshot = open(MAX_FILE_BYTES, CACHE_BYTES);
+                Repository repository = new FileRepositoryBuilder()
+                        .setGitDir(work.resolve(".git").toFile())
+                        .build()) {
+            String licenseBlob = repository.resolve(sha + ":LICENSE").name();
+            String readmeBlob = repository.resolve(sha + ":docs/readme.md").name();
+            Verdict identified = snapshot.identify(Verdict.of(List.of(
+                    new Finding("r", Severity.HIGH, "LICENSE:1", "m", forged),
+                    new Finding("r", Severity.HIGH, "copy/LICENSE:1", "m"),
+                    new Finding("r", Severity.HIGH, "docs/readme.md", "m"),
+                    new Finding("r", Severity.HIGH, "no/such/file.md:3", "m", forged),
+                    new Finding("r", Severity.CRITICAL, "some-vetter", "m"),
+                    new Finding("r", Severity.HIGH, null, "m"))));
+
+            assertThat(identified.findings())
+                    .extracting(Finding::content)
+                    .containsExactly(licenseBlob, licenseBlob, readmeBlob, null, null, null);
+            assertThat(identified.state()).isEqualTo(VerdictState.FAIL);
         }
     }
 

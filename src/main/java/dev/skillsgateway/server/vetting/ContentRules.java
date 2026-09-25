@@ -1,10 +1,13 @@
 package dev.skillsgateway.server.vetting;
 
+import io.github.reqstool.annotations.Requirements;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,22 +48,70 @@ final class ContentRules {
         }
     }
 
-    /** Every match of every rule in one file, located at {@code path:line}, deduplicated per line. */
+    /**
+     * Every match of every rule in one file, located at {@code path:line}, at most one finding per
+     * rule id and line — several patterns may share an id, and one line is one thing to judge.
+     */
     static List<Finding> apply(List<Rule> rules, String path, String text) {
         List<Finding> findings = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
         for (Rule rule : rules) {
             Matcher matcher = rule.pattern().matcher(text);
-            int lastLine = -1;
             while (matcher.find()) {
                 int line = lineOf(text, matcher.start());
-                if (line == lastLine) {
-                    continue;
+                if (seen.add(rule.id() + ":" + line)) {
+                    findings.add(
+                            new Finding(rule.id(), rule.severity(), "%s:%d".formatted(path, line), rule.message()));
                 }
-                lastLine = line;
-                findings.add(new Finding(rule.id(), rule.severity(), "%s:%d".formatted(path, line), rule.message()));
             }
         }
         return findings;
+    }
+
+    /** How many distinct rule ids a rule list carries. */
+    static long ruleCount(List<Rule> rules) {
+        return rules.stream().map(Rule::id).distinct().count();
+    }
+
+    /** How many unscanned paths an aggregated entry names before counting the rest. */
+    static final int NAMED_UNSCANNED = 20;
+
+    /**
+     * One informational entry for a set of files a vetter could not read, rather than one per file
+     * (GW_VETTING_0043): a vendored tree of large assets would otherwise bury the findings that matter
+     * under rows that all say the same thing. It names the first {@value #NAMED_UNSCANNED} paths and
+     * counts the rest, and there is none at all when the set is empty.
+     *
+     * @param reason what the files have in common, completing "N file(s) ..."
+     */
+    @Requirements({"GW_VETTING_0043"})
+    static List<Finding> notScanned(List<String> paths, String reason) {
+        if (paths.isEmpty()) {
+            return List.of();
+        }
+        String named = String.join(", ", paths.subList(0, Math.min(NAMED_UNSCANNED, paths.size())));
+        int more = paths.size() - NAMED_UNSCANNED;
+        return List.of(new Finding(
+                "file-not-scanned",
+                Severity.INFO,
+                null,
+                "%d file(s) %s: %s%s"
+                        .formatted(paths.size(), reason, named, more > 0 ? " (+%d more)".formatted(more) : "")));
+    }
+
+    /** The coverage-summary clause for skipped files, or nothing when none was skipped (GW_VETTING_0043). */
+    static String skipped(int oversize, int unreadable, String unreadableKind) {
+        if (oversize == 0 && unreadable == 0) {
+            return "";
+        }
+        List<String> parts = new ArrayList<>();
+        if (oversize > 0) {
+            parts.add("%d over the size limit".formatted(oversize));
+        }
+        if (unreadable > 0) {
+            parts.add("%d %s".formatted(unreadable, unreadableKind));
+        }
+        return "; %d file(s) not scanned (%s)".formatted(oversize + unreadable, String.join(", ", parts));
     }
 
     static int lineOf(String text, int index) {
