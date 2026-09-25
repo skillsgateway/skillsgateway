@@ -3,6 +3,7 @@ package dev.skillsgateway.server;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -200,6 +201,18 @@ class SnapshotBrowsingTests extends AbstractGatewayTest {
                             .param("offset", "-1")
                             .with(alice))
                     .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0026"})
+    void an_offset_past_the_end_is_an_empty_last_page_even_at_the_largest_int() throws Exception {
+        for (String route : List.of("tree", "files", "diff")) {
+            mockMvc.perform(get("/api/v1/snapshots/{id}/" + route, held)
+                            .param("offset", String.valueOf(Integer.MAX_VALUE))
+                            .with(alice))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.nextOffset").doesNotExist());
         }
     }
 

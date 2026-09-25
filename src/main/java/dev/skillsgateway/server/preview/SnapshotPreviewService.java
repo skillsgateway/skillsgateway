@@ -241,8 +241,13 @@ public class SnapshotPreviewService {
 
     /** The start of the page after one that began at {@code offset} and held {@code size} of {@code total}. */
     private static Integer next(int offset, int size, int total) {
-        int end = offset + size;
-        return end < total ? end : null;
+        // Compared by subtraction: the offset is caller-supplied, so offset + size may overflow.
+        return offset < total && size < total - offset ? offset + size : null;
+    }
+
+    /** The end of a page of at most {@code page} items that starts at {@code offset} in a list of {@code size}. */
+    private static int pageEnd(int offset, int page, int size) {
+        return offset < size && page < size - offset ? offset + page : size;
     }
 
     /**
@@ -372,7 +377,7 @@ public class SnapshotPreviewService {
                     .toList();
             List<TreeChild> page = new ArrayList<>();
             for (ChildBuilder child :
-                    ordered.subList(Math.min(offset, ordered.size()), Math.min(offset + TREE_PAGE, ordered.size()))) {
+                    ordered.subList(Math.min(offset, ordered.size()), pageEnd(offset, TREE_PAGE, ordered.size()))) {
                 page.add(
                         child.directory
                                 ? new TreeChild(
@@ -493,7 +498,7 @@ public class SnapshotPreviewService {
                 int binaries = 0;
                 long linesAdded = 0;
                 long linesRemoved = 0;
-                int end = Math.min(offset + DIFF_PAGE, changes.size());
+                int end = pageEnd(offset, DIFF_PAGE, changes.size());
                 for (int i = 0; i < changes.size(); i++) {
                     DiffEntry change = changes.get(i);
                     String type = type(change);
