@@ -2762,3 +2762,33 @@ requirements:
     rationale: "A vetter that cannot read what a hook runs has not shown that the hook fetches nothing, and a pass would say it had. A binary a hook runs automatically is code no rule of the chain can read, which is exactly what a reviewer needs to know before approving it."
     categories: ["security"]
     revision: 0.3.0
+
+  - id: GW_VETTING_0050
+    title: An MCP server that runs a package fetched at run time is a medium-severity finding
+    significance: shall
+    description: "The system shall raise a medium-severity finding, distinct from the hook rules and located at the path:line of the server's command, for every local MCP server a plugin of the snapshot declares — in its default MCP file, or in MCP configuration its plugin manifest or marketplace entry declares — whose command and arguments run a package runner or install packages from a registry, including when the runner is reached through a shell wrapper, an environment launcher, a path to the runner, or the default of a variable substitution; and shall not raise one for a runner pointed at a path inside the plugin, for a server that runs only files of the snapshot, or for a server reached over a URL."
+    references:
+      requirement_ids: ["GW_VETTING_0048"]
+    rationale: "A package runner fetches the package's current code from a registry every time the server starts, so the code that runs is not the code that was approved. Almost every published MCP server is started this way, so blocking them all would teach reviewers to switch the vetter off; a warning puts each one in front of the reviewer without holding the snapshot. A remote server runs no code on the user's machine."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_VETTING_0051
+    title: An MCP server that downloads and executes code is a high-severity finding
+    significance: shall
+    description: "The system shall raise a high-severity finding, distinct from the hook rules and located at the path:line of the server's command, for every local MCP server a plugin of the snapshot declares whose command and arguments download content and execute it, in the shapes recognised for a hook's command, including when the command is split across argument entries, handed to a shell wrapper as a script, or given as the default of a variable substitution."
+    references:
+      requirement_ids: ["GW_VETTING_0048", "GW_VETTING_0050"]
+    rationale: "Downloading code and executing it when the server starts bypasses quarantine exactly as it does in a hook, so it blocks, waivable per group once a reviewer has decided the source is trusted. Its own rule id keeps that waiver from covering a hook that does the same."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_VETTING_0052
+    title: Files an MCP server launches from its plugin are scanned as hook scripts are
+    significance: shall
+    description: "The system shall follow the files of the snapshot, inside the plugin, that a local MCP server's command and arguments name, directly or through another launched file, to the same depth as for a hook; shall raise the MCP findings for what those files do at the path:line where they do it, at the MCP severities; and shall still raise the hook findings for a file that a hook also launches."
+    references:
+      requirement_ids: ["GW_VETTING_0050", "GW_VETTING_0051"]
+    rationale: "A server is often a script shipped in the plugin, and a fetch moved one file away from the configuration is the same fetch. Sharing the follow with the hooks keeps one notion of what a plugin runs; keeping the two surfaces apart keeps a medium server finding from masking a high hook finding on the same file."
+    categories: ["security"]
+    revision: 0.3.0
