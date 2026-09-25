@@ -231,8 +231,10 @@ test("the_sidebar_states_the_build_that_is_answering", async () => {
   renderLayout();
 
   const version = await screen.findByText("0.3.0");
-  // Scoped to the footer: the brand mark at the top of the sidebar says the product name too.
-  expect(version.parentElement).toHaveTextContent("Skills Gateway 0.3.0");
+  // The version alone is shown; the brand mark at the top already names the product.
+  // A screen reader still hears what the number is.
+  expect(version.parentElement).toHaveTextContent(/^Version 0\.3\.0$/);
+  expect(version.parentElement).not.toHaveTextContent("Skills Gateway");
 });
 
 test("a_build_that_reports_no_version_renders_no_footer_rather_than_the_word_unknown", async () => {

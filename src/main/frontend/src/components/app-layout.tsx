@@ -469,7 +469,8 @@ function GatewayVersion() {
   return (
     <div className="border-t px-4 py-3">
       <span className="text-[11px] text-muted-foreground">
-        Skills Gateway <span className="font-mono">{version}</span>
+        <span className="sr-only">Version </span>
+        <span className="font-mono">{version}</span>
       </span>
     </div>
   );

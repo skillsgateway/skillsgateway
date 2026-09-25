@@ -38,7 +38,7 @@ estate-wide navigation — it is reached from the user menu, described next, and
 from the Overview page's Access tokens card; `/tokens` remains a resolvable
 address for existing bookmarks and links.
 
-The sidebar footer states the running build — *Skills Gateway 0.3.0* — read from
+The sidebar footer states the running build's version — *0.3.0* — read from
 `GET /api/v1/me`. It is the build artifact's own version and nothing a
 deployment can set, so it cannot claim to be a version it is not; a gateway run
 from an exploded build carries no build information and the footer is then
