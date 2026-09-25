@@ -1377,7 +1377,7 @@
             "type": "integer"
           },
           "locations": {
-            "description": "Every path:line this group stands for",
+            "description": "Every path:line this group stands for; empty for an entry with no location",
             "items": {
               "type": "string"
             },

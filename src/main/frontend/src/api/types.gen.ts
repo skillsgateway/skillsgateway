@@ -2588,7 +2588,7 @@ export interface components {
              * @description Line within that blob, or null
              */
             line?: number;
-            /** @description Every path:line this group stands for */
+            /** @description Every path:line this group stands for; empty for an entry with no location */
             locations?: string[];
             /** @description Reviewer-facing explanation */
             message?: string;
