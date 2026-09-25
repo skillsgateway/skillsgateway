@@ -157,3 +157,19 @@ Unit scenarios for the translator, no Spring context:
 - **Coverage:** skipped. There is no coverage tool in the build, so mutation
   stands in for it. EVIDENCE records this.
 - **Independent verification:** not performed.
+
+## Revisions
+
+- 2026-09-25, during GAUNTLET: two mutants were added to the plan.
+  - M9 moves the probe ahead of the name-conflict check, which proves the
+    ordering test (regression armor, passing before the fix) can fail.
+  - M10 removes the portal alert.
+- M7 (redaction removed) is killed by the translator's unit test U4. S9 checks
+  the same property end to end.
+- Existing tests that registered placeholder URLs moved to local fixtures, with
+  their assertions unchanged: `ClaimRoleMappingTests`, `ContentTests`,
+  `DevAuthTests`, `DuplicateUrlWarningTests`, `HostedMarketplaceTests` and
+  three arrangements in `EstateReconciliationTests`.
+  - To support them, `GitHttpFixture` now serves a repository with or without a
+    `.git` suffix or trailing slash, and can answer a JSON path (a forge's REST
+    API beside its git service).
