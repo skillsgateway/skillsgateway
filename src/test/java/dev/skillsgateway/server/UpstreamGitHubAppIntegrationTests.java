@@ -331,6 +331,17 @@ class UpstreamGitHubAppIntegrationTests extends AbstractExternalSourceTest {
         register(uniqueName("leak"), FORGE.baseUrl() + "/pinned/" + refusedRepo + ".git")
                 .andExpect(status().isBadGateway());
 
+        // An upstream that quotes the token back: JGit repeats a refused redirect's Location in its error.
+        String echoRepo = repository("pinned");
+        String echoed = "ghs_echoed_" + echoRepo;
+        issues("77", echoed, Duration.ofHours(1));
+        FORGE.requireBasic("/pinned/", "x-access-token", echoed);
+        FORGE.redirectTo(FORGE.baseUrl() + "/pinned/echo-" + echoed, Integer.MAX_VALUE);
+        register(uniqueName("leak"), FORGE.baseUrl() + "/pinned/" + echoRepo + ".git")
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.rootCause", Matchers.containsString("echo-***")));
+        FORGE.redirectTo(null, 0);
+
         remember(mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn());
@@ -338,7 +349,7 @@ class UpstreamGitHubAppIntegrationTests extends AbstractExternalSourceTest {
                 .andExpect(status().isOk())
                 .andReturn());
 
-        List<String> secrets = new ArrayList<>(List.of(token, "ghs_refused_" + refusedRepo));
+        List<String> secrets = new ArrayList<>(List.of(token, "ghs_refused_" + refusedRepo, echoed));
         GITHUB_API
                 .apiRequests()
                 .forEach(request -> secrets.add(request.authorization().substring("Bearer ".length())));
