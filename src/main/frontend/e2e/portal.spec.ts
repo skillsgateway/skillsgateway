@@ -915,6 +915,8 @@ test("snapshot_contents_are_explored_on_an_address_that_restores_the_same_file",
   await tree.getByRole("button", { name: "plugins" }).click();
   await tree.getByRole("button", { name: "hello" }).click();
   await tree.getByRole("button", { name: "skills" }).click();
+  // A folder's contents load when it opens: wait for the inner "hello" before taking the last one.
+  await expect(tree.getByRole("button", { name: "hello" })).toHaveCount(2);
   await tree.getByRole("button", { name: "hello" }).last().click();
   await tree.getByRole("button", { name: /SKILL\.md/ }).click();
 
