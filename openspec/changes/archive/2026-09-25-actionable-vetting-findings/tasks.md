@@ -80,5 +80,5 @@ are recorded in `evidence.md`.
 ## 9. Gates, evidence, archive
 
 - [x] 9.1 All gates; manual mutation (`mutants.sh`); `evidence.md`.
-- [ ] 9.2 `/opsx:archive`, with the synced `openspec/specs/**` committed in the
+- [x] 9.2 `/opsx:archive`, with the synced `openspec/specs/**` committed in the
   archive commit.
