@@ -2865,6 +2865,20 @@ Three properties make it safe to hand to a server the gateway does not control:<
   names the prefix each registration used. See
   <a href="../../guides/private-upstreams/">Reading a private upstream</a>.</li>
 </ul>
+<p>A prefix's credential can instead be a <strong>GitHub App</strong>. The gateway then holds
+the App's private key, not a token, and mints an installation token per fetch.
+The same per-request attachment carries it, so the rules above hold unchanged.
+Three more properties bound the key:</p>
+<ul>
+<li>The signed assertion goes only to the API URL in configuration, never to an
+  address a marketplace URL chooses, and the gateway does not follow a
+  redirect from that API. The assertion never rides on a git request.</li>
+<li>Each installation token is scoped to the one repository being read, with
+  read access to contents and nothing else, and lives at most an hour.</li>
+<li>The key, the assertion and the tokens are scrubbed from everything the
+  gateway records or returns, and the ledger marks such a registration
+  <code>(github-app)</code>.</li>
+</ul>
 <p>See <a href="../../reference/compatibility/">Compatibility and allowlists</a> for the full
 matrix.</p>
 <p><strong>Declared marketplaces enter through the same gate.</strong> The

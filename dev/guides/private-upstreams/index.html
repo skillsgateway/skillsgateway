@@ -1076,6 +1076,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#using-a-github-app-instead-of-a-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using a GitHub App instead of a token
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using a GitHub App instead of a token">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-and-install-the-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create and install the App
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure the entry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-on-each-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens on each fetch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-a-token-cannot-be-minted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a token cannot be minted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rotating-the-apps-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rotating the App's key
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#when-the-gateway-refuses-to-start" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1087,10 +1159,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#not-yet" class="md-nav__link">
+  <a href="#not-planned" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Not yet
+        Not planned
       
     </span>
   </a>
@@ -2566,6 +2638,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#using-a-github-app-instead-of-a-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using a GitHub App instead of a token
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using a GitHub App instead of a token">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-and-install-the-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create and install the App
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure the entry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-on-each-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens on each fetch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-a-token-cannot-be-minted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a token cannot be minted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rotating-the-apps-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rotating the App's key
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#when-the-gateway-refuses-to-start" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2577,10 +2721,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#not-yet" class="md-nav__link">
+  <a href="#not-planned" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Not yet
+        Not planned
       
     </span>
   </a>
@@ -2616,10 +2760,12 @@
 <p>By default the gateway reads every upstream anonymously. A private or internal
 repository then answers "repository not found or requires authentication", and
 registration refuses it. To read one, give the gateway a credential for the
-repository's URL prefix.</p>
+repository's URL prefix: a static token, or, on GitHub, a
+<a href="#using-a-github-app-instead-of-a-token">GitHub App</a>.</p>
 <h2 id="what-a-credential-is">What a credential is<a class="headerlink" href="#what-a-credential-is" title="Permanent link">&para;</a></h2>
-<p>An entry under <code>skills-gateway.ingestion.upstream-credentials</code> has three
-fields:</p>
+<p>An entry under <code>skills-gateway.ingestion.upstream-credentials</code> is either a
+static token or a <a href="#using-a-github-app-instead-of-a-token">GitHub App</a>. A
+static entry has three fields:</p>
 <ul>
 <li><code>url-prefix</code>: which upstream URLs the entry covers;</li>
 <li><code>username</code>: sent as the HTTP Basic user;</li>
@@ -2776,6 +2922,187 @@ on its <strong>next start</strong>:</p>
 <li>Revoke the old token.</li>
 </ol>
 <p>Between steps 3 and 4 both tokens work, so nothing fails during the rotation.</p>
+<h2 id="using-a-github-app-instead-of-a-token">Using a GitHub App instead of a token<a class="headerlink" href="#using-a-github-app-instead-of-a-token" title="Permanent link">&para;</a></h2>
+<p>On GitHub, a GitHub App is the better credential for an organisation's
+repositories:</p>
+<ul>
+<li><strong>No person's token.</strong> A personal access token belongs to someone, lasts as
+  long as they keep it, and leaves with them. An App belongs to the
+  organisation.</li>
+<li><strong>Installed where it may read.</strong> The App reads only the repositories it is
+  installed on, and the organisation owner decides which those are.</li>
+<li><strong>Hour-long, one-repository tokens.</strong> For every fetch the gateway mints an
+  installation token that can read the contents of that one repository and
+  nothing else, and that expires within the hour. A token that escapes is
+  worth little.</li>
+<li><strong>Tokens rotate themselves.</strong> Nothing has to be rotated by hand except the
+  App's private key, and a key change is still a restart.</li>
+</ul>
+<h3 id="create-and-install-the-app">Create and install the App<a class="headerlink" href="#create-and-install-the-app" title="Permanent link">&para;</a></h3>
+<ol>
+<li>In the organisation's settings, open <strong>Developer settings → GitHub Apps →
+   New GitHub App</strong>. Give it a name and a homepage URL, and clear
+   <strong>Webhook → Active</strong>: the gateway receives no events.</li>
+<li>Under <strong>Repository permissions</strong>, set <strong>Contents</strong> to <strong>Read-only</strong>.
+   <strong>Metadata</strong> is read-only and required. Grant nothing else.</li>
+<li>Create the App, note its <strong>App ID</strong>, and under <strong>Private keys</strong> generate a
+   key. GitHub downloads a <code>.pem</code> file (<code>BEGIN RSA PRIVATE KEY</code>). Keep it
+   outside every repository.</li>
+<li><strong>Install App</strong> on the organisation, and choose <strong>Only select
+   repositories</strong> with the marketplace repositories the gateway may ingest.
+   The installation's page URL ends in its installation id; configuring it saves
+   one API call per token, and leaving it out lets the gateway look it up per
+   repository.</li>
+</ol>
+<p>For GitHub Enterprise Server, do the same on your server and set <code>api-url</code> to
+<code>https://&lt;your-server&gt;/api/v3</code>.</p>
+<h3 id="configure-the-entry">Configure the entry<a class="headerlink" href="#configure-the-entry" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">ingestion</span><span class="p">:</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nt">upstream-credentials</span><span class="p">:</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">url-prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/acme/</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">        </span><span class="nt">github-app</span><span class="p">:</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">          </span><span class="nt">app-id</span><span class="p">:</span><span class="w"> </span><span class="s">"123456"</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">          </span><span class="nt">private-key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${SGW_UPSTREAM_APP_KEY}</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">          </span><span class="nt">installation-id</span><span class="p">:</span><span class="w"> </span><span class="s">"7890"</span><span class="w">      </span><span class="c1"># optional</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">          </span><span class="c1"># api-url: https://api.github.com   (the default)</span>
+</code></pre></div>
+<p>An App entry has no <code>username</code> or <code>token</code>. The marketplace URL must name a
+repository directly, <code>https://github.com/&lt;owner&gt;/&lt;repository&gt;[.git]</code>. The
+gateway reads the owner and repository from it, and they must be plain GitHub
+names.</p>
+<p>The key is supplied like a token, by environment reference:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:3"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Local development</label><label for="__tabbed_2_2">Kubernetes (Helm)</label><label for="__tabbed_2_3">AWS ECS / Fargate</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Keep the downloaded key outside the repository and read it into the
+environment when you start the gateway:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>install<span class="w"> </span>-m<span class="w"> </span><span class="m">600</span><span class="w"> </span>~/Downloads/acme-skills.*.private-key.pem<span class="w"> </span>~/.config/skills-gateway/app-key.pem
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_UPSTREAM_APP_KEY</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span>cat<span class="w"> </span>~/.config/skills-gateway/app-key.pem<span class="k">)</span><span class="s2">"</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<p>Put the key in a Secret and expose it with <code>extraEnv</code>, as for a token:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>kubectl<span class="w"> </span>create<span class="w"> </span>secret<span class="w"> </span>generic<span class="w"> </span>skills-gateway-upstreams<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span>--from-file<span class="o">=</span>app-key<span class="o">=</span>./acme-skills.private-key.pem
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">config</span><span class="p">:</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="nt">ingestion</span><span class="p">:</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">      </span><span class="nt">upstream-credentials</span><span class="p">:</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">url-prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/acme/</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">          </span><span class="nt">github-app</span><span class="p">:</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">            </span><span class="nt">app-id</span><span class="p">:</span><span class="w"> </span><span class="s">"123456"</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">            </span><span class="nt">private-key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${SGW_UPSTREAM_APP_KEY}</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="nt">extraEnv</span><span class="p">:</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SGW_UPSTREAM_APP_KEY</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">    </span><span class="nt">valueFrom</span><span class="p">:</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">      </span><span class="nt">secretKeyRef</span><span class="p">:</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skills-gateway-upstreams</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">        </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app-key</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<p>Store the PEM as a Secrets Manager secret. A multi-line value works as a
+secret string, for example
+<code>aws secretsmanager create-secret --name skills-gateway/upstream-app-key --secret-string file://acme-skills.private-key.pem</code>.
+Map it in with the task definition's <code>secrets</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">"containerDefinitions"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"skills-gateway"</span><span class="p">,</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="nt">"environment"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">      </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SKILLSGATEWAY_INGESTION_UPSTREAMCREDENTIALS_0_URLPREFIX"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://github.com/acme/"</span><span class="p">},</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">      </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SKILLSGATEWAY_INGESTION_UPSTREAMCREDENTIALS_0_GITHUBAPP_APPID"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"123456"</span><span class="p">},</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">      </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SKILLSGATEWAY_INGESTION_UPSTREAMCREDENTIALS_0_GITHUBAPP_PRIVATEKEY"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"${SGW_UPSTREAM_APP_KEY}"</span><span class="p">}</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">    </span><span class="p">],</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">    </span><span class="nt">"secrets"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">      </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SGW_UPSTREAM_APP_KEY"</span><span class="p">,</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">       </span><span class="nt">"valueFrom"</span><span class="p">:</span><span class="w"> </span><span class="s2">"arn:aws:secretsmanager:eu-north-1:111122223333:secret:skills-gateway/upstream-app-key"</span><span class="p">}</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">    </span><span class="p">]</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">  </span><span class="p">}]</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="p">}</span>
+</code></pre></div>
+<p>A store that keeps the key on one line with literal <code>\n</code> sequences works
+too: the gateway reads <code>\n</code> as a line break. The execution role needs the
+same permissions as for a token.</p>
+</div>
+</div>
+</div>
+<h3 id="what-happens-on-each-fetch">What happens on each fetch<a class="headerlink" href="#what-happens-on-each-fetch" title="Permanent link">&para;</a></h3>
+<ol>
+<li>The gateway signs a short assertion with the App's key: issued a minute in
+   the past to allow for clock drift, and expiring nine minutes later.</li>
+<li>If no <code>installation-id</code> is configured, it asks
+   <code>GET {api-url}/repos/&lt;owner&gt;/&lt;repository&gt;/installation</code>.</li>
+<li>It asks <code>POST {api-url}/app/installations/&lt;id&gt;/access_tokens</code> for a token
+   for <strong>that one repository</strong>, with <code>contents: read</code> only.</li>
+<li>It reads the repository with that token as <code>x-access-token</code>, under exactly
+   the prefix rules above. The assertion never goes to the git host.</li>
+</ol>
+<p>The token is reused for the same repository until five minutes before it
+expires. If the upstream refuses a reused token, for example because the
+repository was just removed from the installation, the gateway mints once more
+and retries once. A second refusal is reported as "repository not found or
+requires authentication".</p>
+<p>The API call goes only to <code>api-url</code>. Nothing in a marketplace URL can change
+it, and the gateway does not follow a redirect from it.</p>
+<h3 id="when-a-token-cannot-be-minted">When a token cannot be minted<a class="headerlink" href="#when-a-token-cannot-be-minted" title="Permanent link">&para;</a></h3>
+<p>Registration answers <code>502</code>, and an ingest records the failure, with one of
+these reasons:</p>
+<table>
+<thead>
+<tr>
+<th>Reason</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>the GitHub App is not installed for this repository</td>
+<td>Install the App on the repository's owner, or add the repository to the installation's selected repositories.</td>
+</tr>
+<tr>
+<td>the GitHub App installation was not found</td>
+<td>The <code>installation-id</code> is wrong or the App was uninstalled. Correct it, or omit it.</td>
+</tr>
+<tr>
+<td>the GitHub App installation is suspended</td>
+<td>Unsuspend the installation in the owner's settings.</td>
+</tr>
+<tr>
+<td>the GitHub API refused the App's key</td>
+<td>The <code>app-id</code> does not match the key, or the key was deleted from the App.</td>
+</tr>
+<tr>
+<td>the gateway's clock differs from the GitHub API's</td>
+<td>Synchronise the host clock with NTP.</td>
+</tr>
+<tr>
+<td>the GitHub API could not be reached</td>
+<td>Check <code>api-url</code>, and the network path, proxy and egress rules to it.</td>
+</tr>
+<tr>
+<td>the GitHub API did not issue a token</td>
+<td>Any other answer. The root cause gives the status and GitHub's message.</td>
+</tr>
+<tr>
+<td>the upstream URL does not name a GitHub repository</td>
+<td>Register the repository's own <code>https://&lt;host&gt;/&lt;owner&gt;/&lt;repository&gt;</code> URL.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="rotating-the-apps-key">Rotating the App's key<a class="headerlink" href="#rotating-the-apps-key" title="Permanent link">&para;</a></h3>
+<p>GitHub lets an App have two keys at once, so a key rotates without downtime:</p>
+<ol>
+<li>Generate a second key in the App's settings.</li>
+<li>Update the secret with the new key and restart the gateway.</li>
+<li>Delete the old key in the App's settings.</li>
+</ol>
+<p>The ledger marks a registration made under an App as
+<code>credential=&lt;url-prefix&gt; (github-app)</code>. The warning above still applies: the
+installation's repository selection is the limit on what can be registered.</p>
 <h2 id="when-the-gateway-refuses-to-start">When the gateway refuses to start<a class="headerlink" href="#when-the-gateway-refuses-to-start" title="Permanent link">&para;</a></h2>
 <p>The gateway refuses to start when an entry cannot work as written. The message
 names the entry by its position and prefix, never by its token:</p>
@@ -2807,13 +3134,31 @@ names the entry by its position and prefix, never by its token:</p>
 <td><code>already declares</code></td>
 <td>Two entries for the same prefix. Which token applied would be an accident of ordering.</td>
 </tr>
+<tr>
+<td><code>declares both a username/token and a github-app</code></td>
+<td>An entry is one kind or the other.</td>
+</tr>
+<tr>
+<td><code>declares no credential</code></td>
+<td>An entry with a prefix and nothing else.</td>
+</tr>
+<tr>
+<td><code>app-id must be the App's numeric id</code> / <code>installation-id must be …</code></td>
+<td>A <code>github-app</code> id that is not a positive number.</td>
+</tr>
+<tr>
+<td><code>private-key is not a readable RSA private key in PEM form</code></td>
+<td>The key is truncated, encrypted, not RSA, or not PEM. The message never quotes it.</td>
+</tr>
+<tr>
+<td><code>github-app.api-url must be an absolute https URL …</code></td>
+<td>An <code>http</code> API URL to a host that is not loopback, or one with userinfo, a query or a fragment.</td>
+</tr>
 </tbody>
 </table>
-<h2 id="not-yet">Not yet<a class="headerlink" href="#not-yet" title="Permanent link">&para;</a></h2>
-<p>A GitHub App, with short-lived installation tokens and rotation without a
-restart, is a later credential kind under the same prefix matching. SSH keys,
-per-marketplace credentials and credentials stored in the database are not
-planned.</p>
+<h2 id="not-planned">Not planned<a class="headerlink" href="#not-planned" title="Permanent link">&para;</a></h2>
+<p>SSH keys, per-marketplace credentials and credentials stored in the database
+are not planned.</p>
 
 
 
