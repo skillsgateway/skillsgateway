@@ -66,11 +66,28 @@ is also what makes them safe as path segments on the facade.
 **Reachability.** Only after those checks pass does the gateway list the
 upstream's references, resolve the default branch it will pin, and refuse the
 registration when it cannot. The listing goes through the same connection path
-as ingestion's fetch, so registration opens no second route to the network. That
-path is also where upstream credentials will attach. It is the scheme allowlist
+as ingestion's fetch, so registration opens no second route to the network. It is the scheme allowlist
 that bounds where the gateway may connect. Address-level egress controls apply
 to external plugin sources only, not to a marketplace upstream an administrator
 names.
+
+**Upstream credentials.** A private upstream is read with the credential
+configured for the longest matching URL prefix. It is configuration, never a
+database row, and registration and ingestion get it through the same path.
+Three properties make it safe to hand to a server the gateway does not control:
+
+- The gateway, not the git client, attaches the credential, and it decides
+  again on every request. A request outside the prefix the marketplace URL
+  selected, including every redirect hop out of it, carries nothing. The git
+  client alone would keep an established credential across a redirect to
+  another port, scheme or path of the same host.
+- The token is scrubbed from every failure the gateway records or returns, and
+  a clone URL with userinfo is refused with `400`.
+- **The token's scope is the limit.** An administrator who registers under a
+  credentialed prefix can pull anything the token reads into quarantine. That
+  is why the token must be scoped to what may be ingested, and why the ledger
+  names the prefix each registration used. See
+  [Reading a private upstream](../guides/private-upstreams.md).
 
 See [Compatibility and allowlists](../reference/compatibility.md) for the full
 matrix.

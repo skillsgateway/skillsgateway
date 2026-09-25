@@ -118,6 +118,7 @@ nav:
           - Leaving the gateway: guides/leaving-the-gateway.md
       - Govern the estate:
           - Registering a marketplace: guides/registering-a-marketplace.md
+          - Reading a private upstream: guides/private-upstreams.md
           - Publishing first-party skills: guides/publishing-first-party-skills.md
           - Syncing from upstream automatically: guides/upstream-sync.md
           - Approving and rejecting snapshots: guides/approving-snapshots.md
