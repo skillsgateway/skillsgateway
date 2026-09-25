@@ -3446,3 +3446,43 @@ cases:
       WHEN approval is attempted and the portal shows what blocks it
       THEN the refusal names two groups, each with its rule and its path:line locations, the first ten spelled out and the rest counted, and the portal lists each group once with its locations
     revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0025
+    requirement_ids: ["GW_APPROVAL_0025"]
+    title: Every path of a snapshot wider than one page is reached folder by folder
+    verification: automated-test
+    description: |
+      GIVEN a served snapshot and a held successor whose single directory holds more children than one page, with paths added, modified and removed
+      WHEN a reviewer lists the root and that directory page by page, and asks for directories that are absent or traversal-shaped
+      THEN every child is reached exactly once with its kind, size and change, removed paths included, each directory's counts match its contents, absent and traversal-shaped directories are not found, and the portal loads a folder when opened and the rest of a wide folder on request
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0026
+    requirement_ids: ["GW_APPROVAL_0026"]
+    title: Totals are stated over the whole set, not the page
+    verification: automated-test
+    description: |
+      GIVEN a snapshot with more files than a listing page and more changed paths than a diff page
+      WHEN the first page of the listing, a directory and the diff are read
+      THEN each states the full count it pages over, the diff summary's change-type, binary and line counts are exact over the whole diff, and the portal presents those totals
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0027
+    requirement_ids: ["GW_APPROVAL_0027"]
+    title: A path search finds files anywhere in the snapshot
+    verification: automated-test
+    description: |
+      GIVEN a snapshot with more files than a listing page
+      WHEN a reviewer searches for a path fragment in a different case, and pages the unfiltered listing to its end
+      THEN every file whose full path contains the fragment is found with the count of matches, the pages together hold every path once, and the portal shows the matches against the snapshot's total
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0028
+    requirement_ids: ["GW_APPROVAL_0028"]
+    title: The diff is read to its end a page at a time, or narrowed to one path
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot with more changed paths than one diff page against the served commit
+      WHEN the diff is read page by page, narrowed to one file, to one directory, and to a traversal-shaped path
+      THEN the pages together hold every changed path once and each names the baseline, the narrowed reads hold exactly that file or that directory's changes and the traversal shape holds nothing, and the portal's Diff tab lists every changed file with its diff
+    revision: "0.1.0"

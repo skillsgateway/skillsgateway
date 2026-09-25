@@ -845,7 +845,9 @@ test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async 
  * URL, and opening that URL cold — a second approver following a pasted link — restores the
  * same bytes with nothing else carried over.
  *
- * @SVCs SVC_GW_APPROVAL_0005, SVC_GW_INGEST_0032
+ * The Diff tab lists every changed file against the served commit, each opening its own diff.
+ *
+ * @SVCs SVC_GW_APPROVAL_0005, SVC_GW_INGEST_0032, SVC_GW_APPROVAL_0028
  */
 test("snapshot_contents_are_explored_on_an_address_that_restores_the_same_file", async ({
   page,
@@ -894,6 +896,15 @@ test("snapshot_contents_are_explored_on_an_address_that_restores_the_same_file",
   await ingestOnReview(page, name);
   const heldCard = page.getByRole("region", { name: /^Snapshot \d+$/ });
   await expect(heldCard.getByTestId("snapshot-delta")).toContainText(/2 files · \+\d+ −\d+ · vs [0-9a-f]{8}/);
+
+  // The Diff tab lists both changed files against the served commit, each with its own diff.
+  await heldCard.getByRole("tab", { name: "Diff" }).click();
+  const changed = heldCard.getByRole("list", { name: /Changed files in snapshot \d+/ });
+  await expect(changed.getByRole("button")).toHaveCount(2);
+  await expect(changed.getByRole("button", { name: /docs-NEW\.md/ })).toContainText("added");
+  await changed.getByRole("button", { name: /SKILL\.md/ }).click();
+  await expect(heldCard.getByText("+Now with a changed instruction.")).toBeVisible();
+
   await heldCard.getByRole("tab", { name: "Contents" }).click();
 
   await expect(page).toHaveURL(/\/marketplaces\/[^/?]+\?snapshot=\d+&tab=contents$/);
@@ -904,6 +915,8 @@ test("snapshot_contents_are_explored_on_an_address_that_restores_the_same_file",
   await tree.getByRole("button", { name: "plugins" }).click();
   await tree.getByRole("button", { name: "hello" }).click();
   await tree.getByRole("button", { name: "skills" }).click();
+  // A folder's contents load when it opens: wait for the inner "hello" before taking the last one.
+  await expect(tree.getByRole("button", { name: "hello" })).toHaveCount(2);
   await tree.getByRole("button", { name: "hello" }).last().click();
   await tree.getByRole("button", { name: /SKILL\.md/ }).click();
 

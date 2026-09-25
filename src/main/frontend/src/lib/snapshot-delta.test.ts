@@ -111,3 +111,24 @@ test("an_empty_diff_is_zero_everywhere_rather_than_undefined", () => {
 
   expect(delta).toMatchObject({ files: 0, added: 0, removed: 0, binary: 0, cut: false });
 });
+
+/**
+ * The gateway's own counts win over the page: a first page of 500 entries from a diff of 603 is
+ * reported as 603 files and every line of all of them, and nothing is marked as a lower bound.
+ *
+ * @SVCs SVC_GW_APPROVAL_0026
+ */
+test("the_gateways_totals_over_the_whole_diff_are_the_delta_not_the_page", () => {
+  const delta = snapshotDelta(
+    {
+      baselineSha: "x",
+      truncated: true,
+      total: 603,
+      summary: { binary: 1, linesAdded: 601, linesRemoved: 1 },
+      entries: [{ path: "a", type: "modified", binary: false, truncated: true, diff: `${HEADER}@@ -1 +1 @@\n-a\n+b\n` }],
+    },
+    undefined,
+  );
+
+  expect(delta).toMatchObject({ files: 603, added: 601, removed: 1, binary: 1, cut: false });
+});

@@ -1,13 +1,15 @@
 import { GitCompareArrows, Link2, ShieldAlert } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { formatJson } from "@/lib/json-format";
 import { ApiError } from "@/api/client";
 import {
-  useSnapshotDiff,
+  useSnapshotDirectory,
   useSnapshotFile,
-  useSnapshotFiles,
+  useSnapshotFileDiff,
+  useSnapshotPathSearch,
   type SnapshotDiffEntry,
+  type SnapshotTreeChild,
 } from "@/api/queries";
 import { MarkdownView } from "@/components/markdown-view";
 import { SegmentedGroup } from "@/components/segmented-group";
@@ -15,20 +17,7 @@ import { SnapshotFileTree } from "@/components/snapshot-file-tree";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  ancestorDirectories,
-  buildSnapshotTree,
-  filterSnapshotTree,
-  type ChangeStatus,
-  type TreeNode,
-} from "@/lib/snapshot-tree";
-
-/** Every directory in the tree — what "expand all" means while a filter is narrowing it. */
-function allDirectories(nodes: readonly TreeNode[]): string[] {
-  return nodes.flatMap((node) =>
-    node.kind === "directory" ? [node.path, ...allDirectories(node.children)] : [],
-  );
-}
+import { ancestorDirectories } from "@/lib/snapshot-tree";
 
 function Notice({ children }: { children: React.ReactNode }) {
   return <p className="text-sm text-muted-foreground">{children}</p>;
@@ -51,7 +40,7 @@ export function Forbidden() {
 }
 
 /** Unified diff text, coloured by line kind with theme tokens. */
-function DiffText({ diff }: { diff: string }) {
+export function DiffText({ diff }: { diff: string }) {
   return (
     <pre className="overflow-x-auto rounded-md border bg-muted p-3 font-mono text-xs">
       {diff.split("\n").map((line, i) => {
@@ -190,9 +179,139 @@ function FileDiff({
   );
 }
 
+/** How long typing settles before a search is sent: one request per pause, not per keystroke. */
+const SEARCH_SETTLE_MS = 250;
+
+/** "Show 500 more of 601" — the rest of a paged listing, on request, with its true size. */
+function ShowMore({
+  shown,
+  total,
+  pageSize,
+  loading,
+  onMore,
+}: {
+  shown: number;
+  total: number;
+  pageSize: number;
+  loading: boolean;
+  onMore: () => void;
+}) {
+  return (
+    <Button size="xs" variant="ghost" className="mt-1" disabled={loading} onClick={onMore}>
+      {loading
+        ? "Loading…"
+        : `Show ${Math.min(pageSize, total - shown)} more (${shown} of ${total} shown)`}
+    </Button>
+  );
+}
+
+type TreeProps = {
+  snapshotId: number;
+  selectedPath: string | null;
+  expanded: ReadonlySet<string>;
+  onToggle: (path: string) => void;
+  onSelect: (path: string) => void;
+};
+
+/** One directory's children, read when it is opened; a directory wider than a page pages on request. */
+function DirectoryChildren({ dir, ...tree }: TreeProps & { dir: string }) {
+  const listing = useSnapshotDirectory(tree.snapshotId, dir);
+  if (listing.isPending) {
+    return (
+      <p role="status" className="px-2 py-1 text-xs text-muted-foreground">
+        Loading {dir === "" ? "the snapshot" : dir}…
+      </p>
+    );
+  }
+  if (listing.isError) {
+    return (
+      <p role="alert" className="px-2 py-1 text-xs text-destructive">
+        {listing.error.message}
+      </p>
+    );
+  }
+  const entries: SnapshotTreeChild[] = listing.data.pages.flatMap((page) => page.entries ?? []);
+  const total = listing.data.pages[0]?.total ?? entries.length;
+  return (
+    <>
+      <SnapshotFileTree
+        entries={entries}
+        {...tree}
+        renderChildren={(path) => <DirectoryChildren dir={path} {...tree} />}
+      />
+      {listing.hasNextPage ? (
+        <ShowMore
+          shown={entries.length}
+          total={total}
+          pageSize={TREE_PAGE}
+          loading={listing.isFetchingNextPage}
+          onMore={() => void listing.fetchNextPage()}
+        />
+      ) : null}
+    </>
+  );
+}
+
+/** Children per page of `GET /snapshots/{id}/tree`, for the "Show more" label. */
+const TREE_PAGE = 500;
+/** Paths per page of `GET /snapshots/{id}/files`. */
+const FILES_PAGE = 2000;
+
+/** Search matches from anywhere in the snapshot, as a flat list of full paths. */
+function SearchResults({ query, ...tree }: TreeProps & { query: string }) {
+  const search = useSnapshotPathSearch(tree.snapshotId, query);
+  if (search.isPending) return <Notice>Searching…</Notice>;
+  if (search.isError) {
+    return (
+      <p role="alert" className="text-sm text-destructive">
+        {search.error.message}
+      </p>
+    );
+  }
+  const entries: SnapshotTreeChild[] = search.data.pages.flatMap((page) =>
+    (page.entries ?? []).map((entry) => ({ kind: "file", path: entry.path, size: entry.size })),
+  );
+  if (entries.length === 0) return <Notice>No path matches that search.</Notice>;
+  const total = search.data.pages[0]?.total ?? entries.length;
+  return (
+    <>
+      <SnapshotFileTree
+        entries={entries}
+        {...tree}
+        fullPaths
+        renderChildren={() => null}
+      />
+      {search.hasNextPage ? (
+        <ShowMore
+          shown={entries.length}
+          total={total}
+          pageSize={FILES_PAGE}
+          loading={search.isFetchingNextPage}
+          onMore={() => void search.fetchNextPage()}
+        />
+      ) : null}
+    </>
+  );
+}
+
+/** The count line under the search box: true totals, over the whole snapshot. */
+function countLine(
+  root: { files?: number; changed?: number; baselineSha?: string } | undefined,
+  searching: boolean,
+  matches: number | undefined,
+): string {
+  const files = root?.files ?? 0;
+  const fileCount = `${files} ${files === 1 ? "file" : "files"}`;
+  if (searching) return matches === undefined ? `Searching ${fileCount}…` : `${matches} matching of ${fileCount}`;
+  // With nothing served every path is new, so a changed count would only repeat the file count.
+  return root?.baselineSha ? `${fileCount}, ${root.changed ?? 0} changed` : fileCount;
+}
+
 /**
- * The reviewer's file explorer for one snapshot: a collapsible tree of the pinned commit, each
- * blob as inert text, and each file's delta against what the marketplace currently serves.
+ * The reviewer's file explorer for one snapshot: the pinned commit's tree, read one folder at a
+ * time, each blob as inert text, and each file's delta against what the marketplace currently
+ * serves. A snapshot of any size can be read to its end: folders load when opened, a folder
+ * wider than a page shows the rest on request, and the search runs on the gateway over every path.
  *
  * The selection is the caller's, because the caller owns the address: `?path=` carries the
  * selected file so an approver sends the second approver a link rather than directions, and the
@@ -200,9 +319,9 @@ function FileDiff({
  * in the URL — it is bookkeeping, not identity.
  *
  * Inspection, not execution: Markdown is rendered without an HTML pipeline, binary blobs are
- * described, and every bound the reads impose — a cut listing, a truncated blob — is stated.
+ * described, and every bound the reads impose — a page of a listing, a truncated blob — is stated.
  *
- * @Requirements GW_INGEST_0032, GW_INGEST_0015, GW_INGEST_0016
+ * @Requirements GW_INGEST_0032, GW_INGEST_0015, GW_INGEST_0016, GW_APPROVAL_0025, GW_APPROVAL_0026, GW_APPROVAL_0027
  */
 export function SnapshotExplorer({
   snapshotId,
@@ -213,33 +332,21 @@ export function SnapshotExplorer({
   selectedPath: string | null;
   onSelect: (path: string) => void;
 }) {
-  const files = useSnapshotFiles(snapshotId);
-  const diff = useSnapshotDiff(snapshotId);
+  const root = useSnapshotDirectory(snapshotId, "");
+  const fileDiff = useSnapshotFileDiff(snapshotId, selectedPath);
 
   const [query, setQuery] = useState("");
-  // The reviewer's own expansion, kept apart from what the filter opens: clearing a filter has
-  // to give back the shape they built, not leave 2000 rows open with no way down.
+  const [settled, setSettled] = useState("");
+  const search = useSnapshotPathSearch(snapshotId, settled);
+  // The reviewer's own expansion. A search replaces the tree rather than opening it, so clearing
+  // a search gives back exactly the shape they built.
   const [opened, setOpened] = useState<ReadonlySet<string>>(new Set());
   const [mode, setMode] = useState<"content" | "diff">("content");
 
-  const diffEntries = useMemo(() => diff.data?.entries ?? [], [diff.data]);
-  const changes = useMemo(() => {
-    const map = new Map<string, ChangeStatus>();
-    for (const entry of diffEntries) {
-      const path = entry.path ?? "";
-      if (path && entry.type) map.set(path, entry.type);
-    }
-    return map;
-  }, [diffEntries]);
-  const tree = useMemo(
-    () => buildSnapshotTree(files.data?.entries ?? [], changes),
-    [files.data, changes],
-  );
-  const filtered = useMemo(() => filterSnapshotTree(tree, query), [tree, query]);
-  const entryByPath = useMemo(
-    () => new Map(diffEntries.map((entry) => [entry.path ?? "", entry])),
-    [diffEntries],
-  );
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(query.trim()), SEARCH_SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   // Whatever is addressed is revealed: opening a deep link must not leave the file selected but
   // buried in collapsed directories. Reviewer toggles are kept, so this only ever adds.
@@ -251,16 +358,6 @@ export function SnapshotExplorer({
       return new Set([...open, ...missing]);
     });
   }, [selectedPath]);
-
-  // A filter is only useful if it shows what it found, so matches are revealed while it narrows
-  // — derived, not merged into the reviewer's set, so clearing the filter undoes exactly this.
-  const expanded = useMemo(
-    () =>
-      query.trim() === ""
-        ? opened
-        : new Set([...opened, ...allDirectories(filtered.nodes)]),
-    [opened, query, filtered.nodes],
-  );
 
   const toggle = (path: string) => {
     setOpened((open) => {
@@ -280,73 +377,80 @@ export function SnapshotExplorer({
     }
   };
 
-  const selectedNode = selectedPath ? entryByPath.get(selectedPath) : undefined;
-  const selectedIsRemoved = changes.get(selectedPath ?? "") === "removed";
+  // The one-path diff answers for this path only; anything else in it would be a stale answer.
+  const selectedNode: SnapshotDiffEntry | undefined = fileDiff.data?.entries?.find(
+    (entry) => entry.path === selectedPath,
+  );
+  const selectedIsRemoved = selectedNode?.type === "removed";
 
   // One definition: four props that have to stay in lock-step were written out twice.
   const comparison = (
     <FileDiff
       entry={selectedNode}
-      hasBaseline={Boolean(diff.data?.baselineSha)}
-      unavailable={diff.isError}
-      pending={diff.isPending}
+      hasBaseline={Boolean(fileDiff.data?.baselineSha)}
+      unavailable={fileDiff.isError}
+      pending={fileDiff.isPending}
     />
   );
 
-
-  if (files.isError) {
-    return files.error instanceof ApiError && files.error.status === 403 ? (
+  if (root.isError) {
+    return root.error instanceof ApiError && root.error.status === 403 ? (
       <Forbidden />
     ) : (
       <p role="alert" className="text-sm text-destructive">
-        {files.error.message}
+        {root.error.message}
       </p>
     );
   }
 
+  const totals = root.data?.pages[0];
+  const searching = query.trim() !== "";
+  const tree: TreeProps = {
+    snapshotId,
+    selectedPath,
+    expanded: opened,
+    onToggle: toggle,
+    onSelect,
+  };
+
   return (
     <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
-      {diff.isError ? (
-        <p role="alert" className="text-sm text-destructive">
-          The comparison against the served commit could not be read, so this tree shows the
-          snapshot's own paths only: nothing here is marked added or modified, and any path this
-          snapshot removes is missing from it entirely.
-        </p>
-      ) : null}
-
-      {files.isLoading || diff.isPending ? (
+      {root.isPending ? (
         <Notice>Reading the snapshot's files and its comparison against the served commit…</Notice>
-      ) : (files.data?.entries ?? []).length === 0 && changes.size === 0 ? (
+      ) : (totals?.files ?? 0) === 0 && (totals?.changed ?? 0) === 0 ? (
         <Notice>This snapshot contains no files.</Notice>
       ) : (
         <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[18rem_minmax(0,1fr)]">
           <div className="flex min-w-0 flex-col gap-2 rounded-lg border p-3 lg:min-h-0">
             <label htmlFor={`path-filter-${snapshotId}`} className="sr-only">
-              Filter paths
+              Search paths
             </label>
             <Input
               id={`path-filter-${snapshotId}`}
+              type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Filter paths…"
+              placeholder="Search paths…"
               aria-describedby={`path-filter-count-${snapshotId}`}
             />
             <div className="flex items-center gap-2">
-              <p id={`path-filter-count-${snapshotId}`} className="flex-1 text-xs text-muted-foreground">
-              {/* Counted over what is shown, which includes the paths this snapshot removes;
-                  the cut, when there is one, is a fact about the listing they came from. */}
-              {query.trim() === ""
-                ? `${filtered.searched} paths`
-                : `${filtered.matched} matching of ${filtered.searched}`}
-              {files.data?.truncated ? ", and the listing is cut at its limit" : ""}
+              <p
+                id={`path-filter-count-${snapshotId}`}
+                aria-live="polite"
+                className="flex-1 text-xs text-muted-foreground"
+              >
+                {countLine(
+                  totals,
+                  searching,
+                  searching && settled === query.trim() ? search.data?.pages[0]?.total : undefined,
+                )}
               </p>
               <Button
                 size="xs"
                 variant="ghost"
-                disabled={expanded.size === 0}
-                // Keyed to what is open on screen, not to what the reviewer opened: while a
-                // filter is up it owns the expansion, so collapsing means dropping it too.
-                // Otherwise the control sits inert over a fully open tree.
+                disabled={opened.size === 0 && !searching}
+                // Collapsing means dropping the search too: while it is up it owns the pane, and
+                // the control would otherwise sit inert over it.
                 onClick={() => {
                   setOpened(new Set());
                   setQuery("");
@@ -359,16 +463,14 @@ export function SnapshotExplorer({
               aria-label={`File tree of snapshot ${snapshotId}`}
               className="max-h-[60vh] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1"
             >
-              {filtered.nodes.length === 0 ? (
-                <Notice>No path matches that filter.</Notice>
+              {searching ? (
+                settled === query.trim() ? (
+                  <SearchResults query={settled} {...tree} />
+                ) : (
+                  <Notice>Searching…</Notice>
+                )
               ) : (
-                <SnapshotFileTree
-                  nodes={filtered.nodes}
-                  selectedPath={selectedPath}
-                  expanded={expanded}
-                  onToggle={toggle}
-                  onSelect={onSelect}
-                />
+                <DirectoryChildren dir="" {...tree} />
               )}
             </nav>
           </div>

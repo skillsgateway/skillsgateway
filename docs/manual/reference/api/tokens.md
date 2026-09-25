@@ -255,7 +255,7 @@ credential reaches the union of its scopes' endpoints and nothing more.
 | Scope | Reaches |
 | --- | --- |
 | `marketplaces:read` | `GET /api/v1/marketplaces`, `GET /api/v1/catalog`, and a snapshot's `/content`, `/content-diff`, `/licenses`, `/provenance`, `/release-age` |
-| `snapshots:read` | A snapshot's `/diff`, `/file`, `/files`, `/vetting`, `/fetchers`, `/four-eyes` |
+| `snapshots:read` | A snapshot's `/diff`, `/file`, `/files`, `/tree`, `/vetting`, `/fetchers`, `/four-eyes` |
 | `marketplaces:register` | `POST /api/v1/marketplaces` |
 | `marketplaces:ingest` | `POST /api/v1/marketplaces/{name}/ingest` |
 | `vetting:run` | `POST /api/v1/marketplaces/{name}/revet`, `POST /api/v1/snapshots/{id}/revet` |

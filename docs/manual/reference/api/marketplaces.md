@@ -412,18 +412,59 @@ These reads return raw held content, so unlike the metadata reads above they
 are **privileged**: an admin, or an approver of the snapshot's marketplace.
 Everyone else gets **403**.
 
-### `GET /snapshots/{id}/files`
+Each listing is **paged**: a response holds at most one page, `total` counts
+the whole set it pages over, `nextOffset` is the `offset` of the next page
+(absent on the last one), and `"truncated": true` means more pages follow. The
+page size bounds a response. It does not limit the snapshot: every path of any
+snapshot can be reached. The pinned commit never changes, so an `offset` names
+the same entries on every call. The diff's baseline can move between two calls,
+when an approval changes what is served. Every diff page names its
+`baselineSha`, so a caller can tell. A negative `offset` is **400**, and an
+`offset` past the end is an empty last page.
 
-Every path in the pinned commit's tree, with blob sizes. The listing is capped
-at 2000 entries; `"truncated": true` says it was cut.
+### `GET /snapshots/{id}/tree`
+
+Query: `dir` (optional), `offset` (default 0).
+
+One directory of the pinned commit, the root when `dir` is absent: its direct
+children, directories first and then files, each by name, 500 per page. Each
+child carries its `status` against the served commit (`added`, `modified`,
+`removed`, or absent when unchanged). Paths the snapshot *removes* are listed
+too, with no `size`. A directory child carries `files`, the files beneath it at
+any depth, and `changed`, the paths beneath it that differ from what is served,
+removed ones included. The response carries the same two counts for `dir`
+itself, so the root's `files` and `changed` are the snapshot's totals. With
+nothing served, `baselineSha` is absent and every path is `added`.
 
 ```json
-{"snapshotId":42,"sha":"3f9c2ab...","truncated":false,
+{"snapshotId":43,"sha":"9d41f00...","baselineSha":"3f9c2ab...","dir":"plugins",
+ "files":3261,"changed":12,"total":2,"truncated":false,
+ "entries":[{"name":"acme-tools","path":"plugins/acme-tools","kind":"directory",
+             "files":3260,"changed":12},
+            {"name":"README.md","path":"plugins/README.md","kind":"file",
+             "size":412,"status":"modified"}]}
+```
+
+**200** · **400** negative offset · **403** no applicable role · **404**
+unknown snapshot, or `dir` is not a directory of the pinned or the served tree.
+Traversal shapes are included in that 404.
+
+### `GET /snapshots/{id}/files`
+
+Query: `q` (optional), `offset` (default 0).
+
+Every path in the pinned commit's tree, in tree order, with blob sizes, 2000 per
+page. With `q`, only the paths whose full path contains it, compared without
+regard to case. This is the path search, and `total` counts every match in the
+snapshot.
+
+```json
+{"snapshotId":42,"sha":"3f9c2ab...","total":2,"truncated":false,
  "entries":[{"path":".claude-plugin/marketplace.json","size":180},
             {"path":"plugins/acme-tools/skills/deploy/SKILL.md","size":841}]}
 ```
 
-**200** · **403** no applicable role · **404** unknown
+**200** · **400** negative offset · **403** no applicable role · **404** unknown
 snapshot.
 
 ### `GET /snapshots/{id}/file?path={path}`
@@ -442,24 +483,38 @@ snapshot, or the path is not in the pinned tree.
 
 ### `GET /snapshots/{id}/diff`
 
+Query: `path` (optional), `offset` (default 0).
+
 The delta a reviewer decides: added, modified and removed paths between the
 pinned commit and the marketplace's currently served commit (the published
 repository's served tip — the same commit a `git fetch` returns), with a
-unified text diff per non-binary entry under the same 128 KiB cap. The entry
-list is capped at 500 with a `truncated` marker.
+unified text diff per non-binary entry under the same 128 KiB cap, 500 entries
+per page.
+
+`total` and `summary` count the **whole** diff, not the page. `summary` holds the
+paths `added`, `modified` and `removed`, the `binary` entries, and `linesAdded`
+and `linesRemoved`, which are counted from the full content even where an
+entry's text is cut. `path` narrows the diff the way a git pathspec does:
+exactly one file, or everything beneath one directory. The counts then cover
+the narrowed diff. A path in neither tree, traversal shapes included, narrows
+it to nothing.
 
 When the marketplace serves nothing — never approved, or its content was
 revoked or unpublished — `baselineSha` is `null` and every path is reported as
-`added`, without diff text: approving the snapshot would serve all of it.
+`added`, without diff text or line counts: approving the snapshot would serve
+all of it.
 
 ```json
-{"snapshotId":43,"sha":"9d41f00...","baselineSha":"3f9c2ab...","truncated":false,
+{"snapshotId":43,"sha":"9d41f00...","baselineSha":"3f9c2ab...",
+ "total":603,"truncated":true,"nextOffset":500,
+ "summary":{"added":2,"modified":600,"removed":1,"binary":1,
+            "linesAdded":601,"linesRemoved":1},
  "entries":[{"path":"plugins/acme-tools/skills/deploy/SKILL.md","type":"modified",
              "binary":false,"truncated":false,
              "diff":"--- a/...\n+++ b/...\n@@ -1 +1 @@\n-old\n+new\n"}]}
 ```
 
-**200** · **403** no applicable role · **404** unknown
+**200** · **400** negative offset · **403** no applicable role · **404** unknown
 snapshot.
 
 ---

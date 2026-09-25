@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
 import type { components } from "./types.gen";
 import { isDecidable, newestFirst } from "@/lib/snapshot-roles";
@@ -103,6 +103,9 @@ export function useDecideSnapshot() {
       void queryClient.invalidateQueries({ queryKey: ["snapshot-vetting"] });
       void queryClient.invalidateQueries({ queryKey: ["snapshot-name-collisions"] });
       void queryClient.invalidateQueries({ queryKey: ["waivers"] });
+      // A decision can move the served commit, which every file-level status is taken against.
+      void queryClient.invalidateQueries({ queryKey: ["snapshot-diff"] });
+      void queryClient.invalidateQueries({ queryKey: ["snapshot-tree"] });
     },
   });
 }
@@ -567,15 +570,6 @@ export type SnapshotFileContent = components["schemas"]["FileContent"];
 export type SnapshotDiff = components["schemas"]["SnapshotDiff"];
 export type SnapshotDiffEntry = components["schemas"]["DiffEntryView"];
 
-/** The pinned commit's file tree — the reviewer's map of what the snapshot actually ships. */
-export function useSnapshotFiles(snapshotId: number | null) {
-  return useQuery({
-    queryKey: ["snapshot-files", snapshotId],
-    queryFn: () => api<SnapshotFileTree>(`/api/v1/snapshots/${snapshotId}/files`),
-    enabled: snapshotId !== null,
-  });
-}
-
 /** One blob of the pinned commit, as inert text (or metadata only, for a binary blob). */
 export function useSnapshotFile(snapshotId: number | null, path: string | null) {
   return useQuery({
@@ -588,12 +582,77 @@ export function useSnapshotFile(snapshotId: number | null, path: string | null) 
   });
 }
 
-/** The delta against the marketplace's currently served commit; null baseline = nothing served. */
+/**
+ * The first page of the delta against the marketplace's currently served commit; null baseline =
+ * nothing served. `total` and `summary` count the whole diff, not the page.
+ */
 export function useSnapshotDiff(snapshotId: number | null) {
   return useQuery({
     queryKey: ["snapshot-diff", snapshotId],
     queryFn: () => api<SnapshotDiff>(`/api/v1/snapshots/${snapshotId}/diff`),
     enabled: snapshotId !== null,
+  });
+}
+
+/** The same delta narrowed to one path — how the explorer reads a single file's change. */
+export function useSnapshotFileDiff(snapshotId: number | null, path: string | null) {
+  return useQuery({
+    queryKey: ["snapshot-diff", snapshotId, "path", path],
+    queryFn: () =>
+      api<SnapshotDiff>(
+        `/api/v1/snapshots/${snapshotId}/diff?path=${encodeURIComponent(path ?? "")}`,
+      ),
+    enabled: snapshotId !== null && path !== null,
+  });
+}
+
+/** The whole delta, a page at a time — the Diff tab's list of every changed file. */
+export function useSnapshotDiffPages(snapshotId: number) {
+  return useInfiniteQuery({
+    queryKey: ["snapshot-diff", snapshotId, "pages"],
+    queryFn: ({ pageParam }) =>
+      api<SnapshotDiff>(`/api/v1/snapshots/${snapshotId}/diff?offset=${pageParam}`),
+    initialPageParam: 0,
+    getNextPageParam: (last) => last.nextOffset ?? undefined,
+  });
+}
+
+export type SnapshotDirectory = components["schemas"]["DirectoryListing"];
+export type SnapshotTreeChild = components["schemas"]["TreeChild"];
+
+/**
+ * One directory of the pinned commit, a page of children at a time; `""` is the root, whose
+ * `files` and `changed` are the snapshot's totals.
+ */
+export function useSnapshotDirectory(snapshotId: number | null, dir: string) {
+  return useInfiniteQuery({
+    queryKey: ["snapshot-tree", snapshotId, dir],
+    queryFn: ({ pageParam }) =>
+      api<SnapshotDirectory>(
+        `/api/v1/snapshots/${snapshotId}/tree?dir=${encodeURIComponent(dir)}&offset=${pageParam}`,
+      ),
+    initialPageParam: 0,
+    getNextPageParam: (last) => last.nextOffset ?? undefined,
+    enabled: snapshotId !== null,
+    // The pinned tree never changes, and a decision that moves the served commit invalidates
+    // this explicitly: without it, every folder opened re-reads every folder above it.
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
+/** Paths anywhere in the snapshot containing `query`, regardless of case, a page at a time. */
+export function useSnapshotPathSearch(snapshotId: number, query: string) {
+  const needle = query.trim();
+  return useInfiniteQuery({
+    queryKey: ["snapshot-files", snapshotId, "search", needle],
+    queryFn: ({ pageParam }) =>
+      api<SnapshotFileTree>(
+        `/api/v1/snapshots/${snapshotId}/files?q=${encodeURIComponent(needle)}&offset=${pageParam}`,
+      ),
+    initialPageParam: 0,
+    getNextPageParam: (last) => last.nextOffset ?? undefined,
+    enabled: needle !== "",
+    staleTime: Number.POSITIVE_INFINITY,
   });
 }
 

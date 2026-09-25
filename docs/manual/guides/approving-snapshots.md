@@ -22,9 +22,10 @@ open any of them.
 The card's **Contents** tab is the
 [file explorer](../reference/portal.md#snapshot-contents): the pinned
 commit as a real file tree, each file rendered inertly (Markdown without any
-HTML interpretation, binary files described rather than shown), with a filter
-over the paths and — the part that usually decides a successor snapshot — a
-**vs served** view of the file you are reading: exactly what it adds, changes
+HTML interpretation, binary files described rather than shown). The tree loads a
+folder at a time and states the snapshot's true totals, and a search over every
+path finds a file anywhere in a snapshot of any size. The part that usually
+decides a successor snapshot is the **vs served** view of the file you are reading: exactly what it adds, changes
 or removes against the commit consumers are currently receiving. Paths the
 snapshot removes are in the tree too, marked. A snapshot of a marketplace
 serving nothing shows every path as new: approving it serves all of it.
@@ -40,8 +41,14 @@ Approval is four-eyes, and this is what makes "we both looked at the same
 thing" checkable rather than assumed. The link needs the same roles the reads
 do, so it resolves for a co-approver and refuses anyone else.
 
-The same reads exist on the API (`GET /api/v1/snapshots/{id}/files`, `.../file`,
-`.../diff` — see
+The card's **Diff** tab lists every file the snapshot changes against what is
+served, a page at a time, each with its diff. Nothing is out of reach because of
+its size. The one bound a reviewer meets is per file: text beyond 128 KiB is
+marked as truncated, with the file's full size stated. Read such a file from a
+clone of the upstream at the pinned SHA.
+
+The same reads exist on the API (`GET /api/v1/snapshots/{id}/tree`, `.../files`,
+`.../file`, `.../diff` — see
 [the API reference](../reference/api/marketplaces.md#snapshot-preview)). They
 require admin or an approver grant for the marketplace (see
 [Delegated administration](delegated-administration.md)), because they return

@@ -6,6 +6,7 @@
  */
 import { http, HttpResponse } from "msw";
 import type { components } from "@/api/types.gen";
+import { countDiffLines } from "@/lib/snapshot-delta";
 
 type Schemas = components["schemas"];
 
@@ -882,6 +883,7 @@ export const fileTree: Schemas["FileTree"] = {
   entries: [
     { path: ".claude-plugin/marketplace.json", size: 180 },
     { path: "plugins/hello/skills/hello/SKILL.md", size: 120 },
+    { path: "docs/NEW.md", size: 14 },
     { path: "data/huge.txt", size: 900000 },
     { path: "assets/logo.bin", size: 4096 },
   ],
@@ -908,6 +910,110 @@ export const snapshotDiff: Schemas["SnapshotDiff"] = {
     { path: "docs/OLD.md", type: "removed", binary: false, truncated: false, diff: "-# Old\n" },
   ],
 };
+
+/** A page of `items` from `offset`, with the paging fields the gateway sends beside it. */
+function page<T>(items: readonly T[], offset: number, size: number) {
+  const entries = items.slice(offset, offset + size);
+  const end = offset + entries.length;
+  const more = end < items.length;
+  return { entries, total: items.length, truncated: more, ...(more ? { nextOffset: end } : {}) };
+}
+
+function offsetOf(request: Request): number {
+  return Number(new URL(request.url).searchParams.get("offset") ?? "0");
+}
+
+/** `GET /files` over the fixture: an optional case-insensitive path search, paged at 2000. */
+export function filesPage(tree: Schemas["FileTree"], request: Request): Schemas["FileTree"] {
+  const needle = (new URL(request.url).searchParams.get("q") ?? "").trim().toLowerCase();
+  const matches = (tree.entries ?? []).filter((entry) =>
+    (entry.path ?? "").toLowerCase().includes(needle),
+  );
+  return { snapshotId: tree.snapshotId, sha: tree.sha, ...page(matches, offsetOf(request), 2000) };
+}
+
+/** `GET /diff` over the fixture: narrowed by `path` as a pathspec, paged at 500, with its summary. */
+export function diffPage(diff: Schemas["SnapshotDiff"], request: Request): Schemas["SnapshotDiff"] {
+  const path = new URL(request.url).searchParams.get("path");
+  const entries = (diff.entries ?? []).filter(
+    (entry) => !path || entry.path === path || (entry.path ?? "").startsWith(`${path}/`),
+  );
+  const count = (type: string) => entries.filter((entry) => entry.type === type).length;
+  const lines = entries.map((entry) => countDiffLines(entry.diff ?? ""));
+  return {
+    snapshotId: diff.snapshotId,
+    sha: diff.sha,
+    baselineSha: diff.baselineSha,
+    ...page(entries, offsetOf(request), 500),
+    summary: {
+      added: count("added"),
+      modified: count("modified"),
+      removed: count("removed"),
+      binary: entries.filter((entry) => entry.binary).length,
+      linesAdded: lines.reduce((sum, count) => sum + count.added, 0),
+      linesRemoved: lines.reduce((sum, count) => sum + count.removed, 0),
+    },
+  };
+}
+
+/**
+ * `GET /tree` over the fixture, the way the gateway assembles it: the snapshot's paths and the
+ * diff's removed paths, grouped under `dir`, with statuses and per-directory counts.
+ */
+export function treePage(
+  tree: Schemas["FileTree"],
+  diff: Schemas["SnapshotDiff"],
+  request: Request,
+): Schemas["DirectoryListing"] | null {
+  const dir = new URL(request.url).searchParams.get("dir") ?? "";
+  const under = dir === "" ? "" : `${dir}/`;
+  const status = new Map((diff.entries ?? []).map((entry) => [entry.path ?? "", entry.type]));
+  const leaves = [
+    ...(tree.entries ?? []).map((entry) => ({ path: entry.path ?? "", size: entry.size, present: true })),
+    ...(diff.entries ?? [])
+      .filter((entry) => entry.type === "removed")
+      .map((entry) => ({ path: entry.path ?? "", size: undefined, present: false })),
+  ].filter((leaf) => leaf.path.startsWith(under));
+  if (dir !== "" && leaves.length === 0) return null;
+  const children = new Map<string, Schemas["TreeChild"]>();
+  for (const leaf of leaves) {
+    const rest = leaf.path.slice(under.length);
+    const [name = "", ...deeper] = rest.split("/");
+    const changed = status.has(leaf.path) ? 1 : 0;
+    if (deeper.length === 0) {
+      children.set(`f:${name}`, {
+        kind: "file",
+        name,
+        path: leaf.path,
+        size: leaf.size,
+        status: status.get(leaf.path),
+      });
+    } else {
+      const current = children.get(`d:${name}`) ?? {
+        kind: "directory",
+        name,
+        path: `${under}${name}`,
+        files: 0,
+        changed: 0,
+      };
+      current.files = (current.files ?? 0) + (leaf.present ? 1 : 0);
+      current.changed = (current.changed ?? 0) + changed;
+      children.set(`d:${name}`, current);
+    }
+  }
+  const ordered = [...children.entries()]
+    .sort(([a], [b]) => (a[0] === b[0] ? a.slice(2).localeCompare(b.slice(2)) : a[0] === "d" ? -1 : 1))
+    .map(([, child]) => child);
+  return {
+    snapshotId: tree.snapshotId,
+    sha: tree.sha,
+    baselineSha: diff.baselineSha,
+    dir,
+    files: leaves.filter((leaf) => leaf.present).length,
+    changed: leaves.filter((leaf) => status.has(leaf.path)).length,
+    ...page(ordered, offsetOf(request), 500),
+  };
+}
 
 function fileContent(path: string): Schemas["FileContent"] {
   if (path.endsWith(".bin")) {
@@ -1066,11 +1172,21 @@ export const handlers = [
   http.get("/api/v1/snapshots/:id/content", () => HttpResponse.json(snapshotContent)),
   http.get("/api/v1/snapshots/:id/provenance", () => HttpResponse.json(compositeProvenance)),
   http.get("/api/v1/snapshots/:id/content-diff", () => HttpResponse.json(contentDiff)),
-  http.get("/api/v1/snapshots/:id/files", () => HttpResponse.json(fileTree)),
+  http.get("/api/v1/snapshots/:id/files", ({ request }) =>
+    HttpResponse.json(filesPage(fileTree, request)),
+  ),
+  http.get("/api/v1/snapshots/:id/tree", ({ request }) => {
+    const listing = treePage(fileTree, snapshotDiff, request);
+    return listing
+      ? HttpResponse.json(listing)
+      : HttpResponse.json({ detail: "no such directory" }, { status: 404 });
+  }),
   http.get("/api/v1/snapshots/:id/file", ({ request }) =>
     HttpResponse.json(fileContent(new URL(request.url).searchParams.get("path") ?? "")),
   ),
-  http.get("/api/v1/snapshots/:id/diff", () => HttpResponse.json(snapshotDiff)),
+  http.get("/api/v1/snapshots/:id/diff", ({ request }) =>
+    HttpResponse.json(diffPage(snapshotDiff, request)),
+  ),
   http.get("/api/v1/tokens", () => HttpResponse.json<Schemas["TokenView"][]>(tokenViews)),
   http.post("/api/v1/tokens", () => HttpResponse.json(issuedToken, { status: 201 })),
   http.get("/api/v1/audit", () => HttpResponse.json({ entries: [], nextBefore: null })),
