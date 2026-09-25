@@ -889,6 +889,8 @@
       
         
       
+        
+      
     
     
     
@@ -946,6 +948,34 @@
     
   
     Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/private-upstreams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reading a private upstream
   
 
     
@@ -2813,11 +2843,28 @@ is also what makes them safe as path segments on the facade.</p>
 <p><strong>Reachability.</strong> Only after those checks pass does the gateway list the
 upstream's references, resolve the default branch it will pin, and refuse the
 registration when it cannot. The listing goes through the same connection path
-as ingestion's fetch, so registration opens no second route to the network. That
-path is also where upstream credentials will attach. It is the scheme allowlist
+as ingestion's fetch, so registration opens no second route to the network. It is the scheme allowlist
 that bounds where the gateway may connect. Address-level egress controls apply
 to external plugin sources only, not to a marketplace upstream an administrator
 names.</p>
+<p><strong>Upstream credentials.</strong> A private upstream is read with the credential
+configured for the longest matching URL prefix. It is configuration, never a
+database row, and registration and ingestion get it through the same path.
+Three properties make it safe to hand to a server the gateway does not control:</p>
+<ul>
+<li>The gateway, not the git client, attaches the credential, and it decides
+  again on every request. A request outside the prefix the marketplace URL
+  selected, including every redirect hop out of it, carries nothing. The git
+  client alone would keep an established credential across a redirect to
+  another port, scheme or path of the same host.</li>
+<li>The token is scrubbed from every failure the gateway records or returns, and
+  a clone URL with userinfo is refused with <code>400</code>.</li>
+<li><strong>The token's scope is the limit.</strong> An administrator who registers under a
+  credentialed prefix can pull anything the token reads into quarantine. That
+  is why the token must be scoped to what may be ingested, and why the ledger
+  names the prefix each registration used. See
+  <a href="../../guides/private-upstreams/">Reading a private upstream</a>.</li>
+</ul>
 <p>See <a href="../../reference/compatibility/">Compatibility and allowlists</a> for the full
 matrix.</p>
 <p><strong>Declared marketplaces enter through the same gate.</strong> The

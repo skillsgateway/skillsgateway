@@ -16,7 +16,7 @@
         <link rel="prev" href="../leaving-the-gateway/">
       
       
-        <link rel="next" href="../publishing-first-party-skills/">
+        <link rel="next" href="../private-upstreams/">
       
       
         
@@ -893,6 +893,8 @@
       
         
       
+        
+      
     
     
     
@@ -1115,6 +1117,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../private-upstreams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reading a private upstream
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2723,7 +2753,7 @@ selectable."</p>
 </tr>
 <tr>
 <td>400</td>
-<td>URL scheme not allowlisted, or a <code>ref</code> other than <code>main</code>.</td>
+<td>URL scheme not allowlisted, a credential embedded in the URL, or a <code>ref</code> other than <code>main</code>.</td>
 </tr>
 <tr>
 <td>409</td>
@@ -2747,6 +2777,10 @@ no scheme at all, is rejected rather than passed through. This is what keeps
 <p><strong>The ref</strong> must be absent or exactly <code>main</code>. You cannot register
 <code>release/1.x</code>. Which ref is ingested is the gateway's decision — see
 <a href="../../reference/compatibility/">Compatibility and allowlists</a>.</p>
+<p><strong>No credential in the URL.</strong> A URL with userinfo, such as
+<code>https://user:token@host/…</code>, is refused with <code>400</code>. It would be stored with the
+marketplace and shown wherever the URL is. A private upstream is read with an
+<a href="../private-upstreams/">upstream credential</a> from configuration instead.</p>
 <p><strong>The name</strong> doubles as a path segment on the facade (<code>/git/acme</code>), so it is
 constrained to a character set that cannot traverse directories.</p>
 <p><strong>The upstream must be readable.</strong> Once every check above has passed, the
@@ -2756,10 +2790,10 @@ earlier check never contacts the upstream. If the upstream cannot be read, the
 registration is refused with <code>502</code> and nothing is created. The problem says why,
 in three properties:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="mi">502</span><span class="p">,</span><span class="nt">"title"</span><span class="p">:</span><span class="s2">"Upstream not readable"</span><span class="p">,</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"the upstream could not be read, so nothing was registered: repository not found or requires authentication (…). Check the clone URL for typos; if the repository is private, the gateway has no credentials to read it."</span><span class="p">,</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"the upstream could not be read, so nothing was registered: repository not found or requires authentication (…). Check the clone URL for typos; if the repository is private, configure an upstream credential for its URL prefix whose token can read it."</span><span class="p">,</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w"> </span><span class="nt">"reason"</span><span class="p">:</span><span class="s2">"repository not found or requires authentication"</span><span class="p">,</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w"> </span><span class="nt">"rootCause"</span><span class="p">:</span><span class="s2">"https://github.com/acme/skils.git/info/refs?service=git-upload-pack not found: Not Found"</span><span class="p">,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w"> </span><span class="nt">"nextStep"</span><span class="p">:</span><span class="s2">"Check the clone URL for typos; if the repository is private, the gateway has no credentials to read it."</span><span class="p">}</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w"> </span><span class="nt">"nextStep"</span><span class="p">:</span><span class="s2">"Check the clone URL for typos; if the repository is private, configure an upstream credential for its URL prefix whose token can read it."</span><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -2771,7 +2805,7 @@ in three properties:</p>
 <tbody>
 <tr>
 <td><code>repository not found or requires authentication</code></td>
-<td>A typo in the URL, or a private repository. Forges answer both with 401 or 404, so the gateway does not guess which.</td>
+<td>A typo in the URL, a private repository with no <a href="../private-upstreams/">upstream credential</a>, or a credential whose token cannot read it. Forges answer all of these with 401 or 404, so the gateway does not guess which.</td>
 </tr>
 <tr>
 <td><code>the upstream host could not be resolved</code></td>
@@ -2795,7 +2829,7 @@ in three properties:</p>
 </tr>
 </tbody>
 </table>
-<p>A credential embedded in the URL is never repeated in a response, the log or the
+<p>An upstream credential's token is never repeated in a response, the log or the
 ledger. There is no separate "test connection" call: registering is the test.
 For marketplaces declared in the estate, see
 <a href="../declarative-estate/#an-unreachable-upstream">Declaring the estate</a>.</p>
