@@ -54,9 +54,9 @@ recorded in `evidence.md`.
   its finding groups across a vendored copy and a group waiver clears it; a
   hook-free snapshot passes with a summary; switching the vetter off records
   `DISABLED`.
-- [ ] 3.4 Fix existing tests that assumed four built-ins. They are corrected,
+- [x] 3.4 Fix existing tests that assumed four built-ins. They are corrected,
   not weakened. Verify that `./mvnw clean verify` passes.
-- [ ] 3.5 Manual mutation: at least five mutants over the rules and the
+- [x] 3.5 Manual mutation: at least five mutants over the rules and the
   launcher resolution, kept in `mutants.sh`. Each one is killed.
 - [x] 3.6 Measure against `pbakaus/impeccable` at a pinned SHA and record the
   numbers in evidence.md.
@@ -82,7 +82,7 @@ recorded in `evidence.md`.
 
 ## 6. Gates and archive
 
-- [ ] 6.1 Do a fresh run of all six gates after the last code edit. Write
+- [x] 6.1 Do a fresh run of all six gates after the last code edit. Write
   `evidence.md` with the commands, the result tails and the SHA.
 - [ ] 6.2 `/opsx:archive` as the final commit, with the synced
   `openspec/specs/**` committed in it.
