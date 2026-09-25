@@ -1,0 +1,27 @@
+# snapshot-preview — delta for browse-whole-snapshot
+
+## ADDED Requirements
+
+### Requirement: GW_APPROVAL_0025
+The system SHALL implement GW_APPROVAL_0025.
+
+#### Scenario: SVC_GW_APPROVAL_0025
+The system SHALL pass SVC_GW_APPROVAL_0025.
+
+### Requirement: GW_APPROVAL_0026
+The system SHALL implement GW_APPROVAL_0026.
+
+#### Scenario: SVC_GW_APPROVAL_0026
+The system SHALL pass SVC_GW_APPROVAL_0026.
+
+### Requirement: GW_APPROVAL_0027
+The system SHALL implement GW_APPROVAL_0027.
+
+#### Scenario: SVC_GW_APPROVAL_0027
+The system SHALL pass SVC_GW_APPROVAL_0027.
+
+### Requirement: GW_APPROVAL_0028
+The system SHALL implement GW_APPROVAL_0028.
+
+#### Scenario: SVC_GW_APPROVAL_0028
+The system SHALL pass SVC_GW_APPROVAL_0028.

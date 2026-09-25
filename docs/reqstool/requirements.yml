@@ -2532,3 +2532,43 @@ requirements:
     rationale: "The refusal is the reviewer's worklist. The same rule name repeated 66 times with no location is not a worklist, it is noise; a group at its locations is something a reviewer can open, judge and waive."
     categories: ["security", "interaction-capability"]
     revision: 0.1.0
+
+  - id: GW_APPROVAL_0025
+    title: A reviewer can reach every path of a snapshot, one folder at a time
+    significance: shall
+    description: "The system shall list a snapshot's pinned tree one directory at a time — each direct child of the addressed directory with its kind, its size for a file, its change against the marketplace's currently served commit, and for a directory the number of files beneath it and how many of those changed — including the paths the snapshot removes, bounded per request and paged so that every path of any snapshot can be reached with no overall ceiling; shall answer a directory absent from both trees, including any traversal-shaped path, with not-found; shall present the tree in the portal loading each directory when it is opened and the rest of a directory wider than one page on request; and shall apply the same role rule as file inspection."
+    references:
+      requirement_ids: ["GW_INGEST_0015", "GW_INGEST_0032"]
+    rationale: "A trial deployment reviewed a 3,261-file repository through a listing cut at 2,000 entries, so a reviewer was asked to approve content roughly 40% of which they could not open. Approving what cannot be opened is a correctness defect; a bound per request keeps each response small without putting a ceiling on the snapshot."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0026
+    title: Snapshot listings and the diff state their true totals
+    significance: shall
+    description: "The system shall state, with every page of a snapshot listing, a path search or the diff against the served commit, the full size of the set it pages over — the files and changed paths beneath a listed directory, the paths matching a search, and the changed paths of the diff with their counts by change type, the binary entries, and the lines added and removed across the whole diff — whether or not the page holds all of it; and shall present those totals in the portal rather than counts taken over a page."
+    references:
+      requirement_ids: ["GW_APPROVAL_0018"]
+    rationale: "Counts taken over a cut set read as the size of the review. The card's delta line said 'these are lower bounds' at exactly the scale where the reviewer most needs the true number; totals computed by the gateway over the whole set are the honest answer and cost nothing a reviewer would notice."
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0027
+    title: Path search over the whole snapshot
+    significance: shall
+    description: "The system shall find, over every path of a snapshot's pinned tree, the files whose full path contains a query compared without regard to case, bounded per request and paged, stating how many paths match; and shall present that search in the portal against the snapshot's total file count."
+    references:
+      requirement_ids: ["GW_INGEST_0032"]
+    rationale: "Once the tree loads a folder at a time, a filter over what the browser holds would search only the folders already opened. A reviewer following a finding's path, or a colleague's message naming a file, needs to reach it directly in a snapshot of any size."
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0028
+    title: The diff against the served commit is paged, not cut
+    significance: shall
+    description: "The system shall return the diff against the marketplace's currently served commit in bounded pages that together hold every changed path, each page naming the baseline it was taken against; shall narrow the diff, on request, to one path or one directory; and shall present in the portal every changed file of that diff, a page at a time, each with its textual diff."
+    references:
+      requirement_ids: ["GW_INGEST_0016"]
+    rationale: "A diff cut at 500 entries leaves the rest of the delta unreviewable in exactly the large changes where review matters most. Narrowing by path lets the explorer read one file's change without receiving the whole diff to find it."
+    categories: ["security", "functional-suitability"]
+    revision: 0.1.0
