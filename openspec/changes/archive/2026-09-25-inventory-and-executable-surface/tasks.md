@@ -84,5 +84,5 @@ recorded in `evidence.md`.
 
 - [x] 6.1 Do a fresh run of all six gates after the last code edit. Write
   `evidence.md` with the commands, the result tails and the SHA.
-- [ ] 6.2 `/opsx:archive` as the final commit, with the synced
+- [x] 6.2 `/opsx:archive` as the final commit, with the synced
   `openspec/specs/**` committed in it.
