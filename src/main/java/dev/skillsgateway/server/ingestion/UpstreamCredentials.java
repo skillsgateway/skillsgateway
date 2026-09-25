@@ -56,8 +56,11 @@ public class UpstreamCredentials {
         this.entries = validated(configured, clock);
     }
 
-    /** Validates every entry; one that cannot work as written stops startup (GW_INGEST_0053). */
-    @Requirements({"GW_INGEST_0053"})
+    /**
+     * Validates every entry; one that cannot work as written stops startup (GW_INGEST_0053,
+     * GW_INGEST_0060).
+     */
+    @Requirements({"GW_INGEST_0053", "GW_INGEST_0060"})
     private static List<Selected> validated(List<UpstreamCredential> configured, Clock clock) {
         List<Selected> loaded = new ArrayList<>();
         for (int i = 0; i < configured.size(); i++) {
@@ -107,8 +110,16 @@ public class UpstreamCredentials {
         String name = "%s[%d] (%s)".formatted(PROPERTY, index, prefixText);
         GitHubAppTokens app = null;
         if (credential.githubApp() == null) {
+            if (credential.username() == null && credential.token() == null) {
+                throw new IllegalStateException(
+                        name + ": declares no credential; give it a username and token, or a github-app");
+            }
             requireUsable(name, "username", credential.username());
             requireUsable(name, "token", credential.token());
+        } else if (credential.username() != null || credential.token() != null) {
+            // Exactly one kind per entry (GW_INGEST_0060): which one applies must not be a guess.
+            throw new IllegalStateException(
+                    name + ": declares both a username/token and a github-app; an entry is one kind or the other");
         } else {
             app = GitHubAppTokens.load(name, credential.githubApp(), clock);
         }

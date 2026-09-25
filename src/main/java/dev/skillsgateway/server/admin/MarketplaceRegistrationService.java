@@ -296,10 +296,11 @@ public class MarketplaceRegistrationService {
     }
 
     /**
-     * The ledger names the credential prefix an upstream was read with, never its token
-     * (GW_INGEST_0055): the token's scope is the limit on what a registration can pull in.
+     * The ledger names the credential prefix an upstream was read with, and whether it is a GitHub App,
+     * never its token (GW_INGEST_0055, GW_INGEST_0062): the token's scope is the limit on what a
+     * registration can pull in.
      */
-    @Requirements({"GW_INGEST_0055"})
+    @Requirements({"GW_INGEST_0055", "GW_INGEST_0062"})
     private String registrationDetail(String origin, String url) {
         String detail = "origin=" + origin;
         if (Marketplace.ORIGIN_HOSTED.equals(origin)) {
@@ -307,7 +308,8 @@ public class MarketplaceRegistrationService {
         }
         return upstreamCredentials
                 .select(url)
-                .map(selected -> detail + " credential=" + selected.urlPrefix())
+                .map(selected -> detail + " credential=" + selected.urlPrefix()
+                        + (selected.isGitHubApp() ? " (github-app)" : ""))
                 .orElse(detail);
     }
 
