@@ -132,4 +132,12 @@ Feature: an audit sink's delivery channel is changed only through its sink
 
 ## Revisions
 
-- (none)
+- 2026-09-25, during GAUNTLET: the setup plan said the gauntlet adds no files.
+  It adds one, `openspec/changes/sink-channel-delete-guard/mutants.sh`,
+  because a mutation run has to be reproducible from the repo, not just
+  described. It archives with the change. Two further mutants were added:
+  T1 and T2, throwaway mutants proving that S2 and S4 can fail. The runner
+  counts a kill only when the named test fails, so a build or database
+  failure cannot score as a kill. Mutant 1 removes the whole guard: removing
+  only its first call is equivalent, because the storage fallback still
+  answers 409.
