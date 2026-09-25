@@ -2374,12 +2374,54 @@
         },
         "type": "object"
       },
+      "PluginComponent": {
+        "description": "A command, agent or MCP server a plugin provides",
+        "properties": {
+          "name": {
+            "description": "Name: the file name without .md, the command map key, or the MCP server key",
+            "type": "string"
+          },
+          "path": {
+            "description": "Where it is defined: its file, or path:line of an inline declaration",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PluginContent": {
         "description": "A plugin declared by the marketplace manifest",
         "properties": {
+          "agents": {
+            "description": "Agents the plugin provides (GW_INGEST_0045); empty when there are none",
+            "items": {
+              "$ref": "#/components/schemas/PluginComponent"
+            },
+            "type": "array"
+          },
+          "commands": {
+            "description": "Commands the plugin provides (GW_INGEST_0045); empty when there are none",
+            "items": {
+              "$ref": "#/components/schemas/PluginComponent"
+            },
+            "type": "array"
+          },
           "description": {
             "description": "Plugin description from the manifest",
             "type": "string"
+          },
+          "hooks": {
+            "description": "Hooks the plugin declares, each with its trigger (GW_INGEST_0045): the code Claude Code runs without the user invoking it",
+            "items": {
+              "$ref": "#/components/schemas/PluginHook"
+            },
+            "type": "array"
+          },
+          "mcpServers": {
+            "description": "MCP servers the plugin provides (GW_INGEST_0045); empty when there are none",
+            "items": {
+              "$ref": "#/components/schemas/PluginComponent"
+            },
+            "type": "array"
           },
           "name": {
             "description": "Plugin name from the manifest",
@@ -2428,6 +2470,43 @@
               "removed",
               "changed",
               "unchanged"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PluginHook": {
+        "description": "A hook a plugin declares: something Claude Code runs without the user invoking it",
+        "properties": {
+          "declaredBy": {
+            "description": "plugin for a plugin hook; 'skill <name>' or 'agent <name>' for one declared in that skill's or agent's frontmatter, which runs while it is active",
+            "type": "string"
+          },
+          "event": {
+            "description": "The event that triggers it, e.g. SessionStart, PostToolUse, Stop",
+            "type": "string"
+          },
+          "location": {
+            "description": "path:line of the declaration",
+            "type": "string"
+          },
+          "matcher": {
+            "description": "The tool-name matcher that narrows the trigger, or null for every occurrence",
+            "type": "string"
+          },
+          "runs": {
+            "description": "What it runs: the command with its arguments, the URL, the MCP tool or the prompt",
+            "type": "string"
+          },
+          "type": {
+            "description": "Handler type",
+            "enum": [
+              "command",
+              "http",
+              "mcp_tool",
+              "prompt",
+              "agent"
             ],
             "type": "string"
           }

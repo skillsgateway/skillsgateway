@@ -3197,10 +3197,25 @@ export interface components {
             /** @description Whether the expression matched; absent when it errored */
             matched?: boolean;
         };
+        /** @description A command, agent or MCP server a plugin provides */
+        PluginComponent: {
+            /** @description Name: the file name without .md, the command map key, or the MCP server key */
+            name?: string;
+            /** @description Where it is defined: its file, or path:line of an inline declaration */
+            path?: string;
+        };
         /** @description A plugin declared by the marketplace manifest */
         PluginContent: {
+            /** @description Agents the plugin provides (GW_INGEST_0045); empty when there are none */
+            agents?: components["schemas"]["PluginComponent"][];
+            /** @description Commands the plugin provides (GW_INGEST_0045); empty when there are none */
+            commands?: components["schemas"]["PluginComponent"][];
             /** @description Plugin description from the manifest */
             description?: string;
+            /** @description Hooks the plugin declares, each with its trigger (GW_INGEST_0045): the code Claude Code runs without the user invoking it */
+            hooks?: components["schemas"]["PluginHook"][];
+            /** @description MCP servers the plugin provides (GW_INGEST_0045); empty when there are none */
+            mcpServers?: components["schemas"]["PluginComponent"][];
             /** @description Plugin name from the manifest */
             name?: string;
             /** @description Skills found under <source>/skills/ */
@@ -3223,6 +3238,24 @@ export interface components {
              * @enum {string}
              */
             status?: "added" | "removed" | "changed" | "unchanged";
+        };
+        /** @description A hook a plugin declares: something Claude Code runs without the user invoking it */
+        PluginHook: {
+            /** @description plugin for a plugin hook; 'skill <name>' or 'agent <name>' for one declared in that skill's or agent's frontmatter, which runs while it is active */
+            declaredBy?: string;
+            /** @description The event that triggers it, e.g. SessionStart, PostToolUse, Stop */
+            event?: string;
+            /** @description path:line of the declaration */
+            location?: string;
+            /** @description The tool-name matcher that narrows the trigger, or null for every occurrence */
+            matcher?: string;
+            /** @description What it runs: the command with its arguments, the URL, the MCP tool or the prompt */
+            runs?: string;
+            /**
+             * @description Handler type
+             * @enum {string}
+             */
+            type?: "command" | "http" | "mcp_tool" | "prompt" | "agent";
         };
         /** @description A CEL policy deny rule, evaluated fail-closed at approval time */
         PolicyRule: {
