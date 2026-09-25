@@ -257,7 +257,7 @@ class UpstreamCredentialsTests {
         assertThat(credentials.select("http://127.0.0.1:8080/x/y.git")).isPresent();
         assertThat(credentials.select("http://localhost:80/team/y.git")).isPresent();
         assertThat(credentials.select("http://[::1]:3000/y.git")).isPresent();
-        assertThat(credentials.secrets()).containsExactlyInAnyOrder(ACME_TOKEN, HOST_TOKEN, HOST_TOKEN);
+        assertThat(credentials.secrets()).containsExactlyInAnyOrder(ACME_TOKEN, HOST_TOKEN, HOST_TOKEN, HOST_TOKEN);
     }
 
     @Test

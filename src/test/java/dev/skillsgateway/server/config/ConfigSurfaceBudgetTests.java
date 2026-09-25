@@ -64,7 +64,9 @@ class ConfigSurfaceBudgetTests {
     // The argument the ratchet asks for is in that change's proposal, under Impact.
     // 108 since corpus-aware-vetting: `approval.name-collision.enabled`. The argument the ratchet
     // asks for is in that change's proposal, under "Why the surface grows".
-    private static final int BUDGET = 108;
+    // 109 since upstream-credentials: `ingestion.upstream-credentials`, the one list a private
+    // upstream's token can live in. The argument is in that change's proposal, "Why the surface grows".
+    private static final int BUDGET = 109;
 
     /** Where the measured breakdown is written, so a run's numbers survive for a PR body. */
     private static final Path REPORT = Path.of("target", "config-surface.txt");

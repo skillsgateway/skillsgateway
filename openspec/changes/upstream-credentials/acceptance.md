@@ -152,3 +152,16 @@ Feature: credentials for private upstreams, matched by URL prefix
 | SVC_GW_INGEST_0053 — An unusable credential entry stops startup and names the entry, not the token | U5 |
 | SVC_GW_INGEST_0054 — A clone URL with userinfo is refused and nothing is created | S9 |
 | SVC_GW_INGEST_0055 — The registration ledger entry names the credential prefix | S10 |
+
+## Revisions during implementation
+
+- **S1.** The forge saw one request that was not a git request: the
+  forge-metadata lookup registration makes (`ForgeMetadataService`, a REST
+  call to `/api/v1/repos/<owner>/<repo>`). The credential does not ride on it.
+  It rides only on the git transport, which is what #494 scopes. S1 now
+  asserts that every git request under `/private/` carries the credential,
+  and that the metadata lookup carries none. For a private repository, the
+  metadata is therefore absent. That is a known limit, and it is stated in the
+  docs.
+- **U5 (loopback).** The test counted three tokens for four entries. That was
+  an arithmetic slip in the test, not a behaviour change.

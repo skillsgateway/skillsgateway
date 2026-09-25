@@ -12,6 +12,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.TransportHttp;
 import org.springframework.stereotype.Component;
 
 /**
@@ -25,6 +26,12 @@ public class UpstreamGit {
     /** Idle, not total: a large fetch that keeps moving is never cut off; a silent upstream is. */
     static final int TIMEOUT_SECONDS = 60;
 
+    private final UpstreamCredentials credentials;
+
+    public UpstreamGit(UpstreamCredentials credentials) {
+        this.credentials = credentials;
+    }
+
     /** The default branch registration resolved: the ref the gateway pins (GW_INGEST_0006). */
     public record Probe(String defaultBranch, ObjectId head) {}
 
@@ -35,7 +42,7 @@ public class UpstreamGit {
         try {
             refs = listRefs(url);
         } catch (GitAPIException | RuntimeException e) {
-            throw new UpstreamException(UpstreamFailure.of(e), e);
+            throw new UpstreamException(translate(e), e);
         }
         String branch = defaultBranch(url, refs);
         return new Probe(branch, refs.get(Constants.HEAD).getObjectId());
@@ -50,19 +57,19 @@ public class UpstreamGit {
     public ObjectId fetchDefaultBranch(Repository repo, String url, String targetRef) {
         try (Git git = new Git(repo)) {
             try {
-                connect(git.fetch().setRemote(url).setRefSpecs(new RefSpec("+HEAD:" + targetRef)))
+                connect(git.fetch().setRemote(url).setRefSpecs(new RefSpec("+HEAD:" + targetRef)), url)
                         .call();
             } catch (GitAPIException | RuntimeException first) {
                 try {
                     String branch = defaultBranch(url, listRefs(url));
-                    connect(git.fetch().setRemote(url).setRefSpecs(new RefSpec("+" + branch + ":" + targetRef)))
+                    connect(git.fetch().setRemote(url).setRefSpecs(new RefSpec("+" + branch + ":" + targetRef)), url)
                             .call();
                 } catch (UpstreamException second) {
                     second.addSuppressed(first);
                     throw second;
                 } catch (GitAPIException | RuntimeException second) {
                     second.addSuppressed(first);
-                    throw new UpstreamException(UpstreamFailure.of(second), second);
+                    throw new UpstreamException(translate(second), second);
                 }
             }
             ObjectId sha = repo.resolve(targetRef);
@@ -71,20 +78,36 @@ public class UpstreamGit {
             }
             return sha;
         } catch (IOException e) {
-            throw new UpstreamException(UpstreamFailure.of(e), e);
+            throw new UpstreamException(translate(e), e);
         }
     }
 
     private Map<String, Ref> listRefs(String url) throws GitAPIException {
-        return connect(Git.lsRemoteRepository().setRemote(url)).callAsMap();
+        return connect(Git.lsRemoteRepository().setRemote(url), url).callAsMap();
     }
 
     /**
-     * Where every upstream command is configured before it runs. Upstream credentials (#494) attach
-     * here, so registration's listing and ingestion's fetch get them at once.
+     * Where every upstream command is configured before it runs, so registration's listing and
+     * ingestion's fetch get the same credential (GW_INGEST_0050). The credential is chosen once, from
+     * the marketplace URL, and rides only on requests under its own prefix (GW_INGEST_0051). An
+     * upstream under no prefix gets no factory at all: JGit's own transport, anonymous.
      */
-    private static <C extends TransportCommand<C, ?>> C connect(C command) {
-        return command.setTimeout(TIMEOUT_SECONDS);
+    @Requirements({"GW_INGEST_0050", "GW_INGEST_0051"})
+    private <C extends TransportCommand<C, ?>> C connect(C command, String url) {
+        command.setTimeout(TIMEOUT_SECONDS);
+        credentials
+                .select(url)
+                .ifPresent(selected -> command.setTransportConfigCallback(transport -> {
+                    if (transport instanceof TransportHttp http) {
+                        http.setHttpConnectionFactory(selected.connectionFactory());
+                    }
+                }));
+        return command;
+    }
+
+    /** The translation, with every configured token scrubbed from it (GW_INGEST_0052). */
+    private UpstreamFailure translate(Throwable failure) {
+        return UpstreamFailure.of(failure).scrub(credentials.secrets());
     }
 
     private static String defaultBranch(String url, Map<String, Ref> refs) {

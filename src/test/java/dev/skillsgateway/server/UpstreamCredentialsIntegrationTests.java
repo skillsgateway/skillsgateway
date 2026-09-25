@@ -71,11 +71,17 @@ class UpstreamCredentialsIntegrationTests extends AbstractExternalSourceTest {
                 .andExpect(jsonPath("$.sha").value(FORGE.headSha("private/skills")));
 
         List<String[]> seen = FORGE.authorizations();
-        assertThat(seen).isNotEmpty();
-        assertThat(seen).allSatisfy(request -> {
-            assertThat(request[0]).startsWith("/private/");
-            assertThat(request[1]).isEqualTo(basic(PRIVATE_TOKEN));
-        });
+        assertThat(seen)
+                .filteredOn(request -> request[0].startsWith("/private/"))
+                .hasSizeGreaterThanOrEqualTo(3)
+                .allSatisfy(request -> assertThat(request[1]).isEqualTo(basic(PRIVATE_TOKEN)));
+        // The forge-metadata lookup at registration is not a git request; the credential is not for it.
+        assertThat(seen)
+                .filteredOn(request -> !request[0].startsWith("/private/"))
+                .allSatisfy(request -> {
+                    assertThat(request[0]).startsWith("/api/");
+                    assertThat(request[1]).isEmpty();
+                });
     }
 
     @Test

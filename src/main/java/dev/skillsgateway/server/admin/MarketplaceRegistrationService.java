@@ -2,6 +2,7 @@ package dev.skillsgateway.server.admin;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.ingestion.ForgeMetadataService;
+import dev.skillsgateway.server.ingestion.UpstreamCredentials;
 import dev.skillsgateway.server.ingestion.UpstreamException;
 import dev.skillsgateway.server.ingestion.UpstreamGit;
 import dev.skillsgateway.server.persistence.Marketplace;
@@ -68,6 +69,7 @@ public class MarketplaceRegistrationService {
     private final WebhookService webhookService;
     private final SnapshotRepository snapshotRepository;
     private final UpstreamGit upstreamGit;
+    private final UpstreamCredentials upstreamCredentials;
 
     public MarketplaceRegistrationService(
             MarketplaceRepository marketplaceRepository,
@@ -77,7 +79,8 @@ public class MarketplaceRegistrationService {
             GitStorage storage,
             WebhookService webhookService,
             SnapshotRepository snapshotRepository,
-            UpstreamGit upstreamGit) {
+            UpstreamGit upstreamGit,
+            UpstreamCredentials upstreamCredentials) {
         this.marketplaceRepository = marketplaceRepository;
         this.properties = properties;
         this.forgeMetadataService = forgeMetadataService;
@@ -86,6 +89,7 @@ public class MarketplaceRegistrationService {
         this.webhookService = webhookService;
         this.snapshotRepository = snapshotRepository;
         this.upstreamGit = upstreamGit;
+        this.upstreamCredentials = upstreamCredentials;
     }
 
     /** A successful registration, plus any non-blocking warnings about it (GW_INGEST_0029). */
@@ -123,7 +127,9 @@ public class MarketplaceRegistrationService {
         "GW_FACADE_0006",
         "GW_WEBHOOK_0009",
         "GW_INGEST_0040",
-        "GW_INGEST_0041"
+        "GW_INGEST_0041",
+        "GW_INGEST_0054",
+        "GW_INGEST_0055"
     })
     public RegistrationOutcome register(
             String name, String url, String origin, String pushPolicy, String actor, Reachability reachability) {
@@ -147,6 +153,7 @@ public class MarketplaceRegistrationService {
             }
         } else {
             requireAllowlistedScheme(url);
+            requireNoUserinfo(url);
             warnings = duplicateUrlWarnings(url);
         }
         if (marketplaceRepository.findByName(name).isPresent()) {
@@ -166,7 +173,8 @@ public class MarketplaceRegistrationService {
         if (hosted) {
             createOriginRepository(marketplace.name());
         }
-        auditLogger.record(actor, marketplace.name(), "marketplace-registered", null, "origin=" + resolvedOrigin);
+        auditLogger.record(
+                actor, marketplace.name(), "marketplace-registered", null, registrationDetail(resolvedOrigin, url));
         if (unreadable != null) {
             auditLogger.record(
                     actor,
@@ -284,6 +292,50 @@ public class MarketplaceRegistrationService {
         } catch (IOException e) {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR, "could not create the origin repository", e);
+        }
+    }
+
+    /**
+     * The ledger names the credential prefix an upstream was read with, never its token
+     * (GW_INGEST_0055): the token's scope is the limit on what a registration can pull in.
+     */
+    @Requirements({"GW_INGEST_0055"})
+    private String registrationDetail(String origin, String url) {
+        String detail = "origin=" + origin;
+        if (Marketplace.ORIGIN_HOSTED.equals(origin)) {
+            return detail;
+        }
+        return upstreamCredentials
+                .select(url)
+                .map(selected -> detail + " credential=" + selected.urlPrefix())
+                .orElse(detail);
+    }
+
+    /**
+     * A credential in the URL would be stored in the marketplace record and repeated by every
+     * response that shows it (GW_INGEST_0054); upstream credentials are configuration. The
+     * authority is also read as written, so an opaque parse cannot hide an {@code @}.
+     */
+    @Requirements({"GW_INGEST_0054"})
+    private static void requireNoUserinfo(String url) {
+        boolean userinfo;
+        try {
+            userinfo = new URI(url).getRawUserInfo() != null;
+        } catch (URISyntaxException e) {
+            userinfo = false;
+        }
+        int authority = url.indexOf("://");
+        if (authority >= 0) {
+            int slash = url.indexOf('/', authority + 3);
+            userinfo |= url.substring(authority + 3, slash < 0 ? url.length() : slash)
+                            .indexOf('@')
+                    >= 0;
+        }
+        if (userinfo) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "url must not embed a credential; configure one under"
+                            + " skills-gateway.ingestion.upstream-credentials instead");
         }
     }
 
