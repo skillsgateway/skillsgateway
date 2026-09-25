@@ -1,7 +1,7 @@
 # lifecycle-webhooks Specification
 
 ## Purpose
-TBD - created by archiving change add-lifecycle-event-webhooks. Update Purpose after archive.
+Outbound notification of snapshot and marketplace lifecycle events: signed deliveries to subscribers that filter for them, retried with backoff, from a served registry of namespaced event names; an approval-pending event that announces without disclosing; a delivery contract published in the API document and guarded against breaking change; and the portal page for administering subscribers and watching deliveries.
 ## Requirements
 ### Requirement: GW_WEBHOOK_0001
 The system SHALL implement GW_WEBHOOK_0001.

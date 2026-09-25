@@ -1,7 +1,7 @@
 # git-storage Specification
 
 ## Purpose
-TBD - created by archiving change pluggable-git-storage. Update Purpose after archive.
+Where served and quarantined git repositories live: a named storage backend chosen by configuration, reference transitions and publication that behave identically on every backend, verified migration between backends, and a backend that reports its own contention, levels and reachability.
 ## Requirements
 ### Requirement: GW_FACADE_0010
 The system SHALL implement GW_FACADE_0010.

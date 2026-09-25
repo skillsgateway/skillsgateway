@@ -1,7 +1,7 @@
 # audit-export Specification
 
 ## Purpose
-TBD - created by archiving change add-audit-ledger-export. Update Purpose after archive.
+Getting the append-only audit ledger out of the gateway: the resumable NDJSON export stream, export sinks that push the same feed with at-least-once delivery and a replayable cursor, the bounded browse read the portal's audit page uses, and ledger entries that identify their marketplace by id.
 ## Requirements
 ### Requirement: GW_AUDIT_0003
 The system SHALL implement GW_AUDIT_0003.

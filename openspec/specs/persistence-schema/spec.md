@@ -1,7 +1,7 @@
 # persistence-schema Specification
 
 ## Purpose
-TBD - created by archiving change native-postgres-enum-types. Update Purpose after archive.
+Cross-cutting rules for the gateway's database: enumerated persisted values stored as database types rather than free text, and scheduled background passes that run on one replica at a time.
 ## Requirements
 ### Requirement: GW_FACADE_0009
 The system SHALL implement GW_FACADE_0009.
