@@ -3327,6 +3327,26 @@ cases:
       THEN the ledger holds an ingest-failed entry for each, by the approver and by the scheduler, whose detail names the reason
     revision: "0.3.0"
 
+  - id: SVC_GW_INGEST_0048
+    requirement_ids: ["GW_INGEST_0048"]
+    title: An administrator removes a marketplace from its settings in the portal
+    verification: automated-test
+    description: |
+      GIVEN an administrator on a registered marketplace's settings, and a user who is not an administrator on the same page
+      WHEN the administrator opens the removal confirmation, leaves the reason empty or blank, then writes a reason and confirms; and when the server refuses the removal
+      THEN the confirmation names the marketplace and states the consequences, confirming is unavailable until the reason holds text, the removal is requested with the trimmed reason and the portal lands on the marketplace list without the marketplace, a refusal is shown with the confirmation still open, and the non-administrator is shown no removal control
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0049
+    requirement_ids: ["GW_INGEST_0049"]
+    title: The portal does not offer to remove a declared marketplace
+    verification: automated-test
+    description: |
+      GIVEN an administrator on the settings of a marketplace that the last estate reconciliation lists as declared
+      WHEN the settings are shown
+      THEN the removal control is unavailable and the page states that the next reconciliation would register the name again and that the declaration has to be removed first
+    revision: "0.3.0"
+
   - id: SVC_GW_INGEST_0050
     requirement_ids: ["GW_INGEST_0050"]
     title: A private upstream registers and ingests with its prefix's credential
