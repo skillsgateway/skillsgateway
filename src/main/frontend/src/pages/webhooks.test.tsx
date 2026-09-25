@@ -229,7 +229,7 @@ test("a_sinks_channel_is_not_listed_as_a_subscriber_and_its_deliveries_lead_to_t
   renderPage();
 
   expect(await screen.findByRole("row", { name: /ci-bot.*snapshot\.approved.*enabled/ })).toBeInTheDocument();
-  expect(screen.queryByRole("row", { name: /https:\/\/siem\.example\.com/ })).not.toBeInTheDocument();
+  expect(screen.queryByText("https://siem.example.com/ingest")).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Delete subscriber siem" })).not.toBeInTheDocument();
 
   const sinkDelivery = await screen.findByRole("row", { name: /audit\.export/ });
