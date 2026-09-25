@@ -6,6 +6,7 @@ import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,8 +61,8 @@ public record UpstreamFailure(String reason, String nextStep, String rootCause) 
             if (candidate instanceof NoRemoteRepositoryException || refusalText(candidate)) {
                 return new UpstreamFailure(
                         NOT_FOUND_OR_AUTH,
-                        "Check the clone URL for typos; if the repository is private, the gateway has no"
-                                + " credentials to read it.",
+                        "Check the clone URL for typos; if the repository is private, configure an upstream"
+                                + " credential for its URL prefix whose token can read it.",
                         rootCause(candidate));
             }
         }
@@ -108,6 +109,25 @@ public record UpstreamFailure(String reason, String nextStep, String rootCause) 
                 "the ingestion could not complete",
                 "Check the root cause; the gateway log has the full error.",
                 rootCause(failure));
+    }
+
+    /**
+     * This failure with every one of {@code secrets} replaced by {@code ***} (GW_INGEST_0052). JGit
+     * cannot quote an upstream credential, which is in no URL, but a server's own message can.
+     */
+    @Requirements({"GW_INGEST_0052"})
+    public UpstreamFailure scrub(Collection<String> secrets) {
+        return new UpstreamFailure(scrub(reason, secrets), scrub(nextStep, secrets), scrub(rootCause, secrets));
+    }
+
+    private static String scrub(String text, Collection<String> secrets) {
+        String out = text;
+        for (String secret : secrets) {
+            if (out != null && secret != null && !secret.isEmpty()) {
+                out = out.replace(secret, "***");
+            }
+        }
+        return out;
     }
 
     /** One line for the marketplace record, the ledger and the log. */

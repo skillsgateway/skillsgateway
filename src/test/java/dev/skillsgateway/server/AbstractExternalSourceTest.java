@@ -31,8 +31,14 @@ import org.springframework.test.context.TestPropertySource;
  * metadata-endpoint case in {@code ExternalSourceResolutionTests} is the check that this does
  * <em>not</em> also unlock the link-local range.
  *
+ * <p>The same context carries upstream credentials for the forge (GW_INGEST_0050), so {@code
+ * UpstreamCredentialsIntegrationTests} can use it rather than start a context of its own: a
+ * host-wide one, and one each for {@code /private/} and {@code /other/}. They change nothing for the
+ * external-source suites, whose fetches never carry an upstream credential and whose forge answers
+ * any request without one.
+ *
  * <p>The forge is started in a static initialiser because the context reads
- * {@code github-base-url} while it starts, and it is closed by a shutdown hook rather than an
+ * {@code github-base-url} and the credential prefixes while it starts, and it is closed by a shutdown hook rather than an
  * {@code @AfterAll}: three suites share it, and whichever ran first must not pull it out from under
  * the others.
  */
@@ -54,6 +60,12 @@ abstract class AbstractExternalSourceTest extends AbstractGatewayTest {
 
     protected static final GitHttpFixture FORGE = startForge();
 
+    /** Made-up tokens, one per configured prefix. */
+    protected static final String HOST_TOKEN = "tok-host-5b1e0c";
+
+    protected static final String PRIVATE_TOKEN = "tok-private-a93f27";
+    protected static final String OTHER_TOKEN = "tok-other-0d64b8";
+
     private static GitHttpFixture startForge() {
         try {
             GitHttpFixture forge = new GitHttpFixture();
@@ -67,6 +79,18 @@ abstract class AbstractExternalSourceTest extends AbstractGatewayTest {
     @DynamicPropertySource
     static void forgeBaseUrl(DynamicPropertyRegistry registry) {
         registry.add("skills-gateway.ingestion.external-sources.github-base-url", FORGE::baseUrl);
+        String[][] credentials = {
+            {FORGE.baseUrl() + "/", HOST_TOKEN},
+            {FORGE.baseUrl() + "/private/", PRIVATE_TOKEN},
+            {FORGE.baseUrl() + "/other", OTHER_TOKEN}
+        };
+        for (int i = 0; i < credentials.length; i++) {
+            String entry = "skills-gateway.ingestion.upstream-credentials[" + i + "].";
+            String[] credential = credentials[i];
+            registry.add(entry + "url-prefix", () -> credential[0]);
+            registry.add(entry + "username", () -> "sgw");
+            registry.add(entry + "token", () -> credential[1]);
+        }
     }
 
     @Autowired

@@ -7,7 +7,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | Block | Purpose | Required in production |
 | --- | --- | --- |
 | [`skills-gateway.*`](#skills-gateway) | Storage location, the URL-scheme allowlist, and the development auth escape hatch. | No — all defaulted. |
-| [`skills-gateway.ingestion.*`](#ingestion-external-plugin-sources) | Whether a manifest may declare plugin sources outside the marketplace repository, and within what bounds. **Admits nothing by default.** | No — all defaulted. |
+| [`skills-gateway.ingestion.*`](#ingestion-external-plugin-sources) | Whether a manifest may declare plugin sources outside the marketplace repository, and within what bounds. **Admits nothing by default.** The [credentials private upstreams are read with](#ingestion-upstream-credentials). **None by default.** | No — all defaulted. |
 | [`skills-gateway.webhooks.*`](#webhooks) | Outbound lifecycle-webhook dispatch: poll interval, retry budget and backoff. | No — all defaulted. |
 | [`skills-gateway.audit-export.*`](#audit-export) | Ledger export: the commit-settling lag, batch and page sizes. | No — all defaulted. |
 | [`skills-gateway.retention.*`](#retention) | Snapshot retention policies, the schedules that apply them, and the sweep of abandoned publication staging refs. **Off by default.** | No — all defaulted. |
@@ -419,6 +419,43 @@ skills-gateway:
 
 Sinks, cursors and replay are described in
 [Exporting the audit ledger](../guides/exporting-the-audit-ledger.md).
+
+---
+
+## Ingestion — upstream credentials
+
+The credentials that private marketplace upstreams are read with. The list is empty by default, and an empty
+list reads every upstream anonymously. The task-shaped guide, with examples
+for local development, Helm and ECS, is
+[Reading a private upstream](../guides/private-upstreams.md).
+
+```yaml
+skills-gateway:
+  ingestion:
+    upstream-credentials:
+      # The longest matching prefix wins. Prefixes match whole path segments.
+      - url-prefix: https://github.com/acme/
+        username: skills-gateway
+        # Always an environment reference, never the token itself.
+        token: ${SGW_UPSTREAM_ACME_TOKEN}
+```
+
+| Key | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.ingestion.upstream-credentials` | list | `[]` | One entry per URL prefix. Used by the registration check and by every ingestion and sync fetch. |
+| `….upstream-credentials[n].url-prefix` | URL | — | `https`, or `http` to a loopback host only. No userinfo, query, fragment, dot segments or encoded separators. Scheme and host are compared without case, the port after defaults, and the path by whole segments; a trailing `/` makes no difference. |
+| `….upstream-credentials[n].username` | string | — | Sent as the HTTP Basic user. |
+| `….upstream-credentials[n].token` | string | — | Sent as the HTTP Basic password. Never logged, stored, audited or echoed by any API. |
+
+- **Validated at startup.** The gateway refuses to start on an entry with a
+  blank field, an unresolved `${…}` reference, a prefix that breaks the rules
+  above, or a prefix that another entry also declares. The message names the
+  entry's position and prefix, never its token.
+- **Sent per request.** The credential that the marketplace URL selects rides
+  only on requests under its own prefix, so a redirect elsewhere carries
+  nothing. The forge metadata lookup and external plugin sources are always
+  anonymous.
+- **Rotation is a restart.** The list is read once, at startup.
 
 ---
 

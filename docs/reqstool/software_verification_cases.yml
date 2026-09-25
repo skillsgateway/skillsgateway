@@ -3326,3 +3326,63 @@ cases:
       WHEN an approver ingests it, and the sync sweep ingests a scheduled one whose upstream is deleted
       THEN the ledger holds an ingest-failed entry for each, by the approver and by the scheduler, whose detail names the reason
     revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0050
+    requirement_ids: ["GW_INGEST_0050"]
+    title: A private upstream registers and ingests with its prefix's credential
+    verification: automated-test
+    description: |
+      GIVEN an upstream that answers 401 without the right Basic credential, a credential configured for its owner's prefix and a shorter one for its host
+      WHEN it is registered and ingested, and when a prefix differing only by a trailing segment character or by case of scheme and host is matched
+      THEN registration and ingestion both succeed carrying the longest prefix's credential, an upstream under no prefix is read without any, and matching honours whole segments
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0051
+    requirement_ids: ["GW_INGEST_0051"]
+    title: A redirect out of the prefix carries no credential
+    verification: automated-test
+    description: |
+      GIVEN a credentialed upstream that redirects to the same host on another port, to another path on the same host, and to another credentialed prefix
+      WHEN each is registered
+      THEN no request outside the selected prefix carries an Authorization header, and non-canonical request paths get no credential
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0052
+    requirement_ids: ["GW_INGEST_0052"]
+    title: The token appears in no response, record, ledger entry or log
+    verification: automated-test
+    description: |
+      GIVEN a credentialed upstream that refuses the token, and one whose server quotes the token in its error
+      WHEN they are registered and ingested
+      THEN the token is absent from every API response, the marketplace record, the ledger, the fetch log, the captured log output and the configuration's string form
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0053
+    requirement_ids: ["GW_INGEST_0053"]
+    title: An unusable credential entry stops startup and names the entry, not the token
+    verification: automated-test
+    description: |
+      GIVEN credential entries with an unresolved reference, a blank token, a blank username, an http prefix to a non-loopback host, userinfo, a query, a fragment, and a duplicate prefix
+      WHEN the credentials are loaded
+      THEN each is refused with a message naming its position and prefix and not its token, while https and loopback http entries load
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0054
+    requirement_ids: ["GW_INGEST_0054"]
+    title: A clone URL with userinfo is refused and nothing is created
+    verification: automated-test
+    description: |
+      GIVEN a readable upstream
+      WHEN it is registered with user and password, or a user alone, embedded in its clone URL
+      THEN registration answers 400, the upstream is never contacted, and nothing is created
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0055
+    requirement_ids: ["GW_INGEST_0055"]
+    title: The registration ledger entry names the credential prefix
+    verification: automated-test
+    description: |
+      GIVEN a credentialed upstream and an anonymous one
+      WHEN both are registered
+      THEN the credentialed registration's ledger detail names the prefix and not the token, and the anonymous one names no credential
+    revision: "0.3.0"

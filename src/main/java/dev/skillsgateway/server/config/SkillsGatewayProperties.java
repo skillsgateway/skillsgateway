@@ -82,7 +82,7 @@ public record SkillsGatewayProperties(
             storage = new Storage(null, null, null);
         }
         if (ingestion == null) {
-            ingestion = new Ingestion(null);
+            ingestion = new Ingestion(null, null);
         }
         if (mirror == null) {
             mirror = new Mirror(null, null, null, null, null, null, null, null, null, null, null);
@@ -179,16 +179,36 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * Ingestion-time policy (GW_INGEST_0020). Its one block today is external plugin sources; it exists as
-     * a block of its own so the resolution and hardening knobs that follow have somewhere to land
-     * that is not the top level.
+     * Ingestion-time policy (GW_INGEST_0020).
+     *
+     * @param externalSources admission of plugin sources outside the marketplace repository
+     * @param upstreamCredentials what private marketplace upstreams are read with, chosen by the
+     *     longest URL prefix (GW_INGEST_0050); validated by {@code UpstreamCredentials} at startup
      */
-    public record Ingestion(ExternalSources externalSources) {
+    public record Ingestion(ExternalSources externalSources, List<UpstreamCredential> upstreamCredentials) {
 
         public Ingestion {
             if (externalSources == null) {
                 externalSources = new ExternalSources(null, null, null, null, null, null, null);
             }
+            upstreamCredentials = upstreamCredentials == null ? List.of() : List.copyOf(upstreamCredentials);
+        }
+    }
+
+    /**
+     * One upstream credential (GW_INGEST_0050). The token arrives by environment reference and is
+     * never stored, logged or echoed (GW_INGEST_0052).
+     *
+     * @param urlPrefix the upstream URLs this credential is for, matched by whole path segments
+     * @param username the account or token name, sent as the HTTP Basic user
+     * @param token the secret, sent as the HTTP Basic password
+     */
+    public record UpstreamCredential(String urlPrefix, String username, String token) {
+
+        /** The token is deliberately absent: a record's generated toString would print it. */
+        @Override
+        public String toString() {
+            return "UpstreamCredential[urlPrefix=%s, username=%s]".formatted(urlPrefix, username);
         }
     }
 

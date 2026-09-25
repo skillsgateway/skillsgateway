@@ -4,18 +4,9 @@ import io.github.reqstool.annotations.Requirements;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Proxy;
 import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.TrustManager;
 import org.eclipse.jgit.transport.http.HttpConnection;
 import org.eclipse.jgit.transport.http.HttpConnectionFactory;
 import org.eclipse.jgit.transport.http.JDKHttpConnectionFactory;
@@ -166,13 +157,12 @@ final class GuardedHttpConnectionFactory implements HttpConnectionFactory {
      * The connection JGit is handed: the delegate's behaviour, with the redirect decision moved
      * ahead of the hop and the response stream bounded.
      */
-    private final class Guarded implements HttpConnection {
+    private final class Guarded extends ForwardingHttpConnection {
 
-        private final HttpConnection delegate;
         private final String requestUrl;
 
         private Guarded(HttpConnection delegate, String requestUrl) {
-            this.delegate = delegate;
+            super(delegate);
             this.requestUrl = requestUrl;
         }
 
@@ -207,36 +197,6 @@ final class GuardedHttpConnectionFactory implements HttpConnectionFactory {
         }
 
         @Override
-        public URL getURL() {
-            return delegate.getURL();
-        }
-
-        @Override
-        public String getResponseMessage() throws IOException {
-            return delegate.getResponseMessage();
-        }
-
-        @Override
-        public Map<String, List<String>> getHeaderFields() {
-            return delegate.getHeaderFields();
-        }
-
-        @Override
-        public void setRequestProperty(String key, String value) {
-            delegate.setRequestProperty(key, value);
-        }
-
-        @Override
-        public void setRequestMethod(String method) throws java.net.ProtocolException {
-            delegate.setRequestMethod(method);
-        }
-
-        @Override
-        public void setUseCaches(boolean useCaches) {
-            delegate.setUseCaches(useCaches);
-        }
-
-        @Override
         public void setConnectTimeout(int timeout) {
             delegate.setConnectTimeout(connectTimeoutMillis);
         }
@@ -247,76 +207,9 @@ final class GuardedHttpConnectionFactory implements HttpConnectionFactory {
         }
 
         @Override
-        public String getContentType() {
-            return delegate.getContentType();
-        }
-
-        @Override
-        public String getHeaderField(String name) {
-            return delegate.getHeaderField(name);
-        }
-
-        @Override
-        public List<String> getHeaderFields(String name) {
-            return delegate.getHeaderFields(name);
-        }
-
-        @Override
-        public int getContentLength() {
-            return delegate.getContentLength();
-        }
-
-        @Override
         public void setInstanceFollowRedirects(boolean followRedirects) {
             // Never: a hop the JDK takes is a hop no policy saw.
             delegate.setInstanceFollowRedirects(false);
-        }
-
-        @Override
-        public void setDoOutput(boolean dooutput) {
-            delegate.setDoOutput(dooutput);
-        }
-
-        @Override
-        public void setFixedLengthStreamingMode(int contentLength) {
-            delegate.setFixedLengthStreamingMode(contentLength);
-        }
-
-        @Override
-        public OutputStream getOutputStream() throws IOException {
-            return delegate.getOutputStream();
-        }
-
-        @Override
-        public void setChunkedStreamingMode(int chunklen) {
-            delegate.setChunkedStreamingMode(chunklen);
-        }
-
-        @Override
-        public String getRequestMethod() {
-            return delegate.getRequestMethod();
-        }
-
-        @Override
-        public boolean usingProxy() {
-            return delegate.usingProxy();
-        }
-
-        @Override
-        public void connect() throws IOException {
-            delegate.connect();
-        }
-
-        @Override
-        public void configure(KeyManager[] km, TrustManager[] tm, SecureRandom random)
-                throws NoSuchAlgorithmException, KeyManagementException {
-            delegate.configure(km, tm, random);
-        }
-
-        @Override
-        public void setHostnameVerifier(HostnameVerifier hostnameverifier)
-                throws NoSuchAlgorithmException, KeyManagementException {
-            delegate.setHostnameVerifier(hostnameverifier);
         }
     }
 

@@ -134,13 +134,15 @@ class UpstreamReachabilityTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0038", "SVC_GW_INGEST_0040"})
+    @SVCs({"SVC_GW_INGEST_0038", "SVC_GW_INGEST_0040", "SVC_GW_INGEST_0054"})
     void a_credential_in_the_url_is_never_repeated() throws Exception {
         String name = uniqueName("secret");
         String url = forge.baseUrl().replace("http://", "http://user:s3cret@") + "/acme/missing.git";
 
+        // Refused before the upstream is read since GW_INGEST_0054; the redaction on the 502 path is
+        // UpstreamFailureTests' to pin.
         String body = register(name, url)
-                .andExpect(status().isBadGateway())
+                .andExpect(status().isBadRequest())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();

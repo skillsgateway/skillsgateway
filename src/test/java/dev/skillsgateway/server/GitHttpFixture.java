@@ -50,6 +50,9 @@ final class GitHttpFixture implements AutoCloseable {
     private volatile String truncatePrefix;
     private volatile String floodPrefix;
     private volatile String unauthorizedPrefix;
+    private volatile String basicPrefix;
+    private volatile String basicExpected;
+    private final List<String[]> authorizations = new CopyOnWriteArrayList<>();
 
     GitHttpFixture() throws IOException {
         this.root = Files.createTempDirectory(prepared(Path.of("target", "test-workdirs")), "forge");
@@ -138,6 +141,22 @@ final class GitHttpFixture implements AutoCloseable {
         this.unauthorizedPrefix = pathPrefix;
     }
 
+    /**
+     * Requests whose path starts with this answer 401 with a Basic challenge unless they carry
+     * exactly this Basic credential: a forge's private repository.
+     */
+    void requireBasic(String pathPrefix, String username, String token) {
+        this.basicExpected = "Basic "
+                + java.util.Base64.getEncoder()
+                        .encodeToString((username + ":" + token).getBytes(StandardCharsets.UTF_8));
+        this.basicPrefix = pathPrefix;
+    }
+
+    /** The {@code Authorization} header of every request, by path, in order; empty when none was sent. */
+    List<String[]> authorizations() {
+        return List.copyOf(authorizations);
+    }
+
     /** Answers {@code path} with this JSON body: a forge's REST API beside its git service. */
     void respondJson(String path, String body) {
         json.put(path, body);
@@ -145,6 +164,9 @@ final class GitHttpFixture implements AutoCloseable {
 
     void reset() {
         unauthorizedPrefix = null;
+        basicPrefix = null;
+        basicExpected = null;
+        authorizations.clear();
         redirectTo = null;
         redirectsRemaining = 0;
         truncatePrefix = null;
@@ -170,7 +192,16 @@ final class GitHttpFixture implements AutoCloseable {
     private void handle(HttpExchange exchange) throws IOException {
         String path = exchange.getRequestURI().getPath();
         requested.add(path);
+        String authorization = exchange.getRequestHeaders().getFirst("Authorization");
+        authorizations.add(new String[] {path, authorization == null ? "" : authorization});
         try {
+            // Before the redirect, so a redirect is answered only to a request that authenticated:
+            // what a forge does for a renamed private repository.
+            if (basicPrefix != null && path.startsWith(basicPrefix) && !basicExpected.equals(authorization)) {
+                exchange.getResponseHeaders().add("WWW-Authenticate", "Basic realm=\"forge\"");
+                exchange.sendResponseHeaders(401, -1);
+                return;
+            }
             if (redirectsRemaining > 0 && redirectTo != null) {
                 redirectsRemaining--;
                 exchange.getResponseHeaders().add("Location", redirectTo);

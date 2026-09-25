@@ -38,7 +38,7 @@ Responses:
 | Status | Cause |
 | --- | --- |
 | 201 | Registered. `warnings` names any non-blocking issue with the registration (see below); empty when there is none. |
-| 400 | URL scheme not allowlisted, or a `ref` other than `main`. |
+| 400 | URL scheme not allowlisted, a credential embedded in the URL, or a `ref` other than `main`. |
 | 409 | A marketplace with that name already exists. |
 | 422 | The name fails the pattern. |
 | 502 | The upstream could not be read, or has no default branch. Nothing was registered; see below. |
@@ -54,6 +54,11 @@ no scheme at all, is rejected rather than passed through. This is what keeps
 `release/1.x`. Which ref is ingested is the gateway's decision — see
 [Compatibility and allowlists](../reference/compatibility.md).
 
+**No credential in the URL.** A URL with userinfo, such as
+`https://user:token@host/…`, is refused with `400`. It would be stored with the
+marketplace and shown wherever the URL is. A private upstream is read with an
+[upstream credential](private-upstreams.md) from configuration instead.
+
 **The name** doubles as a path segment on the facade (`/git/acme`), so it is
 constrained to a character set that cannot traverse directories.
 
@@ -66,22 +71,22 @@ in three properties:
 
 ```json
 {"status":502,"title":"Upstream not readable",
- "detail":"the upstream could not be read, so nothing was registered: repository not found or requires authentication (…). Check the clone URL for typos; if the repository is private, the gateway has no credentials to read it.",
+ "detail":"the upstream could not be read, so nothing was registered: repository not found or requires authentication (…). Check the clone URL for typos; if the repository is private, configure an upstream credential for its URL prefix whose token can read it.",
  "reason":"repository not found or requires authentication",
  "rootCause":"https://github.com/acme/skils.git/info/refs?service=git-upload-pack not found: Not Found",
- "nextStep":"Check the clone URL for typos; if the repository is private, the gateway has no credentials to read it."}
+ "nextStep":"Check the clone URL for typos; if the repository is private, configure an upstream credential for its URL prefix whose token can read it."}
 ```
 
 | `reason` | Typical cause |
 | --- | --- |
-| `repository not found or requires authentication` | A typo in the URL, or a private repository. Forges answer both with 401 or 404, so the gateway does not guess which. |
+| `repository not found or requires authentication` | A typo in the URL, a private repository with no [upstream credential](private-upstreams.md), or a credential whose token cannot read it. Forges answer all of these with 401 or 404, so the gateway does not guess which. |
 | `the upstream host could not be resolved` | A typo in the host name, or DNS the gateway cannot use. |
 | `the upstream could not be reached` | The host refused or did not answer: it is down, or a proxy or firewall blocks it. |
 | `the TLS connection to the upstream failed` | The upstream's certificate is not trusted by the gateway's Java trust store. |
 | `the upstream has no default branch` | An empty repository. Push a commit first. |
 | `the upstream fetch failed` | Anything else. `rootCause` carries the detail. |
 
-A credential embedded in the URL is never repeated in a response, the log or the
+An upstream credential's token is never repeated in a response, the log or the
 ledger. There is no separate "test connection" call: registering is the test.
 For marketplaces declared in the estate, see
 [Declaring the estate](declarative-estate.md#an-unreachable-upstream).
