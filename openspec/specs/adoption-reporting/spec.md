@@ -1,7 +1,7 @@
 # adoption-reporting Specification
 
 ## Purpose
-TBD - created by archiving change adoption-dashboards-otel. Update Purpose after archive.
+Who fetches what through the facade, read from the append-only fetch ledger: the windowed per-marketplace and per-snapshot adoption report, the staleness report of identities not on the served tip, and the portal page that presents both.
 ## Requirements
 ### Requirement: GW_OBSERVABILITY_0001
 The system SHALL implement GW_OBSERVABILITY_0001.

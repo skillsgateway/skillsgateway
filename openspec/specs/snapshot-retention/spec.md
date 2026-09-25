@@ -1,7 +1,7 @@
 # snapshot-retention Specification
 
 ## Purpose
-TBD - created by archiving change add-snapshot-retention. Update Purpose after archive.
+Keeping storage and the ledger bounded without losing what must be kept: retention policy evaluation, soft delete with a restore window and scheduled compaction, the portal deletion surface, and the guarantees that approved snapshots, administrative revocations and administrative ledger entries are never removed, and that ledger reads are trimmed only behind every export sink's position.
 ## Requirements
 ### Requirement: GW_RETENTION_0001
 The system SHALL implement GW_RETENTION_0001.
