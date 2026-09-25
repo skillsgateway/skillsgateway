@@ -221,6 +221,10 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
             assertThat(auditSinkRepository.findById(sink.id()).orElseThrow().kind())
                     .isEqualTo(AuditSink.WEBHOOK);
         } finally {
+            // The channel is RESTRICTed while its sink exists (GW_WEBHOOK_0011): the sink goes first.
+            auditSinkRepository
+                    .findBySubscriberId(subscriber.id())
+                    .ifPresent(sink -> auditSinkRepository.delete(sink.id()));
             webhookSubscriberRepository.delete(subscriber.id());
         }
     }

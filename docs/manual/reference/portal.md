@@ -928,6 +928,10 @@ button that flips to a checkmark for two seconds, the same pattern as
 
 ### Subscribers
 
+The lifecycle subscribers. An audit sink's delivery channel — a subscriber the
+API marks with `auditSink` — is listed with its sink on [Audit sinks](#audit-sinks)
+instead, and cannot be deleted from here.
+
 | Column | Contents |
 | --- | --- |
 | Name | The subscriber name. |
@@ -949,7 +953,7 @@ integration.
 | Column | Contents |
 | --- | --- |
 | Event | The lifecycle event name. |
-| Subscriber | Resolved from the subscriber list held in the browser; falls back to the raw id. |
+| Subscriber | Resolved from the subscriber list held in the browser; falls back to the raw id. A sink's delivery reads "{sink} · audit sink" and links to [Audit sinks](#audit-sinks). |
 | State | Badge — `delivered` (primary), `failed` (destructive), `pending` (secondary). |
 | Attempts | Attempts made so far. |
 | Last response | The last HTTP status, else the last error, else "—". |
@@ -1001,7 +1005,7 @@ position is API-only (`PUT /api/v1/audit/sinks/{id}/cursor`).
 channel with it, and toasts *Sink '{name}' deleted*.
 
 Sink deliveries are ordinary webhook deliveries, so their attempts appear on the
-[Webhooks](#webhooks) page rather than here.
+[Webhooks](#webhooks) page rather than here, marked as the sink's.
 
 Empty state: "No export sinks yet."
 

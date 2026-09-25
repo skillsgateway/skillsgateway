@@ -211,10 +211,10 @@ requirements:
   - id: GW_WEBHOOK_0004
     title: Portal webhook administration
     significance: shall
-    description: The system shall provide a portal page, behind the OIDC session, listing the registered webhook subscribers with their event filters and the recent delivery attempts with their state, attempt count, and response status.
-    rationale: Webhook integrations fail silently; an operator needs to see which subscriber is failing and why without querying the database.
+    description: "The system shall provide a portal page, behind the OIDC session, listing the registered lifecycle webhook subscribers with their event filters, and the recent delivery attempts with their state, attempt count, and response status; a delivery attempt made for an audit export sink shall be marked as that sink's and shall lead to where the sink is managed, and the sink's delivery channel shall not be listed among the subscribers."
+    rationale: "Webhook integrations fail silently; an operator needs to see which subscriber is failing and why without querying the database. An audit sink delivers through a webhook subscriber, and listing that subscriber beside the lifecycle ones presented a compliance feed as a stale, deletable subscriber."
     categories: ["functional-suitability", "interaction-capability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_AUDIT_0003
     title: Audit ledger streaming export
@@ -2123,6 +2123,16 @@ requirements:
       requirement_ids: ["GW_INGEST_0034", "GW_WEBHOOK_0009"]
     rationale: "Registration is announced to the systems that track the estate, so its inverse must be, or an inventory built from the events believes a removed marketplace still exists. The withdrawals the removal makes are announced by their own events already; this one says the marketplace itself is gone. The description carries no operator-supplied reason for the reason GW_WEBHOOK_0009 gives: a webhook target is authorised by a URL scheme allowlist, not by an identity."
     categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.1.0
+
+  - id: GW_WEBHOOK_0011
+    title: An audit sink's delivery channel is changed only through its sink
+    significance: shall
+    description: "The system shall refuse, through the webhook administration interface and through declarative estate reconciliation, to delete or modify a webhook subscriber that is an audit export sink's delivery channel, naming the sink and the interface through which it is managed; shall change nothing and record no change when it refuses; shall reject at the storage layer any deletion of such a subscriber made while its sink exists; and shall mark each such subscriber with its sink when listing webhook subscribers."
+    references:
+      requirement_ids: ["GW_AUDIT_0004", "GW_ESTATE_0001"]
+    rationale: "A sink's channel is an ordinary subscriber, so it could be deleted or rewritten by every surface that manages subscribers, and deleting it took the sink with it: the compliance feed stopped without anyone asking for that. The storage-layer rule is what makes the guarantee hold for a caller that has not been written yet."
+    categories: ["functional-suitability", "reliability", "security"]
     revision: 0.1.0
 
   - id: GW_VETTING_0032

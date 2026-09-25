@@ -200,7 +200,8 @@ $ curl localhost:8080/api/v1/audit/sinks
 ```
 
 `DELETE /api/v1/audit/sinks/{id}` removes the sink and its delivery channel — **204**,
-or **404** if it never existed.
+or **404** if it never existed. It is the only way to remove that channel: deleting
+it through the webhooks API is refused with **409**, and the database refuses it too.
 
 ## Why exports lag a few seconds
 

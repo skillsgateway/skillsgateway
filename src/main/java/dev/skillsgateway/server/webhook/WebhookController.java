@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -75,7 +76,13 @@ public class WebhookController {
             @Schema(description = "Whether deliveries are queued for this subscriber")
             boolean enabled,
 
-            @Schema(description = "Creation time") Instant createdAt) {}
+            @Schema(description = "Creation time") Instant createdAt,
+
+            @Schema(
+                    description = "The audit export sink this subscriber is the delivery channel of; absent for a"
+                            + " lifecycle subscriber. Such a subscriber is removed only with its sink.",
+                    nullable = true)
+            String auditSink) {}
 
     @PostMapping
     @Tag(name = "Webhooks")
@@ -102,8 +109,9 @@ public class WebhookController {
             description = "Every registered receiver with its event filter. Signing secrets are never returned.")
     public List<SubscriberView> list(Authentication authentication) {
         roleService.requireAuditor(authentication);
+        Map<Long, String> sinks = webhookService.sinkNamesByChannel();
         return webhookService.listSubscribers().stream()
-                .map(WebhookController::view)
+                .map(subscriber -> view(subscriber, sinks.get(subscriber.id())))
                 .toList();
     }
 
@@ -205,6 +213,10 @@ public class WebhookController {
             description = "Removes the subscriber and its delivery history; no further events are queued for it.")
     @ApiResponse(responseCode = "204", description = "Subscriber deleted")
     @ApiResponse(responseCode = "404", description = "Subscriber not found")
+    @ApiResponse(
+            responseCode = "409",
+            description = "The subscriber is an audit sink's delivery channel; remove the sink instead")
+    @Requirements({"GW_WEBHOOK_0011"})
     public ResponseEntity<Void> delete(@PathVariable long id, Authentication authentication) {
         roleService.requireAdmin(authentication);
         if (!webhookService.deleteSubscriber(id)) {
@@ -228,13 +240,14 @@ public class WebhookController {
         return webhookService.listDeliveries(Math.clamp(limit, 1, MAX_DELIVERY_LIMIT));
     }
 
-    private static SubscriberView view(WebhookSubscriber subscriber) {
+    private static SubscriberView view(WebhookSubscriber subscriber, String auditSink) {
         return new SubscriberView(
                 subscriber.id(),
                 subscriber.name(),
                 subscriber.url(),
                 subscriber.events(),
                 subscriber.enabled(),
-                subscriber.createdAt());
+                subscriber.createdAt(),
+                auditSink);
     }
 }

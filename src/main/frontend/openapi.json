@@ -3066,6 +3066,13 @@
       "SubscriberView": {
         "description": "A webhook subscriber without its signing secret",
         "properties": {
+          "auditSink": {
+            "description": "The audit export sink this subscriber is the delivery channel of; absent for a lifecycle subscriber. Such a subscriber is removed only with its sink.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "createdAt": {
             "description": "Creation time",
             "format": "date-time",
@@ -7212,6 +7219,16 @@
               }
             },
             "description": "Subscriber not found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "The subscriber is an audit sink's delivery channel; remove the sink instead"
           }
         },
         "summary": "Delete a webhook subscriber",

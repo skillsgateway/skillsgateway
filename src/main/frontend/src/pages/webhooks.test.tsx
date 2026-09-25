@@ -1,8 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
+import { MemoryRouter } from "react-router-dom";
 import { expect, test } from "vitest";
+import { delivery, subscriber } from "@/test/msw-handlers";
 import { server } from "@/test/msw-server";
 import { WebhooksPage } from "./webhooks";
 
@@ -19,7 +21,9 @@ function renderPage({ admin = true } = {}) {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <WebhooksPage />
+      <MemoryRouter>
+        <WebhooksPage />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }
@@ -191,4 +195,46 @@ test("a_session_without_the_administrative_role_reads_the_subscribers_but_is_off
   expect(await screen.findByRole("row", { name: /ci-bot.*snapshot\.approved.*enabled/ })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "New subscriber" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /Delete subscriber/ })).not.toBeInTheDocument();
+});
+
+/**
+ * An audit sink delivers through a webhook subscriber. Listed as one, it read as a stale subscriber
+ * with an unknown event, and deleting it took the sink with it; its deliveries still belong here.
+ *
+ * @SVCs SVC_GW_WEBHOOK_0004
+ */
+test("a_sinks_channel_is_not_listed_as_a_subscriber_and_its_deliveries_lead_to_the_sink", async () => {
+  server.use(
+    http.get("/api/v1/webhooks", () =>
+      HttpResponse.json([
+        subscriber,
+        {
+          id: 7,
+          name: "siem",
+          url: "https://siem.example.com/ingest",
+          events: ["audit.export"],
+          enabled: true,
+          createdAt: "2026-08-14T10:00:00Z",
+          auditSink: "siem",
+        },
+      ]),
+    ),
+    http.get("/api/v1/webhooks/deliveries", () =>
+      HttpResponse.json([
+        delivery,
+        { ...delivery, id: 12, subscriberId: 7, event: "audit.export", payload: "{}" },
+      ]),
+    ),
+  );
+  renderPage();
+
+  expect(await screen.findByRole("row", { name: /ci-bot.*snapshot\.approved.*enabled/ })).toBeInTheDocument();
+  expect(screen.queryByText("https://siem.example.com/ingest")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Delete subscriber siem" })).not.toBeInTheDocument();
+
+  const sinkDelivery = await screen.findByRole("row", { name: /audit\.export/ });
+  expect(within(sinkDelivery).getByRole("link", { name: "siem · audit sink" })).toHaveAttribute(
+    "href",
+    "/integrations/sinks",
+  );
 });

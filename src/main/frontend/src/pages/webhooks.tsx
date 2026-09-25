@@ -1,5 +1,6 @@
 import { Check, Copy } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
   useCreateWebhookSubscriber,
@@ -195,7 +196,7 @@ function StoredFilter({ filter, registry }: { filter: string[] | undefined; regi
  * Webhook administration: registered subscribers with their event filters, and the
  * recent delivery attempts with state, attempt count, and last response.
  *
- * @Requirements GW_WEBHOOK_0004, GW_AUTH_0048
+ * @Requirements GW_WEBHOOK_0004, GW_AUTH_0048, GW_WEBHOOK_0011
  */
 export function WebhooksPage() {
   const subscribers = useWebhookSubscribers();
@@ -214,8 +215,26 @@ export function WebhooksPage() {
   const [adding, setAdding] = useState(false);
   const isAdmin = useIsAdmin();
 
-  const subscriberName = (id: number | undefined) =>
-    subscribers.data?.find((subscriber) => subscriber.id === id)?.name ?? String(id ?? "");
+  // An audit sink delivers through a subscriber of its own, which only removing the sink removes
+  // (GW_WEBHOOK_0011): it is listed with its sink, and its deliveries lead there.
+  const lifecycle = useMemo(
+    () => subscribers.data?.filter((subscriber) => !subscriber.auditSink),
+    [subscribers.data],
+  );
+  const recipient = (id: number | undefined) => {
+    const found = subscribers.data?.find((subscriber) => subscriber.id === id);
+    if (found?.auditSink) {
+      return (
+        <Link
+          to="/integrations/sinks"
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {found.auditSink} · audit sink
+        </Link>
+      );
+    }
+    return found?.name ?? String(id ?? "");
+  };
 
   // Mirrors WebhookController: the name must match the gateway name pattern (422) and the
   // URL must parse with a scheme (400). Events are no longer in that category — the registry
@@ -309,10 +328,10 @@ export function WebhooksPage() {
             {subscribers.error.message}
           </p>
         ) : null}
-        {subscribers.data?.length === 0 ? (
+        {lifecycle?.length === 0 ? (
           <p className="text-sm text-muted-foreground">No subscribers yet.</p>
         ) : null}
-        {subscribers.data && subscribers.data.length > 0 ? (
+        {lifecycle && lifecycle.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -324,7 +343,7 @@ export function WebhooksPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {subscribers.data.map((subscriber) => (
+              {lifecycle.map((subscriber) => (
                 <TableRow key={subscriber.id}>
                   <TableCell>{subscriber.name}</TableCell>
                   <TableCell className="break-all">{subscriber.url}</TableCell>
@@ -386,7 +405,7 @@ export function WebhooksPage() {
               {deliveries.data.map((delivery) => (
                 <TableRow key={delivery.id}>
                   <TableCell>{delivery.event}</TableCell>
-                  <TableCell>{subscriberName(delivery.subscriberId)}</TableCell>
+                  <TableCell>{recipient(delivery.subscriberId)}</TableCell>
                   <TableCell>{deliveryBadge(delivery.state)}</TableCell>
                   <TableCell>{delivery.attempts}</TableCell>
                   <TableCell className="break-all text-sm text-muted-foreground">

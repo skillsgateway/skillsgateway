@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.persistence.AuditSink;
+import dev.skillsgateway.server.persistence.AuditSinkRepository;
 import dev.skillsgateway.server.persistence.WebhookDelivery;
 import dev.skillsgateway.server.persistence.WebhookDeliveryRepository;
 import dev.skillsgateway.server.persistence.WebhookSubscriber;
@@ -17,11 +19,14 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -46,17 +51,20 @@ public class WebhookService {
     private final WebhookDeliveryRepository deliveryRepository;
     private final SkillsGatewayProperties properties;
     private final AdminAuditLogger auditLogger;
+    private final AuditSinkRepository sinkRepository;
     private final SecureRandom random = new SecureRandom();
 
     public WebhookService(
             WebhookSubscriberRepository subscriberRepository,
             WebhookDeliveryRepository deliveryRepository,
             SkillsGatewayProperties properties,
-            AdminAuditLogger auditLogger) {
+            AdminAuditLogger auditLogger,
+            AuditSinkRepository sinkRepository) {
         this.subscriberRepository = subscriberRepository;
         this.deliveryRepository = deliveryRepository;
         this.properties = properties;
         this.auditLogger = auditLogger;
+        this.sinkRepository = sinkRepository;
     }
 
     @Schema(description = "A freshly created subscriber; the only time the signing secret is ever returned")
@@ -338,8 +346,38 @@ public class WebhookService {
         return subscriberRepository.findByName(name);
     }
 
+    /**
+     * Refuses a sink's delivery channel: only removing the sink removes it (GW_WEBHOOK_0011). The
+     * foreign key refuses it too; catching that covers a sink that appeared after the check.
+     */
+    @Requirements({"GW_WEBHOOK_0011"})
     public boolean deleteSubscriber(long id) {
-        return subscriberRepository.delete(id);
+        requireNotSinkChannel(id);
+        try {
+            return subscriberRepository.delete(id);
+        } catch (DataIntegrityViolationException e) {
+            requireNotSinkChannel(id);
+            throw e;
+        }
+    }
+
+    /** Throws 409 when the subscriber is an audit sink's delivery channel, naming the sink. */
+    @Requirements({"GW_WEBHOOK_0011"})
+    public void requireNotSinkChannel(long subscriberId) {
+        Optional<AuditSink> sink = sinkRepository.findBySubscriberId(subscriberId);
+        if (sink.isPresent()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "subscriber %d is the delivery channel of audit sink '%s' and is removed or changed only with its"
+                                    .formatted(subscriberId, sink.get().name())
+                            + " sink: DELETE /api/v1/audit/sinks/" + sink.get().id());
+        }
+    }
+
+    /** Sink name by the id of its delivery channel, for marking channels in the subscriber listing. */
+    @Requirements({"GW_WEBHOOK_0011"})
+    public Map<Long, String> sinkNamesByChannel() {
+        return sinkRepository.list().stream().collect(Collectors.toMap(AuditSink::subscriberId, AuditSink::name));
     }
 
     public List<WebhookDelivery> listDeliveries(int limit) {
