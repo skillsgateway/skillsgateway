@@ -223,7 +223,7 @@ A marketplace is divided by what a visit is for, most frequent first:
 | **Review** (default) | What awaits a decision — the [snapshot cards](#the-card) and the decision |
 | **Snapshots** | What is served, and every earlier snapshot |
 | **Activity** | This marketplace's slice of the [audit log](#audit-log) |
-| **Settings** | The [upstream](#upstream) facts and, for an administrator, the [vetting chain](#vetting-chain-administrators) |
+| **Settings** | The [upstream](#upstream) facts and, for an administrator, the [vetting chain](#vetting-chain-administrators) and [removal](#remove-marketplace-administrators) |
 
 ### Header
 
@@ -311,6 +311,32 @@ are local until **Save order** writes the whole arrangement through
 not one per hop — and **Discard changes** puts it back. While an arrangement is
 unsaved the drawing above shows the proposed order and the list says it is not
 saved yet.
+
+### Remove marketplace (administrators)
+
+On **Settings**, last, and **shown only to a session holding the `admin`
+role**. **Remove _name_…** opens a confirmation titled with the marketplace's
+name. The confirmation states what removal does: every approved snapshot is
+withdrawn, so the facade serves nothing under the name; tokens lose their grant
+to publish to it and keep their grant to fetch it; the record, the snapshots and
+the ledger are kept; and the name can be registered again as a new marketplace.
+It also asks for a **Reason**, which is recorded on the removal and on each
+withdrawal. **Remove _name_** is disabled until the reason holds something
+other than whitespace, and reads *Removing…* while the request is in flight.
+
+The confirmation calls
+[`DELETE /api/v1/marketplaces/{name}`](api/marketplaces.md#delete-marketplacesname).
+On success the portal goes to **Marketplaces** and a toast states how many
+approved snapshots were withdrawn. A refusal is shown as a toast with the
+server's reason, and the confirmation stays open.
+
+A marketplace that the [declarative estate](../guides/declarative-estate.md)
+declares is not offered for removal. The next reconciliation would register the
+name again as a new, empty marketplace. The button is disabled, and a line
+beneath it says to remove the declaration and restart the gateway first. The
+portal reads this from the last reconciliation report,
+[`GET /api/v1/estate`](api/estate.md). If that report cannot be read, the
+button stays available, because the server accepts the removal.
 
 ### Review and Snapshots
 

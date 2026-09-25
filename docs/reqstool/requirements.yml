@@ -2415,6 +2415,26 @@ requirements:
     categories: ["functional-suitability", "reliability"]
     revision: 0.3.0
 
+  - id: GW_INGEST_0048
+    title: Removing a marketplace from the portal
+    significance: shall
+    description: "The system shall offer an administrator, in the portal on the marketplace's own settings, a control that removes the marketplace through administrative marketplace removal. Before the removal is made it shall show a confirmation that names the marketplace, states that its approved snapshots are withdrawn so that it serves nothing, that grants to publish to it are removed while grants to fetch it are kept, that its record, snapshots and ledger entries are kept, and that the name may be registered again as a new marketplace, and that asks for the reason removal requires. It shall keep the confirming control unavailable until a reason that is not blank is given, shall show the reason for a refused removal while leaving the marketplace in place, and shall not show the control to a user who is not an administrator."
+    references:
+      requirement_ids: ["GW_INGEST_0034"]
+    rationale: "Removal existed only as an API call, so an administrator of a trial deployment had to make it from the browser's developer tools. The control belongs where the marketplace's registration is described. It states the consequence because removal withdraws everything the marketplace serves and cannot be undone, and the reason is asked for in the dialog because the server refuses a removal without one."
+    categories: ["interaction-capability", "functional-suitability"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0049
+    title: The portal does not offer to remove a declared marketplace
+    significance: shall
+    description: "The system shall present the portal's marketplace removal control as unavailable for a marketplace that the declarative estate configuration declares, and shall state on the same surface that the next estate reconciliation would register the name again as a new marketplace and that the declaration has to be removed first."
+    references:
+      requirement_ids: ["GW_INGEST_0048", "GW_ESTATE_0001"]
+    rationale: "The server accepts the removal of a declared marketplace, but the next reconciliation, which runs at every startup, registers the name again as a new, empty marketplace. A control that appears to work but is quietly undone is worse than one that says why it is unavailable. Removing the declaration first is the order the estate guide already prescribes."
+    categories: ["interaction-capability"]
+    revision: 0.3.0
+
   - id: GW_INGEST_0050
     title: A private upstream is read with the credential configured for its URL prefix
     significance: shall

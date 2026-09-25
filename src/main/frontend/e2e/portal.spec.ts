@@ -148,6 +148,38 @@ test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async (
 });
 
 /**
+ * Removal from the portal (GW_INGEST_0048): the served snapshot is withdrawn, and the portal
+ * leaves the marketplace's page for the list, where the name no longer appears.
+ *
+ * @SVCs SVC_GW_INGEST_0048
+ */
+test("admin_removes_a_marketplace_from_its_settings", async ({ page }) => {
+  await login(page, "alice");
+  await page.goto("/marketplaces");
+  const name = uniqueName("gone");
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
+  await submitRegister(page);
+  await expect(page.getByText(`Marketplace '${name}' registered`)).toBeVisible();
+  await approveCard(page, await ingestOnReview(page, name));
+  await expect(page.getByTestId("marketplace-served-status")).toContainText("Serving");
+
+  await openSection(page, name, "Settings");
+  await page.getByRole("button", { name: `Remove ${name}…` }).click();
+  const dialog = page.getByRole("dialog", { name: `Remove ${name}` });
+  await expect(dialog).toContainText("serves nothing under this name");
+  const confirm = dialog.getByRole("button", { name: `Remove ${name}`, exact: true });
+  await expect(confirm).toBeDisabled();
+  await dialog.getByLabel("Reason").fill("registered by mistake in an e2e run");
+  await confirm.click();
+
+  await expect(page).toHaveURL(/\/marketplaces$/);
+  await expect(page.getByText(`Marketplace '${name}' removed; 1 approved snapshot withdrawn`)).toBeVisible();
+  await expect(page.getByRole("link", { name, exact: true })).toHaveCount(0);
+});
+
+/**
  * Separation of duties as a lone administrator meets it, in a real browser (GW_APPROVAL_0011).
  *
  * One identity registers the marketplace, pulls the content and then opens the review dialog —

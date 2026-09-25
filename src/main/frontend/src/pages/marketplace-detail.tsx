@@ -30,6 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MarketplaceVettingChain } from "@/components/marketplace-vetting-chain";
+import { RemoveMarketplace } from "@/components/remove-marketplace";
 import { SetupWizard } from "@/components/setup-wizard";
 import { SnapshotCard, SnapshotLine } from "@/components/snapshot-card";
 import {
@@ -331,9 +332,9 @@ export function MarketplaceActivityPage() {
 }
 
 /**
- * Settings: what was registered, and — for an administrator only — the vetting chain. The
- * vetter settings are not shown to marketplace-scoped approvers, and the server refuses the
- * read independently.
+ * Settings: what was registered, and — for an administrator only — the vetting chain and
+ * removal. Neither is shown to marketplace-scoped approvers, and the server refuses both
+ * independently.
  */
 export function MarketplaceSettingsPage() {
   const { marketplace } = useMarketplaceContext();
@@ -376,6 +377,7 @@ export function MarketplaceSettingsPage() {
         </CardContent>
       </Card>
       {isAdmin ? <MarketplaceVettingChain marketplace={marketplace.name ?? ""} /> : null}
+      {isAdmin ? <RemoveMarketplace name={marketplace.name ?? ""} /> : null}
     </div>
   );
 }

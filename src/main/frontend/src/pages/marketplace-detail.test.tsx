@@ -35,6 +35,7 @@ function renderPage(search = "", section = "") {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[at]}>
         <Routes>
+          <Route path="/marketplaces" element={<Location />} />
           <Route
             path="/marketplaces/:name"
             element={
@@ -534,4 +535,139 @@ test("a_failed_last_ingest_is_stated_with_when_and_why", async () => {
   expect(screen.queryByTestId("marketplace-last-ingest-failed")).not.toBeInTheDocument();
   expect(screen.getByText("Last ingest", { selector: "dt" })).toBeInTheDocument();
   expect(screen.getByText(/succeeded/, { selector: "dd" })).toBeInTheDocument();
+});
+
+function asAdmin() {
+  server.use(
+    http.get("/api/v1/me", () =>
+      HttpResponse.json<Schemas["MeView"]>({
+        username: "alice",
+        roles: [{ role: "admin", source: "config" }],
+        claimsTruncated: false,
+        version: "0.3.0",
+      }),
+    ),
+  );
+}
+
+/**
+ * Removal is an administrator's act, stated before it is taken, and it asks for the reason the
+ * server requires. Other users are not shown it.
+ *
+ * @SVCs SVC_GW_INGEST_0048
+ */
+test("an_admin_removes_the_marketplace_from_settings_on_a_stated_reason", async () => {
+  asAdmin();
+  let sent: unknown = null;
+  server.use(
+    http.delete("/api/v1/marketplaces/:name", async ({ request, params }) => {
+      sent = { name: params.name, body: await request.json() };
+      return HttpResponse.json<Schemas["Removal"]>({ id: 1, name: "corp-marketplace", withdrawnSnapshotIds: [3, 4] });
+    }),
+  );
+  const user = userEvent.setup();
+  renderPage("", "settings");
+  await user.click(await screen.findByRole("button", { name: "Remove corp-marketplace…" }));
+
+  const dialog = await screen.findByRole("dialog", { name: "Remove corp-marketplace" });
+  expect(within(dialog).getByText(/serves nothing under this name/)).toBeInTheDocument();
+  expect(within(dialog).getByText(/grants to fetch it are kept/)).toBeInTheDocument();
+  expect(within(dialog).getByText(/registered again, as a new marketplace/)).toBeInTheDocument();
+  const confirm = within(dialog).getByRole("button", { name: "Remove corp-marketplace" });
+  const reason = within(dialog).getByLabelText("Reason");
+  expect(reason).toHaveAccessibleDescription(/A reason is required/);
+  expect(confirm).toBeDisabled();
+  await user.type(reason, "   ");
+  expect(confirm).toBeDisabled();
+  await user.type(reason, "upstream moved  ");
+  expect(confirm).toBeEnabled();
+
+  await user.click(confirm);
+  await expect.poll(() => screen.getByTestId("location").textContent).toBe("/marketplaces");
+  expect(sent).toEqual({ name: "corp-marketplace", body: { reason: "upstream moved" } });
+});
+
+/** @SVCs SVC_GW_INGEST_0048 */
+test("a_refused_removal_is_stated_and_the_dialog_stays_open", async () => {
+  asAdmin();
+  server.use(
+    http.delete("/api/v1/marketplaces/:name", () =>
+      HttpResponse.json({ detail: "marketplace 'corp-marketplace' not found" }, { status: 404 }),
+    ),
+  );
+  const user = userEvent.setup();
+  renderPage("", "settings");
+  await user.click(await screen.findByRole("button", { name: "Remove corp-marketplace…" }));
+  const dialog = await screen.findByRole("dialog", { name: "Remove corp-marketplace" });
+  await user.type(within(dialog).getByLabelText("Reason"), "mistake");
+  await user.click(within(dialog).getByRole("button", { name: "Remove corp-marketplace" }));
+  await waitFor(() =>
+    expect(within(dialog).getByRole("button", { name: "Remove corp-marketplace" })).toBeEnabled(),
+  );
+  expect(screen.getByRole("dialog", { name: "Remove corp-marketplace" })).toBeInTheDocument();
+  expect(screen.getByTestId("location").textContent).toBe("/marketplaces/corp-marketplace/settings");
+});
+
+/** @SVCs SVC_GW_INGEST_0048 */
+test("a_user_who_is_not_an_administrator_is_not_shown_removal", async () => {
+  let identified = false;
+  server.use(
+    http.get("/api/v1/me", () => {
+      identified = true;
+      return HttpResponse.json<Schemas["MeView"]>({
+        username: "bob",
+        roles: [{ role: "approver", marketplace: "corp-marketplace", source: "config" }],
+        claimsTruncated: false,
+        version: "0.3.0",
+      });
+    }),
+  );
+  renderPage("", "settings");
+  expect(await screen.findByText("Upstream")).toBeInTheDocument();
+  // Absence proves nothing until the roles it depends on have arrived.
+  await waitFor(() => expect(identified).toBe(true));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(screen.queryByRole("heading", { name: "Remove marketplace" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /^Remove / })).not.toBeInTheDocument();
+});
+
+/**
+ * A declared marketplace would be registered again by the next reconciliation, so it is not
+ * offered for removal, and the page says what to do instead.
+ *
+ * @SVCs SVC_GW_INGEST_0049
+ */
+test("a_declared_marketplace_is_not_offered_for_removal", async () => {
+  asAdmin();
+  server.use(
+    http.get("/api/v1/estate", () =>
+      HttpResponse.json<Schemas["EstateReconciliation"]>({
+        trigger: "startup",
+        entries: [{ kind: "marketplace", name: "corp-marketplace", action: "unchanged" }],
+      }),
+    ),
+  );
+  renderPage("", "settings");
+  const button = await screen.findByRole("button", { name: "Remove corp-marketplace…" });
+  await waitFor(() => expect(button).toHaveAccessibleDescription(/declared in the estate configuration/));
+  expect(button).toBeDisabled();
+  expect(button).toHaveAccessibleDescription(/Remove the declaration/);
+});
+
+/** Only a marketplace entry of the same name declares it; a grant naming it does not. */
+test("an_estate_that_does_not_declare_the_marketplace_leaves_removal_available", async () => {
+  asAdmin();
+  server.use(
+    http.get("/api/v1/estate", () =>
+      HttpResponse.json<Schemas["EstateReconciliation"]>({
+        entries: [
+          { kind: "marketplace", name: "other", action: "created" },
+          { kind: "grant", name: "alice/approver/corp-marketplace", action: "created" },
+        ],
+      }),
+    ),
+  );
+  renderPage("", "settings");
+  const button = await screen.findByRole("button", { name: "Remove corp-marketplace…" });
+  await waitFor(() => expect(button).toBeEnabled());
 });

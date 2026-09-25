@@ -1101,6 +1101,17 @@ export const staleIdentities: Schemas["StaleIdentity"][] = [
   },
 ];
 
+/** A reconciliation that declared nothing: the default, as in a deployment without an estate. */
+export const estateReport: Schemas["EstateReconciliation"] = {
+  ranAt: "2026-09-25T08:00:00Z",
+  trigger: "startup",
+  entries: [],
+  created: 0,
+  updated: 0,
+  unchanged: 0,
+  failed: 0,
+};
+
 export const handlers = [
   http.get("/api/v1/adoption", () => HttpResponse.json(marketplaceAdoption)),
   http.get("/api/v1/adoption/staleness", () => HttpResponse.json(staleIdentities)),
@@ -1114,6 +1125,17 @@ export const handlers = [
       { status: 201 },
     ),
   ),
+  http.delete("/api/v1/marketplaces/:name", ({ params }) =>
+    HttpResponse.json<Schemas["Removal"]>({
+      id: 1,
+      name: String(params.name),
+      removedAt: "2026-09-25T10:00:00Z",
+      removedBy: "alice",
+      withdrawnSnapshotIds: [3],
+      pushScopeRemovedFromTokenIds: [],
+    }),
+  ),
+  http.get("/api/v1/estate", () => HttpResponse.json(estateReport)),
   http.delete("/api/v1/snapshots/:id", () =>
     HttpResponse.json<Schemas["Snapshot"]>({
       ...heldSnapshot,
