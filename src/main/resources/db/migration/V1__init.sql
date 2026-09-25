@@ -404,8 +404,9 @@ CREATE TABLE audit_sinks (
     -- slots in behind the same cursor contract without a schema change.
     kind audit_sink_kind NOT NULL,
     -- The delivery channel: an ordinary webhook subscriber, so audit batches are signed,
-    -- retried, and recorded by exactly the machinery lifecycle events already use.
-    subscriber_id BIGINT NOT NULL REFERENCES webhook_subscribers (id) ON DELETE CASCADE,
+    -- retried, and recorded by exactly the machinery lifecycle events already use. RESTRICT, so
+    -- nothing but removing the sink can remove its channel (GW_WEBHOOK_0011).
+    subscriber_id BIGINT NOT NULL REFERENCES webhook_subscribers (id) ON DELETE RESTRICT,
     -- Id of the last fetch_log entry handed to this sink; the only per-consumer state.
     -- Resetting it is what "replay" means (GW_AUDIT_0005).
     cursor_position BIGINT NOT NULL DEFAULT 0,

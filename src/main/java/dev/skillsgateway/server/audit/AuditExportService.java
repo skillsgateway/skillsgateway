@@ -28,6 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
@@ -63,6 +65,7 @@ public class AuditExportService {
     private final AdminAuditLogger auditLogger;
     private final List<String> allowedUrlSchemes;
     private final SkillsGatewayProperties.AuditExport properties;
+    private final TransactionTemplate transactions;
 
     public AuditExportService(
             FetchLogRepository fetchLogRepository,
@@ -71,7 +74,8 @@ public class AuditExportService {
             WebhookSubscriberRepository subscriberRepository,
             WebhookService webhookService,
             AdminAuditLogger auditLogger,
-            SkillsGatewayProperties properties) {
+            SkillsGatewayProperties properties,
+            PlatformTransactionManager transactionManager) {
         this.fetchLogRepository = fetchLogRepository;
         this.sinkRepository = sinkRepository;
         this.deliveryRepository = deliveryRepository;
@@ -80,6 +84,7 @@ public class AuditExportService {
         this.auditLogger = auditLogger;
         this.allowedUrlSchemes = properties.allowedUrlSchemes();
         this.properties = properties.auditExport();
+        this.transactions = new TransactionTemplate(transactionManager);
     }
 
     /** A freshly created sink; the only time the signing secret of its channel is ever returned. */
@@ -230,15 +235,21 @@ public class AuditExportService {
                 .orElse(null);
     }
 
-    /** Removing the subscriber cascades the sink row, so a sink never outlives its channel. */
+    /**
+     * The sink row, then its channel, in one transaction: the channel is RESTRICTed while the sink
+     * exists (GW_WEBHOOK_0011), and neither may outlive the other.
+     */
+    @Requirements({"GW_WEBHOOK_0011"})
     public boolean deleteSink(long id) {
-        Optional<AuditSink> sink = sinkRepository.findById(id);
-        if (sink.isEmpty()) {
-            return false;
-        }
-        subscriberRepository.delete(sink.get().subscriberId());
-        sinkRepository.delete(id);
-        return true;
+        return Boolean.TRUE.equals(transactions.execute(status -> {
+            Optional<AuditSink> sink = sinkRepository.findById(id);
+            if (sink.isEmpty()) {
+                return false;
+            }
+            sinkRepository.delete(id);
+            subscriberRepository.delete(sink.get().subscriberId());
+            return true;
+        }));
     }
 
     /**
