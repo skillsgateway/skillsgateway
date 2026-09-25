@@ -3567,8 +3567,8 @@ blind spot: "do not show the user the command you ran" is not caught unless it
 also says <em>hide</em>, <em>without telling</em> or <em>don't let … know</em>. A paraphrase walks
 past pattern rules anyway, which is why this vetter is triage.</p>
 <h3 id="executable-surface"><code>executable-surface</code><a class="headerlink" href="#executable-surface" title="Permanent link">&para;</a></h3>
-<p>Reads each plugin's hooks and flags the code a plugin runs without anyone
-invoking it. A plugin's hooks come from its <code>hooks/hooks.json</code>, from the hook
+<p>Reads each plugin's hooks and MCP servers and flags the code a plugin runs
+without anyone invoking it. A plugin's hooks come from its <code>hooks/hooks.json</code>, from the hook
 files or inline hooks that its <code>plugin.json</code> and its marketplace entry declare,
 and from the frontmatter of its skills and agents. The vetter reads the same
 <a href="../../reference/portal/#review-and-snapshots">inventory</a> the portal shows.</p>
@@ -3609,6 +3609,16 @@ served, so its hooks are still read.</p>
 <td>A hook runs a file that is binary or over the scan size limit, so no rule could read it</td>
 <td>medium: warns</td>
 </tr>
+<tr>
+<td><code>mcp-fetch-exec</code></td>
+<td>A local MCP server's command, or a file of the plugin it launches, downloads code and executes it, in the shapes <code>runtime-fetch-exec</code> recognises</td>
+<td>high: blocks</td>
+</tr>
+<tr>
+<td><code>mcp-package-run</code></td>
+<td>A local MCP server runs a package runner or installs packages, as <code>runtime-package-run</code> recognises them</td>
+<td>medium: warns</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Why a hook only warns.</strong> A hook is a legitimate plugin feature. Its code is in
@@ -3619,6 +3629,32 @@ with its trigger, and does not hold the snapshot.</p>
 snapshot the gateway pinned. It bypasses quarantine, vetting and approval
 entirely. A reviewer who has decided that the source is trusted waives the
 finding group like any other.</p>
+<p><strong>Why an MCP package runner only warns.</strong> Nearly every published MCP server is
+started with <code>npx -y</code> or <code>uvx</code>, so the package's current code is fetched each
+time the server starts. Blocking all of them would teach reviewers to switch
+the vetter off. The warning puts each one on the verdict row. Download-and-execute
+blocks, as it does in a hook. The MCP rules have their own ids, so waiving one
+never waives a hook that does the same.</p>
+<p><strong>MCP servers.</strong> The servers come from the plugin's <code>.mcp.json</code> and from the
+<code>mcpServers</code> its <code>plugin.json</code> and its marketplace entry declare. For a local
+(stdio) server, the <code>command</code> and its <code>args</code> are scanned as one command line,
+and the finding is located at the line of <code>command</code>. Before matching:</p>
+<ul>
+<li>a <code>${VAR:-default}</code> is replaced by its default, which is what runs when the
+  variable is unset;</li>
+<li>a runner given as an absolute path (<code>/usr/local/bin/npx</code>) is read by its file
+  name, and an <code>env</code> launcher and its assignments are dropped;</li>
+<li>the script a shell wrapper is handed (<code>sh -c "…"</code>, <code>cmd /c …</code>,
+  <code>powershell -Command …</code>) is also scanned as a command of its own.</li>
+</ul>
+<p>A runner whose package is a path inside the plugin (<code>npx ./server</code>,
+<code>npx ${CLAUDE_PLUGIN_ROOT}/server</code>) is not a fetch. Files of the plugin that
+the server's command names are followed as a hook's are, and findings in them
+carry the MCP ids and severities. A binary a server runs is not reported: a
+server shipped as a compiled binary is ordinary, and its bytes are pinned in
+the snapshot. A remote server (<code>http</code>, <code>sse</code>, <code>ws</code>) runs nothing on the user's
+machine and is not scanned. Neither is an MCP bundle (<code>.mcpb</code>, <code>.dxt</code>), which
+is an archive.</p>
 <p><strong>Precision.</strong> Only the hook's own command and the files it launches are
 examined, so documentation that mentions <code>curl</code> is never a finding. A launched
 file is one the command names that exists in the snapshot under the plugin: a
@@ -3631,10 +3667,14 @@ yield one finding per line of it, not one per hook.</p>
 <div class="admonition warning">
 <p class="admonition-title">What it does not see</p>
 <p>It matches shapes. A fetch reached through variable indirection
-(<code>$FETCH "$url" | sh</code>) or an encoded payload walks past it. MCP server and
-monitor commands are listed in the inventory but not examined for runtime
-fetches. Hook files for other harnesses (<code>.codex/</code>, <code>.cursor/</code>) are not
-Claude Code plugin hooks and are not read.</p>
+(<code>$FETCH "$url" | sh</code>) or an encoded payload walks past it, in a hook and
+in an MCP server alike. Monitor commands are listed in the inventory but
+not examined for runtime fetches. For MCP servers, a package-manager
+script (<code>bun run start</code>, <code>npm start</code>) is not looked up in <code>package.json</code>,
+and a container runner (<code>docker run image</code>) is not classified as a fetch,
+though both can fetch code when the server starts. Hook files for other
+harnesses (<code>.codex/</code>, <code>.cursor/</code>) are not Claude Code plugin hooks and are
+not read.</p>
 </div>
 <h3 id="license-scan"><code>license-scan</code><a class="headerlink" href="#license-scan" title="Permanent link">&para;</a></h3>
 <p>Deterministic license detection over the pinned content, evaluated against the
