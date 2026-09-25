@@ -83,6 +83,7 @@ public final class MachineApiRegistry {
                         get("/api/v1/snapshots/{id}/diff"),
                         get("/api/v1/snapshots/{id}/file"),
                         get("/api/v1/snapshots/{id}/files"),
+                        get("/api/v1/snapshots/{id}/tree"),
                         get("/api/v1/snapshots/{id}/vetting"),
                         // The only route in this scope that also needs a role: the blast-radius
                         // report is approver-scoped (GW_AUTH_0011), and reach is the intersection.
