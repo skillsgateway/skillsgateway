@@ -12,7 +12,7 @@
   the tests at `4dc62082`; M9, M11, M15, M17, M19, M21–M25 with the tests at
   `74b72301` (M9 had survived at `4dc62082`, see below).
 - **Entry points:** the project gates below, and
-  `openspec/changes/archive/<date>-upstream-github-app/mutants.sh`
+  `openspec/changes/archive/2026-09-25-upstream-github-app/mutants.sh`
   (`mutants.sh` alone runs all 25; `mutants.sh M1- M7-` runs a subset).
 - **Isolation:** a branch in the main checkout, not a worktree. The gauntlet
   needs the built `node_modules` and Docker.
