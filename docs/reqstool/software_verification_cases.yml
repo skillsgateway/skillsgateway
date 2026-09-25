@@ -256,13 +256,14 @@ cases:
 
   - id: SVC_GW_WEBHOOK_0004
     requirement_ids: ["GW_WEBHOOK_0004"]
-    title: Portal shows webhook subscribers and their delivery attempts
+    title: Portal shows lifecycle subscribers and their delivery attempts, and marks a sink's
     verification: automated-test
     description: |
-      GIVEN an authenticated portal session and a registered webhook subscriber with a delivery attempt
+      GIVEN an authenticated portal session, a registered webhook subscriber with a delivery attempt, and an audit sink with a delivery attempt
       WHEN the administrator opens the webhooks page
-      THEN the subscriber is listed with its event filter and the delivery attempt is listed with its event and state
-    revision: "0.1.0"
+      THEN the subscriber is listed with its event filter and the delivery attempt is listed with its event and state,
+      the sink's channel is not listed among the subscribers, and the sink's delivery attempt is marked as the sink's and leads to the audit sinks page
+    revision: "0.2.0"
 
   - id: SVC_GW_AUDIT_0003
     requirement_ids: ["GW_AUDIT_0003"]
@@ -3017,6 +3018,20 @@ cases:
       WHEN an administrator removes a marketplace, and separately a removal is refused
       THEN one delivery names the marketplace, the acting identity, the time and a description
       carrying no operator-supplied reason, and the refused removal delivers nothing
+    revision: "0.1.0"
+
+  - id: SVC_GW_WEBHOOK_0011
+    requirement_ids: ["GW_WEBHOOK_0011"]
+    title: A sink's channel cannot be deleted or rewritten except through its sink
+    verification: automated-test
+    description: |
+      GIVEN an audit sink with its delivery channel, and a lifecycle subscriber
+      WHEN the channel is deleted through the webhooks API, deleted directly in storage, and targeted by a
+      declared webhook of the same name; and the lifecycle subscriber is deleted; and the sink is deleted
+      THEN the API answers 409 naming the sink, storage rejects the deletion, the declared entry fails naming
+      the sink while the declaration's other entries apply, the sink and its channel are unchanged with no
+      change recorded; the lifecycle subscriber is deleted; the listing marks the channel with its sink; and
+      deleting the sink removes both the sink and its channel
     revision: "0.1.0"
 
   - id: SVC_GW_VETTING_0032

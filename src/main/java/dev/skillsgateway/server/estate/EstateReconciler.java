@@ -237,7 +237,7 @@ public class EstateReconciler {
      * url, event filter and secret in place — rotation is a config edit away, audited without the
      * value. Update targets are re-validated against the same scheme allowlist as creation.
      */
-    @Requirements({"GW_ESTATE_0004"})
+    @Requirements({"GW_ESTATE_0004", "GW_WEBHOOK_0011"})
     private Entry reconcileWebhook(DeclaredWebhook declared) {
         requireUsableSecret(declared.secret());
         Optional<WebhookSubscriber> existing = webhookService.findSubscriber(declared.name());
@@ -246,6 +246,8 @@ public class EstateReconciler {
             return Entry.created("webhook", declared.name(), null);
         }
         WebhookSubscriber stored = existing.get();
+        // A declared webhook named like a sink would otherwise rewrite the sink's channel (GW_WEBHOOK_0011).
+        webhookService.requireNotSinkChannel(stored.id());
         List<String> events = WebhookService.normalizeEvents(declared.events());
         List<String> changes = new ArrayList<>();
         if (!stored.url().equals(declared.url())) {

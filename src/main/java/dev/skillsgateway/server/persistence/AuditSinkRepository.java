@@ -72,6 +72,14 @@ public class AuditSinkRepository {
                 .optional();
     }
 
+    /** The sink a webhook subscriber is the delivery channel of, if it is one. */
+    public Optional<AuditSink> findBySubscriberId(long subscriberId) {
+        return jdbc.sql("SELECT * FROM audit_sinks WHERE subscriber_id = :subscriberId")
+                .param("subscriberId", subscriberId)
+                .query(AuditSink.class)
+                .optional();
+    }
+
     public Optional<AuditSink> findByName(String name) {
         return jdbc.sql("SELECT * FROM audit_sinks WHERE name = :name")
                 .param("name", name)
