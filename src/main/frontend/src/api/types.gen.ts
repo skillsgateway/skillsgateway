@@ -3340,7 +3340,7 @@ export interface components {
         /** @description Marketplace registration request */
         RegisterMarketplaceRequest: {
             /**
-             * @description Gateway-local marketplace name; becomes the facade clone path /git/{name}
+             * @description Gateway-local marketplace name; it is the facade clone path /git/{name}
              * @example corp-marketplace
              */
             name?: string;

@@ -1,13 +1,13 @@
 package dev.skillsgateway.server.facade;
 
 import dev.skillsgateway.server.persistence.Marketplace;
+import dev.skillsgateway.server.persistence.MarketplaceName;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.storage.GitStorage;
 import io.github.reqstool.annotations.Requirements;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.lib.Repository;
@@ -37,8 +37,6 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class GitPublishConfiguration {
-
-    private static final Pattern MARKETPLACE_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
 
     private final GitStorage storage;
     private final MarketplaceRepository marketplaceRepository;
@@ -70,7 +68,7 @@ public class GitPublishConfiguration {
     }
 
     /** Push scope, then hosted-ness, then existence — every failure answers alike. */
-    @Requirements({"GW_FACADE_0007"})
+    @Requirements({"GW_FACADE_0007", "GW_INGEST_0063"})
     Repository resolveOrigin(HttpServletRequest request, String name)
             throws RepositoryNotFoundException, ServiceMayNotContinueException {
         String marketplace = name.endsWith(".git") ? name.substring(0, name.length() - 4) : name;
@@ -79,7 +77,7 @@ public class GitPublishConfiguration {
         // scope, because push scopes are validated against registered marketplaces and
         // registration enforces the same pattern — and it is kept because relying on that
         // invariant from another class is not how a path should be assembled.
-        if (!MARKETPLACE_NAME.matcher(marketplace).matches()) {
+        if (!MarketplaceName.isValid(marketplace)) {
             throw new RepositoryNotFoundException(name);
         }
         var token = auditHook.currentToken();

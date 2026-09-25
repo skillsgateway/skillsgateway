@@ -164,7 +164,7 @@ ingests the upstream default branch; the ref is not selectable."
 
 | Field | Validation |
 | --- | --- |
-| Name | `^[a-z0-9][a-z0-9_-]*$` — "lowercase letters, digits, `-` and `_`; must not start with `-` or `_`" |
+| Name | `^[a-z0-9][a-z0-9_-]{0,62}$` — the hint reads "Up to 63 lowercase letters, digits, - and _; must start with a letter or digit. It is the /git/{name} path your clients clone."; a name that breaks it gets the API's own 422 wording as its field error |
 | Clone URL | Must be a valid URL. The scheme allowlist, and whether the gateway can read the upstream, are checked server-side. A refusal surfaces as an error toast that gives the reason and a next step. |
 
 **Register** stays disabled until both fields are valid; it enables as soon as the

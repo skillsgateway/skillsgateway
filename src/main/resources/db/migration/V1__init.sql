@@ -47,9 +47,10 @@ CREATE TABLE marketplaces (
     -- a bad name with a proper API error. The constraint is here so no *other* write path -- the
     -- estate reconciler, a later service method, a fixture -- can introduce a name that the facade's
     -- own route pattern would not accept. Do not move it on the assumption it is redundant.
+    -- Kept in lock-step with MarketplaceName.REGEX (GW_INGEST_0063).
     -- Unique among live marketplaces only (GW_INGEST_0035): the partial index below, not a table
     -- constraint, so a removed marketplace's name can be registered again as a new marketplace.
-    name TEXT NOT NULL CHECK (name ~ '^[a-z0-9][a-z0-9_-]*$'),
+    name TEXT NOT NULL CHECK (name ~ '^[a-z0-9][a-z0-9_-]{0,62}$'),
     -- The identity that registered the marketplace (GW_APPROVAL_0010): the supply-side decision the
     -- four-eyes rule compares an approving reviewer against. Nullable for the same reason as
     -- snapshots.ingested_by — an unrecorded registrant never conflicts.

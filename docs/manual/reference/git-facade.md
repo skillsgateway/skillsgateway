@@ -18,9 +18,9 @@ The standard smart-HTTP endpoints below that prefix:
 - `GET /git/{marketplace}/info/refs?service=git-upload-pack`
 - `POST /git/{marketplace}/git-upload-pack`
 
-`{marketplace}` is validated against `^[a-z0-9][a-z0-9_-]*$` after stripping an
-optional `.git` suffix. Anything else is a 404 — which is also what blocks path
-traversal into arbitrary directories.
+`{marketplace}` is validated against `^[a-z0-9][a-z0-9_-]{0,62}$` (at most 63
+characters) after stripping an optional `.git` suffix. Anything else is a 404 —
+which is also what blocks path traversal into arbitrary directories.
 
 ## Authentication
 
@@ -248,7 +248,7 @@ cookie is honoured, and none is set.
 
 | Field | Contract |
 | --- | --- |
-| `marketplace` | The name as it appears in the fetch URL, validated against `^[a-z0-9][a-z0-9_-]*$`. |
+| `marketplace` | The name as it appears in the fetch URL, validated against `^[a-z0-9][a-z0-9_-]{0,62}$`. |
 | `sha` | A full 40-character commit id. An abbreviation is refused. |
 | `holdings` | At most **256** pairs per request. |
 
@@ -307,6 +307,6 @@ How to deploy the check across a fleet is in
 | --- | --- |
 | 401 on every request | Token missing, mistyped, or revoked. Remember the value goes in the **password** field. |
 | 404 for a marketplace you registered | No snapshot has ever been approved, so no published repository exists. |
-| 404 with an odd name | The name failed `^[a-z0-9][a-z0-9_-]*$`. |
+| 404 with an odd name | The name failed `^[a-z0-9][a-z0-9_-]{0,62}$` — the character set, or longer than 63 characters. |
 | `git push` rejected | Expected — the facade is read-only by construction. Publishing to a hosted marketplace goes to `/publish/{name}`. |
 | Client keeps getting an old SHA | Also expected. The published ref moves only on approval. |

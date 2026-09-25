@@ -47,9 +47,9 @@ find a ref — only `main` exists on the published repository.
 
 ## Names
 
-Marketplace names must match `^[a-z0-9][a-z0-9_-]*$`: lowercase letters, digits,
-hyphen and underscore, not starting with a hyphen or underscore. A violation is
-**422**.
+Marketplace names must match `^[a-z0-9][a-z0-9_-]{0,62}$`: 1 to 63 lowercase
+letters, digits, hyphens and underscores, not starting with a hyphen or
+underscore. A violation is **422**.
 
 The name is also a path segment on the facade (`/git/{name}`), which is why the
 character set is constrained.

@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.facade;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.persistence.MarketplaceName;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.storage.GitStorage;
 import io.github.reqstool.annotations.Requirements;
@@ -11,7 +12,6 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.lib.Constants;
@@ -28,13 +28,6 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class GitFacadeConfiguration {
-
-    /**
-     * The shape a marketplace name may have on the wire. Shared with {@link HeldContentController},
-     * which must accept exactly the names a fetch would, so the two surfaces cannot disagree about
-     * what is even askable.
-     */
-    static final Pattern MARKETPLACE_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
 
     private static final String SERVED_REF = GitStorage.SERVED_REF;
 
@@ -94,11 +87,11 @@ public class GitFacadeConfiguration {
     }
 
     /** The facade only ever opens published repositories; quarantine is unreachable from here. */
-    @Requirements({"GW_FACADE_0002", "GW_AUTH_0006", "GW_INGEST_0034"})
+    @Requirements({"GW_FACADE_0002", "GW_AUTH_0006", "GW_INGEST_0034", "GW_INGEST_0063"})
     Repository resolvePublished(HttpServletRequest request, String name)
             throws RepositoryNotFoundException, ServiceMayNotContinueException {
         String marketplace = name.endsWith(".git") ? name.substring(0, name.length() - 4) : name;
-        if (!MARKETPLACE_NAME.matcher(marketplace).matches()) {
+        if (!MarketplaceName.isValid(marketplace)) {
             throw new RepositoryNotFoundException(name);
         }
         // Scope enforcement (GW_AUTH_0006), before the storage lookup: an out-of-scope request gets

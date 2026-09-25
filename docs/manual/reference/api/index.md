@@ -131,7 +131,7 @@ shape, so a client has one body to parse rather than one per endpoint.
 | 403 | The session lacks the role the endpoint requires; or a machine credential reached an endpoint its scopes do not cover, or one no scope covers. |
 | 404 | No such marketplace, snapshot or token. |
 | 409 | A state conflict — a duplicate name, a decision on a snapshot that is already `approved` or `rejected`, or a re-vet of one that is not `approved`. |
-| 422 | A name failed `^[a-z0-9][a-z0-9_-]*$`. |
+| 422 | A name failed `^[a-z0-9][a-z0-9_-]*$`; a marketplace name is also at most 63 characters. |
 | 502 | Ingestion failed against the upstream. |
 
 ## Endpoint index

@@ -109,7 +109,7 @@ tips on the ledger. See
 | 201 | Registered; returns the marketplace plus `warnings` (see below). |
 | 400 | URL scheme not allowlisted, a `url` with userinfo (a credential in the URL), `ref` present and not `main`, a hosted registration supplying a `url`, an upstream one omitting it, or a `pushPolicy` on an upstream marketplace. |
 | 409 | A live marketplace has that name. A [removed](#delete-marketplacesname) marketplace's name is free. |
-| 422 | Name fails `^[a-z0-9][a-z0-9_-]*$`, or an unknown `origin`/`pushPolicy`. |
+| 422 | Name fails `^[a-z0-9][a-z0-9_-]{0,62}$` (at most 63 characters; the reason says the name is the `/git/<name>` path clients clone), or an unknown `origin`/`pushPolicy`. |
 | 502 | The upstream could not be read, or has no default branch. Nothing was registered. The problem carries `reason`, `rootCause` and `nextStep`; see [Registering a marketplace](../../guides/registering-a-marketplace.md#what-is-validated-and-why). |
 
 The upstream is read only after every other check has passed, so a request

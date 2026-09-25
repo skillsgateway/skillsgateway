@@ -6,6 +6,7 @@ import dev.skillsgateway.server.ingestion.UpstreamCredentials;
 import dev.skillsgateway.server.ingestion.UpstreamException;
 import dev.skillsgateway.server.ingestion.UpstreamGit;
 import dev.skillsgateway.server.persistence.Marketplace;
+import dev.skillsgateway.server.persistence.MarketplaceName;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
@@ -21,7 +22,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
@@ -53,8 +53,6 @@ public class MarketplaceRegistrationService {
         REFUSE,
         REPORT
     }
-
-    public static final Pattern MARKETPLACE_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
 
     private static final Set<String> ORIGINS = Set.of(Marketplace.ORIGIN_UPSTREAM, Marketplace.ORIGIN_HOSTED);
 
@@ -129,13 +127,14 @@ public class MarketplaceRegistrationService {
         "GW_INGEST_0040",
         "GW_INGEST_0041",
         "GW_INGEST_0054",
-        "GW_INGEST_0055"
+        "GW_INGEST_0055",
+        "GW_INGEST_0063",
+        "GW_INGEST_0064"
     })
     public RegistrationOutcome register(
             String name, String url, String origin, String pushPolicy, String actor, Reachability reachability) {
-        if (name == null || !MARKETPLACE_NAME.matcher(name).matches()) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + MARKETPLACE_NAME.pattern());
+        if (!MarketplaceName.isValid(name)) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, MarketplaceName.RULE);
         }
         requireNotReservedName(name);
         String resolvedOrigin = origin == null || origin.isBlank() ? Marketplace.ORIGIN_UPSTREAM : origin;

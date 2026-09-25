@@ -3505,6 +3505,25 @@ cases:
       GIVEN a GitHub App entry, an upstream that redirects to another port and another path, and an API that redirects the token request elsewhere
       WHEN each is registered
       THEN no git request carries an assertion, no request outside the prefix carries the installation token, and the API's redirect is not followed
+
+  - id: SVC_GW_INGEST_0063
+    requirement_ids: ["GW_INGEST_0063"]
+    title: A 63-character marketplace name is accepted and a 64-character one is refused everywhere
+    verification: automated-test
+    description: |
+      GIVEN a name of 63 permitted characters and one of 64
+      WHEN each is registered as an upstream and as a hosted marketplace through the API, declared in the estate, fetched and pushed through the facade, asked about on the revocation-status check, and inserted into the marketplace table directly
+      THEN the 63-character name registers, and the 64-character name is refused at every point with nothing registered, answered not-found on the facade, answered 400 on the status check, and rejected by the database
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0064
+    requirement_ids: ["GW_INGEST_0064"]
+    title: The name refusal names the clone path in the API and in the portal
+    verification: automated-test
+    description: |
+      GIVEN a marketplace name that breaks the rule
+      WHEN it is registered through the API, declared in the estate, or typed into the portal's registration form
+      THEN the refusal and the form's hint and field error state the rule in words and that the name is the /git/<name> path clients clone, and the form's Register control stays disabled
     revision: "0.3.0"
 
   - id: SVC_GW_VETTING_0040

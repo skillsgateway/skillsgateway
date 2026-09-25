@@ -29,6 +29,7 @@ import dev.skillsgateway.server.ingestion.UpstreamException;
 import dev.skillsgateway.server.ingestion.UpstreamFailure;
 import dev.skillsgateway.server.persistence.FetchLogRepository;
 import dev.skillsgateway.server.persistence.Marketplace;
+import dev.skillsgateway.server.persistence.MarketplaceName;
 import dev.skillsgateway.server.persistence.MarketplaceRemovedException;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
@@ -121,9 +122,10 @@ public class AdminController {
     @Schema(description = "Marketplace registration request")
     public record RegisterMarketplaceRequest(
             @Schema(
-                    description = "Gateway-local marketplace name; becomes the facade clone path /git/{name}",
+                    description = "Gateway-local marketplace name; it is the facade clone path /git/{name}",
                     example = "corp-marketplace",
-                    pattern = "^[a-z0-9][a-z0-9_-]*$")
+                    maxLength = MarketplaceName.MAX_LENGTH,
+                    pattern = MarketplaceName.REGEX)
             String name,
 
             @Schema(

@@ -70,6 +70,33 @@ test("register_is_disabled_until_the_name_and_url_are_valid", async () => {
   expect(register).toBeDisabled();
 });
 
+/**
+ * The name is the /git/{name} clone path and is bounded at 63 characters, exactly as the server
+ * bounds it; the hint says why before anything is typed, and a name over the bound gets the
+ * server's own words as its field error.
+ *
+ * @SVCs SVC_GW_INGEST_0063, SVC_GW_INGEST_0064
+ */
+test("a_64_character_name_keeps_register_disabled_and_the_form_says_it_is_the_clone_path", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  await user.click(await screen.findByRole("button", { name: "Register marketplace" }));
+  const nameField = screen.getByLabelText("Name");
+  const register = screen.getByRole("button", { name: "Register" });
+
+  expect(nameField).toHaveAccessibleDescription(/Up to 63 .*the \/git\/\{name\} path your clients clone/);
+
+  await user.type(screen.getByLabelText("Clone URL"), "https://github.com/org/marketplace.git");
+  await user.type(nameField, "a".repeat(63));
+  expect(register).toBeEnabled();
+
+  await user.type(nameField, "a");
+  expect(register).toBeDisabled();
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "because it is the /git/<name> path your clients clone",
+  );
+});
+
 test("register_dialog_rejects_invalid_name_and_malformed_url", async () => {
   const user = userEvent.setup();
   renderPage();
