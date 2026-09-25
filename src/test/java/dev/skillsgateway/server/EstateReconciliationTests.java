@@ -181,9 +181,9 @@ class EstateReconciliationTests extends AbstractGatewayTest {
 
     @Test
     @SVCs({"SVC_GW_ESTATE_0001"})
-    void objects_absent_from_the_declaration_are_never_touched() {
+    void objects_absent_from_the_declaration_are_never_touched() throws Exception {
         String survivor = uniqueName("estate-survivor");
-        registrationService.register(survivor, "https://example.invalid/" + survivor + ".git", "alice");
+        registrationService.register(survivor, readableUpstream(), "alice");
         RoleGrant grant = roleService.grant("estate-survivor-user", "approver", survivor, "alice");
 
         EstateReconciliation report = reconciler.reconcile(properties.estate(), "api");
@@ -195,9 +195,10 @@ class EstateReconciliationTests extends AbstractGatewayTest {
 
     @Test
     @SVCs({"SVC_GW_ESTATE_0002"})
-    void declared_marketplaces_face_the_same_registration_gate_as_the_api() {
+    void declared_marketplaces_face_the_same_registration_gate_as_the_api() throws Exception {
         String drift = uniqueName("estate-drift");
-        registrationService.register(drift, "https://example.invalid/original.git", "alice");
+        String original = readableUpstream();
+        registrationService.register(drift, original, "alice");
         long ledgerHead = fetchLogRepository.maxId();
 
         String fresh = uniqueName("estate-fresh");
@@ -227,7 +228,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         assertThat(marketplaceRepository.findByName("estate-webhookmode")).isEmpty();
         assertThat(marketplaceRepository.findByName(drift).orElseThrow().url())
                 .as("a declared URL never rewrites a registered upstream")
-                .isEqualTo("https://example.invalid/original.git");
+                .isEqualTo(original);
         Marketplace created = marketplaceRepository.findByName(fresh).orElseThrow();
         assertThat(created.syncMode()).isEqualTo("scheduled");
 
@@ -257,7 +258,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
 
         // A grant may reference an API-registered marketplace; an unknown one fails in isolation.
         String apiSide = uniqueName("estate-apiside");
-        registrationService.register(apiSide, "https://example.invalid/" + apiSide + ".git", "alice");
+        registrationService.register(apiSide, readableUpstream(), "alice");
         Estate estate = new Estate(
                 null,
                 List.of(
@@ -477,6 +478,49 @@ class EstateReconciliationTests extends AbstractGatewayTest {
     }
 
     // ---------------------------------------------------------------- helpers
+
+    @Test
+    @SVCs({"SVC_GW_INGEST_0041"})
+    void a_declared_marketplace_with_an_unreachable_upstream_is_registered_and_reported() throws Exception {
+        int closed;
+        try (java.net.ServerSocket socket = new java.net.ServerSocket(0)) {
+            closed = socket.getLocalPort();
+        }
+        String unreachable = uniqueName("estate-down");
+        String reachable = uniqueName("estate-up");
+        Estate estate = new Estate(
+                List.of(
+                        new DeclaredMarketplace(
+                                unreachable, "http://127.0.0.1:%d/acme/skills.git".formatted(closed), null, null, null),
+                        new DeclaredMarketplace(reachable, readableUpstream(), null, null, null)),
+                null,
+                null,
+                null,
+                null);
+
+        EstateReconciliation report = reconciler.reconcile(estate, "api");
+
+        assertThat(actionOf(report, unreachable)).isEqualTo("created");
+        assertThat(entryOf(report, unreachable).detail())
+                .contains("upstream")
+                .contains(dev.skillsgateway.server.ingestion.UpstreamFailure.UNREACHABLE);
+        assertThat(actionOf(report, reachable)).isEqualTo("created");
+        assertThat(marketplaceRepository.findByName(unreachable)).isPresent();
+        assertThat(marketplaceRepository.findByName(reachable)).isPresent();
+        assertThat(ledger("marketplace-upstream-unreachable", EstateReconciler.ACTOR))
+                .anySatisfy(entry -> {
+                    assertThat(entry.get("marketplace")).isEqualTo(unreachable);
+                    assertThat(String.valueOf(entry.get("detail")))
+                            .contains(dev.skillsgateway.server.ingestion.UpstreamFailure.UNREACHABLE);
+                });
+        assertThat(ledger("marketplace-upstream-unreachable", EstateReconciler.ACTOR))
+                .noneMatch(entry -> reachable.equals(entry.get("marketplace")));
+    }
+
+    /** A clone URL registration can read: registration checks it (GW_INGEST_0040). */
+    private static String readableUpstream() throws Exception {
+        return createUpstream(DEFAULT_MANIFEST).toUri().toString();
+    }
 
     private String actionOf(EstateReconciliation report, String name) {
         return entryOf(report, name).action();

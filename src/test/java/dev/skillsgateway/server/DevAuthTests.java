@@ -101,11 +101,16 @@ class DevAuthTests {
         // An administrative mutation, not merely a read: this is the loop a developer actually runs.
         // It carries a CSRF token because the hatch opens authentication and not forgery protection
         // (GW_AUTH_0030) — the portal sends one here exactly as it does against a configured gateway.
-        mockMvc.perform(post("/api/v1/marketplaces")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"dev-local\", \"url\": \"https://example.com/x.git\"}"))
-                .andExpect(status().isCreated());
+        // Registration reads the upstream (GW_INGEST_0040), so it names one that exists, in-process.
+        try (GitHttpFixture forge = new GitHttpFixture()) {
+            forge.publish("acme/dev-local", java.util.Map.of("README.md", "dev"));
+            mockMvc.perform(post("/api/v1/marketplaces")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"name\": \"dev-local\", \"url\": \"%s/acme/dev-local.git\"}"
+                                    .formatted(forge.baseUrl())))
+                    .andExpect(status().isCreated());
+        }
 
         // Attributed to the hatch rather than to config or a grant, because the session endpoint
         // exists to answer why a session holds a role and there is no configuration entry to find.

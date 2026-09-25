@@ -2,6 +2,8 @@ package dev.skillsgateway.server.admin;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.ingestion.ForgeMetadataService;
+import dev.skillsgateway.server.ingestion.UpstreamException;
+import dev.skillsgateway.server.ingestion.UpstreamGit;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
@@ -19,7 +21,10 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.eclipse.jgit.lib.Repository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -32,6 +37,21 @@ import org.springframework.web.server.ResponseStatusException;
  */
 @Service
 public class MarketplaceRegistrationService {
+
+    private static final Logger log = LoggerFactory.getLogger(MarketplaceRegistrationService.class);
+
+    /** Ledger event for a marketplace registered although its upstream could not be read (GW_INGEST_0041). */
+    public static final String EVENT_UPSTREAM_UNREACHABLE = "marketplace-upstream-unreachable";
+
+    /**
+     * What an unreadable upstream does to a registration (GW_INGEST_0040, GW_INGEST_0041): an
+     * administrator at the API is refused and can correct the URL; a declaration converged at
+     * startup is registered and reported, so the estate does not depend on the network's weather.
+     */
+    public enum Reachability {
+        REFUSE,
+        REPORT
+    }
 
     public static final Pattern MARKETPLACE_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
 
@@ -47,6 +67,7 @@ public class MarketplaceRegistrationService {
     private final GitStorage storage;
     private final WebhookService webhookService;
     private final SnapshotRepository snapshotRepository;
+    private final UpstreamGit upstreamGit;
 
     public MarketplaceRegistrationService(
             MarketplaceRepository marketplaceRepository,
@@ -55,7 +76,8 @@ public class MarketplaceRegistrationService {
             AdminAuditLogger auditLogger,
             GitStorage storage,
             WebhookService webhookService,
-            SnapshotRepository snapshotRepository) {
+            SnapshotRepository snapshotRepository,
+            UpstreamGit upstreamGit) {
         this.marketplaceRepository = marketplaceRepository;
         this.properties = properties;
         this.forgeMetadataService = forgeMetadataService;
@@ -63,6 +85,7 @@ public class MarketplaceRegistrationService {
         this.storage = storage;
         this.webhookService = webhookService;
         this.snapshotRepository = snapshotRepository;
+        this.upstreamGit = upstreamGit;
     }
 
     /** A successful registration, plus any non-blocking warnings about it (GW_INGEST_0029). */
@@ -85,8 +108,25 @@ public class MarketplaceRegistrationService {
      * check and a supplied URL is a contradiction rather than an unused field; its origin
      * repository is created here so a publisher can push the moment registration returns.
      */
-    @Requirements({"GW_INGEST_0001", "GW_APPROVAL_0010", "GW_FACADE_0006", "GW_WEBHOOK_0009"})
+    @Requirements({"GW_INGEST_0001", "GW_INGEST_0040"})
     public RegistrationOutcome register(String name, String url, String origin, String pushPolicy, String actor) {
+        return register(name, url, origin, pushPolicy, actor, Reachability.REFUSE);
+    }
+
+    /**
+     * As above, deciding what an unreadable upstream does. The upstream is read last, after every
+     * validation that needs no network, so a request refused on those never contacts it.
+     */
+    @Requirements({
+        "GW_INGEST_0001",
+        "GW_APPROVAL_0010",
+        "GW_FACADE_0006",
+        "GW_WEBHOOK_0009",
+        "GW_INGEST_0040",
+        "GW_INGEST_0041"
+    })
+    public RegistrationOutcome register(
+            String name, String url, String origin, String pushPolicy, String actor, Reachability reachability) {
         if (name == null || !MARKETPLACE_NAME.matcher(name).matches()) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_CONTENT, "name must match " + MARKETPLACE_NAME.pattern());
@@ -112,6 +152,7 @@ public class MarketplaceRegistrationService {
         if (marketplaceRepository.findByName(name).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "marketplace '%s' already exists".formatted(name));
         }
+        UpstreamException unreadable = hosted ? null : readUpstream(name, url, reachability);
         startFromNothing(name, hosted);
         Marketplace marketplace = marketplaceRepository.register(
                 name,
@@ -126,9 +167,41 @@ public class MarketplaceRegistrationService {
             createOriginRepository(marketplace.name());
         }
         auditLogger.record(actor, marketplace.name(), "marketplace-registered", null, "origin=" + resolvedOrigin);
+        if (unreadable != null) {
+            auditLogger.record(
+                    actor,
+                    marketplace,
+                    EVENT_UPSTREAM_UNREACHABLE,
+                    null,
+                    unreadable.failure().describe());
+            warnings = Stream.concat(
+                            warnings.stream(),
+                            Stream.of("upstream unreachable: "
+                                    + unreadable.failure().describe()))
+                    .toList();
+        }
         webhookService.emitMarketplace(
                 WebhookEvent.MARKETPLACE_REGISTERED, marketplace.name(), actor, "origin=" + resolvedOrigin);
         return new RegistrationOutcome(marketplace, warnings);
+    }
+
+    /**
+     * Lists the upstream over the path ingestion fetches with and resolves the ref the gateway pins
+     * (GW_INGEST_0040). Refused, the exception reaches the caller with its translated cause and nothing
+     * has been written; reported, it is returned for the caller to record (GW_INGEST_0041).
+     */
+    @Requirements({"GW_INGEST_0040", "GW_INGEST_0041"})
+    private UpstreamException readUpstream(String name, String url, Reachability reachability) {
+        try {
+            upstreamGit.probe(url);
+            return null;
+        } catch (UpstreamException e) {
+            log.warn("upstream of marketplace '{}' could not be read at registration: {}", name, e.getMessage());
+            if (reachability == Reachability.REFUSE) {
+                throw e;
+            }
+            return e;
+        }
     }
 
     /**

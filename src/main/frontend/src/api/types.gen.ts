@@ -2764,6 +2764,18 @@ export interface components {
             id?: number;
             /**
              * Format: date-time
+             * @description When the last ingest attempt ended, whatever triggered it; null before the first
+             */
+            lastIngestAt?: string;
+            /**
+             * @description How the last ingest attempt ended (GW_INGEST_0039); null before the first
+             * @enum {string}
+             */
+            lastIngestOutcome?: "succeeded" | "failed";
+            /** @description Why the last ingest attempt failed: reason, root cause and next step (GW_INGEST_0038); null unless it failed */
+            lastIngestReason?: string;
+            /**
+             * Format: date-time
              * @description Last sync attempt (success or failure), or null before the first one
              */
             lastSyncAt?: string;
@@ -2848,6 +2860,18 @@ export interface components {
              * @description Marketplace id
              */
             id?: number;
+            /**
+             * Format: date-time
+             * @description When the last ingest attempt ended, whatever triggered it; null before the first
+             */
+            lastIngestAt?: string;
+            /**
+             * @description How the last ingest attempt ended (GW_INGEST_0039); null before the first
+             * @enum {string}
+             */
+            lastIngestOutcome?: "succeeded" | "failed";
+            /** @description Why the last ingest attempt failed: reason, root cause and next step (GW_INGEST_0038); null unless it failed */
+            lastIngestReason?: string;
             /** @description Gateway-local name (also the facade clone path) */
             name?: string;
             /**
@@ -4418,6 +4442,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
+            /** @description The upstream could not be read or has no default branch; nothing was registered. The problem carries reason, rootCause and nextStep (GW_INGEST_0040) */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
         };
     };
     removeMarketplace: {
@@ -4502,7 +4535,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
-            /** @description Upstream fetch failed */
+            /** @description Upstream fetch failed; the problem carries reason, rootCause and nextStep (GW_INGEST_0038) */
             502: {
                 headers: {
                     [name: string]: unknown;

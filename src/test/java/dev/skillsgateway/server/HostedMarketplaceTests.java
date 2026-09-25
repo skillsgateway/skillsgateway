@@ -168,16 +168,18 @@ class HostedMarketplaceTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_FACADE_0006"})
     void an_upstream_marketplace_is_unaffected() throws Exception {
         String name = uniqueName("stillupstream");
+        // Registration reads the upstream (GW_INGEST_0040), so it names one that exists, on disk.
+        String url = createUpstream(DEFAULT_MANIFEST).toUri().toString();
         String created = mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"%s\",\"url\":\"https://example.com/x.git\"}".formatted(name)))
+                        .content("{\"name\":\"%s\",\"url\":\"%s\"}".formatted(name, url)))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
         assertThat((String) JsonPath.read(created, "$.origin")).isEqualTo(Marketplace.ORIGIN_UPSTREAM);
-        assertThat((String) JsonPath.read(created, "$.url")).isEqualTo("https://example.com/x.git");
+        assertThat((String) JsonPath.read(created, "$.url")).isEqualTo(url);
         assertThat(storage.hostedIfPresent(name)).isEmpty();
 
         String listing = mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin()))

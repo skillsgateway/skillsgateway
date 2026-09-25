@@ -305,6 +305,9 @@ class ExternalConnectorRegistrationTests {
                 null,
                 null,
                 Marketplace.SYNC_ON_DEMAND,
+                null,
+                null,
+                null,
                 null);
     }
 

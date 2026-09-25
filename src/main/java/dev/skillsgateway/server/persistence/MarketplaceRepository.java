@@ -135,6 +135,22 @@ public class MarketplaceRepository {
     }
 
     /**
+     * Replaces the record of the last ingest attempt (GW_INGEST_0039): one row per marketplace, so it
+     * stays bounded; the sequence of attempts is the ledger's.
+     */
+    @Requirements({"GW_INGEST_0039"})
+    public void recordIngest(long id, String outcome, String reason) {
+        jdbc.sql("UPDATE marketplaces SET last_ingest_at = :now,"
+                        + " last_ingest_outcome = :outcome::marketplace_last_ingest_outcome,"
+                        + " last_ingest_reason = :reason WHERE id = :id")
+                .param("now", OffsetDateTime.now())
+                .param("outcome", outcome)
+                .param("reason", reason)
+                .param("id", id)
+                .update();
+    }
+
+    /**
      * Retires a live marketplace (GW_INGEST_0034). Conditional on the row still being live, so of two
      * concurrent removals exactly one wins; the row lock this update takes is also what an approval's
      * decision waits on (see {@code SnapshotRepository.decide}).

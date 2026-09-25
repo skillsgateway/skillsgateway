@@ -1,7 +1,9 @@
 package dev.skillsgateway.server.ingestion;
 
+import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.Marketplace;
+import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.policy.SnapshotFactsService;
@@ -11,26 +13,30 @@ import dev.skillsgateway.server.vetting.VettingService;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 @Service
 public class IngestionService {
+
+    private static final Logger log = LoggerFactory.getLogger(IngestionService.class);
+
+    /** Ledger event for an ingest attempt that failed, whatever triggered it (GW_AUDIT_0010). */
+    public static final String EVENT_INGEST_FAILED = "ingest-failed";
 
     private static final String INCOMING_REF = "refs/quarantine/incoming";
     private static final String MANIFEST_PATH = ".claude-plugin/marketplace.json";
@@ -54,6 +60,9 @@ public class IngestionService {
     private final ConcurrentHashMap<Long, ReentrantLock> ingestLocks = new ConcurrentHashMap<>();
 
     private final GatewayMetrics metrics;
+    private final UpstreamGit upstreamGit;
+    private final MarketplaceRepository marketplaceRepository;
+    private final AdminAuditLogger auditLogger;
 
     public IngestionService(
             GitStorage storage,
@@ -63,7 +72,10 @@ public class IngestionService {
             ExternalSourceResolver externalSourceResolver,
             ManifestRewriter manifestRewriter,
             SnapshotFactsService factsService,
-            GatewayMetrics metrics) {
+            GatewayMetrics metrics,
+            UpstreamGit upstreamGit,
+            MarketplaceRepository marketplaceRepository,
+            AdminAuditLogger auditLogger) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.vettingService = vettingService;
@@ -72,6 +84,9 @@ public class IngestionService {
         this.manifestRewriter = manifestRewriter;
         this.factsService = factsService;
         this.metrics = metrics;
+        this.upstreamGit = upstreamGit;
+        this.marketplaceRepository = marketplaceRepository;
+        this.auditLogger = auditLogger;
     }
 
     /**
@@ -93,10 +108,38 @@ public class IngestionService {
         lock.lock();
         try {
             // Observation only (GW_OBSERVABILITY_0003): timing and outcome around the unchanged ingestion.
-            return metrics.observeIngestion(() -> ingestLocked(marketplace, actor));
+            Snapshot snapshot = metrics.observeIngestion(() -> ingestLocked(marketplace, actor));
+            marketplaceRepository.recordIngest(marketplace.id(), Marketplace.INGEST_SUCCEEDED, null);
+            return snapshot;
+        } catch (RuntimeException e) {
+            try {
+                recordFailure(marketplace, actor, e);
+            } catch (RuntimeException recording) {
+                // The ingest's own failure is the one the caller must see; this one rides along.
+                e.addSuppressed(recording);
+            }
+            throw e;
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Every failed attempt, whatever triggered it, is recorded where the marketplace is read
+     * (GW_INGEST_0039), in the ledger (GW_AUDIT_0010) and in the log (GW_INGEST_0038). Only a failure
+     * {@link UpstreamGit} raised is described as the upstream's answer; anything else is the
+     * gateway's own and says so.
+     */
+    @Requirements({"GW_INGEST_0038", "GW_INGEST_0039", "GW_AUDIT_0010"})
+    private void recordFailure(Marketplace marketplace, String actor, RuntimeException e) {
+        UpstreamFailure failure = e instanceof IngestionException ingestion && ingestion.failure() != null
+                ? ingestion.failure()
+                : UpstreamFailure.unclassified(e);
+        String reason = failure.describe();
+        log.warn("ingestion of marketplace '{}' failed: {}", marketplace.name(), reason);
+        log.debug("ingestion of marketplace '{}' failed", marketplace.name(), e);
+        marketplaceRepository.recordIngest(marketplace.id(), Marketplace.INGEST_FAILED, reason);
+        auditLogger.record(actor, marketplace, EVENT_INGEST_FAILED, null, reason);
     }
 
     @Requirements({
@@ -155,8 +198,17 @@ public class IngestionService {
                 vettingService.vet(snapshot, marketplace.name());
             }
             return snapshot;
+        } catch (UpstreamException e) {
+            throw new IngestionException(
+                    "ingestion failed for marketplace '%s': %s".formatted(marketplace.name(), e.getMessage()),
+                    e.failure(),
+                    e);
         } catch (IOException | GitAPIException e) {
-            throw new IngestionException("ingestion failed for marketplace '%s'".formatted(marketplace.name()), e);
+            UpstreamFailure failure = UpstreamFailure.unclassified(e);
+            throw new IngestionException(
+                    "ingestion failed for marketplace '%s': %s".formatted(marketplace.name(), failure.describe()),
+                    failure,
+                    e);
         }
     }
 
@@ -170,7 +222,7 @@ public class IngestionService {
     @Requirements({"GW_INGEST_0017"})
     private ObjectId fetchIncoming(Repository repo, Marketplace marketplace) throws GitAPIException, IOException {
         if (!marketplace.hosted()) {
-            return fetchUpstreamHead(repo, marketplace.url());
+            return upstreamGit.fetchDefaultBranch(repo, marketplace.url(), INCOMING_REF);
         }
         try (Repository origin = storage.hosted(marketplace.name())) {
             if (origin.resolve(Marketplace.LINEAGE_REF) == null) {
@@ -193,53 +245,6 @@ public class IngestionService {
             throw new RepositoryNotFoundException("the origin repository produced no commit");
         }
         return sha;
-    }
-
-    private static ObjectId fetchUpstreamHead(Repository repo, String url) throws GitAPIException, IOException {
-        try (Git git = new Git(repo)) {
-            try {
-                git.fetch()
-                        .setRemote(url)
-                        .setRefSpecs(new RefSpec("+HEAD:" + INCOMING_REF))
-                        .call();
-            } catch (GitAPIException e) {
-                // Some transports reject a HEAD refspec; resolve the default branch and retry.
-                String branch = resolveDefaultBranch(url);
-                git.fetch()
-                        .setRemote(url)
-                        .setRefSpecs(new RefSpec("+" + branch + ":" + INCOMING_REF))
-                        .call();
-            }
-        }
-        ObjectId sha = repo.resolve(INCOMING_REF);
-        if (sha == null) {
-            throw new RepositoryNotFoundException("fetch from %s produced no commit".formatted(url));
-        }
-        return sha;
-    }
-
-    private static String resolveDefaultBranch(String url) throws GitAPIException {
-        Map<String, Ref> refs = Git.lsRemoteRepository().setRemote(url).callAsMap();
-        Ref head = refs.get(Constants.HEAD);
-        if (head == null || head.getObjectId() == null) {
-            throw new IngestionException("upstream %s has no HEAD".formatted(url));
-        }
-        if (head.isSymbolic()) {
-            return head.getTarget().getName();
-        }
-        ObjectId id = head.getObjectId();
-        for (String preferred : List.of("refs/heads/main", "refs/heads/master")) {
-            Ref candidate = refs.get(preferred);
-            if (candidate != null && id.equals(candidate.getObjectId())) {
-                return preferred;
-            }
-        }
-        return refs.entrySet().stream()
-                .filter(e -> e.getKey().startsWith(Constants.R_HEADS)
-                        && id.equals(e.getValue().getObjectId()))
-                .map(Map.Entry::getKey)
-                .findFirst()
-                .orElseThrow(() -> new IngestionException("cannot determine default branch of %s".formatted(url)));
     }
 
     /**

@@ -82,7 +82,8 @@ export function useIngest() {
   return useMutation({
     mutationFn: (name: string) =>
       api<Snapshot>(`/api/v1/marketplaces/${encodeURIComponent(name)}/ingest`, { method: "POST" }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketplaces"] }),
+    // A failure is recorded on the marketplace too (GW_INGEST_0039), so either way the read is stale.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["marketplaces"] }),
   });
 }
 

@@ -52,12 +52,15 @@ class ClaimRoleMappingTests extends AbstractClaimMappingTest {
     void a_mapped_admin_claim_grants_the_admin_surface_with_no_grant_row() throws Exception {
         var alice = session("claim-alice", List.of("gw-admins"));
 
-        // Registration is admin-only, and so is the grants API — which would show any row.
+        // Registration is admin-only, and so is the grants API — which would show any row. It reads
+        // the upstream (GW_INGEST_0040), so the URL names a repository that exists, on disk.
         mockMvc.perform(post("/api/v1/marketplaces")
                         .with(alice)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"%s\",\"url\":\"https://example.com/x.git\"}"
-                                .formatted(uniqueName("claimadmin"))))
+                        .content("{\"name\":\"%s\",\"url\":\"%s\"}"
+                                .formatted(
+                                        uniqueName("claimadmin"),
+                                        createUpstream(DEFAULT_MANIFEST).toUri().toString())))
                 .andExpect(status().isCreated());
         mockMvc.perform(get("/api/v1/roles").with(alice)).andExpect(status().isOk());
         assertThat(roleService.rolesOf("claim-alice")).isEmpty();

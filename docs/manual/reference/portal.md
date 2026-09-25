@@ -165,7 +165,7 @@ ingests the upstream default branch; the ref is not selectable."
 | Field | Validation |
 | --- | --- |
 | Name | `^[a-z0-9][a-z0-9_-]*$` — "lowercase letters, digits, `-` and `_`; must not start with `-` or `_`" |
-| Clone URL | Must be a valid URL. The scheme allowlist is enforced server-side and surfaces as an error toast. |
+| Clone URL | Must be a valid URL. The scheme allowlist, and whether the gateway can read the upstream, are checked server-side. A refusal surfaces as an error toast that gives the reason and a next step. |
 
 **Register** stays disabled until both fields are valid; it enables as soon as the
 name matches the pattern and the clone URL parses.
@@ -234,6 +234,12 @@ read from the published repository, not inferred from an approved snapshot
 existing — which is wrong after a withdrawal that left one approved and serves
 nothing.
 
+When the last ingest failed, a further line reads *Last ingest failed {when}:
+{reason}*. The reason includes the root cause and a next step. It is the
+marketplace read's `lastIngestReason`, so it covers ingests by the sync sweep,
+a webhook or a push as well as by hand. A failed **Ingest** also refreshes the
+line, and the next successful ingest removes it.
+
 Two actions, both outline buttons so that **Approve** stays the page's one
 primary control:
 
@@ -246,7 +252,8 @@ primary control:
 
 On **Settings**. Forge metadata captured at registration, best effort: **Clone
 URL**, **Forge**, **Project**, **Description**, **Last upstream update**,
-**Registered**, **Registered by**. Anything not captured shows "—".
+**Last ingest** (its outcome and time, or "never"), **Registered**, **Registered
+by**. Anything not captured shows "—".
 
 ### Vetting chain (administrators)
 

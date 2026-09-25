@@ -25,6 +25,8 @@ import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.ingestion.IngestionException;
 import dev.skillsgateway.server.ingestion.IngestionService;
 import dev.skillsgateway.server.ingestion.SnapshotContentService;
+import dev.skillsgateway.server.ingestion.UpstreamException;
+import dev.skillsgateway.server.ingestion.UpstreamFailure;
 import dev.skillsgateway.server.persistence.FetchLogRepository;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRemovedException;
@@ -202,6 +204,19 @@ public class AdminController {
                     allowableValues = {"on-demand", "scheduled", "webhook"})
             String syncMode,
 
+            @Schema(description = "When the last ingest attempt ended, whatever triggered it; null before the first")
+            Instant lastIngestAt,
+
+            @Schema(
+                    description = "How the last ingest attempt ended (GW_INGEST_0039); null before the first",
+                    allowableValues = {"succeeded", "failed"})
+            String lastIngestOutcome,
+
+            @Schema(
+                    description = "Why the last ingest attempt failed: reason, root cause and next step"
+                            + " (GW_INGEST_0038); null unless it failed")
+            String lastIngestReason,
+
             @Schema(description = "All snapshots of this marketplace, any state")
             List<Snapshot> snapshots) {}
 
@@ -217,6 +232,10 @@ public class AdminController {
     @ApiResponse(responseCode = "400", description = "Disallowed URL scheme, or a ref other than the default branch")
     @ApiResponse(responseCode = "409", description = "A marketplace with that name already exists")
     @ApiResponse(responseCode = "422", description = "Invalid marketplace name")
+    @ApiResponse(
+            responseCode = "502",
+            description = "The upstream could not be read or has no default branch; nothing was registered."
+                    + " The problem carries reason, rootCause and nextStep (GW_INGEST_0040)")
     public ResponseEntity<RegisteredMarketplace> registerMarketplace(
             @RequestBody RegisterMarketplaceRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
@@ -423,6 +442,9 @@ public class AdminController {
                         marketplace.description(),
                         marketplace.upstreamUpdatedAt(),
                         marketplace.syncMode(),
+                        marketplace.lastIngestAt(),
+                        marketplace.lastIngestOutcome(),
+                        marketplace.lastIngestReason(),
                         snapshotRepository.listByMarketplace(marketplace.id())))
                 .toList();
     }
@@ -436,7 +458,10 @@ public class AdminController {
                     + " approves it; manifests declaring non-local plugin sources are rejected.")
     @ApiResponse(responseCode = "201", description = "Snapshot recorded (held, or rejected on policy violation)")
     @ApiResponse(responseCode = "404", description = "Marketplace not found")
-    @ApiResponse(responseCode = "502", description = "Upstream fetch failed")
+    @ApiResponse(
+            responseCode = "502",
+            description =
+                    "Upstream fetch failed; the problem carries reason, rootCause and nextStep" + " (GW_INGEST_0038)")
     public ResponseEntity<Snapshot> ingest(@PathVariable String name, Authentication authentication) {
         roleService.requireApprover(authentication, name);
         Marketplace marketplace = marketplaceRepository
@@ -711,9 +736,28 @@ public class AdminController {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
     }
 
+    /**
+     * An upstream that could not be read says why (GW_INGEST_0038): the detail is readable on its own,
+     * and its parts are properties a client can act on without parsing it.
+     */
     @ExceptionHandler(IngestionException.class)
+    @Requirements({"GW_INGEST_0038", "GW_INGEST_0040"})
     public ProblemDetail ingestionFailed(IngestionException e) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, e.getMessage());
+        UpstreamFailure failure = e.failure();
+        if (failure == null) {
+            return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, e.getMessage());
+        }
+        boolean registration = e instanceof UpstreamException;
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_GATEWAY,
+                registration
+                        ? "the upstream could not be read, so nothing was registered: " + failure.describe()
+                        : e.getMessage());
+        problem.setTitle(registration ? "Upstream not readable" : "Ingestion failed");
+        problem.setProperty("reason", failure.reason());
+        problem.setProperty("rootCause", failure.rootCause());
+        problem.setProperty("nextStep", failure.nextStep());
+        return problem;
     }
 
     @Schema(description = "Withdraw an approved snapshot, saying what the marketplace serves afterwards")

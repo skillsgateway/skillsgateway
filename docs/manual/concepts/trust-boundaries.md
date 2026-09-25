@@ -46,7 +46,8 @@ C4Container
 ## 1. Registration — an operator's URL becomes an outbound fetch
 
 Registering a marketplace hands the gateway a URL it will later clone. Two gates
-apply before the row is written.
+apply before the upstream is contacted at all. After them, a reachability check
+runs before the row is written.
 
 **URL scheme allowlist.** The URL is parsed and its scheme lower-cased and
 matched against `skills-gateway.allowed-url-schemes` (default `http`, `https`).
@@ -62,6 +63,15 @@ publication is a designed future feature and will arrive as promotion per
 Marketplace names are additionally constrained to `^[a-z0-9][a-z0-9_-]*$`, which
 is also what makes them safe as path segments on the facade.
 
+**Reachability.** Only after those checks pass does the gateway list the
+upstream's references, resolve the default branch it will pin, and refuse the
+registration when it cannot. The listing goes through the same connection path
+as ingestion's fetch, so registration opens no second route to the network. That
+path is also where upstream credentials will attach. It is the scheme allowlist
+that bounds where the gateway may connect. Address-level egress controls apply
+to external plugin sources only, not to a marketplace upstream an administrator
+names.
+
 See [Compatibility and allowlists](../reference/compatibility.md) for the full
 matrix.
 
@@ -70,7 +80,9 @@ matrix.
 is a second *caller* of this boundary, never a second implementation: a
 declared marketplace faces the same name rules, reserved name and scheme
 allowlist as an API registration, has no ref key to declare, and a failing
-entry is reported rather than registered. Reconciliation is additive — the
+entry is reported rather than registered. The exception is an unreadable
+upstream: a declared marketplace is registered anyway, and the failure is
+reported, so the estate does not depend on the network at startup. Reconciliation is additive — the
 declaration can create and converge, never deregister.
 
 **A manifest's plugin sources reach for this boundary too.** A registered
