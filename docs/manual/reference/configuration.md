@@ -778,7 +778,7 @@ back a normalized `{state, reportUrl, findings[]}` where `state` is one of
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `…external[n].name` | string | — | Required, unique; must not be a built-in (`secret-scan`, `prompt-injection`, `license-scan`, `skill-conformance`). |
+| `…external[n].name` | string | — | Required, unique; must not be a built-in (`secret-scan`, `prompt-injection`, `executable-surface`, `license-scan`, `skill-conformance`). |
 | `…external[n].url` | url | — | Required; `http` or `https` only. |
 | `…external[n].order` | integer | `1000` | Chain position; ties broken by name. Built-ins start at `100`. |
 | `…external[n].version` | string | `1` | Stamped into the chain identity (GW_VETTING_0012). Bump when the external rules change. |

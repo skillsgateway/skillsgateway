@@ -63,17 +63,17 @@ recorded in `evidence.md`.
 
 ## 4. Portal (SVC_GW_INGEST_0046)
 
-- [ ] 4.1 `snapshot-inventory.tsx`, with a story and a unit test
+- [x] 4.1 `snapshot-inventory.tsx`, with a story and a unit test
   (`@SVCs SVC_GW_INGEST_0046`) that covers collapsed-by-default, counts for
   the present kinds only, and expanding the hooks. Update MSW handlers.
   `snapshot-card.tsx` calls it. Verify with `pnpm test:stories` and
   `./mvnw verify`.
-- [ ] 4.2 Run `/impeccable audit` and `harden` on the Inventory tab. Fix the
+- [x] 4.2 Run `/impeccable audit` and `harden` on the Inventory tab. Fix the
   findings or dismiss each one in the PR body with a reason.
 
 ## 5. Docs (same PR)
 
-- [ ] 5.1 Update `concepts/vetting.md` (the chain diagram, the built-in list
+- [x] 5.1 Update `concepts/vetting.md` (the chain diagram, the built-in list
   with a new `executable-surface` section, and the known limits),
   `reference/portal.md` (Inventory), `reference/api/marketplaces.md` (the
   content fields), the capability map row, the glossary, and
