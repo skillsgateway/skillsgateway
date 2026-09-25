@@ -1,7 +1,9 @@
 # Registering a marketplace
 
 Registration tells the gateway which upstream repository it is willing to talk
-to. It is the first trust boundary, and it fetches nothing.
+to. It is the first trust boundary. It reads the upstream's list of references,
+to confirm the gateway can read it and has a default branch to pin, and it
+fetches no content.
 
 If the skills are your organisation's own and there is no upstream to point at,
 register a **hosted** marketplace instead and push to the gateway directly —
@@ -39,6 +41,7 @@ Responses:
 | 400 | URL scheme not allowlisted, or a `ref` other than `main`. |
 | 409 | A marketplace with that name already exists. |
 | 422 | The name fails the pattern. |
+| 502 | The upstream could not be read, or has no default branch. Nothing was registered; see below. |
 
 ## What is validated, and why
 
@@ -53,6 +56,35 @@ no scheme at all, is rejected rather than passed through. This is what keeps
 
 **The name** doubles as a path segment on the facade (`/git/acme`), so it is
 constrained to a character set that cannot traverse directories.
+
+**The upstream must be readable.** Once every check above has passed, the
+gateway lists the upstream's references and resolves its default branch. It uses
+the same connection path that ingestion uses to fetch. A request refused by an
+earlier check never contacts the upstream. If the upstream cannot be read, the
+registration is refused with `502` and nothing is created. The problem says why,
+in three properties:
+
+```json
+{"status":502,"title":"Upstream not readable",
+ "detail":"the upstream could not be read, so nothing was registered: repository not found or requires authentication (…). Check the clone URL for typos; if the repository is private, the gateway has no credentials to read it.",
+ "reason":"repository not found or requires authentication",
+ "rootCause":"https://github.com/acme/skils.git/info/refs?service=git-upload-pack not found: Not Found",
+ "nextStep":"Check the clone URL for typos; if the repository is private, the gateway has no credentials to read it."}
+```
+
+| `reason` | Typical cause |
+| --- | --- |
+| `repository not found or requires authentication` | A typo in the URL, or a private repository. Forges answer both with 401 or 404, so the gateway does not guess which. |
+| `the upstream host could not be resolved` | A typo in the host name, or DNS the gateway cannot use. |
+| `the upstream could not be reached` | The host refused or did not answer: it is down, or a proxy or firewall blocks it. |
+| `the TLS connection to the upstream failed` | The upstream's certificate is not trusted by the gateway's Java trust store. |
+| `the upstream has no default branch` | An empty repository. Push a commit first. |
+| `the upstream fetch failed` | Anything else. `rootCause` carries the detail. |
+
+A credential embedded in the URL is never repeated in a response, the log or the
+ledger. There is no separate "test connection" call: registering is the test.
+For marketplaces declared in the estate, see
+[Declaring the estate](declarative-estate.md#an-unreachable-upstream).
 
 ## Duplicate upstream URLs
 
@@ -92,11 +124,27 @@ Nothing is served yet.
 
 | Status | Cause |
 | --- | --- |
-| 201 | Snapshot captured. |
+| 201 | Snapshot captured. A manifest that breaks policy still captures one, in state `rejected`. |
 | 404 | Unknown marketplace. |
-| 502 | Ingestion failed — upstream unreachable, or the manifest was rejected. |
+| 502 | Ingestion failed. The problem carries `reason`, `rootCause` and `nextStep`, as for registration above. |
 
 Ingesting the same upstream commit twice does not create a second snapshot.
+
+## When an ingest fails
+
+Every ingest attempt is recorded, whether it was run by hand, by the
+[sync sweep](upstream-sync.md), by a forge webhook or by a push:
+
+- **On the marketplace:** `lastIngestAt`, `lastIngestOutcome` (`succeeded` or
+  `failed`) and `lastIngestReason` on
+  [`GET /api/v1/marketplaces`](../reference/api/marketplaces.md#representations).
+  The portal states a failed last ingest in the marketplace's header, with when
+  it happened and why.
+- **On the ledger:** an `ingest-failed` entry, by whoever or whatever triggered
+  the attempt, with the reason as its `detail`.
+- **In the log:** a `WARN` line naming the marketplace and the reason.
+
+The next successful ingest replaces the record.
 
 ## Keeping it current
 

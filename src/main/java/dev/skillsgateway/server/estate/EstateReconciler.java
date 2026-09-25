@@ -174,7 +174,7 @@ public class EstateReconciler {
      * declared one is a failure, never an update — the API deliberately has no URL update, and the
      * reconciler must not acquire a power the API refuses to have.
      */
-    @Requirements({"GW_ESTATE_0002"})
+    @Requirements({"GW_ESTATE_0002", "GW_INGEST_0041"})
     private Entry reconcileMarketplace(DeclaredMarketplace declared) {
         String mode = declared.syncMode();
         if (mode != null && !DECLARABLE_SYNC_MODES.contains(mode)) {
@@ -183,12 +183,22 @@ public class EstateReconciler {
         }
         Optional<Marketplace> existing = marketplaceRepository.findByName(declared.name());
         if (existing.isEmpty()) {
-            registrationService.register(
-                    declared.name(), declared.url(), declared.origin(), declared.pushPolicy(), ACTOR);
+            // Reported, never refused (GW_INGEST_0041): the entry converges and says why its upstream
+            // could not be read; the registration service has put the same on the ledger.
+            List<String> warnings = registrationService
+                    .register(
+                            declared.name(),
+                            declared.url(),
+                            declared.origin(),
+                            declared.pushPolicy(),
+                            ACTOR,
+                            MarketplaceRegistrationService.Reachability.REPORT)
+                    .warnings();
             if (mode != null && !Marketplace.SYNC_ON_DEMAND.equals(mode)) {
                 syncService.changeMode(declared.name(), mode, ACTOR);
             }
-            return Entry.created("marketplace", declared.name(), null);
+            return Entry.created(
+                    "marketplace", declared.name(), warnings.isEmpty() ? null : String.join("; ", warnings));
         }
         Marketplace stored = existing.get();
         // Null-safe on both sides: a hosted marketplace has no url at all (GW_FACADE_0006), and declaring

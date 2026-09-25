@@ -39,3 +39,9 @@ The system SHALL implement GW_ESTATE_0005.
 
 #### Scenario: SVC_GW_ESTATE_0005
 The system SHALL pass SVC_GW_ESTATE_0005.
+
+### Requirement: GW_INGEST_0041
+The system SHALL implement GW_INGEST_0041.
+
+#### Scenario: SVC_GW_INGEST_0041
+The system SHALL pass SVC_GW_INGEST_0041.

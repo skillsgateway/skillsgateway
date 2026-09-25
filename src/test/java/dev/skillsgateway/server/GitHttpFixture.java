@@ -43,11 +43,13 @@ final class GitHttpFixture implements AutoCloseable {
     private final Path root;
     private final Map<String, Repository> repositories = new ConcurrentHashMap<>();
     private final List<String> requested = new CopyOnWriteArrayList<>();
+    private final Map<String, String> json = new ConcurrentHashMap<>();
 
     private volatile String redirectTo;
     private volatile int redirectsRemaining;
     private volatile String truncatePrefix;
     private volatile String floodPrefix;
+    private volatile String unauthorizedPrefix;
 
     GitHttpFixture() throws IOException {
         this.root = Files.createTempDirectory(prepared(Path.of("target", "test-workdirs")), "forge");
@@ -128,7 +130,21 @@ final class GitHttpFixture implements AutoCloseable {
         this.floodPrefix = pathPrefix;
     }
 
+    /**
+     * Requests whose path starts with this answer 401 with a Basic challenge — what a forge answers
+     * for a private repository, and commonly for one that does not exist.
+     */
+    void unauthorized(String pathPrefix) {
+        this.unauthorizedPrefix = pathPrefix;
+    }
+
+    /** Answers {@code path} with this JSON body: a forge's REST API beside its git service. */
+    void respondJson(String path, String body) {
+        json.put(path, body);
+    }
+
     void reset() {
+        unauthorizedPrefix = null;
         redirectTo = null;
         redirectsRemaining = 0;
         truncatePrefix = null;
@@ -161,12 +177,25 @@ final class GitHttpFixture implements AutoCloseable {
                 exchange.sendResponseHeaders(302, -1);
                 return;
             }
+            if (unauthorizedPrefix != null && path.startsWith(unauthorizedPrefix)) {
+                exchange.getResponseHeaders().add("WWW-Authenticate", "Basic realm=\"forge\"");
+                exchange.sendResponseHeaders(401, -1);
+                return;
+            }
             if (floodPrefix != null && path.startsWith(floodPrefix)) {
                 flood(exchange);
                 return;
             }
             if (truncatePrefix != null && path.startsWith(truncatePrefix)) {
                 truncated(exchange);
+                return;
+            }
+            String body = json.get(path);
+            if (body != null) {
+                byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, bytes.length);
+                exchange.getResponseBody().write(bytes);
                 return;
             }
             Repository repository = repositoryFor(path);
@@ -198,6 +227,13 @@ final class GitHttpFixture implements AutoCloseable {
             if (trimmed.endsWith(suffix)) {
                 trimmed = trimmed.substring(0, trimmed.length() - suffix.length());
             }
+        }
+        // A clone URL commonly ends in .git or a slash; the forge serves the same repository either way.
+        if (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        if (trimmed.endsWith(".git")) {
+            trimmed = trimmed.substring(0, trimmed.length() - ".git".length());
         }
         return repositories.get(trimmed);
     }

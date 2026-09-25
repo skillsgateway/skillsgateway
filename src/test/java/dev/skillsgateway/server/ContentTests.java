@@ -6,10 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
-import com.sun.net.httpserver.HttpServer;
 import io.github.reqstool.annotations.SVCs;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -65,22 +62,17 @@ class ContentTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_INGEST_0009"})
     void forgeMetadataIsCapturedAtRegistrationWhenAvailable() throws Exception {
-        HttpServer forge = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        // A forge whose REST API and git service share one origin: registration reads the git
+        // service (GW_INGEST_0040) before the forge metadata is captured.
+        GitHttpFixture forge = new GitHttpFixture();
         String json = """
                 {"full_name": "acme/skills", "description": "Acme skill marketplace", \
                 "updated_at": "2026-08-01T12:00:00Z"}""";
-        forge.createContext("/api/v1/repos/acme/skills", exchange -> {
-            byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
-            exchange.getResponseHeaders().add("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, bytes.length);
-            exchange.getResponseBody().write(bytes);
-            exchange.close();
-        });
-        forge.start();
+        forge.respondJson("/api/v1/repos/acme/skills", json);
+        forge.publish("acme/skills", java.util.Map.of(MANIFEST_PATH, DEFAULT_MANIFEST));
         try {
             String name = uniqueName("corp");
-            String url = "http://127.0.0.1:%d/acme/skills.git"
-                    .formatted(forge.getAddress().getPort());
+            String url = forge.baseUrl() + "/acme/skills.git";
             String created = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/marketplaces")
                             .with(oidcLogin())
                             .contentType(MediaType.APPLICATION_JSON)
@@ -95,7 +87,7 @@ class ContentTests extends AbstractGatewayTest {
             assertThat((String) JsonPath.read(created, "$.forge")).isEqualTo("gitea");
             assertThat((String) JsonPath.read(created, "$.upstreamUpdatedAt")).startsWith("2026-08-01T12:00:00");
         } finally {
-            forge.stop(0);
+            forge.close();
         }
     }
 }

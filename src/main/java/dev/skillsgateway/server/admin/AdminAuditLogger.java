@@ -94,7 +94,8 @@ public class AdminAuditLogger {
         MachineApiAuthentication machine = machineActor(authentication, principal);
         ActorType actorType = machine != null
                 ? ActorType.MACHINE
-                : SYSTEM_ACTORS.contains(principal) ? ActorType.SYSTEM : ActorType.HUMAN;
+                // Set.of rejects contains(null); an unrecorded actor is simply not one of the gateway's own.
+                : principal != null && SYSTEM_ACTORS.contains(principal) ? ActorType.SYSTEM : ActorType.HUMAN;
         fetchLogRepository.append(
                 SOURCE,
                 principal,

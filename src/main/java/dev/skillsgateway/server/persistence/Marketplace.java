@@ -48,7 +48,23 @@ public record Marketplace(
         String syncMode,
 
         @Schema(description = "Last sync attempt (success or failure), or null before the first one")
-        Instant lastSyncAt) {
+        Instant lastSyncAt,
+
+        @Schema(description = "When the last ingest attempt ended, whatever triggered it; null before the first")
+        Instant lastIngestAt,
+
+        @Schema(
+                description = "How the last ingest attempt ended (GW_INGEST_0039); null before the first",
+                allowableValues = {"succeeded", "failed"})
+        String lastIngestOutcome,
+
+        @Schema(
+                description = "Why the last ingest attempt failed: reason, root cause and next step"
+                        + " (GW_INGEST_0038); null unless it failed")
+        String lastIngestReason) {
+
+    public static final String INGEST_SUCCEEDED = "succeeded";
+    public static final String INGEST_FAILED = "failed";
 
     /**
      * The one history a marketplace has, on both sides of the gateway: what a hosted publisher

@@ -118,6 +118,24 @@ $ curl -X POST localhost:8080/api/v1/estate/reconcile
 The report read is auditor-or-admin and the trigger is admin-only; the
 trigger itself is always on the ledger as `estate-reconcile-triggered`.
 
+## An unreachable upstream
+
+A marketplace registered through the API is refused when its upstream cannot be
+read. A declared one is **not** refused. At startup an upstream can be briefly
+unreachable for reasons that have nothing to do with the declaration. So the
+marketplace is registered, and the failure is reported:
+
+- the entry's `detail` in [`GET /api/v1/estate`](../reference/api/estate.md)
+  reads `upstream unreachable: <reason> (<root cause>). <next step>`, and its
+  action stays `created`;
+- `marketplace-upstream-unreachable` is recorded on the ledger by
+  `config-reconciler`, with the same reason;
+- a `WARN` line is logged, and startup continues.
+
+The first ingest of that marketplace records the same failure on the marketplace
+itself (see
+[When an ingest fails](registering-a-marketplace.md#when-an-ingest-fails)).
+
 ## When an entry fails
 
 The gateway starts and serves anyway — a broken declaration must never take a

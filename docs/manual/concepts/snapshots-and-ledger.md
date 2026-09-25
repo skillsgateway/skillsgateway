@@ -14,8 +14,9 @@ The name must match `^[a-z0-9][a-z0-9_-]*$`. It is the identity of the
 marketplace everywhere: the portal route, the API path, and the facade URL
 `/git/{name}`.
 
-Registration does **not** fetch anything. It only establishes that this URL is
-one the gateway is willing to talk to.
+Registration does **not** fetch any content. It establishes that this URL is one
+the gateway is willing to talk to, and that the gateway can actually read it: it
+lists the upstream's references and resolves the default branch it will pin.
 
 ## Snapshot
 

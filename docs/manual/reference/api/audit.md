@@ -156,6 +156,8 @@ the acting OIDC principal.
 | `machine-credential-created` | A machine API credential was provisioned. The actor is the administrator who provisioned it; the credential's own actions are recorded under its own principal. | `credential {id} '{name}' scopes=…; expires=…`. |
 | `machine-credential-rotated` | A machine API credential got a new secret with an identical grant. | As above. |
 | `machine-credential-revoked` | A machine API credential was revoked. | `credential {id} '{name}' principal=…`. |
+| `ingest-failed` | An ingest attempt failed, whatever triggered it. The principal is whoever or whatever triggered it: a person, `scheduler`, `webhook`, or the pushing principal. | The reason, root cause and next step, in one line. |
+| `marketplace-upstream-unreachable` | A marketplace declared in the estate was registered although its upstream could not be read. The principal is `config-reconciler`. | As above. |
 | `marketplace-removed` | A marketplace was [removed](marketplaces.md#delete-marketplacesname). Its withdrawals follow as `snapshot-revoked` and `snapshot-unpublished`. | `withdrew {n} approved snapshot(s); reason: …`. |
 | `marketplace-push-scopes-removed` | The same removal took the name out of tokens' publication grants. Written only when a token held one. | `tokens=[{id}, …]`. |
 

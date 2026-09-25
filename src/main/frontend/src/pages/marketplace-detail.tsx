@@ -357,6 +357,16 @@ export function MarketplaceSettingsPage() {
             <dd>{marketplace.description ?? "—"}</dd>
             <dt className="font-medium">Last upstream update</dt>
             <dd><Timestamp value={marketplace.upstreamUpdatedAt} /></dd>
+            <dt className="font-medium">Last ingest</dt>
+            <dd>
+              {marketplace.lastIngestOutcome ? (
+                <>
+                  {marketplace.lastIngestOutcome} · <Timestamp value={marketplace.lastIngestAt} />
+                </>
+              ) : (
+                "never"
+              )}
+            </dd>
             <dt className="font-medium">Registered</dt>
             <dd><Timestamp value={marketplace.createdAt} /></dd>
             {/* Who chose this upstream is provenance, and the four-eyes rule reads it (GW_APPROVAL_0010). */}
@@ -378,7 +388,7 @@ export function MarketplaceSettingsPage() {
  * Connect a client is a header action rather than the page's leading panel: it is a step each
  * consumer takes once, and leading with it pushed the reviewer's daily work below the fold.
  *
- * @Requirements GW_INGEST_0007, GW_AUTH_0043, GW_INGEST_0033
+ * @Requirements GW_INGEST_0007, GW_AUTH_0043, GW_INGEST_0033, GW_INGEST_0039
  */
 export function MarketplaceLayout() {
   const { name } = useParams<{ name: string }>();
@@ -445,6 +455,18 @@ export function MarketplaceLayout() {
               </span>
             )}
           </p>
+          {/* GW_INGEST_0039: an automated ingest has nobody waiting for its response, so a failure
+              is stated where the marketplace is read — when, and the reason with its next step. */}
+          {marketplace.lastIngestOutcome === "failed" ? (
+            <p
+              data-testid="marketplace-last-ingest-failed"
+              role="alert"
+              className="break-words text-sm text-destructive"
+            >
+              Last ingest failed <Timestamp value={marketplace.lastIngestAt} relative />:{" "}
+              {marketplace.lastIngestReason}
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button

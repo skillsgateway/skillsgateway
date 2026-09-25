@@ -2364,3 +2364,53 @@ requirements:
     rationale: "Continuous re-vetting is worth running only because a changed verdict over unchanged content means the chain learned something; a third, unrecorded input would make it mean nothing in particular. Written down rather than left to the shape of the code so that a change handing a vetter a question about the estate is caught as a breach, not reviewed as a reasonable improvement."
     categories: ["security", "reliability"]
     revision: 0.1.0
+
+  - id: GW_INGEST_0038
+    title: An upstream failure states its cause and a next step
+    significance: shall
+    description: "The system shall, when fetching from or listing a marketplace's upstream fails, report the failure with a plain-language reason, the root cause and a next step, in the error response and wherever the failure is recorded; shall report an upstream that answers not found, unauthorised or forbidden as a repository that was not found or requires authentication; shall keep, when a retry follows a first failed attempt, the first attempt's error attached to the retry's so that neither is lost; shall log the failure at warning level; and shall never repeat a credential embedded in the upstream URL."
+    references:
+      requirement_ids: ["GW_INGEST_0002", "GW_INGEST_0001"]
+    rationale: "A mistyped URL and a private repository produced the same wrapper message, with the cause dropped and nothing logged, so the operator had nothing to act on. Forges commonly answer a missing repository with 401 to avoid disclosing which private repositories exist, so the honest statement is the combined one; stating the authentication half alone sends the operator after credentials for a URL that is simply wrong. A retry that discards the first error hides the more specific of the two."
+    categories: ["interaction-capability", "reliability"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0039
+    title: The last ingest attempt is recorded on the marketplace
+    significance: shall
+    description: "The system shall record on the marketplace, for every ingest attempt whatever triggered it, when the attempt ended, whether it succeeded or failed, and for a failure the reason stated under GW_INGEST_0038; shall replace that record with each later attempt; shall expose it on the marketplace read; and the portal shall state on the marketplace's page when its last ingest failed and why."
+    references:
+      requirement_ids: ["GW_INGEST_0038", "GW_INGEST_0011"]
+    rationale: "An automated ingest has no one waiting for its response, so a failure that is not recorded where the marketplace is read is a failure nobody sees until content goes stale. Recording the last attempt rather than a history keeps the marketplace row bounded; the history is the ledger's job."
+    categories: ["interaction-capability", "reliability"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0040
+    title: Registration refuses an upstream it cannot read
+    significance: shall
+    description: "The system shall, before registering an upstream marketplace through the API, list the upstream's references over the same connection path ingestion fetches with and resolve the ref the gateway pins (the upstream default branch); shall do so only after every validation that needs no network has passed; and shall, when the upstream cannot be listed or has no default branch, refuse the registration with the reason stated under GW_INGEST_0038 and create nothing."
+    references:
+      requirement_ids: ["GW_INGEST_0001", "GW_INGEST_0005", "GW_INGEST_0006", "GW_INGEST_0038"]
+    rationale: "A mistyped URL was accepted and surfaced only at the first ingest, by which time it had become a registered marketplace to be removed again. Reading the upstream at the moment an administrator is present to correct it is the cheapest point to catch it; taking the ingestion path rather than a separate probe keeps registration from opening a second, differently configured route to the network, and is where upstream credentials will apply to both at once. Validations that need no network run first so that a refused request never contacts the upstream it names."
+    categories: ["security", "interaction-capability"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0041
+    title: A declared marketplace with an unreadable upstream is registered and reported
+    significance: shall
+    description: "The system shall register a marketplace declared in the estate configuration even when its upstream cannot be read at registration, shall report the reason stated under GW_INGEST_0038 in that entry's reconciliation outcome and in the audit ledger, and shall let the reconciliation and the gateway's startup continue."
+    references:
+      requirement_ids: ["GW_INGEST_0040", "GW_ESTATE_0002", "GW_ESTATE_0005"]
+    rationale: "A declaration is converged at startup, when an upstream may be briefly unreachable for reasons that have nothing to do with the declaration; refusing it would make the running estate depend on network weather and could leave a gateway without marketplaces it was configured to have. The object is registered and the unhealthy upstream is made visible instead, and its first ingest records the same failure on the marketplace."
+    categories: ["reliability"]
+    revision: 0.3.0
+
+  - id: GW_AUDIT_0010
+    title: A failed ingestion is recorded in the ledger with its reason
+    significance: shall
+    description: "The system shall append to the audit ledger, for every ingest attempt that fails whatever triggered it, an entry naming the marketplace, the identity that triggered the attempt, and the reason stated under GW_INGEST_0038."
+    references:
+      requirement_ids: ["GW_AUDIT_0002", "GW_INGEST_0038"]
+    rationale: "A successful ingest was ledgered and a failed one was not, so the ledger could not answer why content had stopped arriving, or which trigger kept failing. The marketplace keeps only the last attempt; the ledger is where the sequence lives."
+    categories: ["functional-suitability", "reliability"]
+    revision: 0.3.0

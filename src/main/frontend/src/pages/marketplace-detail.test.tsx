@@ -499,3 +499,39 @@ test("a_blocking_finding_is_waived_from_the_vetting_tab_with_a_justification", a
   await user.type(expiry, "2020-01-01");
   expect(record).toBeDisabled();
 });
+
+/**
+ * A failed last ingest is stated on the marketplace's page — when, and why — because an automated
+ * ingest has nobody waiting for its response; a successful one states nothing.
+ *
+ * @SVCs SVC_GW_INGEST_0039
+ */
+test("a_failed_last_ingest_is_stated_with_when_and_why", async () => {
+  const reason =
+    "repository not found or requires authentication (https://github.com/corp/marketplace.git: not found). Check the clone URL for typos.";
+  withMarketplace({
+    ...marketplace,
+    lastIngestAt: "2026-09-24T08:30:00Z",
+    lastIngestOutcome: "failed",
+    lastIngestReason: reason,
+  });
+  const failed = renderPage();
+  const alert = await screen.findByTestId("marketplace-last-ingest-failed");
+  expect(alert).toHaveAttribute("role", "alert");
+  expect(alert).toHaveTextContent(/Last ingest failed/);
+  expect(alert).toHaveTextContent(reason);
+  expect(within(alert).getByTitle(/2026-09-24T08:30:00Z/)).toBeInTheDocument();
+  failed.unmount();
+
+  withMarketplace({
+    ...marketplace,
+    lastIngestAt: "2026-09-24T09:00:00Z",
+    lastIngestOutcome: "succeeded",
+    lastIngestReason: undefined,
+  });
+  renderPage("", "settings");
+  expect(await screen.findByRole("heading", { level: 1, name: "corp-marketplace" })).toBeInTheDocument();
+  expect(screen.queryByTestId("marketplace-last-ingest-failed")).not.toBeInTheDocument();
+  expect(screen.getByText("Last ingest", { selector: "dt" })).toBeInTheDocument();
+  expect(screen.getByText(/succeeded/, { selector: "dd" })).toBeInTheDocument();
+});

@@ -36,8 +36,16 @@ its principal's approver or admin role. See
  "createdAt":"2026-08-15T09:00:00Z","registeredBy":"dana",
  "forge":"github","forgeProject":"acme/skills",
  "description":"Acme internal skills","upstreamUpdatedAt":"2026-08-14T18:20:00Z",
- "servedSha":"3f9c2ab...","snapshots":[]}
+ "servedSha":"3f9c2ab...","lastIngestAt":"2026-08-15T09:01:00Z",
+ "lastIngestOutcome":"succeeded","lastIngestReason":null,"snapshots":[]}
 ```
+
+`lastIngestAt`, `lastIngestOutcome` and `lastIngestReason` describe how the last
+ingest attempt ended, whatever triggered it. `lastIngestOutcome` is `succeeded`
+or `failed`. `lastIngestReason` is set only for a failure: the reason, the root
+cause and a next step, in one line. All three are `null` before the first
+attempt. A manifest rejected by policy is a `succeeded` ingest: the snapshot it
+captured is what is `rejected`.
 
 `servedSha` is the commit the facade currently serves for this marketplace, read
 from the published repository, or `null` when it serves nothing. It is **not** the
@@ -72,7 +80,9 @@ re-vetting found. See
 
 ## `POST /marketplaces`
 
-Register a marketplace. Fetches nothing.
+Register a marketplace. For an upstream marketplace, the gateway lists the
+upstream's references and resolves its default branch before it creates
+anything. It fetches no content. A hosted marketplace contacts nothing.
 
 **Body** — `{name, url?, ref?, origin?, pushPolicy?}`
 
@@ -100,6 +110,10 @@ tips on the ledger. See
 | 400 | URL scheme not allowlisted, `ref` present and not `main`, a hosted registration supplying a `url`, an upstream one omitting it, or a `pushPolicy` on an upstream marketplace. |
 | 409 | A live marketplace has that name. A [removed](#delete-marketplacesname) marketplace's name is free. |
 | 422 | Name fails `^[a-z0-9][a-z0-9_-]*$`, or an unknown `origin`/`pushPolicy`. |
+| 502 | The upstream could not be read, or has no default branch. Nothing was registered. The problem carries `reason`, `rootCause` and `nextStep`; see [Registering a marketplace](../../guides/registering-a-marketplace.md#what-is-validated-and-why). |
+
+The upstream is read only after every other check has passed, so a request
+refused with `400`, `409` or `422` never contacts it.
 
 The 400 cases are trust-boundary rejections — see
 [Compatibility and allowlists](../compatibility.md).
@@ -187,11 +201,13 @@ $ curl -X POST localhost:8080/api/v1/marketplaces/acme/ingest
 
 | Status | Cause |
 | --- | --- |
-| 201 | Snapshot captured; returns it. |
+| 201 | Snapshot captured; returns it. A manifest that breaks policy captures a `rejected` snapshot. |
 | 404 | Unknown marketplace. |
-| 502 | Ingestion failed — upstream unreachable, or the manifest was rejected. |
+| 502 | Ingestion failed. The problem carries `reason`, `rootCause` and `nextStep`. |
 
-Ingesting a commit already captured does not create a second snapshot.
+Ingesting a commit already captured does not create a second snapshot. Every
+attempt, from any trigger, updates the marketplace's `lastIngest*` fields, and a
+failed one is recorded on the ledger as `ingest-failed`.
 
 ---
 

@@ -12,6 +12,7 @@
 CREATE TYPE marketplace_origin AS ENUM ('upstream', 'hosted');
 CREATE TYPE marketplace_push_policy AS ENUM ('append-only', 'allow-rewrite');
 CREATE TYPE marketplace_sync_mode AS ENUM ('on-demand', 'scheduled', 'webhook');
+CREATE TYPE marketplace_last_ingest_outcome AS ENUM ('succeeded', 'failed');
 CREATE TYPE snapshot_state AS ENUM ('held', 'approved', 'rejected', 'revoked');
 -- Who decided a revocation, which is what decides how it can be lifted (GW_APPROVAL_0017).
 -- 'revet' is a chain verdict against a finding: it lifts when the finding is cleared, by a waiver
@@ -80,6 +81,11 @@ CREATE TABLE marketplaces (
     -- Last sync attempt, success or failure (GW_INGEST_0011): stamping failures too is what keeps one
     -- dead upstream from monopolizing the sweep's oldest-first order.
     last_sync_at TIMESTAMPTZ,
+    -- How the last ingest attempt ended, whatever triggered it (GW_INGEST_0039), and for a failure
+    -- why (GW_INGEST_0038). Replaced by every attempt; the sequence is the ledger's (GW_AUDIT_0010).
+    last_ingest_at TIMESTAMPTZ,
+    last_ingest_outcome marketplace_last_ingest_outcome,
+    last_ingest_reason TEXT,
     -- Removal (GW_INGEST_0034) retires the row rather than deleting it: snapshots restrict deletion
     -- because they are the approval history, and the ledger keeps this row's id as its referent.
     deleted_at TIMESTAMPTZ,
@@ -88,6 +94,9 @@ CREATE TABLE marketplaces (
     CONSTRAINT marketplaces_removal_is_recorded_whole CHECK (
         (deleted_at IS NULL) = (deleted_by IS NULL) AND (deleted_at IS NULL) = (deleted_reason IS NULL)),
     -- An upstream marketplace is defined by its clone URL; a hosted one has none (GW_FACADE_0006).
+    CONSTRAINT marketplaces_last_ingest_is_recorded_whole CHECK (
+        (last_ingest_at IS NULL) = (last_ingest_outcome IS NULL)
+        AND (last_ingest_reason IS NOT NULL) = (last_ingest_outcome IS NOT DISTINCT FROM 'failed')),
     CONSTRAINT marketplaces_upstream_has_url CHECK (origin = 'hosted' OR url IS NOT NULL),
     -- A hosted marketplace has no upstream to poll or be notified about: its ingestion trigger is
     -- the push itself, so the sweep must never see it (GW_FACADE_0006).

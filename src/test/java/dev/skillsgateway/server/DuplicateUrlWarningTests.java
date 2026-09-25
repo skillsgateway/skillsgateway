@@ -19,6 +19,28 @@ import org.springframework.http.MediaType;
  */
 class DuplicateUrlWarningTests extends AbstractGatewayTest {
 
+    /**
+     * Registration reads the upstream (GW_INGEST_0040), so every spelling below must reach a real
+     * repository: the fixture answers by host name, ignores a trailing slash and a {@code .git}.
+     */
+    private static GitHttpFixture forge;
+
+    @org.junit.jupiter.api.BeforeAll
+    static void startForge() throws Exception {
+        forge = new GitHttpFixture();
+    }
+
+    @org.junit.jupiter.api.AfterAll
+    static void stopForge() {
+        forge.close();
+    }
+
+    /** {@code http://<host>:<port>/acme/<repo>}, published so registration can read it. */
+    private static String repo(String host, String name) throws Exception {
+        forge.publish("acme/" + name, java.util.Map.of(MANIFEST_PATH, DEFAULT_MANIFEST));
+        return "http://%s:%d/acme/%s".formatted(host, forge.port(), name);
+    }
+
     private String register(String name, String url) throws Exception {
         return mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
@@ -35,10 +57,10 @@ class DuplicateUrlWarningTests extends AbstractGatewayTest {
     void a_normalized_duplicate_url_warns_and_still_registers() throws Exception {
         String first = uniqueName("dup-first");
         String second = uniqueName("dup-second");
-        register(first, "https://example.invalid/acme/%s.git".formatted(first));
+        register(first, repo("localhost", first) + ".git");
 
         // Differs only by host case, a trailing slash and the absent '.git' suffix.
-        String created = register(second, "https://EXAMPLE.invalid/acme/%s/".formatted(first));
+        String created = register(second, repo("LOCALHOST", first) + "/");
 
         List<String> warnings = JsonPath.read(created, "$.warnings");
         assertThat(warnings).containsExactly("url already registered as " + first);
@@ -51,7 +73,7 @@ class DuplicateUrlWarningTests extends AbstractGatewayTest {
     void a_url_matching_no_existing_marketplace_carries_no_warning() throws Exception {
         String name = uniqueName("nodup");
 
-        String created = register(name, "https://example.invalid/acme/%s.git".formatted(name));
+        String created = register(name, repo("localhost", name) + ".git");
 
         assertThat(JsonPath.<List<String>>read(created, "$.warnings")).isEmpty();
     }
@@ -62,7 +84,7 @@ class DuplicateUrlWarningTests extends AbstractGatewayTest {
         String first = uniqueName("dup-multi-a");
         String second = uniqueName("dup-multi-b");
         String third = uniqueName("dup-multi-c");
-        String url = "https://example.invalid/acme/%s.git".formatted(first);
+        String url = repo("localhost", first) + ".git";
         register(first, url);
         register(second, url);
 
