@@ -643,6 +643,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Running behind a proxy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-proxys-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The proxy's timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2652,6 +2669,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Running behind a proxy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-proxys-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The proxy's timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2970,6 +3004,14 @@ mean one thing regardless.</p>
 </code></pre></div>
 <p>It fixes the login and nothing else — every other URL built from the request
 still names the container — so it is the escape hatch, not the fix.</p>
+<h3 id="the-proxys-timeout">The proxy's timeout<a class="headerlink" href="#the-proxys-timeout" title="Permanent link">&para;</a></h3>
+<p>A first ingest of a repository with a long history runs inside one request for
+minutes (<a href="../registering-a-marketplace/#ingesting-the-first-snapshot">why</a>). An AWS Application Load Balancer's
+idle timeout and nginx's <code>proxy_read_timeout</code> both default to 60 seconds; raise
+them, to 600 seconds for example. On ECS behind an ALB that is the load
+balancer attribute <code>idle_timeout.timeout_seconds</code>. A timeout that is too short
+loses only the response: the ingest still finishes and is recorded on the
+marketplace.</p>
 <h2 id="property-names-as-environment-variables">Property names as environment variables<a class="headerlink" href="#property-names-as-environment-variables" title="Permanent link">&para;</a></h2>
 <p>Spring's relaxed binding maps a property to a variable by upper-casing it,
 replacing <code>.</code> with <code>_</code>, and <strong>removing</strong> hyphens:</p>
