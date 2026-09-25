@@ -47,3 +47,8 @@ The system SHALL implement GW_API_0007.
 #### Scenario: SVC_GW_API_0007
 The system SHALL pass SVC_GW_API_0007.
 
+### Requirement: GW_AUDIT_0010
+The system SHALL implement GW_AUDIT_0010.
+
+#### Scenario: SVC_GW_AUDIT_0010
+The system SHALL pass SVC_GW_AUDIT_0010.
