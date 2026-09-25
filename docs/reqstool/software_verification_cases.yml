@@ -3676,3 +3676,33 @@ cases:
       WHEN the chain runs
       THEN each yields one medium finding naming the file, and none is passed silently
     revision: "0.3.0"
+
+  - id: SVC_GW_VETTING_0050
+    requirement_ids: ["GW_VETTING_0050"]
+    title: MCP servers that run package runners warn at their command; local runners, binaries and remote servers stay silent
+    verification: automated-test
+    description: |
+      GIVEN local MCP servers that run npx -y, uvx from a git URL, pnpm dlx, bunx, a pip install through sh -c, npx through cmd /c, npx by absolute path, npx behind env, and npx as the default of a variable; and negatives: npx of a path inside the plugin, a plain local binary, and a remote server
+      WHEN the chain runs
+      THEN each positive raises one medium mcp-package-run finding at the path:line of its command and the snapshot warns, and every negative raises none
+    revision: "0.3.0"
+
+  - id: SVC_GW_VETTING_0051
+    requirement_ids: ["GW_VETTING_0051"]
+    title: An MCP server that downloads and executes blocks, from every declaration source and through wrappers
+    verification: automated-test
+    description: |
+      GIVEN local MCP servers in the default MCP file, in the plugin manifest and in the marketplace entry whose commands pipe a download into a shell through sh -c, split the pipe across argument entries, feed a download through substitution, or take the shell from a variable's default; and a server whose download is only printed
+      WHEN the chain runs
+      THEN each positive raises one high mcp-fetch-exec finding at its command's path:line, blocks the snapshot, is stamped with a blob, groups and is cleared by a group waiver, and the printing server raises none
+    revision: "0.3.0"
+
+  - id: SVC_GW_VETTING_0052
+    requirement_ids: ["GW_VETTING_0052"]
+    title: Scripts an MCP server launches are followed; a binary is not reported; a hook's finding on a shared script survives
+    verification: automated-test
+    description: |
+      GIVEN an MCP server that launches a script of its plugin which calls a second script that downloads and executes, a server that launches a binary of its plugin, and a script that both a hook and a server launch which installs a package
+      WHEN the chain runs
+      THEN the second script's line raises a high mcp-fetch-exec finding, the binary raises none, and the shared script raises both the hook's high runtime-package-run and the server's medium mcp-package-run
+    revision: "0.3.0"
