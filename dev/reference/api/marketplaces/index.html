@@ -4126,19 +4126,24 @@ chain has never run against reports <code>"outcome":"BLOCKED"</code> and <code>"
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">           </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"1 finding(s); worst critical"</span><span class="p">,</span><span class="nt">"reportUrl"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
 <a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">           </span><span class="nt">"findings"</span><span class="p">:[{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span><span class="nt">"severity"</span><span class="p">:</span><span class="s2">"CRITICAL"</span><span class="p">,</span>
 <a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">                        </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">,</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">                        </span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"an AWS access key id is committed in this file"</span><span class="p">}]},</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">          </span><span class="p">{</span><span class="nt">"verdictId"</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"prompt-injection"</span><span class="p">,</span><span class="nt">"position"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">           </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"PASS"</span><span class="p">,</span><span class="nt">"detail"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"reportUrl"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"findings"</span><span class="p">:[]}]},</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="w"> </span><span class="nt">"suppressed"</span><span class="p">:[{</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="w">                </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span>
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="w">                </span><span class="nt">"approvedBy"</span><span class="p">:</span><span class="s2">"alice"</span><span class="p">,</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-09-30T23:59:59Z"</span><span class="p">}],</span>
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="w"> </span><span class="nt">"uncovered"</span><span class="p">:[],</span>
-<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="w"> </span><span class="nt">"waivers"</span><span class="p">:[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"corp-marketplace"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
-<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="w">             </span><span class="nt">"scope"</span><span class="p">:</span><span class="s2">"SNAPSHOT"</span><span class="p">,</span><span class="nt">"scopeValue"</span><span class="p">:</span><span class="s2">"a1b2c3…"</span><span class="p">,</span><span class="nt">"justification"</span><span class="p">:</span><span class="s2">"documented dummy key"</span><span class="p">,</span>
-<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="w">             </span><span class="nt">"approvedBy"</span><span class="p">:</span><span class="s2">"alice"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-09-30T23:59:59Z"</span><span class="p">,</span>
-<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="w">             </span><span class="nt">"revokedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"revokedBy"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"active"</span><span class="p">:</span><span class="kc">true</span><span class="p">}],</span>
-<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a><span class="w"> </span><span class="nt">"vetters"</span><span class="p">:[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"order"</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span><span class="nt">"description"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"version"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">,</span><span class="nt">"external"</span><span class="p">:</span><span class="kc">false</span><span class="p">},</span>
-<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a><span class="w">               </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"prompt-injection"</span><span class="p">,</span><span class="nt">"order"</span><span class="p">:</span><span class="mi">200</span><span class="p">,</span><span class="nt">"description"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"version"</span><span class="p">:</span><span class="s2">"1"</span><span class="p">,</span><span class="nt">"external"</span><span class="p">:</span><span class="kc">false</span><span class="p">}]}</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">                        </span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"an AWS access key id is committed in this file"</span><span class="p">,</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">                        </span><span class="nt">"content"</span><span class="p">:</span><span class="s2">"3b18e512dba79e4c8300dd08aeb37f8e728b8dad"</span><span class="p">}],</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">           </span><span class="nt">"groups"</span><span class="p">:[{</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span><span class="nt">"severity"</span><span class="p">:</span><span class="s2">"CRITICAL"</span><span class="p">,</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="w">                      </span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"an AWS access key id is committed in this file"</span><span class="p">,</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="w">                      </span><span class="nt">"content"</span><span class="p">:</span><span class="s2">"3b18e512dba79e4c8300dd08aeb37f8e728b8dad"</span><span class="p">,</span><span class="nt">"line"</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="w">                      </span><span class="nt">"locations"</span><span class="p">:[</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">]}]},</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="w">          </span><span class="p">{</span><span class="nt">"verdictId"</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"prompt-injection"</span><span class="p">,</span><span class="nt">"position"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="w">           </span><span class="nt">"state"</span><span class="p">:</span><span class="s2">"PASS"</span><span class="p">,</span><span class="nt">"detail"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"reportUrl"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"findings"</span><span class="p">:[]}]},</span>
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="w"> </span><span class="nt">"suppressed"</span><span class="p">:[{</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="w">                </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">,</span><span class="nt">"waiverId"</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span>
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="w">                </span><span class="nt">"approvedBy"</span><span class="p">:</span><span class="s2">"alice"</span><span class="p">,</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-09-30T23:59:59Z"</span><span class="p">}],</span>
+<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a><span class="w"> </span><span class="nt">"uncovered"</span><span class="p">:[],</span>
+<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a><span class="w"> </span><span class="nt">"waivers"</span><span class="p">:[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="nt">"marketplace"</span><span class="p">:</span><span class="s2">"corp-marketplace"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
+<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a><span class="w">             </span><span class="nt">"scope"</span><span class="p">:</span><span class="s2">"SNAPSHOT"</span><span class="p">,</span><span class="nt">"scopeValue"</span><span class="p">:</span><span class="s2">"a1b2c3…"</span><span class="p">,</span><span class="nt">"justification"</span><span class="p">:</span><span class="s2">"documented dummy key"</span><span class="p">,</span>
+<a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a><span class="w">             </span><span class="nt">"approvedBy"</span><span class="p">:</span><span class="s2">"alice"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-09-30T23:59:59Z"</span><span class="p">,</span>
+<a id="__codelineno-15-24" name="__codelineno-15-24" href="#__codelineno-15-24"></a><span class="w">             </span><span class="nt">"revokedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"revokedBy"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"active"</span><span class="p">:</span><span class="kc">true</span><span class="p">}],</span>
+<a id="__codelineno-15-25" name="__codelineno-15-25" href="#__codelineno-15-25"></a><span class="w"> </span><span class="nt">"vetters"</span><span class="p">:[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"order"</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span><span class="nt">"description"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"version"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">,</span><span class="nt">"external"</span><span class="p">:</span><span class="kc">false</span><span class="p">},</span>
+<a id="__codelineno-15-26" name="__codelineno-15-26" href="#__codelineno-15-26"></a><span class="w">               </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"prompt-injection"</span><span class="p">,</span><span class="nt">"order"</span><span class="p">:</span><span class="mi">200</span><span class="p">,</span><span class="nt">"description"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"version"</span><span class="p">:</span><span class="s2">"1"</span><span class="p">,</span><span class="nt">"external"</span><span class="p">:</span><span class="kc">false</span><span class="p">}]}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -4162,7 +4167,7 @@ chain has never run against reports <code>"outcome":"BLOCKED"</code> and <code>"
 </tr>
 <tr>
 <td><code>uncovered</code></td>
-<td>The blocking findings no active waiver covers — the waivers approval still needs.</td>
+<td>The blocking finding <strong>groups</strong> no active waiver covers — the waivers approval still needs. One entry per group: <code>location</code> is its first location, <code>locations</code> all of them, and <code>content</code> and <code>line</code> name the group for a group waiver.</td>
 </tr>
 <tr>
 <td><code>waivers</code></td>
@@ -4178,6 +4183,11 @@ chain has never run against reports <code>"outcome":"BLOCKED"</code> and <code>"
 </tr>
 </tbody>
 </table>
+<p>Each finding carries <code>content</code>, the git blob id of its file in the pinned tree.
+The gateway sets it; a vetter cannot. It is <code>null</code> when the location names no
+file. Each verdict's <code>groups</code> are its findings with identical content collapsed:
+the findings that share rule, severity, message, <code>content</code> and line become one
+entry listing every location. <code>groups</code> is derived on read and never stored.</p>
 <p><code>state</code> is one of <code>PASS</code>, <code>WARN</code>, <code>FAIL</code>, <code>ERROR</code>, <code>PENDING</code>, <code>DISABLED</code>;
 <code>severity</code> is one of <code>INFO</code>, <code>LOW</code>, <code>MEDIUM</code>, <code>HIGH</code>, <code>CRITICAL</code>. A <code>DISABLED</code>
 verdict records that an administrator switched that vetter off for the
@@ -4816,6 +4826,16 @@ for the matching rules.</p>
 <td>yes</td>
 <td>Must be in the future. There is no unlimited waiver.</td>
 </tr>
+<tr>
+<td><code>content</code></td>
+<td>no</td>
+<td>A finding group's git blob id (40 or 64 lower-case hex characters), as <code>groups</code> or <code>uncovered</code> give it. It limits the waiver to that group: the rule on that blob and line, in this snapshot, and nothing else. Only with <code>SNAPSHOT</code>.</td>
+</tr>
+<tr>
+<td><code>line</code></td>
+<td>no</td>
+<td>The group's line; omit it for a group without one. Needs <code>content</code>.</td>
+</tr>
 </tbody>
 </table>
 <p>The marketplace — and, for <code>SNAPSHOT</code> scope, the commit SHA — are taken from the
@@ -4835,7 +4855,7 @@ approver is the acting session.</p>
 </tr>
 <tr>
 <td>400</td>
-<td>Missing justification or expiry, an expiry in the past, or an unusable scope.</td>
+<td>Missing justification or expiry, an expiry in the past, an unusable scope, or a group qualifier that is malformed or not on <code>SNAPSHOT</code> scope.</td>
 </tr>
 <tr>
 <td>404</td>
@@ -5045,11 +5065,17 @@ and <code>uncoveredFindings</code>:</p>
 <a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="s2">"snapshot 12 cannot be approved: …"</span><span class="p">,</span>
 <a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w"> </span><span class="nt">"blockingVetters"</span><span class="p">:[</span><span class="s2">"secret-scan"</span><span class="p">],</span>
 <a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w"> </span><span class="nt">"uncoveredFindings"</span><span class="p">:[{</span><span class="nt">"vetter"</span><span class="p">:</span><span class="s2">"secret-scan"</span><span class="p">,</span><span class="nt">"ruleId"</span><span class="p">:</span><span class="s2">"aws-access-key-id"</span><span class="p">,</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">                       </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">,</span><span class="nt">"severity"</span><span class="p">:</span><span class="s2">"CRITICAL"</span><span class="p">,</span>
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="w">                       </span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"an AWS access key id is committed in this file"</span><span class="p">}]}</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">                       </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">,</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="w">                       </span><span class="nt">"locations"</span><span class="p">:[</span><span class="s2">"plugins/hello/DEPLOY.md:5"</span><span class="p">],</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="w">                       </span><span class="nt">"content"</span><span class="p">:</span><span class="s2">"3b18e512dba79e4c8300dd08aeb37f8e728b8dad"</span><span class="p">,</span><span class="nt">"line"</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="w">                       </span><span class="nt">"severity"</span><span class="p">:</span><span class="s2">"CRITICAL"</span><span class="p">,</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="w">                       </span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"an AWS access key id is committed in this file"</span><span class="p">}]}</span>
 </code></pre></div>
-<p><code>uncoveredFindings</code> is the complete worklist: record a waiver for each entry and
-the approval succeeds. Every waiver that was in force is appended to the audit
+<p><code>uncoveredFindings</code> is the complete worklist, one entry per finding group (one
+rule on one line of identical content, with every <code>path:line</code> it occurs at).
+<code>detail</code> names each group at its locations, the first ten spelled out. Record a
+waiver for each entry (a <a href="#post-snapshotsidwaivers">group waiver</a> covers every
+location of one) and the approval succeeds. Every waiver that was in force is appended to the audit
 ledger as <code>waiver-applied</code>.</p>
 <p>A snapshot inside the configured
 <a href="../../configuration/#minimum-release-age">minimum release age</a> is refused by the

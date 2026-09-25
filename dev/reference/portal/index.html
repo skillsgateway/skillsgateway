@@ -4033,8 +4033,9 @@ the disabled button mirrors policy rather than replacing it.</p>
 name the snapshot introduces that looks like one another marketplace already
 serves, with the manifest line declaring it and the incumbents it resembles.
 While any is uncovered the confirm control stays disabled. Each carries a
-<strong>Waive name collision for {name}</strong> button opening the same waiver form, offering
-<em>This snapshot only</em> as the only scope. The snapshot card does not shut
+<strong>Waive name collision</strong> button (accessible name <em>Waive name collision for
+{name}</em>) opening the same waiver form, offering <em>Every plugin-name-collision
+finding in this snapshot</em> as the only scope. The snapshot card does not shut
 <strong>Approve</strong> for a collision, since this dialog is where it is waived.</p>
 <p>The dialog is also shut by the minimum release age, and says so in its own note:
 that one has no way past it in the portal at all, and needs none — it opens by
@@ -4042,8 +4043,16 @@ itself at the stated time.</p>
 <p>Confirming calls <code>POST /api/v1/snapshots/{id}/approve</code> with no body and toasts
 <em>Snapshot {id} approved</em>.</p>
 <h4 id="waiving-a-finding">Waiving a finding<a class="headerlink" href="#waiving-a-finding" title="Permanent link">&para;</a></h4>
-<p>Each blocking finding in the report carries a <strong>Waive finding {rule}</strong> button
-that opens an inline form beside it:</p>
+<p>The report lists each verdict's findings as <strong>finding groups</strong>. A group is the
+findings of one rule on one line of identical content (the same git blob). It
+shows its first location and, under <em>N more copies of the same content</em>, the
+rest. Above the verdicts, <em>Approval is blocked until each of these is waived</em>
+lists every uncovered group, as <em>{rule} at {path:line}, …</em>, with the first
+three locations spelled out and the rest counted.</p>
+<p>Each blocking group carries a button that opens an inline form beside it:
+<strong>Waive finding</strong> (accessible name <em>Waive finding {rule} at {path:line}</em>) for a
+single location, or <strong>Waive all N locations</strong> (<em>Waive all N locations of
+{rule}</em>) for a group.</p>
 <table>
 <thead>
 <tr>
@@ -4054,7 +4063,7 @@ that opens an inline form beside it:</p>
 <tbody>
 <tr>
 <td><strong>Scope</strong></td>
-<td><em>This snapshot only</em> (default) or <em>This path in the marketplace</em></td>
+<td><em>These N identical copies, in this snapshot</em> (or <em>This finding, in this snapshot</em>) — the default, covering the group and nothing else; <em>Every {rule} finding in this snapshot</em>; and, for a single location, <em>Every {rule} finding under {path}, in later snapshots too</em></td>
 </tr>
 <tr>
 <td><strong>Expires on</strong></td>
@@ -4070,8 +4079,9 @@ that opens an inline form beside it:</p>
 <strong>and</strong> the expiry is still in the future, which is exactly what the server
 requires.</p>
 <p><em>Record waiver for {rule}</em> calls <code>POST /api/v1/snapshots/{id}/waivers</code> and toasts
-<em>Waiver recorded for {rule}</em>. The finding is then struck through and badged
-<strong>waived by {approver} until {date}</strong>, and the outcome badge becomes
+<em>Waiver recorded for {rule}</em>. The group is then struck through and badged
+<strong>waived by {approver} until {date}</strong> (or <strong>k of N waived</strong> when a wider waiver
+covers only some of its locations), and the outcome badge becomes
 <strong>vetting clear with waivers</strong> once nothing is left uncovered.</p>
 <p>Below the verdicts, <strong>Accepted risks</strong> lists every waiver whose rule appears in
 this run — active, expired and revoked alike — with its rule, scope,
