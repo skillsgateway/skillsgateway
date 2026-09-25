@@ -117,7 +117,7 @@ abstract class AbstractGatewayTest {
                 .build();
     }
 
-    /** Unique marketplace name matching {@code ^[a-z0-9][a-z0-9_-]*$}. */
+    /** Unique marketplace name within {@link dev.skillsgateway.server.persistence.MarketplaceName}. */
     protected static String uniqueName(String prefix) {
         return prefix + Long.toString(System.nanoTime(), 36) + COUNTER.incrementAndGet();
     }

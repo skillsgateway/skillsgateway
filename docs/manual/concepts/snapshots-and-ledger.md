@@ -10,9 +10,9 @@ A *marketplace* is a registered upstream git repository — a name, a clone URL,
 and best-effort forge metadata (forge, project, description, last upstream
 update) captured at registration.
 
-The name must match `^[a-z0-9][a-z0-9_-]*$`. It is the identity of the
-marketplace everywhere: the portal route, the API path, and the facade URL
-`/git/{name}`.
+The name must match `^[a-z0-9][a-z0-9_-]{0,62}$` — at most 63 characters. It is
+the identity of the marketplace everywhere: the portal route, the API path, and
+the facade URL `/git/{name}`.
 
 Registration does **not** fetch any content. It establishes that this URL is one
 the gateway is willing to talk to, and that the gateway can actually read it: it

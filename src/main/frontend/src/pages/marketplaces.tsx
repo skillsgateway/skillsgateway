@@ -24,7 +24,12 @@ import {
 import { Timestamp } from "@/components/timestamp";
 import { SnapshotVettingBadge } from "@/components/vetting-report";
 import { isDecidable } from "@/lib/snapshot-roles";
-import { GATEWAY_NAME, GATEWAY_NAME_HINT, normalizeCloneUrl } from "@/lib/form-rules";
+import {
+  MARKETPLACE_NAME,
+  MARKETPLACE_NAME_ERROR,
+  MARKETPLACE_NAME_HINT,
+  normalizeCloneUrl,
+} from "@/lib/form-rules";
 import { SnapshotStateBadge } from "@/components/snapshot-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,9 +63,7 @@ const marketplacesTableFeatures = tableFeatures({
 });
 
 const registerSchema = z.object({
-  name: z
-    .string()
-    .regex(GATEWAY_NAME, "lowercase letters, digits, - and _; must not start with - or _"),
+  name: z.string().regex(MARKETPLACE_NAME, MARKETPLACE_NAME_ERROR),
   // Scheme policy is enforced server-side (GW_INGEST_0005, configurable allowlist);
   // the client only requires a well-formed absolute URL.
   url: z.url({ error: "must be a valid URL" }),
@@ -72,7 +75,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
  * Warns rather than blocks on a duplicate upstream URL, client-side against the marketplaces
  * already loaded here and again from the server's authoritative check on the response.
  *
- * @Requirements GW_INGEST_0029
+ * @Requirements GW_INGEST_0029, GW_INGEST_0063, GW_INGEST_0064
  */
 function RegisterMarketplaceDialog({ existing }: { existing: MarketplaceView[] }) {
   const [open, setOpen] = useState(false);
@@ -150,7 +153,7 @@ function RegisterMarketplaceDialog({ existing }: { existing: MarketplaceView[] }
               {...form.register("name")}
             />
             <p id="marketplace-name-hint" className="text-xs text-muted-foreground">
-              {GATEWAY_NAME_HINT} It becomes the facade clone path /git/&#123;name&#125;.
+              {MARKETPLACE_NAME_HINT}
             </p>
             {form.formState.errors.name ? (
               <p id="marketplace-name-error" role="alert" className="text-sm text-destructive">

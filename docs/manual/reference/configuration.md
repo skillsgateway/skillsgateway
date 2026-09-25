@@ -1387,7 +1387,7 @@ skills-gateway:
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `skills-gateway.estate.marketplaces` | list | `[]` | Each entry: `name`, `url`, optional `sync-mode` (`on-demand`/`scheduled`). |
-| `skills-gateway.estate.marketplaces[].name` | string | — | Same rules as the API: `^[a-z0-9][a-z0-9_-]*$`, catalog name reserved. |
+| `skills-gateway.estate.marketplaces[].name` | string | — | Same rules as the API: `^[a-z0-9][a-z0-9_-]{0,62}$` (at most 63 characters), catalog name reserved. |
 | `skills-gateway.estate.marketplaces[].url` | string | — | Scheme must be allowlisted. Immutable once registered: a differing declared URL is a reconciliation failure, never an update. |
 | `skills-gateway.estate.marketplaces[].sync-mode` | string | unset (not managed) | `on-demand` or `scheduled`; `webhook` is refused. Unset never touches the stored mode. |
 | `skills-gateway.estate.grants` | list | `[]` | Each entry: `principal`, `role` (`admin`/`approver`/`auditor`), `marketplace` (required for approver, forbidden otherwise). |

@@ -18,7 +18,7 @@ selectable."
 
 | Field | Rule |
 | --- | --- |
-| Name | `^[a-z0-9][a-z0-9_-]*$` — lowercase letters, digits, `-` and `_`; must not start with `-` or `_`. |
+| Name | `^[a-z0-9][a-z0-9_-]{0,62}$` — 1 to 63 lowercase letters, digits, `-` and `_`; must not start with `-` or `_`. |
 | Clone URL | A valid URL whose scheme is on the allowlist. |
 
 ## Over the API

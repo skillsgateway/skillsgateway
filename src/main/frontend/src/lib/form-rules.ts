@@ -17,14 +17,29 @@
 
 /**
  * Gateway-local resource names: marketplaces, webhook subscribers and audit sinks all
- * share one pattern. Mirrors `AdminController.MARKETPLACE_NAME`,
- * `WebhookController.SUBSCRIBER_NAME` and `AuditController.SINK_NAME`, each of which
- * rejects a non-matching name with 422.
+ * share one character pattern. Mirrors `WebhookService.SUBSCRIBER_NAME` and
+ * `AuditExportService.SINK_NAME`, each of which rejects a non-matching name with 422; a
+ * marketplace name is also bounded, below.
  */
 export const GATEWAY_NAME = /^[a-z0-9][a-z0-9_-]*$/;
 
 export const GATEWAY_NAME_HINT =
   "Lowercase letters, digits, - and _; must start with a letter or digit.";
+
+/**
+ * Marketplace names: the gateway name characters, at most 63 of them, because the name is the
+ * facade clone path. Mirrors `MarketplaceName` (GW_INGEST_0063); the error is its `RULE`, word for
+ * word, so the portal and a 422 say the same thing.
+ *
+ * @Requirements GW_INGEST_0063, GW_INGEST_0064
+ */
+export const MARKETPLACE_NAME = /^[a-z0-9][a-z0-9_-]{0,62}$/;
+
+export const MARKETPLACE_NAME_ERROR =
+  "name must be 1 to 63 lowercase letters, digits, - or _, starting with a letter or digit, because it is the /git/<name> path your clients clone";
+
+export const MARKETPLACE_NAME_HINT =
+  "Up to 63 lowercase letters, digits, - and _; must start with a letter or digit. It is the /git/{name} path your clients clone.";
 
 /** True when `value` is a name the server would accept. Whitespace is never a name. */
 export function isValidGatewayName(value: string): boolean {

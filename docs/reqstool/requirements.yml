@@ -2595,6 +2595,26 @@ requirements:
     categories: ["security"]
     revision: 0.3.0
 
+  - id: GW_INGEST_0063
+    title: Marketplace names are one bounded facade path segment
+    significance: shall
+    description: "The system shall accept as a marketplace name only 1 to 63 characters drawn from lowercase letters, digits, hyphen and underscore and starting with a letter or digit, for a marketplace fetched from an upstream and for one the gateway hosts alike, and shall apply the same rule wherever a marketplace name is accepted: registration through the administrative API, a declared estate, the stored marketplace record, and the marketplace segment of every git facade path and of the revocation-status check."
+    references:
+      requirement_ids: ["GW_INGEST_0001", "GW_ESTATE_0002", "GW_FACADE_0006"]
+    rationale: "The name is the only identifier a marketplace has, and it is the path segment clients clone from, /git/<name>; a rule that admits a name the facade would not serve, or a facade that serves a name registration refuses, is the drift a single rule exists to prevent. The bound follows a DNS label's 63 characters: long enough for any real name, short enough to stay usable in a clone URL, a log line and the portal's navigation, and a definite answer where the rule previously had none."
+    categories: ["security", "interaction-capability"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0064
+    title: A refused marketplace name says it is the clone path
+    significance: shall
+    description: "The system shall, when it refuses a marketplace name, state the rule in words and state that the name is the /git/<name> path clients clone, in the registration refusal and in the portal's registration form, and shall show that reason on the form before anything is submitted."
+    references:
+      requirement_ids: ["GW_INGEST_0063"]
+    rationale: "A tester on a trial deployment met the rule and could not tell why it exists. The reason is the facade path, and saying so where the rule is met turns an arbitrary-looking constraint into one a registrant can reason about, which is also what lets them choose a good name the first time."
+    categories: ["interaction-capability"]
+    revision: 0.3.0
+
   - id: GW_VETTING_0040
     title: Prompt-injection markers do not fire on formatting instructions or command names
     significance: shall

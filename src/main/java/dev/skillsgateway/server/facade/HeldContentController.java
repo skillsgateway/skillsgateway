@@ -2,6 +2,7 @@ package dev.skillsgateway.server.facade;
 
 import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.AccessToken;
+import dev.skillsgateway.server.persistence.MarketplaceName;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
@@ -158,9 +159,7 @@ public class HeldContentController {
             if (query == null
                     || query.marketplace() == null
                     || query.sha() == null
-                    || !GitFacadeConfiguration.MARKETPLACE_NAME
-                            .matcher(query.marketplace())
-                            .matches()
+                    || !MarketplaceName.isValid(query.marketplace())
                     || !ObjectId.isId(query.sha())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Malformed holding");
             }
