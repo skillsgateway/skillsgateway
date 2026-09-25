@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 /**
- * Measures the two pattern vetters over a local clone of a real marketplace, for the before/after
+ * Measures the pattern vetters over a local clone of a real marketplace, for the before/after
  * numbers of a precision change. Never part of a normal build: it runs only when
  * {@code -Dvetting.measure.repo=/path/to/clone} is given, and it never touches the network.
  *
@@ -28,7 +28,8 @@ class VettingPrecisionMeasurement {
         Repository repository =
                 new FileRepositoryBuilder().findGitDir(dir).setMustExist(true).build();
         String sha = repository.resolve("HEAD").name();
-        List<Vetter> vetters = List.of(new SecretScanVetter(), new PromptInjectionVetter());
+        List<Vetter> vetters =
+                List.of(new SecretScanVetter(), new PromptInjectionVetter(), new ExecutableSurfaceVetter());
         StringBuilder report = new StringBuilder("measured %s at %s%n".formatted(dir, sha));
         try (QuarantineSnapshot snapshot =
                 new QuarantineSnapshot(1, "measure", sha, 1024L * 1024L, 64L << 20, repository)) {
@@ -64,6 +65,13 @@ class VettingPrecisionMeasurement {
                                             group.locations().size()));
                 }
                 shown.forEach((rule, entries) -> report.append("  %s: %s%n".formatted(rule, entries)));
+                if (vetter instanceof ExecutableSurfaceVetter) {
+                    for (FindingGroup group : groups) {
+                        report.append("  [%s] %s %s: %s%n"
+                                .formatted(
+                                        group.severity().stored(), group.ruleId(), group.locations(), group.message()));
+                    }
+                }
             }
         }
         System.out.println(report);
