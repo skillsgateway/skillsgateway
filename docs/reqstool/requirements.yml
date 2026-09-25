@@ -1755,6 +1755,36 @@ requirements:
     categories: ["interaction-capability", "compatibility"]
     revision: 0.1.0
 
+  - id: GW_AUTH_0049
+    title: A GitHub App key, assertion or installation token is never repeated by the gateway
+    significance: shall
+    description: "The system shall not write a GitHub App's private key, an assertion signed with it, or an installation token to its logs, the audit ledger, the fetch log, the marketplace record, any error or failure reason, any exception message, or any API response, including text quoted from the GitHub API's or the git transport's errors; and shall not store any of them in the database."
+    references:
+      requirement_ids: ["GW_INGEST_0052", "GW_INGEST_0056"]
+    rationale: "The key signs for the App on every repository it is installed on, for as long as it is not deleted; one copy in a log line is a standing credential for the whole installation. The assertion and the token are shorter-lived but still read everything their scope covers while they last."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_AUTH_0050
+    title: A GitHub App assertion is short-lived
+    significance: shall
+    description: "The system shall sign every GitHub App assertion with RS256 and the configured private key, name the App as its issuer, date its issue sixty seconds in the past, set its expiry no more than ten minutes after it is signed, and sign a new one for every exchange rather than keeping one."
+    references:
+      requirement_ids: ["GW_INGEST_0056"]
+    rationale: "GitHub refuses an assertion that lives longer than ten minutes, and one dated exactly now is refused by a server whose clock runs a little behind. An assertion that is never kept has no stored copy to leak."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_AUTH_0051
+    title: A GitHub App assertion is sent only to the configured API
+    significance: shall
+    description: "The system shall send a GitHub App assertion only in requests to the configured API URL, shall not follow a redirect from that API, and shall never attach an assertion to a git request."
+    references:
+      requirement_ids: ["GW_INGEST_0056", "GW_INGEST_0061"]
+    rationale: "The assertion can mint a token for every repository the App is installed on. A redirect followed with it, or an assertion that rode on a git request to the upstream, would hand that power to a server the operator never named."
+    categories: ["security"]
+    revision: 0.3.0
+
   - id: GW_INGEST_0033
     title: The marketplace read names the commit the facade serves
     significance: shall
@@ -2492,6 +2522,76 @@ requirements:
     references:
       requirement_ids: ["GW_INGEST_0050", "GW_INGEST_0052", "GW_AUDIT_0002"]
     rationale: "Registering under a credentialed prefix can pull anything the token reads into quarantine, and the token's scope is the only limit on that. The ledger is where an auditor can see which marketplaces were registered under which credential, and by whom."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0056
+    title: A private upstream is read with a GitHub App installation token
+    significance: shall
+    description: "The system shall, for a marketplace whose clone URL selects an upstream credential of the GitHub App kind, read the upstream — at registration and at every ingestion — with an installation token that it obtains from the configured GitHub API by presenting an assertion signed with the App's private key, sent as a Basic credential under the same prefix rules as a static upstream credential; and shall, when the entry names no installation, ask the configured API which installation of the App covers the repository."
+    references:
+      requirement_ids: ["GW_INGEST_0050", "GW_INGEST_0051"]
+    rationale: "A static token on GitHub belongs to a person, outlives their role, and is rotated by hand. A GitHub App belongs to the organisation, is installed only on the repositories it may read, and issues tokens that expire within the hour. Reusing the static credential's per-request attachment keeps every guarantee about where a credential may go unchanged for the new kind."
+    categories: ["functional-suitability", "security"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0057
+    title: A GitHub App installation token is scoped to the one repository being read
+    significance: shall
+    description: "The system shall request every GitHub App installation token for exactly the one repository its marketplace URL names, with read access to repository contents and no other permission."
+    references:
+      requirement_ids: ["GW_INGEST_0056"]
+    rationale: "An installation can cover many repositories, some writable. A token narrowed to one repository and to reading means a token that escapes — through a redirect inside the prefix or a server's error — can read nothing but what the gateway was already reading."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0058
+    title: An installation token is reused until shortly before it expires and renewed once after a refusal
+    significance: shall
+    description: "The system shall reuse an installation token for the same credential entry and repository until five minutes before the expiry the API stated; and, when the upstream refuses a reused token, shall discard it, obtain a new one, and retry the read once, reporting the second refusal rather than retrying again."
+    references:
+      requirement_ids: ["GW_INGEST_0056"]
+    rationale: "Minting on every fetch spends the API's rate limit and adds a round trip to every sync; keeping a token to its last second lets a fetch start with a token that dies mid-transfer. A token can also be revoked early, when the App is uninstalled or the repository deselected, and one renewal distinguishes that from a lasting refusal without a loop that would hammer the API."
+    categories: ["reliability", "performance-efficiency"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0059
+    title: A GitHub App token failure says why in an operator's words
+    significance: shall
+    description: "The system shall report a failure to obtain a GitHub App installation token as a reason and a next step that distinguish an App not installed for the repository, an installation that was not found, a suspended installation, a key the API refused, a clock that differs from the API's, an API that could not be reached, and a clone URL that names no repository; through the same failure translation, record and responses as any other upstream failure."
+    references:
+      requirement_ids: ["GW_INGEST_0038", "GW_INGEST_0056"]
+    rationale: "Each of these has a different fix, made by a different person — the organisation owner installs the App, the operator fixes the key or the clock, the network team opens egress. A failure reported only as not found or requires authentication sends all of them to the same wrong place."
+    categories: ["interaction-capability", "reliability"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0060
+    title: The gateway refuses to start with an unusable GitHub App credential
+    significance: shall
+    description: "The system shall refuse to start when an upstream credential entry declares both a static token and a GitHub App, or neither; when a GitHub App entry has a missing or non-numeric App id or installation id, a private key that is not a readable RSA key in PKCS#1 or PKCS#8 form, a value that still holds an unresolved configuration reference, or an API URL that is not https (http is accepted only to a loopback host) or carries userinfo, a query or a fragment; and shall name the offending entry by its position and prefix, never by its key."
+    references:
+      requirement_ids: ["GW_INGEST_0053", "GW_INGEST_0056"]
+    rationale: "Every one of these would otherwise surface on the first fetch as an upstream failure that points at the repository, when the mistake is in the gateway's configuration. GitHub issues its keys in PKCS#1 form, which the Java platform does not read directly, so accepting only PKCS#8 would refuse the key as downloaded."
+    categories: ["security", "reliability"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0061
+    title: The GitHub API a token is minted at comes only from configuration
+    significance: shall
+    description: "The system shall send every GitHub App request to the API URL configured on the credential entry, or to GitHub's public API when none is configured, and to no address derived from a marketplace URL; and shall, before any API request, refuse a clone URL whose owner or repository is not a plain name or that names more than an owner and a repository."
+    references:
+      requirement_ids: ["GW_INGEST_0056", "GW_AUTH_0051"]
+    rationale: "The App's assertion is the key's proxy for ten minutes. A marketplace URL is chosen by whoever registers it; if its host or path could steer where the assertion goes, registration would become a way to hand the assertion to any server. The owner and repository do enter the API path, so they are held to the characters a GitHub name can have."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_INGEST_0062
+    title: The registration ledger entry names the credential kind
+    significance: shall
+    description: "The system shall record, alongside the credential prefix in the registration's audit ledger entry, that the credential is a GitHub App when it is one, and never the App's key, assertion or installation token."
+    references:
+      requirement_ids: ["GW_INGEST_0055", "GW_AUTH_0049"]
+    rationale: "An auditor reading which marketplaces were registered under which credential needs to know whether the scope limit was a person's token or an organisation's App installation, because the two are revoked in different places."
     categories: ["security"]
     revision: 0.3.0
 
