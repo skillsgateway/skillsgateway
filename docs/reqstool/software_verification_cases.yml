@@ -3276,3 +3276,53 @@ cases:
       WHEN other snapshots, including ones declaring colliding plugin names, are approved and revoked, and the snapshot is re-vetted
       THEN the new run records the same chain and the same verdicts and findings as the first
     revision: "0.1.0"
+
+  - id: SVC_GW_INGEST_0038
+    requirement_ids: ["GW_INGEST_0038"]
+    title: An upstream failure is reported with its reason, root cause and next step
+    verification: automated-test
+    description: |
+      GIVEN an upstream that answers not found, one that answers 401, one that refuses connections, and failures whose specific error is attached to a generic retry error
+      WHEN the upstream is registered, ingested, or the failure translated
+      THEN not found and 401 both read "repository not found or requires authentication", a refused connection reads that the upstream could not be reached, the reason comes from the attached first error when it is the specific one, the response carries reason, root cause and next step, a warning is logged, and a credential in the URL appears in none of them
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0039
+    requirement_ids: ["GW_INGEST_0039"]
+    title: The marketplace read shows how the last ingest ended
+    verification: automated-test
+    description: |
+      GIVEN a registered marketplace whose upstream becomes unreadable and then readable again, and a scheduled marketplace whose upstream is deleted
+      WHEN it is ingested manually, again after the upstream recovers, and the sync sweep runs over the scheduled one
+      THEN the marketplace read shows failed with the time and reason after the failure, succeeded with no reason after the recovery, failed after the sweep, and the portal states the failed last ingest, when and why, on the marketplace's page
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0040
+    requirement_ids: ["GW_INGEST_0040"]
+    title: Registration of an unreadable upstream is refused and creates nothing
+    verification: automated-test
+    description: |
+      GIVEN a missing repository, one answering 401, an unreachable port, an empty repository, and two readable repositories over HTTP and file
+      WHEN each is registered through the API
+      THEN each unreadable one is refused with the translated reason and is neither listed nor ledgered as registered, and each readable one is registered
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0041
+    requirement_ids: ["GW_INGEST_0041"]
+    title: A declared marketplace with an unreachable upstream is registered and reported
+    verification: automated-test
+    description: |
+      GIVEN an estate declaring one marketplace with an unreachable upstream and one with a readable upstream
+      WHEN the estate is reconciled
+      THEN both are created, the unreachable one's entry names the reason, the ledger records the unreachable upstream by the reconciler, and the reconciliation completes
+    revision: "0.3.0"
+
+  - id: SVC_GW_AUDIT_0010
+    requirement_ids: ["GW_AUDIT_0010"]
+    title: Failed ingests are ledgered by the identity that triggered them
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose upstream is unreadable
+      WHEN an approver ingests it, and the sync sweep ingests a scheduled one whose upstream is deleted
+      THEN the ledger holds an ingest-failed entry for each, by the approver and by the scheduler, whose detail names the reason
+    revision: "0.3.0"
