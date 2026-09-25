@@ -67,7 +67,7 @@ run M5-local-runner-flagged java $T aLocalRunnerALocalBinaryARemoteServerAndAPri
 run M6-launched-not-followed java $T aScriptAnMcpServerLaunchesIsFollowedThroughASecondScript "$V/ExecutableSurfaceVetter.java" \
   'follow(text, root, server.location(), true);' ';'
 run M7-launched-fetch-medium java $T aScriptAnMcpServerLaunchesIsFollowedThroughASecondScript "$V/ExecutableSurfaceVetter.java" \
-  $'                        runner ? Severity.MEDIUM : Severity.HIGH,' $'                        Severity.MEDIUM,'
+  $'Severity.MEDIUM : Severity.HIGH,\n                        "%s:%d"' $'Severity.MEDIUM : Severity.MEDIUM,\n                        "%s:%d"'
 run M8-one-visited-set java $T aScriptBothAHookAndAnMcpServerLaunchKeepsTheHooksHighFinding "$V/ExecutableSurfaceVetter.java" \
   'Set<String> visited = mcp ? mcpScanned : scanned;' 'Set<String> visited = scanned;'
 run M9-launched-scanned-as-hook java $T aLocalRunnerALocalBinaryARemoteServerAndAPrintedDownloadStaySilent "$V/ExecutableSurfaceVetter.java" \
