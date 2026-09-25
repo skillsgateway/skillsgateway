@@ -3774,7 +3774,7 @@ tips on the ledger. See
 </tr>
 <tr>
 <td>422</td>
-<td>Name fails <code>^[a-z0-9][a-z0-9_-]*$</code>, or an unknown <code>origin</code>/<code>pushPolicy</code>.</td>
+<td>Name fails <code>^[a-z0-9][a-z0-9_-]{0,62}$</code> (at most 63 characters; the reason says the name is the <code>/git/&lt;name&gt;</code> path clients clone), or an unknown <code>origin</code>/<code>pushPolicy</code>.</td>
 </tr>
 <tr>
 <td>502</td>

@@ -2775,9 +2775,9 @@ independently through the same approval gate, not by relaxing this check.</p>
 <p>Consequently <code>marketplace add &lt;url&gt;#release-1.x</code> against the facade will not
 find a ref — only <code>main</code> exists on the published repository.</p>
 <h2 id="names">Names<a class="headerlink" href="#names" title="Permanent link">&para;</a></h2>
-<p>Marketplace names must match <code>^[a-z0-9][a-z0-9_-]*$</code>: lowercase letters, digits,
-hyphen and underscore, not starting with a hyphen or underscore. A violation is
-<strong>422</strong>.</p>
+<p>Marketplace names must match <code>^[a-z0-9][a-z0-9_-]{0,62}$</code>: 1 to 63 lowercase
+letters, digits, hyphens and underscores, not starting with a hyphen or
+underscore. A violation is <strong>422</strong>.</p>
 <p>The name is also a path segment on the facade (<code>/git/{name}</code>), which is why the
 character set is constrained.</p>
 <h2 id="plugin-sources-inside-a-marketplace">Plugin sources inside a marketplace<a class="headerlink" href="#plugin-sources-inside-a-marketplace" title="Permanent link">&para;</a></h2>

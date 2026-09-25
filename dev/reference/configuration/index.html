@@ -5431,7 +5431,7 @@ other entries.</p>
 <td><code>skills-gateway.estate.marketplaces[].name</code></td>
 <td>string</td>
 <td>—</td>
-<td>Same rules as the API: <code>^[a-z0-9][a-z0-9_-]*$</code>, catalog name reserved.</td>
+<td>Same rules as the API: <code>^[a-z0-9][a-z0-9_-]{0,62}$</code> (at most 63 characters), catalog name reserved.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.estate.marketplaces[].url</code></td>

@@ -2818,9 +2818,9 @@ answerable.</p>
 <p>A <em>marketplace</em> is a registered upstream git repository — a name, a clone URL,
 and best-effort forge metadata (forge, project, description, last upstream
 update) captured at registration.</p>
-<p>The name must match <code>^[a-z0-9][a-z0-9_-]*$</code>. It is the identity of the
-marketplace everywhere: the portal route, the API path, and the facade URL
-<code>/git/{name}</code>.</p>
+<p>The name must match <code>^[a-z0-9][a-z0-9_-]{0,62}$</code> — at most 63 characters. It is
+the identity of the marketplace everywhere: the portal route, the API path, and
+the facade URL <code>/git/{name}</code>.</p>
 <p>Registration does <strong>not</strong> fetch any content. It establishes that this URL is one
 the gateway is willing to talk to, and that the gateway can actually read it: it
 lists the upstream's references and resolves the default branch it will pin.</p>

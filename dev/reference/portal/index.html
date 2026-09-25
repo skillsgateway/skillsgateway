@@ -3770,7 +3770,7 @@ ingests the upstream default branch; the ref is not selectable."</p>
 <tbody>
 <tr>
 <td>Name</td>
-<td><code>^[a-z0-9][a-z0-9_-]*$</code> — "lowercase letters, digits, <code>-</code> and <code>_</code>; must not start with <code>-</code> or <code>_</code>"</td>
+<td><code>^[a-z0-9][a-z0-9_-]{0,62}$</code> — the hint reads "Up to 63 lowercase letters, digits, - and _; must start with a letter or digit. It is the /git/{name} path your clients clone."; a name that breaks it gets the API's own 422 wording as its field error</td>
 </tr>
 <tr>
 <td>Clone URL</td>

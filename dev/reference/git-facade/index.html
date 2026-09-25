@@ -2768,9 +2768,9 @@ the web chain.</p>
 <li><code>GET /git/{marketplace}/info/refs?service=git-upload-pack</code></li>
 <li><code>POST /git/{marketplace}/git-upload-pack</code></li>
 </ul>
-<p><code>{marketplace}</code> is validated against <code>^[a-z0-9][a-z0-9_-]*$</code> after stripping an
-optional <code>.git</code> suffix. Anything else is a 404 — which is also what blocks path
-traversal into arbitrary directories.</p>
+<p><code>{marketplace}</code> is validated against <code>^[a-z0-9][a-z0-9_-]{0,62}$</code> (at most 63
+characters) after stripping an optional <code>.git</code> suffix. Anything else is a 404 —
+which is also what blocks path traversal into arbitrary directories.</p>
 <h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
 <p>HTTP Basic, backed by the PAT provider. An OIDC browser <strong>session</strong> can never
 authenticate a git fetch: no session is read and no cookie is honoured on this
@@ -3012,7 +3012,7 @@ cookie is honoured, and none is set.</p>
 <tbody>
 <tr>
 <td><code>marketplace</code></td>
-<td>The name as it appears in the fetch URL, validated against <code>^[a-z0-9][a-z0-9_-]*$</code>.</td>
+<td>The name as it appears in the fetch URL, validated against <code>^[a-z0-9][a-z0-9_-]{0,62}$</code>.</td>
 </tr>
 <tr>
 <td><code>sha</code></td>
@@ -3113,7 +3113,7 @@ in and that some are still holding withdrawn content.</p>
 </tr>
 <tr>
 <td>404 with an odd name</td>
-<td>The name failed <code>^[a-z0-9][a-z0-9_-]*$</code>.</td>
+<td>The name failed <code>^[a-z0-9][a-z0-9_-]{0,62}$</code> — the character set, or longer than 63 characters.</td>
 </tr>
 <tr>
 <td><code>git push</code> rejected</td>
