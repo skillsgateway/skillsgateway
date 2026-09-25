@@ -165,3 +165,15 @@ Feature: credentials for private upstreams, matched by URL prefix
   docs.
 - **U5 (loopback).** The test counted three tokens for four entries. That was
   an arithmetic slip in the test, not a behaviour change.
+- **S7.** It gained the case its SVC names but the first draft did not
+  exercise: a server that quotes the token back. The forge redirects to a
+  Location that contains the token. JGit refuses the redirect and repeats the
+  Location in its error. Registration's `502` and the ingest's recorded reason
+  must read `echo-***`. That is the only test that reaches the scrub through
+  `UpstreamGit` (mutant M14).
+- **Redirect scenarios S4 to S6.** The forge now requires the credential under
+  `/private/` and answers the redirect only to an authenticated request. A
+  forge does exactly this for a renamed private repository. Without it, the
+  rejected JGit `CredentialsProvider` design would never have established a
+  credential before the redirect, and the tests could not tell the designs
+  apart (mutant M1).

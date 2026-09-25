@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -165,6 +166,16 @@ class UpstreamCredentialsIntegrationTests extends AbstractExternalSourceTest {
         ingest(revoked)
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.reason").value(UpstreamFailure.NOT_FOUND_OR_AUTH));
+
+        // A server that quotes the token back: JGit repeats a refused redirect's Location in its error.
+        FORGE.requireBasic("/private/", "sgw", PRIVATE_TOKEN);
+        FORGE.redirectTo(FORGE.baseUrl() + "/private/echo-" + PRIVATE_TOKEN, Integer.MAX_VALUE);
+        register(uniqueName("quoted"), FORGE.baseUrl() + "/private/skills.git")
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.rootCause", Matchers.containsString("echo-***")));
+        ingest(revoked)
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.rootCause", Matchers.containsString("echo-***")));
         remember(mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn());
@@ -179,7 +190,7 @@ class UpstreamCredentialsIntegrationTests extends AbstractExternalSourceTest {
             assertThat(rowsContaining("marketplaces", token)).isZero();
         }
         assertThat(marketplaceRepository.findByName(revoked).orElseThrow().lastIngestReason())
-                .contains(UpstreamFailure.NOT_FOUND_OR_AUTH);
+                .contains("echo-***");
     }
 
     @Test
