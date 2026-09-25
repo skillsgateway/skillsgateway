@@ -3239,6 +3239,13 @@ enough to tell a receiver that is down from one that is rejecting the payload.</
 history go with it, and no further events are queued for it. Subscriber creation
 and deletion are themselves recorded in the ledger as
 <code>webhook-subscriber-created</code> and <code>webhook-subscriber-deleted</code>.</p>
+<p>An <a href="../exporting-the-audit-ledger/#push-sinks">audit export sink</a> delivers
+through a subscriber of its own. <code>GET /api/v1/webhooks</code> lists it with
+<code>auditSink</code> set to the sink's name, and deleting it here is <strong>409</strong>: the
+answer names the sink and <code>DELETE /api/v1/audit/sinks/{id}</code>, which removes
+both. A declared webhook in the <a href="../../reference/api/estate/">estate</a> whose
+name is a sink's fails its entry for the same reason, rather than rewriting
+the sink's channel.</p>
 
 
 

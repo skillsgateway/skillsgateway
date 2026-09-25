@@ -4596,6 +4596,9 @@ once — copy it now." — with the <code>whsec_…</code> value in a code block
 button that flips to a checkmark for two seconds, the same pattern as
 <a href="#access-tokens">Access tokens</a>.</p>
 <h3 id="subscribers">Subscribers<a class="headerlink" href="#subscribers" title="Permanent link">&para;</a></h3>
+<p>The lifecycle subscribers. An audit sink's delivery channel — a subscriber the
+API marks with <code>auditSink</code> — is listed with its sink on <a href="#audit-sinks">Audit sinks</a>
+instead, and cannot be deleted from here.</p>
 <table>
 <thead>
 <tr>
@@ -4646,7 +4649,7 @@ integration.</p>
 </tr>
 <tr>
 <td>Subscriber</td>
-<td>Resolved from the subscriber list held in the browser; falls back to the raw id.</td>
+<td>Resolved from the subscriber list held in the browser; falls back to the raw id. A sink's delivery reads "{sink} · audit sink" and links to <a href="#audit-sinks">Audit sinks</a>.</td>
 </tr>
 <tr>
 <td>State</td>
@@ -4725,7 +4728,7 @@ position is API-only (<code>PUT /api/v1/audit/sinks/{id}/cursor</code>).</p>
 <p><strong>Delete</strong> calls <code>DELETE /api/v1/audit/sinks/{id}</code>, taking the sink's delivery
 channel with it, and toasts <em>Sink '{name}' deleted</em>.</p>
 <p>Sink deliveries are ordinary webhook deliveries, so their attempts appear on the
-<a href="#webhooks">Webhooks</a> page rather than here.</p>
+<a href="#webhooks">Webhooks</a> page rather than here, marked as the sink's.</p>
 <p>Empty state: "No export sinks yet."</p>
 <hr />
 <h2 id="access-tokens">Access tokens<a class="headerlink" href="#access-tokens" title="Permanent link">&para;</a></h2>

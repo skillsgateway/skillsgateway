@@ -2836,7 +2836,8 @@ poll interval:</p>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">"enabled"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">}]</span>
 </code></pre></div>
 <p><code>DELETE /api/v1/audit/sinks/{id}</code> removes the sink and its delivery channel — <strong>204</strong>,
-or <strong>404</strong> if it never existed.</p>
+or <strong>404</strong> if it never existed. It is the only way to remove that channel: deleting
+it through the webhooks API is refused with <strong>409</strong>, and the database refuses it too.</p>
 <h2 id="why-exports-lag-a-few-seconds">Why exports lag a few seconds<a class="headerlink" href="#why-exports-lag-a-few-seconds" title="Permanent link">&para;</a></h2>
 <p>The ledger's <code>id</code> is a <code>BIGSERIAL</code>, and <code>nextval</code> is assigned <strong>before</strong> commit.
 Entry 101 can therefore become visible while 100 is still in flight; a naive
