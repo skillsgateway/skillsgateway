@@ -20,5 +20,5 @@
 
 ## 5. Gates and evidence
 
-- [ ] 5.1 Run all gates from CLAUDE.md fresh after the last code edit and record them with the SHA in `evidence.md`
+- [x] 5.1 Run all gates from CLAUDE.md fresh after the last code edit and record them with the SHA in `evidence.md`
 - [ ] 5.2 Archive the change as the PR's final commit, and verify with `openspec validate --all --strict`
