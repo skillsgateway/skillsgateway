@@ -44,5 +44,5 @@ failing against the unfixed code. Those failures are recorded in `evidence.md`.
 
 ## 6. Gauntlet and close
 
-- [ ] 6.1 `mutants.sh` (manual mutants M1–M8), all killed
-- [ ] 6.2 All gates, `evidence.md`, then `/opsx:archive` as the final commit
+- [x] 6.1 `mutants.sh` (manual mutants M1–M8), all killed
+- [x] 6.2 All gates, `evidence.md`, then `/opsx:archive` as the final commit
