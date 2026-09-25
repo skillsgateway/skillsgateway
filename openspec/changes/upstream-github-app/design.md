@@ -109,11 +109,11 @@ See proposal.md, "Why". The code this builds on:
    | 404 on `/repos/…/installation` | the GitHub App is not installed for this repository | install on the owner, select the repository |
    | 422 on `access_tokens` | same | add the repository to the installation's selection |
    | 404 on `access_tokens` | the GitHub App installation was not found | reinstall, or correct `installation-id` |
-   | 403 on `access_tokens` | the GitHub App installation is suspended | unsuspend it in the owner's settings |
+   | 403 on `access_tokens` whose message says suspended | the GitHub App installation is suspended | unsuspend it in the owner's settings |
    | 401, message names `iat`/`exp`, or a `Date` more than 30 s off | the gateway's clock differs from the GitHub API's | sync the host clock (NTP) |
    | other 401 | the GitHub API refused the App's key | check `app-id` matches the key and the key is not deleted |
    | connect/timeout/IO | the GitHub API could not be reached | check `api-url`, egress, proxy |
-   | anything else, 3xx included | the GitHub API did not issue a token | the status and GitHub's `message` |
+   | anything else, 3xx and other 403s (rate limits) included | the GitHub API did not issue a token | the status and GitHub's `message` |
 
    The root cause is `HTTP <status>: <GitHub's message>`, capped at 200
    characters and scrubbed. GitHub's messages never quote the JWT, but the

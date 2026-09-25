@@ -163,3 +163,30 @@ Feature: GitHub App credentials for private upstreams
 | SVC_GW_AUTH_0049 — The key, assertion and installation token appear nowhere | S10, U6 |
 | SVC_GW_AUTH_0050 — The assertion verifies against the App's key and expires within ten minutes | U3 |
 | SVC_GW_AUTH_0051 — The assertion goes only to the API, never across a redirect or on a git request | S6, S7, S8 |
+
+## Revisions during implementation
+
+- **U3.** "The two are different strings" holds because the clock moves
+  between them. RS256 (PKCS#1 v1.5) is deterministic, so two assertions signed
+  in the same second are identical; adding a random `jti` to make them differ
+  would add a claim GitHub does not document. The test advances a test clock by
+  a second between the two.
+- **U4.** The `Date`-header half of clock-skew detection is unit-tested only:
+  the JDK's `HttpServer` overwrites any `Date` header a handler sets, so the
+  fixture cannot send a skewed one. The integration test covers the
+  message half.
+- **S11, 403.** A 403 reads as "suspended" only when GitHub's message says so;
+  a rate-limit 403 reads as "the GitHub API did not issue a token". The unit
+  test pins both.
+- **S10.** It gained the case the SVC names but the first draft did not
+  exercise: an upstream that quotes the token back through a redirect
+  `Location`, which JGit repeats in its error. Without it, mutant M25 (no scrub
+  of git failures) had nothing to kill it.
+- **S5.** Mutant M9 (a token refused after renewal stays cached) survived the
+  first draft: the API's request count is the same either way, because
+  renewal drops the cache itself. The test now also asserts that the next read's
+  git requests carry only the newly minted token, never the refused one.
+- **Test helper.** `TestKeys.pkcs1Of` first produced an empty key: `a[0] +=
+  f(a)` reads `a[0]` before `f` runs. Found in the RED run, where the
+  properties test compared against an empty line. Fixed before GREEN; the
+  generated PKCS#1 PEM is checked with `openssl rsa -check` once, by hand.

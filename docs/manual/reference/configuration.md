@@ -425,7 +425,9 @@ Sinks, cursors and replay are described in
 ## Ingestion — upstream credentials
 
 The credentials that private marketplace upstreams are read with. The list is empty by default, and an empty
-list reads every upstream anonymously. The task-shaped guide, with examples
+list reads every upstream anonymously. Each entry is one of two kinds: a static
+`username` and `token`, or a `github-app` that mints a short-lived token per
+fetch. The task-shaped guide, with examples
 for local development, Helm and ECS, is
 [Reading a private upstream](../guides/private-upstreams.md).
 
@@ -438,6 +440,13 @@ skills-gateway:
         username: skills-gateway
         # Always an environment reference, never the token itself.
         token: ${SGW_UPSTREAM_ACME_TOKEN}
+      # A GitHub App instead of a token: no username or token on this entry.
+      - url-prefix: https://github.com/widgets/
+        github-app:
+          app-id: "123456"
+          private-key: ${SGW_UPSTREAM_APP_KEY}
+          installation-id: "7890"            # optional
+          api-url: https://api.github.com    # optional; GitHub Enterprise Server sets its own
 ```
 
 | Key | Type | Default | Notes |
@@ -446,16 +455,30 @@ skills-gateway:
 | `….upstream-credentials[n].url-prefix` | URL | — | `https`, or `http` to a loopback host only. No userinfo, query, fragment, dot segments or encoded separators. Scheme and host are compared without case, the port after defaults, and the path by whole segments; a trailing `/` makes no difference. |
 | `….upstream-credentials[n].username` | string | — | Sent as the HTTP Basic user. |
 | `….upstream-credentials[n].token` | string | — | Sent as the HTTP Basic password. Never logged, stored, audited or echoed by any API. |
+| `….upstream-credentials[n].github-app.app-id` | string | — | The App's numeric id. Required in a `github-app` block. |
+| `….upstream-credentials[n].github-app.private-key` | string | — | The App's RSA private key as PEM: PKCS#1 (`BEGIN RSA PRIVATE KEY`, what GitHub issues) or PKCS#8, unencrypted. A `\n` written as two characters counts as a line break. Never logged, stored, audited or echoed. |
+| `….upstream-credentials[n].github-app.installation-id` | string | none | The installation to mint from. When absent, the gateway asks the API which installation covers each repository. |
+| `….upstream-credentials[n].github-app.api-url` | URL | `https://api.github.com` | The REST API tokens are minted at. `https`, or `http` to a loopback host only; no userinfo, query or fragment. Never taken from a marketplace URL. |
 
 - **Validated at startup.** The gateway refuses to start on an entry with a
   blank field, an unresolved `${…}` reference, a prefix that breaks the rules
-  above, or a prefix that another entry also declares. The message names the
-  entry's position and prefix, never its token.
+  above, or a prefix that another entry also declares. It also refuses an entry
+  with both a token and a `github-app` or with neither, a non-numeric
+  `app-id` or `installation-id`, a key it cannot read as RSA, and an `api-url`
+  that breaks the rules above. The message names the entry's position and
+  prefix, never its token or key.
+- **GitHub App tokens.** Per fetch the gateway signs an assertion with the key
+  (valid for under ten minutes) and exchanges it for an installation token
+  scoped to the one repository, with `contents: read`. It reuses the token
+  until five minutes before it expires, and after the upstream refuses a
+  reused token it mints once more. The marketplace URL must be
+  `https://<host>/<owner>/<repository>[.git]`.
 - **Sent per request.** The credential that the marketplace URL selects rides
   only on requests under its own prefix, so a redirect elsewhere carries
   nothing. The forge metadata lookup and external plugin sources are always
   anonymous.
-- **Rotation is a restart.** The list is read once, at startup.
+- **Rotation is a restart.** The list is read once, at startup. A GitHub App's
+  installation tokens renew by themselves; its key is changed by a restart.
 
 ---
 
