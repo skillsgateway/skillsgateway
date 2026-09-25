@@ -2662,6 +2662,14 @@ unconditionally, through the auto-configured Micrometer registries; whether
 anything is <strong>exported</strong> is a deployment decision. There is no
 <code>skills-gateway.*</code> property for this — there is nothing to configure on the
 gateway's side.</p>
+<div class="admonition note">
+<p class="admonition-title">Metrics are pushed over OTLP, not scraped</p>
+<p>The actuator exposes only <code>health</code> and <code>sbom</code>. There is no <code>/actuator/metrics</code>
+or <code>/actuator/prometheus</code> endpoint to scrape, so a deployment that has not
+<a href="#exporting">enabled export</a> has no way to read the metrics below. Point the
+exporter at an OpenTelemetry collector; a collector can re-expose them for
+Prometheus if that is what you run.</p>
+</div>
 <h2 id="metrics">Metrics<a class="headerlink" href="#metrics" title="Permanent link">&para;</a></h2>
 <p>All gateway metrics live under the <code>skills_gateway</code> prefix. Every tag is a
 closed vocabulary: per-marketplace, per-SHA and per-identity dimensions are
@@ -2683,7 +2691,7 @@ a time series.</p>
 <td><code>skills_gateway.ingestion</code></td>
 <td>timer (observation)</td>
 <td><code>outcome=success\|error</code></td>
-<td>Each ingestion — upstream fetch, pin, snapshot record, vetting trigger.</td>
+<td>Each ingestion — upstream fetch, pin, snapshot record, vetting trigger. Which marketplace failed, and why, is not a tag: the marketplace read carries its last ingest (<code>lastIngestOutcome</code>, <code>lastIngestReason</code>) and the ledger an <code>ingest-failed</code> entry.</td>
 </tr>
 <tr>
 <td><code>skills_gateway.approval</code></td>

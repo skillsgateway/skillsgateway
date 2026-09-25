@@ -757,6 +757,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#metrics-and-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics and traces
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#backups-and-upgrades" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2811,6 +2822,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#metrics-and-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics and traces
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#backups-and-upgrades" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3247,6 +3269,15 @@ offline, verified, reversible copy described in
 reports the last run, and the audit ledger carries its entries under the
 <code>config-reconciler</code> principal. See
 <a href="../declarative-estate/">Declarative estate configuration</a>.</p>
+<h2 id="metrics-and-traces">Metrics and traces<a class="headerlink" href="#metrics-and-traces" title="Permanent link">&para;</a></h2>
+<p>A default install records its metrics and exports none of them. The chart's
+<code>otel</code> values switch on OTLP export to your collector:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">otel</span><span class="p">:</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://otel-collector.observability:4318</span>
+</code></pre></div>
+<p>There is no metrics endpoint to scrape. The metric names, and the two worth
+alerting on, are in <a href="../../reference/observability/#from-the-helm-chart">Observability</a>.</p>
 <h2 id="backups-and-upgrades">Backups and upgrades<a class="headerlink" href="#backups-and-upgrades" title="Permanent link">&para;</a></h2>
 <p>The database and the git storage are one estate and have to be backed up and restored
 together — see
