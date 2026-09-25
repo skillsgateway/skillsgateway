@@ -11,7 +11,7 @@
   - `git diff 31c399a5 64ff9f73 -- src` is empty. The commit in between
     changes only documentation and `tasks.md`.
 - **Entry points:** the project gates below, and
-  `openspec/changes/upstream-credentials/mutants.sh`.
+  `openspec/changes/archive/2026-09-25-upstream-credentials/mutants.sh`.
 - **Isolation:** a branch in the main checkout, not a worktree. The gauntlet
   needs the built `node_modules` and Docker.
 - **Independent verification:** not performed.
