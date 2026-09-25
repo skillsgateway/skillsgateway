@@ -27,7 +27,10 @@ class PromptInjectionPrecisionTests {
                     + " trend line and the written path.",
             "- `ignore-rule <rule>[ --all-values if rule is overused-font]`",
             "`ignore-rule overused-font` requires `--all-values`, `ignore-rule` for other rules",
-            "Do not tell users they need to invoke `craft`. Natural requests use the same flow.");
+            "Do not tell users they need to invoke `craft`. Natural requests use the same flow.",
+            // Not from that repository: the same sentence-crossing shape with a verb of telling.
+            "Do not overwrite the file. Tell the user what changed.",
+            "Never commit on the default branch; report to the reviewer which branch you used.");
 
     /** What the rules exist for; each must still raise a high finding. */
     private static final Map<String, String> PAYLOADS = Map.ofEntries(
