@@ -63,10 +63,8 @@ public record FindingGroup(
     private static FindingGroup from(List<Finding> members) {
         Finding first = members.getFirst();
         // A finding with no location (an aggregated entry) contributes none rather than a blank.
-        List<String> locations = members.stream()
-                .map(Finding::location)
-                .filter(Objects::nonNull)
-                .toList();
+        List<String> locations =
+                members.stream().map(Finding::location).filter(Objects::nonNull).toList();
         return new FindingGroup(
                 first.id(), first.severity(), first.message(), first.content(), first.line(), locations);
     }
