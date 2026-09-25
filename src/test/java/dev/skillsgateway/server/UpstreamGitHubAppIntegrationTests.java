@@ -185,8 +185,13 @@ class UpstreamGitHubAppIntegrationTests extends AbstractExternalSourceTest {
         assertThat(tokenRequests()).isEqualTo(3);
 
         // The refused token was dropped: the next read mints, is refused, and is not retried.
+        issues("77", "ghs_fourth_" + repo, Duration.ofHours(1));
+        int before = FORGE.authorizations().size();
         ingest(name).andExpect(status().isBadGateway());
         assertThat(tokenRequests()).isEqualTo(4);
+        List<String[]> seen = FORGE.authorizations();
+        assertThat(seen.subList(before, seen.size())).isNotEmpty().allSatisfy(request -> assertThat(request[1])
+                .isEqualTo(basic("ghs_fourth_" + repo)));
     }
 
     @Test
