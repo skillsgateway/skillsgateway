@@ -518,6 +518,16 @@ yield one finding per line of it, not one per hook.
     harnesses (`.codex/`, `.cursor/`) are not Claude Code plugin hooks and are
     not read.
 
+    Dependencies a skill installs are not seen at all. Only hooks and MCP
+    servers are scanned for package installs, so a script a skill runs, or a
+    `SKILL.md` that tells the agent to run `npm install` or `pip install`,
+    fetches code from a registry after the snapshot was pinned without any
+    finding. Dependency manifests (`package.json`, `requirements.txt`,
+    `Cargo.toml`) and their lockfiles are not read either: a manifest without
+    a lockfile, an unpinned version range, or a package with a known
+    vulnerability is not reported. Approving such a snapshot approves whatever
+    the registry serves on the day the skill runs.
+
 ### `license-scan`
 
 Deterministic license detection over the pinned content, evaluated against the
