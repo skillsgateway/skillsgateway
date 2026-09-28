@@ -3675,6 +3675,15 @@ and a container runner (<code>docker run image</code>) is not classified as a fe
 though both can fetch code when the server starts. Hook files for other
 harnesses (<code>.codex/</code>, <code>.cursor/</code>) are not Claude Code plugin hooks and are
 not read.</p>
+<p>Dependencies a skill installs are not seen at all. Only hooks and MCP
+servers are scanned for package installs, so a script a skill runs, or a
+<code>SKILL.md</code> that tells the agent to run <code>npm install</code> or <code>pip install</code>,
+fetches code from a registry after the snapshot was pinned without any
+finding. Dependency manifests (<code>package.json</code>, <code>requirements.txt</code>,
+<code>Cargo.toml</code>) and their lockfiles are not read either: a manifest without
+a lockfile, an unpinned version range, or a package with a known
+vulnerability is not reported. Approving such a snapshot approves whatever
+the registry serves on the day the skill runs.</p>
 </div>
 <h3 id="license-scan"><code>license-scan</code><a class="headerlink" href="#license-scan" title="Permanent link">&para;</a></h3>
 <p>Deterministic license detection over the pinned content, evaluated against the
