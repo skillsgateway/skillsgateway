@@ -166,6 +166,14 @@ it came from.
 A **blocked** outcome means at least one vetter failed, errored or has not
 answered, or that the chain never ran for this snapshot at all.
 
+Read each finding where it is. Every location in the **Vetting** tab is a link
+that opens the file in **Contents** at that line. The line is marked, and the
+finding's severity, rule and message are written beneath it, next to the text
+it is about. Files with findings are marked in the tree, and "N findings in
+this file" above a file leads to each of its lines. The link carries the line
+in the address (`&line=`), so the second approver can be sent straight to the
+same evidence. See [Snapshot contents](../reference/portal.md#snapshot-contents).
+
 !!! warning "A clear outcome is not a clean bill of health"
 
     The built-in vetters are pattern matchers. They catch known credential

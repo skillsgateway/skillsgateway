@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { expect, test, vi } from "vitest";
-import { filesPage, treePage } from "@/test/msw-handlers";
+import { filesPage, locatedVetting, treePage } from "@/test/msw-handlers";
 import { server } from "@/test/msw-server";
 import { SnapshotFilesPage } from "./snapshot-files";
 
@@ -350,4 +350,23 @@ test("collapse_all_is_never_inert_over_a_search", async () => {
   await user.click(collapse);
   expect(tree().queryByRole("button", { name: /SKILL\.md/ })).not.toBeInTheDocument();
   expect(screen.getByLabelText("Search paths")).toHaveValue("");
+});
+
+/**
+ * @SVCs SVC_GW_APPROVAL_0030
+ */
+test("the_standalone_page_carries_the_line_too", async () => {
+  const user = userEvent.setup();
+  server.use(http.get("/api/v1/snapshots/:id/vetting", () => HttpResponse.json(locatedVetting)));
+  const { container } = renderPage(
+    "/marketplaces/corp-marketplace/snapshots/1/files?path=plugins%2Fhello%2Fskills%2Fhello%2FSKILL.md&line=5",
+  );
+
+  await screen.findByRole("list", { name: "Lines of plugins/hello/skills/hello/SKILL.md" });
+  await waitFor(() => expect(document.activeElement).toBe(container.querySelector('[data-line="5"]')));
+
+  await user.click(await tree().findByRole("button", { name: /^\.claude-plugin,/ }));
+  await user.click(await tree().findByRole("button", { name: /marketplace\.json/ }));
+  expect(screen.getByLabelText("address")).toHaveTextContent("path=.claude-plugin%2Fmarketplace.json");
+  expect(screen.getByLabelText("address")).not.toHaveTextContent("line=");
 });

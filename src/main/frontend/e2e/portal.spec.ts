@@ -519,6 +519,36 @@ test("vetting_verdicts_are_shown_and_a_blocked_snapshot_cannot_be_approved", asy
 });
 
 /**
+ * A finding's location is one click from its line: the Vetting tab links it, the Contents tab
+ * opens the file numbered with the line focused, and the finding is written out beneath the line.
+ *
+ * @SVCs SVC_GW_APPROVAL_0029, SVC_GW_APPROVAL_0030
+ */
+test("a_finding_is_followed_from_the_vetting_tab_to_its_marked_line", async ({ page }) => {
+  await login(page, "alice");
+  const card = await registerTainted(page, "highlight");
+  const skill = "plugins/hello/skills/hello/SKILL.md";
+
+  await card.getByRole("link", { name: `${skill}:3` }).first().click();
+
+  await expect(page).toHaveURL(
+    new RegExp(`\\?snapshot=\\d+&tab=contents&path=${encodeURIComponent(skill)}&line=3$`),
+  );
+  await expect(card.getByRole("list", { name: `Lines of ${skill}` })).toBeVisible();
+  const line = card.locator('[data-line="3"]');
+  await expect(line).toBeFocused();
+  await expect(line).toHaveAttribute("data-severity", "high");
+  const note = line.getByRole("note").filter({ hasText: "instruction-override" });
+  await expect(note).toContainText("prompt-injection");
+  await expect(card.getByRole("region", { name: "Findings in this file" })).toBeVisible();
+  await expect(
+    card
+      .getByRole("navigation", { name: /File tree of snapshot \d+/ })
+      .getByRole("button", { name: new RegExp(`SKILL\\.md, .*findings?, highest high`) }),
+  ).toBeVisible();
+});
+
+/**
  * The chain drawn as a chain, on the surface where a reviewer reads it: the marketplace detail
  * page, where the report is inline rather than inside the approve dialog.
  *

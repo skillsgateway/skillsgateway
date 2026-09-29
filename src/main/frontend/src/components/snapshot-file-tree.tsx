@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronRight, File, FilePlus2, FilePen, FileX2, Folder, FolderOpen } from "lucide-react";
 import type { ReactNode } from "react";
 import type { SnapshotTreeChild } from "@/api/queries";
+import { highestSeverity, type FileFinding } from "@/lib/file-findings";
 
 const STATUS_ICON = {
   added: FilePlus2,
@@ -41,6 +42,18 @@ function FileMarker({ node }: { node: SnapshotTreeChild }) {
   );
 }
 
+/** A file's vetter findings at a glance: the highest severity and how many (GW_APPROVAL_0029). */
+function FindingsMarker({ findings }: { findings: readonly FileFinding[] }) {
+  const highest = highestSeverity(findings);
+  if (!highest) return null;
+  const strong = highest === "high" || highest === "critical";
+  return (
+    <span className={`shrink-0 font-sans text-xs ${strong ? "text-destructive" : "text-primary"}`}>
+      {highest} · {findings.length}
+    </span>
+  );
+}
+
 /**
  * The right slot of a directory row: how many changes are beneath it, or how many files — so a
  * reviewer can find the change without opening every folder.
@@ -75,6 +88,7 @@ export function SnapshotFileTree({
   onSelect,
   renderChildren,
   fullPaths = false,
+  findings,
 }: {
   entries: readonly SnapshotTreeChild[];
   selectedPath: string | null;
@@ -85,12 +99,19 @@ export function SnapshotFileTree({
   renderChildren: (path: string) => ReactNode;
   /** Label files with their full path rather than their name — for a flat list of search matches. */
   fullPaths?: boolean;
+  /** Vetter findings by path; a file that carries any is marked with its count and highest severity. */
+  findings?: ReadonlyMap<string, readonly FileFinding[]>;
 }) {
   return (
     <ul className="space-y-0.5">
       {entries.map((node) => {
         const path = node.path ?? "";
         const name = node.name ?? path;
+        const found = findings?.get(path) ?? [];
+        const foundLabel =
+          found.length > 0
+            ? `, ${plural(found.length, "finding")}, highest ${highestSeverity(found)}`
+            : "";
         return node.kind === "directory" ? (
           <li key={`d:${path}`}>
             <button
@@ -124,7 +145,7 @@ export function SnapshotFileTree({
             <button
               type="button"
               aria-current={path === selectedPath ? "true" : undefined}
-              aria-label={node.status ? `${path}, ${node.status}` : `${path}, ${size(node.size)}`}
+              aria-label={`${path}, ${node.status ?? size(node.size)}${foundLabel}`}
               onClick={() => onSelect(path)}
               // Selected is a violet tint, hover is the neutral one. They have to differ by hue
               // rather than by token, because `--accent` and `--muted` are the same value in both
@@ -145,6 +166,7 @@ export function SnapshotFileTree({
                 );
               })()}
               <span className="min-w-0 flex-1 truncate">{fullPaths ? path : name}</span>
+              <FindingsMarker findings={found} />
               <FileMarker node={node} />
             </button>
           </li>

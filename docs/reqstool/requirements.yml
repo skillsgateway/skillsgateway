@@ -2713,6 +2713,26 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
+  - id: GW_APPROVAL_0029
+    title: A file in the Contents view marks the lines vetter findings locate, each with its description
+    significance: shall
+    description: "The system shall show a snapshot file that vetter findings locate with its lines numbered, shall mark each line a finding locates by severity, and shall show beside the marked line, as text reachable by keyboard and by a screen reader, each finding on it with its vetter, rule, severity and message, and whether an active waiver covers it; and shall list the file's findings above it, each leading to its line, including a finding without a line or beyond the part of the file shown."
+    references:
+      requirement_ids: ["GW_APPROVAL_0025", "GW_VETTING_0023"]
+    rationale: "A finding is evidence about a line, and a reviewer judges it by reading the line. Text rather than colour or hover keeps the description readable to every reviewer, and the list catches what cannot be marked."
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.3.0
+
+  - id: GW_APPROVAL_0030
+    title: A finding's location links to its file and line in the Contents view
+    significance: shall
+    description: "The system shall present every path:line location of a snapshot's vetting report in the review card as a link that opens that file in the Contents view at that line, shall carry the line in the address so the link can be sent and reopened, and shall focus the addressed line once the file is shown."
+    references:
+      requirement_ids: ["GW_APPROVAL_0029", "GW_INGEST_0032"]
+    rationale: "The location already names the evidence exactly; a link makes it one step to read, and an address that carries the line lets a second approver open the same evidence rather than follow directions."
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.3.0
+
   - id: GW_INGEST_0045
     title: The snapshot inventory lists every component a plugin declares
     significance: shall
