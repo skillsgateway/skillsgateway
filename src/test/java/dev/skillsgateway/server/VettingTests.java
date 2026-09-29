@@ -209,8 +209,9 @@ class VettingTests extends AbstractGatewayTest {
         assertThat(findingsOf(dirty, "prompt-injection"))
                 .extracting(dev.skillsgateway.server.vetting.Finding::id)
                 .contains("instruction-override", "credential-path-reference", "invisible-characters");
-        assertThat(findingsOf(dirty, "prompt-injection")).allSatisfy(finding -> assertThat(finding.location())
-                .startsWith("plugins/hello/skills/hello/SKILL.md:"));
+        assertThat(findingsOf(dirty, "prompt-injection"))
+                .allSatisfy(
+                        finding -> assertThat(finding.location()).startsWith("plugins/hello/skills/hello/SKILL.md:"));
 
         Registered clean = registerAndIngest(uniqueName("vetinjectok"), createUpstream(DEFAULT_MANIFEST));
         assertThat(verdictOf(clean, "prompt-injection").state()).isEqualTo(VerdictState.PASS);
@@ -435,8 +436,10 @@ class VettingTests extends AbstractGatewayTest {
 
         VettingRepository.VerdictView secret = verdictOf(registered, "secret-scan");
         assertThat(secret.state()).isEqualTo(VerdictState.PASS);
-        assertThat(secret.findings()).singleElement().satisfies(finding -> assertThat(finding.message())
-                .startsWith("2 file(s) not scanned: over the scan size limit"));
+        assertThat(secret.findings())
+                .singleElement()
+                .satisfies(finding ->
+                        assertThat(finding.message()).startsWith("2 file(s) not scanned: over the scan size limit"));
         assertThat(secret.detail()).contains("2 file(s) not scanned (2 over the size limit)");
         assertThat(fetchLogRepository.list().stream()
                         .filter(entry -> name.equals(entry.get("marketplace")))

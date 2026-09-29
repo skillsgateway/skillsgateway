@@ -285,14 +285,15 @@ class OpenApiContractTests extends AbstractGatewayTest {
         // exact regression its check exists to catch.
         String served = servedDocument();
 
-        assertThatThrownBy(() -> assertDescribesExactlyTheSubscribableEvents(
-                        mutated(served, root -> ((ObjectNode) root.required("webhooks"))
-                                .remove(WebhookEvent.SNAPSHOT_REJECTED))))
+        assertThatThrownBy(() -> assertDescribesExactlyTheSubscribableEvents(mutated(
+                        served,
+                        root -> ((ObjectNode) root.required("webhooks")).remove(WebhookEvent.SNAPSHOT_REJECTED))))
                 .as("an event dropped from the contract")
                 .isInstanceOf(AssertionError.class);
 
-        assertThatThrownBy(() -> assertEachDeliveryReferencesItsOwnPayload(
-                        mutated(served, root -> ((ObjectNode) delivery(root, WebhookEvent.SNAPSHOT_APPROVED)
+        assertThatThrownBy(() -> assertEachDeliveryReferencesItsOwnPayload(mutated(
+                        served,
+                        root -> ((ObjectNode) delivery(root, WebhookEvent.SNAPSHOT_APPROVED)
                                         .required("requestBody")
                                         .required("content")
                                         .required("application/json")
@@ -311,14 +312,17 @@ class OpenApiContractTests extends AbstractGatewayTest {
                 .as("a payload field no longer declared always present")
                 .isInstanceOf(AssertionError.class);
 
-        assertThatThrownBy(() -> assertEachDeliveryDescribesItsTransportHeaders(mutated(served, root -> ((ArrayNode)
-                                delivery(root, WebhookEvent.SNAPSHOT_APPROVED).required("parameters"))
-                        .removeAll())))
+        assertThatThrownBy(() -> assertEachDeliveryDescribesItsTransportHeaders(mutated(
+                        served,
+                        root -> ((ArrayNode) delivery(root, WebhookEvent.SNAPSHOT_APPROVED)
+                                        .required("parameters"))
+                                .removeAll())))
                 .as("a transport header no longer described")
                 .isInstanceOf(AssertionError.class);
 
-        assertThatThrownBy(() -> assertThePayloadIsReachableFromPaths(
-                        mutated(served, root -> ((ObjectNode) root.required("paths")
+        assertThatThrownBy(() -> assertThePayloadIsReachableFromPaths(mutated(
+                        served,
+                        root -> ((ObjectNode) root.required("paths")
                                         .required("/api/v1/webhooks/events")
                                         .required("get")
                                         .required("responses"))

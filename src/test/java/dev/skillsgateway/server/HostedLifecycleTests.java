@@ -118,10 +118,12 @@ class HostedLifecycleTests extends AbstractGatewayTest {
 
         Snapshot snapshot = onlySnapshot(publisher.marketplace());
         assertThat(snapshot.state()).isEqualTo(Snapshot.HELD);
-        assertThat(vettingRepository.latestRun(snapshot.id())).isPresent().get().satisfies(run -> assertThat(
-                        run.verdicts())
-                .as("the chain ran and found something")
-                .anySatisfy(verdict -> assertThat(verdict.findings()).isNotEmpty()));
+        assertThat(vettingRepository.latestRun(snapshot.id()))
+                .isPresent()
+                .get()
+                .satisfies(run -> assertThat(run.verdicts())
+                        .as("the chain ran and found something")
+                        .anySatisfy(verdict -> assertThat(verdict.findings()).isNotEmpty()));
     }
 
     @Test

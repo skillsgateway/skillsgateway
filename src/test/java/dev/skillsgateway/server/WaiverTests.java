@@ -251,8 +251,9 @@ class WaiverTests extends AbstractGatewayTest {
         WaiverEvaluation.Effect effect = waiverService.evaluate(id);
 
         assertThat(effect.outcome()).isEqualTo(VettingChain.Outcome.CLEAR_WITH_WAIVERS);
-        assertThat(effect.suppressions()).singleElement().satisfies(suppression -> assertThat(suppression.ruleId())
-                .isEqualTo(RULE));
+        assertThat(effect.suppressions())
+                .singleElement()
+                .satisfies(suppression -> assertThat(suppression.ruleId()).isEqualTo(RULE));
         assertThat(effect.uncovered()).isEmpty();
         // The recorded evidence is never rewritten by a waiver.
         assertThat(effect.recordedOutcome()).isEqualTo(VettingChain.Outcome.BLOCKED);

@@ -182,8 +182,9 @@ class ExternalSourceResolutionTests extends AbstractExternalSourceTest {
                 .findFirst()
                 .orElseThrow()
                 .findings();
-        assertThat(findings).isNotEmpty().anySatisfy(finding -> assertThat(finding.location())
-                .startsWith("_plugins/tools/DEPLOY.md:"));
+        assertThat(findings)
+                .isNotEmpty()
+                .anySatisfy(finding -> assertThat(finding.location()).startsWith("_plugins/tools/DEPLOY.md:"));
     }
 
     @Test

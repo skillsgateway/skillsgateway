@@ -222,8 +222,9 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
         assertThat(outcome).as("outcome for %s", vetter.description()).isEqualTo(VettingChain.Outcome.BLOCKED);
         VettingRepository.VerdictView verdict = verdictOf(registered, vetter.name());
         assertThat(verdict.state()).as("state for %s", vetter.description()).isEqualTo(VerdictState.ERROR);
-        assertThat(verdict.findings()).extracting(Finding::message).anySatisfy(message -> assertThat(message)
-                .contains("produced no verdict"));
+        assertThat(verdict.findings())
+                .extracting(Finding::message)
+                .anySatisfy(message -> assertThat(message).contains("produced no verdict"));
     }
 
     private ExternalVettingConnector vetter(String name, String url) {

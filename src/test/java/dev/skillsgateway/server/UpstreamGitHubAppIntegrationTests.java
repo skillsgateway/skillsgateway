@@ -190,8 +190,9 @@ class UpstreamGitHubAppIntegrationTests extends AbstractExternalSourceTest {
         ingest(name).andExpect(status().isBadGateway());
         assertThat(tokenRequests()).isEqualTo(4);
         List<String[]> seen = FORGE.authorizations();
-        assertThat(seen.subList(before, seen.size())).isNotEmpty().allSatisfy(request -> assertThat(request[1])
-                .isEqualTo(basic("ghs_fourth_" + repo)));
+        assertThat(seen.subList(before, seen.size()))
+                .isNotEmpty()
+                .allSatisfy(request -> assertThat(request[1]).isEqualTo(basic("ghs_fourth_" + repo)));
     }
 
     @Test
@@ -206,8 +207,9 @@ class UpstreamGitHubAppIntegrationTests extends AbstractExternalSourceTest {
         register(uniqueName("port"), FORGE.baseUrl() + "/pinned/" + repo + ".git")
                 .andExpect(status().isCreated());
 
-        assertThat(elsewhere.authorizations()).isNotEmpty().allSatisfy(request -> assertThat(request[1])
-                .isEmpty());
+        assertThat(elsewhere.authorizations())
+                .isNotEmpty()
+                .allSatisfy(request -> assertThat(request[1]).isEmpty());
     }
 
     @Test

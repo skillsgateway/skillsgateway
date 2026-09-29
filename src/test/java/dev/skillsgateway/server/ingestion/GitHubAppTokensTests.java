@@ -349,10 +349,11 @@ class GitHubAppTokensTests {
         assertThat(tokens.token(url, false).cached()).isFalse();
         assertThat(tokens.token(PREFIX + "other.git", false).cached()).isFalse();
         assertThat(minted).hasValue(5);
-        assertThat(tokenBodies).allSatisfy(body -> assertThat(body)
-                .isIn(
-                        "{\"repositories\":[\"skills\"],\"permissions\":{\"contents\":\"read\"}}",
-                        "{\"repositories\":[\"other\"],\"permissions\":{\"contents\":\"read\"}}"));
+        assertThat(tokenBodies)
+                .allSatisfy(body -> assertThat(body)
+                        .isIn(
+                                "{\"repositories\":[\"skills\"],\"permissions\":{\"contents\":\"read\"}}",
+                                "{\"repositories\":[\"other\"],\"permissions\":{\"contents\":\"read\"}}"));
     }
 
     @Test

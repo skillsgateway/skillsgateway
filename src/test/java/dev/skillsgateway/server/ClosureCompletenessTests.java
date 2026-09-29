@@ -205,9 +205,10 @@ class ClosureCompletenessTests extends AbstractExternalSourceTest {
         Snapshot after = snapshotRepository.findById(id).orElseThrow();
         assertThat(after.state()).isEqualTo(Snapshot.HELD);
         assertThat(after.decidedBy()).isNull();
-        assertThat(ledger(composite.marketplace(), REFUSED)).singleElement().satisfies(detail -> assertThat(detail)
-                .startsWith("closure-incomplete:")
-                .contains(named));
+        assertThat(ledger(composite.marketplace(), REFUSED))
+                .singleElement()
+                .satisfies(detail ->
+                        assertThat(detail).startsWith("closure-incomplete:").contains(named));
         try (Repository published = storage.published(composite.marketplace())) {
             assertThat(published.resolve("refs/heads/main")).isNull();
         }

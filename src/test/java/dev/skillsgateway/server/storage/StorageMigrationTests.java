@@ -169,10 +169,11 @@ class StorageMigrationTests {
         // The head is the branch a client checks out on clone, so a destination whose head names
         // something else serves a different marketplace than the source did -- with every object
         // and every reference present, which is exactly the failure a byte count would miss.
-        GitStorage target =
-                new DamagingGitStorage(objectStore(), GitStorage.Role.PUBLISHED, damaged, repository -> repository
-                        .updateRef(Constants.HEAD, true)
-                        .link(Constants.R_HEADS + "elsewhere"));
+        GitStorage target = new DamagingGitStorage(
+                objectStore(),
+                GitStorage.Role.PUBLISHED,
+                damaged,
+                repository -> repository.updateRef(Constants.HEAD, true).link(Constants.R_HEADS + "elsewhere"));
 
         StorageMigration.Report report = migration().migrate(source, target);
 

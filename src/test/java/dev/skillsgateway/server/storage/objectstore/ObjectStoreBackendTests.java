@@ -183,9 +183,10 @@ class ObjectStoreBackendTests {
                     new ReceiveCommand(one, two, SNAPSHOT_PREFIX + two.name()));
             execute(hosted, commands, true);
 
-            assertThat(commands).allSatisfy(command -> assertThat(command.getResult())
-                    .as("atomic means all or nothing, including the command that was fine")
-                    .isEqualTo(ReceiveCommand.Result.LOCK_FAILURE));
+            assertThat(commands)
+                    .allSatisfy(command -> assertThat(command.getResult())
+                            .as("atomic means all or nothing, including the command that was fine")
+                            .isEqualTo(ReceiveCommand.Result.LOCK_FAILURE));
             assertThat(hosted.exactRef(MAIN)).isNull();
             assertThat(manifest(client, prefix, "hosted", marketplace).sequence())
                     .as("a refused atomic push must leave the manifest untouched")

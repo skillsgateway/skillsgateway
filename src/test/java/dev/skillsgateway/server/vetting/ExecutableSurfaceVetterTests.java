@@ -212,8 +212,9 @@ class ExecutableSurfaceVetterTests {
     void aHookThatRunsAPackageRunnerBlocks(String command) {
         Verdict verdict = vet(snapshot("p/hooks/hooks.json", hook("PostToolUse", command)));
 
-        assertThat(high(verdict)).singleElement().satisfies(finding -> assertThat(finding.id())
-                .isEqualTo(PACKAGE_RUN));
+        assertThat(high(verdict))
+                .singleElement()
+                .satisfies(finding -> assertThat(finding.id()).isEqualTo(PACKAGE_RUN));
     }
 
     @Test

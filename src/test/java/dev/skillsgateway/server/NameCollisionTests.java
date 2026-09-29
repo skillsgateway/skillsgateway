@@ -308,9 +308,10 @@ class NameCollisionTests extends AbstractNameCollisionTest {
         mockMvc.perform(post("/api/v1/snapshots/{id}/approve", id)
                         .with(oidcLogin().idToken(token -> token.subject("alice"))))
                 .andExpect(status().isOk());
-        assertThat(ledger(newcomer, WaiverService.EVENT_APPLIED)).anySatisfy(detail -> assertThat(detail)
-                .contains("waiver=" + own.id())
-                .contains("rule=" + NameCollisionGate.RULE_ID));
+        assertThat(ledger(newcomer, WaiverService.EVENT_APPLIED))
+                .anySatisfy(detail -> assertThat(detail)
+                        .contains("waiver=" + own.id())
+                        .contains("rule=" + NameCollisionGate.RULE_ID));
         assertThat(ledger(newcomer, FourEyesGate.EVENT_CONFLICT)).isNotEmpty();
     }
 
@@ -348,9 +349,10 @@ class NameCollisionTests extends AbstractNameCollisionTest {
 
         assertThatThrownBy(() -> approvalService.approve(colliding.snapshot().id(), "alice"))
                 .isInstanceOf(NameCollisionException.class);
-        assertThat(ledger(colliding, "snapshot-approval-refused")).anySatisfy(detail -> assertThat(detail)
-                .startsWith(NameCollisionGate.RULE_ID + ":")
-                .contains(incumbent.marketplace().name()));
+        assertThat(ledger(colliding, "snapshot-approval-refused"))
+                .anySatisfy(detail -> assertThat(detail)
+                        .startsWith(NameCollisionGate.RULE_ID + ":")
+                        .contains(incumbent.marketplace().name()));
 
         mockMvc.perform(post(
                                 "/api/v1/snapshots/{id}/waivers",

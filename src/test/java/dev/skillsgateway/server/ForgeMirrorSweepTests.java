@@ -251,9 +251,10 @@ class ForgeMirrorSweepTests extends AbstractGatewayTest {
         assertThat(mirror.report().inSync()).isTrue();
         // Named as a repair rather than as an update: nothing was approved or revoked when it ran.
         assertThat(mirrorEvents()).contains(ForgeMirrorService.EVENT_REPAIRED);
-        assertThat(mirrorDetails(ForgeMirrorService.EVENT_REPAIRED)).anySatisfy(detail -> assertThat(detail)
-                .contains(MirrorReconciliationSweep.REASON)
-                .contains(snapshotRef));
+        assertThat(mirrorDetails(ForgeMirrorService.EVENT_REPAIRED))
+                .anySatisfy(detail -> assertThat(detail)
+                        .contains(MirrorReconciliationSweep.REASON)
+                        .contains(snapshotRef));
 
         // ---- Metrics (GW_FACADE_0026): the divergence is readable without asking the mirror, and the
         // meters carry no marketplace, commit, principal or credential.

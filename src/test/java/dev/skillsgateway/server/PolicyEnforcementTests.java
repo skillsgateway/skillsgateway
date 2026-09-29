@@ -149,7 +149,8 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
                 true);
         try {
             org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
-                    java.time.Duration.ofSeconds(30), () -> mockMvc.perform(post(
+                    java.time.Duration.ofSeconds(30),
+                    () -> mockMvc.perform(post(
                                             "/api/v1/snapshots/{id}/approve",
                                             registered.snapshot().id())
                                     .with(oidcLogin().idToken(token -> token.subject("alice"))))
