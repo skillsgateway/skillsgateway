@@ -16,6 +16,9 @@ Load these before working in their areas:
 - `.claude/skills/documentation` — MkDocs site structure, Markdown/Mermaid conventions, docs-in-same-PR rule
 - `.claude/skills/docs-diagrams` — headline docs diagrams: Mermaid SSOT in `docs/diagrams/`, generated diagram-design SVG pairs, the Skills Gateway skin
 - `.claude/skills/impeccable` — design harness (`/impeccable audit|harden|critique`) run on any PR touching a portal page; `PRODUCT.md` and `DESIGN.md` at the root are its context, and design-conventions outranks it
+- `.claude/skills/ui-screenshots` — before/after screenshots of portal changes
+  (Storybook stories or the e2e harness) for the PR body; `.claude/skills/github-upload`
+  uploads them
 - `.claude/skills/old-coder` — evidence-first discipline for high-assurance work:
   changes touching trust boundaries (facade auth, `ApprovalService`, registration
   allowlist) or anything with data-loss/concurrency stakes. OpenSpec stays the
@@ -101,6 +104,12 @@ The gates above ask "is this well specified?". This one asks "should this exist?
 - The API contract is additive within a major; a breaking change moves the path
   prefix **and** ships as a major, and CI refuses one that the PR title does not
   declare. See `docs/manual/reference/compatibility.md` — "The API contract".
+- **A portal change carries before/after screenshots in its PR body.** A PR that
+  changes `src/main/frontend/src/` is reviewed by looking at it, and the
+  `pr-screenshots` check fails it until the body has an image or the
+  `no-screenshots` label (for a change with nothing visible). Uploads are
+  permanent, so the owner sees each image before it is uploaded. Recipe:
+  `.claude/skills/ui-screenshots`.
 - Documentation lives in `docs/manual/` (MkDocs Material). Any change to
   behavior, the REST API, configuration, or the portal updates the affected
   pages **in the same PR**.

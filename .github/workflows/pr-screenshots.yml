@@ -1,0 +1,50 @@
+name: PR screenshots
+
+# A portal change is reviewed by looking at it: a PR that changes the portal's
+# source carries before/after images in its body (.claude/skills/ui-screenshots).
+# A rule alone was measured elsewhere at about half the PRs that needed it. The
+# `no-screenshots` label is the deliberate exception for a change nothing can see.
+
+on:
+  pull_request:
+    # `edited` and `labeled` re-run the check once the images or the label are added.
+    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  screenshots:
+    name: Screenshots for portal changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require before/after images when the portal changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # Portal source only: tests, stories, MSW fixtures and generated API types show nothing new.
+          portal=$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[].filename' \
+            | grep -E '^src/main/frontend/src/' \
+            | grep -vE '\.(test|stories)\.tsx?$|^src/main/frontend/src/test/|^src/main/frontend/src/api/types\.gen\.ts$' \
+            || true)
+          if [ -z "$portal" ]; then
+            echo "No portal source changed; no screenshots needed."
+            exit 0
+          fi
+          # Read label and body from the event payload, never interpolated into the script.
+          if jq -e '.pull_request.labels | any(.name == "no-screenshots")' "$GITHUB_EVENT_PATH" > /dev/null; then
+            echo "::notice::Labelled no-screenshots: the change is declared to have nothing visible."
+            exit 0
+          fi
+          if jq -r '.pull_request.body // ""' "$GITHUB_EVENT_PATH" | grep -q 'github.com/user-attachments/assets/'; then
+            echo "The PR body carries images."
+            exit 0
+          fi
+          echo "Portal source changed:"
+          echo "$portal" | sed 's/^/  /'
+          echo "::error::This PR changes the portal but its body has no screenshot. Add before/after images (see .claude/skills/ui-screenshots) or, if nothing visible changed, label it no-screenshots."
+          exit 1
