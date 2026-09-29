@@ -3684,6 +3684,10 @@ finding. Dependency manifests (<code>package.json</code>, <code>requirements.txt
 a lockfile, an unpinned version range, or a package with a known
 vulnerability is not reported. Approving such a snapshot approves whatever
 the registry serves on the day the skill runs.</p>
+<p>LSP servers a plugin declares (<code>lspServers</code> in its <code>plugin.json</code>) are not
+read. Like a hook, such a server is a local process that starts without
+anyone invoking it, but its command is neither listed in the inventory nor
+scanned.</p>
 </div>
 <h3 id="license-scan"><code>license-scan</code><a class="headerlink" href="#license-scan" title="Permanent link">&para;</a></h3>
 <p>Deterministic license detection over the pinned content, evaluated against the
