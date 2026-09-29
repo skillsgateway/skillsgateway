@@ -31,8 +31,8 @@ the part of that idea the gateway cannot already see.
     (`package.json`, `requirements.txt`, `pyproject.toml`, `Cargo.toml`). The
     finding says whether a lockfile sits beside it;
   - a package install or package runner, in the shapes `runtime-package-run`
-    already recognises, in a skill's scripts, or in a code block or code span of
-    a skill's Markdown or of a command or agent.
+    already recognises, in a skill's scripts, or in a fenced code block of a
+    skill's Markdown or of a command or agent.
 
   Medium, as for MCP servers: runtime installs are a documented plugin
   pattern, and blocking them would teach reviewers to switch the vetter off.

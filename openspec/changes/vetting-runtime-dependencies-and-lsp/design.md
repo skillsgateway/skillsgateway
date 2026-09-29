@@ -127,11 +127,12 @@ whether a section is empty, and a new dependency for that is not warranted.
   `.ps1`, `.rb`) or a `#!` first line. The whole file is scanned, as a launched
   hook file is.
 - **Instructions.** Every Markdown file under a skill's directory, and the
-  command and agent files the inventory lists. Only fenced code blocks and
-  inline code spans are scanned, each as a command. Prose is not. The vetting
-  page's rule that "documentation that mentions `curl` is never a finding"
-  still holds for prose, and an instruction to run a command is written as
-  code in practice.
+  command and agent files the inventory lists. Only fenced code blocks
+  (```` ``` ```` and `~~~`) are scanned, each as a command. Prose and inline
+  code spans are not: an inline span is usually a mention, and the existing
+  test for SVC_GW_VETTING_0048 requires a mention in `SKILL.md` to stay silent
+  (acceptance.md, R1). The vetting page's rule that "documentation that
+  mentions `curl` is never a finding" still holds.
 
 A file already scanned as a launched hook, MCP or LSP file is skipped. Each
 line then carries the strongest applicable finding, never two.

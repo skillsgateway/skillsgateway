@@ -52,10 +52,11 @@ first run.
   manifests under `node_modules/`, `.venv/` and `target/`. Watch each fail.
 - [ ] 4.2 Tests for 0054. One medium `runtime-dependency` at the line for:
   `npm install` in a skill's `.sh`; `pip install` in an extensionless file
-  with a shebang; `npx -y` in a fenced block of `SKILL.md`; `uvx` in an inline
-  code span of a skill's reference Markdown; and `pip install` in a command's
-  and an agent's code block. Silent for: `npm install` in prose, in a
-  plugin-root `README.md`, and in a script already scanned as a hook's launched
+  with a shebang; `npx -y` in a fenced block of `SKILL.md`; `uvx` in a `~~~`
+  block of a skill's reference Markdown; and `pip install` in a command's
+  and an agent's fenced block. Silent for: `npm install` in prose and in an
+  inline span of `SKILL.md`, in a fenced block of the plugin-root `README.md`,
+  and in a script already scanned as a hook's launched
   file (which keeps its high finding). A `curl | sh` in a skill script yields
   no `runtime-dependency`. Watch each fail.
 - [ ] 4.2a Tests for 0056. One high `skill-fetch-exec` at the line for: `curl … | sh`
