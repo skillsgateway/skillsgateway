@@ -43,14 +43,14 @@ first run.
 
 ## 4. Skill, command and agent files (SVC_GW_VETTING_0053, SVC_GW_VETTING_0054, SVC_GW_VETTING_0056)
 
-- [ ] 4.1 Tests for 0053. One medium `runtime-dependency` at the declaring
+- [x] 4.1 Tests for 0053. One medium `runtime-dependency` at the declaring
   line, with lockfile presence in the message, for: `package.json` with
   `dependencies`, and with only `devDependencies`; `requirements.txt`;
   `pyproject.toml` with an inline array, with a multi-line array, and with
   poetry dependencies; `Cargo.toml` with `[dependencies]`. Silent for: a
   `package.json` with only scripts, a poetry table with only `python`, and
   manifests under `node_modules/`, `.venv/` and `target/`. Watch each fail.
-- [ ] 4.2 Tests for 0054. One medium `runtime-dependency` at the line for:
+- [x] 4.2 Tests for 0054. One medium `runtime-dependency` at the line for:
   `npm install` in a skill's `.sh`; `pip install` in an extensionless file
   with a shebang; `npx -y` in a fenced block of `SKILL.md`; `uvx` in a `~~~`
   block of a skill's reference Markdown; and `pip install` in a command's
@@ -59,14 +59,14 @@ first run.
   and in a script already scanned as a hook's launched
   file (which keeps its high finding). A `curl | sh` in a skill script yields
   no `runtime-dependency`. Watch each fail.
-- [ ] 4.2a Tests for 0056. One high `skill-fetch-exec` at the line for: `curl … | sh`
+- [x] 4.2a Tests for 0056. One high `skill-fetch-exec` at the line for: `curl … | sh`
   in a skill's `.sh`; download-then-chmod-then-run in a skill's `.py`; `curl
   … | bash` in a fenced block of `SKILL.md` and of an agent. Silent for: a
   download never made executable, and a prose mention. Watch each fail.
-- [ ] 4.3 Implement all three in `ExecutableSurfaceVetter`
+- [x] 4.3 Implement all three in `ExecutableSurfaceVetter`
   (`@Requirements GW_VETTING_0053, GW_VETTING_0054, GW_VETTING_0056`), with the vetter's
   description and coverage summary updated. Make 4.1, 4.2 and 4.2a green.
-- [ ] 4.4 Integration: extend `ExecutableSurfaceTests`
+- [x] 4.4 Integration: extend `ExecutableSurfaceTests`
   (`@SVCs SVC_GW_VETTING_0053, SVC_GW_VETTING_0054, SVC_GW_VETTING_0055,
   SVC_GW_VETTING_0056`). A `skill-fetch-exec` blocks. A
   plugin with a `package.json` and an `lsp-fetch-exec` blocks at approval. The

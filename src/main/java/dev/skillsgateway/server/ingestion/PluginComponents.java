@@ -105,6 +105,7 @@ public final class PluginComponents {
             List<McpCommand> mcpCommands,
             List<Component> lspServers,
             List<McpCommand> lspCommands,
+            List<String> skillFiles,
             List<Problem> hookProblems) {}
 
     /**
@@ -211,7 +212,8 @@ public final class PluginComponents {
             reader.lspDeclaration(entry.path("lspServers"), manifest, entryPointer + "/lspServers", lsp);
         }
 
-        for (String skill : reader.skillFiles(plugin, entry)) {
+        List<String> skillFiles = reader.skillFiles(plugin, entry);
+        for (String skill : skillFiles) {
             reader.frontmatterHooks(skill, "skill " + parentName(skill), hooks);
         }
         for (Component agent : agents) {
@@ -227,6 +229,7 @@ public final class PluginComponents {
                 List.copyOf(mcpCommands),
                 List.copyOf(lsp.servers().values()),
                 List.copyOf(lsp.commands().values()),
+                List.copyOf(skillFiles),
                 List.copyOf(reader.problems));
     }
 
