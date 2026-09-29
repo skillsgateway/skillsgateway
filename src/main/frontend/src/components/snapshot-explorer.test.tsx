@@ -107,3 +107,30 @@ test("an_addressed_line_is_focused_once_the_file_is_shown", async () => {
   await (await pane()).findByRole("list", { name: `Lines of ${SKILL}` });
   expect(document.activeElement).toBe(container.querySelector('[data-line="5"]'));
 });
+
+/**
+ * @SVCs SVC_GW_APPROVAL_0029
+ */
+test("the_tree_marks_a_file_with_findings", async () => {
+  renderExplorer(SKILL);
+
+  const tree = within(await screen.findByRole("navigation", { name: /File tree of snapshot/ }));
+  expect(
+    await tree.findByRole("button", { name: `${SKILL}, modified, 3 findings, highest high` }),
+  ).toHaveTextContent("high · 3");
+});
+
+/**
+ * @SVCs SVC_GW_APPROVAL_0029
+ */
+test("a_vetting_read_that_fails_leaves_the_file_readable", async () => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  server.use(http.get("/api/v1/snapshots/:id/vetting", () => HttpResponse.json({ detail: "no" }, { status: 403 })));
+  render(
+    <QueryClientProvider client={queryClient}>
+      <SnapshotExplorer snapshotId={1} selectedPath="docs/NEW.md" onSelect={() => {}} />
+    </QueryClientProvider>,
+  );
+
+  expect(await (await pane()).findByRole("heading", { name: "Hello skill" })).toBeInTheDocument();
+});

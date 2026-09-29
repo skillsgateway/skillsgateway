@@ -47,7 +47,7 @@ on the changed surfaces.
 
   Watch it fail, then wire it into `FileContent` and `SnapshotExplorer`
   (`@Requirements GW_APPROVAL_0029`).
-- [ ] 3.4 Tree marker (D7): a `snapshot-file-tree` test for "2 high" on a file
+- [x] 3.4 Tree marker (D7): a `snapshot-file-tree` test for "2 high" on a file
   row, and none on a directory. Implement.
 - [ ] 3.5 Stories for `SourceView`: plain, marked (every severity), two
   findings on one line, waived, beyond-truncation, long lines, and dark mode.

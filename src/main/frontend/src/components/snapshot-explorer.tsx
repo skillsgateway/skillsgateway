@@ -321,6 +321,7 @@ type TreeProps = {
   expanded: ReadonlySet<string>;
   onToggle: (path: string) => void;
   onSelect: (path: string) => void;
+  findings: ReadonlyMap<string, readonly FileFinding[]>;
 };
 
 /** One directory's children, read when it is opened; a directory wider than a page pages on request. */
@@ -537,6 +538,7 @@ export function SnapshotExplorer({
     expanded: opened,
     onToggle: toggle,
     onSelect,
+    findings,
   };
 
   return (
