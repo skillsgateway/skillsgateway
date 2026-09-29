@@ -528,6 +528,11 @@ yield one finding per line of it, not one per hook.
     vulnerability is not reported. Approving such a snapshot approves whatever
     the registry serves on the day the skill runs.
 
+    LSP servers a plugin declares (`lspServers` in its `plugin.json`) are not
+    read. Like a hook, such a server is a local process that starts without
+    anyone invoking it, but its command is neither listed in the inventory nor
+    scanned.
+
 ### `license-scan`
 
 Deterministic license detection over the pinned content, evaluated against the
