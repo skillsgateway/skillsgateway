@@ -73,8 +73,9 @@ class MinimumReleaseAgeTests extends AbstractGatewayTest {
 
         // And it is on the ledger: a window that turned an approval away has to be as visible as
         // one that let it through.
-        assertThat(ledger(name, "snapshot-approval-refused")).singleElement().satisfies(detail -> assertThat(detail)
-                .contains("minimum-release-age", "remaining="));
+        assertThat(ledger(name, "snapshot-approval-refused"))
+                .singleElement()
+                .satisfies(detail -> assertThat(detail).contains("minimum-release-age", "remaining="));
     }
 
     @Test

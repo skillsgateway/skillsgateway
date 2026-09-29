@@ -234,10 +234,12 @@ class EstateReconciliationTests extends AbstractGatewayTest {
 
         // Each failure is loud on the ledger; none of them wrote anything else there.
         List<Map<String, Object>> failures = ledger("estate-reconciliation-failed", EstateReconciler.ACTOR);
-        assertThat(failures).anySatisfy(entry -> assertThat(String.valueOf(entry.get("detail")))
-                .contains("estate-evil"));
-        assertThat(failures).anySatisfy(entry -> assertThat(String.valueOf(entry.get("detail")))
-                .contains("estate-webhookmode"));
+        assertThat(failures)
+                .anySatisfy(
+                        entry -> assertThat(String.valueOf(entry.get("detail"))).contains("estate-evil"));
+        assertThat(failures)
+                .anySatisfy(
+                        entry -> assertThat(String.valueOf(entry.get("detail"))).contains("estate-webhookmode"));
         assertThat(fetchLogRepository.list().stream()
                         .filter(entry -> ((Number) entry.get("id")).longValue() > ledgerHead)
                         .filter(entry -> "marketplace-registered".equals(entry.get("event"))))

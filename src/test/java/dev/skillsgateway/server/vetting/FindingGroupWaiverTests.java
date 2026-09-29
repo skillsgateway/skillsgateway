@@ -98,8 +98,9 @@ class FindingGroupWaiverTests {
                 finding(RULE, "x/SKILL.md:7", null), // not tied to a blob
                 finding(RULE, "y/SKILL.md:7", null)));
 
-        assertThat(groups).hasSize(6).allSatisfy(group -> assertThat(group.locations())
-                .hasSize(1));
+        assertThat(groups)
+                .hasSize(6)
+                .allSatisfy(group -> assertThat(group.locations()).hasSize(1));
     }
 
     // ---- the group waiver (GW_VETTING_0042) ----

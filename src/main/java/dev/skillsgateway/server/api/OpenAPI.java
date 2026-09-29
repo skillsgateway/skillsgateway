@@ -146,8 +146,9 @@ public class OpenAPI {
     OpenApiCustomizer refusalsAreProblemDocuments() {
         return openApi -> {
             openApi.getComponents().addSchemas(PROBLEM_DETAIL, problemDetailSchema());
-            openApi.getPaths().values().forEach(pathItem -> pathItem.readOperations()
-                    .forEach(operation -> {
+            openApi.getPaths()
+                    .values()
+                    .forEach(pathItem -> pathItem.readOperations().forEach(operation -> {
                         ApiResponses responses = operation.getResponses();
                         if (responses == null) {
                             return;

@@ -66,8 +66,9 @@ class SkillConformanceEnforceTests extends AbstractGatewayTest {
                 .singleElement()
                 .satisfies(verdict -> {
                     assertThat(verdict.state()).isEqualTo(VerdictState.FAIL);
-                    assertThat(verdict.findings()).allSatisfy(finding -> assertThat(finding.severity())
-                            .isEqualTo(Severity.HIGH));
+                    assertThat(verdict.findings())
+                            .allSatisfy(
+                                    finding -> assertThat(finding.severity()).isEqualTo(Severity.HIGH));
                 });
         // The posture is in the recorded chain identity, so this run is distinguishable from a
         // default deployment's run over the same content.

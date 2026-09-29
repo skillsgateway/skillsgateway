@@ -88,8 +88,9 @@ class SyncTests extends AbstractGatewayTest {
         marketplaceRepository.updateSyncMode(name, Marketplace.SYNC_SCHEDULED, null);
         syncService.sweep(Integer.MAX_VALUE);
         List<Snapshot> snapshots = snapshotRepository.listByMarketplace(marketplace.id());
-        assertThat(snapshots).isNotEmpty().allSatisfy(snapshot -> assertThat(snapshot.state())
-                .isEqualTo(Snapshot.HELD));
+        assertThat(snapshots)
+                .isNotEmpty()
+                .allSatisfy(snapshot -> assertThat(snapshot.state()).isEqualTo(Snapshot.HELD));
     }
 
     @Test

@@ -142,8 +142,9 @@ class MarketplaceRemovalTests extends AbstractGatewayTest {
         assertThat(marketplaceRepository.findById(registered.marketplace().id()))
                 .isPresent();
         assertThat(snapshots.findById(held.id())).isPresent();
-        assertThat(approvalService.provenance(approved.id())).hasValueSatisfying(p -> assertThat(p.upstreamUrl())
-                .isEqualTo(registered.marketplace().url()));
+        assertThat(approvalService.provenance(approved.id()))
+                .hasValueSatisfying(p -> assertThat(p.upstreamUrl())
+                        .isEqualTo(registered.marketplace().url()));
         assertThat(ledger(name))
                 .extracting(FetchLogRepository.AuditEntry::event)
                 .contains(
@@ -565,8 +566,9 @@ class MarketplaceRemovalTests extends AbstractGatewayTest {
         removalService.remove(name, "a secret incident", "root");
 
         List<WebhookDelivery> delivered = deliveryRepository.listBySubscriber(subscriber);
-        assertThat(delivered).singleElement().satisfies(d -> assertThat(d.event())
-                .isEqualTo(WebhookEvent.MARKETPLACE_REMOVED));
+        assertThat(delivered)
+                .singleElement()
+                .satisfies(d -> assertThat(d.event()).isEqualTo(WebhookEvent.MARKETPLACE_REMOVED));
         @SuppressWarnings("unchecked")
         Map<String, Object> body =
                 new ObjectMapper().readValue(delivered.getFirst().payload(), Map.class);

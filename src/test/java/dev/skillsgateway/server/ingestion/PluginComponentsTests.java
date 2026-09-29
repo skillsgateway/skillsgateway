@@ -304,8 +304,9 @@ class PluginComponentsTests {
         assertThat(components.hooks()).isEmpty();
         assertThat(components.commands()).extracting(Component::name).containsExactly("ok");
         assertThat(components.mcpServers()).isEmpty();
-        assertThat(components.hookProblems()).singleElement().satisfies(problem -> assertThat(problem.path())
-                .isEqualTo("p/hooks/hooks.json"));
+        assertThat(components.hookProblems())
+                .singleElement()
+                .satisfies(problem -> assertThat(problem.path()).isEqualTo("p/hooks/hooks.json"));
     }
 
     @Test
@@ -314,8 +315,9 @@ class PluginComponentsTests {
         Map<String, String> files = files("p/hooks/hooks.json", null);
         Components components = read(files, "p");
 
-        assertThat(components.hookProblems()).singleElement().satisfies(problem -> assertThat(problem.message())
-                .contains("size limit"));
+        assertThat(components.hookProblems())
+                .singleElement()
+                .satisfies(problem -> assertThat(problem.message()).contains("size limit"));
     }
 
     @Test

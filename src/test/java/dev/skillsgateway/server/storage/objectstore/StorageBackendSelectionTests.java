@@ -69,11 +69,12 @@ class StorageBackendSelectionTests {
     @Test
     @SVCs({"SVC_GW_FACADE_0010"})
     void anUnrecognisedBackendFailsTheStart() {
-        contexts.withPropertyValues("skills-gateway.storage.backend=magic").run(context -> assertThat(context)
-                .hasFailed()
-                .getFailure()
-                .hasStackTraceContaining("skills-gateway.storage.backend")
-                .hasStackTraceContaining("magic"));
+        contexts.withPropertyValues("skills-gateway.storage.backend=magic")
+                .run(context -> assertThat(context)
+                        .hasFailed()
+                        .getFailure()
+                        .hasStackTraceContaining("skills-gateway.storage.backend")
+                        .hasStackTraceContaining("magic"));
     }
 
     /**
@@ -85,11 +86,12 @@ class StorageBackendSelectionTests {
     @Test
     @SVCs({"SVC_GW_FACADE_0010"})
     void anUnrecognisedBackendNamesTheAcceptedValues() {
-        contexts.withPropertyValues("skills-gateway.storage.backend=magic").run(context -> assertThat(context)
-                .hasFailed()
-                .getFailure()
-                .hasStackTraceContaining("filesystem")
-                .hasStackTraceContaining("object-store"));
+        contexts.withPropertyValues("skills-gateway.storage.backend=magic")
+                .run(context -> assertThat(context)
+                        .hasFailed()
+                        .getFailure()
+                        .hasStackTraceContaining("filesystem")
+                        .hasStackTraceContaining("object-store"));
     }
 
     // the object store without a bucket fails the start rather than falling back to disk

@@ -152,8 +152,9 @@ class ClaimRoleMapperTests {
             mapper.truncated(authentication);
 
             List<String> exact = exactMatches(payload);
-            assertThat(roles).as("payload %s", payload).allSatisfy(role -> assertThat(role.source())
-                    .isEqualTo(EffectiveRole.CLAIM));
+            assertThat(roles)
+                    .as("payload %s", payload)
+                    .allSatisfy(role -> assertThat(role.source()).isEqualTo(EffectiveRole.CLAIM));
             assertThat(roles.stream()
                             .map(EffectiveRole::role)
                             .distinct()

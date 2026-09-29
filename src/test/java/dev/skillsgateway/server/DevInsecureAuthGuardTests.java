@@ -48,11 +48,12 @@ class DevInsecureAuthGuardTests {
     @SVCs({"SVC_GW_AUTH_0019"})
     void the_escape_hatch_refuses_to_start_where_an_identity_provider_is_configured() {
         // The local development loop: the escape hatch on, no identity provider configured.
-        contexts.withPropertyValues("skills-gateway.dev-insecure-auth=true").run(context -> assertThat(context)
-                .hasNotFailed()
-                .hasSingleBean(DevInsecureAuthGuard.class)
-                // The registrations the later cases are judged on are really present.
-                .hasSingleBean(ClientRegistrationRepository.class));
+        contexts.withPropertyValues("skills-gateway.dev-insecure-auth=true")
+                .run(context -> assertThat(context)
+                        .hasNotFailed()
+                        .hasSingleBean(DevInsecureAuthGuard.class)
+                        // The registrations the later cases are judged on are really present.
+                        .hasSingleBean(ClientRegistrationRepository.class));
 
         // A real client id is a configured provider, whatever the endpoints still say.
         contexts.withPropertyValues(

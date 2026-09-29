@@ -92,8 +92,9 @@ class UpstreamCredentialsIntegrationTests extends AbstractExternalSourceTest {
 
         register(uniqueName("anon"), elsewhere.baseUrl() + "/acme/skills.git").andExpect(status().isCreated());
 
-        assertThat(elsewhere.authorizations()).isNotEmpty().allSatisfy(request -> assertThat(request[1])
-                .isEmpty());
+        assertThat(elsewhere.authorizations())
+                .isNotEmpty()
+                .allSatisfy(request -> assertThat(request[1]).isEmpty());
     }
 
     @Test
@@ -120,8 +121,9 @@ class UpstreamCredentialsIntegrationTests extends AbstractExternalSourceTest {
 
         register(uniqueName("port"), FORGE.baseUrl() + "/private/skills.git").andExpect(status().isCreated());
 
-        assertThat(elsewhere.authorizations()).isNotEmpty().allSatisfy(request -> assertThat(request[1])
-                .isEmpty());
+        assertThat(elsewhere.authorizations())
+                .isNotEmpty()
+                .allSatisfy(request -> assertThat(request[1]).isEmpty());
     }
 
     @Test

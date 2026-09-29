@@ -189,8 +189,9 @@ class SkillConformanceVetterTests {
         // become a block — not even for the operator who asked for enforcement.
         Verdict enforcing = enforcing().vet(snapshotOf(Map.of(PATH, md)));
         assertThat(enforcing.state()).isEqualTo(VerdictState.PASS);
-        assertThat(enforcing.findings()).singleElement().satisfies(finding -> assertThat(finding.severity())
-                .isEqualTo(Severity.INFO));
+        assertThat(enforcing.findings())
+                .singleElement()
+                .satisfies(finding -> assertThat(finding.severity()).isEqualTo(Severity.INFO));
     }
 
     // --- Posture ----------------------------------------------------------------------------------
@@ -308,8 +309,9 @@ class SkillConformanceVetterTests {
 
         Verdict verdict = advisory().vet(snapshotOf(files));
 
-        assertThat(verdict.findings()).singleElement().satisfies(finding -> assertThat(finding.location())
-                .isEqualTo("plugins/hello/skills/broken/SKILL.md"));
+        assertThat(verdict.findings())
+                .singleElement()
+                .satisfies(finding -> assertThat(finding.location()).isEqualTo("plugins/hello/skills/broken/SKILL.md"));
         assertThat(verdict.summary()).contains("scanned 3 SKILL.md file(s)");
     }
 

@@ -64,8 +64,9 @@ class ExternalVettingConnectorUnitTests {
         Verdict verdict = vetter(stub.url()).vet(snapshotOf(Map.of("SKILL.md", "x")));
         assertThat(verdict.state()).isEqualTo(VerdictState.FAIL);
         assertThat(verdict.reportUrl()).isEqualTo("https://r.example/1");
-        assertThat(verdict.findings()).singleElement().satisfies(f -> assertThat(f.id())
-                .isEqualTo("exfil"));
+        assertThat(verdict.findings())
+                .singleElement()
+                .satisfies(f -> assertThat(f.id()).isEqualTo("exfil"));
     }
 
     @Test
@@ -232,8 +233,9 @@ class ExternalVettingConnectorUnitTests {
 
     private static void assertError(Verdict verdict) {
         assertThat(verdict.state()).isEqualTo(VerdictState.ERROR);
-        assertThat(verdict.findings()).extracting(Finding::message).anySatisfy(message -> assertThat(message)
-                .contains("produced no verdict"));
+        assertThat(verdict.findings())
+                .extracting(Finding::message)
+                .anySatisfy(message -> assertThat(message).contains("produced no verdict"));
     }
 
     private static ExternalVettingConnector vetter(String url) {
