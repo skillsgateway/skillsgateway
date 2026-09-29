@@ -171,7 +171,9 @@ resolves completely or not at all.
     The primary control is network topology: ingestion egress routed through a
     proxy or DMZ with no route to cloud metadata endpoints, internal APIs or
     anything holding corporate credentials. See
-    [ADR 0011](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md).
+    [ADR 0011](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md),
+    and [Restricting egress](../guides/deploying-on-kubernetes.md#restricting-egress)
+    for a Kubernetes policy that enforces it.
 
 !!! warning "What this layer does not claim"
 
