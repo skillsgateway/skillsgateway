@@ -37,7 +37,8 @@ import org.springframework.stereotype.Component;
  *
  * <p>Every local MCP server's command is scanned with the same rules under its own ids
  * (GW_VETTING_0050 - GW_VETTING_0052): a package runner warns, because nearly every published
- * server starts that way, and download-and-execute blocks, as in a hook.
+ * server starts that way, and download-and-execute blocks, as in a hook. An LSP server's command
+ * is scanned the same way under ids of its own (GW_VETTING_0055).
  *
  * <p><b>What it cannot do.</b> It matches shapes. A fetch reached through variable indirection or
  * an encoded payload walks past it, and monitor commands are listed in the inventory but not
@@ -63,6 +64,24 @@ public class ExecutableSurfaceVetter implements Vetter {
 
     static final String MCP_FETCH_EXEC = "mcp-fetch-exec";
     static final String MCP_PACKAGE_RUN = "mcp-package-run";
+    static final String LSP_FETCH_EXEC = "lsp-fetch-exec";
+    static final String LSP_PACKAGE_RUN = "lsp-package-run";
+
+    /** A kind of server Claude Code starts as a local process, and the rule ids its findings carry. */
+    private enum Server {
+        MCP("MCP server", MCP_FETCH_EXEC, MCP_PACKAGE_RUN),
+        LSP("LSP server", LSP_FETCH_EXEC, LSP_PACKAGE_RUN);
+
+        private final String label;
+        private final String fetchExec;
+        private final String packageRun;
+
+        Server(String label, String fetchExec, String packageRun) {
+            this.label = label;
+            this.fetchExec = fetchExec;
+            this.packageRun = packageRun;
+        }
+    }
 
     /** {@code ${VAR:-default}}: what runs when the variable is unset, which is what is approved. */
     private static final Pattern VARIABLE_DEFAULT = Pattern.compile("\\$\\{\\w+:-([^}]*)}");
@@ -84,7 +103,7 @@ public class ExecutableSurfaceVetter implements Vetter {
     public String description() {
         return "Lists every hook a plugin declares with its trigger, and blocks where a hook — or a script it"
                 + " launches — downloads code and executes it, or runs a package fetched at run time. Scans local"
-                + " MCP server commands too: a package runner warns, download-and-execute blocks. Shape-based:"
+                + " MCP and LSP server commands too: a package runner warns, download-and-execute blocks. Shape-based:"
                 + " indirection and encoding walk past it, and monitor commands are not examined.";
     }
 
@@ -114,9 +133,11 @@ public class ExecutableSurfaceVetter implements Vetter {
         private final Map<String, Finding> findings = new LinkedHashMap<>();
         private final Set<String> scanned = new HashSet<>();
         // Apart from the hooks' set, so a server's medium scan never hides a hook's high one.
-        private final Set<String> mcpScanned = new HashSet<>();
+        private final Map<Server, Set<String>> serverScanned =
+                Map.of(Server.MCP, new HashSet<>(), Server.LSP, new HashSet<>());
         private int hooks;
         private int servers;
+        private int lspServers;
 
         Run(SnapshotFiles files) {
             this.files = files;
@@ -143,16 +164,22 @@ public class ExecutableSurfaceVetter implements Vetter {
                     hook(root.getKey(), hook);
                 }
                 for (McpCommand server : components.mcpCommands()) {
-                    mcp(root.getKey(), server);
+                    servers++;
+                    server(root.getKey(), server, Server.MCP);
+                }
+                for (McpCommand server : components.lspCommands()) {
+                    lspServers++;
+                    server(root.getKey(), server, Server.LSP);
                 }
             }
             Set<String> launched = new HashSet<>(scanned);
-            launched.addAll(mcpScanned);
+            serverScanned.values().forEach(launched::addAll);
             return Verdict.of(
                     List.copyOf(findings.values()),
-                    ("examined %d plugin root(s): %d hook(s), %d MCP server command(s), %d launched file(s)"
-                                    + " scanned for runtime fetches; monitor commands are not examined")
-                            .formatted(roots.size(), hooks, servers, launched.size()));
+                    ("examined %d plugin root(s): %d hook(s), %d MCP server command(s), %d LSP server command(s),"
+                                    + " %d launched file(s) scanned for runtime fetches; monitor commands are not"
+                                    + " examined")
+                            .formatted(roots.size(), hooks, servers, lspServers, launched.size()));
         }
 
         /** The manifest's plugin roots into {@code roots}, keyed to their entry's JSON pointer. */
@@ -196,16 +223,16 @@ public class ExecutableSurfaceVetter implements Vetter {
             for (RuntimeFetch.Match match : RuntimeFetch.scan(hook.runs(), false)) {
                 add(new Finding(match.rule(), Severity.HIGH, hook.location(), "this hook " + match.message()));
             }
-            follow(hook.runs(), root, hook.location(), false);
+            follow(hook.runs(), root, hook.location(), null);
         }
 
         /**
-         * A local MCP server's command: package runners warn and download-and-execute blocks, under
-         * ids of their own, and the files of the plugin it names are followed as a hook's are.
+         * A local MCP or LSP server's command: package runners warn and download-and-execute blocks,
+         * under ids of that kind of server, and the files of the plugin it names are followed as a
+         * hook's are.
          */
-        @Requirements({"GW_VETTING_0050", "GW_VETTING_0051", "GW_VETTING_0052"})
-        private void mcp(String root, McpCommand server) throws IOException {
-            servers++;
+        @Requirements({"GW_VETTING_0050", "GW_VETTING_0051", "GW_VETTING_0052", "GW_VETTING_0055"})
+        private void server(String root, McpCommand server, Server kind) throws IOException {
             List<String> words = new ArrayList<>();
             words.add(withDefaults(server.command()));
             server.args().forEach(arg -> words.add(withDefaults(arg)));
@@ -230,20 +257,23 @@ public class ExecutableSurfaceVetter implements Vetter {
                 }
                 if (rules.add(match.rule())) {
                     add(new Finding(
-                            runner ? MCP_PACKAGE_RUN : MCP_FETCH_EXEC,
+                            runner ? kind.packageRun : kind.fetchExec,
                             runner ? Severity.MEDIUM : Severity.HIGH,
                             server.location(),
-                            "MCP server '%s' %s".formatted(server.name(), match.message())));
+                            "%s '%s' %s".formatted(kind.label, server.name(), match.message())));
                 }
             }
-            follow(text, root, server.location(), true);
+            follow(text, root, server.location(), kind);
         }
 
-        /** Files of the plugin that {@code text} names, scanned and followed to {@link #MAX_DEPTH}. */
-        private void follow(String text, String root, String location, boolean mcp) throws IOException {
+        /**
+         * Files of the plugin that {@code text} names, scanned and followed to {@link #MAX_DEPTH}, at
+         * the severities of {@code server}, or of a hook when it is {@code null}.
+         */
+        private void follow(String text, String root, String location, Server server) throws IOException {
             String declaring = pathOf(location);
             String base = declaring.contains("/") ? declaring.substring(0, declaring.lastIndexOf('/')) : "";
-            Set<String> visited = mcp ? mcpScanned : scanned;
+            Set<String> visited = server == null ? scanned : serverScanned.get(server);
             Deque<Launched> queue = new ArrayDeque<>();
             for (String path : references(text, root, base)) {
                 queue.add(new Launched(path, 1));
@@ -253,7 +283,7 @@ public class ExecutableSurfaceVetter implements Vetter {
                 if (!visited.add(next.path())) {
                     continue;
                 }
-                String content = mcp ? mcpLaunchedText(next) : launchedText(next);
+                String content = server == null ? launchedText(next) : serverLaunchedText(next, server);
                 if (content == null || next.depth() >= MAX_DEPTH) {
                     continue;
                 }
@@ -267,11 +297,11 @@ public class ExecutableSurfaceVetter implements Vetter {
         }
 
         /**
-         * A file an MCP server launches, scanned at the MCP severities. A binary or oversized one is
+         * A file a server launches, scanned at the server's severities. A binary or oversized one is
          * not reported: a server shipped as a compiled binary is ordinary, and its bytes are pinned.
          */
-        @Requirements({"GW_VETTING_0052"})
-        private String mcpLaunchedText(Launched launched) throws IOException {
+        @Requirements({"GW_VETTING_0052", "GW_VETTING_0055"})
+        private String serverLaunchedText(Launched launched, Server server) throws IOException {
             String text = ContentRules.text(files.read(launched.path()));
             if (text == null) {
                 return null;
@@ -279,10 +309,10 @@ public class ExecutableSurfaceVetter implements Vetter {
             for (RuntimeFetch.Match match : RuntimeFetch.scan(text, true)) {
                 boolean runner = RuntimeFetch.PACKAGE_RUN.equals(match.rule());
                 add(new Finding(
-                        runner ? MCP_PACKAGE_RUN : MCP_FETCH_EXEC,
+                        runner ? server.packageRun : server.fetchExec,
                         runner ? Severity.MEDIUM : Severity.HIGH,
                         "%s:%d".formatted(launched.path(), match.line()),
-                        "a script an MCP server launches " + match.message()));
+                        "a script an %s launches %s".formatted(server.label, match.message())));
             }
             return text;
         }

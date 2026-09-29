@@ -30,14 +30,14 @@ first run.
 
 ## 3. LSP command scanning (SVC_GW_VETTING_0055)
 
-- [ ] 3.1 `ExecutableSurfaceVetterTests`: an LSP server running `npx -y …`
+- [x] 3.1 `ExecutableSurfaceVetterTests`: an LSP server running `npx -y …`
   is one medium `lsp-package-run` at its command line. One piping a download
   into a shell through `sh -c` is one high `lsp-fetch-exec`. A launched plugin
   script is followed, with findings at its `path:line`. Negatives stay silent:
   `gopls` on `PATH`, a binary in the plugin, and `npx ${CLAUDE_PLUGIN_ROOT}/srv`.
   A script both a hook and an LSP server launch keeps the hook's high finding.
   Watch each fail.
-- [ ] 3.2 Extend `ExecutableSurfaceVetter` (`@Requirements GW_VETTING_0055`)
+- [x] 3.2 Extend `ExecutableSurfaceVetter` (`@Requirements GW_VETTING_0055`)
   through the MCP command path, with its own visited set and rule ids. Make 3.1
   green, and keep every existing test green unchanged.
 
