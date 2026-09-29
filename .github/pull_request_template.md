@@ -42,5 +42,6 @@ Commit:
 - [ ] PR title is a valid [Conventional Commit](https://www.conventionalcommits.org/)
 - [ ] Every commit is signed off (`git commit -s`) per the [DCO](https://github.com/skillsgateway/.github/blob/main/dco.txt)
 - [ ] Documentation under `docs/manual/` updated in this PR, if behavior, the REST API, configuration or the portal changed
+- [ ] Before/after screenshots in this body, if the portal changed, or the `no-screenshots` label if nothing visible did
 - [ ] Tests added or updated; no existing SVC test weakened or deleted
 - [ ] OpenSpec change archived as the final commit, if this PR implements one
