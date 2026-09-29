@@ -2378,10 +2378,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-risk-tiers" class="md-nav__link">
+  <a href="#6-risk-is-expressed-as-findings" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Risk tiers
+        6. Risk is expressed as findings
       
     </span>
   </a>
@@ -2765,10 +2765,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-risk-tiers" class="md-nav__link">
+  <a href="#6-risk-is-expressed-as-findings" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Risk tiers
+        6. Risk is expressed as findings
       
     </span>
   </a>
@@ -3047,7 +3047,7 @@ catalog rather than being refused.</p>
 <li><strong>Rewrite, don't just mirror.</strong> Ingestion resolves every transitive plugin
    source, mirrors it, and rewrites <code>marketplace.json</code> so <strong>every URL a client
    will ever dereference resolves inside the gateway</strong> (kills T3/T4).</li>
-<li><strong>Risk-tiered friction.</strong> A markdown-only skill and a plugin that registers
+<li><strong>Risk-scaled friction.</strong> A markdown-only skill and a plugin that registers
    shell hooks are different animals; review effort must match (see §6), or
    admins drown and users route around the system.</li>
 <li><strong>Complement the existing repository manager.</strong> npm/OCI-packaged skills
@@ -3155,20 +3155,19 @@ catalog rather than being refused.</p>
     access credentials, make network calls, modify files outside its stated
     purpose, alter its own review process? A triage signal, not a verdict.</li>
 <li><em>Sandbox runners:</em> execute bundled scripts and hooks in an instrumented
-    sandbox; record file, network, and process behavior (T1/T2 tiers).</li>
+    sandbox; record file, network, and process behavior.</li>
 <li><em>Human processes:</em> a Jira ticket, a review queue — the MVP "vetter" is
     simply an approve button in the portal.</li>
 </ul>
 <p>Results are normalized and attached to the snapshot forever. One analysis
-  stays built-in because tiering depends on it: <em>manifest analysis</em> —
+  stays built-in because the review depends on it: <em>manifest analysis</em> —
   enumerating registered hooks, MCP servers, commands, and agents (§6).
 - <strong>Policy engine.</strong> Policy-as-code consuming snapshot facts and the
   normalized vetter verdicts. The engine is embedded CEL (ADR 0006), and
   its first slice ships: <a href="../guides/policy-rules/">deny rules</a> evaluated
   fail-closed at approval time, with a playground and ledger provenance.
-  The rest of the sketch — which vetters are required per tier,
-  auto-approval conditions, license allowlists, org/team scoping, mandatory
-  reviewers for T2 — attaches to the same engine if and when those are
+  The rest of the sketch — auto-approval conditions, org/team scoping,
+  mandatory reviewers — attaches to the same engine if and when those are
   decided (auto-approval deliberately parked: it would delegate the human
   gate, a product decision, not a feature).
 - <strong>Publisher.</strong> Composes virtual marketplaces per audience (org-wide, per
@@ -3179,7 +3178,7 @@ catalog rather than being refused.</p>
   are set the <code>sha</code> wins) — so the pin is enforced by the client's own git
   fetch, not just by gateway behavior.
 - <strong>Catalog &amp; portal.</strong> Search across gateway <em>and</em> federated
-  repository-manager skills; per-skill page with scan history, tier, owner, install count, trust
+  repository-manager skills; per-skill page with scan history, owner, install count, trust
   signals; "request this upstream skill" button feeding the approval queue.
 - <strong>Audit ledger.</strong> Append-only record of every fetch (who, what, which SHA,
   when), every approval (who, what diff, which scan report), every recall.
@@ -3199,7 +3198,7 @@ catalog rather than being refused.</p>
     participant Portal as Catalog/Portal
     participant Ing as Ingestion
     participant Vet as Vetting vetters
-    participant Rev as Reviewer (tiered)
+    participant Rev as Reviewer
     participant Pub as Publisher
     participant Fac as Git façade
 
@@ -3207,7 +3206,7 @@ catalog rather than being refused.</p>
     Portal-&gt;&gt;Ing: register upstream
     Ing-&gt;&gt;Ing: fetch @ SHA abc123, resolve transitive sources
     Ing-&gt;&gt;Vet: snapshot → vetting trigger
-    Vet-&gt;&gt;Rev: verdict callbacks + computed tier (T0 may auto-approve)
+    Vet-&gt;&gt;Rev: verdicts and findings, by severity
     Rev-&gt;&gt;Pub: approve X @ abc123
     Pub-&gt;&gt;Fac: republish marketplace with X pinned
     Dev-&gt;&gt;Fac: claude plugin install X (from corp marketplace)
@@ -3218,9 +3217,9 @@ catalog rather than being refused.</p>
     Rev-&gt;&gt;Pub: promote def456 (or reject; abc123 keeps serving)</code></pre>
 <p>The held-update behavior is the rug-pull defense: upstream movement never
 changes what clients receive until the new snapshot passes the same gate the
-old one did. Tier-0 diffs that stay tier-0 and scan clean can auto-promote on
-a configurable delay (a cooling-off window also defeats
-push-then-quickly-revert attacks).</p>
+old one did. Nothing auto-promotes: automatic promotion is parked with
+auto-approval (§4, Policy engine). A cooling-off window before any approval
+still defeats push-then-quickly-revert attacks.</p>
 <p>Implemented today (GW_APPROVAL_0004): a global
 <code>skills-gateway.vetting.minimum-release-age</code> (default <code>0</code>, off) that the manual
 approval gate enforces — a snapshot whose commit this gateway first ingested
@@ -3228,7 +3227,7 @@ less than that long ago is refused, whatever its verdicts say. The age is taken
 from the gateway's own first sighting, never from the commit's timestamp, and it
 is compared at each approval request rather than tracked, so the wait clears
 itself. This is the window any future auto-promotion is conditioned on;
-per-marketplace and per-tier ages ride on the policy rules.</p>
+per-marketplace ages ride on the policy rules.</p>
 <p>Implemented today (GW_APPROVAL_0010, GW_APPROVAL_0011): <strong>separation of duties</strong> on that same
 gate. The marketplace's registrant and each snapshot's ingestion actor are
 recorded as attributes of the objects themselves, and an approval by the
@@ -3285,40 +3284,20 @@ branches, not only the default branch. The gateway handles this by making
   feature, not an architecture change — the first portal feature after the
   MVP.</li>
 </ul>
-<h2 id="6-risk-tiers">6. Risk tiers<a class="headerlink" href="#6-risk-tiers" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Tier</th>
-<th>Contents</th>
-<th>Review</th>
-<th>Update policy</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>T0</strong></td>
-<td><code>SKILL.md</code> + reference docs only. No scripts, no hooks, no MCP servers</td>
-<td>Automated scans + LLM review; auto-approve on clean</td>
-<td>Auto-promote after cooling-off window</td>
-</tr>
-<tr>
-<td><strong>T1</strong></td>
-<td>Skills bundling scripts/executables the agent may run</td>
-<td>T0 checks + sandbox run + human spot-check</td>
-<td>Human-approved diff</td>
-</tr>
-<tr>
-<td><strong>T2</strong></td>
-<td>Plugins registering hooks, MCP servers, or commands that execute code on install/events</td>
-<td>Full security review, named internal owner required</td>
-<td>Mandatory re-review of every diff</td>
-</tr>
-</tbody>
-</table>
-<p>A snapshot's tier is computed by manifest analysis, never self-declared. A T0
-skill that grows a <code>scripts/</code> directory in an update is automatically re-tiered
-— that transition is itself a review trigger.</p>
+<h2 id="6-risk-is-expressed-as-findings">6. Risk is expressed as findings<a class="headerlink" href="#6-risk-is-expressed-as-findings" title="Permanent link">&para;</a></h2>
+<p>There are no risk tiers. Each vetter reports findings with a severity, and
+severity alone decides the outcome: a medium finding warns, a high one blocks
+approval until it is waived. Findings are keyed by the git blob they were
+found in, and are grouped and waived per group
+(<a href="../concepts/vetting/">Vetting</a>). What a plugin runs is read from its
+manifests, never self-declared: hooks, MCP servers and the code they launch
+are <code>executable-surface</code> findings.</p>
+<p>A change in what a plugin runs is still a review trigger. Every update is held
+until approved. The review card's <strong>Diff</strong> and <strong>Inventory</strong> tabs show what was
+added. A new hook or script is a new blob, so its finding falls outside every
+existing waiver.</p>
+<p>Why tiers were designed and then not built is recorded in
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0021-risk-is-expressed-as-findings-not-tiers.md">ADR 0021 — Risk is expressed as findings, not tiers</a>.</p>
 <h2 id="7-versioning-and-provenance">7. Versioning and provenance<a class="headerlink" href="#7-versioning-and-provenance" title="Permanent link">&para;</a></h2>
 <p>Git gives you refs; enterprises need coordinates. Every published plugin gets
 an immutable coordinate:</p>
@@ -3398,7 +3377,7 @@ git façade remains for client compatibility.</p>
 format-agnostic; tool specifics live in <strong>adapters</strong>:</p>
 <ul>
 <li><strong>Claude Code adapter:</strong> parses <code>.claude-plugin/marketplace.json</code>, resolves
-  plugin sources, understands hooks/MCP/commands/agents for tiering, emits
+  plugin sources, understands hooks/MCP/commands/agents for vetting, emits
   rewritten marketplaces. (First and most complete, since the marketplace
   mechanism is furthest along.)</li>
 <li><strong>Plain skills-repo adapter:</strong> any repo of <code>SKILL.md</code> directories (the open
@@ -3481,7 +3460,7 @@ reference transitions at all — see
   enables, <code>git</code> and <code>git-subdir</code>, the egress proxy, connect-time address
   pinning, and declared-<code>ref</code>/<code>sha</code> pinning. Also in this phase: a
   vetter framework with automated vetting
-  (scanners, LLM review, sandbox), risk tiers, approval workflow with
+  (scanners, LLM review, sandbox), approval workflow with
   semantic diffs, policy-as-code, catalog/portal with request flow, per-team
   virtual marketplaces, multi-ref publication. <em>Implemented:</em> per-marketplace
   upstream sync modes — on-demand, scheduled polling, and HMAC-authenticated
@@ -3568,7 +3547,7 @@ reference transitions at all — see
    (<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md">ADR 0016 — Client invocation telemetry is not ingested; the gateway publishes presence instead</a>).</li>
 <li><strong>LLM review confidence.</strong> Semantic scanning of prose will have false
    negatives; adversaries will optimize against it. It must gate <em>triage
-   priority</em>, not substitute for tier-appropriate human review.
+   priority</em>, not substitute for human review.
    Designated tooling for when this vetter is built: <strong>promptfoo</strong>
    (promptfoo.dev) as its eval + red-team harness — a CI-run corpus of
    known-malicious/benign skills asserting detection (prompt changes that
@@ -3578,7 +3557,7 @@ reference transitions at all — see
    adapters must be versioned and the ingestion contract conservative
    (unknown manifest constructs → quarantine, not pass-through).</li>
 <li><strong>Ownership.</strong> Curation sits naturally with the platform team, policy with
-   Security — the approval-queue SLA (especially T0 auto-approval) is what
+   Security — the approval-queue SLA is what
    keeps developers on the paved road. Decide this before the MVP ships.</li>
 <li><strong>Authz — only the scoping half is still open.</strong> Authentication is no
    longer deferred and no path serves anonymous read: the façade takes PATs
