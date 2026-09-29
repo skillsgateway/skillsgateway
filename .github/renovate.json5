@@ -5,7 +5,11 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
 
-  extends: ["github>skillsgateway/.github//.github/renovate.json5"],
+  extends: [
+    "github>skillsgateway/.github//.github/renovate.json5",
+    // Every action by digest, the GitHub-owned ones included.
+    "helpers:pinGitHubActionDigests",
+  ],
 
   // Kept from the pre-preset config: the preset adds bot-renovate, addLabels
   // appends rather than replaces.
@@ -18,6 +22,15 @@
   },
 
   packageRules: [
+    {
+      // The image's base layers and the CI service containers by digest, so
+      // a release builds from exactly what CI tested. Renovate keeps the
+      // digests current.
+      description: "Pin container images in the Dockerfile and workflows",
+      matchManagers: ["dockerfile", "github-actions"],
+      matchDatasources: ["docker"],
+      pinDigests: true,
+    },
     {
       // The object-storage backend extends org.eclipse.jgit.internal.storage.dfs
       // -- `internal` in the package name is real, and JGit changes those

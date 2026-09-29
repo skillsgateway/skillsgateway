@@ -92,14 +92,19 @@ $ docker pull ghcr.io/skillsgateway/skillsgateway@sha256:…
 Package visibility can later be made public in the GHCR package settings,
 independently of the repository's visibility.
 
-## SBOM attestation
+## SBOM and provenance attestations
 
-The published image index carries the build's CycloneDX SBOM as a registry
-attestation (the same SBOM the running gateway serves at `/actuator/sbom`),
-against the digest the publish prints and that a deployment pins. Verify what a
-pinned digest contains with:
+The published image index carries two registry attestations against the digest
+the publish prints and that a deployment pins. One is the build's CycloneDX SBOM,
+the same SBOM the running gateway serves at `/actuator/sbom`. The other is SLSA
+build provenance: which workflow run, from which commit, produced the image.
+
+`gh attestation verify` checks the provenance by default, and the SBOM when
+asked for its predicate type:
 
 ```console
 $ gh attestation verify oci://ghcr.io/skillsgateway/skillsgateway@sha256:… \
     --owner skillsgateway
+$ gh attestation verify oci://ghcr.io/skillsgateway/skillsgateway@sha256:… \
+    --owner skillsgateway --predicate-type https://cyclonedx.org/bom
 ```
