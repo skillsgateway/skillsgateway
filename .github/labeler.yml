@@ -1,6 +1,6 @@
 # Configuration for actions/labeler -- see .github/workflows/pr-labels.yml
 #
-# Labels map to the subsystem boundaries CLAUDE.md and ARCHITECTURE.md describe,
+# Labels map to the subsystem boundaries AGENTS.md and ARCHITECTURE.md describe,
 # which the package layout under src/main/java/.../skillsgateway/ already
 # mirrors one-to-one. One directory glob per label is therefore enough: files
 # moving within a subsystem need no change here.
@@ -126,7 +126,7 @@ dependencies:
 # The two warning labels. Both are deliberately loud, and neither is a
 # classification of what the PR is about.
 
-# CLAUDE.md names exactly these three as the trust boundaries, and holds changes
+# AGENTS.md names exactly these three as the trust boundaries, and holds changes
 # to them to a higher bar: adversarial and negative tests plus the old-coder
 # evidence discipline, not just happy-path coverage.
 #

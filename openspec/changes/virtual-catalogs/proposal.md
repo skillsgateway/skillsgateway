@@ -140,7 +140,7 @@ The entries are **not written into `docs/reqstool/requirements.yml` by this
 change.** A requirement with no `@Requirements` annotation and no SVC test is
 incomplete, and adding one for unimplemented behaviour turns the traceability
 gate red on `main`. The implementing PR adds the requirement, the SVC and the
-annotated code together, which is the order `CLAUDE.md` asks for. The spec deltas
+annotated code together, which is the order `AGENTS.md` asks for. The spec deltas
 in `specs/` name the ids so the reservation is visible and reviewable.
 
 ## Out of scope (named, so the boundary is explicit)
@@ -163,7 +163,7 @@ Deferred to later slices per ADR 0017, and to be opened as their own changes:
 - **Entitlement as a facade deny** (slice 5) — the only genuinely new trust
   boundary in #11, gated on a deployment with two real audiences.
 - **Multi-ref publication** — ruled out of #11 by ADR 0017. It re-decides
-  `GW_INGEST_0006 — Gateway-pinned ingestion ref`, which `CLAUDE.md` names as part of
+  `GW_INGEST_0006 — Gateway-pinned ingestion ref`, which `AGENTS.md` names as part of
   the registration trust boundary, and needs its own ADR and its own issue.
 - **Portal surfaces** for collisions and revisions. The API and the ledger carry
   them first.

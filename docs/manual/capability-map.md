@@ -48,4 +48,4 @@ an open commitment.
 | Virtual catalogs per team | [ADR 0017 — Virtual catalogs stay derived views: they may subtract, never substitute](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0017-virtual-catalogs-are-derived-views.md) |
 
 Adding an area to the first table, or moving one out of the second, goes through
-the stop rule in `CLAUDE.md`.
+the stop rule in `AGENTS.md`.

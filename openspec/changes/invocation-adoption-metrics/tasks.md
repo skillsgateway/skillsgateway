@@ -47,7 +47,7 @@ gate red, so the entries land with the code that satisfies them.
       (GW_0214, design decision 5)
 - [ ] 3.4 `AdoptionController` route under `/api/adoption`, auditor-or-admin gated
       like the ledger reads; resolve the machine-scope open question and, if it is
-      a new scope, extend `skills-gateway.estate.*` in the same PR per `CLAUDE.md`
+      a new scope, extend `skills-gateway.estate.*` in the same PR per `AGENTS.md`
 - [ ] 3.5 `@Requirements` annotations
 
 ## 4. The boundary

@@ -1,6 +1,6 @@
 <!--
   Overrides the generic organization default in skillsgateway/.github, which has
-  no Evidence section. CLAUDE.md requires evidence -- the commands and pasted
+  no Evidence section. AGENTS.md requires evidence -- the commands and pasted
   result tails of one final fresh run of all gates after the last code edit.
 
   The PR title becomes the commit subject on main (squash merge, PR_TITLE), so
