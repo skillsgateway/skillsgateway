@@ -113,6 +113,33 @@ class ContentTests extends AbstractGatewayTest {
     }
 
     @Test
+    @SVCs({"SVC_GW_INGEST_0045"})
+    void snapshotContentListsLspServers() throws Exception {
+        Path upstream = createUpstream(
+                TWO_PLUGIN_MANIFEST,
+                java.util.Map.of(
+                        "plugins/review/.lsp.json",
+                        "{\"go\": {\"command\": \"gopls\", \"extensionToLanguage\": {\".go\": \"go\"}}}"));
+
+        Registered registered = registerAndIngest(uniqueName("corp"), upstream);
+
+        String body = mockMvc.perform(get("/api/v1/snapshots/%d/content"
+                                .formatted(registered.snapshot().id()))
+                        .with(oidcLogin()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat((List<String>) JsonPath.read(body, "$.plugins[?(@.name == 'review')].lspServers[*].name"))
+                .containsExactly("go");
+        assertThat((List<String>) JsonPath.read(body, "$.plugins[?(@.name == 'review')].lspServers[*].path"))
+                .containsExactly("plugins/review/.lsp.json:1");
+        assertThat((List<Object>) JsonPath.read(body, "$.plugins[?(@.name == 'hello')].lspServers[*]"))
+                .isEmpty();
+    }
+
+    @Test
     @SVCs({"SVC_GW_INGEST_0009"})
     void forgeMetadataIsCapturedAtRegistrationWhenAvailable() throws Exception {
         // A forge whose REST API and git service share one origin: registration reads the git
