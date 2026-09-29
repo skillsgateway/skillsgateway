@@ -3197,9 +3197,9 @@ export interface components {
             /** @description Whether the expression matched; absent when it errored */
             matched?: boolean;
         };
-        /** @description A command, agent or MCP server a plugin provides */
+        /** @description A command, agent, MCP server or LSP server a plugin provides */
         PluginComponent: {
-            /** @description Name: the file name without .md, the command map key, or the MCP server key */
+            /** @description Name: the file name without .md, the command map key, or the MCP or LSP server key */
             name?: string;
             /** @description Where it is defined: its file, or path:line of an inline declaration */
             path?: string;
@@ -3214,6 +3214,8 @@ export interface components {
             description?: string;
             /** @description Hooks the plugin declares, each with its trigger (GW_INGEST_0045): the code Claude Code runs without the user invoking it */
             hooks?: components["schemas"]["PluginHook"][];
+            /** @description LSP servers the plugin provides (GW_INGEST_0045), each a local process Claude Code starts for matching files; empty when there are none */
+            lspServers?: components["schemas"]["PluginComponent"][];
             /** @description MCP servers the plugin provides (GW_INGEST_0045); empty when there are none */
             mcpServers?: components["schemas"]["PluginComponent"][];
             /** @description Plugin name from the manifest */

@@ -2375,10 +2375,10 @@
         "type": "object"
       },
       "PluginComponent": {
-        "description": "A command, agent or MCP server a plugin provides",
+        "description": "A command, agent, MCP server or LSP server a plugin provides",
         "properties": {
           "name": {
-            "description": "Name: the file name without .md, the command map key, or the MCP server key",
+            "description": "Name: the file name without .md, the command map key, or the MCP or LSP server key",
             "type": "string"
           },
           "path": {
@@ -2413,6 +2413,13 @@
             "description": "Hooks the plugin declares, each with its trigger (GW_INGEST_0045): the code Claude Code runs without the user invoking it",
             "items": {
               "$ref": "#/components/schemas/PluginHook"
+            },
+            "type": "array"
+          },
+          "lspServers": {
+            "description": "LSP servers the plugin provides (GW_INGEST_0045), each a local process Claude Code starts for matching files; empty when there are none",
+            "items": {
+              "$ref": "#/components/schemas/PluginComponent"
             },
             "type": "array"
           },

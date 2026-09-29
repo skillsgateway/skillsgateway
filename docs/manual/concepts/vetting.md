@@ -438,8 +438,10 @@ past pattern rules anyway, which is why this vetter is triage.
 
 ### `executable-surface`
 
-Reads each plugin's hooks and MCP servers and flags the code a plugin runs
-without anyone invoking it. A plugin's hooks come from its `hooks/hooks.json`, from the hook
+Reads each plugin's hooks, MCP servers and LSP servers and flags the code a
+plugin runs without anyone invoking it. It also flags code a plugin installs
+or fetches after the snapshot was pinned: dependency manifests, and installs
+in its skills, commands and agents. A plugin's hooks come from its `hooks/hooks.json`, from the hook
 files or inline hooks that its `plugin.json` and its marketplace entry declare,
 and from the frontmatter of its skills and agents. The vetter reads the same
 [inventory](../reference/portal.md#review-and-snapshots) the portal shows.
@@ -457,6 +459,10 @@ served, so its hooks are still read.
 | `hook-target-unscanned` | A hook runs a file that is binary or over the scan size limit, so no rule could read it | medium: warns |
 | `mcp-fetch-exec` | A local MCP server's command, or a file of the plugin it launches, downloads code and executes it, in the shapes `runtime-fetch-exec` recognises | high: blocks |
 | `mcp-package-run` | A local MCP server runs a package runner or installs packages, as `runtime-package-run` recognises them | medium: warns |
+| `lsp-fetch-exec` | An LSP server's command, or a file of the plugin it launches, downloads code and executes it, as for an MCP server | high: blocks |
+| `lsp-package-run` | An LSP server runs a package runner or installs packages, as for an MCP server | medium: warns |
+| `runtime-dependency` | A dependency manifest in a plugin declares dependencies; or a skill's script, or a fenced code block of a skill's Markdown or of a command or agent, installs packages or runs a package runner. The code arrives from a registry after the snapshot was pinned. One finding per rule per file, at the first line, naming every line | medium: warns |
+| `skill-fetch-exec` | A skill's script, or a fenced code block of a skill's Markdown or of a command or agent, downloads code and executes it, in the shapes `runtime-fetch-exec` recognises. One finding per file, at the first line, naming every line | high: blocks |
 
 **Why a hook only warns.** A hook is a legitimate plugin feature. Its code is in
 the snapshot, and the rest of the chain reads it. Blocking every hook would
@@ -466,7 +472,11 @@ with its trigger, and does not hold the snapshot.
 **Why runtime fetching blocks.** Code fetched at run time was never in the
 snapshot the gateway pinned. It bypasses quarantine, vetting and approval
 entirely. A reviewer who has decided that the source is trusted waives the
-finding group like any other.
+finding group like any other. It blocks wherever it is found: in a hook, an
+MCP or LSP server, or a skill's files. On a Markdown line, `skill-fetch-exec`
+can coincide with `prompt-injection`'s `pipe-to-shell`. The overlap is
+deliberate: the two vetters are switched and waived apart, and
+`skill-fetch-exec` also sees shapes `pipe-to-shell` does not.
 
 **Why an MCP package runner only warns.** Nearly every published MCP server is
 started with `npx -y` or `uvx`, so the package's current code is fetched each
@@ -474,6 +484,40 @@ time the server starts. Blocking all of them would teach reviewers to switch
 the vetter off. The warning puts each one on the verdict row. Download-and-execute
 blocks, as it does in a hook. The MCP rules have their own ids, so waiving one
 never waives a hook that does the same.
+
+**Why a runtime dependency only warns.** Claude Code documents
+`${CLAUDE_PLUGIN_DATA}` as the place for a plugin's installed dependencies, so
+installing at run time is a sanctioned pattern, as the MCP runner is. The
+finding says whether a lockfile sits beside a manifest, but a lockfile does
+not lower it: a lockfile fixes versions only when the install command honours
+it (`npm ci`, not `npm i`), and the code is fetched after pinning either way.
+A file is one finding per rule, so a skill of scaffolding commands is one
+decision for the reviewer, not one per line.
+
+**Dependency manifests.** `package.json` (any of `dependencies`,
+`devDependencies`, `optionalDependencies`, `peerDependencies`),
+`requirements*.txt` (any requirement, `-r`, `-c` or `-e` line),
+`pyproject.toml` (`[project]` `dependencies`, a poetry dependency table other
+than `python`, `[dependency-groups]`) and `Cargo.toml` (any dependency table)
+anywhere in a plugin. The finding sits at the declaring line. A manifest that
+declares nothing, or that does not parse, is silent. Manifests inside
+`node_modules/`, `.venv/`, `venv/`, `site-packages/` and `target/` are vendored
+content and are not read, and neither are the skill files there.
+
+**Skill, command and agent files.** A skill's directory is the one holding its
+`SKILL.md`. Its scripts (a known extension, or a `#!` first line) are scanned
+whole. Its Markdown files, and the command and agent files the inventory
+lists, are scanned in fenced code blocks only (```` ``` ```` or `~~~`, at any
+indentation, so a fence nested in a list is read). Prose and inline code
+spans are mentions, not commands, and are not read. A file that a hook or a
+server launches is not read again here, so a line carries one finding.
+
+**LSP servers.** The servers come from the plugin's `.lsp.json` and from the
+`lspServers` its `plugin.json` and its marketplace entry declare, as a path,
+an inline map or an array of both. A name declared later replaces an earlier
+one. Every LSP server runs as a local process, so every one is scanned exactly
+as a local MCP server is, below, under the `lsp-` ids. A language server on
+`PATH` (`gopls`) is the user's install, and is silent.
 
 **MCP servers.** The servers come from the plugin's `.mcp.json` and from the
 `mcpServers` its `plugin.json` and its marketplace entry declare. For a local
@@ -518,20 +562,13 @@ yield one finding per line of it, not one per hook.
     harnesses (`.codex/`, `.cursor/`) are not Claude Code plugin hooks and are
     not read.
 
-    Dependencies a skill installs are not seen at all. Only hooks and MCP
-    servers are scanned for package installs, so a script a skill runs, or a
-    `SKILL.md` that tells the agent to run `npm install` or `pip install`,
-    fetches code from a registry after the snapshot was pinned without any
-    finding. Dependency manifests (`package.json`, `requirements.txt`,
-    `Cargo.toml`) and their lockfiles are not read either: a manifest without
-    a lockfile, an unpinned version range, or a package with a known
-    vulnerability is not reported. Approving such a snapshot approves whatever
-    the registry serves on the day the skill runs.
-
-    LSP servers a plugin declares (`lspServers` in its `plugin.json`) are not
-    read. Like a hook, such a server is a local process that starts without
-    anyone invoking it, but its command is neither listed in the inventory nor
-    scanned.
+    Dependencies are reported, not resolved. No lockfile is parsed, no
+    version range is evaluated, and no package is looked up for known
+    vulnerabilities or malware, which needs an advisory database and belongs
+    in an [external connector](#external-connectors). An install written as an
+    inline code span in prose (``run `npm i` first``) is read as a mention and
+    is not reported, and neither is a command inside a string argument
+    (`os.system("npm install")`). Files under `bin/` are not scanned.
 
 ### `license-scan`
 

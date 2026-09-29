@@ -55,6 +55,27 @@ export const AllExpanded: Story = {
   },
 };
 
+/** A language plugin: its LSP servers, each a process Claude Code starts for matching files. */
+export const LspServersExpanded: Story = {
+  args: {
+    plugin: {
+      name: "lang",
+      source: "./lang",
+      skills: [],
+      lspServers: [
+        { name: "go", path: "plugins/lang/.lsp.json:2" },
+        { name: "typescript", path: "plugins/lang/.claude-plugin/plugin.json:4" },
+      ],
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "2 LSP servers" }));
+    const servers = canvas.getByRole("region", { name: "LSP servers of lang" });
+    await expect(within(servers).getByText("typescript")).toBeVisible();
+  },
+};
+
 /** A plugin with nothing the layout recognises. */
 export const Empty: Story = {
   args: { plugin: { name: "empty", source: "./empty", skills: [] } },

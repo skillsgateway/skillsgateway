@@ -385,4 +385,70 @@ class PluginComponentsTests {
                                 java.util.List.of("entry-server"),
                                 ".claude-plugin/marketplace.json:3"));
     }
+
+    @Test
+    @SVCs({"SVC_GW_INGEST_0045"})
+    void lspServersAreReadFromEverySourceAndALaterNameReplacesAnEarlierOne() throws IOException {
+        String marketplace = """
+                {"name": "m", "plugins": [{"name": "p", "source": "./p",
+                  "lspServers": {"entry": {
+                    "command": "entry-ls", "extensionToLanguage": {".e": "e"}}}}]}
+                """;
+        Map<String, String> files = files(
+                "p/.lsp.json", """
+                {
+                  "go": {
+                    "command": "gopls", "args": ["serve"], "extensionToLanguage": {".go": "go"}},
+                  "broken": {"extensionToLanguage": {".b": "b"}},
+                  "ts": {"command": "old-ts", "extensionToLanguage": {".ts": "typescript"}}
+                }
+                """, "p/.claude-plugin/plugin.json", """
+                {"lspServers": ["./cfg/lsp.json", "../escape.json", {
+                  "inline": {"command": "${CLAUDE_PLUGIN_ROOT}/bin/ls", "extensionToLanguage": {".i": "i"}}}]}
+                """, "p/cfg/lsp.json", """
+                {"ts": {
+                  "command": "npx", "args": ["-y", "typescript-language-server", "--stdio"],
+                  "extensionToLanguage": {".ts": "typescript"}}}
+                """, "escape.json", """
+                {"outside": {"command": "x", "extensionToLanguage": {".x": "x"}}}
+                """);
+        Manifest manifest =
+                Manifest.parse(".claude-plugin/marketplace.json", marketplace.getBytes(StandardCharsets.UTF_8));
+
+        Components components = PluginComponents.read(new MapFiles(files), "p", manifest, "/plugins/0");
+
+        assertThat(components.lspServers())
+                .extracting(Component::name, Component::path)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple("go", "p/.lsp.json:2"),
+                        org.assertj.core.groups.Tuple.tuple("ts", "p/cfg/lsp.json:1"),
+                        org.assertj.core.groups.Tuple.tuple("inline", "p/.claude-plugin/plugin.json:2"),
+                        org.assertj.core.groups.Tuple.tuple("entry", ".claude-plugin/marketplace.json:2"));
+        assertThat(components.lspCommands())
+                .extracting(McpCommand::name, McpCommand::command, McpCommand::args, McpCommand::location)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple("go", "gopls", java.util.List.of("serve"), "p/.lsp.json:3"),
+                        org.assertj.core.groups.Tuple.tuple(
+                                "ts",
+                                "npx",
+                                java.util.List.of("-y", "typescript-language-server", "--stdio"),
+                                "p/cfg/lsp.json:2"),
+                        org.assertj.core.groups.Tuple.tuple(
+                                "inline",
+                                "${CLAUDE_PLUGIN_ROOT}/bin/ls",
+                                java.util.List.of(),
+                                "p/.claude-plugin/plugin.json:2"),
+                        org.assertj.core.groups.Tuple.tuple(
+                                "entry", "entry-ls", java.util.List.of(), ".claude-plugin/marketplace.json:3"));
+    }
+
+    @Test
+    @SVCs({"SVC_GW_INGEST_0045"})
+    void aMalformedLspFileLeavesOnlyItsServersOut() {
+        Components components = read(files("p/.lsp.json", "{ not json", "p/hooks/hooks.json", HOOKS_JSON), "p");
+
+        assertThat(components.lspServers()).isEmpty();
+        assertThat(components.lspCommands()).isEmpty();
+        assertThat(components.hooks()).isNotEmpty();
+    }
 }

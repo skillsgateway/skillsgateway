@@ -91,11 +91,16 @@ public class SnapshotContentService {
             List<PluginComponents.Hook> hooks,
 
             @Schema(description = "MCP servers the plugin provides (GW_INGEST_0045); empty when there are none")
-            List<PluginComponents.Component> mcpServers) {
+            List<PluginComponents.Component> mcpServers,
+
+            @Schema(
+                    description = "LSP servers the plugin provides (GW_INGEST_0045), each a local process Claude Code"
+                            + " starts for matching files; empty when there are none")
+            List<PluginComponents.Component> lspServers) {
 
         /** A plugin with skills only: what the content diff compares, which has no use for components. */
         PluginContent(String name, String description, String source, List<SkillInfo> skills) {
-            this(name, description, source, skills, List.of(), List.of(), List.of(), List.of());
+            this(name, description, source, skills, List.of(), List.of(), List.of(), List.of(), List.of());
         }
     }
 
@@ -232,7 +237,8 @@ public class SnapshotContentService {
                     components.commands(),
                     components.agents(),
                     components.hooks(),
-                    components.mcpServers()));
+                    components.mcpServers(),
+                    components.lspServers()));
         }
         return List.copyOf(plugins);
     }
