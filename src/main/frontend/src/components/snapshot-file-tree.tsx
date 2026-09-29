@@ -166,8 +166,15 @@ export function SnapshotFileTree({
                 );
               })()}
               <span className="min-w-0 flex-1 truncate">{fullPaths ? path : name}</span>
-              <FindingsMarker findings={found} />
-              <FileMarker node={node} />
+              {found.length > 0 ? (
+                // Stacked, so the slot is as wide as the wider marker and the name keeps its room.
+                <span className="flex shrink-0 flex-col items-end leading-tight">
+                  <FindingsMarker findings={found} />
+                  <FileMarker node={node} />
+                </span>
+              ) : (
+                <FileMarker node={node} />
+              )}
             </button>
           </li>
         );

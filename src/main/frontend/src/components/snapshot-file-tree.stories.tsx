@@ -46,8 +46,11 @@ function Harness({
   selected = null,
   matches,
   findings,
+  width = "w-80",
 }: {
   findings?: ReadonlyMap<string, readonly FileFinding[]>;
+  /** The tree's width: the explorer's tree pane is 18rem with p-3, so 16.5rem inside. */
+  width?: string;
   open?: string[];
   selected?: string | null;
   /** Render a flat list of search matches instead of the tree. */
@@ -71,7 +74,7 @@ function Harness({
     <SnapshotFileTree entries={LISTINGS[at] ?? []} {...props} renderChildren={level} />
   );
   return (
-    <div className="w-80 rounded-lg border p-3">
+    <div className={`${width} rounded-lg border p-3`}>
       {matches ? (
         <SnapshotFileTree entries={matches} {...props} fullPaths renderChildren={() => null} />
       ) : (
@@ -212,6 +215,9 @@ const found = (severity: FileFinding["severity"]): FileFinding => ({
 export const WithFindings: Story = {
   args: {
     open: ["plugins", "plugins/hello", "plugins/hello/skills", "plugins/hello/skills/hello"],
+    width: "w-[18rem]",
+    // Selected, as in the explorer after following a finding: the selected name is semibold, so wider.
+    selected: "plugins/hello/skills/hello/SKILL.md",
     findings: new Map([
       ["plugins/hello/skills/hello/SKILL.md", [found("medium"), found("high")]],
       ["plugins/hello/skills/hello/reference.md", [found("low")]],
