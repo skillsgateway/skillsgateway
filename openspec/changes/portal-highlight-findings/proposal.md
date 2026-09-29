@@ -17,9 +17,9 @@ where the content is.
   finding's description in place**: vetter, rule, severity and message. It is
   text, not only a colour, and it is reachable by keyboard and screen reader,
   not on hover. Several findings on one line are all shown, and a waived
-  finding says it is waived. A file with findings opens in a line-numbered
-  source view. Markdown and formatted JSON keep their rendered view one
-  control away.
+  finding says it is waived. The marks are in a line-numbered source view.
+  Plain text opens in it. Markdown and JSON open rendered, and following a
+  finding opens the source (design D3).
 - **A finding summary per file.** Above the file, "N findings in this file"
   lists each finding with a link to its line. That is the keyboard route from
   the top of the file to each marked line.

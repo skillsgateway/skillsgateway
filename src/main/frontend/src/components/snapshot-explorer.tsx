@@ -132,9 +132,10 @@ function FileFindings({
 }
 
 /**
- * The blob itself: inert text, Markdown rendered without any HTML pipeline, bounds stated. A file
- * that findings locate opens numbered, with each finding on its line (GW_APPROVAL_0029); Markdown
- * and JSON keep their rendered view one control away.
+ * The blob itself: inert text, Markdown rendered without any HTML pipeline, bounds stated. A
+ * file's findings are listed above it, and each is written out beneath its line in the numbered
+ * source (GW_APPROVAL_0029). Markdown and JSON open rendered, with the source one control away
+ * and opened by following a finding to its line.
  */
 function FileContent({
   snapshotId,
@@ -151,8 +152,14 @@ function FileContent({
 }) {
   const file = useSnapshotFile(snapshotId, path);
   const kind = path.endsWith(".md") ? "md" : path.endsWith(".json") ? "json" : null;
-  // Keyed by path and by whether findings exist, so either change chooses the view afresh.
-  const [view, setView] = useState<"source" | "rendered">(findings.length > 0 ? "source" : "rendered");
+  // Markdown and JSON open as they read; following a finding to a line opens the numbered source,
+  // because that is where the line is marked. Keyed by path, so a new file chooses afresh.
+  const [view, setView] = useState<"source" | "rendered">(focus.line !== null ? "source" : "rendered");
+  const [followed, setFollowed] = useState(focus.seq);
+  if (followed !== focus.seq) {
+    setFollowed(focus.seq);
+    if (focus.line !== null) setView("source");
+  }
   if (file.isLoading) return <Notice>Loading {path}…</Notice>;
   if (file.isError) {
     if (file.error instanceof ApiError && file.error.status === 403) return <Forbidden />;
@@ -661,7 +668,7 @@ export function SnapshotExplorer({
                     </div>
                   ) : mode === "content" ? (
                     <FileContent
-                      key={`${selectedPath}:${findings.has(selectedPath)}`}
+                      key={selectedPath}
                       snapshotId={snapshotId}
                       path={selectedPath}
                       findings={findings.get(selectedPath) ?? []}

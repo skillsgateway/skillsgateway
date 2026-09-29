@@ -25,22 +25,25 @@ const pane = async () => within(await screen.findByRole("region", { name: "Selec
 /**
  * @SVCs SVC_GW_APPROVAL_0029
  */
-test("a_file_with_findings_opens_numbered_with_its_findings_listed_and_marked", async () => {
+test("a_file_with_findings_lists_them_and_following_one_opens_its_marked_line", async () => {
   const user = userEvent.setup();
   const { container } = renderExplorer(SKILL);
 
+  // Markdown opens as it reads, with its findings listed above it.
   const summary = await (await pane()).findByRole("region", { name: "Findings in this file" });
   expect(summary).toHaveTextContent("3 findings in this file");
   expect(summary).toHaveTextContent("no line");
+  expect(await (await pane()).findByRole("heading", { name: "Hello skill" })).toBeInTheDocument();
+
+  // Following a finding opens the numbered source, the line marked and focused.
+  await user.click(within(summary).getByRole("button", { name: /high · html-in-markdown · line 5/ }));
   expect((await pane()).getByRole("list", { name: `Lines of ${SKILL}` })).toBeInTheDocument();
   const line5 = container.querySelector<HTMLElement>('[data-line="5"]')!;
   expect(line5).toHaveAttribute("data-severity", "high");
   expect(within(line5).getAllByRole("note")).toHaveLength(2);
-
-  await user.click(within(summary).getByRole("button", { name: /high · html-in-markdown · line 5/ }));
   expect(document.activeElement).toBe(line5);
 
-  // The rendered view is one control away, and moving to a line comes back to the source.
+  // The rendered view is one control away, and following a finding comes back to the source.
   await user.click((await pane()).getByRole("button", { name: "Rendered" }));
   expect(await (await pane()).findByRole("heading", { name: "Hello skill" })).toBeInTheDocument();
   await user.click(within(summary).getByRole("button", { name: /medium · generic-token · line 5/ }));

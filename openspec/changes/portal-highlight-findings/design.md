@@ -86,14 +86,21 @@ affordance fails keyboard and touch.
 
 ### D3. Which view opens
 
-A file with findings opens in the source view:
+**Revised during implementation, by the owner's decision.** The first draft
+opened a file with findings in the source view. That broke the existing test
+for contents exploration (SVC_GW_APPROVAL_0005, SVC_GW_INGEST_0032,
+SVC_GW_APPROVAL_0028), whose `SKILL.md` carries a finding and is expected to
+render. An existing requirement test is not edited to make a change pass, so
+the owner chose:
 
-- Markdown and JSON offer a Source / Rendered (or Formatted) toggle, built
-  with the existing `SegmentedGroup`.
-- A file without findings keeps today's defaults: Markdown rendered, JSON
-  formatted.
-- Other text always uses the source view, which adds line numbers to what was
-  a bare `<pre>`.
+- **Markdown and JSON open as they read** (rendered, formatted), findings or
+  not. The findings summary (D4) is shown above them.
+- **Following a finding opens the numbered source** with the line marked and
+  focused. That includes a link with a `line` (D5) and an entry of the
+  summary. A Source / Rendered (or Formatted) toggle, built with the existing
+  `SegmentedGroup`, is there whenever the file has findings.
+- **Other text always uses the source view.** That adds line numbers to what
+  was a bare `<pre>`, so its marks show on open.
 
 ### D4. The summary above the file
 

@@ -74,7 +74,7 @@ on the changed surfaces.
 
   Watch them fail, then implement, and pass `locationHref` from
   `snapshot-card.tsx`.
-- [ ] 4.3 Playwright e2e `highlight.spec.ts`, against the real jar
+- [x] 4.3 Playwright e2e `highlight.spec.ts`, against the real jar
   (`@SVCs SVC_GW_APPROVAL_0029, SVC_GW_APPROVAL_0030`, snake_case titles):
   - Register a marketplace whose plugin's hook pipes a download to `sh`.
   - Open its review and follow the finding's location from the Vetting tab.
