@@ -1,8 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router-dom";
 import { expect, test } from "vitest";
+import { auditPage, ledgerEntries } from "@/test/msw-handlers";
 import { server } from "@/test/msw-server";
 import { AuditPage } from "./audit";
 
@@ -117,9 +119,10 @@ test("column_filters_offer_completion_from_present_values", async () => {
 });
 
 /**
- * The ledger opens newest first. The API answers in ledger order — oldest first — so an
- * administrator who has just switched a vetter off would otherwise find their entry at the bottom
- * of the table, or on its last page, and read the page as not having recorded the change at all.
+ * The ledger opens newest first. The API answers newest first too (GW_AUDIT_0008), but the table
+ * sorts the entries it has loaded itself, across every page fetched; the fixture below is in
+ * ledger order — oldest first — so it is the table's own sort that puts an administrator's
+ * just-made change at the top rather than at the bottom or on the last page.
  */
 test("the_ledger_opens_with_the_newest_entry_first", async () => {
   server.use(
@@ -153,3 +156,39 @@ test("the_ledger_opens_with_the_newest_entry_first", async () => {
   expect(newest).toBeGreaterThan(-1);
   expect(newest).toBeLessThan(oldest);
 });
+
+/**
+ * The page reaches past the entries it first loaded: the control passes the last page's
+ * `nextBefore` back and the older entries join the table. Without it the download was the only
+ * way to an entry older than the newest page.
+ *
+ * @SVCs SVC_GW_AUDIT_0008
+ */
+test("load_older_entries_fetches_the_next_page_through_the_cursor", async () => {
+  const user = userEvent.setup();
+  const befores: string[] = [];
+  server.use(
+    http.get("/api/v1/audit", ({ request }) => {
+      const url = new URL(request.url);
+      befores.push(url.searchParams.get("before") ?? "");
+      url.searchParams.set("limit", "3");
+      return HttpResponse.json(auditPage(ledgerEntries, url));
+    }),
+  );
+  renderPage();
+
+  await screen.findByText("upload-pack");
+  expect(screen.getByText("3 of 3 loaded entries")).toBeInTheDocument();
+  expect(screen.queryByText("snapshot-ingested")).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Load older entries" }));
+  expect(await screen.findByText("snapshot-ingested")).toBeInTheDocument();
+  expect(screen.getByText("6 of 6 loaded entries")).toBeInTheDocument();
+  expect(befores).toEqual(["", "4"]);
+  // Six entries at three a page: the second page was full, so the cursor asks once more, finds
+  // nothing older, and the control gives way to the statement that the oldest entry is loaded.
+  await user.click(screen.getByRole("button", { name: "Load older entries" }));
+  expect(await screen.findByText(/nothing older is recorded/)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Load older entries" })).not.toBeInTheDocument();
+});
+

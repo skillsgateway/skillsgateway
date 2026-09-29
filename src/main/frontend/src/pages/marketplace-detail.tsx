@@ -9,7 +9,8 @@ import {
 } from "react-router-dom";
 import { toast } from "sonner";
 import {
-  useAudit,
+  auditRows,
+  useAuditPages,
   useIngest,
   useIsAdmin,
   useMarketplaces,
@@ -17,6 +18,7 @@ import {
   type Snapshot,
 } from "@/api/queries";
 import { AuditStatusBadge, auditRowClass } from "@/components/audit-status";
+import { LoadOlderEntries } from "@/components/load-older-entries";
 import { auditStatus } from "@/lib/audit-status";
 import { Timestamp } from "@/components/timestamp";
 import { Button } from "@/components/ui/button";
@@ -59,11 +61,13 @@ function useMarketplaceContext() {
  * and the marketplace row use. It answers "what has happened to this marketplace" without
  * making the reader scan the whole ledger and pick its name out by eye (#221/#224).
  *
- * @Requirements GW_AUDIT_0002, GW_INGEST_0007
+ * @Requirements GW_AUDIT_0002, GW_AUDIT_0008, GW_INGEST_0007
  */
 function MarketplaceAudit({ name }: { name: string }) {
-  const audit = useAudit();
-  const rows = (audit.data ?? []).filter((row) => row.marketplace === name).slice().reverse();
+  // The server narrows the ledger to this marketplace and answers newest first, so a quiet
+  // marketplace's entries are not lost behind newer ones belonging to others.
+  const audit = useAuditPages({ marketplace: name });
+  const rows = auditRows(audit.data?.pages);
 
   return (
     <div className="space-y-3">
@@ -103,7 +107,7 @@ function MarketplaceAudit({ name }: { name: string }) {
               {rows.map((row, index) => {
                 const sha = typeof row.sha === "string" ? row.sha : "";
                 return (
-                  <TableRow key={index} className={auditRowClass(row)}>
+                  <TableRow key={String(row.id ?? index)} className={auditRowClass(row)}>
                     <TableCell>
                       <AuditStatusBadge status={auditStatus(row)} />
                     </TableCell>
@@ -124,6 +128,14 @@ function MarketplaceAudit({ name }: { name: string }) {
             </TableBody>
           </Table>
         </div>
+      ) : null}
+      {rows.length > 0 ? (
+        <LoadOlderEntries
+          loaded={rows.length}
+          hasMore={audit.hasNextPage}
+          loading={audit.isFetchingNextPage}
+          onLoad={() => void audit.fetchNextPage()}
+        />
       ) : null}
     </div>
   );

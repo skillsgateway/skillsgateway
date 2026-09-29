@@ -223,9 +223,12 @@ the database for the serving path, not for the reporting one.
 
 ### Reading it
 
-`GET /api/v1/audit` returns the whole table, and the portal's
-[Audit log page](../reference/portal.md#audit-log) renders it. There is no
-filtering, search or paging: it is a recent-activity view.
+[`GET /api/v1/audit`](../reference/api/audit.md#get-apiv1audit) returns the ledger
+a bounded page at a time, newest first, optionally narrowed to one marketplace,
+with a count of the whole ledger on every page. The portal's
+[Audit log page](../reference/portal.md#audit-log) renders it and loads older
+pages on request, and each marketplace's Activity section reads its own slice.
+For a complete pull, use the NDJSON export and its cursor.
 
 Because entries carry the principal, marketplace and SHA, the inventory question
 — "every identity that fetched this exact content" — is a single query against

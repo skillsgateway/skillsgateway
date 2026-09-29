@@ -1,12 +1,15 @@
 package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import dev.skillsgateway.server.persistence.FetchLogRepository;
 import io.github.reqstool.annotations.SVCs;
 import java.util.List;
 import java.util.Map;
@@ -124,5 +127,84 @@ class AuditBrowseTests extends AbstractGatewayTest {
                 .andExpect(jsonPath("$.entries[0].actor_type").doesNotExist())
                 .andExpect(jsonPath("$.entries[0].token_id").doesNotExist())
                 .andExpect(jsonPath("$.entries[0].credential_kind").doesNotExist());
+    }
+
+    @Test
+    @SVCs({"SVC_GW_AUDIT_0008"})
+    void a_page_narrowed_to_one_marketplace_carries_only_its_entries_and_pages_within_it() throws Exception {
+        // The quiet marketplace's entries are older than a burst from another one: an unnarrowed
+        // first page of this size would hold none of them, which is the Activity tab bug.
+        String quiet = uniqueName("quiet");
+        for (int i = 0; i < 3; i++) {
+            fetchLogRepository.append("10.0.0.2", "quiet-" + i, quiet, "info-refs", "refs/heads/main", null);
+        }
+        appendEntries(5);
+
+        String first = mockMvc.perform(get("/api/v1/audit")
+                        .param("marketplace", quiet)
+                        .param("limit", "2")
+                        .with(oidcLogin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.entries.length()").value(2))
+                .andExpect(jsonPath("$.entries[*].marketplace", everyItem(is(quiet))))
+                .andExpect(jsonPath("$.entries[0].principal").value("quiet-2"))
+                .andExpect(jsonPath("$.nextBefore").isNumber())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long cursor = ((Number) JsonPath.read(first, "$.nextBefore")).longValue();
+
+        // The cursor continues within the narrowing, and the short last page ends it.
+        mockMvc.perform(get("/api/v1/audit")
+                        .param("marketplace", quiet)
+                        .param("limit", "2")
+                        .param("before", String.valueOf(cursor))
+                        .with(oidcLogin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.entries.length()").value(1))
+                .andExpect(jsonPath("$.entries[0].principal").value("quiet-0"))
+                .andExpect(jsonPath("$.nextBefore").doesNotExist());
+
+        mockMvc.perform(get("/api/v1/audit")
+                        .param("marketplace", uniqueName("absent"))
+                        .with(oidcLogin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.entries.length()").value(0));
+    }
+
+    @Test
+    @SVCs({"SVC_GW_AUDIT_0008"})
+    void every_page_states_the_ledger_total_exactly_while_the_ledger_is_small() throws Exception {
+        appendEntries(3);
+        long before = fetchLogRepository.list().size();
+
+        // A one-entry page still counts the whole ledger: the total is not the page's row count.
+        String body = mockMvc.perform(get("/api/v1/audit").param("limit", "1").with(oidcLogin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.entries.length()").value(1))
+                .andExpect(jsonPath("$.totalIsEstimate").value(false))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long after = fetchLogRepository.list().size();
+
+        // Other tests share the ledger and may append meanwhile; the count lies between the two reads.
+        long total = ((Number) JsonPath.read(body, "$.total")).longValue();
+        assertThat(total).isBetween(before, after);
+    }
+
+    @Test
+    @SVCs({"SVC_GW_AUDIT_0008"})
+    void the_total_is_the_estimate_only_from_the_threshold_up() {
+        // Never analysed (-1) and small both count exactly; the count is not read at all from the
+        // threshold up, because that read is the scan the estimate avoids.
+        assertThat(FetchLogRepository.LedgerSize.of(-1, () -> 7))
+                .isEqualTo(new FetchLogRepository.LedgerSize(7, false));
+        assertThat(FetchLogRepository.LedgerSize.of(99_999, () -> 12))
+                .isEqualTo(new FetchLogRepository.LedgerSize(12, false));
+        assertThat(FetchLogRepository.LedgerSize.of(100_000, () -> {
+                    throw new AssertionError("counted a large ledger");
+                }))
+                .isEqualTo(new FetchLogRepository.LedgerSize(100_000, true));
     }
 }

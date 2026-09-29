@@ -703,19 +703,48 @@ export function useStaleness() {
   });
 }
 
+export type AuditPage = components["schemas"]["AuditPage"];
+
 /**
- * The newest page of the ledger. The read is paged rather than whole (GW_AUDIT_0008) — the table it
- * reads grows with every client poll — so this is the first page, and `nextBefore` is what a
- * later "load older" control would pass back.
+ * The ledger, a page at a time, newest first (GW_AUDIT_0008): the table grows with every client
+ * poll, so the portal never reads it whole. `fetchNextPage` passes the last page's `nextBefore`
+ * back for the next older page; `marketplace` asks the server for that marketplace's entries
+ * only, so a quiet one is not lost behind newer entries belonging to others.
  */
-export function useAudit() {
+export function useAuditPages({ marketplace }: { marketplace?: string } = {}) {
+  return useInfiniteQuery({
+    queryKey: ["audit", "pages", marketplace ?? null],
+    queryFn: ({ pageParam }) => {
+      const query = new URLSearchParams();
+      if (pageParam !== 0) {
+        query.set("before", String(pageParam));
+      }
+      if (marketplace) {
+        query.set("marketplace", marketplace);
+      }
+      const suffix = query.size > 0 ? `?${query}` : "";
+      return api<AuditPage>(`/api/v1/audit${suffix}`);
+    },
+    initialPageParam: 0,
+    getNextPageParam: (last) => last.nextBefore ?? undefined,
+  });
+}
+
+/** Every entry loaded so far, in the order the server returned them: newest first. */
+export function auditRows(pages: AuditPage[] | undefined): Record<string, unknown>[] {
+  return (pages ?? []).flatMap((page) => (page.entries ?? []) as Record<string, unknown>[]);
+}
+
+/**
+ * How many entries the ledger holds, and whether that is the database's estimate — read from a
+ * one-entry page, so a count costs no page of rows.
+ */
+export function useLedgerTotal() {
   return useQuery({
-    queryKey: ["audit"],
+    queryKey: ["audit", "total"],
     queryFn: async () => {
-      const page = await api<{ entries: Record<string, unknown>[]; nextBefore: number | null }>(
-        "/api/v1/audit",
-      );
-      return page.entries;
+      const page = await api<AuditPage>("/api/v1/audit?limit=1");
+      return { total: page.total ?? 0, estimate: page.totalIsEstimate ?? false };
     },
   });
 }
