@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 type Plugin = NonNullable<SnapshotContent["plugins"]>[number];
 type Hook = NonNullable<Plugin["hooks"]>[number];
-type Kind = "skills" | "commands" | "agents" | "hooks" | "mcpServers";
+type Kind = "skills" | "commands" | "agents" | "hooks" | "mcpServers" | "lspServers";
 
 const KINDS: readonly { kind: Kind; one: string; many: string }[] = [
   { kind: "skills", one: "skill", many: "skills" },
@@ -14,6 +14,7 @@ const KINDS: readonly { kind: Kind; one: string; many: string }[] = [
   { kind: "agents", one: "agent", many: "agents" },
   { kind: "hooks", one: "hook", many: "hooks" },
   { kind: "mcpServers", one: "MCP server", many: "MCP servers" },
+  { kind: "lspServers", one: "LSP server", many: "LSP servers" },
 ];
 
 function count(n: number, one: string, many: string): string {

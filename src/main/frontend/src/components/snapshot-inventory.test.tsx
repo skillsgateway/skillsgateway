@@ -42,3 +42,28 @@ test("a_plugin_with_no_components_says_so", () => {
   expect(screen.getByText("no components found")).toBeInTheDocument();
   expect(screen.queryByRole("button")).not.toBeInTheDocument();
 });
+
+/**
+ * @SVCs SVC_GW_INGEST_0045
+ */
+test("lsp_servers_are_a_count_that_expands_to_each_server_and_its_declaration", async () => {
+  const user = userEvent.setup();
+  render(
+    <PluginInventory
+      plugin={{
+        name: "lang",
+        source: "./lang",
+        skills: [],
+        lspServers: [
+          { name: "go", path: "plugins/lang/.lsp.json:2" },
+          { name: "ts", path: "plugins/lang/.claude-plugin/plugin.json:4" },
+        ],
+      }}
+    />,
+  );
+
+  await user.click(screen.getByRole("button", { name: "2 LSP servers" }));
+  const servers = screen.getByRole("region", { name: "LSP servers of lang" });
+  expect(within(servers).getByText("go")).toBeInTheDocument();
+  expect(within(servers).getByText("plugins/lang/.claude-plugin/plugin.json:4")).toBeInTheDocument();
+});
