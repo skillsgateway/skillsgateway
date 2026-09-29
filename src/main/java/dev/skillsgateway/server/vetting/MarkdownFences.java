@@ -15,7 +15,8 @@ final class MarkdownFences {
     /** A block's content, and the file line its first content line is on. */
     record Block(int firstLine, String text) {}
 
-    private static final Pattern OPEN = Pattern.compile("^ {0,3}(`{3,}|~{3,})(.*)$");
+    /** Any indentation, not CommonMark's three spaces: a fence nested in a list item is still a fence. */
+    private static final Pattern OPEN = Pattern.compile("^[ \\t]*(`{3,}|~{3,})(.*)$");
 
     private MarkdownFences() {}
 
@@ -33,7 +34,7 @@ final class MarkdownFences {
                 continue;
             }
             Pattern close = Pattern.compile(
-                    "^ {0,3}" + Pattern.quote(String.valueOf(open.group(1).charAt(0))) + "{"
+                    "^[ \\t]*" + Pattern.quote(String.valueOf(open.group(1).charAt(0))) + "{"
                             + open.group(1).length() + ",}\\s*$");
             int first = i + 1;
             StringBuilder text = new StringBuilder();

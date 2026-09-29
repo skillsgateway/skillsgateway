@@ -818,6 +818,35 @@ class ExecutableSurfaceVetterTests {
         assertThat(rule(verdict, RUNTIME_DEPENDENCY)).isEmpty();
     }
 
+    @Test
+    @SVCs({"SVC_GW_VETTING_0053", "SVC_GW_VETTING_0054"})
+    void hostileLayoutsAreReadAsTheToolsReadThem() {
+        String skill = "---\r\nname: s\r\n---\r\n1. Install:\r\n\r\n    - then:\r\n\r\n        ```bash\r\n"
+                + "        npm install\r\n        ```\r\n";
+        Verdict verdict = vet(snapshot(
+                "p/skills/s/SKILL.md", skill,
+                "p/skills/s/fence.md", "````md\n```\nnot a close\n```\npip install acme\n````\nnpm install\n",
+                "p/skills/s/open.md", "```\n\npip install left-open\n",
+                "p/crlf/package.json", "{\r\n\"name\": \"c\",\r\n\"dependencies\": {\"a\": \"1\"}\r\n}\r\n",
+                "p/cmt/pyproject.toml", "[project]  # meta\ndependencies = [  # pinned below\n\n  \"httpx\",\n]\n",
+                "p/cfg/Cargo.toml", "[package]\nname = \"x\"\n\n[target.'cfg(unix)'.dependencies]\nlibc = \"0.2\"\n",
+                "p/one/Cargo.toml", "[package]\nname = \"y\"\n\n[dependencies.serde]\nversion = \"1\"\n",
+                "p/idx/requirements.txt", "--index-url https://pypi.example/simple\n",
+                "p/edit/requirements-dev.txt", "--index-url https://pypi.example/simple\n-e .\n"));
+
+        assertThat(rule(verdict, RUNTIME_DEPENDENCY))
+                .extracting(Finding::location)
+                .containsExactlyInAnyOrder(
+                        "p/skills/s/SKILL.md:9",
+                        "p/skills/s/fence.md:5",
+                        "p/skills/s/open.md:3",
+                        "p/crlf/package.json:3",
+                        "p/cmt/pyproject.toml:2",
+                        "p/cfg/Cargo.toml:4",
+                        "p/one/Cargo.toml:4",
+                        "p/edit/requirements-dev.txt:2");
+    }
+
     /** Counts tree walks: reading skill files one at a time would walk the tree once per file. */
     private record CountingSnapshot(InMemorySnapshot inner, int[] walks) implements SnapshotUnderVetting {
         @Override
