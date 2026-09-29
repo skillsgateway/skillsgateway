@@ -26,4 +26,4 @@
 
 ## 5. Integration
 
-- [ ] 5.1 Run all gates fresh after the last code edit and record them in `evidence.md`; capture before/after screenshots (overview card, Activity order, Load older) to the local screenshots directory
+- [x] 5.1 Run all gates fresh after the last code edit and record them in `evidence.md`; capture before/after screenshots (overview card, Activity order, Load older) to the local screenshots directory
