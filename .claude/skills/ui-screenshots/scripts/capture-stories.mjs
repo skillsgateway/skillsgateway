@@ -5,7 +5,7 @@
 //        [--widths 1280,390] [--themes light,dark] <story-id> [<story-id> ...]
 //
 // Writes <out>/<prefix>-<story-id>-<theme>-<width>.png, one per story, theme and width, of the
-// story's root element only. Playwright comes from the frontend's own node_modules. Fails closed:
+// story's own element only. Playwright comes from the frontend's own node_modules. Fails closed:
 // an unknown story, a story that renders an error, or an empty root is an error, not a blank image.
 import { createServer } from "node:http";
 import { createReadStream, existsSync, mkdirSync, statSync } from "node:fs";
@@ -101,7 +101,8 @@ async function main() {
           await page.waitForTimeout(300); // let a play function's final state and focus settle
           if (errors.length) throw new Error(`story ${story} threw: ${errors.join("; ")}`);
           const file = join(options.out, `${options.prefix}-${story}-${theme}-${width}.png`);
-          await root.screenshot({ path: file });
+          // The story's own element, not Storybook's full-width root: no empty margin beside it.
+          await root.locator(":scope > *").first().screenshot({ path: file });
           written.push(file);
           await page.close();
         }

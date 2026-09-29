@@ -36,17 +36,23 @@ not a way to silence the check.
 Use this when the change shows in a story, whether an existing one or one this
 PR adds. Stories enumerate the states and hold fixture data.
 
-```bash
-S=<scratch dir>   # your session scratchpad, never ~/cloud and never the repo
-# after: this branch
-(cd src/main/frontend && pnpm build-storybook -o $S/sb-after --quiet)
-# before: main, in a worktree (never switch the branch you are working in)
-git worktree add $S/main-tree origin/main
-(cd $S/main-tree/src/main/frontend && pnpm install --frozen-lockfile --prefer-offline && pnpm build-storybook -o $S/sb-before --quiet)
+Worktrees and builds go under `.claude/worktrees/`, which git ignores. They do
+not go in a `/tmp` scratchpad: a worktree's `node_modules` and Maven build
+overflow its per-user quota. Images and throwaway specs can go in the
+scratchpad (`$S`).
 
-node .claude/skills/ui-screenshots/scripts/capture-stories.mjs --storybook $S/sb-before --out $S/shots --prefix before <story-id> ...
-node .claude/skills/ui-screenshots/scripts/capture-stories.mjs --storybook $S/sb-after  --out $S/shots --prefix after  <story-id> ...
-git worktree remove $S/main-tree
+```bash
+W=.claude/worktrees
+# after: this branch
+(cd src/main/frontend && pnpm build-storybook -o ../../../$W/sb-after --quiet)
+# before: main, in a worktree (never switch the branch you are working in)
+git worktree add $W/shots-main origin/main
+(cd $W/shots-main/src/main/frontend && pnpm install --frozen-lockfile --prefer-offline \
+  && pnpm build-storybook -o ../../../../sb-before --quiet)
+
+node .claude/skills/ui-screenshots/scripts/capture-stories.mjs --storybook $W/sb-before --out $S/shots --prefix before <story-id> ...
+node .claude/skills/ui-screenshots/scripts/capture-stories.mjs --storybook $W/sb-after  --out $S/shots --prefix after  <story-id> ...
+git worktree remove $W/shots-main && rm -rf $W/sb-before $W/sb-after
 ```
 
 - **Story ids** are `title--export` in kebab case (`Snapshots/SourceView` and
@@ -56,9 +62,13 @@ git worktree remove $S/main-tree
   The script shoots the story root only, after its play function has run.
 - **It fails closed.** An unknown id, a render error or an empty root is an
   error, not a blank image.
-- **A story new in this PR has no before.** Pair it with the closest thing
-  `main` has: the same component's nearest story, or the page shot from
-  recipe B.
+- **No story shows the same data on both sides?** Write a throwaway story in
+  `$S` that renders the component with the data the claim needs. Copy it
+  into both trees' `src/components/` before building, and delete it
+  afterwards. On `main`, a prop it does not know yet is ignored, so the
+  before shows exactly what `main` shows for that data. Never commit it.
+- `--frontend <dir>` names the frontend whose `node_modules` holds
+  Playwright, when you run the script from outside the checkout that has it.
 
 ## Recipe B: page flows, against the real jar
 
@@ -72,12 +82,15 @@ PostgreSQL, the mock IdP) and its fixture upstreams.
    `await page.screenshot({ path: process.env.SHOT_DIR + "/<name>.png" })`,
    or `locator.screenshot` for one region. Take nothing that is not fixture
    data.
+   Wait for each step as the real specs do. For example, after registering,
+   wait for the dialog to close and the marketplace heading to show before
+   ingesting.
 2. **After:** repackage the jar (`./mvnw -q package -DskipTests`; e2e runs
    the newest jar in `target/`). Copy the spec into `src/main/frontend/e2e/`,
-   run `SHOT_DIR=$S/shots/after pnpm e2e -- <spec>.spec.ts`, and delete the
-   copy.
-3. **Before:** the same in a `main` worktree. Package there, then run its own
-   `pnpm e2e`, which uses that worktree's jar.
+   run `SHOT_DIR=$S/shots/after pnpm e2e <spec-name>`, and delete the copy.
+   Pass no `--`: under pnpm 12 it is passed through, and the whole suite runs.
+3. **Before:** the same in a `main` worktree under `.claude/worktrees/`.
+   Package there, then run its own `pnpm e2e`, which uses that worktree's jar.
 
 Never commit the spec or the images.
 
