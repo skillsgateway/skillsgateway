@@ -83,7 +83,7 @@ on the changed surfaces.
 
 ## 5. Docs (same PR)
 
-- [ ] 5.1 `reference/portal.md`: the Contents tab (the source view, markers,
+- [x] 5.1 `reference/portal.md`: the Contents tab (the source view, markers,
   the summary, the view toggle, tree markers), the `line` address parameter,
   and links in the Vetting tab. `guides/approving-snapshots.md`: reading a
   finding in context. Verify with `mkdocs build --strict`.
