@@ -71,11 +71,15 @@ purpose; it was retired in favour of that single source (issue #23).
 
 Two consequences worth knowing before you open a PR:
 
-- **`main` is protected.** A PR needs the required checks (`Build & gates`,
-  `Storybook tests`, `Portal e2e`, `Traceability & spec gates`,
-  `Documentation (strict)`, `Breaking change detection`,
-  `semantic-pr / Validate PR title`) green, one approving review, and all review
-  threads resolved. Force-pushes and branch deletion are blocked.
+- **`main` is protected.** A PR needs thirteen required checks green:
+  `Build & gates`, `Storybook tests`, `Portal e2e`,
+  `Traceability & spec gates`, `Documentation (strict)`,
+  `Breaking change detection`, `semantic-pr / Validate PR title`,
+  `Apply subsystem labels`, `DCO`, `CodeQL`, `Analyze (actions)`,
+  `Analyze (java-kotlin)` and `Analyze (javascript-typescript)`. All review
+  threads must be resolved. The review rule is declared with the ruleset, in
+  `safe-settings/suborgs/product.yml` of the admin repo. Force-pushes and
+  branch deletion are blocked.
 - **Labels are declarative.** `.github/labeler.yml` may only reference labels
   declared in the admin repo; a label that exists on the repo but not there is
   deleted on the next sync. Adding a label means a PR against that repo. CI

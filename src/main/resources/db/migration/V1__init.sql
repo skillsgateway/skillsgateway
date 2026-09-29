@@ -240,7 +240,8 @@ CREATE INDEX idx_snapshots_purge_queue ON snapshots (purge_after) WHERE deleted_
 -- The continuous re-vetting sweep's only query: live approved snapshots, oldest run first.
 CREATE INDEX idx_snapshots_revet_queue ON snapshots (id) WHERE state = 'approved' AND deleted_at IS NULL;
 
--- Append-only fetch ledger: no UPDATE/DELETE is ever issued against this table.
+-- Append-only fetch ledger: no UPDATE is ever issued against this table, and the only DELETE is
+-- the export-cursor trim (GW_RETENTION_0009), which removes read entries behind every sink.
 -- What kind of actor produced a ledger entry (GW_AUDIT_0007). A native type rather than three
 -- magic strings in `principal`: the ledger already had this vocabulary --
 -- 'config-reconciler', 'scheduler', 'system' -- distinguishable only by string comparison

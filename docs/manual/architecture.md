@@ -7,7 +7,7 @@
     [concepts](concepts/lifecycle.md) and [reference](reference/configuration.md)
     sections; implementation notes below are marked as such.
 
-**Status:** Draft proposal · **Date:** 2026-08-13
+**Status:** Accepted; the ADRs record what superseded which section · **Date:** 2026-08-13, revised 2026-09-30
 
 An enterprise gateway for git-distributed AI agent skills and skill
 marketplaces (Claude Code, GitHub Copilot, Cursor, …) — the missing analogue of

@@ -1,8 +1,8 @@
 # Delegated administration
 
-Out of the box every authenticated portal session may do everything. This guide
-turns that into delegated administration: named **admins**, per-marketplace
-**approvers**, and read-only **auditors** — without ever locking yourself out.
+Authorization is always enforced: a session may do only what its roles grant.
+This guide sets up delegated administration: named **admins**, per-marketplace
+**approvers**, and read-only **auditors**, without ever locking yourself out.
 
 ## The three roles
 
