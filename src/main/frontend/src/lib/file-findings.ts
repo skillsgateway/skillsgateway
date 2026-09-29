@@ -63,3 +63,10 @@ export function highestSeverity(findings: readonly FileFinding[]): Severity | nu
   }
   return null;
 }
+
+/** A `line` address parameter: a positive whole number, or nothing (GW_APPROVAL_0030). */
+export function parseLineParam(value: string | null): number | null {
+  if (value === null || !/^\d+$/.test(value)) return null;
+  const line = Number(value);
+  return line >= 1 ? line : null;
+}

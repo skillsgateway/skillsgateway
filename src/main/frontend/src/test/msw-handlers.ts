@@ -921,6 +921,35 @@ export const fileTree: Schemas["FileTree"] = {
   ],
 };
 
+/** A run locating findings on the fixture's files: SKILL.md line 5 twice and once without a line. */
+export const locatedVetting: Schemas["VettingView"] = {
+  snapshotId: 1,
+  outcome: "blocked",
+  run: {
+    verdicts: [
+      {
+        vetter: "prompt-injection",
+        state: "fail",
+        findings: [
+          { id: "html-in-markdown", severity: "high", location: `plugins/hello/skills/hello/SKILL.md:5`, message: "raw HTML with an event handler" },
+          { id: "file-level", severity: "low", location: "plugins/hello/skills/hello/SKILL.md", message: "a finding about the whole file" },
+        ],
+      },
+      {
+        vetter: "secret-scan",
+        state: "warn",
+        findings: [{ id: "generic-token", severity: "medium", location: `plugins/hello/skills/hello/SKILL.md:5`, message: "looks like a token" }],
+      },
+      {
+        vetter: "executable-surface",
+        state: "warn",
+        findings: [{ id: "runtime-dependency", severity: "medium", location: "data/huge.txt:40", message: "installs" }],
+      },
+    ],
+  },
+  suppressed: [],
+};
+
 /** Hostile-shaped SKILL.md: the embedded HTML must render as text, never as markup. */
 export const skillMarkdown =
   "# Hello skill\n\nA test skill that says hello.\n\n<img src=x onerror=alert(1)>\n\n```console\n$ echo hi\n```\n";

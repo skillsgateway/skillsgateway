@@ -58,7 +58,7 @@ on the changed surfaces.
 
 ## 4. Address and links (D5, D6)
 
-- [ ] 4.1 Tests (`@SVCs SVC_GW_APPROVAL_0030`):
+- [x] 4.1 Tests (`@SVCs SVC_GW_APPROVAL_0030`):
   - `marketplace-detail` reads and writes `line`.
   - Choosing another file clears it.
   - `snapshot-files` does the same with `?line=`.

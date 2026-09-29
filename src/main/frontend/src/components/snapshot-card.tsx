@@ -331,6 +331,8 @@ export function SnapshotCard({
   path,
   onTab,
   onPath,
+  line = null,
+  onLine,
   others,
   onRetentionChanged,
 }: {
@@ -339,6 +341,9 @@ export function SnapshotCard({
   path: string | null;
   onTab: (tab: SnapshotTab) => void;
   onPath: (path: string) => void;
+  /** The addressed line of the open file (GW_APPROVAL_0030). */
+  line?: number | null;
+  onLine?: (line: number) => void;
   /** The other snapshots awaiting a decision — named because approving this one leaves them held. */
   others: readonly Snapshot[];
   onRetentionChanged?: () => void;
@@ -389,7 +394,13 @@ export function SnapshotCard({
           <TabsContent value="contents" className="pt-2">
             {/* Bounded, so the tree and the file scroll inside the card and the page does not. */}
             <div className="lg:h-[36rem]">
-              <SnapshotExplorer snapshotId={id} selectedPath={path} onSelect={onPath} />
+              <SnapshotExplorer
+                snapshotId={id}
+                selectedPath={path}
+                onSelect={onPath}
+                selectedLine={line}
+                onSelectLine={onLine}
+              />
             </div>
           </TabsContent>
           <TabsContent value="diff" className="space-y-6 pt-2">

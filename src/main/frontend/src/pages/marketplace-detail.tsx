@@ -33,6 +33,7 @@ import { MarketplaceVettingChain } from "@/components/marketplace-vetting-chain"
 import { RemoveMarketplace } from "@/components/remove-marketplace";
 import { SetupWizard } from "@/components/setup-wizard";
 import { SnapshotCard, SnapshotLine } from "@/components/snapshot-card";
+import { parseLineParam } from "@/lib/file-findings";
 import {
   isDecidable,
   newestFirst,
@@ -137,6 +138,7 @@ function useSnapshotAddress() {
   const [params, setParams] = useSearchParams();
   const tab = parseSnapshotTab(params.get("tab"));
   const path = params.get("path");
+  const line = parseLineParam(params.get("line"));
   const addressedId = params.get("snapshot") === null ? null : Number(params.get("snapshot"));
   // Each move names the snapshot explicitly, so the address never depends on which one happens
   // to be newest when the link is opened.
@@ -148,10 +150,15 @@ function useSnapshotAddress() {
         : { snapshot: String(id), tab: next },
       { replace: true },
     );
-  // Pushed, not replaced: back and forward walk the files the reviewer visited.
+  // Pushed, not replaced: back and forward walk the files the reviewer visited. A new file has
+  // no line of its own yet.
   const setPath = (id: number, next: string) =>
     setParams({ snapshot: String(id), tab: "contents", path: next });
-  return { tab, path, addressedId, openSnapshot, setTab, setPath };
+  // Replaced, not pushed: moving between lines of one file is not a step back should undo.
+  const setLine = (id: number, next: number) => {
+    if (path) setParams({ snapshot: String(id), tab: "contents", path, line: String(next) }, { replace: true });
+  };
+  return { tab, path, line, addressedId, openSnapshot, setTab, setPath, setLine };
 }
 
 function SnapshotItem({
@@ -178,6 +185,8 @@ function SnapshotItem({
         path={address.path}
         onTab={(next) => address.setTab(id, next)}
         onPath={(next) => address.setPath(id, next)}
+        line={address.line}
+        onLine={(next) => address.setLine(id, next)}
         others={others}
         onRetentionChanged={pin}
       />

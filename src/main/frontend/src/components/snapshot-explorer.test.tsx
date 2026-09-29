@@ -3,40 +3,11 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
-import type { VettingView } from "@/api/queries";
+import { locatedVetting } from "@/test/msw-handlers";
 import { server } from "@/test/msw-server";
 import { SnapshotExplorer } from "./snapshot-explorer";
 
 const SKILL = "plugins/hello/skills/hello/SKILL.md";
-
-/** A run locating findings on the fixture's files: SKILL.md line 5 twice and once without a line. */
-export const locatedVetting: VettingView = {
-  snapshotId: 1,
-  outcome: "blocked",
-  run: {
-    verdicts: [
-      {
-        vetter: "prompt-injection",
-        state: "fail",
-        findings: [
-          { id: "html-in-markdown", severity: "high", location: `${SKILL}:5`, message: "raw HTML with an event handler" },
-          { id: "file-level", severity: "low", location: SKILL, message: "a finding about the whole file" },
-        ],
-      },
-      {
-        vetter: "secret-scan",
-        state: "warn",
-        findings: [{ id: "generic-token", severity: "medium", location: `${SKILL}:5`, message: "looks like a token" }],
-      },
-      {
-        vetter: "executable-surface",
-        state: "warn",
-        findings: [{ id: "runtime-dependency", severity: "medium", location: "data/huge.txt:40", message: "installs" }],
-      },
-    ],
-  },
-  suppressed: [],
-};
 
 function renderExplorer(path: string, line: number | null = null) {
   server.use(http.get("/api/v1/snapshots/:id/vetting", () => HttpResponse.json(locatedVetting)));
