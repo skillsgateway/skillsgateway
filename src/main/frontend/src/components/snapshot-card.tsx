@@ -20,6 +20,7 @@ import { ProvenanceDetails } from "@/components/provenance-details";
 import { SnapshotContentDiff } from "@/components/snapshot-content-diff";
 import { SnapshotDelta } from "@/components/snapshot-delta";
 import { SnapshotExplorer } from "@/components/snapshot-explorer";
+import { contentsHref } from "@/lib/file-findings";
 import { SnapshotFileChanges } from "@/components/snapshot-file-changes";
 import { SnapshotInventory } from "@/components/snapshot-inventory";
 import { RevocationNote, SnapshotStateBadge } from "@/components/snapshot-state";
@@ -389,7 +390,7 @@ export function SnapshotCard({
             <TabsTrigger value="provenance">Provenance</TabsTrigger>
           </TabsList>
           <TabsContent value="vetting" className="pt-2">
-            <VettingReport snapshotId={id} />
+            <VettingReport snapshotId={id} locationHref={(location) => contentsHref(id, location)} />
           </TabsContent>
           <TabsContent value="contents" className="pt-2">
             {/* Bounded, so the tree and the file scroll inside the card and the page does not. */}

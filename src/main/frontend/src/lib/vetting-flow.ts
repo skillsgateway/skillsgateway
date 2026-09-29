@@ -434,16 +434,8 @@ export function marketplaceHeadline(
   };
 }
 
-/** How many locations a list spells out before counting the rest. */
-const SHOWN_LOCATIONS = 3;
-
-/** `a:1, b:1, c:1 and 4 more` — every location a reviewer is being asked about, never a bare rule. */
-export function describeLocations(locations: readonly string[]) {
-  if (locations.length === 0) return "—";
-  const shown = locations.slice(0, SHOWN_LOCATIONS).join(", ");
-  const more = locations.length - SHOWN_LOCATIONS;
-  return more > 0 ? `${shown} and ${more} more` : shown;
-}
+/** How many locations a list spells out before counting the rest (`FindingLocations`). */
+export const SHOWN_LOCATIONS = 3;
 
 /** What a waiver form accepts: one finding, or one group of findings on identical content. */
 export interface WaiveTarget {

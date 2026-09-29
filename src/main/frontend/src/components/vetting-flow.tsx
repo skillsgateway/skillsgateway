@@ -20,8 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FindingLocations } from "@/components/finding-locations";
 import {
-  describeLocations,
   sourceChip,
   sourceWord,
   type FlowHeadline,
@@ -96,7 +96,9 @@ function GroupLine({
     <div className="flex flex-wrap items-baseline gap-2 text-sm">
       <Badge variant="outline">{group.severity?.toLowerCase()}</Badge>
       <span className={`font-mono text-xs ${waived ? "line-through" : ""}`}>{group.ruleId}</span>
-      <span className="font-mono text-xs break-all text-muted-foreground">{describeLocations(locations)}</span>
+      <span className="font-mono text-xs break-all text-muted-foreground">
+        <FindingLocations locations={locations} />
+      </span>
       <span className="text-muted-foreground">{group.message}</span>
       {waived ? (
         <Badge variant="secondary">
@@ -219,7 +221,7 @@ function NodeDetail({
                 <Badge variant="outline">{finding.severity?.toLowerCase()}</Badge>
                 <span className="font-mono text-xs">{finding.ruleId}</span>
                 <span className="font-mono text-xs break-all text-muted-foreground">
-                  {describeLocations(finding.locations ?? (finding.location ? [finding.location] : []))}
+                  <FindingLocations locations={finding.locations ?? (finding.location ? [finding.location] : [])} />
                 </span>
                 <span className="text-muted-foreground">{finding.message}</span>
               </div>

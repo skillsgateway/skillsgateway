@@ -10,6 +10,8 @@ import {
   vendoredVetting,
 } from "@/test/msw-handlers";
 import { server } from "@/test/msw-server";
+import { MemoryRouter } from "react-router-dom";
+import { contentsHref } from "@/lib/file-findings";
 import { VettingReport } from "./vetting-report";
 import type { VettingView } from "@/api/queries";
 
@@ -165,4 +167,47 @@ test("a_pass_that_skipped_files_says_so_in_one_entry", async () => {
   expect(
     screen.getAllByText(/2 file\(s\) not scanned: over the scan size limit: assets\/demo.mp4, assets\/hero.png/),
   ).toHaveLength(1);
+});
+
+function renderLinkedReport() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <VettingReport snapshotId={1} locationHref={(location) => contentsHref(1, location)} />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
+/**
+ * @SVCs SVC_GW_APPROVAL_0030
+ */
+test("every_location_links_to_its_file_and_line_in_contents", async () => {
+  vettingIs(vendoredVetting);
+  renderLinkedReport();
+
+  const blocking = await screen.findByRole("list", { name: "Blocking findings" });
+  const entry = within(blocking).getAllByRole("listitem")[0]!;
+  // The text is unchanged: the same locations, the same truncation, now each one a link.
+  expect(entry).toHaveTextContent(
+    "concealment-instruction at plugins/a/skills/x/SKILL.md:12, plugins/b/skills/x/SKILL.md:12, plugins/c/skills/x/SKILL.md:12 and 1 more",
+  );
+  expect(within(entry).getByRole("link", { name: "plugins/b/skills/x/SKILL.md:12" })).toHaveAttribute(
+    "href",
+    "/?snapshot=1&tab=contents&path=plugins%2Fb%2Fskills%2Fx%2FSKILL.md&line=12",
+  );
+  // A group's other copies link too, each to its own file.
+  expect(screen.getAllByRole("link", { name: "plugins/d/skills/x/SKILL.md:12" }).length).toBeGreaterThan(0);
+});
+
+/**
+ * @SVCs SVC_GW_APPROVAL_0030
+ */
+test("without_a_link_target_locations_stay_text", async () => {
+  vettingIs(vendoredVetting);
+  renderReport();
+
+  await screen.findByRole("list", { name: "Blocking findings" });
+  expect(screen.queryByRole("link", { name: /SKILL\.md/ })).not.toBeInTheDocument();
 });

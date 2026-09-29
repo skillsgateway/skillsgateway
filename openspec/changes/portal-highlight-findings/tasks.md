@@ -66,7 +66,7 @@ on the changed surfaces.
   - Copy link includes the line.
 
   Watch them fail, then implement (`@Requirements GW_APPROVAL_0030`).
-- [ ] 4.2 `VettingReport` and `VettingFlow` tests (`@SVCs SVC_GW_APPROVAL_0030`):
+- [x] 4.2 `VettingReport` and `VettingFlow` tests (`@SVCs SVC_GW_APPROVAL_0030`):
   - With `locationHref`, every location is a link to
     `?snapshot=&tab=contents&path=&line=`, including each location of a group.
   - Without it, as in the approval dialog, they stay text.

@@ -339,6 +339,26 @@ test("the_address_carries_the_line_of_the_file", async () => {
 });
 
 /**
+ * @SVCs SVC_GW_APPROVAL_0030
+ */
+test("a_location_in_the_vetting_tab_opens_its_file_at_its_line", async () => {
+  const user = userEvent.setup();
+  server.use(http.get("/api/v1/snapshots/:id/vetting", () => HttpResponse.json(locatedVetting)));
+  const { container } = renderPage("?snapshot=3&tab=vetting");
+
+  const card = await screen.findByRole("region", { name: "Snapshot 3" });
+  const links = await within(card).findAllByRole("link", { name: `${SKILL}:5` });
+  await user.click(links[0]!);
+
+  expect(screen.getByTestId("address")).toHaveTextContent(
+    `?snapshot=3&tab=contents&path=${encodeURIComponent(SKILL)}&line=5`,
+  );
+  expect(within(card).getByRole("tab", { name: "Contents" })).toHaveAttribute("aria-selected", "true");
+  await within(card).findByRole("list", { name: `Lines of ${SKILL}` });
+  await waitFor(() => expect(document.activeElement).toBe(container.querySelector('[data-line="5"]')));
+});
+
+/**
  * The regression test for the reason this layout exists: with twelve snapshots each section
  * still opens at most one card and runs at most one vetting report — the rest are one line each.
  * Review holds only what awaits a decision; history is on Snapshots.

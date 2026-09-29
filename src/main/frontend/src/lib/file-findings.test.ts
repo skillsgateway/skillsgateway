@@ -1,6 +1,13 @@
 import { expect, test } from "vitest";
 import type { VettingView } from "@/api/queries";
-import { findingsByPath, highestSeverity, parseLineParam, parseLocation, type FileFinding } from "./file-findings";
+import {
+  contentsHref,
+  findingsByPath,
+  highestSeverity,
+  parseLineParam,
+  parseLocation,
+  type FileFinding,
+} from "./file-findings";
 
 /**
  * @SVCs SVC_GW_APPROVAL_0029
@@ -87,4 +94,13 @@ test("the_highest_severity_orders_critical_high_medium_low_info", () => {
 test("a_line_parameter_is_a_positive_whole_number_or_nothing", () => {
   expect(parseLineParam("12")).toBe(12);
   for (const bad of [null, "", "0", "-3", "1.5", "12a", " 12"]) expect(parseLineParam(bad)).toBeNull();
+});
+
+/**
+ * @SVCs SVC_GW_APPROVAL_0030
+ */
+test("a_location_becomes_the_address_of_its_file_and_line", () => {
+  expect(contentsHref(3, "a b/c.md:7")).toBe("?snapshot=3&tab=contents&path=a+b%2Fc.md&line=7");
+  expect(contentsHref(3, "p/big.bin")).toBe("?snapshot=3&tab=contents&path=p%2Fbig.bin");
+  expect(contentsHref(3, "")).toBeNull();
 });

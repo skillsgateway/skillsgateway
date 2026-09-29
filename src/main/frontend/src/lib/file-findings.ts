@@ -70,3 +70,12 @@ export function parseLineParam(value: string | null): number | null {
   const line = Number(value);
   return line >= 1 ? line : null;
 }
+
+/** The review card's address of a finding's file and line, or null for an empty location (GW_APPROVAL_0030). */
+export function contentsHref(snapshotId: number, location: string): string | null {
+  if (location.trim() === "") return null;
+  const { path, line } = parseLocation(location);
+  const params = new URLSearchParams({ snapshot: String(snapshotId), tab: "contents", path });
+  if (line !== null && line >= 1) params.set("line", String(line));
+  return `?${params.toString()}`;
+}
