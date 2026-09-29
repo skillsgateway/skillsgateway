@@ -210,8 +210,9 @@ The threats that matter here are the ones no scanner catches:
 - **Hooks and MCP servers.** These execute without the user ever invoking a
   skill. A plugin that registers them deserves more scrutiny than a
   markdown-only skill.
-- **The diff, on updates.** A skill that grows a `scripts/` directory has
-  changed category, and that transition is itself worth a closer look.
+- **The diff, on updates.** A skill that grows a `scripts/` directory now runs
+  something it did not run before, and that transition is itself worth a
+  closer look.
 
 ## Deciding
 
