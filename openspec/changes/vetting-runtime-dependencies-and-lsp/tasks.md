@@ -77,13 +77,13 @@ first run.
 
 - [x] 5.1 Manual mutation: at least five mutants over the new code in
   `mutants.sh` in this change. Each is killed.
-- [ ] 5.2 Measure on `anthropics/claude-plugins-official` at a pinned SHA with
+- [x] 5.2 Measure on `anthropics/claude-plugins-official` at a pinned SHA with
   `VettingPrecisionMeasurement`. Record the new findings by rule and severity,
   and a sample judged true or false positive, in `evidence.md`.
 
 ## 6. Docs (same PR)
 
-- [ ] 6.1 `concepts/vetting.md`: add the three rules to the
+- [x] 6.1 `concepts/vetting.md`: add the three rules to the
   `executable-surface` table and describe LSP servers beside MCP servers.
   Replace the two limitation paragraphs from PRs #521 and #528 with what
   remains unseen: manifest resolution and vulnerabilities. In "Why runtime
