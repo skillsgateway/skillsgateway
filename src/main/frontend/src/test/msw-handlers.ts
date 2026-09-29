@@ -921,6 +921,44 @@ export const fileTree: Schemas["FileTree"] = {
   ],
 };
 
+const LOCATED_SKILL = "plugins/hello/skills/hello/SKILL.md";
+
+/** One finding and its one-location group, as the API reports every finding of a run. */
+function located(id: string, severity: "high" | "medium" | "low", location: string, message: string) {
+  return {
+    finding: { id, severity, location, message },
+    group: { ruleId: id, severity, message, locations: [location] },
+  };
+}
+
+const LOCATED = {
+  "prompt-injection": [
+    located("html-in-markdown", "high", `${LOCATED_SKILL}:5`, "raw HTML with an event handler"),
+    located("file-level", "low", LOCATED_SKILL, "a finding about the whole file"),
+  ],
+  "secret-scan": [located("generic-token", "medium", `${LOCATED_SKILL}:5`, "looks like a token")],
+  "executable-surface": [located("runtime-dependency", "medium", "data/huge.txt:40", "installs")],
+};
+
+/**
+ * A run locating findings on the fixture's files: SKILL.md line 5 twice and once without a line,
+ * and a line beyond the truncated `data/huge.txt` (GW_APPROVAL_0029, GW_APPROVAL_0030).
+ */
+export const locatedVetting: Schemas["VettingView"] = {
+  snapshotId: 3,
+  outcome: "blocked",
+  run: {
+    verdicts: Object.entries(LOCATED).map(([vetter, entries]) => ({
+      vetter,
+      state: entries.some((entry) => entry.finding.severity === "high") ? "fail" : "warn",
+      findings: entries.map((entry) => entry.finding),
+      groups: entries.map((entry) => entry.group),
+    })),
+  },
+  suppressed: [],
+  uncovered: [{ vetter: "prompt-injection", ruleId: "html-in-markdown", severity: "high", location: `${LOCATED_SKILL}:5`, locations: [`${LOCATED_SKILL}:5`], message: "raw HTML with an event handler" }],
+};
+
 /** Hostile-shaped SKILL.md: the embedded HTML must render as text, never as markup. */
 export const skillMarkdown =
   "# Hello skill\n\nA test skill that says hello.\n\n<img src=x onerror=alert(1)>\n\n```console\n$ echo hi\n```\n";

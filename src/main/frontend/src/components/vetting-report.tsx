@@ -26,8 +26,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FindingLocation, FindingLocations } from "@/components/finding-locations";
+import { LocationHrefContext } from "@/lib/location-href";
 import {
-  describeLocations,
   snapshotFlow,
   snapshotHeadline,
   type WaiveTarget,
@@ -276,7 +277,9 @@ function GroupRow({
           {group.severity?.toLowerCase()}
         </Badge>
         <span className={`font-mono text-xs ${waived ? "line-through" : ""}`}>{group.ruleId}</span>
-        <span className="font-mono text-xs break-all text-muted-foreground">{first}</span>
+        <span className="font-mono text-xs break-all text-muted-foreground">
+          {locations.length > 0 ? <FindingLocation location={first} /> : first}
+        </span>
         <span className="text-muted-foreground">{group.message}</span>
         {waived ? (
           <Badge variant="secondary">
@@ -310,7 +313,9 @@ function GroupRow({
           </summary>
           <ul className="mt-1 space-y-0.5 font-mono break-all">
             {rest.map((location) => (
-              <li key={location}>{location}</li>
+              <li key={location}>
+                <FindingLocation location={location} />
+              </li>
             ))}
           </ul>
         </details>
@@ -497,7 +502,14 @@ export function ChainStalenessNotice({
   );
 }
 
-export function VettingReport({ snapshotId }: { snapshotId: number }) {
+export function VettingReport({
+  snapshotId,
+  locationHref,
+}: {
+  snapshotId: number;
+  /** Where a finding's location leads; without it, locations are text (GW_APPROVAL_0030). */
+  locationHref?: (location: string) => string | null;
+}) {
   const vetting = useSnapshotVetting(snapshotId);
 
   if (vetting.isLoading) return <p className="text-sm text-muted-foreground">Loading verdicts…</p>;
@@ -519,6 +531,7 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
   const uncovered = vetting.data?.uncovered ?? [];
   const flow = snapshotFlow(vetting.data);
   return (
+    <LocationHrefContext.Provider value={locationHref ?? null}>
     <section aria-label={`Vetting of snapshot ${snapshotId}`} className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <ShieldCheck className="size-4 text-primary" aria-hidden />
@@ -556,7 +569,7 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
                 <span className="font-mono text-xs">{finding.ruleId}</span>{" "}
                 <span className="text-muted-foreground">at</span>{" "}
                 <span className="font-mono text-xs break-all text-muted-foreground">
-                  {describeLocations(finding.locations ?? (finding.location ? [finding.location] : []))}
+                  <FindingLocations locations={finding.locations ?? (finding.location ? [finding.location] : [])} />
                 </span>
               </li>
             ))}
@@ -594,5 +607,6 @@ export function VettingReport({ snapshotId }: { snapshotId: number }) {
         </details>
       ) : null}
     </section>
+    </LocationHrefContext.Provider>
   );
 }
