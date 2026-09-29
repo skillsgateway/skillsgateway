@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,8 +23,8 @@ import java.util.function.IntFunction;
 import java.util.stream.StreamSupport;
 
 /**
- * The one reading of the Claude Code plugin layout (GW_INGEST_0045): which commands, agents, hooks
- * and MCP servers a plugin root provides, from their default locations and from what the plugin's
+ * The one reading of the Claude Code plugin layout (GW_INGEST_0045): which commands, agents, hooks,
+ * MCP servers and LSP servers a plugin root provides, from their default locations and from what the plugin's
  * {@code .claude-plugin/plugin.json} and its marketplace entry declare. Shared by the inventory
  * and the {@code executable-surface} vetter so the two cannot disagree about what a plugin's hooks
  * are.
@@ -49,9 +50,9 @@ public final class PluginComponents {
         byte[] read(String path) throws IOException;
     }
 
-    @Schema(name = "PluginComponent", description = "A command, agent or MCP server a plugin provides")
+    @Schema(name = "PluginComponent", description = "A command, agent, MCP server or LSP server a plugin provides")
     public record Component(
-            @Schema(description = "Name: the file name without .md, the command map key, or the MCP server key")
+            @Schema(description = "Name: the file name without .md, the command map key, or the MCP or LSP server key")
             String name,
 
             @Schema(description = "Where it is defined: its file, or path:line of an inline declaration")
@@ -92,6 +93,9 @@ public final class PluginComponents {
      */
     public record McpCommand(String name, String location, String command, List<String> args) {}
 
+    /** LSP servers by name, in load order: a name declared later replaces an earlier one in place. */
+    private record Lsp(Map<String, Component> servers, Map<String, McpCommand> commands) {}
+
     /** Everything one plugin root provides beside its skills. */
     public record Components(
             List<Component> commands,
@@ -99,6 +103,8 @@ public final class PluginComponents {
             List<Hook> hooks,
             List<Component> mcpServers,
             List<McpCommand> mcpCommands,
+            List<Component> lspServers,
+            List<McpCommand> lspCommands,
             List<Problem> hookProblems) {}
 
     /**
@@ -193,6 +199,18 @@ public final class PluginComponents {
             reader.mcpDeclaration(entry.path("mcpServers"), manifest, entryPointer + "/mcpServers", mcp, mcpCommands);
         }
 
+        Lsp lsp = new Lsp(new LinkedHashMap<>(), new LinkedHashMap<>());
+        Manifest defaultLsp = reader.json(join(root, ".lsp.json"), false);
+        if (defaultLsp != null) {
+            reader.lspServers(defaultLsp.root(), defaultLsp, "", lsp);
+        }
+        if (plugin != null) {
+            reader.lspDeclaration(plugin.root().path("lspServers"), plugin, "/lspServers", lsp);
+        }
+        if (entry != null) {
+            reader.lspDeclaration(entry.path("lspServers"), manifest, entryPointer + "/lspServers", lsp);
+        }
+
         for (String skill : reader.skillFiles(plugin, entry)) {
             reader.frontmatterHooks(skill, "skill " + parentName(skill), hooks);
         }
@@ -207,6 +225,8 @@ public final class PluginComponents {
                 List.copyOf(hooks),
                 List.copyOf(mcp),
                 List.copyOf(mcpCommands),
+                List.copyOf(lsp.servers().values()),
+                List.copyOf(lsp.commands().values()),
                 List.copyOf(reader.problems));
     }
 
@@ -437,6 +457,48 @@ public final class PluginComponents {
                             server.get("command").asText(),
                             List.copyOf(args)));
                 }
+            });
+        }
+
+        /** A plugin.json or marketplace-entry {@code lspServers} value: a path, an inline map, or an array of both. */
+        void lspDeclaration(JsonNode value, Manifest doc, String pointer, Lsp out) {
+            if (value.isTextual()) {
+                Manifest file = json(resolve(root, value.asText()), false);
+                if (file != null) {
+                    lspServers(file.root(), file, "", out);
+                }
+            } else if (value.isObject()) {
+                lspServers(value, doc, pointer, out);
+            } else if (value.isArray()) {
+                for (int i = 0; i < value.size(); i++) {
+                    lspDeclaration(value.get(i), doc, pointer + "/" + i, out);
+                }
+            }
+        }
+
+        /**
+         * A map of LSP servers. Every one is local, since Claude Code runs each as a process; an
+         * entry without a {@code command} is not a server Claude Code would start.
+         */
+        @Requirements({"GW_INGEST_0045", "GW_VETTING_0055"})
+        private void lspServers(JsonNode servers, Manifest doc, String pointer, Lsp out) {
+            servers.fieldNames().forEachRemaining(name -> {
+                JsonNode server = servers.get(name);
+                if (!server.path("command").isTextual()) {
+                    return;
+                }
+                String at = pointer + "/" + escape(name);
+                List<String> args = new ArrayList<>();
+                server.path("args").forEach(arg -> args.add(arg.asText()));
+                out.servers().put(name, new Component(name, doc.locate(at)));
+                out.commands()
+                        .put(
+                                name,
+                                new McpCommand(
+                                        name,
+                                        doc.locate(at + "/command"),
+                                        server.get("command").asText(),
+                                        List.copyOf(args)));
             });
         }
 

@@ -7,7 +7,7 @@ first run.
 
 ## 1. Requirements (reqstool)
 
-- [ ] 1.1 Add GW_VETTING_0053 to GW_VETTING_0056, with
+- [x] 1.1 Add GW_VETTING_0053 to GW_VETTING_0056, with
   SVC_GW_VETTING_0053–0056, to `docs/reqstool/`. Revise GW_INGEST_0045 and
   SVC_GW_INGEST_0045 so that the inventory includes LSP servers, and bump
   their revision. Verify with
@@ -15,17 +15,17 @@ first run.
 
 ## 2. LSP servers in the layout reader (SVC_GW_INGEST_0045)
 
-- [ ] 2.1 `PluginComponentsTests`: LSP servers from `.lsp.json`, an inline
+- [x] 2.1 `PluginComponentsTests`: LSP servers from `.lsp.json`, an inline
   `plugin.json` `lspServers`, a referenced JSON file, an array of both, and the
   marketplace entry. Each has its command, arguments and the `path:line` of its
   `command`. A later name replaces an earlier one. An entry without `command`
   is a problem, not a server. Watch it fail.
-- [ ] 2.2 `PluginComponents.Components.lspServers` and `lspCommands`,
+- [x] 2.2 `PluginComponents.Components.lspServers` and `lspCommands`,
   annotated `@Requirements GW_INGEST_0045`. Make 2.1 green.
-- [ ] 2.3 Add `lspServers` to the inventory's `PluginComponent` schema.
+- [x] 2.3 Add `lspServers` to the inventory's `PluginComponent` schema.
   Regenerate the OpenAPI contract and confirm the diff is additive only. Extend
   the inventory API test (`@SVCs SVC_GW_INGEST_0045`).
-- [ ] 2.4 Portal: the `lspServers` kind in `snapshot-inventory.tsx`, with its
+- [x] 2.4 Portal: the `lspServers` kind in `snapshot-inventory.tsx`, with its
   story and test. Verify with `pnpm test:stories` and the component test.
 
 ## 3. LSP command scanning (SVC_GW_VETTING_0055)

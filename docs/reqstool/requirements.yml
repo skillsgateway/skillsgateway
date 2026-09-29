@@ -2716,7 +2716,7 @@ requirements:
   - id: GW_INGEST_0045
     title: The snapshot inventory lists every component a plugin declares
     significance: shall
-    description: "The system shall expose, for each plugin of a snapshot's content inventory, beside its skills, the commands, agents, hooks and MCP servers the plugin provides, read from the plugin's default component locations and from what its plugin manifest and its marketplace entry declare; shall give each hook its trigger event, its matcher when it has one, its handler type, what it runs, and the path:line at which it is declared, including a hook declared in the frontmatter of a skill or an agent; and shall leave out a component whose declaration cannot be read rather than fail the inventory."
+    description: "The system shall expose, for each plugin of a snapshot's content inventory, beside its skills, the commands, agents, hooks, MCP servers and LSP servers the plugin provides, read from the plugin's default component locations and from what its plugin manifest and its marketplace entry declare; shall give each hook its trigger event, its matcher when it has one, its handler type, what it runs, and the path:line at which it is declared, including a hook declared in the frontmatter of a skill or an agent; and shall leave out a component whose declaration cannot be read rather than fail the inventory."
     references:
       requirement_ids: ["GW_INGEST_0008"]
     rationale: "A trial deployment reviewed a plugin with one skill, four agents and three hooks, and the inventory showed the skill. The hooks were the part that ran code on every session, every edit and every turn. A reviewer approves what the inventory shows them, so an inventory that stops at skills hides exactly the components that execute. The inventory feeds the policy gate's facts too, so one malformed declaration must cost the listing of that component, not the whole inventory."
@@ -2790,5 +2790,45 @@ requirements:
     references:
       requirement_ids: ["GW_VETTING_0050", "GW_VETTING_0051"]
     rationale: "A server is often a script shipped in the plugin, and a fetch moved one file away from the configuration is the same fetch. Sharing the follow with the hooks keeps one notion of what a plugin runs; keeping the two surfaces apart keeps a medium server finding from masking a high hook finding on the same file."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_VETTING_0053
+    title: A dependency manifest in a plugin is a medium-severity finding
+    significance: shall
+    description: "The system shall raise one medium-severity finding, located at the path:line where the dependencies are declared, for every npm, Python or Cargo dependency manifest inside a plugin of the snapshot that declares at least one dependency, and shall say in it whether a lockfile sits in the same directory; and shall not raise one for a manifest that declares no dependency, for one inside an installed or build-output directory, or for one it cannot parse."
+    references:
+      requirement_ids: ["GW_VETTING_0048"]
+    rationale: "A declared dependency is code that is installed after the snapshot was pinned, so what runs is not what was approved. Installing into the plugin data directory is a documented plugin pattern, so it warns rather than blocks. A lockfile fixes versions but not review, so it is reported, not rewarded. An installed tree is vendored content, not a declaration, and reporting every manifest in it would bury the one that matters."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_VETTING_0054
+    title: A package install in a plugin's skill, command or agent files is a medium-severity finding
+    significance: shall
+    description: "The system shall raise a medium-severity finding at the path:line where a script in a skill's directory, or a fenced code block of a skill's Markdown or of a command or agent file, installs packages from a registry or runs a package runner, in the shapes recognised for a hook's command; and shall not raise one for prose, for an inline code span, for Markdown outside skills, commands and agents, or for a line already reported as part of a file a hook, an MCP server or an LSP server launches."
+    references:
+      requirement_ids: ["GW_VETTING_0048", "GW_VETTING_0053"]
+    rationale: "A skill that tells the agent to install a package fetches code after the snapshot was pinned, as a hook that does it does, but only when the skill is used; that and the prevalence of the pattern make it a warning. A fenced block is a command to run and an inline span is usually a mention, so only the first is read. One line carries one finding, the strongest that applies."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_VETTING_0055
+    title: LSP server commands are scanned as MCP server commands are
+    significance: shall
+    description: "The system shall scan the command and arguments of every LSP server a plugin of the snapshot declares, and the files of the plugin they launch, exactly as it scans a local MCP server's, raising a medium-severity finding for a package runner or install and a high-severity finding for download-and-execute, under rule ids distinct from the MCP and hook rules, located at the path:line of the server's command or of the launched file's line; and shall still raise the hook findings for a file that a hook also launches."
+    references:
+      requirement_ids: ["GW_VETTING_0050", "GW_VETTING_0051", "GW_VETTING_0052"]
+    rationale: "A language server is a local process Claude Code starts without anyone invoking it, which is what a local MCP server is, so it earns the same scan and the same severities. Its own ids keep a waiver for one surface from covering another."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_VETTING_0056
+    title: Download-and-execute in a plugin's skill, command or agent files is a high-severity finding
+    significance: shall
+    description: "The system shall raise a high-severity finding at the path:line where a script in a skill's directory, or a fenced code block of a skill's Markdown or of a command or agent file, downloads content and executes it, in the shapes recognised for a hook's command; and shall not raise one for prose, for an inline code span, or for a download that is never executed."
+    references:
+      requirement_ids: ["GW_VETTING_0048", "GW_VETTING_0054"]
+    rationale: "Code fetched and executed at run time was never in the snapshot the gateway pinned, whatever starts it, so it blocks here as it does in a hook, an MCP server or an LSP server, waivable per group once a reviewer has decided the source is trusted."
     categories: ["security"]
     revision: 0.3.0
