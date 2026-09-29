@@ -178,7 +178,7 @@ unaffected.
   content, which is a slightly sharper capability than the marketplace-level
   report — argues for its own scope; but a second scope for one path argues for
   reuse. Decide in the implementing PR, and whichever way it goes, the estate
-  declaration obligation in `CLAUDE.md` applies to a new grantable scope.
+  declaration obligation in `AGENTS.md` applies to a new grantable scope.
 - **Window semantics**: GW_OBSERVABILITY_0001 windows and GW_OBSERVABILITY_0002 deliberately does not, because
   staleness is a property of an identity's latest state. Presence is arguably the
   same — *holds*, not *held during a window* — which would make the window

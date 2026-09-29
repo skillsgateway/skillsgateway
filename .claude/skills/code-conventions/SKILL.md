@@ -54,7 +54,7 @@ openspec validate --all --strict
   arconia BOM for what else is published before assuming a gap; `floci` (an AWS
   emulator) is there and is not obvious from a Maven Central name search. A raw Testcontainers container is a fallback
   for dependencies Arconia does not cover; justify it in the change's design and
-  consider proposing the dev service upstream. See CLAUDE.md, "Process".
+  consider proposing the dev service upstream. See AGENTS.md, "Process".
 - Formatting is Spotless (palantir-java-format) + Checkstyle — non-negotiable
   gates, auto-fix with `spotless:apply`.
 - REST errors: `ResponseStatusException` / `ProblemDetail`. New endpoints get
