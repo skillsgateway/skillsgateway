@@ -358,35 +358,48 @@ public class ExecutableSurfaceVetter implements Vetter {
                                     lockfile == null ? "no lockfile" : "lockfile present: " + lockfile)));
         }
 
+        /**
+         * A skill, command or agent file: at most one finding per rule, at its first matching line,
+         * naming every line, so one decision about one file is one group to read and waive.
+         */
         @Requirements({"GW_VETTING_0054", "GW_VETTING_0056"})
         private void skillFile(String path, String text) {
             if (text == null) {
                 return;
             }
+            Map<String, List<Integer>> lines = new LinkedHashMap<>();
+            Map<String, String> messages = new HashMap<>();
+            String what;
             if (path.endsWith(".md")) {
+                what = "a code block of these instructions";
                 for (MarkdownFences.Block block : MarkdownFences.of(text)) {
                     for (RuntimeFetch.Match match : RuntimeFetch.scan(block.text(), true)) {
-                        installed(
-                                path,
-                                block.firstLine() + match.line() - 1,
-                                match,
-                                "a code block of these instructions");
+                        collect(lines, messages, block.firstLine() + match.line() - 1, match);
                     }
                 }
             } else if (SCRIPT.matcher(path).matches() || text.startsWith("#!")) {
+                what = "a skill script";
                 for (RuntimeFetch.Match match : RuntimeFetch.scan(text, true)) {
-                    installed(path, match.line(), match, "a skill script");
+                    collect(lines, messages, match.line(), match);
                 }
+            } else {
+                return;
             }
+            lines.forEach((rule, at) -> {
+                boolean runner = RuntimeFetch.PACKAGE_RUN.equals(rule);
+                List<Integer> sorted = at.stream().sorted().distinct().toList();
+                add(new Finding(
+                        runner ? RUNTIME_DEPENDENCY : SKILL_FETCH_EXEC,
+                        runner ? Severity.MEDIUM : Severity.HIGH,
+                        "%s:%d".formatted(path, sorted.getFirst()),
+                        "%s %s (%s)".formatted(what, messages.get(rule), lineList(sorted))));
+            });
         }
 
-        private void installed(String path, int line, RuntimeFetch.Match match, String what) {
-            boolean runner = RuntimeFetch.PACKAGE_RUN.equals(match.rule());
-            add(new Finding(
-                    runner ? RUNTIME_DEPENDENCY : SKILL_FETCH_EXEC,
-                    runner ? Severity.MEDIUM : Severity.HIGH,
-                    "%s:%d".formatted(path, line),
-                    "%s %s".formatted(what, match.message())));
+        private static void collect(
+                Map<String, List<Integer>> lines, Map<String, String> messages, int line, RuntimeFetch.Match match) {
+            lines.computeIfAbsent(match.rule(), rule -> new ArrayList<>()).add(line);
+            messages.putIfAbsent(match.rule(), match.message());
         }
 
         /**
@@ -587,6 +600,13 @@ public class ExecutableSurfaceVetter implements Vetter {
     private static String program(String word) {
         String name = word.substring(word.lastIndexOf('/') + 1).toLowerCase(Locale.ROOT);
         return name.endsWith(".exe") ? name.substring(0, name.length() - 4) : name;
+    }
+
+    /** "line 4", or "lines 2, 3, 4, 5, 6 +3 more". */
+    private static String lineList(List<Integer> lines) {
+        String shown = lines.stream().limit(5).map(String::valueOf).collect(java.util.stream.Collectors.joining(", "));
+        String more = lines.size() > 5 ? " +%d more".formatted(lines.size() - 5) : "";
+        return (lines.size() == 1 ? "line " : "lines ") + shown + more;
     }
 
     private static boolean vendored(String path) {

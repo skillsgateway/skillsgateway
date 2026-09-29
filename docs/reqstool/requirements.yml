@@ -2806,10 +2806,10 @@ requirements:
   - id: GW_VETTING_0054
     title: A package install in a plugin's skill, command or agent files is a medium-severity finding
     significance: shall
-    description: "The system shall raise a medium-severity finding at the path:line where a script in a skill's directory, or a fenced code block of a skill's Markdown or of a command or agent file, installs packages from a registry or runs a package runner, in the shapes recognised for a hook's command; and shall not raise one for prose, for an inline code span, for Markdown outside skills, commands and agents, or for a line already reported as part of a file a hook, an MCP server or an LSP server launches."
+    description: "The system shall raise one medium-severity finding per file, located at the first line and naming every line, where a script in a skill's directory, or a fenced code block of a skill's Markdown or of a command or agent file, installs packages from a registry or runs a package runner, in the shapes recognised for a hook's command; and shall not raise one for prose, for an inline code span, for Markdown outside skills, commands and agents, or for a line already reported as part of a file a hook, an MCP server or an LSP server launches."
     references:
       requirement_ids: ["GW_VETTING_0048", "GW_VETTING_0053"]
-    rationale: "A skill that tells the agent to install a package fetches code after the snapshot was pinned, as a hook that does it does, but only when the skill is used; that and the prevalence of the pattern make it a warning. A fenced block is a command to run and an inline span is usually a mention, so only the first is read. One line carries one finding, the strongest that applies."
+    rationale: "A skill that tells the agent to install a package fetches code after the snapshot was pinned, as a hook that does it does, but only when the skill is used; that and the prevalence of the pattern make it a warning. A fenced block is a command to run and an inline span is usually a mention, so only the first is read. One line carries one finding, the strongest that applies, and one file carries one finding per rule: a file of scaffolding commands is one decision, not one per line."
     categories: ["security"]
     revision: 0.3.0
 
@@ -2826,7 +2826,7 @@ requirements:
   - id: GW_VETTING_0056
     title: Download-and-execute in a plugin's skill, command or agent files is a high-severity finding
     significance: shall
-    description: "The system shall raise a high-severity finding at the path:line where a script in a skill's directory, or a fenced code block of a skill's Markdown or of a command or agent file, downloads content and executes it, in the shapes recognised for a hook's command; and shall not raise one for prose, for an inline code span, or for a download that is never executed."
+    description: "The system shall raise one high-severity finding per file, located at the first line and naming every line, where a script in a skill's directory, or a fenced code block of a skill's Markdown or of a command or agent file, downloads content and executes it, in the shapes recognised for a hook's command; and shall not raise one for prose, for an inline code span, or for a download that is never executed."
     references:
       requirement_ids: ["GW_VETTING_0048", "GW_VETTING_0054"]
     rationale: "Code fetched and executed at run time was never in the snapshot the gateway pinned, whatever starts it, so it blocks here as it does in a hook, an MCP server or an LSP server, waivable per group once a reviewer has decided the source is trusted."

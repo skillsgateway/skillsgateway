@@ -3724,7 +3724,7 @@ cases:
     description: |
       GIVEN a skill script with npm install, an extensionless skill script with a shebang running pip install, npx in a fenced block of SKILL.md, uvx in a tilde-fenced block of a skill reference file, and pip install in fenced blocks of a command and an agent; and negatives: npm install in prose and an inline span of SKILL.md, in a fenced block of the plugin README, and in a skill script a hook launches
       WHEN the chain runs
-      THEN each positive raises one medium runtime-dependency finding at its line, the negatives raise none, and the hook-launched line carries only the hook's high runtime-package-run
+      THEN each positive raises one medium runtime-dependency finding at its line, a file with several install lines raises one finding at its first line naming every line, the negatives raise none, and the hook-launched line carries only the hook's high runtime-package-run
     revision: "0.3.0"
 
   - id: SVC_GW_VETTING_0055
@@ -3744,5 +3744,5 @@ cases:
     description: |
       GIVEN a skill script piping a download into sh, a skill Python script downloading a file, making it executable and running it, and a download piped into bash in fenced blocks of SKILL.md and of an agent; and negatives: a download written to a data file and a piped download in prose and an inline span of SKILL.md
       WHEN the chain runs
-      THEN each positive raises one high skill-fetch-exec finding at its line and the verdict fails, and the negatives raise none
+      THEN each positive raises one high skill-fetch-exec finding at its first matching line and the verdict fails, a script that also installs raises one runtime-dependency beside it, and the negatives raise none
     revision: "0.3.0"

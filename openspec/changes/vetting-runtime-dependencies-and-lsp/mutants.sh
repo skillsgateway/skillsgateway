@@ -75,7 +75,11 @@ run M6-prose-scanned-as-code java $T documentationAndUnlaunchedScriptsMentioning
 run M7-launched-file-scanned-twice java $T anInstallInASkillScriptOrAFencedBlockOfASkillCommandOrAgentWarnsAtItsLine "$E" \
   '} else if (!launched.contains(path)' '} else if (true'
 run M8-skill-fetch-medium java $T downloadAndExecuteInASkillScriptOrAFencedBlockBlocksAtItsLine "$E" \
-  $'                    runner ? RUNTIME_DEPENDENCY : SKILL_FETCH_EXEC,\n                    runner ? Severity.MEDIUM : Severity.HIGH,' $'                    runner ? RUNTIME_DEPENDENCY : SKILL_FETCH_EXEC,\n                    Severity.MEDIUM,'
+  $'                        runner ? RUNTIME_DEPENDENCY : SKILL_FETCH_EXEC,\n                        runner ? Severity.MEDIUM : Severity.HIGH,' $'                        runner ? RUNTIME_DEPENDENCY : SKILL_FETCH_EXEC,\n                        Severity.MEDIUM,'
+run M14-located-at-last-line java $T aFileIsOneFindingPerRuleAtItsFirstLineNamingEveryLine "$E" \
+  '"%s:%d".formatted(path, sorted.getFirst()),' '"%s:%d".formatted(path, sorted.getLast()),'
+run M15-long-list-not-shortened java $T aLongListOfLinesIsShortened "$E" \
+  '.limit(5)' '.limit(50)'
 run M9-lsp-carries-mcp-ids java $T anLspServerThatRunsAPackageRunnerWarnsAtItsCommand "$E" \
   'LSP("LSP server", LSP_FETCH_EXEC, LSP_PACKAGE_RUN);' 'LSP("LSP server", MCP_FETCH_EXEC, MCP_PACKAGE_RUN);'
 run M10-plugin-json-lsp-unread java $P lspServersAreReadFromEverySourceAndALaterNameReplacesAnEarlierOne "$I/PluginComponents.java" \
