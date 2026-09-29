@@ -3210,6 +3210,13 @@ outcome and, per vetter, its verdict and every finding with the file and line
 it came from.</p>
 <p>A <strong>blocked</strong> outcome means at least one vetter failed, errored or has not
 answered, or that the chain never ran for this snapshot at all.</p>
+<p>Read each finding where it is. Every location in the <strong>Vetting</strong> tab is a link
+that opens the file in <strong>Contents</strong> at that line. The line is marked, and the
+finding's severity, rule and message are written beneath it, next to the text
+it is about. Files with findings are marked in the tree, and "N findings in
+this file" above a file leads to each of its lines. The link carries the line
+in the address (<code>&amp;line=</code>), so the second approver can be sent straight to the
+same evidence. See <a href="../../reference/portal/#snapshot-contents">Snapshot contents</a>.</p>
 <div class="admonition warning">
 <p class="admonition-title">A clear outcome is not a clean bill of health</p>
 <p>The built-in vetters are pattern matchers. They catch known credential

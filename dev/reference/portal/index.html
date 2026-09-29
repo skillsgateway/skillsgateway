@@ -3990,10 +3990,13 @@ snapshot's card in its place.</p>
 </tr>
 </tbody>
 </table>
-<p>Two snapshots can await a decision at once. The open snapshot, its tab and its
-file are in the address, so a link to the evidence restores all three:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>/marketplaces/acme?snapshot=41&amp;tab=contents&amp;path=plugins/hello/skills/hello/SKILL.md
+<p>Two snapshots can await a decision at once. The open snapshot, its tab, its
+file and the line in that file are in the address, so a link to the evidence
+restores all four:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>/marketplaces/acme?snapshot=41&amp;tab=contents&amp;path=plugins/hello/skills/hello/SKILL.md&amp;line=12
 </code></pre></div>
+<p><code>line</code> is optional. When present, the file opens at that line with the line
+focused. Choosing another file drops it.</p>
 <p>An address naming a snapshot that no longer awaits a decision — an older link to
 one since approved — still opens it on Review, under <strong>Linked snapshot</strong>, with a
 link to it among the snapshots.</p>
@@ -4027,7 +4030,7 @@ it.
 <tbody>
 <tr>
 <td><strong>Vetting</strong> (default)</td>
-<td>The <a href="#the-chain-flow">vetting report</a>: chain outcome, verdicts, findings, waivers</td>
+<td>The <a href="#the-chain-flow">vetting report</a>: chain outcome, verdicts, findings, waivers. Every <code>path:line</code> location is a link that opens the file at that line in <strong>Contents</strong> (not in the approve dialog, which stays on the decision)</td>
 </tr>
 <tr>
 <td><strong>Contents</strong></td>
@@ -4434,6 +4437,32 @@ search is up, each shown by its full path, and the count reads "12 matching of
 one file, read from <code>GET /api/v1/snapshots/{id}/diff?path=</code>. Files and the diff
 no longer compete for one box: switching to the diff leaves the tree where it
 is.</p>
+<p><strong>Findings in the file.</strong> The latest vetting run's findings
+(<code>GET /api/v1/snapshots/{id}/vetting</code>) are read onto the files they locate:</p>
+<ul>
+<li><strong>In the tree</strong>, a file that carries findings shows its highest severity
+  and the count, for example "high · 3". Directories carry no marker.</li>
+<li><strong>Above the file</strong>, "N findings in this file" lists each finding with its
+  severity, rule, line, vetter and message. An entry with a line moves to that
+  line. A finding whose location has no line, or whose line is beyond the part
+  of a truncated file that is shown, is listed there too.</li>
+<li><strong>In the file</strong>, a file is shown as numbered lines. Each line a finding
+  locates is tinted by its highest severity, and <strong>each finding on it is
+  written out beneath the line</strong>: severity, vetter, rule and message, and
+  "waived by … until …" when an active waiver covers it. Several findings on
+  one line are all shown. The line is described by them, so moving focus to it
+  reads what was found there. Colour is never the only signal.</li>
+<li><strong>Markdown and JSON</strong> open as they read (rendered, formatted), with the
+  findings listed above them. Following a finding, from that list or from a
+  link with a <code>line</code>, opens the numbered <strong>Source</strong>. A <strong>Source / Rendered</strong> (or
+  <strong>Formatted</strong>) control switches between the two. Other text always opens
+  numbered.</li>
+</ul>
+<p>A finding is marked on the one line its location names; a finding whose message
+names further lines marks only that one. <strong>Copy link</strong> includes the line once one is chosen, and the address of this
+route takes <code>?line=</code> beside <code>?path=</code>.</p>
+<p>A reviewer who may read contents but not vetting still gets the file, without
+markers.</p>
 <p>Every bound of these reads is a state this page renders on purpose:</p>
 <table>
 <thead>
@@ -4483,6 +4512,10 @@ is.</p>
 <td>A <code>.json</code> file that does not tokenise as JSON</td>
 <td>"Not valid JSON — shown as stored.", with the stored bytes</td>
 </tr>
+<tr>
+<td>A finding's line beyond a truncated blob</td>
+<td>Listed above the file, and written out below it as "Line N is beyond the part shown"</td>
+</tr>
 </tbody>
 </table>
 <p>The tree keeps one width whatever file is open; a long line scrolls inside the
@@ -4496,7 +4529,7 @@ the whitespace between them changes. A truncated blob is shown as stored, since
 half a document cannot be formatted honestly.</p>
 <p>Markdown renders inertly — there is no HTML pipeline at all, so HTML embedded in
 a hostile file appears as visible text and links are shown but never navigable.
-Other text renders preformatted. This is inspection, not execution: nothing
+Other text renders as numbered lines. This is inspection, not execution: nothing
 fetched here is ever run, followed or injected as markup, and the page changes
 nothing about what the facade serves.</p>
 <p>The reads are privileged — admin or an approver of this marketplace — and the
