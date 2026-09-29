@@ -34,7 +34,9 @@ class VettingPrecisionMeasurement {
         try (QuarantineSnapshot snapshot =
                 new QuarantineSnapshot(1, "measure", sha, 1024L * 1024L, 64L << 20, repository)) {
             for (Vetter vetter : vetters) {
+                long started = System.nanoTime();
                 Verdict verdict = snapshot.identify(vetter.vet(snapshot));
+                long millis = (System.nanoTime() - started) / 1_000_000;
                 List<Finding> high = verdict.findings().stream()
                         .filter(finding -> finding.severity().atLeast(Severity.HIGH))
                         .toList();
@@ -53,6 +55,7 @@ class VettingPrecisionMeasurement {
                                 groups.size(),
                                 highGroups.size()));
                 report.append("  summary: %s%n".formatted(verdict.summary()));
+                report.append("  took: %d ms%n".formatted(millis));
                 Map<String, Integer> byRule = new TreeMap<>();
                 high.forEach(finding -> byRule.merge(finding.id(), 1, Integer::sum));
                 report.append("  high by rule: %s%n".formatted(byRule));

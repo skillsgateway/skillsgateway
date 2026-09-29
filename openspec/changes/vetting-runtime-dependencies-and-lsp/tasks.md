@@ -75,7 +75,7 @@ first run.
 
 ## 5. Evidence of precision
 
-- [ ] 5.1 Manual mutation: at least five mutants over the new code in
+- [x] 5.1 Manual mutation: at least five mutants over the new code in
   `mutants.sh` in this change. Each is killed.
 - [ ] 5.2 Measure on `anthropics/claude-plugins-official` at a pinned SHA with
   `VettingPrecisionMeasurement`. Record the new findings by rule and severity,

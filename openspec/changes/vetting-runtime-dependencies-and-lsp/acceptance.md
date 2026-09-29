@@ -18,6 +18,29 @@ command to run. `design.md` D4 and task 4.2 are corrected to match. An
 instruction written as an inline span is a known limit, and `prompt-injection`'s
 `pipe-to-shell` still flags a piped download in it.
 
+## Revision R2 — one finding per file (after the measurement)
+
+On `anthropics/claude-plugins-official` at `ad30d62c`, one finding per line
+gave 20 `runtime-dependency` groups for a single plugin (`mcp-server-dev`,
+whose skills scaffold an MCP server). That is 20 reads and 20 waivers for one
+decision. The owner chose one finding per file.
+
+**In a skill, command or agent file, `runtime-dependency` and
+`skill-fetch-exec` are raised at most once per rule per file.** The finding is
+located at the file's first matching line. Its message names the matching
+lines (the first five, then "+N more"). A waiver on it covers that blob, so
+any edit to the file raises it again. Manifest findings are already one per
+file and do not change. The scenarios below keep their locations: each
+fixture has one matching line. One scenario is added:
+
+- **SVC_GW_VETTING_0054, 10.** A `SKILL.md` with `npm install` on lines 7, 8
+  and 12 → one `R` at `SKILL.md:7` whose message names lines 7, 8 and 12. A
+  script with both a `pip install` and a `curl … | sh` → one `R` and one `S`.
+
+The requirement texts of GW_VETTING_0054 and 0056 and their SVCs are
+reworded to "once per file, at the first line". This does not change which
+files are flagged.
+
 ## Scenarios
 
 `R` = `runtime-dependency` (medium), `S` = `skill-fetch-exec` (high),
