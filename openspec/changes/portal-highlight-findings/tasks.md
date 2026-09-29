@@ -96,6 +96,6 @@ on the changed surfaces.
 
 ## 7. Gates and archive
 
-- [ ] 7.1 A fresh run of all six gates after the last code edit. Write
+- [x] 7.1 A fresh run of all six gates after the last code edit. Write
   `evidence.md` with the commands, the result tails and the SHA.
 - [ ] 7.2 Archive with the synced `openspec/specs/**` as the final commit.
