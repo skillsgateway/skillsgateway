@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState, type ReactNode } from "react";
 import { expect, userEvent, within } from "storybook/test";
 import type { SnapshotTreeChild } from "@/api/queries";
+import type { FileFinding } from "@/lib/file-findings";
 import { SnapshotFileTree } from "./snapshot-file-tree";
 
 const dir = (path: string, files: number, changed = 0): SnapshotTreeChild => ({
@@ -44,7 +45,9 @@ function Harness({
   open = ["plugins"],
   selected = null,
   matches,
+  findings,
 }: {
+  findings?: ReadonlyMap<string, readonly FileFinding[]>;
   open?: string[];
   selected?: string | null;
   /** Render a flat list of search matches instead of the tree. */
@@ -62,6 +65,7 @@ function Harness({
         return next;
       }),
     onSelect: setPath,
+    findings,
   };
   const level = (at: string): ReactNode => (
     <SnapshotFileTree entries={LISTINGS[at] ?? []} {...props} renderChildren={level} />
@@ -192,4 +196,37 @@ export const TogglesFromTheKeyboard: Story = {
     await expect(plugins).toHaveAttribute("aria-expanded", "true");
     await expect(canvas.getByRole("button", { name: /^hello,/ })).toBeVisible();
   },
+};
+
+const found = (severity: FileFinding["severity"]): FileFinding => ({
+  vetter: "executable-surface",
+  ruleId: "runtime-dependency",
+  severity,
+  message: "installs packages from a registry at run time",
+  location: "x:1",
+  line: 1,
+  waived: null,
+});
+
+/** Files carrying vetter findings, marked with their highest severity and count (GW_APPROVAL_0029). */
+export const WithFindings: Story = {
+  args: {
+    open: ["plugins", "plugins/hello", "plugins/hello/skills", "plugins/hello/skills/hello"],
+    findings: new Map([
+      ["plugins/hello/skills/hello/SKILL.md", [found("medium"), found("high")]],
+      ["plugins/hello/skills/hello/reference.md", [found("low")]],
+    ]),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      canvas.getByRole("button", { name: /SKILL\.md, modified, 2 findings, highest high/ }),
+    ).toHaveTextContent("high · 2");
+  },
+};
+
+/** The same in the dark theme: the markers are tokens, not fixed colours. */
+export const WithFindingsDark: Story = {
+  ...WithFindings,
+  parameters: { theme: "dark" },
 };

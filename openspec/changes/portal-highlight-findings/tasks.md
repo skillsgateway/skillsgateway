@@ -49,10 +49,12 @@ on the changed surfaces.
   (`@Requirements GW_APPROVAL_0029`).
 - [x] 3.4 Tree marker (D7): a `snapshot-file-tree` test for "2 high" on a file
   row, and none on a directory. Implement.
-- [ ] 3.5 Stories for `SourceView`: plain, marked (every severity), two
+- [x] 3.5 Stories for `SourceView`: plain, marked (every severity), two
   findings on one line, waived, beyond-truncation, long lines, and dark mode.
   Update the explorer story with findings. Verify with `pnpm test:stories`
-  (axe as error).
+  (axe as error). (Done as `SourceView` stories plus `FileTree` `WithFindings`
+  and `WithFindingsDark`. The explorer has no story; its component tests
+  cover it.)
 
 ## 4. Address and links (D5, D6)
 
