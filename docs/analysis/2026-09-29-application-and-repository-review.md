@@ -12,6 +12,13 @@ GitHub API rather than from `safe-settings/`. Nothing was built in this session;
 the build evidence below comes from CI and from a local run earlier today.
 Every claim carries the file and line, or the API object, that proves it.
 
+Two passes. The first (findings 1–8) covered the trust boundaries, the gates,
+the workflows and the repository settings. The second (findings 9–17 and "The
+portal, walked") read every backend package at function level, the schema
+against the queries that hit it, and every portal source file, and then opened
+every page of the live instance in a browser. The second pass is where the
+defects are; the first is where the posture decisions are.
+
 **The short version.** The trust boundaries hold. The facade, the publication
 endpoint, the machine API, the approval gates, the SSRF layer for
 manifest-driven fetches and the schema's invariants are in the state the
@@ -21,7 +28,10 @@ named is closed (`RoleEnforcementTests.java:579-588`). What remains is
 governance and posture: a default that is open where the rest of the product
 refuses, a repository rule that is decorative for a solo maintainer, a primary
 control that exists only as prose, and a test suite whose flakes are known only
-outside the repository.
+outside the repository. The code pass adds four things to fix rather than
+decide: two paths that cannot work on the object-store backend, a portal that
+mistakes the newest page of the ledger for the ledger, three ledger reads with
+no index and one table with no delete, and a waiver that may expire in 2099.
 
 **Nothing here is a disclosure.** Every weakness below is already stated in the
 public documentation or visible in the public repository settings; none is an
@@ -250,6 +260,251 @@ behaviour change and takes an OpenSpec change and a `GW_AUTH` requirement.
 
 ---
 
+## Should-fix, from the code pass
+
+Same ordering rule: by what it costs to leave alone.
+
+### 9. The catalog and hosted-marketplace ingestion cannot work on the object-store backend (BACKEND)
+
+`CatalogService.vendor` (`CatalogService.java:245`) and the hosted branch of
+`IngestionService.fetchIncoming` (`IngestionService.java:232`) both fetch
+through `repository.getDirectory().getAbsolutePath()`. A JGit `DfsRepository`
+has no directory — `getDirectory()` returns null — and the codebase knows it:
+`GitObjectTransfer.java:19-22` records that publication once used the same
+expression, raised `NullPointerException` on the object-store backend, "and
+nothing detected it because no test drove approval on that backend";
+`RefTransitions.java:83` and `HostedPushHook.java:139` both guard the null.
+Two call sites were not converted.
+
+On an object-store deployment the catalog is on by default
+(`SkillsGatewayProperties.Catalog`), so every approval and every revocation
+runs `rebuildQuietly` (`CatalogService.java:136-142`), which catches the
+`RuntimeException`, logs "virtual catalog rebuild failed" and serves no
+catalog: `/git/catalog` answers 404 and `GET /api/v1/catalog` says "not
+generated yet" over an estate that is serving. A hosted marketplace
+(GW_FACADE_0006 — Gateway-hosted marketplace origin) cannot be ingested there
+at all; `fetchIncoming` throws before the lineage is read.
+`ObjectStoreBackendTests` drives hosted storage at the reference-transition
+level and never the ingestion path, and no test names the catalog on that
+backend.
+
+**Fix.** Both fetches copy objects between two repositories the gateway
+already holds open, which is what `GitObjectTransfer.copy` was written for;
+use it in both places, and add the two cases to the object-store backend
+tests so the third call site cannot appear. Stated by reading, not by running
+a bucket — see "Could not verify".
+
+### 10. The portal reads one page of the ledger and calls it the ledger (PORTAL)
+
+`useAudit` (`queries.ts:711-721`) fetches `GET /api/v1/audit` once, keeps
+`entries` and discards `nextBefore`. Three surfaces then treat that page — the
+newest 1,000 rows, `audit-export.default-page-size` — as the whole ledger:
+
+- The overview's "Fetch ledger" card (`overview.tsx:87`) prints the page's row
+  count as "recorded fetches". On the live instance it reads **76 recorded
+  fetches** while the adoption page, which asks the ledger the real question
+  (GW_OBSERVABILITY_0001 — Adoption reporting from the fetch ledger), reads
+  **0 fetches**: 66 of those 76 rows are `vetting-verdict`,
+  `vetting-completed` and `revet-clear`. Past 1,000 rows the number freezes.
+- The marketplace Activity section (`marketplace-detail.tsx:63-65`) filters
+  that page by marketplace name — so a quiet marketplace reads "Nothing
+  recorded against this marketplace yet" once 1,000 newer rows belong to
+  other marketplaces — and then `reverse()`s it. The page arrives newest first
+  (`FetchLogRepository.java:154`, `ORDER BY id DESC`), so Activity renders
+  oldest first; verified live, `marketplace-registered` is its top row,
+  against its own docstring and against the Audit page one click away. The
+  unit tests cannot catch it: the mock ledger answers empty
+  (`msw-handlers.ts:1246`), and `audit.test.tsx:120` still says "the API
+  answers in ledger order — oldest first", the contract before GW_AUDIT_0008 —
+  The ledger browse read is bounded, typed and stably paged.
+- The Audit page paginates client-side over the page and offers nothing that
+  passes `nextBefore` back; `useAudit`'s own docstring calls it "what a later
+  'load older' control would pass back". The download is the only way to an
+  older row.
+
+**Fix.** A "load older" control on the Audit page — `useInfiniteQuery` over
+`nextBefore`, the shape the diff and tree reads already use. The overview
+card reads a count from the ledger, not from a page
+(`FetchLogRepository.approximateDepth` already exists for the gauge), and
+calls it "ledger entries", which is what it is. Activity asks the server for
+its marketplace's rows — a `marketplace` filter on the existing paged read,
+additive within the contract — and drops the `reverse()`. The stale test
+comment goes with it.
+
+### 11. Three ledger reads scan the table, and one table never shrinks (SCHEMA)
+
+`fetch_log` carries two indexes (`V1__init.sql:294-300`): the partial adoption
+index on `(principal, marketplace, id)` and `(actor_type, id)`. Three queries
+use neither:
+
+- `fetchersOf(sha)` (`FetchLogRepository.java:189`) — `WHERE sha = ? AND event
+  = 'upload-pack'` — behind every blast-radius report and every re-vetting
+  violation.
+- The retention candidate query (`SnapshotRepository.java:374-376`) — `NOT
+  EXISTS (SELECT 1 FROM fetch_log WHERE sha = s.sha AND marketplace = ? AND ts
+  > ?)` — evaluated per candidate row, per marketplace, every hourly pass once
+  retention is on.
+- `adoptionSince` and `marketplaceAdoptionSince` (`:217, :237`), on `ts`.
+
+Each is a sequential scan of the table the documentation calls "the table that
+ends the deployment", and the retention one is a scan per snapshot. One index
+on `(sha, marketplace, ts)` restricted to `event = 'upload-pack'` covers the
+first two and `(ts)` under the same restriction covers the third; `V1` is
+rewritten, not migrated, so this costs nothing pre-1.0.
+
+`webhook_deliveries` has one index (`:406`, the dispatcher's) and **no delete
+path anywhere under `src/main`**. Every delivery is kept forever with its
+payload (`payload TEXT NOT NULL`) — and for an audit sink the payload is the
+exported batch, so a sink with the default 500-entry batch writes a second
+copy of the ledger into this table beside the one it exports (GW_RETENTION_0009
+— Audit ledger read entries are trimmed only behind every sink's export
+position — trims `fetch_log` and nothing else). `listBySubscriber`
+(`WebhookDeliveryRepository.java:106`) has no index on `subscriber_id`. A
+`delivered`/`failed` row's payload is dead weight once the receiver has it: an
+age-bounded sweep under the retention pass that already exists adds no
+scheduled sweep and at most one leaf.
+
+### 12. A waiver may expire in 2099 (POLICY)
+
+`WaiverService.create` (`WaiverService.java:117-121`) requires an expiry and
+requires it to lie in the future; nothing bounds how far. The portal tells the
+reviewer "there are no unlimited waivers" (`vetting-report.tsx:155`, the
+surface GW_VETTING_0010 — Portal waiver management surface — describes), which
+is true in the letter. A waiver is the one act that turns a blocked verdict
+into an approval; the ledger entry it writes carries the date, so an auditor
+can see a fifty-year waiver, but nothing refuses one.
+
+`Tokens.maxTtl` is the shape: a lifetime past the cap is refused, "never
+silently clamped". One comparison here. Whether the cap is a configuration
+leaf or a constant is the owner's call — both budgets are at their ratchet
+(see Decisions); `HeldContentController.MAX_HOLDINGS` (`:57`) is the precedent
+for a bound kept as a constant because no deployment has ever tuned one.
+
+---
+
+## Could-fix, from the code pass
+
+### 13. Two HTTP responses are never closed (BACKEND)
+
+`ExternalVettingConnector.java:123` and `WebhookDispatcher.java:132` call
+`RestClient.exchange(fn, false)`; `false` means the caller closes the
+`ClientHttpResponse`, and neither does. Both build on
+`JdkClientHttpRequestFactory` explicitly, which tolerates it: the vetter reads
+its body to the bound, so its connection is normally reusable; the dispatcher
+never reads the body at all, so no connection to a subscriber is ever reused
+and each one is held until the garbage collector reaches it. A `try` with the
+response in both places, or `exchange(fn)` with its default of closing.
+
+### 14. The per-vetter ledger rows are most of the ledger (LEDGER, a decision)
+
+On the live instance 50 of 76 rows are `vetting-verdict` — one per vetter per
+run — beside a `vetting-completed` row per run and a `revet-clear` row per
+re-vet. The scheduled re-vet (`revet.cadence`, 24 h) therefore writes eight
+rows per approved snapshot per day into the compliance ledger to record that
+nothing changed, and the per-vetter rows duplicate `vetting_verdicts`, which
+is where the portal reads them from. A 200-snapshot estate writes 1,600 rows a
+day before a single fetch — the growth the export-cursor trim exists to
+absorb, and the noise every Activity view scrolls through. What
+GW_VETTING_0012 — Continuous re-vetting of approved snapshots — requires is an
+attributable run, which the `vetting_runs` row already is. Whether an
+unchanged re-vet needs eight ledger rows, or one, is the owner's decision.
+
+### 15. The diff endpoint re-diffs the whole delta on every page (PERFORMANCE)
+
+`SnapshotPreviewService.diff` (`SnapshotPreviewService.java:501-516`)
+computes `toFileHeader(change).toEditList()` and `isBinary` for every changed
+path so that `summary` carries whole-diff line counts, then returns one page of
+500. A snapshot with 5,000 changed files diffs 5,000 files per page request,
+ten pages deep. The paths listing and the tree read page without this. The
+pair `(sha, baselineSha)` is immutable, so the summary can be computed once
+and cached, or computed only for the first page.
+
+### 16. Smaller backend items
+
+- `IngestionService.ingestLocked` writes `refs/snapshots/<sha>` (`:168`)
+  before `snapshotRepository.create` (`:180`); a failed insert leaves a pin
+  no row names, and the staging sweep prunes `refs/staging/` only. Insert
+  first, or delete the ref when the insert fails.
+- `RevetService.revetMarketplace` (`:197`) walks the approved snapshots with
+  no per-snapshot `catch`, unlike `sweep` (`:186`): one storage error ends the
+  marketplace's re-vet mid-list.
+- `VettingService.run` wraps the whole chain loop in `catch (Exception)`
+  (`:329, :414`) and records a `snapshot-access` error verdict for anything,
+  a database failure mid-loop included, so a blocked snapshot can say "could
+  not read the snapshot" about a snapshot that was fine.
+- `AdminController.listMarketplaces` (`:450`) runs one snapshot query per
+  marketplace, and its response — every snapshot of every marketplace — is
+  what every portal page loads first. Fine at ten marketplaces; the first
+  thing to page at a hundred.
+- `ForgeMetadataService` (`:149`) reads an unknown forge's API answer with
+  `body(String.class)` and no size bound on a 3-second timeout; the SSRF layer
+  bounds bytes on manifest fetches, not here.
+- Six configuration leaves accept zero where the rest of
+  `SkillsGatewayProperties` guards `<= 0`: `audit-export.max-page-size`,
+  `default-page-size` and `batch-size`, `retention.batch-size`,
+  `webhooks.max-attempts` and `batch-size` (`:1298-1355`). `max-page-size: 0`
+  makes `Math.clamp(x, 1, 0)` throw on every audit read.
+- Three records carry a secret and keep the generated `toString`:
+  `ObjectStore.Credentials.secretAccessKey` (`:578`), `DeclaredWebhook.secret`
+  (`:699`), `DeclaredAuditSink.secret` (`:708`). `Mirror`,
+  `UpstreamCredential` and `GitHubApp` override theirs for this reason
+  (`:164, :212, :231`). Nothing logs the properties tree today; the next debug
+  line that does prints them.
+- `InboundWebhookController` answers 404 for a marketplace that is unknown
+  or not in webhook mode and 403 for a bad signature (`:76, :79, :85`),
+  unauthenticated. The facade makes absence and refusal indistinguishable on
+  purpose (GW_AUTH_0006 — Marketplace-scoped access tokens); this endpoint
+  enumerates names. One status for both.
+
+### 17. Portal: session expiry, the clone snippet, one raw timestamp
+
+- The web chain answers an unauthenticated `/api/**` call with a bare 401
+  (`SecurityConfig.java:243-244, 318-319`) and the client turns it into an
+  `ApiError` whose message is "401 Unauthorized" (`client.ts:32-43`). After
+  the session cookie expires every page shows that string in its alert and
+  every button toasts it; nothing sends the reader back through login, and
+  `useMe` is cached forever (`queries.ts:56`), so the shell keeps saying
+  "Signed in as". One check in `api()` — a 401 on a same-origin call means
+  reload — is the whole fix.
+- The setup wizard's "clone directly" snippet (`setup-wizard.tsx:262`) embeds
+  the token in the URL: `git clone https://token:<PAT>@host/git/m`. git writes
+  that URL into the clone's `.git/config` in cleartext and the shell into its
+  history. The first snippet already stores the credential in the helper; the
+  clone line should rely on it and carry no userinfo. The "CI and other
+  clients" wording invites exactly the copy that persists it.
+- `RevetPanel` prints `fetcher.lastFetch` raw (`snapshot-card.tsx:177`), the
+  one instant in the portal not rendered through `Timestamp`.
+
+---
+
+## The portal, walked
+
+Every page was opened on the live instance (`0.4.0-20-SNAPSHOT`,
+`dev-insecure-auth`, an admin session): overview, review queue, marketplaces,
+one marketplace's review with all five evidence tabs, its snapshots, activity
+and settings with the chain controls, the estate-wide vetting page, both
+integration pages, tokens, adoption, a marketplace that does not exist, the
+user menu and the waiver form. No console errors on any of them.
+
+What it looks like: one design language throughout. The verdict vocabulary —
+pass, warn, fail, blocked, clear with waivers — is the same word in the same
+colour on the review queue, the marketplace row, the snapshot card, the flow
+drawing and the ledger; every state carries a word beside its colour; every
+disabled control says why beside itself; every mutation reports its refusal in
+the server's own words. The flow drawing — "Blocked at step 1 · secret-scan
+found 1 critical finding" over the chain — is the best screen in the product:
+the reviewer reads the answer before the evidence and opens the node for the
+why. The waiver form defaults to the narrowest scope on offer and refuses a
+blank justification. A cold load of an address the router does not know
+answers `application/problem+json` rather than a page, which is right for an
+admin tool and worth knowing.
+
+Findings 10 and 17 are what the walk turned up; nothing else looked wrong.
+Not walked: a narrow viewport (the browser refused the resize) and a session
+without the admin role.
+
+---
+
 ## Decisions for the owner
 
 - **Finding 2 is yours alone.** Removing the review requirement is honest;
@@ -265,6 +520,13 @@ behaviour change and takes an OpenSpec change and a `GW_AUTH` requirement.
   against `BUDGET = 27` (`ContextBudgetTests.java:77`). That is the mechanism
   working: the next leaf has to argue. Finding 1 removes a default without
   adding a leaf; finding 7 adds none. Nothing here asks you to raise either.
+- **Finding 12 needs a number.** A maximum waiver lifetime as a constant keeps
+  the configuration budget where it is; as a leaf it is the first argument the
+  ratchet has had to hear. Ninety days is what `Tokens.DEFAULT_MACHINE_MAX_TTL`
+  already reasons for.
+- **Finding 14 is a ledger-shape decision.** Eight rows per unchanged re-vet is
+  what the requirement's literal reading produces; one row per run is what its
+  purpose needs. Changing it changes what a SIEM has been ingesting.
 - **Coverage is not measured.** `pom.xml` has no JaCoCo and no PIT; the
   frontend lists `@vitest/coverage-v8` but enforces nothing. The gates are
   specification gates — reqstool, OpenSpec, route-table derivation, budgets —
@@ -359,6 +621,34 @@ Do not re-spend effort here.
   GitHub App tests. No AWS, GitHub or Slack token shapes in the tree. Every
   runtime secret in the chart comes from a `Secret`; the compose file's
   placeholders are `change-me` and `test`.
+- **The approval lock and the storage seam, function by function.**
+  `NameCollisionGate` takes `pg_advisory_xact_lock` and re-asks the question
+  inside the transaction; `ManifestStore.transact` is a bounded
+  compare-and-swap with a write-ahead entry and a torn-read retry;
+  `RefTransitions` refuses a move it did not make; `PublicationReconciler`
+  repairs a half-publication at startup. `SqlArrays.literal` escapes; every
+  enum is native; `snapshots` has `UNIQUE (marketplace_id, sha)` and
+  `access_tokens.token_hash` is unique; every foreign key's `ON DELETE` matches
+  the owner's lifetime (cascade under a snapshot, restrict from a sink to its
+  channel).
+- **The credential paths, function by function.** `MachineApiRegistry` is an
+  allowlist whose omissions fail the build; `MachineApiAuthenticationFilter`
+  holds no session, refuses a request carrying both a bearer and a cookie, and
+  answers every refusal alike; `IdpBearerConfiguration` refuses to start
+  without a pinned issuer, checks audience by containment and refuses a token
+  with none; `GitHubAppTokens` validates repository names by pattern before
+  they reach a URL; `SkillFrontmatter` parses YAML through `SafeConstructor`
+  with alias, depth and code-point limits; `CelPolicy` bounds comprehensions.
+- **The read surfaces are bounded.** Every preview read is paged with the total
+  stated beside the page; blobs are cut at 128 KiB with the cut stated; the
+  status endpoint refuses more than 256 pairs; the inbound webhook bounds the
+  body before the HMAC; the external vetter bounds the response.
+- **The portal's data layer.** One client, CSRF header on every call, RFC 7807
+  `detail` surfaced verbatim; the API types are generated and the contract test
+  refuses drift; every mutation invalidates what it changes and toasts what it
+  cannot; Markdown renders with no HTML pipeline; the Storybook gate runs axe
+  as an error; ARIA names on every control that needs one (88 `aria-label`s,
+  42 live regions across the source).
 - **Process hygiene.** Three branches, two open issues, one open PR, 118
   archived OpenSpec changes and two parked ones that say why they are parked
   — consistent with the stop rule. `clean verify` on this machine earlier today:
@@ -379,3 +669,13 @@ Do not re-spend effort here.
   token lacks; the repository-level view may not be the whole picture.
 - **Whether the flaky suites in finding 4 are five or six** — the sample was
   five runs; a full pass over the red runs' logs would settle the list.
+- **Finding 9 is by reading.** No bucket was run in this session. The three
+  pieces of in-repository evidence — `GitObjectTransfer`'s own account of the
+  same defect, and the two null guards — are what the claim rests on; a test
+  that approves into the catalog on `ObjectStoreTestSupport` would settle it
+  in one run.
+- **The portal below 1,000 pixels wide** was not seen; the browser declined the
+  resize. The shell's sidebar is a fixed 15 rem with no collapse in the source,
+  so a phone-width review is at least worth one look.
+- **A non-admin session** was not walked; the live instance runs the
+  development escape hatch, which is admin by construction.
