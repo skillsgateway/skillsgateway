@@ -3627,6 +3627,26 @@ cases:
       THEN the pages together hold every changed path once and each names the baseline, the narrowed reads hold exactly that file or that directory's changes and the traversal shape holds nothing, and the portal's Diff tab lists every changed file with its diff
     revision: "0.1.0"
 
+  - id: SVC_GW_APPROVAL_0029
+    requirement_ids: ["GW_APPROVAL_0029"]
+    title: Lines with findings are numbered, marked and described in place, and listed above the file
+    verification: automated-test
+    description: |
+      GIVEN a snapshot whose vetting run locates findings on lines of a file, two on one line, one waived, one without a line and one beyond a truncated view
+      WHEN a reviewer opens that file in the Contents view
+      THEN its lines are numbered, each located line is marked and shows each of its findings as text with vetter, rule, severity and message, the waived one says it is waived, the marked line is described by them, the summary lists every finding and leads to its line, and a file without findings keeps its usual view
+    revision: "0.3.0"
+
+  - id: SVC_GW_APPROVAL_0030
+    requirement_ids: ["GW_APPROVAL_0030"]
+    title: A location in the vetting report opens its file at its line, and the address carries the line
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot whose vetting report locates a finding at a path and line
+      WHEN a reviewer follows the location from the Vetting tab
+      THEN the Contents tab opens that file with the line focused and marked, the address carries the line, choosing another file clears it, and in the approval dialog the location stays text
+    revision: "0.3.0"
+
   - id: SVC_GW_INGEST_0045
     requirement_ids: ["GW_INGEST_0045"]
     title: The inventory lists commands, agents, hooks and MCP servers from every declaration source

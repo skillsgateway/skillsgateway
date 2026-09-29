@@ -7,13 +7,13 @@ on the changed surfaces.
 
 ## 1. Requirements (reqstool)
 
-- [ ] 1.1 Add GW_APPROVAL_0029 and GW_APPROVAL_0030, with SVC_GW_APPROVAL_0029
+- [x] 1.1 Add GW_APPROVAL_0029 and GW_APPROVAL_0030, with SVC_GW_APPROVAL_0029
   and SVC_GW_APPROVAL_0030 (automated tests), to `docs/reqstool/`. Verify with
   `openspec validate portal-highlight-findings --strict`.
 
 ## 2. Reading findings per file (D1)
 
-- [ ] 2.1 `lib/file-findings.test.ts` (`@SVCs SVC_GW_APPROVAL_0029`):
+- [x] 2.1 `lib/file-findings.test.ts` (`@SVCs SVC_GW_APPROVAL_0029`):
   - `parseLocation` on `a/b.md:12`, `a:b/c.sh:3` (last colon), `a/b.md`
     (no line), `a/b.md:x` (no line) and `C:\x` (no line).
   - `findingsByPath` groups by path across verdicts, carries the vetter, marks
@@ -22,12 +22,12 @@ on the changed surfaces.
   - `highestSeverity` orders critical, high, medium, low, info.
 
   Watch it fail.
-- [ ] 2.2 Implement `lib/file-findings.ts` (JSDoc `@Requirements GW_APPROVAL_0029`).
+- [x] 2.2 Implement `lib/file-findings.ts` (JSDoc `@Requirements GW_APPROVAL_0029`).
   Make 2.1 green.
 
 ## 3. Source view (D2, D3, D4)
 
-- [ ] 3.1 `components/source-view.test.tsx` (`@SVCs SVC_GW_APPROVAL_0029`):
+- [x] 3.1 `components/source-view.test.tsx` (`@SVCs SVC_GW_APPROVAL_0029`):
   - Every line is numbered.
   - A marked line shows each of its findings as text below it (severity,
     vetter, rule, message), and a line with two findings shows both.
@@ -36,8 +36,8 @@ on the changed surfaces.
   - A finding beyond a truncated view is still shown, with its line.
 
   Watch it fail.
-- [ ] 3.2 Implement `components/source-view.tsx`. Make 3.1 green.
-- [ ] 3.3 `snapshot-explorer` tests (`@SVCs SVC_GW_APPROVAL_0029`):
+- [x] 3.2 Implement `components/source-view.tsx`. Make 3.1 green.
+- [x] 3.3 `snapshot-explorer` tests (`@SVCs SVC_GW_APPROVAL_0029`):
   - A file with findings opens in the source view, with the summary "2
     findings in this file".
   - Activating a summary entry focuses its line.
