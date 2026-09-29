@@ -3627,12 +3627,32 @@ cases:
       THEN the pages together hold every changed path once and each names the baseline, the narrowed reads hold exactly that file or that directory's changes and the traversal shape holds nothing, and the portal's Diff tab lists every changed file with its diff
     revision: "0.1.0"
 
-  - id: SVC_GW_INGEST_0045
-    requirement_ids: ["GW_INGEST_0045"]
-    title: The inventory lists commands, agents, hooks and MCP servers from every declaration source
+  - id: SVC_GW_APPROVAL_0029
+    requirement_ids: ["GW_APPROVAL_0029"]
+    title: Lines with findings are numbered, marked and described in place, and listed above the file
     verification: automated-test
     description: |
-      GIVEN a snapshot whose plugins declare commands, agents, hooks and MCP servers in their default locations, in plugin manifest paths and inline configuration, in a marketplace entry, and in skill and agent frontmatter, and one plugin with a malformed hook file
+      GIVEN a snapshot whose vetting run locates findings on lines of a file, two on one line, one waived, one without a line and one beyond a truncated view
+      WHEN a reviewer opens that file in the Contents view
+      THEN its lines are numbered, each located line is marked and shows each of its findings as text with vetter, rule, severity and message, the waived one says it is waived, the marked line is described by them, the summary lists every finding and leads to its line, and a file without findings keeps its usual view
+    revision: "0.3.0"
+
+  - id: SVC_GW_APPROVAL_0030
+    requirement_ids: ["GW_APPROVAL_0030"]
+    title: A location in the vetting report opens its file at its line, and the address carries the line
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot whose vetting report locates a finding at a path and line
+      WHEN a reviewer follows the location from the Vetting tab
+      THEN the Contents tab opens that file with the line focused and marked, the address carries the line, choosing another file clears it, and in the approval dialog the location stays text
+    revision: "0.3.0"
+
+  - id: SVC_GW_INGEST_0045
+    requirement_ids: ["GW_INGEST_0045"]
+    title: The inventory lists commands, agents, hooks, MCP servers and LSP servers from every declaration source
+    verification: automated-test
+    description: |
+      GIVEN a snapshot whose plugins declare commands, agents, hooks, MCP servers and LSP servers in their default locations, in plugin manifest paths and inline configuration, in a marketplace entry, and in skill and agent frontmatter, and one plugin with a malformed hook file
       WHEN the snapshot's content inventory is read
       THEN each plugin lists every component with its declaring location, each hook carries its trigger, matcher, type and command, a manifest path that replaces a default location replaces it, a path escaping the plugin root is ignored, and the malformed file leaves only that plugin's hooks out
     revision: "0.3.0"
@@ -3705,4 +3725,44 @@ cases:
       GIVEN an MCP server that launches a script of its plugin which calls a second script that downloads and executes, a server that launches a binary of its plugin, and a script that both a hook and a server launch which installs a package
       WHEN the chain runs
       THEN the second script's line raises a high mcp-fetch-exec finding, the binary raises none, and the shared script raises both the hook's high runtime-package-run and the server's medium mcp-package-run
+    revision: "0.3.0"
+
+  - id: SVC_GW_VETTING_0053
+    requirement_ids: ["GW_VETTING_0053"]
+    title: Dependency manifests warn at their declaration, with the lockfile stated; empty, vendored and unparseable ones stay silent
+    verification: automated-test
+    description: |
+      GIVEN plugins holding a package.json with dependencies beside a lockfile, a package.json with only devDependencies, a requirements.txt, a pyproject.toml with an inline and with a multi-line dependency array, a poetry dependency table, and a Cargo.toml with dependencies; and negatives: manifests declaring nothing, manifests under installed or build-output directories, a manifest outside every plugin, and a package.json that is not valid JSON
+      WHEN the chain runs
+      THEN each positive raises one medium runtime-dependency finding at the line declaring its dependencies whose message names the ecosystem and whether a lockfile is present, and every negative raises none
+    revision: "0.3.0"
+
+  - id: SVC_GW_VETTING_0054
+    requirement_ids: ["GW_VETTING_0054"]
+    title: Installs in skill scripts and fenced blocks of skills, commands and agents warn; prose, inline spans, README and hook-launched lines do not
+    verification: automated-test
+    description: |
+      GIVEN a skill script with npm install, an extensionless skill script with a shebang running pip install, npx in a fenced block of SKILL.md, uvx in a tilde-fenced block of a skill reference file, and pip install in fenced blocks of a command and an agent; and negatives: npm install in prose and an inline span of SKILL.md, in a fenced block of the plugin README, and in a skill script a hook launches
+      WHEN the chain runs
+      THEN each positive raises one medium runtime-dependency finding at its line, a file with several install lines raises one finding at its first line naming every line, the negatives raise none, and the hook-launched line carries only the hook's high runtime-package-run
+    revision: "0.3.0"
+
+  - id: SVC_GW_VETTING_0055
+    requirement_ids: ["GW_VETTING_0055"]
+    title: LSP server commands warn on package runners and block on download-and-execute, and launched scripts are followed
+    verification: automated-test
+    description: |
+      GIVEN LSP servers that run npx, that pipe a download into a shell through sh -c, and that launch a plugin script calling a second script that installs a package; and negatives: a language server on the PATH, a binary of the plugin, and a runner pointed inside the plugin; and a script both a hook and an LSP server launch
+      WHEN the chain runs
+      THEN the runner raises a medium lsp-package-run and the pipe a high lsp-fetch-exec at the command's line, the second script's line raises lsp-package-run, the negatives raise none, and the shared script keeps the hook's high runtime-package-run
+    revision: "0.3.0"
+
+  - id: SVC_GW_VETTING_0056
+    requirement_ids: ["GW_VETTING_0056"]
+    title: Download-and-execute in skill scripts and fenced blocks blocks; prose, inline spans and a download never executed do not
+    verification: automated-test
+    description: |
+      GIVEN a skill script piping a download into sh, a skill Python script downloading a file, making it executable and running it, and a download piped into bash in fenced blocks of SKILL.md and of an agent; and negatives: a download written to a data file and a piped download in prose and an inline span of SKILL.md
+      WHEN the chain runs
+      THEN each positive raises one high skill-fetch-exec finding at its first matching line and the verdict fails, a script that also installs raises one runtime-dependency beside it, and the negatives raise none
     revision: "0.3.0"

@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useMarketplaces, useSnapshotDirectory } from "@/api/queries";
 import { SnapshotExplorer } from "@/components/snapshot-explorer";
+import { parseLineParam } from "@/lib/file-findings";
 import { SnapshotStateBadge } from "@/components/snapshot-state";
 import { Badge } from "@/components/ui/badge";
 
@@ -20,6 +21,7 @@ export function SnapshotFilesPage() {
   const [params, setParams] = useSearchParams();
   const snapshotId = Number(id);
   const selectedPath = params.get("path");
+  const selectedLine = parseLineParam(params.get("line"));
 
   const marketplaces = useMarketplaces();
   // A malformed id addresses nothing, so nothing is asked of the gateway.
@@ -30,8 +32,15 @@ export function SnapshotFilesPage() {
   const select = (path: string) => {
     const next = new URLSearchParams(params);
     next.set("path", path);
+    next.delete("line");
     // Pushed, not replaced: back and forward walk the files the reviewer visited.
     setParams(next);
+  };
+
+  const selectLine = (line: number) => {
+    const next = new URLSearchParams(params);
+    next.set("line", String(line));
+    setParams(next, { replace: true });
   };
 
   const marketplace = marketplaces.data?.find((entry) => entry.name === name);
@@ -85,7 +94,13 @@ export function SnapshotFilesPage() {
           reading — send it to the second approver.
         </p>
       </div>
-      <SnapshotExplorer snapshotId={readable} selectedPath={selectedPath} onSelect={select} />
+      <SnapshotExplorer
+        snapshotId={readable}
+        selectedPath={selectedPath}
+        onSelect={select}
+        selectedLine={selectedLine}
+        onSelectLine={selectLine}
+      />
     </div>
   );
 }

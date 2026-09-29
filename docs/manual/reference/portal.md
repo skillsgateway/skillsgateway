@@ -350,12 +350,16 @@ snapshot's card in its place.
 | Snapshots — **Serving** | The snapshot whose commit the facade answers with | Open by default. "Nothing is served." when `servedSha` is null — and, if a snapshot is still recorded approved, that it was withdrawn |
 | Snapshots — **Earlier snapshots (n)** | Everything else: rejected, deleted, approved but no longer served | One line each |
 
-Two snapshots can await a decision at once. The open snapshot, its tab and its
-file are in the address, so a link to the evidence restores all three:
+Two snapshots can await a decision at once. The open snapshot, its tab, its
+file and the line in that file are in the address, so a link to the evidence
+restores all four:
 
 ```text
-/marketplaces/acme?snapshot=41&tab=contents&path=plugins/hello/skills/hello/SKILL.md
+/marketplaces/acme?snapshot=41&tab=contents&path=plugins/hello/skills/hello/SKILL.md&line=12
 ```
+
+`line` is optional. When present, the file opens at that line with the line
+focused. Choosing another file drops it.
 
 An address naming a snapshot that no longer awaits a decision — an older link to
 one since approved — still opens it on Review, under **Linked snapshot**, with a
@@ -387,10 +391,10 @@ Top to bottom, in this order on purpose:
 
     | Tab | Shows |
     | --- | --- |
-    | **Vetting** (default) | The [vetting report](#the-chain-flow): chain outcome, verdicts, findings, waivers |
+    | **Vetting** (default) | The [vetting report](#the-chain-flow): chain outcome, verdicts, findings, waivers. Every `path:line` location is a link that opens the file at that line in **Contents** (not in the approve dialog, which stays on the decision) |
     | **Contents** | The [file explorer](#snapshot-contents), inside the card |
     | **Diff** | Changes since the last approved snapshot — plugins and skills marked added, changed, moved or removed, only what changed, from `content-diff`. With nothing approved yet it says there is no baseline. Below it, **Files changed against the served commit** lists every changed path from `diff`, 500 at a time, with **Show N more**, the totals over the whole diff, and each file's diff opened in place |
-    | **Inventory** | What the snapshot ships: one block per declared plugin with its `source` and description. Below them is one count per component kind the plugin has, for example "1 skill · 4 agents · 3 hooks". Each count is collapsed and expands its own list in place. A hook row shows its trigger (the event, and the tool matcher when there is one), what it runs, and where it is declared. Read from `GET /api/v1/snapshots/{id}/content` |
+    | **Inventory** | What the snapshot ships: one block per declared plugin with its `source` and description. Below them is one count per component kind the plugin has (skills, commands, agents, hooks, MCP servers and LSP servers), for example "1 skill · 4 agents · 3 hooks". Each count is collapsed and expands its own list in place. A hook row shows its trigger (the event, and the tool matcher when there is one), what it runs, and where it is declared. Read from `GET /api/v1/snapshots/{id}/content` |
     | **Provenance** | Upstream URL and SHA, the served SHA, who decided it and when, and the closure of external plugin sources |
 
 5. **The decision** — **Approve** (**Re-approve** for a revoked snapshot) and
@@ -752,6 +756,34 @@ one file, read from `GET /api/v1/snapshots/{id}/diff?path=`. Files and the diff
 no longer compete for one box: switching to the diff leaves the tree where it
 is.
 
+**Findings in the file.** The latest vetting run's findings
+(`GET /api/v1/snapshots/{id}/vetting`) are read onto the files they locate:
+
+- **In the tree**, a file that carries findings shows its highest severity
+  and the count, for example "high · 3". Directories carry no marker.
+- **Above the file**, "N findings in this file" lists each finding with its
+  severity, rule, line, vetter and message. An entry with a line moves to that
+  line. A finding whose location has no line, or whose line is beyond the part
+  of a truncated file that is shown, is listed there too.
+- **In the file**, a file is shown as numbered lines. Each line a finding
+  locates is tinted by its highest severity, and **each finding on it is
+  written out beneath the line**: severity, vetter, rule and message, and
+  "waived by … until …" when an active waiver covers it. Several findings on
+  one line are all shown. The line is described by them, so moving focus to it
+  reads what was found there. Colour is never the only signal.
+- **Markdown and JSON** open as they read (rendered, formatted), with the
+  findings listed above them. Following a finding, from that list or from a
+  link with a `line`, opens the numbered **Source**. A **Source / Rendered** (or
+  **Formatted**) control switches between the two. Other text always opens
+  numbered.
+
+A finding is marked on the one line its location names; a finding whose message
+names further lines marks only that one. **Copy link** includes the line once one is chosen, and the address of this
+route takes `?line=` beside `?path=`.
+
+A reviewer who may read contents but not vetting still gets the file, without
+markers.
+
 Every bound of these reads is a state this page renders on purpose:
 
 | Condition | What the page says |
@@ -766,6 +798,7 @@ Every bound of these reads is a state this page renders on purpose:
 | No approver role | "You cannot read this snapshot's contents.", naming the role needed |
 | Snapshot is not this marketplace's | "Snapshot N is not a snapshot of X." |
 | A `.json` file that does not tokenise as JSON | "Not valid JSON — shown as stored.", with the stored bytes |
+| A finding's line beyond a truncated blob | Listed above the file, and written out below it as "Line N is beyond the part shown" |
 
 The tree keeps one width whatever file is open; a long line scrolls inside the
 file pane rather than taking width from the tree.
@@ -780,7 +813,7 @@ half a document cannot be formatted honestly.
 
 Markdown renders inertly — there is no HTML pipeline at all, so HTML embedded in
 a hostile file appears as visible text and links are shown but never navigable.
-Other text renders preformatted. This is inspection, not execution: nothing
+Other text renders as numbered lines. This is inspection, not execution: nothing
 fetched here is ever run, followed or injected as markup, and the page changes
 nothing about what the facade serves.
 
