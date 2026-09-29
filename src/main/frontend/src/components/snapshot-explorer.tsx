@@ -113,7 +113,12 @@ function FileFindings({
           return (
             <li key={`${index}:${finding.location}:${finding.ruleId}`} className="flex flex-wrap items-baseline gap-x-2">
               {reachable ? (
-                <Button variant="link" size="xs" className="h-auto p-0 font-mono" onClick={() => onLine(finding.line!)}>
+                <Button
+                  variant="link"
+                  size="xs"
+                  className="h-auto p-0 text-left font-mono break-all whitespace-normal"
+                  onClick={() => onLine(finding.line!)}
+                >
                   {label}
                 </Button>
               ) : (

@@ -18,8 +18,10 @@ function Note({ id, finding, prefix }: { id: string; finding: FileFinding; prefi
     <div
       id={id}
       role="note"
-      className={`ml-12 border-l-2 py-1 pr-2 pl-3 font-sans text-xs whitespace-normal ${
-        finding.waived ? "border-muted-foreground/50 opacity-75" : high ? "border-destructive" : "border-primary"
+      // On the page background, not the line's tint: the text keeps its contrast in both themes. A
+      // waived note is set apart by its rule and its words, never by fading the words.
+      className={`ml-12 border-l-2 bg-background py-1 pr-2 pl-3 font-sans text-xs whitespace-normal ${
+        finding.waived ? "border-dashed border-muted-foreground" : high ? "border-destructive" : "border-primary"
       }`}
     >
       {prefix ? <span className="text-muted-foreground">{prefix} — </span> : null}
@@ -112,7 +114,12 @@ export function SourceView({
               }`}
             >
               <div className="flex">
-                <span aria-hidden className="w-10 shrink-0 pr-2 text-right text-muted-foreground select-none">
+                <span
+                  aria-hidden
+                  className={`w-10 shrink-0 pr-2 text-right select-none ${
+                    severity ? "font-medium text-foreground" : "text-muted-foreground"
+                  }`}
+                >
                   {n}
                 </span>
                 <span className="min-w-0 pr-3 break-all whitespace-pre-wrap">{content === "" ? " " : content}</span>

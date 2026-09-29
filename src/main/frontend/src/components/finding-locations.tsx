@@ -8,7 +8,10 @@ import { SHOWN_LOCATIONS } from "@/lib/vetting-flow";
 export function FindingLocation({ location }: { location: string }) {
   const href = useContext(LocationHrefContext)?.(location) ?? null;
   return href ? (
-    <Link to={href} className="underline decoration-dotted underline-offset-2 hover:text-foreground">
+    <Link
+      to={href}
+      className="rounded-sm underline decoration-dotted underline-offset-2 outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
       {location}
     </Link>
   ) : (

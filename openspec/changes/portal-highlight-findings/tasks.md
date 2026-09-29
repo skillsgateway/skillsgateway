@@ -90,7 +90,7 @@ on the changed surfaces.
 
 ## 6. Design harness
 
-- [ ] 6.1 `/impeccable audit` and `/impeccable harden` on the Contents tab and
+- [x] 6.1 `/impeccable audit` and `/impeccable harden` on the Contents tab and
   the Vetting tab. Fix each finding or dismiss it with a reason, and record
   both in the PR body.
 
