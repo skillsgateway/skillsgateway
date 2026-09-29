@@ -842,6 +842,18 @@ class ExecutableSurfaceVetterTests {
 
     @Test
     @SVCs({"SVC_GW_VETTING_0054"})
+    void aFileMixingInstallsAndRunnersNamesBoth() {
+        Verdict verdict = vet(snapshot("p/skills/s/SKILL.md", "```\nnpm install\nnpx acme\n```\n"));
+
+        assertThat(rule(verdict, RUNTIME_DEPENDENCY))
+                .singleElement()
+                .satisfies(finding -> assertThat(finding.message())
+                        .contains("installs packages")
+                        .contains("runs 'npx'"));
+    }
+
+    @Test
+    @SVCs({"SVC_GW_VETTING_0054"})
     void aLongListOfLinesIsShortened() {
         StringBuilder skill = new StringBuilder("```\n");
         for (int i = 0; i < 8; i++) {

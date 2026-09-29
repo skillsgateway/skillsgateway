@@ -368,7 +368,7 @@ public class ExecutableSurfaceVetter implements Vetter {
                 return;
             }
             Map<String, List<Integer>> lines = new LinkedHashMap<>();
-            Map<String, String> messages = new HashMap<>();
+            Map<String, Set<String>> messages = new HashMap<>();
             String what;
             if (path.endsWith(".md")) {
                 what = "a code block of these instructions";
@@ -392,14 +392,19 @@ public class ExecutableSurfaceVetter implements Vetter {
                         runner ? RUNTIME_DEPENDENCY : SKILL_FETCH_EXEC,
                         runner ? Severity.MEDIUM : Severity.HIGH,
                         "%s:%d".formatted(path, sorted.getFirst()),
-                        "%s %s (%s)".formatted(what, messages.get(rule), lineList(sorted))));
+                        "%s %s (%s)".formatted(what, String.join("; ", messages.get(rule)), lineList(sorted))));
             });
         }
 
         private static void collect(
-                Map<String, List<Integer>> lines, Map<String, String> messages, int line, RuntimeFetch.Match match) {
+                Map<String, List<Integer>> lines,
+                Map<String, Set<String>> messages,
+                int line,
+                RuntimeFetch.Match match) {
             lines.computeIfAbsent(match.rule(), rule -> new ArrayList<>()).add(line);
-            messages.putIfAbsent(match.rule(), match.message());
+            // Each distinct wording once: an install and a runner are both named, not only the first.
+            messages.computeIfAbsent(match.rule(), rule -> new LinkedHashSet<>())
+                    .add(match.message());
         }
 
         /**

@@ -80,6 +80,8 @@ run M14-located-at-last-line java $T aFileIsOneFindingPerRuleAtItsFirstLineNamin
   '"%s:%d".formatted(path, sorted.getFirst()),' '"%s:%d".formatted(path, sorted.getLast()),'
 run M15-long-list-not-shortened java $T aLongListOfLinesIsShortened "$E" \
   '.limit(5)' '.limit(50)'
+run M16-first-wording-only java $T aFileMixingInstallsAndRunnersNamesBoth "$E" \
+  $'messages.computeIfAbsent(match.rule(), rule -> new LinkedHashSet<>())\n                    .add(match.message());' 'messages.putIfAbsent(match.rule(), new LinkedHashSet<>(java.util.List.of(match.message())));'
 run M9-lsp-carries-mcp-ids java $T anLspServerThatRunsAPackageRunnerWarnsAtItsCommand "$E" \
   'LSP("LSP server", LSP_FETCH_EXEC, LSP_PACKAGE_RUN);' 'LSP("LSP server", MCP_FETCH_EXEC, MCP_PACKAGE_RUN);'
 run M10-plugin-json-lsp-unread java $P lspServersAreReadFromEverySourceAndALaterNameReplacesAnEarlierOne "$I/PluginComponents.java" \
