@@ -1,5 +1,5 @@
 import { GitCompareArrows, Link2, ShieldAlert } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { formatJson } from "@/lib/json-format";
 import { ApiError } from "@/api/client";
@@ -8,15 +8,18 @@ import {
   useSnapshotFile,
   useSnapshotFileDiff,
   useSnapshotPathSearch,
+  useSnapshotVetting,
   type SnapshotDiffEntry,
   type SnapshotTreeChild,
 } from "@/api/queries";
 import { MarkdownView } from "@/components/markdown-view";
 import { SegmentedGroup } from "@/components/segmented-group";
 import { SnapshotFileTree } from "@/components/snapshot-file-tree";
+import { SourceView } from "@/components/source-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { findingsByPath, type FileFinding } from "@/lib/file-findings";
 import { ancestorDirectories } from "@/lib/snapshot-tree";
 
 function Notice({ children }: { children: React.ReactNode }) {
@@ -62,9 +65,106 @@ export function DiffText({ diff }: { diff: string }) {
   );
 }
 
-/** The blob itself: inert text, Markdown rendered without any HTML pipeline, bounds stated. */
-function FileContent({ snapshotId, path }: { snapshotId: number; path: string }) {
+/** Where the reviewer asked to be: a line, and a counter so asking for the same line again refocuses it. */
+interface LineFocus {
+  line: number | null;
+  seq: number;
+}
+
+const SOURCE_VIEWS = {
+  md: [
+    { value: "source", label: "Source" },
+    { value: "rendered", label: "Rendered" },
+  ],
+  json: [
+    { value: "source", label: "Source" },
+    { value: "rendered", label: "Formatted" },
+  ],
+} as const;
+
+/**
+ * The file's findings as a list above it, each leading to its line: the keyboard route from the
+ * top of the file to what was found, and the only place a finding without a line can be shown.
+ */
+function FileFindings({
+  findings,
+  lineCount,
+  onLine,
+}: {
+  findings: readonly FileFinding[];
+  lineCount: number;
+  onLine: (line: number) => void;
+}) {
+  return (
+    <section aria-label="Findings in this file" className="space-y-1 rounded-md border p-3">
+      <p className="text-xs font-medium">
+        {findings.length} {findings.length === 1 ? "finding" : "findings"} in this file
+      </p>
+      <ul className="space-y-1 text-xs">
+        {findings.map((finding, index) => {
+          const reachable = finding.line !== null && finding.line >= 1 && finding.line <= lineCount;
+          const label = `${finding.severity} · ${finding.ruleId} · ${
+            finding.line === null || finding.line < 1
+              ? "no line"
+              : reachable
+                ? `line ${finding.line}`
+                : `line ${finding.line}, beyond the part shown`
+          }`;
+          return (
+            <li key={`${index}:${finding.location}:${finding.ruleId}`} className="flex flex-wrap items-baseline gap-x-2">
+              {reachable ? (
+                <Button
+                  variant="link"
+                  size="xs"
+                  className="h-auto p-0 text-left font-mono break-all whitespace-normal"
+                  onClick={() => onLine(finding.line!)}
+                >
+                  {label}
+                </Button>
+              ) : (
+                <span className="font-mono">{label}</span>
+              )}
+              <span className="text-muted-foreground">
+                {finding.vetter} — {finding.message}
+                {finding.waived ? ` (waived by ${finding.waived.by})` : ""}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+/**
+ * The blob itself: inert text, Markdown rendered without any HTML pipeline, bounds stated. A
+ * file's findings are listed above it, and each is written out beneath its line in the numbered
+ * source (GW_APPROVAL_0029). Markdown and JSON open rendered, with the source one control away
+ * and opened by following a finding to its line.
+ */
+function FileContent({
+  snapshotId,
+  path,
+  findings,
+  focus,
+  onLine,
+}: {
+  snapshotId: number;
+  path: string;
+  findings: readonly FileFinding[];
+  focus: LineFocus;
+  onLine: (line: number) => void;
+}) {
   const file = useSnapshotFile(snapshotId, path);
+  const kind = path.endsWith(".md") ? "md" : path.endsWith(".json") ? "json" : null;
+  // Markdown and JSON open as they read; following a finding to a line opens the numbered source,
+  // because that is where the line is marked. Keyed by path, so a new file chooses afresh.
+  const [view, setView] = useState<"source" | "rendered">(focus.line !== null ? "source" : "rendered");
+  const [followed, setFollowed] = useState(focus.seq);
+  if (followed !== focus.seq) {
+    setFollowed(focus.seq);
+    if (focus.line !== null) setView("source");
+  }
   if (file.isLoading) return <Notice>Loading {path}…</Notice>;
   if (file.isError) {
     if (file.error instanceof ApiError && file.error.status === 403) return <Forbidden />;
@@ -79,6 +179,13 @@ function FileContent({ snapshotId, path }: { snapshotId: number; path: string })
   if (content.binary) {
     return <Notice>Binary file ({content.size} bytes) — content is not rendered.</Notice>;
   }
+  const text = content.text ?? "";
+  const lineCount = text.split(/\r?\n/).length - (text.endsWith("\n") ? 1 : 0);
+  const source = kind === null || view === "source";
+  const toLine = (line: number) => {
+    setView("source");
+    onLine(line);
+  };
   return (
     <div className="space-y-2">
       {content.truncated ? (
@@ -86,14 +193,29 @@ function FileContent({ snapshotId, path }: { snapshotId: number; path: string })
           Truncated: showing the first part of {content.size} bytes.
         </p>
       ) : null}
-      {path.endsWith(".md") ? (
-        <MarkdownView text={content.text ?? ""} />
-      ) : path.endsWith(".json") ? (
-        <JsonContent text={content.text ?? ""} truncated={content.truncated === true} />
+      {findings.length > 0 ? <FileFindings findings={findings} lineCount={lineCount} onLine={toLine} /> : null}
+      {kind !== null && findings.length > 0 ? (
+        <SegmentedGroup
+          label="File view"
+          hideLabel
+          value={view}
+          options={SOURCE_VIEWS[kind]}
+          onChange={setView}
+        />
+      ) : null}
+      {source ? (
+        <SourceView
+          path={path}
+          text={text}
+          findings={findings}
+          truncated={content.truncated === true}
+          focusLine={focus.line}
+          focusKey={focus.seq}
+        />
+      ) : kind === "md" ? (
+        <MarkdownView text={text} />
       ) : (
-        <pre className="overflow-x-auto rounded-md border bg-muted p-3 font-mono text-xs">
-          {content.text ?? ""}
-        </pre>
+        <JsonContent text={text} truncated={content.truncated === true} />
       )}
     </div>
   );
@@ -211,6 +333,7 @@ type TreeProps = {
   expanded: ReadonlySet<string>;
   onToggle: (path: string) => void;
   onSelect: (path: string) => void;
+  findings: ReadonlyMap<string, readonly FileFinding[]>;
 };
 
 /** One directory's children, read when it is opened; a directory wider than a page pages on request. */
@@ -327,12 +450,28 @@ export function SnapshotExplorer({
   snapshotId,
   selectedPath,
   onSelect,
+  selectedLine = null,
+  onSelectLine,
 }: {
   snapshotId: number;
   selectedPath: string | null;
   onSelect: (path: string) => void;
+  /** The addressed line of the selected file, focused once the file is shown (GW_APPROVAL_0030). */
+  selectedLine?: number | null;
+  onSelectLine?: (line: number) => void;
 }) {
   const root = useSnapshotDirectory(snapshotId, "");
+  // Findings are an overlay: a reviewer who may read contents but not vetting still gets the file.
+  const vetting = useSnapshotVetting(snapshotId);
+  const findings = useMemo(() => findingsByPath(vetting.data), [vetting.data]);
+  // A new address focuses its line; derived during render rather than synchronised in an effect.
+  const addressed = `${selectedPath ?? ""}:${selectedLine ?? ""}`;
+  const [focus, setFocus] = useState<LineFocus & { from: string }>({ line: selectedLine, seq: 0, from: addressed });
+  if (focus.from !== addressed) setFocus({ line: selectedLine, seq: focus.seq + 1, from: addressed });
+  const goToLine = (line: number) => {
+    setFocus((current) => ({ line, seq: current.seq + 1, from: current.from }));
+    onSelectLine?.(line);
+  };
   const fileDiff = useSnapshotFileDiff(snapshotId, selectedPath);
 
   const [query, setQuery] = useState("");
@@ -411,6 +550,7 @@ export function SnapshotExplorer({
     expanded: opened,
     onToggle: toggle,
     onSelect,
+    findings,
   };
 
   return (
@@ -532,7 +672,14 @@ export function SnapshotExplorer({
                       {comparison}
                     </div>
                   ) : mode === "content" ? (
-                    <FileContent snapshotId={snapshotId} path={selectedPath} />
+                    <FileContent
+                      key={selectedPath}
+                      snapshotId={snapshotId}
+                      path={selectedPath}
+                      findings={findings.get(selectedPath) ?? []}
+                      focus={focus}
+                      onLine={goToLine}
+                    />
                   ) : (
                     comparison
                   )}

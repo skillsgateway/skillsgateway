@@ -5,7 +5,7 @@ import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { expect, test } from "vitest";
 import type { components } from "@/api/types.gen";
-import { clearVetting, compositeProvenance, heldSnapshot, marketplace, tooYoung } from "@/test/msw-handlers";
+import { clearVetting, compositeProvenance, heldSnapshot, locatedVetting, marketplace, tooYoung } from "@/test/msw-handlers";
 import { server } from "@/test/msw-server";
 import {
   MarketplaceActivityPage,
@@ -303,6 +303,59 @@ test("a_deep_link_restores_the_snapshot_the_tab_and_the_file", async () => {
   );
   await user.click(within(card).getByRole("tab", { name: "Provenance" }));
   expect(screen.getByTestId("address")).toHaveTextContent("?snapshot=3&tab=provenance");
+});
+
+const SKILL = "plugins/hello/skills/hello/SKILL.md";
+
+/**
+ * An address that names a line opens the file with that line focused; moving to another file
+ * drops the line, and moving to a finding writes it.
+ *
+ * @SVCs SVC_GW_APPROVAL_0030
+ */
+test("the_address_carries_the_line_of_the_file", async () => {
+  const user = userEvent.setup();
+  server.use(http.get("/api/v1/snapshots/:id/vetting", () => HttpResponse.json(locatedVetting)));
+  const { container } = renderPage(`?snapshot=3&tab=contents&path=${encodeURIComponent(SKILL)}&line=5`);
+
+  const card = await screen.findByRole("region", { name: "Snapshot 3" });
+  await within(card).findByRole("list", { name: `Lines of ${SKILL}` });
+  await waitFor(() => expect(document.activeElement).toBe(container.querySelector('[data-line="5"]')));
+
+  const tree = within(card).getByRole("navigation", { name: "File tree of snapshot 3" });
+  await user.click(within(tree).getByRole("button", { name: /^\.claude-plugin,/ }));
+  await user.click(await within(tree).findByRole("button", { name: /marketplace\.json/ }));
+  expect(screen.getByTestId("address")).toHaveTextContent(
+    "?snapshot=3&tab=contents&path=.claude-plugin%2Fmarketplace.json",
+  );
+  expect(screen.getByTestId("address")).not.toHaveTextContent("line=");
+
+  await user.click(within(tree).getByRole("button", { name: /SKILL\.md/ }));
+  const summary = await within(card).findByRole("region", { name: "Findings in this file" });
+  await user.click(within(summary).getByRole("button", { name: /high · html-in-markdown · line 5/ }));
+  expect(screen.getByTestId("address")).toHaveTextContent(
+    `?snapshot=3&tab=contents&path=${encodeURIComponent(SKILL)}&line=5`,
+  );
+});
+
+/**
+ * @SVCs SVC_GW_APPROVAL_0030
+ */
+test("a_location_in_the_vetting_tab_opens_its_file_at_its_line", async () => {
+  const user = userEvent.setup();
+  server.use(http.get("/api/v1/snapshots/:id/vetting", () => HttpResponse.json(locatedVetting)));
+  const { container } = renderPage("?snapshot=3&tab=vetting");
+
+  const card = await screen.findByRole("region", { name: "Snapshot 3" });
+  const links = await within(card).findAllByRole("link", { name: `${SKILL}:5` });
+  await user.click(links[0]!);
+
+  expect(screen.getByTestId("address")).toHaveTextContent(
+    `?snapshot=3&tab=contents&path=${encodeURIComponent(SKILL)}&line=5`,
+  );
+  expect(within(card).getByRole("tab", { name: "Contents" })).toHaveAttribute("aria-selected", "true");
+  await within(card).findByRole("list", { name: `Lines of ${SKILL}` });
+  await waitFor(() => expect(document.activeElement).toBe(container.querySelector('[data-line="5"]')));
 });
 
 /**
