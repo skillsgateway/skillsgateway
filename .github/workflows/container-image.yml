@@ -8,6 +8,16 @@ name: Container image
 on:
   push:
     branches: [main]
+  # The smoke test is the only place the jlink module list, the read-only root
+  # filesystem and the product path run against the real image, so a PR that
+  # can break them runs it before merge. Path-filtered, so it is not a required
+  # check: a required context that does not run blocks the PR forever.
+  pull_request:
+    paths:
+      - Dockerfile
+      - pom.xml
+      - 'helm/**'
+      - .github/workflows/container-image.yml
   schedule:
     # Weekly, Monday 04:30 UTC
     - cron: '30 4 * * 1'
@@ -36,8 +46,9 @@ jobs:
     # architectures, and only the jlink runtime under it is platform-specific,
     # which buildx builds for each target platform in the same build.
     #
-    # A main push and a schedule/dispatch build and smoke-test exactly what a
-    # release does -- proving the image works -- but publish nothing. Only
+    # A pull request, a main push and a schedule/dispatch build and smoke-test
+    # exactly what a release does -- proving the image works -- but publish
+    # nothing. Only
     # release.yml (`inputs.version` set) ever reaches GHCR: the published tag
     # namespace holds released versions only, never a moving per-commit tag.
     runs-on: ubuntu-latest
@@ -327,6 +338,14 @@ jobs:
           subject-name: ghcr.io/skillsgateway/skillsgateway
           subject-digest: ${{ steps.push.outputs.digest }}
           sbom-path: target/classes/META-INF/sbom/application.cdx.json
+          push-to-registry: true
+
+      - name: Attest build provenance
+        if: inputs.version != ''
+        uses: actions/attest-build-provenance@v4.2.2
+        with:
+          subject-name: ghcr.io/skillsgateway/skillsgateway
+          subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
       - name: Export image
