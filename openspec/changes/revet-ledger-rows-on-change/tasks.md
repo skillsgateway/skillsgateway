@@ -52,7 +52,7 @@
 
 ## 4. Gates and evidence
 
-- [ ] 4.1 Run all gates fresh after the last code edit (`./mvnw clean verify`,
+- [x] 4.1 Run all gates fresh after the last code edit (`./mvnw clean verify`,
       `pnpm test:stories`, `pnpm e2e`, `reqstool status local -p docs/reqstool`,
       `openspec validate --all --strict`, `mkdocs build --strict`) and write
       `evidence.md` with the commands, result tails and the commit SHA.
