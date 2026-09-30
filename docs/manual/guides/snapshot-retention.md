@@ -152,11 +152,19 @@ observation for `staging-ref-max-age` (default `24h`), so a publication running
 right now is never disturbed. See
 [Snapshot retention](../reference/retention.md#abandoned-publication-staging-references).
 
+### Webhook delivery history
+
+The same pass removes webhook deliveries that are `delivered` or `failed` and were last
+updated more than 30 days ago, up to `batch-size` per pass. A `pending` delivery is never
+removed, whatever its age. The age is fixed, not a setting; it is not `ledger-max-age`. Each
+pass that removes any writes `webhook-deliveries-swept:removed=<n>` to the ledger. With
+retention off, delivery history is kept.
+
 ## 6. Watch it
 
 Every retention action is in the append-only ledger with the acting identity:
 `retention-evaluated:…`, `snapshot-soft-deleted:<reason>`, `snapshot-restored`,
-`snapshot-purged` and `staging-refs-swept:count=<n>`. Policy-driven deletions are
+`snapshot-purged`, `staging-refs-swept:count=<n>` and `webhook-deliveries-swept:removed=<n>`. Policy-driven deletions are
 attributed to `retention-policy` rather than to a person.
 
 Soft delete and restore also fire the `marketplace.snapshot.soft_deleted` and

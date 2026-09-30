@@ -1713,6 +1713,16 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
+  - id: GW_RETENTION_0011
+    title: Delivered and failed webhook deliveries are removed after a bounded age
+    significance: shall
+    description: "The system shall, during its scheduled hard-delete compaction pass while retention is enabled, remove webhook deliveries that are in the delivered or failed state and were last updated more than thirty days ago, at most one configured batch per pass; shall never remove a delivery that is still pending, whatever its age; and shall record one ledger entry naming the number removed for each pass that removed any."
+    rationale: "A delivery row exists so an operator can troubleshoot a receiver over days, and for an audit export sink its payload is a copy of the exported ledger batch, so keeping every row forever grows a second copy of the ledger that nothing bounds. The ledger already holds the audit record of the event itself. The age is fixed rather than configurable and is not the ledger maximum age, which is compliance policy and would couple two unrelated retentions; a pending delivery is excluded because it has not yet done its job. Running inside the existing pass adds no scheduled sweep."
+    references:
+      requirement_ids: ["GW_RETENTION_0009"]
+    categories: ["reliability", "performance-efficiency"]
+    revision: 0.1.0
+
   - id: GW_VETTING_0038
     title: Chain staleness is stated at the approval gate
     significance: shall

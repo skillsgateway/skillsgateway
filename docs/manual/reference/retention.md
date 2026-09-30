@@ -266,6 +266,7 @@ Every retention action lands in the append-only ledger with the acting identity:
 | `snapshot-soft-deleted:<reason>` | Each soft delete — reason `held-too-long`, `superseded`, or `manual`. |
 | `snapshot-restored` | Each restore. |
 | `snapshot-purged` | Each compaction removal, carrying the SHA. |
+| `webhook-deliveries-swept:removed=<n>` | Each compaction pass that removed delivered or failed webhook deliveries last updated more than 30 days ago (at most `batch-size` per pass; pending deliveries are never removed). |
 | `staging-refs-swept:count=<n>` | Each compaction pass that removed abandoned staging refs from a marketplace's published repository. |
 
 Soft delete and restore also emit the `marketplace.snapshot.soft_deleted` and
