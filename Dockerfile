@@ -11,7 +11,7 @@
 # built for the target platform rather than cross-linked.
 
 # --- The runtime and the staged jar ------------------------------------------
-FROM eclipse-temurin:25-jdk AS runtime
+FROM eclipse-temurin:25-jdk@sha256:119a3d18f160a3e7655a66034d0f43beee31cd7b3b9142d57a5de29772011de6 AS runtime
 
 # An explicit module set rather than the whole JDK -- jlink is the reason
 # java-base can stay small. It is deliberately NOT derived with `jdeps`: a Spring
@@ -37,7 +37,7 @@ RUN set -eu; \
 RUN mkdir -p /data && chown 65532:65532 /data
 
 # --- The image ---------------------------------------------------------------
-FROM gcr.io/distroless/java-base-debian12:nonroot
+FROM gcr.io/distroless/java-base-debian12:nonroot@sha256:a9930cad62d02853d7f3dede7281c4b916cbf74493c2d8d38564121aad92bf6c
 
 COPY --from=runtime /javaruntime /opt/java
 COPY --from=runtime /app/skills-gateway-server.jar /app/skills-gateway-server.jar
