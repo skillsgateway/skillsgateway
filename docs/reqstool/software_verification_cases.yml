@@ -1139,7 +1139,16 @@ cases:
     description: |
       GIVEN a gateway configured with an expected issuer and a principal-name claim other than the subject, and a second gateway left at the defaults
       WHEN an identity token from a different issuer is presented, one from the expected issuer is presented, and the session identity endpoint is read on both gateways
-      THEN the foreign-issuer token is refused and establishes no session, the matching one succeeds and the identity endpoint reports the configured claim's value which the role lookups key on, and the default gateway behaves exactly as before while logging that no expected issuer is configured
+      THEN the foreign-issuer token is refused and establishes no session, the matching one succeeds and the identity endpoint reports the configured claim's value which the role lookups key on, and the default gateway applies the standard identity-token checks and no issuer comparison
+    revision: "0.2.0"
+  - id: SVC_GW_AUTH_0017.2
+    requirement_ids: ["GW_AUTH_0017"]
+    title: A configured identity provider without an expected issuer refuses to start
+    verification: automated-test
+    description: |
+      GIVEN a gateway started from the shipped identity-provider placeholders
+      WHEN it is started with a real client id or a real provider endpoint and no expected issuer (or one that is only whitespace), with a provider and an expected issuer, with no provider and no issuer, and in the insecure development mode with no issuer
+      THEN the first refuses to start with a message naming the expected-issuer setting and the configuration that showed a provider to be configured, the other three start, and in the insecure development mode a configured provider is refused by that mode's own guard rather than by this one
     revision: "0.1.0"
   - id: SVC_GW_FACADE_0006
     requirement_ids: ["GW_FACADE_0006"]
