@@ -4128,7 +4128,7 @@ export interface components {
             content?: string;
             /**
              * Format: date-time
-             * @description When the acceptance lapses. Required and must be in the future: there are no unlimited waivers.
+             * @description When the acceptance lapses. Required, in the future and at most 90 days after the request; a later instant is refused, not shortened. There are no unlimited waivers.
              * @example 2026-12-31T00:00:00Z
              */
             expiresAt: string;
@@ -6194,7 +6194,7 @@ export interface operations {
                     "*/*": components["schemas"]["WaiverView"];
                 };
             };
-            /** @description Missing justification or expiry, an expiry in the past, or an unusable scope */
+            /** @description Missing justification or expiry, an expiry in the past or more than 90 days ahead, or an unusable scope */
             400: {
                 headers: {
                     [name: string]: unknown;
