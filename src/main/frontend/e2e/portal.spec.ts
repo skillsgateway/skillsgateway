@@ -100,6 +100,73 @@ async function approveCard(page: Page, card: Locator) {
 }
 
 /**
+ * Any content security policy violation fails the test that raised it (GW_AUTH_0052), so every
+ * flow below — dialogs, the setup wizard, the file explorer — also proves the portal runs under the
+ * policy. Chromium reports each refusal as a console error naming the policy.
+ */
+let policyViolations: string[] = [];
+
+test.beforeEach(({ page }) => {
+  policyViolations = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && /Content Security Policy/i.test(message.text())) {
+      policyViolations.push(`${page.url()}: ${message.text()}`);
+    }
+  });
+});
+
+test.afterEach(() => {
+  expect(policyViolations, "content security policy violations").toEqual([]);
+});
+
+/** Every route the gateway serves the portal on that needs no fixture, and the API reference. */
+const PORTAL_ROUTES = [
+  "/",
+  "/marketplaces",
+  "/review",
+  "/audit",
+  "/vetting",
+  "/adoption",
+  "/tokens",
+  "/integrations",
+  "/integrations/webhooks",
+  "/integrations/sinks",
+  "/webhooks",
+];
+
+/**
+ * @SVCs SVC_GW_AUTH_0052
+ */
+test("the_portal_and_the_api_reference_load_under_the_content_security_policy", async ({ page }) => {
+  await login(page, "alice");
+  // Watched from here: the login itself visits the identity provider, which is meant to be elsewhere.
+  const origin = new URL(page.url()).origin;
+  const offOrigin: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.protocol.startsWith("http") && url.origin !== origin) {
+      offOrigin.push(request.url());
+    }
+  });
+
+  for (const route of PORTAL_ROUTES) {
+    const portal = await page.goto(route);
+    // The policy really is in force, or the absence of violations would prove nothing.
+    expect(portal?.headers()["content-security-policy"]).toContain("script-src 'self';");
+    await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
+    await page.waitForLoadState("networkidle");
+  }
+
+  const response = await page.goto("/docs");
+  expect(response?.headers()["content-security-policy"]).toContain("script-src 'self' 'unsafe-inline'");
+  // Rendered, which the inline initialisation script has to have run for.
+  await expect(page.getByRole("heading", { name: "Skills Gateway", level: 1 })).toBeVisible();
+  await page.waitForLoadState("networkidle");
+
+  expect(offOrigin, "requests that left the gateway's origin").toEqual([]);
+});
+
+/**
  * @SVCs SVC_GW_INGEST_0007
  */
 test("admin_registers_ingests_and_approves_a_marketplace_in_the_portal", async ({ page }) => {

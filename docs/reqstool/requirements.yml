@@ -1795,6 +1795,14 @@ requirements:
     categories: ["security"]
     revision: 0.3.0
 
+  - id: GW_AUTH_0052
+    title: The web surface declares a content security policy
+    significance: shall
+    description: "The system shall send a content security policy on every response of the browser-facing web surface that permits script, styles, fonts, images and connections from the gateway's own origin only, permits no plugin content, no framing by another page and no form submission elsewhere, and shall permit inline script on the API reference page alone and on no portal page."
+    rationale: "The portal has no HTML pipeline, so the policy is defence in depth: should an injection ever be found, it cannot load script from elsewhere or send what it reads off-site. The API reference initialises itself from an inline script its third-party page generates, and renders only the gateway's own API description, so it is the one page given inline script, rather than the whole surface."
+    categories: ["security"]
+    revision: 0.3.0
+
   - id: GW_INGEST_0033
     title: The marketplace read names the commit the facade serves
     significance: shall
