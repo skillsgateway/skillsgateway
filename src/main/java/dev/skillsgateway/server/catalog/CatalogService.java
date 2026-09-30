@@ -10,6 +10,7 @@ import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.ActorType;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
+import dev.skillsgateway.server.storage.GitObjectTransfer;
 import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.storage.RefTransitions;
 import io.github.reqstool.annotations.Requirements;
@@ -23,8 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
@@ -36,7 +35,6 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.TreeFormatter;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,7 +137,7 @@ public class CatalogService {
         }
         try {
             rebuild();
-        } catch (IOException | GitAPIException | RuntimeException e) {
+        } catch (IOException | RuntimeException e) {
             log.error("virtual catalog rebuild failed; POST /api/catalog/rebuild repairs on demand", e);
         }
     }
@@ -151,7 +149,7 @@ public class CatalogService {
      * reads the current served state in full.
      */
     @Requirements({"GW_FACADE_0003", "GW_FACADE_0004"})
-    public CatalogInfo rebuild() throws IOException, GitAPIException {
+    public CatalogInfo rebuild() throws IOException {
         synchronized (rebuildLock) {
             try (Repository catalog = storage.published(properties.name())) {
                 List<Constituent> constituents = new ArrayList<>();
@@ -229,8 +227,9 @@ public class CatalogService {
     }
 
     /**
-     * Pulls one served tip into the catalog repository (local fetch — pure object reuse) and
-     * folds its manifest into the merged one, sources rewritten into the vendored subtree.
+     * Copies one served tip's tree into the catalog repository and folds its manifest into the
+     * merged one, sources rewritten into the vendored subtree. The tree alone: the catalog commit is
+     * parentless, so no constituent history is ever reachable from it.
      */
     private void vendor(
             Repository catalog,
@@ -239,25 +238,20 @@ public class CatalogService {
             ObjectId tip,
             Map<String, ObjectId> subtrees,
             Map<String, List<Claim>> claims)
-            throws IOException, GitAPIException {
-        try (Git git = new Git(catalog)) {
-            git.fetch()
-                    .setRemote(published.getDirectory().getAbsolutePath())
-                    .setRefSpecs(new RefSpec("+" + MAIN + ":" + INTERNAL_REF_PREFIX + name))
-                    .call();
+            throws IOException {
+        ObjectId tree;
+        try (RevWalk walk = new RevWalk(published)) {
+            tree = walk.parseCommit(tip).getTree().getId();
         }
-        try (RevWalk walk = new RevWalk(catalog)) {
-            RevCommit commit = walk.parseCommit(tip);
-            subtrees.put(name, commit.getTree().getId());
-            try (TreeWalk tree = TreeWalk.forPath(catalog, MANIFEST_PATH, commit.getTree())) {
-                if (tree == null) {
-                    return;
-                }
-                JsonNode parsed =
-                        MAPPER.readTree(catalog.open(tree.getObjectId(0)).getBytes());
-                for (JsonNode plugin : parsed.path("plugins")) {
-                    mergePlugin(name, plugin, claims);
-                }
+        GitObjectTransfer.copy(published, catalog, tree);
+        subtrees.put(name, tree);
+        try (TreeWalk walk = TreeWalk.forPath(catalog, MANIFEST_PATH, tree)) {
+            if (walk == null) {
+                return;
+            }
+            JsonNode parsed = MAPPER.readTree(catalog.open(walk.getObjectId(0)).getBytes());
+            for (JsonNode plugin : parsed.path("plugins")) {
+                mergePlugin(name, plugin, claims);
             }
         }
     }
@@ -399,7 +393,8 @@ public class CatalogService {
     }
 
     /**
-     * The fetch refs are scaffolding; only main (and nothing else) stays in the catalog repository.
+     * Only main stays in the catalog repository. Vendoring no longer writes {@code refs/catalog/*},
+     * but a repository an earlier rebuild wrote can still hold them.
      *
      * <p>Checked (GW_FACADE_0017). The facade now advertises an allowlist, so a reference left here is no
      * longer served — but it still holds objects a later revocation should have made unreachable,
