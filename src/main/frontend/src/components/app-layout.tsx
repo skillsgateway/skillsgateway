@@ -509,7 +509,7 @@ export function AppLayout() {
         wide ? "min-h-screen lg:h-screen lg:overflow-hidden" : "min-h-screen",
       )}
     >
-      <aside className="flex w-60 shrink-0 flex-col border-r bg-sidebar">
+      <aside className="flex w-60 shrink-0 flex-col border-r bg-sidebar lg:min-h-0 lg:overflow-y-auto">
         <div className="flex items-center gap-2 px-4 py-4 font-semibold">
           <BrandMark className="size-5" />
           Skills Gateway
@@ -572,7 +572,7 @@ export function AppLayout() {
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-4 border-b px-6 py-3">
-          <div className="text-xs font-semibold tracking-wider text-primary uppercase">
+          <div className="min-w-0 truncate text-xs font-semibold tracking-wider text-primary uppercase" title={breadcrumb(location.pathname)}>
             {breadcrumb(location.pathname)}
           </div>
           <UserMenu />

@@ -346,7 +346,7 @@ export function WebhooksPage() {
               {lifecycle.map((subscriber) => (
                 <TableRow key={subscriber.id}>
                   <TableCell>{subscriber.name}</TableCell>
-                  <TableCell className="break-all">{subscriber.url}</TableCell>
+                  <TableCell className="whitespace-normal break-all">{subscriber.url}</TableCell>
                   <TableCell>
                     <StoredFilter filter={subscriber.events} registry={registry} />
                   </TableCell>
@@ -408,7 +408,7 @@ export function WebhooksPage() {
                   <TableCell>{recipient(delivery.subscriberId)}</TableCell>
                   <TableCell>{deliveryBadge(delivery.state)}</TableCell>
                   <TableCell>{delivery.attempts}</TableCell>
-                  <TableCell className="break-all text-sm text-muted-foreground">
+                  <TableCell className="whitespace-normal break-all text-sm text-muted-foreground">
                     {delivery.lastStatus ?? delivery.lastError ?? "—"}
                   </TableCell>
                   <TableCell><Timestamp value={delivery.createdAt} /></TableCell>

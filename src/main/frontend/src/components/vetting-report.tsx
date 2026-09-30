@@ -394,7 +394,7 @@ function WaiverList({ waivers }: { waivers: Waiver[] }) {
               {waiver.active ? "active" : waiver.revokedAt ? "revoked" : "expired"}
             </Badge>
             <span className="font-mono text-xs">{waiver.ruleId}</span>
-            <span className="font-mono text-xs text-muted-foreground">
+            <span className="font-mono text-xs break-all text-muted-foreground">
               {waiver.scope === "snapshot" ? "snapshot" : "path"}: {waiver.scopeValue}
             </span>
             <span className="text-muted-foreground">{waiver.justification}</span>
