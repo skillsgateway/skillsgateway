@@ -3746,7 +3746,7 @@ and omitting the whole block is identical to omitting each key.</p>
 <td><code>skills-gateway.webhooks.max-attempts</code></td>
 <td>integer</td>
 <td><code>5</code></td>
-<td>Attempt budget per delivery.</td>
+<td>Attempt budget per delivery. Zero or negative falls back to the default.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.webhooks.timeout</code></td>
@@ -3758,7 +3758,7 @@ and omitting the whole block is identical to omitting each key.</p>
 <td><code>skills-gateway.webhooks.batch-size</code></td>
 <td>integer</td>
 <td><code>50</code></td>
-<td>Deliveries claimed per pass.</td>
+<td>Deliveries claimed per pass. Zero or negative falls back to the default.</td>
 </tr>
 </tbody>
 </table>
@@ -3975,19 +3975,19 @@ exporter that feeds push sinks. Java-side defaults again; nothing appears in
 <td><code>skills-gateway.audit-export.batch-size</code></td>
 <td>integer</td>
 <td><code>500</code></td>
-<td>Per-sink default; a sink may set its own, clamped to <code>max-page-size</code>.</td>
+<td>Per-sink default; a sink may set its own, clamped to <code>max-page-size</code>. Zero or negative falls back to the default.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.audit-export.default-page-size</code></td>
 <td>integer</td>
 <td><code>1000</code></td>
-<td>Applied when <code>?limit=</code> is absent.</td>
+<td>Applied when <code>?limit=</code> is absent. Zero or negative falls back to the default.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.audit-export.max-page-size</code></td>
 <td>integer</td>
 <td><code>10000</code></td>
-<td>Hard ceiling on <code>?limit=</code> and on a sink's batch size.</td>
+<td>Hard ceiling on <code>?limit=</code> and on a sink's batch size. Zero or negative falls back to the default.</td>
 </tr>
 </tbody>
 </table>
@@ -4963,7 +4963,7 @@ passes run. Java-side defaults; nothing appears in <code>application.yaml</code>
 <td><code>skills-gateway.retention.batch-size</code></td>
 <td>integer</td>
 <td><code>200</code></td>
-<td>Snapshots per marketplace per pass.</td>
+<td>Snapshots per marketplace per pass. Zero or negative falls back to the default.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.retention.staging-ref-max-age</code></td>

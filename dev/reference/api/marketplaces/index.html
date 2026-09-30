@@ -3951,16 +3951,12 @@ and lands <code>held</code> like any other.</p>
 <td>Signature valid; ingestion queued.</td>
 </tr>
 <tr>
-<td>403</td>
-<td>Missing or invalid signature. Nothing was ingested.</td>
-</tr>
-<tr>
 <td>404</td>
-<td>Unknown marketplace, or its sync mode is not <code>webhook</code>.</td>
+<td>Unknown marketplace, not in webhook mode, or the signature did not verify. One answer for all three, so the status does not reveal which names exist. Nothing was ingested.</td>
 </tr>
 <tr>
 <td>413</td>
-<td>Body exceeds <code>skills-gateway.sync.max-webhook-body-bytes</code>; rejected before verification.</td>
+<td>Body exceeds <code>skills-gateway.sync.max-webhook-body-bytes</code>; rejected before the marketplace is looked up.</td>
 </tr>
 </tbody>
 </table>

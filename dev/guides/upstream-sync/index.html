@@ -2702,10 +2702,13 @@ forged-but-signed request can cause is a fetch the schedule would have done
 anyway, landing held in quarantine. The endpoint answers <code>202 Accepted</code>
 immediately and ingests in the background; the snapshot appears in the portal
 moments later.</p>
-<p>Requests with a missing or wrong signature get <code>403</code> and ingest nothing.
-Unknown marketplaces — and marketplaces not in <code>webhook</code> mode — get <code>404</code>.
-Bodies over the configured bound get <code>413</code> before the signature is even
-checked.</p>
+<p>A refused request ingests nothing and gets <code>404</code>, whatever the reason: an
+unknown marketplace, one not in <code>webhook</code> mode, or a signature that is missing
+or did not verify. The endpoint needs no credential to call, so it answers all
+three alike rather than tell anyone which marketplace names exist. If a forge's
+delivery log shows <code>404</code> for a marketplace you know is in <code>webhook</code> mode, check
+the secret first. Bodies over the configured bound get <code>413</code> before the
+marketplace is even looked up.</p>
 <h2 id="upstream-outages-dont-reach-consumers">Upstream outages don't reach consumers<a class="headerlink" href="#upstream-outages-dont-reach-consumers" title="Permanent link">&para;</a></h2>
 <p>The facade serves the last approved snapshot regardless of upstream health. A
 scheduled or webhook-triggered fetch that fails because upstream is down is
