@@ -3561,6 +3561,16 @@ cases:
       THEN no git request carries an assertion, no request outside the prefix carries the installation token, and the API's redirect is not followed
     revision: "0.3.0"
 
+  - id: SVC_GW_AUTH_0052
+    requirement_ids: ["GW_AUTH_0052"]
+    title: Every web response carries the policy, and only the API reference allows inline script
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session, an anonymous browser, and the packaged gateway driven in a real browser
+      WHEN a portal route, a session API route, the API reference and the anonymous login redirect are requested, and every portal page and the API reference are loaded
+      THEN each response carries exactly one policy, the portal's and the API's allow script from the gateway's origin only, the API reference's alone also allows inline script, and no page raises a policy violation
+    revision: "0.3.0"
+
   - id: SVC_GW_INGEST_0063
     requirement_ids: ["GW_INGEST_0063"]
     title: A 63-character marketplace name is accepted and a 64-character one is refused everywhere
