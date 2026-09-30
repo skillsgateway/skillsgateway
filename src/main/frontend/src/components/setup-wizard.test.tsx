@@ -43,7 +43,7 @@ test("commands_are_composed_from_the_browsing_origin_and_the_facade_path", async
   expect(screen.getByTestId("wizard-credential-config")).toHaveTextContent(window.location.host);
   expect(screen.getByTestId("wizard-clone-command")).toHaveTextContent("/git/corp-marketplace");
   // No token minted yet: every snippet carries the placeholder, never a secret.
-  expect(screen.getByTestId("wizard-clone-command")).toHaveTextContent("<YOUR_TOKEN>");
+  expect(screen.getByTestId("wizard-credential-config")).toHaveTextContent("<YOUR_TOKEN>");
 });
 
 test("create_token_is_disabled_until_the_name_is_non_blank", async () => {
@@ -122,12 +122,17 @@ test("a_minted_token_fills_the_snippets_only_while_the_wizard_is_open", async ()
   await user.click(screen.getByRole("button", { name: "Create token" }));
   // The MSW-issued cleartext lands in the snippets, show-once style.
   expect(await screen.findByText(/Token created/)).toBeInTheDocument();
-  expect(screen.getByTestId("wizard-clone-command")).toHaveTextContent("sgw_cleartext_shown_once");
+  expect(screen.getByTestId("wizard-credential-config")).toHaveTextContent(
+    "sgw_cleartext_shown_once",
+  );
+  // The clone line carries no userinfo: the credential helper above already holds it.
+  expect(screen.getByTestId("wizard-clone-command")).not.toHaveTextContent("sgw_cleartext_shown_once");
+  expect(screen.getByTestId("wizard-clone-command")).not.toHaveTextContent("token:");
   expect(screen.getByTestId("wizard-credential-config")).toHaveTextContent("sgw_cleartext_shown_once");
 
   // Close and reopen: the wizard was unmounted, the secret is gone, the placeholder is back.
   await user.click(screen.getByRole("button", { name: "Done" }));
   await user.click(screen.getByRole("button", { name: "Connect a client" }));
-  expect(await screen.findByTestId("wizard-clone-command")).toHaveTextContent("<YOUR_TOKEN>");
+  expect(await screen.findByTestId("wizard-credential-config")).toHaveTextContent("<YOUR_TOKEN>");
   expect(screen.queryByText(/sgw_cleartext_shown_once/)).not.toBeInTheDocument();
 });

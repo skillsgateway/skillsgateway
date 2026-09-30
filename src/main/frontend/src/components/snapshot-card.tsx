@@ -175,7 +175,7 @@ function RevetPanel({ snapshot }: { snapshot: Snapshot }) {
                   <span className="rounded-md border bg-muted px-2 py-0.5 text-xs">
                     {fetcher.fetches} fetch{fetcher.fetches === 1 ? "" : "es"}
                   </span>
-                  <span className="text-xs text-muted-foreground">last {fetcher.lastFetch}</span>
+                  <span className="text-xs text-muted-foreground">last <Timestamp value={fetcher.lastFetch} /></span>
                 </li>
               ))}
             </ul>

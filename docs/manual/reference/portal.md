@@ -512,10 +512,12 @@ Inside the wizard:
    family.
 3. **Add the marketplace to Claude Code** —
    `claude plugin marketplace add {origin}/git/{name}`.
-4. **Clone directly** — the CI-shaped `git clone` URL with the token inline.
+4. **Clone directly** — a plain `git clone` of the facade URL, with no token in it:
+   the credential stored by step 2 authenticates it, and nothing lands in
+   `.git/config` or shell history.
 
 The remaining snippets have icon copy buttons. Until a token is minted the
-snippets carry the `<YOUR_TOKEN>` placeholder.
+credential snippet carries the `<YOUR_TOKEN>` placeholder.
 
 ### Vetting
 
