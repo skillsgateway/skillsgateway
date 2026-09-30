@@ -5,7 +5,8 @@
 #   docker compose up
 #
 # The OIDC variables default to the build-time placeholders; point them at a
-# real IdP (SGW_OIDC_*) to log in to the web/admin surface locally.
+# real IdP (SGW_OIDC_*) to log in to the web/admin surface locally, and set
+# SKILLSGATEWAY_OIDC_ISSUER with them: a configured IdP without it refuses to start.
 services:
   postgres:
     image: postgres:18

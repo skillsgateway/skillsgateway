@@ -103,6 +103,23 @@ class PackagingTests {
                 .contains("${SGW_OIDC_REDIRECT_URI:{baseUrl}/login/oauth2/code/idp}");
     }
 
+    /**
+     * The chart will not render a deployment whose login compares no issuer (GW_AUTH_0017): the
+     * gateway would refuse to start with it anyway, and failing at render time says so before a
+     * pod crash-loops.
+     */
+    @Test
+    @SVCs({"SVC_GW_AUTH_0017.2"})
+    void chartRequiresTheExpectedIssuer() throws IOException {
+        Path chart = REPO_ROOT.resolve("helm/skills-gateway");
+        String deployment = Files.readString(chart.resolve("templates/deployment.yaml"));
+
+        assertThat(deployment)
+                .contains("SKILLSGATEWAY_OIDC_ISSUER")
+                .containsPattern("required \"oidc\\.issuer is required[^\"]*\" \\.Values\\.oidc\\.issuer")
+                .doesNotContain("if .Values.oidc.issuer");
+    }
+
     @Test
     @SVCs({"SVC_GW_FACADE_0008"})
     void chartRefusesToRenderWithoutAnExplicitStorageDurabilityChoice() throws IOException {

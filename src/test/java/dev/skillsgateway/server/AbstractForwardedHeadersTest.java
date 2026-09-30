@@ -36,6 +36,7 @@ import org.springframework.web.util.UriComponentsBuilder;
             "spring.security.oauth2.client.provider.idp.authorization-uri=https://idp.invalid/authorize",
             "spring.security.oauth2.client.provider.idp.token-uri=https://idp.invalid/token",
             "spring.security.oauth2.client.provider.idp.jwk-set-uri=https://idp.invalid/jwks",
+            "skills-gateway.oidc.issuer=https://idp.invalid",
             "skills-gateway.data-dir=target/test-git-data",
             "skills-gateway.roles.admins=user",
             // Boot switches Tomcat's forwarded-header support on by itself when it detects a cloud
