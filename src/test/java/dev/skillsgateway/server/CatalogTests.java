@@ -35,8 +35,17 @@ import org.springframework.test.context.TestPropertySource;
  * nothing has ever served, and the revocation case needs enforcing re-vetting — a deployment
  * decision, like in {@link RevetEnforceTests}. Method order is significant: the estate grows
  * across the tests, and emptiness only exists before anything is approved.
+ *
+ * <p>Its own data directory too, because the catalog repository is one per directory: in the shared
+ * one, every other context's approvals rebuild it and JGit's background GC repacks it, and either
+ * can hold a ref lock this class's rebuild needs (#549).
  */
-@TestPropertySource(properties = {"skills-gateway.vetting.revet.mode=enforce", "skills-gateway.catalog.name=catalog"})
+@TestPropertySource(
+        properties = {
+            "skills-gateway.vetting.revet.mode=enforce",
+            "skills-gateway.catalog.name=catalog",
+            "skills-gateway.data-dir=target/test-git-data-catalog"
+        })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class CatalogTests extends AbstractGatewayTest {
 

@@ -116,6 +116,24 @@ generated annotation files. The list is an ordered sequence, not a set:
 **exits 0 even when it prints FAIL** — read its last line rather than its exit
 code.
 
+### Known flaky suites
+
+Every other suite is expected to pass every time. These two are open in
+[#549](https://github.com/skillsgateway/skillsgateway/issues/549); if one of
+them fails on a change that cannot reach it, re-run the failed job once.
+
+- **`CsrfEnforcementTests`** — `Status expected:<200> but was:<500>` from
+  `POST /api/v1/catalog/rebuild`. A background JGit auto-GC on the shared
+  catalog repository, started by an earlier rebuild's fetch, holds a ref lock
+  the rebuild needs (`LOCK_FAILURE` in the log). Once catalog vendoring no
+  longer fetches (#552), a second occurrence means the cause is something else:
+  investigate.
+- **`ObjectStoreBackendTests.concurrentPublicationsOfDistinctSnapshotsAllSurvive`**
+  — one of the concurrent publications returns `LOCK_FAILURE`. Seen once
+  (2026-09-24) and never reproduced. A second occurrence is a real
+  compare-and-swap defect in the object-store ref database, not a flake:
+  investigate rather than re-run.
+
 ## Building and running the packaged artifacts
 
 ```bash
