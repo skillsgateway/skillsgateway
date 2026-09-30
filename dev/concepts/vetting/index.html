@@ -3374,8 +3374,9 @@ and is refused as a collision with it.</p>
 <p>A <strong>waiver</strong> is an accepted-risk exception for <strong>one finding rule</strong>, on <strong>one
 marketplace</strong>, within <strong>one scope</strong>, until <strong>one date</strong>. All four are mandatory,
 and so are a justification and the identity accepting the risk. There is no way
-to express an unlimited waiver — <code>expires_at</code> is <code>NOT NULL</code> in the schema, and a
-past expiry is refused at creation.</p>
+to express an unlimited waiver — <code>expires_at</code> is <code>NOT NULL</code> in the schema, and an
+expiry in the past, or more than 90 days ahead, is refused at creation
+(refused, not shortened; a lapsed waiver is renewed, not extended).</p>
 <table>
 <thead>
 <tr>

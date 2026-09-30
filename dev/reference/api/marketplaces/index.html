@@ -4910,7 +4910,7 @@ for the matching rules.</p>
 <tr>
 <td><code>expiresAt</code></td>
 <td>yes</td>
-<td>Must be in the future. There is no unlimited waiver.</td>
+<td>Must be in the future and at most 90 days after the request; a later instant is refused, not shortened. There is no unlimited waiver.</td>
 </tr>
 <tr>
 <td><code>content</code></td>
@@ -4941,7 +4941,7 @@ approver is the acting session.</p>
 </tr>
 <tr>
 <td>400</td>
-<td>Missing justification or expiry, an expiry in the past, an unusable scope, or a group qualifier that is malformed or not on <code>SNAPSHOT</code> scope.</td>
+<td>Missing justification or expiry, an expiry in the past or more than 90 days ahead, an unusable scope, or a group qualifier that is malformed or not on <code>SNAPSHOT</code> scope.</td>
 </tr>
 <tr>
 <td>404</td>
