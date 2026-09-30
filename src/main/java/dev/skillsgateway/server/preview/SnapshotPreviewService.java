@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -68,9 +69,26 @@ public class SnapshotPreviewService {
     /** Page size of the diff; each entry keeps its own text cap. */
     static final int DIFF_PAGE = 500;
 
+    /** Diff summaries kept; a summary is of two immutable commits, so an entry never goes stale. */
+    static final int SUMMARY_CACHE_ENTRIES = 256;
+
     private final GitStorage storage;
     private final SnapshotRepository snapshotRepository;
     private final MarketplaceRepository marketplaceRepository;
+    private final Map<SummaryKey, FileDiffSummary> summaries = lru(SUMMARY_CACHE_ENTRIES);
+
+    /** One diff summary: the summary is over the narrowed path, so the path is part of the key. */
+    private record SummaryKey(String marketplace, String sha, String baselineSha, String path) {}
+
+    /** A bounded, thread-safe, least-recently-used map. */
+    static <K, V> Map<K, V> lru(int capacity) {
+        return Collections.synchronizedMap(new LinkedHashMap<>(16, 0.75f, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+                return size() > capacity;
+            }
+        });
+    }
 
     public SnapshotPreviewService(
             GitStorage storage, SnapshotRepository snapshotRepository, MarketplaceRepository marketplaceRepository) {
@@ -492,33 +510,45 @@ public class SnapshotPreviewService {
                 // Rename detection stays off: an approval review wants "this path changed",
                 // not similarity heuristics.
                 List<DiffEntry> changes = formatter.scan(baseline.getTree(), commit.getTree());
+                int end = pageEnd(offset, DIFF_PAGE, changes.size());
+                // The summary is over every changed path, so computing it is the expensive part;
+                // a later page of the same diff reads it back and classifies only its own entries.
+                SummaryKey key = new SummaryKey(resolved.marketplace().name(), sha, baselineSha, narrowed);
+                FileDiffSummary summary = summaries.get(key);
                 int added = 0;
                 int modified = 0;
                 int removed = 0;
                 int binaries = 0;
                 long linesAdded = 0;
                 long linesRemoved = 0;
-                int end = pageEnd(offset, DIFF_PAGE, changes.size());
-                for (int i = 0; i < changes.size(); i++) {
+                int from = summary == null ? 0 : Math.max(0, offset);
+                int to = summary == null ? changes.size() : end;
+                for (int i = from; i < to; i++) {
                     DiffEntry change = changes.get(i);
                     String type = type(change);
-                    switch (type) {
-                        case "added" -> added++;
-                        case "removed" -> removed++;
-                        default -> modified++;
-                    }
                     boolean binary = isBinary(repo, change);
-                    if (binary) {
-                        binaries++;
-                    } else {
-                        for (Edit edit : formatter.toFileHeader(change).toEditList()) {
-                            linesAdded += edit.getLengthB();
-                            linesRemoved += edit.getLengthA();
+                    if (summary == null) {
+                        switch (type) {
+                            case "added" -> added++;
+                            case "removed" -> removed++;
+                            default -> modified++;
+                        }
+                        if (binary) {
+                            binaries++;
+                        } else {
+                            for (Edit edit : formatter.toFileHeader(change).toEditList()) {
+                                linesAdded += edit.getLengthB();
+                                linesRemoved += edit.getLengthA();
+                            }
                         }
                     }
                     if (i >= offset && i < end) {
                         entries.add(view(formatter, out, change, type, binary));
                     }
+                }
+                if (summary == null) {
+                    summary = new FileDiffSummary(added, modified, removed, binaries, linesAdded, linesRemoved);
+                    summaries.put(key, summary);
                 }
                 Integer nextOffset = next(offset, entries.size(), changes.size());
                 return new SnapshotDiff(
@@ -529,7 +559,7 @@ public class SnapshotPreviewService {
                         nextOffset != null,
                         changes.size(),
                         nextOffset,
-                        new FileDiffSummary(added, modified, removed, binaries, linesAdded, linesRemoved));
+                        summary);
             }
         } catch (IOException e) {
             throw new UncheckedIOException("cannot diff snapshot %d against %s".formatted(snapshotId, baselineSha), e);
