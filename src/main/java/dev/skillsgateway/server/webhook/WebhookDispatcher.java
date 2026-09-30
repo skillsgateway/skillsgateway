@@ -129,7 +129,7 @@ public class WebhookDispatcher {
                 .header(WebhookSigner.TIMESTAMP_HEADER, Instant.now().toString())
                 .header(WebhookSigner.SIGNATURE_HEADER, signer.sign(subscriber.secret(), delivery.payload()))
                 .body(delivery.payload())
-                .exchange((request, response) -> response.getStatusCode().value(), false);
+                .exchange((request, response) -> response.getStatusCode().value());
     }
 
     /** Exponential backoff {@code base * 2^(attempts-1)}, capped, until the attempt budget is spent. */
