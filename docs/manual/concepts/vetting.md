@@ -717,9 +717,14 @@ conformance a publishing requirement must not have "we could not check" read as
 
 ## What lands in the ledger
 
-Every chain run writes to the append-only ledger: one entry per vetter
-verdict (`vetting-verdict`) and one entry for the run outcome
-(`vetting-completed`). Both are attributed to the `system` actor kind — the chain
+Every chain run writes one entry for the run outcome (`vetting-completed`) to
+the append-only ledger, and the ingestion run adds one entry per vetter verdict
+(`vetting-verdict`). A re-vet adds a verdict entry only for a vetter whose
+verdict changed since the snapshot's previous run — a different state, finding
+count or worst severity, or a vetter version that was not in that run's chain —
+and states how many in the completion entry's `changed=`; the verdicts
+themselves are recorded for every vetter on every run and served in the vetting
+report. Both kinds of entry are attributed to the `system` actor kind — the chain
 is the gateway's own automated subsystem, not a person. A verdict entry leads
 with `vetter=state` and then carries the finding count, the worst severity
 present, and the id of the chain run, so the entry is auditable on its own; a

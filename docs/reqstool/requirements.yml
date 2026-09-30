@@ -383,10 +383,10 @@ requirements:
   - id: GW_VETTING_0006
     title: Vetting actions are audit-logged
     significance: shall
-    description: The system shall append every chain run outcome and every vetter verdict to the append-only audit ledger with the marketplace, the snapshot commit SHA, and the acting identity.
-    rationale: An auditor asking why a snapshot with findings is being served must be able to answer it from the ledger alone, without reading the vetting tables or trusting the portal.
+    description: The system shall append every chain run outcome to the append-only audit ledger, together with every vetter verdict of a snapshot's ingestion run and, of a re-vetting run, every verdict that changed as GW_VETTING_0017 defines it, each with the marketplace, the snapshot commit SHA, and the acting identity.
+    rationale: An auditor asking why a snapshot with findings is being served must be able to answer it from the ledger alone, without reading the vetting tables or trusting the portal. A re-vetting verdict identical to the previous one adds a copy rather than an answer, so the ledger carries the verdicts that changed and the run says how many.
     categories: ["security", "functional-suitability"]
-    revision: 0.3.0
+    revision: 0.4.0
 
   - id: GW_VETTING_0007
     title: Scoped, expiring vetting waivers
@@ -471,10 +471,10 @@ requirements:
   - id: GW_VETTING_0017
     title: Re-vetting and revocation are audit-logged
     significance: shall
-    description: The system shall append to the append-only audit ledger the outcome of every re-vetting run with its trigger, each retroactive violation with the objecting vetters, the rules behind it and the mode in force, one entry per identity affected by that violation, and every revocation and unpublication with the acting identity and the marketplace.
-    rationale: A retraction of content that was previously approved is the most consequential thing the gateway does on its own; an auditor must be able to read what was found, when, under which policy, who was affected and what was taken away, from the ledger alone.
+    description: The system shall append to the append-only audit ledger the outcome of every re-vetting run with its trigger and the number of vetter verdicts in it that changed, each retroactive violation with the objecting vetters, the rules behind it and the mode in force, one entry per identity affected by that violation, and every revocation and unpublication with the acting identity and the marketplace. Of a re-vetting run's vetter verdicts it shall append exactly those that changed — a verdict whose conclusion, number of findings or worst finding severity differs from the same vetter's verdict in the snapshot's previous completed chain run, or whose vetter at its current version was not in that run's chain — and no entry for a verdict that did not change, so that a re-vetting run that changed nothing appends only its outcome.
+    rationale: A retraction of content that was previously approved is the most consequential thing the gateway does on its own; an auditor must be able to read what was found, when, under which policy, who was affected and what was taken away, from the ledger alone. Re-vetting repeats the same pinned content daily, so a verdict copied into the ledger on every run records nothing the previous run did not; stating how many verdicts changed keeps the omission of the rest a recorded fact rather than a gap.
     categories: ["security", "functional-suitability"]
-    revision: 0.2.0
+    revision: 0.3.0
 
   - id: GW_VETTING_0018
     title: Portal re-vetting and revocation surface
@@ -1290,10 +1290,10 @@ requirements:
   - id: GW_VETTING_0022
     title: A vetting ledger entry is self-describing and correctly attributed
     significance: shall
-    description: The system shall append every vetter verdict to the audit ledger carrying the vetter name, its conclusion, the number of findings and the worst finding severity present, and a reference to the chain run the verdict belongs to; shall append the run-completed entry carrying that same run reference; and shall attribute every entry produced by the automated vetting chain to the gateway acting on its own rather than to a person.
+    description: The system shall append every vetter verdict it appends to the audit ledger under GW_VETTING_0006 carrying the vetter name, its conclusion, the number of findings and the worst finding severity present, and a reference to the chain run the verdict belongs to; shall append the run-completed entry carrying that same run reference; and shall attribute every entry produced by the automated vetting chain to the gateway acting on its own rather than to a person.
     rationale: An auditor asking what a snapshot's vetting did must be able to answer it from the ledger alone; an entry that records only that a vetter passed forces the reader back into the vetting tables to learn how much was examined and how it relates to the rest of the run, which is exactly the derivation the ledger exists to remove. Carrying the run reference on both the verdict and the completion entry is what lets the scattered per-vetter rows be reassembled into the one run they came from. Typing the chain as the automated subsystem it is stops the ledger from asserting that a machine verdict was a human act, which is itself a transparency defect on the surface whose whole purpose is transparency.
     categories: ["security", "functional-suitability"]
-    revision: 0.2.0
+    revision: 0.3.0
 
   - id: GW_VETTING_0023
     title: A clean vetting pass records what it examined
