@@ -27,4 +27,4 @@ against the unchanged `SecurityConfig`. That failure is recorded in
 
 ## 5. Gates and evidence
 
-- [ ] 5.1 Run all gates fresh after the last edit, write `evidence.md`, then archive
+- [x] 5.1 Run all gates fresh after the last edit, write `evidence.md`, then archive
