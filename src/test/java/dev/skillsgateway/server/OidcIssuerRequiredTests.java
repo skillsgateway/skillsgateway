@@ -7,6 +7,7 @@ import dev.skillsgateway.server.auth.DevInsecureAuthGuard;
 import dev.skillsgateway.server.auth.IdTokenDecoderConfiguration;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import io.github.reqstool.annotations.SVCs;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -16,6 +17,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ResolvableType;
+import org.springframework.core.env.MapPropertySource;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -62,8 +64,13 @@ class OidcIssuerRequiredTests {
                         "spring.security.oauth2.client.provider.idp.jwk-set-uri=https://idp.example.com/jwks")
                 .run(context -> assertRefused(context, "has a real jwk-set-uri (https://idp.example.com/jwks)"));
 
-        // An issuer of only whitespace pins nothing, so it is unset.
-        contexts.withPropertyValues(REAL_CLIENT_ID, "skills-gateway.oidc.issuer=   ")
+        // An issuer of only whitespace pins nothing, so it is unset. Set through a map rather than
+        // "key=value", which would trim it to empty and test a different case.
+        contexts.withPropertyValues(REAL_CLIENT_ID)
+                .withInitializer(context -> context.getEnvironment()
+                        .getPropertySources()
+                        .addFirst(new MapPropertySource(
+                                "whitespace-issuer", Map.of("skills-gateway.oidc.issuer", "   "))))
                 .run(context -> assertRefused(context, "carries a real client id"));
     }
 
