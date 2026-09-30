@@ -2964,7 +2964,9 @@ data — the SSRF shape. Everything in the table above is <strong>defence in dep
 The primary control is network topology: ingestion egress routed through a
 proxy or DMZ with no route to cloud metadata endpoints, internal APIs or
 anything holding corporate credentials. See
-<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md">ADR 0011</a>.</p>
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md">ADR 0011</a>,
+and <a href="../../guides/deploying-on-kubernetes/#restricting-egress">Restricting egress</a>
+for a Kubernetes policy that enforces it.</p>
 </div>
 <div class="admonition warning">
 <p class="admonition-title">What this layer does not claim</p>
