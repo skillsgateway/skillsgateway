@@ -131,8 +131,9 @@ public class WaiverController {
             String justification,
 
             @Schema(
-                    description = "When the acceptance lapses. Required and must be in the future: there are no"
-                            + " unlimited waivers.",
+                    description = "When the acceptance lapses. Required, in the future and at most 90 days after"
+                            + " the request; a later instant is refused, not shortened. There are no unlimited"
+                            + " waivers.",
                     requiredMode = Schema.RequiredMode.REQUIRED,
                     example = "2026-12-31T00:00:00Z")
             Instant expiresAt,
@@ -162,7 +163,8 @@ public class WaiverController {
     @ApiResponse(responseCode = "201", description = "Waiver recorded")
     @ApiResponse(
             responseCode = "400",
-            description = "Missing justification or expiry, an expiry in the past, or an unusable scope")
+            description = "Missing justification or expiry, an expiry in the past or more than 90 days ahead,"
+                    + " or an unusable scope")
     @ApiResponse(responseCode = "404", description = "Snapshot not found")
     public ResponseEntity<WaiverView> create(
             @PathVariable long id, @RequestBody WaiverRequest request, Authentication authentication) {
