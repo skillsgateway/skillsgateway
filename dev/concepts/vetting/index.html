@@ -3928,9 +3928,14 @@ this" is never invisible.</p>
 conformance a publishing requirement must not have "we could not check" read as
 "it conformed".</p>
 <h2 id="what-lands-in-the-ledger">What lands in the ledger<a class="headerlink" href="#what-lands-in-the-ledger" title="Permanent link">&para;</a></h2>
-<p>Every chain run writes to the append-only ledger: one entry per vetter
-verdict (<code>vetting-verdict</code>) and one entry for the run outcome
-(<code>vetting-completed</code>). Both are attributed to the <code>system</code> actor kind — the chain
+<p>Every chain run writes one entry for the run outcome (<code>vetting-completed</code>) to
+the append-only ledger, and the ingestion run adds one entry per vetter verdict
+(<code>vetting-verdict</code>). A re-vet adds a verdict entry only for a vetter whose
+verdict changed since the snapshot's previous run — a different state, finding
+count or worst severity, or a vetter version that was not in that run's chain —
+and states how many in the completion entry's <code>changed=</code>; the verdicts
+themselves are recorded for every vetter on every run and served in the vetting
+report. Both kinds of entry are attributed to the <code>system</code> actor kind — the chain
 is the gateway's own automated subsystem, not a person. A verdict entry leads
 with <code>vetter=state</code> and then carries the finding count, the worst severity
 present, and the id of the chain run, so the entry is auditable on its own; a

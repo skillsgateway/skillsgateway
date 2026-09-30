@@ -2900,7 +2900,11 @@ Size expiries so the risk is genuinely resolved before them.</p>
 <tbody>
 <tr>
 <td><code>vetting-completed</code></td>
-<td>Every run, with its trigger, outcome and chain identity.</td>
+<td>Every run, with its trigger, outcome and chain identity, and <code>changed=</code>: how many vetters' verdicts differ from the snapshot's previous run.</td>
+</tr>
+<tr>
+<td><code>vetting-verdict</code></td>
+<td>Only for a vetter whose verdict changed since the previous run. An unchanged re-vet writes none, so it leaves exactly two entries: <code>vetting-completed</code> (<code>changed=0</code>) and <code>revet-clear</code> (or <code>revet-inconclusive</code>).</td>
 </tr>
 <tr>
 <td><code>revet-clear</code></td>

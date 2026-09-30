@@ -2938,13 +2938,13 @@ triggered the rebuild. See
 <tbody>
 <tr>
 <td><code>vetting-verdict</code></td>
-<td>One per vetter per run.</td>
-<td><code>{vetter}={state}</code>, e.g. <code>secret-scan=fail</code>.</td>
+<td>One per vetter on the ingestion run. On a re-vet, only for a vetter whose verdict changed since the snapshot's previous run — a different state, finding count or worst severity, or a vetter version that was not in that run's chain; the run's <code>vetting-completed</code> entry says how many in <code>changed=</code>.</td>
+<td><code>{vetter}={state}; findings={n}; worst={severity\|none}; run={id}</code>, e.g. <code>secret-scan=fail; findings=2; worst=critical; run=1841</code>.</td>
 </tr>
 <tr>
 <td><code>vetting-completed</code></td>
 <td>Once per run.</td>
-<td><code>trigger={ingestion\|revet-scheduled\|revet-manual}; outcome={clear\|blocked}; vetters={n}; chain={vetter@version,…}</code>.</td>
+<td><code>trigger={ingestion\|revet-scheduled\|revet-manual}; outcome={clear\|blocked}; vetters={n}; run={id}; chain={vetter@version,…}</code>. A re-vet adds <code>changed={k}</code> before <code>run=</code>: the number of <code>vetting-verdict</code> entries it wrote, <code>0</code> when nothing changed.</td>
 </tr>
 </tbody>
 </table>
