@@ -61,7 +61,7 @@ empty issuer. Fixed in `8a62af38` by setting the value through a
 | Traceability | `reqstool status local -p docs/reqstool` | `324/324 complete · 0 incomplete · PASS`; SVC_GW_AUTH_0017.2 ← 5 passing tests |
 | OpenSpec | `openspec validate --all --strict` | `Totals: 31 passed, 0 failed (31 items)` |
 | Docs | `mkdocs build --strict` | `Documentation built in 1.48 seconds` (two pre-existing INFO anchor notes, unrelated) |
-| Mutation | `openspec/changes/require-oidc-issuer/mutants.sh` | `8 mutants run, all killed` |
+| Mutation | `openspec/changes/archive/2026-09-30-require-oidc-issuer/mutants.sh` | `8 mutants run, all killed` |
 | Mutation runner negative control | `ONLY=M99 mutants.sh` | `no mutant selected`, exit 5 |
 | Chart | `helm template` without / with `oidc.issuer` | see below |
 | Real execution | the packaged jar against a throwaway PostgreSQL | see below |
