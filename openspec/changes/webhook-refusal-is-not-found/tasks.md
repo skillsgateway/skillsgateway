@@ -96,5 +96,5 @@ there is none.
 
 ## 12. Gates and evidence
 
-- [ ] 12.1 One fresh run of every gate after the last code edit; results in
+- [x] 12.1 One fresh run of every gate after the last code edit; results in
   `evidence.md` with the commit SHA.
