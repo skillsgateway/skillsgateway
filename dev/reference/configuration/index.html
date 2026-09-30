@@ -5755,8 +5755,15 @@ both Kubernetes probes point at the bare path.</p>
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/docs</span><span class="w">        </span><span class="c1"># the Scalar UI</span>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/v3/api-docs</span><span class="w">  </span><span class="c1"># the OpenAPI document it renders</span>
 <a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">purple</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="w">  </span><span class="nt">with-default-fonts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
 <p>Both paths sit behind the OIDC login like the rest of the web surface.</p>
+<p><code>with-default-fonts</code> is off because Scalar otherwise loads its fonts from
+<code>fonts.scalar.com</code>, which the web surface's content security policy refuses.
+With it off, the reference renders in the browser's own fonts. The page at
+<code>path</code> is the one page whose policy allows inline script, because Scalar starts
+itself with one. Moving <code>path</code> moves that exception with it. See
+<a href="../../concepts/trust-boundaries/#the-web-surface">Trust boundaries</a>.</p>
 <hr />
 <h2 id="forwarded-headers">Forwarded headers<a class="headerlink" href="#forwarded-headers" title="Permanent link">&para;</a></h2>
 <table>

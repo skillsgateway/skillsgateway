@@ -3133,6 +3133,26 @@ which withholds it from every cross-site POST. That is a second layer and not
 the control, because honouring it is the browser's choice; <code>Strict</code> is
 deliberately not used, and
 <a href="../../reference/configuration/#session-cookie">Configuration</a> says why.</p>
+<p><strong>Browser hardening.</strong> Every response on this chain carries a
+<code>Content-Security-Policy</code>. It allows script, styles, fonts, images and
+connections from the gateway's own origin only. It also allows no plugins, no
+framing by another page, and no form submission elsewhere:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+</code></pre></div>
+<p>The portal has no HTML pipeline, so the policy is defence in depth. If an
+injection were ever found, it could not load script from elsewhere, and it could
+not send what it reads off-site.</p>
+<ul>
+<li><strong>Inline styles are allowed</strong> because the portal's toast and component
+  libraries inject them at run time.</li>
+<li><strong>Inline script is allowed on the API reference (<code>scalar.path</code>, <code>/docs</code>) and on
+  no other page.</strong> Its third-party page starts itself from an inline script built
+  from its configuration, and it renders only the gateway's own API description.</li>
+</ul>
+<p>The git, publication, revocation-check, webhook and machine chains serve no
+documents, so they carry no policy. A proxy in front of the gateway may add its
+own policy. Browsers enforce every policy they receive, so a second policy can
+only narrow this one.</p>
 <div class="admonition warning">
 <p class="admonition-title">dev-insecure-auth</p>
 <p><code>skills-gateway.dev-insecure-auth=true</code> makes the <strong>entire web surface</strong>
