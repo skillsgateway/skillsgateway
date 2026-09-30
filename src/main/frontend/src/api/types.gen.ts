@@ -7082,16 +7082,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Missing or invalid signature */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Unknown marketplace, or its sync mode is not webhook */
+            /** @description Unknown marketplace, not in webhook mode, or the signature did not verify */
             404: {
                 headers: {
                     [name: string]: unknown;

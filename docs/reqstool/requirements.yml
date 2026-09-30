@@ -503,10 +503,10 @@ requirements:
   - id: GW_INGEST_0012
     title: Webhook-triggered ingestion
     significance: shall
-    description: The system shall expose, for a marketplace whose sync mode is webhook, an inbound endpoint that a forge push webhook can call, shall authenticate each request solely by an HMAC-SHA256 signature of the exact raw request body verified in constant time against a per-marketplace secret that the gateway generated and returned exactly once when the mode was enabled, shall treat a valid signature only as a trigger to ingest the registered upstream URL's default branch and never read a URL, ref, or commit from the request payload, shall bound the accepted body size, and shall reject a request with a missing or invalid signature, for an unknown marketplace, or for a marketplace not in webhook mode without ingesting anything.
-    rationale: A push event removes polling latency, but the endpoint is reachable without an OIDC session, so its authentication must be cryptographic and its authority must be nil — the worst a forged-but-signed request can cause is a fetch of the already-registered upstream into quarantine, which the schedule would have done anyway.
+    description: The system shall expose, for a marketplace whose sync mode is webhook, an inbound endpoint that a forge push webhook can call, shall authenticate each request solely by an HMAC-SHA256 signature of the exact raw request body verified in constant time against a per-marketplace secret that the gateway generated and returned exactly once when the mode was enabled, shall treat a valid signature only as a trigger to ingest the registered upstream URL's default branch and never read a URL, ref, or commit from the request payload, shall bound the accepted body size, and shall reject a request with a missing or invalid signature, for an unknown marketplace, or for a marketplace not in webhook mode without ingesting anything, answering all three with the same not-found response, and shall decide the body-size bound before looking the marketplace up.
+    rationale: A push event removes polling latency, but the endpoint is reachable without an OIDC session, so its authentication must be cryptographic and its authority must be nil — the worst a forged-but-signed request can cause is a fetch of the already-registered upstream into quarantine, which the schedule would have done anyway. Because it is unauthenticated, a refusal that differed by cause would tell anyone which marketplace names exist and which are in webhook mode; the facade answers refusal and absence alike for the same reason.
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_INGEST_0013
     title: Upstream outage resilience

@@ -8,25 +8,25 @@ there is none.
 
 ## 1. Requirements (reqstool)
 
-- [ ] 1.1 Amend GW_INGEST_0012 — Webhook-triggered ingestion — in
+- [x] 1.1 Amend GW_INGEST_0012 — Webhook-triggered ingestion — in
   `docs/reqstool/requirements.yml` so the refusals share one answer, and
   SVC_GW_INGEST_0012 so its THEN says so; bump both revisions. Verify with
   `openspec validate webhook-refusal-is-not-found --strict`.
 
 ## 2. The webhook answers every refusal alike (SVC_GW_INGEST_0012)
 
-- [ ] 2.1 `SyncTests`: missing, malformed, wrong-secret and tampered-body
+- [x] 2.1 `SyncTests`: missing, malformed, wrong-secret and tampered-body
   signatures, an unknown name, a non-webhook marketplace, and the rotated
   secret each answer `404` with the same body; an oversized body answers `413`
   for an unknown name as for a real one; a bad signature on a real webhook
   marketplace creates no snapshot and records no sync attempt. Watch the
   status assertions fail against the current controller.
-- [ ] 2.2 `InboundWebhookController`: read the bounded body first, then answer
+- [x] 2.2 `InboundWebhookController`: read the bounded body first, then answer
   `404 not found` for every lookup or signature refusal; drop the `403`
   `@ApiResponse`. Make 2.1 green.
-- [ ] 2.3 Regenerate `src/main/frontend/openapi.json` and
+- [x] 2.3 Regenerate `src/main/frontend/openapi.json` and
   `src/api/types.gen.ts`; `OpenApiContractTests` passes.
-- [ ] 2.4 Docs: `guides/upstream-sync.md`, `reference/api/marketplaces.md` and
+- [x] 2.4 Docs: `guides/upstream-sync.md`, `reference/api/marketplaces.md` and
   `concepts/trust-boundaries.md` say "404: unknown marketplace, not in webhook
   mode, or the signature did not verify". Verify with `mkdocs build --strict`.
 

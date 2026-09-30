@@ -74,10 +74,13 @@ anyway, landing held in quarantine. The endpoint answers `202 Accepted`
 immediately and ingests in the background; the snapshot appears in the portal
 moments later.
 
-Requests with a missing or wrong signature get `403` and ingest nothing.
-Unknown marketplaces — and marketplaces not in `webhook` mode — get `404`.
-Bodies over the configured bound get `413` before the signature is even
-checked.
+A refused request ingests nothing and gets `404`, whatever the reason: an
+unknown marketplace, one not in `webhook` mode, or a signature that is missing
+or did not verify. The endpoint needs no credential to call, so it answers all
+three alike rather than tell anyone which marketplace names exist. If a forge's
+delivery log shows `404` for a marketplace you know is in `webhook` mode, check
+the secret first. Bodies over the configured bound get `413` before the
+marketplace is even looked up.
 
 ## Upstream outages don't reach consumers
 
