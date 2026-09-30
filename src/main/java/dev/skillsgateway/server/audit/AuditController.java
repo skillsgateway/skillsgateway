@@ -7,6 +7,7 @@ import dev.skillsgateway.server.persistence.FetchLogRepository;
 import dev.skillsgateway.server.roles.RoleService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -118,7 +119,16 @@ public class AuditController {
             @Schema(
                     description = "Pass as `before` for the next, older page. Null when this page reaches"
                             + " the oldest entry the ledger still holds.")
-            Long nextBefore) {}
+            Long nextBefore,
+
+            @Schema(
+                    description = "How many entries the whole ledger holds, whatever `marketplace` narrowed this"
+                            + " page to. Exact while the ledger is small; from 100,000 entries up, the"
+                            + " database's estimate (see `totalIsEstimate`).")
+            long total,
+
+            @Schema(description = "True when `total` is an estimate rather than an exact count")
+            boolean totalIsEstimate) {}
 
     /**
      * One page of the ledger, newest first (GW_AUDIT_0008).
@@ -137,20 +147,27 @@ public class AuditController {
             summary = "Browse the audit ledger",
             description = "One page of the append-only ledger, newest first: facade fetches with client source"
                     + " address, identity, ref and commit SHA, and administrative actions with the acting"
-                    + " identity. Page backwards by passing the previous page's `nextBefore` as `before`.")
+                    + " identity. Page backwards by passing the previous page's `nextBefore` as `before`;"
+                    + " pass `marketplace` to read only the entries recorded against that marketplace name.")
     @ApiResponse(responseCode = "200", description = "The page, newest entry first")
     @ApiResponse(responseCode = "403", description = "The session holds no applicable role")
     @Requirements({"GW_AUDIT_0008"})
     public AuditPage browse(
             @RequestParam(required = false, defaultValue = "0") long before,
             @RequestParam(required = false) Integer limit,
+            @RequestParam(required = false)
+                    @Parameter(description = "Only the entries recorded against this marketplace name")
+                    String marketplace,
             Authentication authentication) {
         roleService.requireAuditor(authentication);
         SkillsGatewayProperties.AuditExport bounds = properties.auditExport();
         int page = Math.clamp(limit == null ? bounds.defaultPageSize() : limit, 1, bounds.maxPageSize());
-        List<FetchLogRepository.AuditEntry> entries = fetchLogRepository.entriesBefore(Math.max(before, 0), page);
+        String narrowTo = marketplace == null || marketplace.isBlank() ? null : marketplace;
+        List<FetchLogRepository.AuditEntry> entries =
+                fetchLogRepository.entriesBefore(Math.max(before, 0), page, narrowTo);
         Long next = entries.size() < page ? null : entries.getLast().id();
-        return new AuditPage(entries, next);
+        FetchLogRepository.LedgerSize size = fetchLogRepository.size();
+        return new AuditPage(entries, next, size.total(), size.estimate());
     }
 
     @GetMapping(value = "/export", produces = NDJSON)

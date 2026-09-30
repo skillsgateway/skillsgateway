@@ -29,6 +29,7 @@ the auditor role.
 ```console
 $ curl localhost:8080/api/v1/audit
 $ curl 'localhost:8080/api/v1/audit?before=41&limit=100'
+$ curl 'localhost:8080/api/v1/audit?marketplace=acme'
 ```
 
 ```json
@@ -37,13 +38,25 @@ $ curl 'localhost:8080/api/v1/audit?before=41&limit=100'
    "marketplace":"acme","event":"upload-pack","ref":"refs/snapshots/9d01c44...","sha":"9d01c44..."},
   {"id":42,"ts":"2026-08-15T09:04:11Z","source":"10.0.0.4","principal":"alice@example.com",
    "marketplace":"acme","event":"upload-pack","ref":"refs/heads/main","sha":"3f9c2ab..."}],
- "nextBefore":42}
+ "nextBefore":42,"total":43,"totalIsEstimate":false}
 ```
 
 **200.** `before` (default `0`, meaning start at the newest entry) and `limit`
 (clamped to the same bounds as the export). Page backwards by passing the previous
 response's `nextBefore` as `before`; it is absent once the page reaches the oldest
 entry the ledger still holds.
+
+`marketplace` (optional) narrows the page to the entries recorded against that
+marketplace name; `nextBefore` then pages within the narrowing. An entry written
+under an earlier marketplace that held the same name is included — `marketplaceId`
+tells the two apart.
+
+Every page carries `total`, how many entries the whole ledger holds (whatever
+`marketplace` narrowed the page to), and `totalIsEstimate`. Below 100,000 entries
+the total is an exact count and `totalIsEstimate` is `false`. From 100,000 up it is
+the database's row estimate, `totalIsEstimate` is `true`, and it is as current as
+the table's last automatic analyse. An exact count at that size would be the full
+scan of the ledger that the page bound exists to avoid.
 
 !!! note "Newest first, the opposite of the export"
 

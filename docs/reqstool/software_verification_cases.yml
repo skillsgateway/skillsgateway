@@ -317,7 +317,9 @@ cases:
       AND the final page omits the cursor rather than returning it pointing at nothing
       AND a requested page size above the export maximum is clamped to it
       AND a caller holding no role to read the ledger is refused
-    revision: "0.1.0"
+      AND a read narrowed to one marketplace carries only that marketplace's entries, newest first, and its cursor continues within the narrowing
+      AND every page states how many entries the ledger holds, exactly and marked as exact while the ledger is small
+    revision: "0.2.0"
 
   - id: SVC_GW_AUDIT_0009
     requirement_ids: ["GW_AUDIT_0009"]

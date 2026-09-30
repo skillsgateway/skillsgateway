@@ -232,6 +232,89 @@ export const createdSubscriber: Schemas["CreatedSubscriber"] = {
   createdAt: "2026-08-14T10:00:00Z",
 };
 
+/**
+ * A small ledger in the order the server answers it: newest first (`ORDER BY id DESC`), the
+ * order the portal renders without re-sorting. Two marketplaces, so a narrowed read has
+ * something to leave out.
+ */
+export const ledgerEntries: Schemas["AuditEntry"][] = [
+  {
+    id: 6,
+    ts: "2026-08-14T10:05:00Z",
+    source: "10.0.0.7",
+    principal: "ci-bot",
+    marketplace: "partner-marketplace",
+    event: "upload-pack",
+    ref: "refs/heads/main",
+    sha: "bbbbccccddddeeeeffff00001111222233334444",
+  },
+  {
+    id: 5,
+    ts: "2026-08-14T10:04:00Z",
+    source: "admin",
+    principal: "alice",
+    marketplace: "corp-marketplace",
+    event: "snapshot-approved",
+    sha: "aaaabbbbccccddddeeeeffff0000111122223333",
+  },
+  {
+    id: 4,
+    ts: "2026-08-14T10:03:00Z",
+    source: "admin",
+    principal: "vetting",
+    marketplace: "corp-marketplace",
+    event: "vetting-completed",
+    sha: "aaaabbbbccccddddeeeeffff0000111122223333",
+    detail: "trigger=ingestion; outcome=clear; vetters=3",
+  },
+  {
+    id: 3,
+    ts: "2026-08-14T10:02:00Z",
+    source: "admin",
+    principal: "alice",
+    marketplace: "partner-marketplace",
+    event: "marketplace-registered",
+  },
+  {
+    id: 2,
+    ts: "2026-08-14T10:01:00Z",
+    source: "admin",
+    principal: "alice",
+    marketplace: "corp-marketplace",
+    event: "snapshot-ingested",
+    sha: "aaaabbbbccccddddeeeeffff0000111122223333",
+  },
+  {
+    id: 1,
+    ts: "2026-08-14T10:00:00Z",
+    source: "admin",
+    principal: "alice",
+    marketplace: "corp-marketplace",
+    event: "marketplace-registered",
+  },
+];
+
+/**
+ * The browse read over `entries` as the gateway pages it (GW_AUDIT_0008): newest first, narrowed
+ * by `marketplace`, cursored by `before`, `nextBefore` only on a full page, and `total` counting
+ * the whole ledger whatever the narrowing.
+ */
+export function auditPage(entries: Schemas["AuditEntry"][], url: URL): Schemas["AuditPage"] {
+  const before = Number(url.searchParams.get("before") ?? 0);
+  const limit = Number(url.searchParams.get("limit") ?? 1000);
+  const marketplace = url.searchParams.get("marketplace");
+  const page = entries
+    .filter((entry) => !marketplace || entry.marketplace === marketplace)
+    .filter((entry) => before === 0 || (entry.id ?? 0) < before)
+    .slice(0, limit);
+  return {
+    entries: page,
+    nextBefore: page.length < limit ? undefined : page[page.length - 1]?.id,
+    total: entries.length,
+    totalIsEstimate: false,
+  };
+}
+
 export const auditSink: Schemas["SinkView"] = {
   id: 2,
   name: "siem",
@@ -1281,7 +1364,9 @@ export const handlers = [
   ),
   http.get("/api/v1/tokens", () => HttpResponse.json<Schemas["TokenView"][]>(tokenViews)),
   http.post("/api/v1/tokens", () => HttpResponse.json(issuedToken, { status: 201 })),
-  http.get("/api/v1/audit", () => HttpResponse.json({ entries: [], nextBefore: null })),
+  http.get("/api/v1/audit", ({ request }) =>
+    HttpResponse.json(auditPage(ledgerEntries, new URL(request.url))),
+  ),
   http.get("/api/v1/audit/sinks", () => HttpResponse.json<Schemas["SinkView"][]>([auditSink])),
   http.post("/api/v1/audit/sinks", () => HttpResponse.json(createdAuditSink, { status: 201 })),
   http.get("/api/v1/webhooks", () => HttpResponse.json<Schemas["SubscriberView"][]>([subscriber])),

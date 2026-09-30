@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.LongSupplier;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -151,11 +152,66 @@ public class FetchLogRepository {
      */
     @Requirements({"GW_AUDIT_0008"})
     public List<AuditEntry> entriesBefore(long before, int limit) {
-        return jdbc.sql("SELECT * FROM fetch_log WHERE (:before = 0 OR id < :before) ORDER BY id DESC LIMIT :limit")
-                .param("before", before)
+        return entriesBefore(before, limit, null);
+    }
+
+    /**
+     * {@link #entriesBefore(long, int)} narrowed to the entries recorded against one marketplace
+     * name, or not narrowed when {@code marketplace} is null. The cursor is the same ledger sequence,
+     * so paging continues within the narrowing.
+     */
+    @Requirements({"GW_AUDIT_0008"})
+    public List<AuditEntry> entriesBefore(long before, int limit, String marketplace) {
+        if (marketplace == null) {
+            return jdbc.sql("SELECT * FROM fetch_log WHERE (:before = 0 OR id < :before) ORDER BY id DESC LIMIT :limit")
+                    .param("before", before)
+                    .param("limit", limit)
+                    .query(FetchLogRepository::map)
+                    .list();
+        }
+        // Its own statement rather than an "IS NULL OR" predicate, so the plan is always a walk of
+        // idx_fetch_log_marketplace and never a generic plan that cannot use it.
+        return jdbc.sql("SELECT * FROM fetch_log WHERE marketplace = :marketplace AND id < :before"
+                        + " ORDER BY id DESC LIMIT :limit")
+                .param("marketplace", marketplace)
+                .param("before", before == 0 ? Long.MAX_VALUE : before)
                 .param("limit", limit)
                 .query(FetchLogRepository::map)
                 .list();
+    }
+
+    /** Below this many rows the ledger is counted exactly; from it up, the planner's estimate is used. */
+    static final long EXACT_COUNT_BELOW = 100_000;
+
+    /**
+     * How many entries the ledger holds (GW_AUDIT_0008), for a reader who must not take a page for
+     * the whole. Exact while the table is small, where a count is cheap — and always before the
+     * first analyse, when the estimate is -1 and would print 0 beside a page of rows. From {@link
+     * #EXACT_COUNT_BELOW} up it is the planner's estimate, flagged as one, for the reason {@link
+     * #approximateDepth} gives.
+     */
+    @Requirements({"GW_AUDIT_0008"})
+    public LedgerSize size() {
+        long estimate = jdbc.sql("SELECT reltuples::BIGINT FROM pg_class WHERE oid = 'fetch_log'::regclass")
+                .query(Long.class)
+                .optional()
+                .orElse(-1L);
+        return LedgerSize.of(
+                estimate,
+                () -> jdbc.sql("SELECT COUNT(*) FROM fetch_log")
+                        .query(Long.class)
+                        .single());
+    }
+
+    /** The ledger's entry count, and whether it is the planner's estimate rather than a count. */
+    public record LedgerSize(long total, boolean estimate) {
+
+        /** The estimate from {@link #EXACT_COUNT_BELOW} up; below it, or never analysed (-1), the count. */
+        public static LedgerSize of(long estimate, LongSupplier exactCount) {
+            return estimate >= EXACT_COUNT_BELOW
+                    ? new LedgerSize(estimate, true)
+                    : new LedgerSize(exactCount.getAsLong(), false);
+        }
     }
 
     /**

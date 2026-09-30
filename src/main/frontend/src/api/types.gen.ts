@@ -53,7 +53,7 @@ export interface paths {
         };
         /**
          * Browse the audit ledger
-         * @description One page of the append-only ledger, newest first: facade fetches with client source address, identity, ref and commit SHA, and administrative actions with the acting identity. Page backwards by passing the previous page's `nextBefore` as `before`.
+         * @description One page of the append-only ledger, newest first: facade fetches with client source address, identity, ref and commit SHA, and administrative actions with the acting identity. Page backwards by passing the previous page's `nextBefore` as `before`; pass `marketplace` to read only the entries recorded against that marketplace name.
          */
         get: operations["browse"];
         put?: never;
@@ -1849,6 +1849,13 @@ export interface components {
              * @description Pass as `before` for the next, older page. Null when this page reaches the oldest entry the ledger still holds.
              */
             nextBefore?: number;
+            /**
+             * Format: int64
+             * @description How many entries the whole ledger holds, whatever `marketplace` narrowed this page to. Exact while the ledger is small; from 100,000 entries up, the database's estimate (see `totalIsEstimate`).
+             */
+            total?: number;
+            /** @description True when `total` is an estimate rather than an exact count */
+            totalIsEstimate?: boolean;
         };
         /** @description One vetting-chain change addressed to several marketplaces */
         BulkChainChange: {
@@ -4306,6 +4313,8 @@ export interface operations {
             query?: {
                 before?: number;
                 limit?: number;
+                /** @description Only the entries recorded against this marketplace name */
+                marketplace?: string;
             };
             header?: never;
             path?: never;

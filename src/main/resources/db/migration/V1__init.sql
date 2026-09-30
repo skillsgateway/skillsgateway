@@ -310,6 +310,10 @@ CREATE INDEX idx_fetch_log_sha_marketplace_ts ON fetch_log (sha, marketplace, ts
 CREATE INDEX idx_fetch_log_ts ON fetch_log (ts)
     WHERE event = 'upload-pack';
 
+-- One marketplace's page of the browse read (GW_AUDIT_0008), newest first: without it, a quiet
+-- marketplace's page walks the primary key back across the whole ledger to fill itself.
+CREATE INDEX idx_fetch_log_marketplace ON fetch_log (marketplace, id DESC);
+
 CREATE TABLE access_tokens (
     id BIGSERIAL PRIMARY KEY,
     principal TEXT NOT NULL,

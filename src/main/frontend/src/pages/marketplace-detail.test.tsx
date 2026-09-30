@@ -5,7 +5,16 @@ import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { expect, test } from "vitest";
 import type { components } from "@/api/types.gen";
-import { clearVetting, compositeProvenance, heldSnapshot, locatedVetting, marketplace, tooYoung } from "@/test/msw-handlers";
+import {
+  auditPage,
+  clearVetting,
+  compositeProvenance,
+  heldSnapshot,
+  ledgerEntries,
+  locatedVetting,
+  marketplace,
+  tooYoung,
+} from "@/test/msw-handlers";
 import { server } from "@/test/msw-server";
 import {
   MarketplaceActivityPage,
@@ -724,3 +733,61 @@ test("an_estate_that_does_not_declare_the_marketplace_leaves_removal_available",
   const button = await screen.findByRole("button", { name: "Remove corp-marketplace…" });
   await waitFor(() => expect(button).toBeEnabled());
 });
+
+/**
+ * Activity asks the server for this marketplace's entries and renders them in the order it
+ * answers — newest first. It used to filter the ledger's newest page by name, so a quiet
+ * marketplace read "Nothing recorded" once newer entries belonged to others, and then reversed
+ * what it found, rendering oldest first.
+ *
+ * @SVCs SVC_GW_AUDIT_0008
+ */
+test("activity_reads_this_marketplace_from_the_server_newest_first", async () => {
+  const asked: string[] = [];
+  server.use(
+    http.get("/api/v1/audit", ({ request }) => {
+      const url = new URL(request.url);
+      asked.push(url.searchParams.get("marketplace") ?? "");
+      return HttpResponse.json(auditPage(ledgerEntries, url));
+    }),
+  );
+  renderPage("", "activity");
+
+  await screen.findByText("snapshot-approved");
+  expect(asked).toEqual(["corp-marketplace"]);
+  const events = screen
+    .getAllByRole("row")
+    .slice(1)
+    .map((row) => within(row).getAllByRole("cell")[2]?.textContent);
+  expect(events).toEqual([
+    "snapshot-approved",
+    "vetting-completed",
+    "snapshot-ingested",
+    "marketplace-registered",
+  ]);
+  // The oldest entry is on the page, so there is nothing older to load.
+  expect(screen.queryByRole("button", { name: "Load older entries" })).not.toBeInTheDocument();
+});
+
+/** A marketplace with more entries than a page reaches the older ones through the control. */
+test("activity_loads_older_entries_through_the_cursor", async () => {
+  const user = userEvent.setup();
+  const befores: string[] = [];
+  server.use(
+    http.get("/api/v1/audit", ({ request }) => {
+      const url = new URL(request.url);
+      befores.push(url.searchParams.get("before") ?? "");
+      url.searchParams.set("limit", "2");
+      return HttpResponse.json(auditPage(ledgerEntries, url));
+    }),
+  );
+  renderPage("", "activity");
+
+  await screen.findByText("snapshot-approved");
+  expect(screen.queryByText("snapshot-ingested")).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Load older entries" }));
+  expect(await screen.findByText("snapshot-ingested")).toBeInTheDocument();
+  // The second request passed the first page's last id back as the cursor.
+  expect(befores).toEqual(["", "4"]);
+});
+

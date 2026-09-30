@@ -19,11 +19,13 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   AUDIT_EXPORT_URL,
-  useAudit,
+  auditRows,
+  useAuditPages,
   useAuditSinks,
   useMarketplaces,
 } from "@/api/queries";
 import { AuditStatusBadge, auditRowClass } from "@/components/audit-status";
+import { LoadOlderEntries } from "@/components/load-older-entries";
 import { Timestamp } from "@/components/timestamp";
 import { auditStatus } from "@/lib/audit-status";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -114,8 +116,9 @@ function SortHeader({
  * The in-portal ledger view: the same append-only entries, but legible. Every row carries a
  * status derived from its event and detail (a blocked verdict reads red, matching the
  * marketplace card — #221/#224), the marketplace column links to that marketplace's detail
- * page, and the table sorts and filters per column. It paginates client-side over the JSON
- * ledger; the NDJSON export above is the path for a full, cursor-resumable pull.
+ * page, and the table sorts, filters and paginates client-side over the entries loaded so far;
+ * the page's "Load older entries" control fetches further back, and the NDJSON export above is
+ * the path for a full, cursor-resumable pull.
  *
  * @Requirements GW_AUDIT_0002, GW_AUDIT_0006
  */
@@ -127,9 +130,9 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   // Completion options for each free-text filter. The marketplace column is sourced from the
-  // authoritative marketplaces list so it completes beyond the loaded page; the rest are derived
-  // from the rows currently in hand (the ledger is paginated client-side over /api/audit, so
-  // event/principal/sha options only cover loaded rows). Filters stay free-text either way.
+  // authoritative marketplaces list so it completes beyond the loaded pages; the rest are derived
+  // from the rows currently in hand, so event/principal/sha options only cover loaded entries.
+  // Filters stay free-text either way.
   const marketplaces = useMarketplaces();
   const facets = useMemo<Record<string, string[]>>(() => {
     const marketplaceNames = (marketplaces.data ?? [])
@@ -335,7 +338,7 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
       </div>
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>
-          {table.getFilteredRowModel().rows.length} of {rows.length} entries
+          {table.getFilteredRowModel().rows.length} of {rows.length} loaded entries
         </span>
         <div className="flex items-center gap-2">
           <Button
@@ -373,9 +376,9 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
  * @Requirements GW_INGEST_0007, GW_AUDIT_0006
  */
 export function AuditPage() {
-  const audit = useAudit();
+  const audit = useAuditPages();
   const sinks = useAuditSinks();
-  const rows = audit.data ?? [];
+  const rows = useMemo(() => auditRows(audit.data?.pages), [audit.data]);
   const sinkCount = sinks.data?.length ?? 0;
 
   return (
@@ -433,7 +436,17 @@ export function AuditPage() {
         {rows.length === 0 && !audit.isLoading ? (
           <p className="text-sm text-muted-foreground">No fetches recorded yet.</p>
         ) : null}
-        {rows.length > 0 ? <LedgerTable rows={rows} /> : null}
+        {rows.length > 0 ? (
+          <>
+            <LedgerTable rows={rows} />
+            <LoadOlderEntries
+              loaded={rows.length}
+              hasMore={audit.hasNextPage}
+              loading={audit.isFetchingNextPage}
+              onLoad={() => void audit.fetchNextPage()}
+            />
+          </>
+        ) : null}
       </section>
     </div>
   );
