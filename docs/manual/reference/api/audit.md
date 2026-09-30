@@ -180,8 +180,8 @@ triggered the rebuild. See
 
 | Event | When | `detail` |
 | --- | --- | --- |
-| `vetting-verdict` | One per vetter per run. | `{vetter}={state}`, e.g. `secret-scan=fail`. |
-| `vetting-completed` | Once per run. | `trigger={ingestion\|revet-scheduled\|revet-manual}; outcome={clear\|blocked}; vetters={n}; chain={vetter@version,…}`. |
+| `vetting-verdict` | One per vetter on the ingestion run. On a re-vet, only for a vetter whose verdict changed since the snapshot's previous run — a different state, finding count or worst severity, or a vetter version that was not in that run's chain; the run's `vetting-completed` entry says how many in `changed=`. | `{vetter}={state}; findings={n}; worst={severity\|none}; run={id}`, e.g. `secret-scan=fail; findings=2; worst=critical; run=1841`. |
+| `vetting-completed` | Once per run. | `trigger={ingestion\|revet-scheduled\|revet-manual}; outcome={clear\|blocked}; vetters={n}; run={id}; chain={vetter@version,…}`. A re-vet adds `changed={k}` before `run=`: the number of `vetting-verdict` entries it wrote, `0` when nothing changed. |
 
 **From continuous re-vetting** — see
 [Re-vetting approved content](../../guides/re-vetting.md). The scheduled sweep

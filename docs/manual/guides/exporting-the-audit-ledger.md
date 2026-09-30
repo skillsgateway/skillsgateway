@@ -19,12 +19,15 @@ Two shapes of the same feed:
 
 ## What a vetting entry carries
 
-Every chain run lands two kinds of entry, both attributed to the **`system`**
+A chain run lands two kinds of entry, both attributed to the **`system`**
 actor kind — the vetting chain is the gateway's own automated subsystem, not a
 person, so the portal audit table and the ledger show it as `system`, never as a
 human actor.
 
-- A **`vetting-verdict`** entry per vetter. Its detail leads with
+- A **`vetting-verdict`** entry per vetter on the ingestion run. On a re-vet,
+  only for a vetter whose verdict changed since the snapshot's previous run (a
+  different state, finding count or worst severity, or a vetter version that was
+  not in that run's chain); a re-vet that changed nothing writes none. Its detail leads with
   `vetter=state` and then carries the finding count, the worst severity
   present (`none` when there are none), and the id of the chain run — so the
   entry is auditable on its own rather than a pointer back into the vetting
@@ -38,7 +41,19 @@ human actor.
   ```
 
 - A **`vetting-completed`** entry per run, carrying the trigger, the fail-closed
-  outcome, the vetter count, the same `run=` id, and the chain identity.
+  outcome, the vetter count, the same `run=` id, and the chain identity. On a
+  re-vet it also carries `changed=`, the number of `vetting-verdict` entries the
+  run wrote:
+
+  ```text
+  trigger=revet-scheduled; outcome=clear; vetters=5; changed=0; run=1902; chain=secret-scan@1,prompt-injection@1,…;mode=run-all
+  ```
+
+!!! note "Counting runs"
+    Count vetting runs by `vetting-completed`, not by `vetting-verdict`. An
+    unchanged re-vet writes `vetting-completed` (`changed=0`) and `revet-clear`
+    and no verdict entries; every verdict of every run stays in the vetting
+    report (`GET /api/v1/snapshots/{id}/vetting`).
 
 ## The cursor
 

@@ -594,6 +594,28 @@ cases:
       THEN it holds the re-vetting run's outcome with its trigger, the violation with the objecting vetters and the mode in force, an entry naming the affected identity, the revocation, the unpublication, and the fresh approval, each with the marketplace and the acting identity
     revision: "0.2.0"
 
+  - id: SVC_GW_VETTING_0017.1
+    requirement_ids: ["GW_VETTING_0017"]
+    title: A re-vet that changes no verdict appends only its outcome
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot whose ingestion run appended one vetting-verdict entry per vetter and a vetting-completed entry with no changed count
+      WHEN it is re-vetted over the same chain and every vetter concludes as before
+      THEN the re-vet appends exactly two entries, a vetting-completed entry with changed=0 and the re-vetting outcome entry, and no vetting-verdict entry
+      AND the re-vetting run's recorded verdicts still hold one verdict per vetter
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0017.2
+    requirement_ids: ["GW_VETTING_0017"]
+    title: A re-vet appends the verdict of the one vetter that changed
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot and one vetter of its chain switched off for the marketplace after the previous run
+      WHEN it is re-vetted
+      THEN the re-vet appends exactly one vetting-verdict entry, naming that vetter and its disabled conclusion
+      AND a vetting-completed entry with changed=1
+    revision: "0.1.0"
+
   - id: SVC_GW_VETTING_0018
     requirement_ids: ["GW_VETTING_0018"]
     title: Portal shows a revoked snapshot, its violation and who fetched it

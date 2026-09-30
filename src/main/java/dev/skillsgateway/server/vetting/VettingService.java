@@ -11,13 +11,16 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -205,7 +208,7 @@ public class VettingService {
     private static String chainIdentity(List<Vetter> ordered, ChainMode mode) {
         return ordered.stream()
                         .map(vetter -> vetter.name() + "@" + vetter.version())
-                        .collect(java.util.stream.Collectors.joining(","))
+                        .collect(Collectors.joining(","))
                 + ";mode=" + mode.stored();
     }
 
@@ -247,6 +250,40 @@ public class VettingService {
         return detail.toString();
     }
 
+    /**
+     * Whether a re-vet's verdict differs from the same vetter's verdict in the snapshot's previous
+     * finished run (GW_VETTING_0017): its state, finding count or worst severity differ, or the vetter
+     * at this version was not in that run's chain. No previous run means changed.
+     */
+    @Requirements({"GW_VETTING_0017"})
+    static boolean changedSince(Optional<VettingRepository.Run> previous, Vetter vetter, Verdict verdict) {
+        if (previous.isEmpty()
+                || !chainMembers(previous.get().chain()).contains(vetter.name() + "@" + vetter.version())) {
+            return true;
+        }
+        return previous.get().verdicts().stream()
+                .filter(before -> before.vetter().equals(vetter.name()))
+                .findFirst()
+                .map(before -> before.state() != verdict.state()
+                        || before.findings().size() != verdict.findings().size()
+                        || !worst(before.findings()).equals(worst(verdict.findings())))
+                .orElse(true);
+    }
+
+    /** The {@code vetter@version} entries of a stored chain identity, as {@link #chainIdentity} composes it. */
+    private static Set<String> chainMembers(String identity) {
+        if (identity == null || identity.isBlank()) {
+            return Set.of();
+        }
+        int mode = identity.indexOf(';');
+        return Arrays.stream((mode < 0 ? identity : identity.substring(0, mode)).split(","))
+                .collect(Collectors.toSet());
+    }
+
+    private static Optional<Severity> worst(List<Finding> findings) {
+        return findings.stream().map(Finding::severity).max(Severity::compareTo);
+    }
+
     /** One chain run and the id it was recorded under. */
     public record Run(long runId, VettingChain.Outcome outcome) {}
 
@@ -268,6 +305,7 @@ public class VettingService {
         "GW_VETTING_0002",
         "GW_VETTING_0006",
         "GW_VETTING_0012",
+        "GW_VETTING_0017",
         "GW_VETTING_0029.2",
         "GW_VETTING_0032",
         "GW_VETTING_0032.2",
@@ -279,6 +317,12 @@ public class VettingService {
         ChainMode mode = chainSettings.resolveMode(snapshot.marketplaceId()).mode();
         String chainIdentity = chainIdentity(chain, mode);
         long runId = vettingRepository.startRun(snapshot.id(), trigger, chainIdentity);
+        // A re-vet copies a verdict into the ledger only when it changed since the previous run
+        // (GW_VETTING_0017); the ingestion run, having nothing to compare with, writes every one.
+        boolean revet = VettingRepository.isRevet(trigger);
+        Optional<VettingRepository.Run> previous =
+                revet ? vettingRepository.previousRun(snapshot.id(), runId) : Optional.empty();
+        int changed = 0;
         // Read once, and only when the mode can actually use them: under run-all nothing consults
         // them here, and the effective outcome reads them again at evaluation time regardless.
         List<Waiver> waivers = mode == ChainMode.STOP_AFTER_FAIL ? waiverService.forSnapshot(snapshot) : List.of();
@@ -321,12 +365,15 @@ public class VettingService {
                 }
                 vettingRepository.recordVerdict(runId, vetter.name(), position++, verdict);
                 states.add(verdict.state());
-                auditLogger.record(
-                        VETTING_ACTOR,
-                        marketplace,
-                        "vetting-verdict",
-                        snapshot.sha(),
-                        verdictDetail(vetter, verdict, runId));
+                if (!revet || changedSince(previous, vetter, verdict)) {
+                    changed++;
+                    auditLogger.record(
+                            VETTING_ACTOR,
+                            marketplace,
+                            "vetting-verdict",
+                            snapshot.sha(),
+                            verdictDetail(vetter, verdict, runId));
+                }
             }
         } catch (IOException | UncheckedIOException e) {
             // The content itself could not be opened: nothing was vetted, so nothing clears. The
@@ -344,8 +391,12 @@ public class VettingService {
                 marketplace,
                 "vetting-completed",
                 snapshot.sha(),
-                "trigger=%s; outcome=%s; vetters=%d; run=%d; chain=%s"
-                        .formatted(trigger, outcome.stored(), states.size(), runId, chainIdentity));
+                // chain= stays last: its value carries a ';' of its own.
+                (revet
+                        ? "trigger=%s; outcome=%s; vetters=%d; changed=%d; run=%d; chain=%s"
+                                .formatted(trigger, outcome.stored(), states.size(), changed, runId, chainIdentity)
+                        : "trigger=%s; outcome=%s; vetters=%d; run=%d; chain=%s"
+                                .formatted(trigger, outcome.stored(), states.size(), runId, chainIdentity)));
         webhookService.emit(
                 WebhookEvent.SNAPSHOT_VETTED, marketplace, snapshot.id(), snapshot.sha(), snapshot.state(), "vetting");
         announceIfAwaitingApproval(snapshot, marketplace, runId);

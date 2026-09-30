@@ -186,8 +186,8 @@ Once configured, the connector's vetter behaves like any other in the chain:
   alongside the built-ins, with its findings and report link if it set one.
 - **`GET /api/v1/snapshots/{id}/vetting`** lists it in `run.verdicts` and in the
   `vetters` array, with `"external":true`.
-- **The ledger** records one `vetting-verdict` entry for it on every run, same
-  as a built-in.
+- **The ledger** records a `vetting-verdict` entry for it on the ingestion run,
+  and on a re-vet whenever its verdict changed, same as a built-in.
 - **`PUT /api/v1/vetting/vetters/{name}/toggle`** switches it off globally or for
   one marketplace, the same way as a built-in. See
   [Vetter enable/disable](../reference/api/marketplaces.md#vetter-enabledisable).
