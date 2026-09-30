@@ -367,6 +367,9 @@ Tune all of this under
 
     Most recent first. `limit` defaults to 100 and is clamped to 500.
 
+When [retention](snapshot-retention.md#webhook-delivery-history) is enabled, delivered and
+failed deliveries older than 30 days are removed, so the listing covers the last 30 days.
+
 Each row carries `state`, `attempts`, `lastStatus` and `lastError`, which is
 enough to tell a receiver that is down from one that is rejecting the payload.
 

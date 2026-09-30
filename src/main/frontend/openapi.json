@@ -135,6 +135,15 @@
             "description": "Pass as `before` for the next, older page. Null when this page reaches the oldest entry the ledger still holds.",
             "format": "int64",
             "type": "integer"
+          },
+          "total": {
+            "description": "How many entries the whole ledger holds, whatever `marketplace` narrowed this page to. Exact while the ledger is small; from 100,000 entries up, the database's estimate (see `totalIsEstimate`).",
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalIsEstimate": {
+            "description": "True when `total` is an estimate rather than an exact count",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -4195,7 +4204,7 @@
     },
     "/api/v1/audit": {
       "get": {
-        "description": "One page of the append-only ledger, newest first: facade fetches with client source address, identity, ref and commit SHA, and administrative actions with the acting identity. Page backwards by passing the previous page's `nextBefore` as `before`.",
+        "description": "One page of the append-only ledger, newest first: facade fetches with client source address, identity, ref and commit SHA, and administrative actions with the acting identity. Page backwards by passing the previous page's `nextBefore` as `before`; pass `marketplace` to read only the entries recorded against that marketplace name.",
         "operationId": "browse",
         "parameters": [
           {
@@ -4215,6 +4224,15 @@
             "schema": {
               "format": "int32",
               "type": "integer"
+            }
+          },
+          {
+            "description": "Only the entries recorded against this marketplace name",
+            "in": "query",
+            "name": "marketplace",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -7820,16 +7838,6 @@
           "202": {
             "description": "Trigger accepted; ingestion queued"
           },
-          "403": {
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description": "Missing or invalid signature"
-          },
           "404": {
             "content": {
               "application/problem+json": {
@@ -7838,7 +7846,7 @@
                 }
               }
             },
-            "description": "Unknown marketplace, or its sync mode is not webhook"
+            "description": "Unknown marketplace, not in webhook mode, or the signature did not verify"
           },
           "413": {
             "content": {

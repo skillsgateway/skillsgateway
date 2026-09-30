@@ -116,6 +116,9 @@ class StagingRefSweepTests extends AbstractGatewayTest {
     @Autowired
     private dev.skillsgateway.server.persistence.AuditSinkRepository auditSinkRepository;
 
+    @Autowired
+    private dev.skillsgateway.server.persistence.WebhookDeliveryRepository deliveryRepository;
+
     private RetentionService retentionOver(GitStorage over, SkillsGatewayProperties settings) {
         return new RetentionService(
                 marketplaceRepository,
@@ -126,6 +129,7 @@ class StagingRefSweepTests extends AbstractGatewayTest {
                 webhookService,
                 auditSinkRepository,
                 fetchLogRepository,
+                deliveryRepository,
                 settings);
     }
 

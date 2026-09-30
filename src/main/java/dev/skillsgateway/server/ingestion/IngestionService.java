@@ -7,6 +7,7 @@ import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.policy.SnapshotFactsService;
+import dev.skillsgateway.server.storage.GitObjectTransfer;
 import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.storage.RefTransitions;
 import dev.skillsgateway.server.vetting.VettingService;
@@ -16,14 +17,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -186,6 +185,9 @@ public class IngestionService {
                 return snapshotRepository
                         .findByMarketplaceAndSha(marketplace.id(), sha.name())
                         .orElseThrow(() -> raced);
+            } catch (RuntimeException failed) {
+                unpin(repo, marketplace, sha, failed);
+                throw failed;
             }
             if (Snapshot.HELD.equals(state)) {
                 // Recorded once, before the chain so a failure shows without waiting on it
@@ -213,11 +215,37 @@ public class IngestionService {
     }
 
     /**
+     * Takes back the pin of a snapshot whose row could not be written, which nothing would ever
+     * prune. Every doubt keeps the pin: an orphan pin costs storage, while a row without its pin is
+     * the state GW_INGEST_0018 forbids. So it goes only while no row names the commit, and comes back
+     * if a row (another gateway instance's) appeared meanwhile. Failures ride on {@code failed}.
+     */
+    private void unpin(Repository repo, Marketplace marketplace, ObjectId sha, RuntimeException failed) {
+        String pin = "refs/snapshots/" + sha.name();
+        try {
+            if (snapshotRepository
+                    .findByMarketplaceAndSha(marketplace.id(), sha.name())
+                    .isPresent()) {
+                return;
+            }
+            RefTransitions.delete(repo, pin);
+            if (snapshotRepository
+                    .findByMarketplaceAndSha(marketplace.id(), sha.name())
+                    .isPresent()) {
+                RefTransitions.write(repo, pin, sha);
+            }
+        } catch (IOException | RuntimeException cleanup) {
+            failed.addSuppressed(cleanup);
+        }
+    }
+
+    /**
      * Where the incoming commit comes from — the only thing that differs between an upstream
      * marketplace and a gateway-hosted one (GW_INGEST_0017). A hosted marketplace's source is its own
-     * origin repository, fetched by filesystem path with the same JGit fetch, so everything from
-     * the snapshot pin down is literally the same code and pushed content faces the same manifest
-     * validation, the same vetting chain and the same approval gate as fetched content.
+     * origin repository, whose objects are copied across rather than fetched by path, because an
+     * object-store origin has no path. Everything from the snapshot pin down is literally the same
+     * code, so pushed content faces the same manifest validation, the same vetting chain and the
+     * same approval gate as fetched content.
      */
     @Requirements({"GW_INGEST_0017"})
     private ObjectId fetchIncoming(Repository repo, Marketplace marketplace) throws GitAPIException, IOException {
@@ -225,26 +253,15 @@ public class IngestionService {
             return upstreamGit.fetchDefaultBranch(repo, marketplace.url(), INCOMING_REF);
         }
         try (Repository origin = storage.hosted(marketplace.name())) {
-            if (origin.resolve(Marketplace.LINEAGE_REF) == null) {
+            ObjectId lineage = origin.resolve(Marketplace.LINEAGE_REF);
+            if (lineage == null) {
                 throw new RepositoryNotFoundException(
                         "'%s' has not been published to yet".formatted(marketplace.name()));
             }
-            return fetchHostedLineage(repo, origin.getDirectory().getAbsolutePath());
+            GitObjectTransfer.copy(origin, repo, lineage);
+            RefTransitions.write(repo, INCOMING_REF, lineage);
+            return lineage;
         }
-    }
-
-    private static ObjectId fetchHostedLineage(Repository repo, String originPath) throws GitAPIException, IOException {
-        try (Git git = new Git(repo)) {
-            git.fetch()
-                    .setRemote(originPath)
-                    .setRefSpecs(new RefSpec("+" + Marketplace.LINEAGE_REF + ":" + INCOMING_REF))
-                    .call();
-        }
-        ObjectId sha = repo.resolve(INCOMING_REF);
-        if (sha == null) {
-            throw new RepositoryNotFoundException("the origin repository produced no commit");
-        }
-        return sha;
     }
 
     /**

@@ -58,6 +58,9 @@ scalar:
   path: /docs
   url: /v3/api-docs
   theme: purple
+  # The reference's fonts come from fonts.scalar.com, which the content security policy refuses
+  # (GW_AUTH_0052); off, it uses the browser's own.
+  with-default-fonts: false
 
 # Local observability is opt-in: the LGTM dev service and OpenTelemetry export are
 # both off unless the "observability" profile is active (application-observability.yaml).

@@ -251,10 +251,10 @@ requirements:
   - id: GW_AUDIT_0008
     title: The ledger browse read is bounded, typed and stably paged
     significance: shall
-    description: The system shall serve the audit ledger's browse read as a bounded page of typed entries, newest entry first, ordered and paged by the ledger sequence rather than by offset, carrying the sequence a caller passes back to reach the next older page and omitting it once the page reaches the oldest entry held, clamping any requested page size to the same bounds the ledger export uses, and shall restrict the read to callers permitted to read the ledger.
-    rationale: An unbounded read of the one table that grows with every client poll makes the surface that exists to investigate an incident the thing that cannot be opened during one, and untyped rows keyed by column name make every column rename a change to the published contract. Paging by sequence rather than offset is what keeps a page stable while the ledger is being appended to underneath a reader, which offset paging over an append-only table cannot be; sharing the export's bounds avoids a second setting that says the same thing about the same table.
+    description: The system shall serve the audit ledger's browse read as a bounded page of typed entries, newest entry first, ordered and paged by the ledger sequence rather than by offset, carrying the sequence a caller passes back to reach the next older page and omitting it once the page reaches the oldest entry held, clamping any requested page size to the same bounds the ledger export uses, and shall restrict the read to callers permitted to read the ledger. The read shall optionally narrow the page to the entries recorded against one named marketplace, paging within that narrowing, and every page shall state how many entries the ledger holds and whether that number is exact or an estimate, counting exactly while the ledger is small and never scanning the whole ledger to count it once it is large.
+    rationale: An unbounded read of the one table that grows with every client poll makes the surface that exists to investigate an incident the thing that cannot be opened during one, and untyped rows keyed by column name make every column rename a change to the published contract. Paging by sequence rather than offset is what keeps a page stable while the ledger is being appended to underneath a reader, which offset paging over an append-only table cannot be; sharing the export's bounds avoids a second setting that says the same thing about the same table. A reader shown one page with no count and no narrowing takes that page for the whole ledger — a quiet marketplace's history disappears behind newer entries belonging to others, and a page's row count is reported as the ledger's size; an exact count of a large ledger is the full scan the bound exists to avoid, so past a size where only the trend matters the count is an estimate and says so.
     categories: ["functional-suitability", "performance-efficiency"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_AUDIT_0009
     title: Ledger entries identify the marketplace they concern by id
@@ -383,18 +383,18 @@ requirements:
   - id: GW_VETTING_0006
     title: Vetting actions are audit-logged
     significance: shall
-    description: The system shall append every chain run outcome and every vetter verdict to the append-only audit ledger with the marketplace, the snapshot commit SHA, and the acting identity.
-    rationale: An auditor asking why a snapshot with findings is being served must be able to answer it from the ledger alone, without reading the vetting tables or trusting the portal.
+    description: The system shall append every chain run outcome to the append-only audit ledger, together with every vetter verdict of a snapshot's ingestion run and, of a re-vetting run, every verdict that changed as GW_VETTING_0017 defines it, each with the marketplace, the snapshot commit SHA, and the acting identity.
+    rationale: An auditor asking why a snapshot with findings is being served must be able to answer it from the ledger alone, without reading the vetting tables or trusting the portal. A re-vetting verdict identical to the previous one adds a copy rather than an answer, so the ledger carries the verdicts that changed and the run says how many.
     categories: ["security", "functional-suitability"]
-    revision: 0.3.0
+    revision: 0.4.0
 
   - id: GW_VETTING_0007
     title: Scoped, expiring vetting waivers
     significance: shall
-    description: The system shall allow a reviewer to record a waiver that accepts one vetting finding rule identifier on one marketplace, scoped either to a single snapshot commit SHA or to a path within the marketplace, and shall reject a waiver that omits a justification, an approving identity, or an expiry instant in the future.
-    rationale: An accepted risk that is not narrow, attributed, justified and temporary is indistinguishable from a disabled control; refusing an unbounded or unexplained waiver at the point of creation is what keeps every acceptance reviewable.
+    description: The system shall allow a reviewer to record a waiver that accepts one vetting finding rule identifier on one marketplace, scoped either to a single snapshot commit SHA or to a path within the marketplace, and shall reject a waiver that omits a justification, an approving identity, or an expiry instant in the future, and a waiver whose expiry lies more than 90 days after the moment of creation, without shortening it.
+    rationale: An accepted risk that is not narrow, attributed, justified and temporary is indistinguishable from a disabled control; refusing an unbounded or unexplained waiver at the point of creation is what keeps every acceptance reviewable, and a bound on how far the expiry may lie is what makes a waiver a quarterly re-affirmation rather than a permanent exception in all but name.
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0008
     title: Waivers suppress findings in the effective vetting outcome
@@ -471,10 +471,10 @@ requirements:
   - id: GW_VETTING_0017
     title: Re-vetting and revocation are audit-logged
     significance: shall
-    description: The system shall append to the append-only audit ledger the outcome of every re-vetting run with its trigger, each retroactive violation with the objecting vetters, the rules behind it and the mode in force, one entry per identity affected by that violation, and every revocation and unpublication with the acting identity and the marketplace.
-    rationale: A retraction of content that was previously approved is the most consequential thing the gateway does on its own; an auditor must be able to read what was found, when, under which policy, who was affected and what was taken away, from the ledger alone.
+    description: The system shall append to the append-only audit ledger the outcome of every re-vetting run with its trigger and the number of vetter verdicts in it that changed, each retroactive violation with the objecting vetters, the rules behind it and the mode in force, one entry per identity affected by that violation, and every revocation and unpublication with the acting identity and the marketplace. Of a re-vetting run's vetter verdicts it shall append exactly those that changed — a verdict whose conclusion, number of findings or worst finding severity differs from the same vetter's verdict in the snapshot's previous completed chain run, or whose vetter at its current version was not in that run's chain — and no entry for a verdict that did not change, so that a re-vetting run that changed nothing appends only its outcome.
+    rationale: A retraction of content that was previously approved is the most consequential thing the gateway does on its own; an auditor must be able to read what was found, when, under which policy, who was affected and what was taken away, from the ledger alone. Re-vetting repeats the same pinned content daily, so a verdict copied into the ledger on every run records nothing the previous run did not; stating how many verdicts changed keeps the omission of the rest a recorded fact rather than a gap.
     categories: ["security", "functional-suitability"]
-    revision: 0.2.0
+    revision: 0.3.0
 
   - id: GW_VETTING_0018
     title: Portal re-vetting and revocation surface
@@ -503,10 +503,10 @@ requirements:
   - id: GW_INGEST_0012
     title: Webhook-triggered ingestion
     significance: shall
-    description: The system shall expose, for a marketplace whose sync mode is webhook, an inbound endpoint that a forge push webhook can call, shall authenticate each request solely by an HMAC-SHA256 signature of the exact raw request body verified in constant time against a per-marketplace secret that the gateway generated and returned exactly once when the mode was enabled, shall treat a valid signature only as a trigger to ingest the registered upstream URL's default branch and never read a URL, ref, or commit from the request payload, shall bound the accepted body size, and shall reject a request with a missing or invalid signature, for an unknown marketplace, or for a marketplace not in webhook mode without ingesting anything.
-    rationale: A push event removes polling latency, but the endpoint is reachable without an OIDC session, so its authentication must be cryptographic and its authority must be nil — the worst a forged-but-signed request can cause is a fetch of the already-registered upstream into quarantine, which the schedule would have done anyway.
+    description: The system shall expose, for a marketplace whose sync mode is webhook, an inbound endpoint that a forge push webhook can call, shall authenticate each request solely by an HMAC-SHA256 signature of the exact raw request body verified in constant time against a per-marketplace secret that the gateway generated and returned exactly once when the mode was enabled, shall treat a valid signature only as a trigger to ingest the registered upstream URL's default branch and never read a URL, ref, or commit from the request payload, shall bound the accepted body size, and shall reject a request with a missing or invalid signature, for an unknown marketplace, or for a marketplace not in webhook mode without ingesting anything, answering all three with the same not-found response, and shall decide the body-size bound before looking the marketplace up.
+    rationale: A push event removes polling latency, but the endpoint is reachable without an OIDC session, so its authentication must be cryptographic and its authority must be nil — the worst a forged-but-signed request can cause is a fetch of the already-registered upstream into quarantine, which the schedule would have done anyway. Because it is unauthenticated, a refusal that differed by cause would tell anyone which marketplace names exist and which are in webhook mode; the facade answers refusal and absence alike for the same reason.
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_INGEST_0013
     title: Upstream outage resilience
@@ -917,10 +917,10 @@ requirements:
   - id: GW_AUTH_0017
     title: Enterprise identity-provider session integrity
     significance: shall
-    description: The system shall let an operator configure which claim of the identity-provider token names the principal and which scopes the login requests, defaulting to the subject claim and the openid scope so an existing deployment is unchanged, and shall, when an expected issuer is configured, refuse any identity token whose issuer claim differs from it and establish no session, warning at startup whenever a deployment that is not in the insecure development mode leaves the expected issuer unconfigured.
-    rationale: On an app registration shared between services the subject claim is an opaque per-application identifier, so grants, the configured admin list and every ledger row would name a string no human can resolve to a person; and where one authorization endpoint serves many tenants every tenant's tokens verify against the same signing keys, which makes the issuer the tenant boundary — leaving it unchecked accepts a login from an organisation the deployment has no relationship with.
+    description: The system shall let an operator configure which claim of the identity-provider token names the principal and which scopes the login requests, defaulting to the subject claim and the openid scope so an existing deployment is unchanged, and shall, when an expected issuer is configured, refuse any identity token whose issuer claim differs from it and establish no session, and shall refuse to start whenever a deployment that is not in the insecure development mode has an identity provider configured and leaves the expected issuer unconfigured, stating the missing setting and the configuration that showed a provider to be configured.
+    rationale: On an app registration shared between services the subject claim is an opaque per-application identifier, so grants, the configured admin list and every ledger row would name a string no human can resolve to a person; and where one authorization endpoint serves many tenants every tenant's tokens verify against the same signing keys, which makes the issuer the tenant boundary — leaving it unchecked accepts a login from an organisation the deployment has no relationship with, and because that misconfiguration's only symptom is logins accepted too broadly, which nobody observes, a warning is not enough and the gateway refuses to start instead. Every identity provider has an issuer, so there is no deployment for which leaving it unchecked is correct.
     categories: ["security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_FACADE_0006
     title: Gateway-hosted marketplace origin
@@ -1290,10 +1290,10 @@ requirements:
   - id: GW_VETTING_0022
     title: A vetting ledger entry is self-describing and correctly attributed
     significance: shall
-    description: The system shall append every vetter verdict to the audit ledger carrying the vetter name, its conclusion, the number of findings and the worst finding severity present, and a reference to the chain run the verdict belongs to; shall append the run-completed entry carrying that same run reference; and shall attribute every entry produced by the automated vetting chain to the gateway acting on its own rather than to a person.
+    description: The system shall append every vetter verdict it appends to the audit ledger under GW_VETTING_0006 carrying the vetter name, its conclusion, the number of findings and the worst finding severity present, and a reference to the chain run the verdict belongs to; shall append the run-completed entry carrying that same run reference; and shall attribute every entry produced by the automated vetting chain to the gateway acting on its own rather than to a person.
     rationale: An auditor asking what a snapshot's vetting did must be able to answer it from the ledger alone; an entry that records only that a vetter passed forces the reader back into the vetting tables to learn how much was examined and how it relates to the rest of the run, which is exactly the derivation the ledger exists to remove. Carrying the run reference on both the verdict and the completion entry is what lets the scattered per-vetter rows be reassembled into the one run they came from. Typing the chain as the automated subsystem it is stops the ledger from asserting that a machine verdict was a human act, which is itself a transparency defect on the surface whose whole purpose is transparency.
     categories: ["security", "functional-suitability"]
-    revision: 0.2.0
+    revision: 0.3.0
 
   - id: GW_VETTING_0023
     title: A clean vetting pass records what it examined
@@ -1713,6 +1713,16 @@ requirements:
     categories: ["security", "functional-suitability"]
     revision: 0.1.0
 
+  - id: GW_RETENTION_0011
+    title: Delivered and failed webhook deliveries are removed after a bounded age
+    significance: shall
+    description: "The system shall, during its scheduled hard-delete compaction pass while retention is enabled, remove webhook deliveries that are in the delivered or failed state and were last updated more than thirty days ago, at most one configured batch per pass; shall never remove a delivery that is still pending, whatever its age; and shall record one ledger entry naming the number removed for each pass that removed any."
+    rationale: "A delivery row exists so an operator can troubleshoot a receiver over days, and for an audit export sink its payload is a copy of the exported ledger batch, so keeping every row forever grows a second copy of the ledger that nothing bounds. The ledger already holds the audit record of the event itself. The age is fixed rather than configurable and is not the ledger maximum age, which is compliance policy and would couple two unrelated retentions; a pending delivery is excluded because it has not yet done its job. Running inside the existing pass adds no scheduled sweep."
+    references:
+      requirement_ids: ["GW_RETENTION_0009"]
+    categories: ["reliability", "performance-efficiency"]
+    revision: 0.1.0
+
   - id: GW_VETTING_0038
     title: Chain staleness is stated at the approval gate
     significance: shall
@@ -1782,6 +1792,14 @@ requirements:
     references:
       requirement_ids: ["GW_INGEST_0056", "GW_INGEST_0061"]
     rationale: "The assertion can mint a token for every repository the App is installed on. A redirect followed with it, or an assertion that rode on a git request to the upstream, would hand that power to a server the operator never named."
+    categories: ["security"]
+    revision: 0.3.0
+
+  - id: GW_AUTH_0052
+    title: The web surface declares a content security policy
+    significance: shall
+    description: "The system shall send a content security policy on every response of the browser-facing web surface that permits script, styles, fonts, images and connections from the gateway's own origin only, permits no plugin content, no framing by another page and no form submission elsewhere, and shall permit inline script on the API reference page alone and on no portal page."
+    rationale: "The portal has no HTML pipeline, so the policy is defence in depth: should an injection ever be found, it cannot load script from elsewhere or send what it reads off-site. The API reference initialises itself from an inline script its third-party page generates, and renders only the gateway's own API description, so it is the one page given inline script, rather than the whole surface."
     categories: ["security"]
     revision: 0.3.0
 

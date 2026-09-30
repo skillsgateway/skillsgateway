@@ -300,6 +300,20 @@ CREATE INDEX idx_fetch_log_adoption ON fetch_log (principal, marketplace, id DES
 -- comparison it replaces.
 CREATE INDEX idx_fetch_log_actor_type ON fetch_log (actor_type, id DESC);
 
+-- The per-commit ledger reads: who fetched a commit, and the retention idle veto's NOT EXISTS. The
+-- veto matches `source <> 'admin'` rather than `event`, so this index cannot be restricted to
+-- upload-pack; `sha IS NOT NULL` is implied by both equality predicates.
+CREATE INDEX idx_fetch_log_sha_marketplace_ts ON fetch_log (sha, marketplace, ts)
+    WHERE sha IS NOT NULL;
+
+-- The windowed adoption reads, which filter on `event = 'upload-pack'` and `ts >= :since`.
+CREATE INDEX idx_fetch_log_ts ON fetch_log (ts)
+    WHERE event = 'upload-pack';
+
+-- One marketplace's page of the browse read (GW_AUDIT_0008), newest first: without it, a quiet
+-- marketplace's page walks the primary key back across the whole ledger to fill itself.
+CREATE INDEX idx_fetch_log_marketplace ON fetch_log (marketplace, id DESC);
+
 CREATE TABLE access_tokens (
     id BIGSERIAL PRIMARY KEY,
     principal TEXT NOT NULL,
@@ -405,6 +419,9 @@ CREATE TABLE webhook_deliveries (
 
 -- The dispatcher's only query.
 CREATE INDEX idx_webhook_deliveries_due ON webhook_deliveries (state, next_attempt_at);
+
+-- A subscriber's delivery listing.
+CREATE INDEX idx_webhook_deliveries_subscriber ON webhook_deliveries (subscriber_id, id);
 
 -- Audit ledger export sinks (GW_AUDIT_0004..GW_AUDIT_0005).
 

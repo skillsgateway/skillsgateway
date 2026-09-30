@@ -59,6 +59,26 @@ export async function signOut(): Promise<void> {
   window.location.assign("/");
 }
 
+const RELOAD_KEY = "sgw-session-reload";
+const RELOAD_WINDOW_MS = 30_000;
+
+/**
+ * `/api/**` answers a bare 401 once the session is gone. Reloading the page restarts the
+ * OIDC flow. The timestamp in sessionStorage stops a reload loop: a second 401 within the
+ * window (login did not take) surfaces as an ordinary error instead of reloading again.
+ */
+function reloadOnExpiredSession(): void {
+  try {
+    const last = Number(window.sessionStorage.getItem(RELOAD_KEY));
+    if (Date.now() - last < RELOAD_WINDOW_MS) return;
+    window.sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+  } catch {
+    // Storage blocked: reload at most is unguarded, so do nothing rather than risk a loop.
+    return;
+  }
+  window.location.reload();
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const token = csrfToken();
   const response = await fetch(path, {
@@ -71,6 +91,9 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       ...init?.headers,
     },
   });
+  if (response.status === 401) {
+    reloadOnExpiredSession();
+  }
   if (!response.ok) {
     throw await parseError(response);
   }

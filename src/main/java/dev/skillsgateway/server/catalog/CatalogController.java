@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -73,7 +72,7 @@ public class CatalogController {
             CatalogService.CatalogInfo info = catalogService.rebuild();
             auditLogger.record(authentication.getName(), catalogService.name(), "catalog-rebuilt", info.sha());
             return info;
-        } catch (IOException | GitAPIException e) {
+        } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }

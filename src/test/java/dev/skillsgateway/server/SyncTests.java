@@ -146,11 +146,12 @@ class SyncTests extends AbstractGatewayTest {
         assertThat(snapshot.sha()).isEqualTo(expectedSha);
         assertThat(snapshot.state()).isEqualTo(Snapshot.HELD);
 
-        // Adversarial cases: each is rejected and none creates a snapshot.
-        trigger(name, payload, null).andExpect(status().isForbidden());
-        trigger(name, payload, "sha256=not-hex-not-right").andExpect(status().isForbidden());
-        trigger(name, payload, signer.sign("0".repeat(64), payload)).andExpect(status().isForbidden());
-        trigger(name, "{\"tampered\":true}", signer.sign(secret, payload)).andExpect(status().isForbidden());
+        // Adversarial cases: each is rejected and none creates a snapshot. A refused signature
+        // answers exactly what an unknown name does (GW_INGEST_0012).
+        trigger(name, payload, null).andExpect(status().isNotFound());
+        trigger(name, payload, "sha256=not-hex-not-right").andExpect(status().isNotFound());
+        trigger(name, payload, signer.sign("0".repeat(64), payload)).andExpect(status().isNotFound());
+        trigger(name, "{\"tampered\":true}", signer.sign(secret, payload)).andExpect(status().isNotFound());
         trigger(uniqueName("ghost"), payload, signer.sign(secret, payload)).andExpect(status().isNotFound());
 
         String onDemandName = uniqueName("plain");
@@ -166,7 +167,61 @@ class SyncTests extends AbstractGatewayTest {
         // Enabling webhook mode again rotates the secret: the old one stops working.
         String rotated = enableWebhookMode(name);
         assertThat(rotated).isNotEqualTo(secret);
-        trigger(name, payload, signer.sign(secret, payload)).andExpect(status().isForbidden());
+        trigger(name, payload, signer.sign(secret, payload)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @SVCs({"SVC_GW_INGEST_0012"})
+    void every_webhook_refusal_answers_like_an_unknown_marketplace_and_ingests_nothing() throws Exception {
+        Path upstream = createUpstream(DEFAULT_MANIFEST);
+        String hooked = uniqueName("oracle");
+        Marketplace marketplace =
+                marketplaceRepository.register(hooked, upstream.toAbsolutePath().toString());
+        String secret = enableWebhookMode(hooked);
+        String plain = uniqueName("oracle-plain");
+        marketplaceRepository.register(plain, upstream.toAbsolutePath().toString());
+        String payload = "{}";
+
+        // The reference answer: a name that was never registered.
+        String unknown = refusal(uniqueName("oracle-ghost"), payload, signer.sign(secret, payload));
+
+        // Every other refusal is byte-for-byte the same answer, so none tells a caller whether the
+        // name exists or is in webhook mode.
+        assertThat(refusal(plain, payload, signer.sign(secret, payload))).isEqualTo(unknown);
+        assertThat(refusal(hooked, payload, null)).isEqualTo(unknown);
+        assertThat(refusal(hooked, payload, "sha256=" + "0".repeat(64))).isEqualTo(unknown);
+        assertThat(refusal(hooked, payload, signer.sign("f".repeat(64), payload)))
+                .isEqualTo(unknown);
+
+        // The size bound is decided before the name is looked up, so it reveals nothing either.
+        byte[] oversized = new byte[1024 * 1024 + 1];
+        String body = new String(oversized, StandardCharsets.ISO_8859_1);
+        trigger(uniqueName("oracle-ghost"), body, null).andExpect(status().isContentTooLarge());
+        trigger(plain, body, null).andExpect(status().isContentTooLarge());
+        trigger(hooked, body, signer.sign(secret, oversized)).andExpect(status().isContentTooLarge());
+
+        // None of the refusals reached ingestion: no snapshot and no sync attempt, even given time.
+        Instant settle = Instant.now().plus(Duration.ofSeconds(1));
+        while (Instant.now().isBefore(settle)) {
+            assertThat(snapshotRepository.listByMarketplace(marketplace.id())).isEmpty();
+            assertThat(marketplaceRepository.findByName(hooked).orElseThrow().lastSyncAt())
+                    .isNull();
+            Thread.sleep(50);
+        }
+    }
+
+    /**
+     * A refusal as the caller sees it — status, reason, content type and body — with the problem's
+     * {@code instance}, which only echoes the caller's own request path, made name-independent.
+     */
+    private String refusal(String marketplace, String body, String signature) throws Exception {
+        var response = trigger(marketplace, body, signature)
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse();
+        return (response.getStatus() + " " + response.getErrorMessage() + " " + response.getContentType() + " "
+                        + response.getContentAsString())
+                .replace("/hooks/" + marketplace, "/hooks/{marketplace}");
     }
 
     @Test

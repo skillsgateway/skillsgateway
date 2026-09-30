@@ -104,6 +104,18 @@ function defaultExpiry() {
   return date.toISOString().slice(0, 10);
 }
 
+/** Mirrors `WaiverService.MAX_LIFETIME`: the server refuses an expiry further out than this. */
+const MAX_WAIVER_DAYS = 90;
+
+/**
+ * The last day whose end (the instant posted below) is still within the server's cap, so the
+ * date control never offers a day the server refuses.
+ */
+function latestExpiry() {
+  const cap = Date.now() + MAX_WAIVER_DAYS * 86_400_000;
+  return new Date(cap - 86_399_000).toISOString().slice(0, 10);
+}
+
 type WaiveChoice = "group" | "snapshot" | "path";
 
 /**
@@ -144,7 +156,9 @@ export function WaiveForm({
   // (a justification is likewise mandatory there, never blank).
   const expiryInstant = new Date(`${expiresAt}T23:59:59Z`).getTime();
   const expiryIsFuture = Number.isFinite(expiryInstant) && expiryInstant > Date.now();
-  const incomplete = justification.trim().length === 0 || !expiryIsFuture;
+  const maxExpiry = latestExpiry();
+  const expiryIsBeyondCap = expiresAt > maxExpiry;
+  const incomplete = justification.trim().length === 0 || !expiryIsFuture || expiryIsBeyondCap;
   const idBase = `${snapshotId}-${rule}-${target.content ?? "rule"}-${target.line ?? 0}`;
   const hintId = `waiver-hint-${idBase}`;
 
@@ -153,7 +167,7 @@ export function WaiveForm({
       <p className="text-xs text-muted-foreground">
         Accepting <span className="font-mono">{rule}</span>
         {count > 1 ? ` at ${count} locations` : null}. The acceptance is recorded with your identity,
-        and it lapses on the date you choose — there are no unlimited waivers.
+        and it lapses on the date you choose, at most 90 days out — there are no unlimited waivers.
       </p>
       <div className="grid gap-2 sm:grid-cols-2">
         {/* Full width: the scope options say how far each one reaches, and that text must not be cut. */}
@@ -186,7 +200,8 @@ export function WaiveForm({
             value={expiresAt}
             // The native control refuses a past day for the same reason the server does.
             min={new Date().toISOString().slice(0, 10)}
-            aria-invalid={expiryIsFuture ? undefined : true}
+            max={maxExpiry}
+            aria-invalid={expiryIsFuture && !expiryIsBeyondCap ? undefined : true}
             aria-describedby={hintId}
             onChange={(event) => setExpiresAt(event.target.value)}
           />
@@ -205,7 +220,8 @@ export function WaiveForm({
       </div>
       <p id={hintId} className="text-xs text-muted-foreground">
         Record waiver enables once a justification is written and the expiry is a future
-        date. Both are mandatory — the gateway refuses an unlimited or unexplained waiver.
+        date within 90 days. All are mandatory — the gateway refuses an unlimited, longer
+        or unexplained waiver; renew a waiver rather than extend it.
       </p>
       <div className="flex gap-2">
         <Button
@@ -394,7 +410,7 @@ function WaiverList({ waivers }: { waivers: Waiver[] }) {
               {waiver.active ? "active" : waiver.revokedAt ? "revoked" : "expired"}
             </Badge>
             <span className="font-mono text-xs">{waiver.ruleId}</span>
-            <span className="font-mono text-xs text-muted-foreground">
+            <span className="font-mono text-xs break-all text-muted-foreground">
               {waiver.scope === "snapshot" ? "snapshot" : "path"}: {waiver.scopeValue}
             </span>
             <span className="text-muted-foreground">{waiver.justification}</span>

@@ -161,6 +161,35 @@ public class VettingRepository {
                 verdicts(r.runId())));
     }
 
+    /**
+     * The snapshot's latest finished run before {@code runId}, with its verdicts and findings — what
+     * a re-vet compares its verdicts with (GW_VETTING_0017). An unfinished run is skipped: its verdict
+     * set may be partial.
+     */
+    @Requirements({"GW_VETTING_0017"})
+    public Optional<Run> previousRun(long snapshotId, long runId) {
+        return jdbc.sql("SELECT * FROM vetting_runs WHERE snapshot_id = :snapshotId AND id < :runId"
+                        + " AND finished_at IS NOT NULL ORDER BY id DESC LIMIT 1")
+                .param("snapshotId", snapshotId)
+                .param("runId", runId)
+                .query(VettingRepository::mapRun)
+                .optional()
+                .map(r -> new Run(
+                        r.runId(),
+                        r.snapshotId(),
+                        r.trigger(),
+                        r.outcome(),
+                        r.startedAt(),
+                        r.finishedAt(),
+                        r.chain(),
+                        verdicts(r.runId())));
+    }
+
+    /** Whether a run with this trigger is a re-vet rather than the ingestion run. */
+    public static boolean isRevet(String trigger) {
+        return TRIGGER_REVET_SCHEDULED.equals(trigger) || TRIGGER_REVET_MANUAL.equals(trigger);
+    }
+
     /** One run by id, with its verdicts and findings — what a just-finished re-vet reads back. */
     public Optional<Run> run(long runId) {
         return jdbc.sql("SELECT * FROM vetting_runs WHERE id = :runId")
@@ -313,7 +342,7 @@ public class VettingRepository {
 
         /** Whether this run was produced by re-vetting rather than by ingesting the snapshot. */
         public boolean revet() {
-            return TRIGGER_REVET_SCHEDULED.equals(trigger) || TRIGGER_REVET_MANUAL.equals(trigger);
+            return isRevet(trigger);
         }
     }
 

@@ -45,6 +45,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
             "spring.security.oauth2.client.provider.idp.authorization-uri=https://idp.invalid/authorize",
             "spring.security.oauth2.client.provider.idp.token-uri=https://idp.invalid/token",
             "spring.security.oauth2.client.provider.idp.jwk-set-uri=https://idp.invalid/jwks",
+            "skills-gateway.oidc.issuer=https://idp.invalid",
             "skills-gateway.data-dir=target/test-git-data",
             "skills-gateway.roles.admins=user",
             "spring.main.cloud-platform=none"

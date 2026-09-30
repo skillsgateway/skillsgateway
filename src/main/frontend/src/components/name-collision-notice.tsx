@@ -14,8 +14,8 @@ function CollisionRow({ snapshotId, collision }: { snapshotId: number; collision
   return (
     <li className="list-none text-sm">
       <div className="flex flex-wrap items-baseline gap-2">
-        <span className={`font-mono text-xs ${waiver ? "line-through" : ""}`}>{collision.pluginName}</span>
-        <span className="font-mono text-xs text-muted-foreground">{collision.location}</span>
+        <span className={`font-mono text-xs break-all ${waiver ? "line-through" : ""}`}>{collision.pluginName}</span>
+        <span className="font-mono text-xs break-all text-muted-foreground">{collision.location}</span>
         <span className="text-muted-foreground">
           looks like{" "}
           {incumbents
@@ -23,7 +23,7 @@ function CollisionRow({ snapshotId, collision }: { snapshotId: number; collision
             .join(", ")}
         </span>
         {waiver ? (
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="h-auto whitespace-normal break-words">
             waived by {waiver.approvedBy} until <Timestamp value={waiver.expiresAt} dayOnly />
           </Badge>
         ) : !waiving ? (

@@ -290,8 +290,9 @@ and is refused as a collision with it.
 A **waiver** is an accepted-risk exception for **one finding rule**, on **one
 marketplace**, within **one scope**, until **one date**. All four are mandatory,
 and so are a justification and the identity accepting the risk. There is no way
-to express an unlimited waiver — `expires_at` is `NOT NULL` in the schema, and a
-past expiry is refused at creation.
+to express an unlimited waiver — `expires_at` is `NOT NULL` in the schema, and an
+expiry in the past, or more than 90 days ahead, is refused at creation
+(refused, not shortened; a lapsed waiver is renewed, not extended).
 
 | Scope | The scope value is | It covers a finding when |
 | --- | --- | --- |
@@ -717,9 +718,14 @@ conformance a publishing requirement must not have "we could not check" read as
 
 ## What lands in the ledger
 
-Every chain run writes to the append-only ledger: one entry per vetter
-verdict (`vetting-verdict`) and one entry for the run outcome
-(`vetting-completed`). Both are attributed to the `system` actor kind — the chain
+Every chain run writes one entry for the run outcome (`vetting-completed`) to
+the append-only ledger, and the ingestion run adds one entry per vetter verdict
+(`vetting-verdict`). A re-vet adds a verdict entry only for a vetter whose
+verdict changed since the snapshot's previous run — a different state, finding
+count or worst severity, or a vetter version that was not in that run's chain —
+and states how many in the completion entry's `changed=`; the verdicts
+themselves are recorded for every vetter on every run and served in the vetting
+report. Both kinds of entry are attributed to the `system` actor kind — the chain
 is the gateway's own automated subsystem, not a person. A verdict entry leads
 with `vetter=state` and then carries the finding count, the worst severity
 present, and the id of the chain run, so the entry is auditable on its own; a

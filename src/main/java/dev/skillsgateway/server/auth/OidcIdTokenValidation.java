@@ -30,7 +30,8 @@ public final class OidcIdTokenValidation {
      * The standard OIDC checks, plus an issuer comparison when one is configured.
      *
      * @param expectedIssuer the issuer to require, or null to keep only the standard checks —
-     *     which compare no issuer at all, which is why the gateway warns when nothing is pinned
+     *     which compare no issuer at all, which is why a gateway with a configured provider
+     *     refuses to start with nothing pinned ({@link IdTokenDecoderConfiguration})
      */
     @Requirements({"GW_AUTH_0017"})
     public static OAuth2TokenValidator<Jwt> validator(ClientRegistration registration, String expectedIssuer) {

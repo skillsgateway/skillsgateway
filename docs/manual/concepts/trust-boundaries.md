@@ -204,9 +204,10 @@ the web chain, and it is **stateless**:
   [identity-provider bearer token](../reference/git-facade.md#identity-provider-bearer-tokens)
   from the same provider the web surface trusts (GW_AUTH_0040). It is validated the
   way a resource server validates one — key-set signature, issuer, audience,
-  `exp`/`nbf` — and the issuer pin the login path only warns about (GW_AUTH_0017)
-  becomes mandatory here, because a token arriving cold has none of the
-  provenance a code exchange has. While the capability is off, no filter,
+  `exp`/`nbf` — and the issuer pin, which the facade requires on its own
+  account because a token arriving cold has none of the provenance a code
+  exchange has, and which the login requires as well (GW_AUTH_0017 — Enterprise
+  identity-provider session integrity). While the capability is off, no filter,
   provider or decoder exists on the path at all. It changes what a credential may
   *be*, and nothing about what it may *reach*: a bearer token carries no scope
   list, so it permits exactly what an unscoped PAT permits, and it reaches
@@ -358,6 +359,30 @@ the control, because honouring it is the browser's choice; `Strict` is
 deliberately not used, and
 [Configuration](../reference/configuration.md#session-cookie) says why.
 
+**Browser hardening.** Every response on this chain carries a
+`Content-Security-Policy`. It allows script, styles, fonts, images and
+connections from the gateway's own origin only. It also allows no plugins, no
+framing by another page, and no form submission elsewhere:
+
+```text
+default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+```
+
+The portal has no HTML pipeline, so the policy is defence in depth. If an
+injection were ever found, it could not load script from elsewhere, and it could
+not send what it reads off-site.
+
+- **Inline styles are allowed** because the portal's toast and component
+  libraries inject them at run time.
+- **Inline script is allowed on the API reference (`scalar.path`, `/docs`) and on
+  no other page.** Its third-party page starts itself from an inline script built
+  from its configuration, and it renders only the gateway's own API description.
+
+The git, publication, revocation-check, webhook and machine chains serve no
+documents, so they carry no policy. A proxy in front of the gateway may add its
+own policy. Browsers enforce every policy they receive, so a second policy can
+only narrow this one.
+
 !!! warning "dev-insecure-auth"
 
     `skills-gateway.dev-insecure-auth=true` makes the **entire web surface**
@@ -434,8 +459,10 @@ lands `held` in quarantine exactly as the polling sweep would have produced.
 The worst a forged-but-signed request can cause is therefore a redundant fetch
 of content the gateway already governs; nothing on this path can name a URL, a
 ref, or a commit, and nothing on it can approve or publish. Body size is
-bounded before the HMAC is computed, and requests for marketplaces not in
-webhook mode are refused without revealing why.
+bounded before the marketplace is looked up, and every other refusal — an
+unknown marketplace, one not in webhook mode, a signature that did not
+verify — is the same `404`, so the endpoint reveals neither why it refused nor
+which marketplace names exist.
 
 ## 5. Publication — a publisher's push becomes quarantined content
 
@@ -512,7 +539,11 @@ The identity token's own integrity is part of this: the gateway configures its
 provider endpoints explicitly rather than by discovery, so it compares the
 token's issuer only when `skills-gateway.oidc.issuer` names one. Where a single
 authorization endpoint serves many tenants, that comparison *is* the tenant
-boundary — every tenant's tokens verify against the same keys.
+boundary — every tenant's tokens verify against the same keys. So a gateway
+with an identity provider configured refuses to start without the issuer,
+rather than starting with the boundary open and only a log line to say so: the
+only symptom of that misconfiguration is logins accepted too broadly, which
+nobody observes.
 
 This boundary is the web surface's only. The facade's authorization is
 [token scopes](../reference/api/tokens.md) — a different credential for a

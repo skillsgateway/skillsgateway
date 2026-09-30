@@ -94,7 +94,7 @@ for both.
 | Check | Source |
 | --- | --- |
 | Signature | The `idp` registration's `jwk-set-uri`, cached and refreshed on an unknown `kid` |
-| `iss` | `skills-gateway.oidc.issuer`, which this capability makes mandatory |
+| `iss` | `skills-gateway.oidc.issuer`, which the login already requires and this capability checks on every token |
 | `aud` | `skills-gateway.facade.idp-bearer.audience`, defaulting to the OAuth2 client id; must *contain* it, and a token with no `aud` is refused |
 | `exp` / `nbf` | The current time, with 60 seconds of clock leeway |
 

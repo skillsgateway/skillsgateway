@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 /** A name has no length limit and no spaces, so a button carrying it must be allowed to wrap anywhere. */
-const WRAPS = "h-auto min-h-8 max-w-full whitespace-normal break-all py-1.5";
+const WRAPS = "h-auto min-h-8 max-w-full shrink min-w-0 whitespace-normal break-all py-1.5";
 
 /** Declared by the estate when the last reconciliation has an entry for it, whatever that entry's outcome. */
 export function isDeclared(report: EstateReconciliation | undefined, name: string): boolean {

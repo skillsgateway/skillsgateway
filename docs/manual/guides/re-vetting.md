@@ -215,7 +215,8 @@ Rejecting it instead is the terminal answer.
 
 | Event | Meaning |
 | --- | --- |
-| `vetting-completed` | Every run, with its trigger, outcome and chain identity. |
+| `vetting-completed` | Every run, with its trigger, outcome and chain identity, and `changed=`: how many vetters' verdicts differ from the snapshot's previous run. |
+| `vetting-verdict` | Only for a vetter whose verdict changed since the previous run. An unchanged re-vet writes none, so it leaves exactly two entries: `vetting-completed` (`changed=0`) and `revet-clear` (or `revet-inconclusive`). |
 | `revet-clear` | A re-vetting run that found nothing. |
 | `revet-inconclusive` | The chain could not conclude; the snapshot stays approved. |
 | `revet-violation` | A retroactive violation, with the objecting vetters, the rules and the mode in force. |

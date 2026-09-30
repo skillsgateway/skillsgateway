@@ -15,7 +15,7 @@ Run, Nomad, a systemd unit — see
 | What | Why | Notes |
 | --- | --- | --- |
 | A PostgreSQL database | Snapshots, the audit ledger, tokens and grants live there | The chart does **not** bring one. Create the database and a Secret with key `password`. |
-| An OIDC client | The whole web surface authenticates with OIDC | Client id, client secret, and the three endpoint URIs. See [Identity providers](identity-providers.md). |
+| An OIDC client | The whole web surface authenticates with OIDC | Client id, client secret, the three endpoint URIs, and the provider's issuer (`oidc.issuer`, which the chart requires). See [Identity providers](identity-providers.md). |
 | Access to the image | `ghcr.io/skillsgateway/skillsgateway`, or your own mirror | For a private mirror, create a `kubernetes.io/dockerconfigjson` Secret and name it in `imagePullSecrets`. |
 | A storage decision | The chart will not install without one | See [Storage](#storage) — this is the one value that has no default. |
 

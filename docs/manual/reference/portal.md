@@ -119,8 +119,11 @@ are `held`, `approved` and `rejected` across all of them. When any snapshot is
 held, a secondary badge reads *"{n} awaiting review"* and links to the
 [review queue](#review-queue). Action: **Manage marketplaces**.
 
-**Fetch ledger** — chip with the total recorded fetches. Action: **Open audit
-log**.
+**Fetch ledger** — a chip with how many entries the ledger holds: *"{n} ledger
+entries"*, or *"about {n} ledger entries"* once the ledger is large enough that the
+server estimates rather than counts (see [`GET /api/v1/audit`](api/audit.md#get-apiv1audit)).
+It counts every entry: fetches, administrative actions and vetting bookkeeping.
+Action: **Open audit log**.
 
 **Access tokens** — chips for active and revoked counts. Action: **Manage
 tokens**.
@@ -512,10 +515,12 @@ Inside the wizard:
    family.
 3. **Add the marketplace to Claude Code** —
    `claude plugin marketplace add {origin}/git/{name}`.
-4. **Clone directly** — the CI-shaped `git clone` URL with the token inline.
+4. **Clone directly** — a plain `git clone` of the facade URL, with no token in it:
+   the credential stored by step 2 authenticates it, and nothing lands in
+   `.git/config` or shell history.
 
 The remaining snippets have icon copy buttons. Until a token is minted the
-snippets carry the `<YOUR_TOKEN>` placeholder.
+credential snippet carries the `<YOUR_TOKEN>` placeholder.
 
 ### Vetting
 
@@ -697,11 +702,13 @@ Empty state: "No snapshots yet."
 
 ### Audit log
 
-Below the snapshots, the marketplace's slice of the ledger: the entries from
-`GET /api/v1/audit` whose marketplace is this one, newest first, with the same
+Below the snapshots, the marketplace's slice of the ledger: the entries
+`GET /api/v1/audit?marketplace={name}` returns, newest first, with the same
 verdict colouring as the [Audit log](#audit-log) page — a blocked verdict reads
-red here too. A **See the full ledger** link goes to `/audit`. Empty state:
-"Nothing recorded against this marketplace yet."
+red here too. The server does the narrowing, so a quiet marketplace's entries
+show however many newer entries belong to others. **Load older entries**
+fetches the next page while there is one. A **See the full ledger** link goes
+to `/audit`. Empty state: "Nothing recorded against this marketplace yet."
 
 ---
 
@@ -909,9 +916,15 @@ not a fetch through the API client. The line beneath it states how many
 
 ### Ledger
 
-The table, from `GET /api/v1/audit`, **newest first** — the API answers in ledger
-order, so the page sorts it by timestamp descending to open on what just
-happened. Any column header re-sorts it.
+The table, from `GET /api/v1/audit`, **newest first**. The API pages the ledger
+newest first, and the table sorts the entries it has loaded by timestamp
+descending, so it opens on what just happened. Any column header re-sorts it.
+
+The table starts with the newest page of the ledger (1,000 entries by default).
+Below it, **Load older entries** fetches the next older page and adds it to the
+table. Beside the control, a line says how many entries are loaded. Once the
+oldest entry the ledger holds is loaded, the control goes and the line reads
+*"{n} entries loaded — nothing older is recorded."*
 
 | Column | Contents |
 | --- | --- |
@@ -927,9 +940,10 @@ The per-column filter boxes sit above the table; each is free-text but offers
 **completion** from the values actually present, so you pick rather than type
 blind. The event, principal and commit lists are the distinct values in the
 loaded rows; the marketplace list draws on the registered marketplaces, so it
-completes beyond the rows on screen. Because the table paginates client-side
-(25 rows a page) over the JSON ledger, the event/principal/commit suggestions
-cover only the rows loaded so far. The status is a **read-only legibility
+completes beyond the rows on screen. The table sorts, filters and paginates
+(25 rows a page) client-side over the entries loaded so far. The footer reads
+*"{shown} of {loaded} loaded entries"*, and the filters and the
+event/principal/commit suggestions cover only the loaded entries. The status is a **read-only legibility
 aid** derived from what the ledger already records — it does not correct the
 ledger; the lossy verdict detail and the actor-type on automated vetting
 principals are tracked in [#221](https://github.com/skillsgateway/skillsgateway/issues/221).

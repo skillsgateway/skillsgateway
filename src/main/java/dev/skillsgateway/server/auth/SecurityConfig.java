@@ -6,6 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -18,19 +19,21 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.client.oidc.authentication.OidcIdTokenDecoderFactory;
-import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.header.writers.ContentSecurityPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -180,25 +183,6 @@ public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     /**
-     * Adds the issuer comparison Spring Security cannot make on its own here (GW_AUTH_0017). Unset is
-     * today's behaviour and stays the default, so an upgrade changes nothing — but a deployment
-     * that is not the local development escape hatch is told, once, that its login accepts an
-     * identity token from any issuer whose keys are in the configured key set.
-     */
-    @Bean
-    @Requirements({"GW_AUTH_0017"})
-    public JwtDecoderFactory<ClientRegistration> idTokenDecoderFactory(SkillsGatewayProperties properties) {
-        String issuer = properties.oidc().issuer();
-        if ((issuer == null || issuer.isBlank()) && !properties.devInsecureAuth()) {
-            log.warn("skills-gateway.oidc.issuer is not set — the identity token's issuer is not checked. "
-                    + "Pin it to your provider's issuer, which on a multi-tenant endpoint is the tenant boundary.");
-        }
-        OidcIdTokenDecoderFactory factory = new OidcIdTokenDecoderFactory();
-        factory.setJwtValidatorFactory(registration -> OidcIdTokenValidation.validator(registration, issuer));
-        return factory;
-    }
-
-    /**
      * The machine API chain (GW_AUTH_0021): a sibling of the facade and publication chains rather than
      * a mode on the session chain. It matches {@code /api/**} <em>and</em> the presence of an
      * {@code Authorization: Bearer} header, so a browser request without one still falls through
@@ -264,6 +248,32 @@ public class SecurityConfig {
         registry.anyRequest().denyAll();
     }
 
+    private static final String CONTENT_SECURITY_POLICY = "default-src 'self'; script-src 'self'; "
+            + "style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; "
+            + "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
+
+    private static final String API_REFERENCE_CONTENT_SECURITY_POLICY = "default-src 'self'; "
+            + "script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+            + "font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; "
+            + "frame-ancestors 'none'";
+
+    /**
+     * The web surface's content security policy (GW_AUTH_0052). The API reference is the one page
+     * allowed inline script: the Scalar webjar's page initialises itself from an inline script built
+     * from its configuration, so no fixed hash could name it. Its matcher reads {@code scalar.path}
+     * with the webjar's own default, so it names whatever path the webjar serves. The two matchers
+     * are complements, so each response carries exactly one policy.
+     */
+    @Requirements({"GW_AUTH_0052"})
+    private static void contentSecurityPolicy(HeadersConfigurer<HttpSecurity> headers, String apiReferencePath) {
+        RequestMatcher apiReference = PathPatternRequestMatcher.withDefaults().matcher(apiReferencePath + "/**");
+        headers.addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                        apiReference, new ContentSecurityPolicyHeaderWriter(API_REFERENCE_CONTENT_SECURITY_POLICY)))
+                .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                        new NegatedRequestMatcher(apiReference),
+                        new ContentSecurityPolicyHeaderWriter(CONTENT_SECURITY_POLICY)));
+    }
+
     /**
      * OIDC for browsers; unauthenticated /api/** gets 401 instead of a login redirect.
      *
@@ -281,7 +291,13 @@ public class SecurityConfig {
     @Bean
     @Order(6)
     @Requirements({"GW_AUTH_0002", "GW_AUTH_0030"})
-    public SecurityFilterChain webChain(HttpSecurity http, SkillsGatewayProperties properties) throws Exception {
+    public SecurityFilterChain webChain(
+            HttpSecurity http,
+            SkillsGatewayProperties properties,
+            @Value("${scalar.path:/scalar}") String apiReferencePath)
+            throws Exception {
+        // Ahead of the escape hatch's early return, so local development runs under the same policy.
+        http.headers(headers -> contentSecurityPolicy(headers, apiReferencePath));
         if (properties.devInsecureAuth()) {
             log.warn("skills-gateway.dev-insecure-auth is ON — the web surface is UNAUTHENTICATED. "
                     + "Never enable this outside local development.");

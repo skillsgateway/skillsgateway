@@ -120,7 +120,7 @@ public class ExternalVettingConnector implements Vetter {
                         }
                     })
                     .body(request)
-                    .exchange((req, response) -> map(response), false);
+                    .exchange((req, response) -> map(response));
         } catch (Exception e) {
             // Connection refused, DNS failure, timeout, reset, serialization error — all block.
             log.warn("external vetting connector '{}' call to {} failed", name(), props.url(), e);

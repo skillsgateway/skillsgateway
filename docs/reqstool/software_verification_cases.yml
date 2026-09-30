@@ -317,7 +317,9 @@ cases:
       AND the final page omits the cursor rather than returning it pointing at nothing
       AND a requested page size above the export maximum is clamped to it
       AND a caller holding no role to read the ledger is refused
-    revision: "0.1.0"
+      AND a read narrowed to one marketplace carries only that marketplace's entries, newest first, and its cursor continues within the narrowing
+      AND every page states how many entries the ledger holds, exactly and marked as exact while the ledger is small
+    revision: "0.2.0"
 
   - id: SVC_GW_AUDIT_0009
     requirement_ids: ["GW_AUDIT_0009"]
@@ -494,6 +496,16 @@ cases:
       THEN each of the first three is refused and no waiver is recorded for it, and the fourth is recorded carrying the acting identity as its approver
     revision: "0.1.0"
 
+  - id: SVC_GW_VETTING_0007.2
+    requirement_ids: ["GW_VETTING_0007"]
+    title: A waiver expiring more than 90 days out is refused, one at 90 days is accepted
+    verification: automated-test
+    description: |
+      GIVEN a snapshot carrying a failing vetting finding
+      WHEN a waiver is requested with an expiry just past 90 days from now, and then one with an expiry of exactly 90 days from the moment of creation
+      THEN the first is refused with a message naming the 90-day bound and no waiver is recorded for it, and the second is recorded with the expiry as requested
+    revision: "0.1.0"
+
   - id: SVC_GW_VETTING_0008
     requirement_ids: ["GW_VETTING_0008"]
     title: A waiver suppresses only the finding its scope names
@@ -594,6 +606,28 @@ cases:
       THEN it holds the re-vetting run's outcome with its trigger, the violation with the objecting vetters and the mode in force, an entry naming the affected identity, the revocation, the unpublication, and the fresh approval, each with the marketplace and the acting identity
     revision: "0.2.0"
 
+  - id: SVC_GW_VETTING_0017.1
+    requirement_ids: ["GW_VETTING_0017"]
+    title: A re-vet that changes no verdict appends only its outcome
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot whose ingestion run appended one vetting-verdict entry per vetter and a vetting-completed entry with no changed count
+      WHEN it is re-vetted over the same chain and every vetter concludes as before
+      THEN the re-vet appends exactly two entries, a vetting-completed entry with changed=0 and the re-vetting outcome entry, and no vetting-verdict entry
+      AND the re-vetting run's recorded verdicts still hold one verdict per vetter
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0017.2
+    requirement_ids: ["GW_VETTING_0017"]
+    title: A re-vet appends the verdict of the one vetter that changed
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot and one vetter of its chain switched off for the marketplace after the previous run
+      WHEN it is re-vetted
+      THEN the re-vet appends exactly one vetting-verdict entry, naming that vetter and its disabled conclusion
+      AND a vetting-completed entry with changed=1
+    revision: "0.1.0"
+
   - id: SVC_GW_VETTING_0018
     requirement_ids: ["GW_VETTING_0018"]
     title: Portal shows a revoked snapshot, its violation and who fetched it
@@ -631,8 +665,8 @@ cases:
     description: |
       GIVEN a marketplace in webhook mode with a gateway-generated secret returned exactly once
       WHEN the inbound endpoint receives a validly signed request, requests with a missing, malformed, or wrong-secret signature, a tampered body, an oversized body, and requests for an unknown marketplace and one not in webhook mode
-      THEN only the validly signed request triggers ingestion of the registered upstream's default branch (a foreign URL or ref in the payload is ignored), a held snapshot appears for it, and every other request is rejected with no snapshot created
-    revision: "0.1.0"
+      THEN only the validly signed request triggers ingestion of the registered upstream's default branch (a foreign URL or ref in the payload is ignored), a held snapshot appears for it, every other request is rejected with no snapshot created, every refusal other than the oversized body answers the same not-found status and body whether the marketplace is unknown, not in webhook mode, or the signature did not verify, and an oversized body is refused alike for an unknown and a registered marketplace
+    revision: "0.2.0"
 
   - id: SVC_GW_INGEST_0013
     requirement_ids: ["GW_INGEST_0013"]
@@ -1117,7 +1151,16 @@ cases:
     description: |
       GIVEN a gateway configured with an expected issuer and a principal-name claim other than the subject, and a second gateway left at the defaults
       WHEN an identity token from a different issuer is presented, one from the expected issuer is presented, and the session identity endpoint is read on both gateways
-      THEN the foreign-issuer token is refused and establishes no session, the matching one succeeds and the identity endpoint reports the configured claim's value which the role lookups key on, and the default gateway behaves exactly as before while logging that no expected issuer is configured
+      THEN the foreign-issuer token is refused and establishes no session, the matching one succeeds and the identity endpoint reports the configured claim's value which the role lookups key on, and the default gateway applies the standard identity-token checks and no issuer comparison
+    revision: "0.2.0"
+  - id: SVC_GW_AUTH_0017.2
+    requirement_ids: ["GW_AUTH_0017"]
+    title: A configured identity provider without an expected issuer refuses to start
+    verification: automated-test
+    description: |
+      GIVEN a gateway started from the shipped identity-provider placeholders
+      WHEN it is started with a real client id or a real provider endpoint and no expected issuer (or one that is only whitespace), with a provider and an expected issuer, with no provider and no issuer, and in the insecure development mode with no issuer
+      THEN the first refuses to start with a message naming the expected-issuer setting and the configuration that showed a provider to be configured, the other three start, and in the insecure development mode a configured provider is refused by that mode's own guard rather than by this one
     revision: "0.1.0"
   - id: SVC_GW_FACADE_0006
     requirement_ids: ["GW_FACADE_0006"]
@@ -2431,6 +2474,19 @@ cases:
       and an event kind outside that set is not eligible
     revision: "0.1.0"
 
+  - id: SVC_GW_RETENTION_0011
+    requirement_ids: ["GW_RETENTION_0011"]
+    title: Only settled deliveries past the age are swept, a batch at a time
+    verification: automated-test
+    description: |
+      GIVEN delivered, failed and pending webhook deliveries older than thirty days, and delivered
+      and failed ones newer than that
+      WHEN the compaction pass runs
+      THEN only the old delivered and failed deliveries are removed, no pending delivery is removed
+      whatever its age, no more than one configured batch is removed per pass, the pass writes one
+      ledger entry naming how many it removed, and a pass that removes nothing writes none
+    revision: "0.1.0"
+
   - id: SVC_GW_VETTING_0038
     requirement_ids: ["GW_VETTING_0038"]
     title: A run's chain is compared with the chain in force, and undetermined is its own answer
@@ -3505,6 +3561,16 @@ cases:
       GIVEN a GitHub App entry, an upstream that redirects to another port and another path, and an API that redirects the token request elsewhere
       WHEN each is registered
       THEN no git request carries an assertion, no request outside the prefix carries the installation token, and the API's redirect is not followed
+    revision: "0.3.0"
+
+  - id: SVC_GW_AUTH_0052
+    requirement_ids: ["GW_AUTH_0052"]
+    title: Every web response carries the policy, and only the API reference allows inline script
+    verification: automated-test
+    description: |
+      GIVEN an authenticated portal session, an anonymous browser, and the packaged gateway driven in a real browser
+      WHEN a portal route, a session API route, the API reference and the anonymous login redirect are requested, and every portal page and the API reference are loaded
+      THEN each response carries exactly one policy, the portal's and the API's allow script from the gateway's origin only, the API reference's alone also allows inline script, and no page raises a policy violation
     revision: "0.3.0"
 
   - id: SVC_GW_INGEST_0063

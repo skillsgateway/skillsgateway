@@ -106,7 +106,8 @@ class ClaimRoleMappingTests extends AbstractClaimMappingTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"ruleId\": \"aws-access-key-id\", \"scope\": \"path\","
                                         + " \"path\": \"plugins/hello\", \"justification\": \"claim scoping test\","
-                                        + " \"expiresAt\": \"2036-01-01T00:00:00Z\"}"))
+                                        + " \"expiresAt\": \""
+                                        + java.time.Instant.now().plus(java.time.Duration.ofDays(30)) + "\"}"))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()

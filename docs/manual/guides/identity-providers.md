@@ -18,7 +18,7 @@ which team.
 | JWKS endpoint | `SGW_OIDC_JWK_SET_URI` | Keys the ID token is verified with. |
 | Principal claim | `SGW_OIDC_USER_NAME_ATTRIBUTE` | Which claim names the user. Default `sub`. |
 | Scopes | `SGW_OIDC_SCOPE` | Default `openid`. Widen if a scope is needed for group claims. |
-| Expected issuer | `SKILLSGATEWAY_OIDC_ISSUER` | The `iss` every ID token must carry. |
+| Expected issuer | `SKILLSGATEWAY_OIDC_ISSUER` | The `iss` every ID token must carry. Required: the gateway refuses to start without it. |
 | Redirect URI | `SGW_OIDC_REDIRECT_URI` | Optional. States the registered redirect URI outright instead of deriving it from the request. |
 
 The redirect URI to register is:
@@ -33,15 +33,17 @@ see [Running behind a proxy](deploying-without-kubernetes.md#running-behind-a-pr
 A redirect-URI mismatch reported by the provider is almost always that, not the
 registration.
 
-!!! warning "Pin the issuer"
+!!! warning "The issuer is required"
 
     The gateway configures its endpoints explicitly rather than by issuer
     discovery, and Spring Security compares an ID token's `iss` only when an
-    issuer is configured. Leave `skills-gateway.oidc.issuer` unset and nothing
-    checks it — which, on an authorization endpoint that serves many tenants,
-    means a token minted for another organisation verifies against the same
-    keys and looks exactly like yours. The gateway warns at startup while this
-    is unset.
+    issuer is configured. Unchecked, on an authorization endpoint that serves
+    many tenants, a token minted for another organisation verifies against the
+    same keys and looks exactly like yours. So once a provider is configured,
+    the gateway **refuses to start** without `skills-gateway.oidc.issuer`. Take
+    the value from the `issuer` field of your provider's
+    `/.well-known/openid-configuration`, exactly — a trailing slash or a
+    different API version is a different issuer, and every login then fails.
 
 ## Groups instead of grants
 

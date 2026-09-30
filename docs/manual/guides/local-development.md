@@ -98,11 +98,18 @@ $ export SGW_OIDC_CLIENT_SECRET=...
 $ export SGW_OIDC_AUTHORIZATION_URI=https://idp.example.com/authorize
 $ export SGW_OIDC_TOKEN_URI=https://idp.example.com/token
 $ export SGW_OIDC_JWK_SET_URI=https://idp.example.com/jwks
+$ export SKILLSGATEWAY_OIDC_ISSUER=https://idp.example.com
 ```
 
 The client registration id is `idp`, and the defaults are the placeholders
 `change-me` and `idp.invalid` so that the registration always exists. A gateway
 started without real values will not complete a login.
+
+The issuer is not optional: once any of the `SGW_OIDC_*` values is real, the
+gateway refuses to start without `SKILLSGATEWAY_OIDC_ISSUER`, and names the
+settings that tripped it. Use the `issuer` value from your provider's
+`/.well-known/openid-configuration`. See
+[Configuration](../reference/configuration.md#expected-issuer).
 
 ### Without one — the escape hatch
 

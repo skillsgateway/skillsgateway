@@ -108,4 +108,16 @@ public class WebhookDeliveryRepository {
                 .query(WebhookDelivery.class)
                 .list();
     }
+
+    /**
+     * Deletes up to {@code limit} delivered or failed deliveries last touched before {@code cutoff};
+     * a pending delivery is never selected, whatever its age.
+     */
+    public int deleteSettledBefore(Instant cutoff, int limit) {
+        return jdbc.sql("DELETE FROM webhook_deliveries WHERE id IN (SELECT id FROM webhook_deliveries"
+                        + " WHERE state IN ('delivered', 'failed') AND updated_at < :cutoff ORDER BY id LIMIT :limit)")
+                .param("cutoff", cutoff.atOffset(ZoneOffset.UTC))
+                .param("limit", limit)
+                .update();
+    }
 }

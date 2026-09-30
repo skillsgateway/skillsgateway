@@ -7,6 +7,8 @@ import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.vetting.RevetService;
 import dev.skillsgateway.server.vetting.RevetVerdict;
+import dev.skillsgateway.server.vetting.VerdictState;
+import dev.skillsgateway.server.vetting.VetterToggleService;
 import dev.skillsgateway.server.vetting.VettingChain;
 import dev.skillsgateway.server.vetting.VettingRepository;
 import dev.skillsgateway.server.vetting.WaiverScope;
@@ -53,6 +55,9 @@ class RevetTests extends AbstractGatewayTest {
 
     @Autowired
     private SkillsGatewayProperties properties;
+
+    @Autowired
+    private VetterToggleService vetterToggleService;
 
     private static Instant soon() {
         return Instant.now().plus(Duration.ofDays(7));
@@ -206,6 +211,99 @@ class RevetTests extends AbstractGatewayTest {
         assertThat(result.affected()).isEmpty();
         assertThat(snapshotRepository.findById(id).orElseThrow().state()).isEqualTo(Snapshot.APPROVED);
         assertThat(storage.publishedIfServing(registered.marketplace().name())).isPresent();
+    }
+
+    /** The ledger rows of one marketplace appended after the given ledger id, in order. */
+    private List<Map<String, Object>> ledgerAfter(String marketplace, long afterId) {
+        return fetchLogRepository.list().stream()
+                .filter(entry -> marketplace.equals(entry.get("marketplace")))
+                .filter(entry -> ((Number) entry.get("id")).longValue() > afterId)
+                .toList();
+    }
+
+    private long ledgerHead() {
+        return fetchLogRepository.list().stream()
+                .mapToLong(entry -> ((Number) entry.get("id")).longValue())
+                .max()
+                .orElse(0L);
+    }
+
+    /**
+     * An unchanged re-vet says so in two rows (GW_VETTING_0017): the run with {@code changed=0} and
+     * its outcome. The per-vetter verdicts stay in the run's record, and the ingestion run — the
+     * first answer about the content — still carries one ledger row per vetter.
+     */
+    @Test
+    @SVCs({"SVC_GW_VETTING_0017.1"})
+    void anUnchangedRevetAppendsOnlyTheRunAndItsOutcome() throws Exception {
+        Registered registered = registerAndIngest(uniqueName("revetquiet"), createUpstream(DEFAULT_MANIFEST));
+        String name = registered.marketplace().name();
+        long id = registered.snapshot().id();
+        int chainLength =
+                vettingRepository.latestRun(id).orElseThrow().verdicts().size();
+        assertThat(chainLength).isGreaterThan(1);
+
+        // The ingestion run: one verdict row per vetter, and a completed row with no changed count.
+        List<Map<String, Object>> ingestion = ledgerAfter(name, 0);
+        assertThat(ingestion)
+                .filteredOn(entry -> "vetting-verdict".equals(entry.get("event")))
+                .hasSize(chainLength);
+        assertThat(ingestion)
+                .filteredOn(entry -> "vetting-completed".equals(entry.get("event")))
+                .singleElement()
+                .satisfies(entry -> assertThat(String.valueOf(entry.get("detail")))
+                        .contains("trigger=" + VettingRepository.TRIGGER_INGESTION)
+                        .doesNotContain("changed="));
+
+        approve(id);
+        long head = ledgerHead();
+
+        RevetService.RevetResult result = revetService.revetSnapshot(id, "alice");
+
+        assertThat(result.classification()).isEqualTo(RevetVerdict.Classification.CLEAR);
+        List<Map<String, Object>> revet = ledgerAfter(name, head);
+        assertThat(revet)
+                .extracting(entry -> entry.get("event"))
+                .containsExactly("vetting-completed", RevetService.EVENT_CLEAR);
+        assertThat(String.valueOf(revet.getFirst().get("detail")))
+                .contains("trigger=" + VettingRepository.TRIGGER_REVET_MANUAL)
+                .contains("changed=0")
+                .contains("run=" + result.runId())
+                .contains("chain=");
+        // Only the ledger copy is conditional: the run itself records every vetter's verdict.
+        assertThat(vettingRepository.run(result.runId()).orElseThrow().verdicts())
+                .hasSize(chainLength);
+    }
+
+    /**
+     * A re-vet in which one verdict changed writes that verdict and nothing else of the chain
+     * (GW_VETTING_0017). Switching a vetter off is the one way to change a verdict over pinned
+     * content without changing the chain's code.
+     */
+    @Test
+    @SVCs({"SVC_GW_VETTING_0017.2"})
+    void aRevetAppendsTheVerdictOfTheOneVetterThatChanged() throws Exception {
+        Registered registered = registerAndIngest(uniqueName("revetchanged"), createUpstream(DEFAULT_MANIFEST));
+        String name = registered.marketplace().name();
+        long id = registered.snapshot().id();
+        approve(id);
+        vetterToggleService.set("prompt-injection", name, false, "noisy on this marketplace", "alice");
+        long head = ledgerHead();
+
+        RevetService.RevetResult result = revetService.revetSnapshot(id, "alice");
+
+        List<Map<String, Object>> revet = ledgerAfter(name, head);
+        assertThat(revet)
+                .filteredOn(entry -> "vetting-verdict".equals(entry.get("event")))
+                .singleElement()
+                .satisfies(entry -> assertThat(String.valueOf(entry.get("detail")))
+                        .startsWith("prompt-injection=" + VerdictState.DISABLED.stored())
+                        .contains("run=" + result.runId()));
+        assertThat(revet)
+                .filteredOn(entry -> "vetting-completed".equals(entry.get("event")))
+                .singleElement()
+                .satisfies(
+                        entry -> assertThat(String.valueOf(entry.get("detail"))).contains("changed=1"));
     }
 
     /**
