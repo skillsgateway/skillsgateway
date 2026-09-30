@@ -204,9 +204,10 @@ the web chain, and it is **stateless**:
   [identity-provider bearer token](../reference/git-facade.md#identity-provider-bearer-tokens)
   from the same provider the web surface trusts (GW_AUTH_0040). It is validated the
   way a resource server validates one — key-set signature, issuer, audience,
-  `exp`/`nbf` — and the issuer pin the login path only warns about (GW_AUTH_0017)
-  becomes mandatory here, because a token arriving cold has none of the
-  provenance a code exchange has. While the capability is off, no filter,
+  `exp`/`nbf` — and the issuer pin, which the facade requires on its own
+  account because a token arriving cold has none of the provenance a code
+  exchange has, and which the login requires as well (GW_AUTH_0017 — Enterprise
+  identity-provider session integrity). While the capability is off, no filter,
   provider or decoder exists on the path at all. It changes what a credential may
   *be*, and nothing about what it may *reach*: a bearer token carries no scope
   list, so it permits exactly what an unscoped PAT permits, and it reaches
@@ -514,7 +515,11 @@ The identity token's own integrity is part of this: the gateway configures its
 provider endpoints explicitly rather than by discovery, so it compares the
 token's issuer only when `skills-gateway.oidc.issuer` names one. Where a single
 authorization endpoint serves many tenants, that comparison *is* the tenant
-boundary — every tenant's tokens verify against the same keys.
+boundary — every tenant's tokens verify against the same keys. So a gateway
+with an identity provider configured refuses to start without the issuer,
+rather than starting with the boundary open and only a log line to say so: the
+only symptom of that misconfiguration is logins accepted too broadly, which
+nobody observes.
 
 This boundary is the web surface's only. The facade's authorization is
 [token scopes](../reference/api/tokens.md) — a different credential for a

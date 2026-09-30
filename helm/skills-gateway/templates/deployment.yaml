@@ -83,10 +83,8 @@ spec:
               value: {{ .Values.oidc.userNameAttribute | quote }}
             - name: SGW_OIDC_SCOPE
               value: {{ .Values.oidc.scope | quote }}
-            {{- if .Values.oidc.issuer }}
             - name: SKILLSGATEWAY_OIDC_ISSUER
-              value: {{ .Values.oidc.issuer | quote }}
-            {{- end }}
+              value: {{ required "oidc.issuer is required: the identity token's issuer is the tenant boundary" .Values.oidc.issuer | quote }}
             {{- if .Values.oidc.redirectUri }}
             - name: SGW_OIDC_REDIRECT_URI
               value: {{ .Values.oidc.redirectUri | quote }}

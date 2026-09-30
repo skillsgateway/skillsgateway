@@ -119,8 +119,8 @@ oidc:
   # the gateway derive it from the request, which is right only when
   # `forwardHeadersStrategy` below tells it what the outside world sees.
   redirectUri: ""
-  # Expected ID-token issuer. Unset means the issuer is not checked at all —
-  # on a multi-tenant endpoint that is the tenant boundary left open.
+  # Expected ID-token issuer. Required: on a multi-tenant endpoint it is the
+  # tenant boundary, and the gateway refuses to start without it.
   issuer: ""
 
 # Git storage (/data): the quarantine, published and hosted repositories.

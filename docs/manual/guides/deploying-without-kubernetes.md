@@ -19,7 +19,7 @@ instead — the chart already does everything below.
 | What | Why |
 | --- | --- |
 | A PostgreSQL database | Snapshots, the audit ledger, tokens and grants live there. Nothing here creates one. |
-| An OIDC client | The whole web surface authenticates with OIDC. Client id, client secret and the three endpoint URIs — see [Identity providers](identity-providers.md). |
+| An OIDC client | The whole web surface authenticates with OIDC. Client id, client secret, the three endpoint URIs and the provider's issuer — see [Identity providers](identity-providers.md). The gateway refuses to start with a provider configured and no issuer. |
 | Persistent storage | On the default `filesystem` backend, the repositories live on disk under the data directory and must outlive the container. See [Storage](#storage). |
 | A container memory limit | The image runs a JVM, and its heap ceiling is a percentage of the limit. With no limit set that percentage is taken from the *host's* memory. See [Memory](#memory). |
 | Writable scratch at `/tmp` | Only if you run with a read-only root filesystem — Tomcat's work directory lives there and the process will not start without it. See [A writable `/tmp`](#a-writable-tmp-if-you-seal-the-root-filesystem). |
@@ -50,7 +50,7 @@ SGW_OIDC_TOKEN_URI=https://idp.example.com/oauth2/v2.0/token
 SGW_OIDC_JWK_SET_URI=https://idp.example.com/discovery/v2.0/keys
 SGW_OIDC_USER_NAME_ATTRIBUTE=preferred_username
 SGW_OIDC_SCOPE=openid,profile,email
-SKILLSGATEWAY_OIDC_ISSUER=https://idp.example.com/v2.0
+SKILLSGATEWAY_OIDC_ISSUER=https://idp.example.com/v2.0   # required with a provider configured
 
 # Behind a TLS-terminating proxy — see Running behind a proxy
 SERVER_FORWARDHEADERSSTRATEGY=native

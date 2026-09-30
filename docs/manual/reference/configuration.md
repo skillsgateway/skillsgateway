@@ -1488,15 +1488,25 @@ provider exists — and a gateway with one configured refuses to start with
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `skills-gateway.oidc.issuer` | string | _(unset)_ | ID-token issuer to require. Unset means the issuer is not compared at all. |
+| `skills-gateway.oidc.issuer` | string | _(unset)_ | ID-token issuer to require. **Required once an identity provider is configured**: the gateway refuses to start without it. |
 
 The gateway configures its provider endpoints explicitly rather than by issuer
 discovery, and Spring Security compares an ID token's `iss` only when the
 registration carries an issuer — so with this unset, nothing checks it. That
 matters most where one authorization endpoint serves many tenants: every
 tenant's tokens verify against the same signing keys, so the issuer is the only
-thing that says which organisation the person logging in belongs to. The
-gateway logs a warning at startup while it is unset.
+thing that says which organisation the person logging in belongs to.
+
+!!! warning "A configured provider needs an issuer"
+
+    The gateway **refuses to start** when an identity provider is configured —
+    a client id other than `change-me`, or a provider endpoint off the
+    `idp.invalid` host — and this is unset or blank. The refusal names the
+    property and the settings that showed a provider to be configured. Set it to
+    the `issuer` value of your provider's `/.well-known/openid-configuration`.
+    Unset is accepted only while the shipped placeholders are in force, and
+    under `skills-gateway.dev-insecure-auth`, whose own guard refuses a
+    configured provider.
 
 ---
 

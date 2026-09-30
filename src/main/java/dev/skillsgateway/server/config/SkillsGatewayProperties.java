@@ -772,10 +772,10 @@ public record SkillsGatewayProperties(
     /**
      * Browser-login integrity beyond what the client registration expresses (GW_AUTH_0017).
      *
-     * @param issuer the ID-token issuer to require. Null — the default, for compatibility — runs
-     *     Spring Security's own checks only, which compare no issuer at all when the registration
-     *     carries none; the gateway warns at startup while that is the case. Where one
-     *     authorization endpoint serves many tenants, this is the tenant boundary.
+     * @param issuer the ID-token issuer to require. Where one authorization endpoint serves many
+     *     tenants, this is the tenant boundary, so once an identity provider is configured the
+     *     gateway refuses to start without it. Null is only for the unconfigured placeholders and
+     *     the development escape hatch.
      */
     public record Oidc(String issuer) {}
 

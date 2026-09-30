@@ -89,8 +89,8 @@ class OidcIdTokenValidationTests {
     void with_no_issuer_configured_the_standard_checks_are_all_that_run() {
         OAuth2TokenValidator<Jwt> validator = OidcIdTokenValidation.validator(registration(), null);
 
-        // Today's behaviour, kept deliberately: any issuer passes, which is exactly why the
-        // gateway warns at startup when nothing is pinned.
+        // Any issuer passes, which is exactly why a gateway with a configured provider refuses
+        // to start when nothing is pinned (OidcIssuerRequiredTests).
         assertThat(validator
                         .validate(idToken("https://idp.example.com/tenant-b/v2.0"))
                         .hasErrors())

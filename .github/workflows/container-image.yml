@@ -188,6 +188,7 @@ jobs:
             -e SGW_OIDC_AUTHORIZATION_URI=http://localhost:9090/default/authorize \
             -e SGW_OIDC_TOKEN_URI=http://localhost:9090/default/token \
             -e SGW_OIDC_JWK_SET_URI=http://localhost:9090/default/jwks \
+            -e SKILLSGATEWAY_OIDC_ISSUER=http://localhost:9090/default \
             -e SKILLSGATEWAY_ROLES_CLAIM=groups \
             -e SKILLSGATEWAY_ROLES_MAPPINGS_0_CLAIMVALUE=sg-gateway-admins \
             -e SKILLSGATEWAY_ROLES_MAPPINGS_0_ROLE=admin \

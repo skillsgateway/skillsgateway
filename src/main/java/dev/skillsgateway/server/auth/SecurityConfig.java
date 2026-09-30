@@ -22,9 +22,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.client.oidc.authentication.OidcIdTokenDecoderFactory;
-import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
@@ -178,25 +175,6 @@ public class SecurityConfig {
     }
 
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
-
-    /**
-     * Adds the issuer comparison Spring Security cannot make on its own here (GW_AUTH_0017). Unset is
-     * today's behaviour and stays the default, so an upgrade changes nothing — but a deployment
-     * that is not the local development escape hatch is told, once, that its login accepts an
-     * identity token from any issuer whose keys are in the configured key set.
-     */
-    @Bean
-    @Requirements({"GW_AUTH_0017"})
-    public JwtDecoderFactory<ClientRegistration> idTokenDecoderFactory(SkillsGatewayProperties properties) {
-        String issuer = properties.oidc().issuer();
-        if ((issuer == null || issuer.isBlank()) && !properties.devInsecureAuth()) {
-            log.warn("skills-gateway.oidc.issuer is not set — the identity token's issuer is not checked. "
-                    + "Pin it to your provider's issuer, which on a multi-tenant endpoint is the tenant boundary.");
-        }
-        OidcIdTokenDecoderFactory factory = new OidcIdTokenDecoderFactory();
-        factory.setJwtValidatorFactory(registration -> OidcIdTokenValidation.validator(registration, issuer));
-        return factory;
-    }
 
     /**
      * The machine API chain (GW_AUTH_0021): a sibling of the facade and publication chains rather than

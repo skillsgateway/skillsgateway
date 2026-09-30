@@ -145,6 +145,7 @@ SGW_OIDC_CLIENT_SECRET=e2e-secret \
 SGW_OIDC_AUTHORIZATION_URI="http://localhost:9090/default/authorize" \
 SGW_OIDC_TOKEN_URI="http://localhost:9090/default/token" \
 SGW_OIDC_JWK_SET_URI="http://localhost:9090/default/jwks" \
+SKILLSGATEWAY_OIDC_ISSUER="http://localhost:9090/default" \
 SKILLSGATEWAY_DATADIR="$DATA_DIR" \
 SKILLSGATEWAY_ALLOWEDURLSCHEMES="http,https,file" \
 SKILLSGATEWAY_VETTING_REVET_ENABLED=false \

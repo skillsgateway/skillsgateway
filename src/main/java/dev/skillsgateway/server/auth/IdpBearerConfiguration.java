@@ -57,11 +57,10 @@ public class IdpBearerConfiguration {
      *
      * <p>The issuer check is the reason this method can throw. On a multi-tenant authorization
      * endpoint every tenant's tokens verify against the same keys, so {@code iss} is the only
-     * claim that says which organisation a holder belongs to. At login the gateway may go without
-     * it, having itself exchanged a code over TLS with a configured endpoint (GW_AUTH_0017 warns and
-     * continues); a bearer token arriving cold at the facade has no such provenance. So the pin is
-     * a precondition here, refused at startup rather than at request time — a misconfiguration
-     * whose only symptom is "tokens are accepted too broadly" is one nobody observes.
+     * claim that says which organisation a holder belongs to, so the pin is a precondition here,
+     * refused at startup rather than at request time — a misconfiguration whose only symptom is
+     * "tokens are accepted too broadly" is one nobody observes. The browser login refuses on the
+     * same condition (GW_AUTH_0017); this check stays because it does not depend on that one.
      */
     @Bean
     @Requirements({"GW_AUTH_0040"})

@@ -917,10 +917,10 @@ requirements:
   - id: GW_AUTH_0017
     title: Enterprise identity-provider session integrity
     significance: shall
-    description: The system shall let an operator configure which claim of the identity-provider token names the principal and which scopes the login requests, defaulting to the subject claim and the openid scope so an existing deployment is unchanged, and shall, when an expected issuer is configured, refuse any identity token whose issuer claim differs from it and establish no session, warning at startup whenever a deployment that is not in the insecure development mode leaves the expected issuer unconfigured.
-    rationale: On an app registration shared between services the subject claim is an opaque per-application identifier, so grants, the configured admin list and every ledger row would name a string no human can resolve to a person; and where one authorization endpoint serves many tenants every tenant's tokens verify against the same signing keys, which makes the issuer the tenant boundary — leaving it unchecked accepts a login from an organisation the deployment has no relationship with.
+    description: The system shall let an operator configure which claim of the identity-provider token names the principal and which scopes the login requests, defaulting to the subject claim and the openid scope so an existing deployment is unchanged, and shall, when an expected issuer is configured, refuse any identity token whose issuer claim differs from it and establish no session, and shall refuse to start whenever a deployment that is not in the insecure development mode has an identity provider configured and leaves the expected issuer unconfigured, stating the missing setting and the configuration that showed a provider to be configured.
+    rationale: On an app registration shared between services the subject claim is an opaque per-application identifier, so grants, the configured admin list and every ledger row would name a string no human can resolve to a person; and where one authorization endpoint serves many tenants every tenant's tokens verify against the same signing keys, which makes the issuer the tenant boundary — leaving it unchecked accepts a login from an organisation the deployment has no relationship with, and because that misconfiguration's only symptom is logins accepted too broadly, which nobody observes, a warning is not enough and the gateway refuses to start instead. Every identity provider has an issuer, so there is no deployment for which leaving it unchecked is correct.
     categories: ["security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_FACADE_0006
     title: Gateway-hosted marketplace origin

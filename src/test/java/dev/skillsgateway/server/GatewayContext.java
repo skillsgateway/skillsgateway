@@ -38,6 +38,8 @@ import org.springframework.context.annotation.Import;
             "spring.security.oauth2.client.provider.idp.authorization-uri=https://idp.invalid/authorize",
             "spring.security.oauth2.client.provider.idp.token-uri=https://idp.invalid/token",
             "spring.security.oauth2.client.provider.idp.jwk-set-uri=https://idp.invalid/jwks",
+            // A configured provider must pin its issuer (GW_AUTH_0017); no test here completes a login.
+            "skills-gateway.oidc.issuer=https://idp.invalid",
             "skills-gateway.data-dir=target/test-git-data",
             // Authorization is always enforced and a gateway with no configured administrator
             // refuses to start (GW_AUTH_0025, GW_AUTH_0026), so the shared context names the principals its
