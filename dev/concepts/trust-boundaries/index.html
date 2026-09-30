@@ -2995,9 +2995,10 @@ the web chain, and it is <strong>stateless</strong>:</p>
   <a href="../../reference/git-facade/#identity-provider-bearer-tokens">identity-provider bearer token</a>
   from the same provider the web surface trusts (GW_AUTH_0040). It is validated the
   way a resource server validates one — key-set signature, issuer, audience,
-  <code>exp</code>/<code>nbf</code> — and the issuer pin the login path only warns about (GW_AUTH_0017)
-  becomes mandatory here, because a token arriving cold has none of the
-  provenance a code exchange has. While the capability is off, no filter,
+  <code>exp</code>/<code>nbf</code> — and the issuer pin, which the facade requires on its own
+  account because a token arriving cold has none of the provenance a code
+  exchange has, and which the login requires as well (GW_AUTH_0017 — Enterprise
+  identity-provider session integrity). While the capability is off, no filter,
   provider or decoder exists on the path at all. It changes what a credential may
   <em>be</em>, and nothing about what it may <em>reach</em>: a bearer token carries no scope
   list, so it permits exactly what an unscoped PAT permits, and it reaches
@@ -3284,7 +3285,11 @@ request carry no claims and derive no role, whatever authorities they hold.</p>
 provider endpoints explicitly rather than by discovery, so it compares the
 token's issuer only when <code>skills-gateway.oidc.issuer</code> names one. Where a single
 authorization endpoint serves many tenants, that comparison <em>is</em> the tenant
-boundary — every tenant's tokens verify against the same keys.</p>
+boundary — every tenant's tokens verify against the same keys. So a gateway
+with an identity provider configured refuses to start without the issuer,
+rather than starting with the boundary open and only a log line to say so: the
+only symptom of that misconfiguration is logins accepted too broadly, which
+nobody observes.</p>
 <p>This boundary is the web surface's only. The facade's authorization is
 <a href="../../reference/api/tokens/">token scopes</a> — a different credential for a
 different surface — and roles never apply to PATs. See

@@ -2845,7 +2845,7 @@ which team.</p>
 <tr>
 <td>Expected issuer</td>
 <td><code>SKILLSGATEWAY_OIDC_ISSUER</code></td>
-<td>The <code>iss</code> every ID token must carry.</td>
+<td>The <code>iss</code> every ID token must carry. Required: the gateway refuses to start without it.</td>
 </tr>
 <tr>
 <td>Redirect URI</td>
@@ -2863,14 +2863,16 @@ see <a href="../deploying-without-kubernetes/#running-behind-a-proxy">Running be
 A redirect-URI mismatch reported by the provider is almost always that, not the
 registration.</p>
 <div class="admonition warning">
-<p class="admonition-title">Pin the issuer</p>
+<p class="admonition-title">The issuer is required</p>
 <p>The gateway configures its endpoints explicitly rather than by issuer
 discovery, and Spring Security compares an ID token's <code>iss</code> only when an
-issuer is configured. Leave <code>skills-gateway.oidc.issuer</code> unset and nothing
-checks it — which, on an authorization endpoint that serves many tenants,
-means a token minted for another organisation verifies against the same
-keys and looks exactly like yours. The gateway warns at startup while this
-is unset.</p>
+issuer is configured. Unchecked, on an authorization endpoint that serves
+many tenants, a token minted for another organisation verifies against the
+same keys and looks exactly like yours. So once a provider is configured,
+the gateway <strong>refuses to start</strong> without <code>skills-gateway.oidc.issuer</code>. Take
+the value from the <code>issuer</code> field of your provider's
+<code>/.well-known/openid-configuration</code>, exactly — a trailing slash or a
+different API version is a different issuer, and every login then fails.</p>
 </div>
 <h2 id="groups-instead-of-grants">Groups instead of grants<a class="headerlink" href="#groups-instead-of-grants" title="Permanent link">&para;</a></h2>
 <p>Role enforcement (see <a href="../delegated-administration/">Delegated administration</a>)

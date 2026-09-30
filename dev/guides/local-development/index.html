@@ -3023,10 +3023,16 @@ e2e compose stack) rebuilds from scratch anyway and needs nothing.</p>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_AUTHORIZATION_URI</span><span class="o">=</span>https://idp.example.com/authorize
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_TOKEN_URI</span><span class="o">=</span>https://idp.example.com/token
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SGW_OIDC_JWK_SET_URI</span><span class="o">=</span>https://idp.example.com/jwks
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SKILLSGATEWAY_OIDC_ISSUER</span><span class="o">=</span>https://idp.example.com
 </code></pre></div>
 <p>The client registration id is <code>idp</code>, and the defaults are the placeholders
 <code>change-me</code> and <code>idp.invalid</code> so that the registration always exists. A gateway
 started without real values will not complete a login.</p>
+<p>The issuer is not optional: once any of the <code>SGW_OIDC_*</code> values is real, the
+gateway refuses to start without <code>SKILLSGATEWAY_OIDC_ISSUER</code>, and names the
+settings that tripped it. Use the <code>issuer</code> value from your provider's
+<code>/.well-known/openid-configuration</code>. See
+<a href="../../reference/configuration/#expected-issuer">Configuration</a>.</p>
 <h3 id="without-one-the-escape-hatch">Without one — the escape hatch<a class="headerlink" href="#without-one-the-escape-hatch" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>./mvnw<span class="w"> </span>spring-boot:run<span class="w"> </span>-Dspring-boot.run.arguments<span class="o">=</span>--skills-gateway.dev-insecure-auth<span class="o">=</span><span class="nb">true</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="gp">$ </span>java<span class="w"> </span>-jar<span class="w"> </span>target/skills-gateway-server-*.jar<span class="w"> </span>--skills-gateway.dev-insecure-auth<span class="o">=</span><span class="nb">true</span>

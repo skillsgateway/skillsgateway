@@ -5631,7 +5631,7 @@ provider exists — and a gateway with one configured refuses to start with
 <td><code>skills-gateway.oidc.issuer</code></td>
 <td>string</td>
 <td><em>(unset)</em></td>
-<td>ID-token issuer to require. Unset means the issuer is not compared at all.</td>
+<td>ID-token issuer to require. <strong>Required once an identity provider is configured</strong>: the gateway refuses to start without it.</td>
 </tr>
 </tbody>
 </table>
@@ -5640,8 +5640,18 @@ discovery, and Spring Security compares an ID token's <code>iss</code> only when
 registration carries an issuer — so with this unset, nothing checks it. That
 matters most where one authorization endpoint serves many tenants: every
 tenant's tokens verify against the same signing keys, so the issuer is the only
-thing that says which organisation the person logging in belongs to. The
-gateway logs a warning at startup while it is unset.</p>
+thing that says which organisation the person logging in belongs to.</p>
+<div class="admonition warning">
+<p class="admonition-title">A configured provider needs an issuer</p>
+<p>The gateway <strong>refuses to start</strong> when an identity provider is configured —
+a client id other than <code>change-me</code>, or a provider endpoint off the
+<code>idp.invalid</code> host — and this is unset or blank. The refusal names the
+property and the settings that showed a provider to be configured. Set it to
+the <code>issuer</code> value of your provider's <code>/.well-known/openid-configuration</code>.
+Unset is accepted only while the shipped placeholders are in force, and
+under <code>skills-gateway.dev-insecure-auth</code>, whose own guard refuses a
+configured provider.</p>
+</div>
 <hr />
 <h2 id="identity-provider-bearer-tokens-on-the-facade">Identity-provider bearer tokens on the facade<a class="headerlink" href="#identity-provider-bearer-tokens-on-the-facade" title="Permanent link">&para;</a></h2>
 <p>Off by default. When enabled, <code>/git/**</code> accepts an OIDC access token or ID token
