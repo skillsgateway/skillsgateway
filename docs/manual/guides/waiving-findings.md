@@ -12,7 +12,9 @@ A waiver always names four things, and none of them is optional:
 - the **rule** it accepts (`aws-access-key-id`), not "this snapshot";
 - the **scope** it applies to — this commit, or this path in the marketplace;
 - a **justification** in your own words;
-- an **expiry**. There are no unlimited waivers.
+- an **expiry**, at most 90 days ahead. There are no unlimited waivers, and a
+  longer expiry is refused rather than shortened: renew a waiver when it lapses
+  instead of extending it.
 
 The identity accepting the risk is your session, and it is recorded with the
 waiver and in the audit ledger.

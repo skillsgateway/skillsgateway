@@ -910,7 +910,7 @@ for the matching rules.
 | `scope` | yes | `SNAPSHOT` or `PATH`. |
 | `path` | for `PATH` | Repository-relative; must not contain `..`. Ignored for `SNAPSHOT`. |
 | `justification` | yes | Free text; blank is refused. |
-| `expiresAt` | yes | Must be in the future. There is no unlimited waiver. |
+| `expiresAt` | yes | Must be in the future and at most 90 days after the request; a later instant is refused, not shortened. There is no unlimited waiver. |
 | `content` | no | A finding group's git blob id (40 or 64 lower-case hex characters), as `groups` or `uncovered` give it. It limits the waiver to that group: the rule on that blob and line, in this snapshot, and nothing else. Only with `SNAPSHOT`. |
 | `line` | no | The group's line; omit it for a group without one. Needs `content`. |
 
@@ -921,7 +921,7 @@ approver is the acting session.
 | Status | Cause |
 | --- | --- |
 | 201 | Waiver recorded; returns it with `active`. |
-| 400 | Missing justification or expiry, an expiry in the past, an unusable scope, or a group qualifier that is malformed or not on `SNAPSHOT` scope. |
+| 400 | Missing justification or expiry, an expiry in the past or more than 90 days ahead, an unusable scope, or a group qualifier that is malformed or not on `SNAPSHOT` scope. |
 | 404 | Unknown snapshot. |
 
 ### `GET /marketplaces/{name}/waivers`

@@ -290,8 +290,9 @@ and is refused as a collision with it.
 A **waiver** is an accepted-risk exception for **one finding rule**, on **one
 marketplace**, within **one scope**, until **one date**. All four are mandatory,
 and so are a justification and the identity accepting the risk. There is no way
-to express an unlimited waiver — `expires_at` is `NOT NULL` in the schema, and a
-past expiry is refused at creation.
+to express an unlimited waiver — `expires_at` is `NOT NULL` in the schema, and an
+expiry in the past, or more than 90 days ahead, is refused at creation
+(refused, not shortened; a lapsed waiver is renewed, not extended).
 
 | Scope | The scope value is | It covers a finding when |
 | --- | --- | --- |

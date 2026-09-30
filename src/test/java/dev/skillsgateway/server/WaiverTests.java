@@ -135,6 +135,38 @@ class WaiverTests extends AbstractGatewayTest {
     }
 
     /**
+     * A waiver may run for at most {@link WaiverService#MAX_LIFETIME}: past it is refused and writes
+     * nothing, and an expiry computed from a moment before the call (so never later than the
+     * service's own cap) is accepted as requested.
+     */
+    @Test
+    @SVCs({"SVC_GW_VETTING_0007.2"})
+    void aWaiverPastNinetyDaysIsRefusedAndOneAtTheCapIsAccepted() throws Exception {
+        Registered blocked = blockedSnapshot("waivcap");
+        long id = blocked.snapshot().id();
+
+        assertThat(WaiverService.MAX_LIFETIME).isEqualTo(Duration.ofDays(90));
+        assertThatThrownBy(() -> waiverService.create(
+                        id,
+                        RULE,
+                        WaiverScope.SNAPSHOT,
+                        null,
+                        "documented dummy",
+                        Instant.now().plus(WaiverService.MAX_LIFETIME).plus(Duration.ofMinutes(1)),
+                        "alice"))
+                .isInstanceOf(WaiverValidationException.class)
+                .hasMessageContaining("at most 90 days");
+        assertThat(waiverRepository.byMarketplace(blocked.snapshot().marketplaceId()))
+                .isEmpty();
+
+        Instant atTheCap = Instant.now().plus(WaiverService.MAX_LIFETIME);
+        Waiver waiver =
+                waiverService.create(id, RULE, WaiverScope.SNAPSHOT, null, "documented dummy", atTheCap, "alice");
+        assertThat(waiver.expiresAt())
+                .isCloseTo(atTheCap, org.assertj.core.api.Assertions.within(1, java.time.temporal.ChronoUnit.MILLIS));
+    }
+
+    /**
      * The group waiver end to end (GW_VETTING_0041, GW_VETTING_0042, GW_APPROVAL_0022): one file vendored
      * into two plugins is one group with two locations, one waiver on that group covers both, and a
      * third file carrying the same rule on different bytes is untouched by it and still named, with

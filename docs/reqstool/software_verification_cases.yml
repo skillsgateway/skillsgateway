@@ -494,6 +494,16 @@ cases:
       THEN each of the first three is refused and no waiver is recorded for it, and the fourth is recorded carrying the acting identity as its approver
     revision: "0.1.0"
 
+  - id: SVC_GW_VETTING_0007.2
+    requirement_ids: ["GW_VETTING_0007"]
+    title: A waiver expiring more than 90 days out is refused, one at 90 days is accepted
+    verification: automated-test
+    description: |
+      GIVEN a snapshot carrying a failing vetting finding
+      WHEN a waiver is requested with an expiry just past 90 days from now, and then one with an expiry of exactly 90 days from the moment of creation
+      THEN the first is refused with a message naming the 90-day bound and no waiver is recorded for it, and the second is recorded with the expiry as requested
+    revision: "0.1.0"
+
   - id: SVC_GW_VETTING_0008
     requirement_ids: ["GW_VETTING_0008"]
     title: A waiver suppresses only the finding its scope names

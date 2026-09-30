@@ -391,10 +391,10 @@ requirements:
   - id: GW_VETTING_0007
     title: Scoped, expiring vetting waivers
     significance: shall
-    description: The system shall allow a reviewer to record a waiver that accepts one vetting finding rule identifier on one marketplace, scoped either to a single snapshot commit SHA or to a path within the marketplace, and shall reject a waiver that omits a justification, an approving identity, or an expiry instant in the future.
-    rationale: An accepted risk that is not narrow, attributed, justified and temporary is indistinguishable from a disabled control; refusing an unbounded or unexplained waiver at the point of creation is what keeps every acceptance reviewable.
+    description: The system shall allow a reviewer to record a waiver that accepts one vetting finding rule identifier on one marketplace, scoped either to a single snapshot commit SHA or to a path within the marketplace, and shall reject a waiver that omits a justification, an approving identity, or an expiry instant in the future, and a waiver whose expiry lies more than 90 days after the moment of creation, without shortening it.
+    rationale: An accepted risk that is not narrow, attributed, justified and temporary is indistinguishable from a disabled control; refusing an unbounded or unexplained waiver at the point of creation is what keeps every acceptance reviewable, and a bound on how far the expiry may lie is what makes a waiver a quarterly re-affirmation rather than a permanent exception in all but name.
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_VETTING_0008
     title: Waivers suppress findings in the effective vetting outcome
