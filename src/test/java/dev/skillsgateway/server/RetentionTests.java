@@ -19,9 +19,11 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.jgit.lib.Repository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -236,12 +238,34 @@ class RetentionTests extends AbstractGatewayTest {
         assertThat(hasEvent(entries, "snapshot-purged", snapshot.sha())).isTrue();
     }
 
+    private final List<Long> subscribers = new ArrayList<>();
+
+    /**
+     * A disabled subscriber, removed with its deliveries after each case: the dispatch pass reads
+     * due deliveries across the whole shared database, so a row left here would surface in
+     * {@code WebhookTests} as a backlog it did not create.
+     */
     private long subscriber() {
-        return jdbc.sql("INSERT INTO webhook_subscribers (name, url, secret, events, enabled, created_at)"
-                        + " VALUES (:name, 'https://sweep.invalid', 'x', ARRAY['*'], TRUE, NOW()) RETURNING id")
+        long id = jdbc.sql("INSERT INTO webhook_subscribers (name, url, secret, events, enabled, created_at)"
+                        + " VALUES (:name, 'https://sweep.invalid', 'x', ARRAY['*'], FALSE, NOW()) RETURNING id")
                 .param("name", uniqueName("sweep"))
                 .query(Long.class)
                 .single();
+        subscribers.add(id);
+        return id;
+    }
+
+    @AfterEach
+    void removeSweepSubscribers() {
+        for (long id : subscribers) {
+            jdbc.sql("DELETE FROM webhook_deliveries WHERE subscriber_id = :id")
+                    .param("id", id)
+                    .update();
+            jdbc.sql("DELETE FROM webhook_subscribers WHERE id = :id")
+                    .param("id", id)
+                    .update();
+        }
+        subscribers.clear();
     }
 
     /** A delivery row in the given state, last touched {@code age} ago. */
