@@ -299,6 +299,111 @@ root filesystem — failing on every fetch with a caught (non-fatal) error that
 still drowns out real ones. The chart sets `XDG_CONFIG_HOME=/tmp/xdg-config`
 in the Deployment for exactly this reason.
 
+## Restricting egress
+
+The gateway makes outbound connections to URLs an administrator or an upstream
+chooses: a marketplace's upstream, an external plugin source, a webhook
+subscriber, an audit sink, the forge mirror. The in-application address policy
+([trust boundaries](../concepts/trust-boundaries.md)) refuses private and
+link-local addresses for external plugin sources only. A marketplace upstream,
+a webhook subscriber URL and the mirror URL are checked for their scheme and
+nothing else. [ADR 0011](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md)
+names network topology as the primary control, and in a cluster that control is
+an egress `NetworkPolicy`. The chart does not ship one, because the right
+allowlist depends on where your database, object store and identity provider
+live.
+
+This policy selects the gateway's pods and permits DNS, PostgreSQL, and HTTPS to
+public addresses. It refuses the cloud metadata endpoint, RFC 1918, carrier-grade
+NAT and their IPv6 counterparts:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: skills-gateway-egress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: skills-gateway
+      app.kubernetes.io/instance: skills-gateway   # the Helm release name
+  policyTypes:
+    - Egress
+  egress:
+    # DNS, to the cluster resolver only.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    # PostgreSQL. Name its address; it is usually private, so the rule below
+    # would refuse it.
+    - to:
+        - ipBlock:
+            cidr: 10.20.30.40/32
+      ports:
+        - { protocol: TCP, port: 5432 }
+    # HTTPS to public addresses: forges, the identity provider, the object
+    # store's public endpoint, webhook subscribers.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 100.64.0.0/10
+              - 169.254.0.0/16    # link-local, the cloud metadata endpoint
+        - ipBlock:
+            cidr: ::/0
+            except:
+              - fc00::/7
+              - fe80::/10
+      ports:
+        - { protocol: TCP, port: 443 }
+```
+
+Adapt it to the estate:
+
+- **Anything private the gateway must reach** gets its own rule with the
+  narrowest block that holds it: an in-cluster database (a `podSelector` or
+  `namespaceSelector` rule instead of an `ipBlock`), an object store reached
+  through a private endpoint, an internal forge, an OpenTelemetry collector.
+  Never widen the public rule to cover them.
+- **Plain `http`.** `skills-gateway.allowed-url-schemes` permits `http` by
+  default. The policy above allows port 443 only, so an `http` upstream fails to
+  connect. Set `allowed-url-schemes: [https]` as well, and registration refuses
+  such a URL with a reason instead.
+- **An egress proxy.** Where egress already goes through a proxy, allow the
+  proxy's address and nothing else, and let the proxy hold the destination
+  allowlist.
+
+!!! warning "A policy the network does not enforce does nothing"
+
+    A `NetworkPolicy` is enforced by the cluster's network plugin, and a plugin
+    that does not implement it accepts the object and ignores it. Some platforms
+    do not enforce it for every node type, serverless node pools included on
+    some providers. Use the platform's own control there, such as security
+    groups or a firewall on the egress path. Either way, check the result with
+    the probe below.
+
+**Verify it from inside the pod.** The image has no shell, so attach an
+ephemeral debug container: it shares the pod's network namespace, and the
+policy applies to it.
+
+```bash
+kubectl debug -it <gateway-pod> --image=curlimages/curl -- \
+  curl -sS -m 5 http://169.254.169.254/
+```
+
+A timeout is the expected answer. Any response means the metadata endpoint is
+reachable from the gateway.
+
 ## Storage options on serverless Kubernetes
 
 Serverless node pools — AWS Fargate and its equivalents — constrain storage
@@ -369,7 +474,8 @@ server on a network filesystem is not the case it is best at.
   direct route to an internet gateway. Ingestion fetches from upstream git over
   the network, so without a NAT gateway (or equivalent egress) registration and
   sync will hang rather than fail quickly. Inbound traffic likewise arrives
-  through a load balancer you place in front of the pods.
+  through a load balancer you place in front of the pods. Restrict that egress
+  as [Restricting egress](#restricting-egress) describes.
 
 ## Worked example: a statically provisioned network filesystem
 
