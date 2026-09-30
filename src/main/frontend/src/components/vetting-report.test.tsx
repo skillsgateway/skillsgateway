@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { expect, test, vi } from "vitest";
@@ -154,6 +154,31 @@ test("waiving_a_group_defaults_to_that_group_and_posts_its_content", async () =>
     line: 12,
     justification: "vendored copy",
   });
+});
+
+/**
+ * @SVCs SVC_GW_VETTING_0007.2
+ */
+test("the_waiver_expiry_is_capped_at_ninety_days", async () => {
+  const user = userEvent.setup();
+  vettingIs(vendoredVetting);
+  renderReport();
+
+  await user.click(
+    await screen.findByRole("button", { name: "Waive all 4 locations of concealment-instruction" }),
+  );
+  const expiry = screen.getByLabelText("Expires on");
+  const max = expiry.getAttribute("max") ?? "";
+  // The last offered day, ended at 23:59:59Z as the form posts it, is within 90 days of now.
+  const lastInstant = new Date(`${max}T23:59:59Z`).getTime();
+  expect(lastInstant).toBeLessThanOrEqual(Date.now() + 90 * 86_400_000);
+  expect(lastInstant).toBeGreaterThan(Date.now() + 89 * 86_400_000);
+
+  await user.type(screen.getByLabelText("Justification"), "vendored copy");
+  const record = screen.getByRole("button", { name: "Record waiver for concealment-instruction" });
+  expect(record).toBeEnabled();
+  fireEvent.change(expiry, { target: { value: "2099-01-01" } });
+  expect(record).toBeDisabled();
 });
 
 /**

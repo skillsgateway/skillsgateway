@@ -7,6 +7,7 @@ import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import io.github.reqstool.annotations.Requirements;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +31,9 @@ public class WaiverService {
      * ledger entries {@code system} instead of leaving a magic string in the identity column.
      */
     public static final String SYSTEM_ACTOR = "system";
+
+    /** How far ahead a waiver's expiry may lie; a constant because no deployment has tuned one. */
+    public static final Duration MAX_LIFETIME = Duration.ofDays(90);
 
     /** Ledger events, so the auditor's grep terms are one list rather than scattered literals. */
     public static final String EVENT_CREATED = "waiver-created";
@@ -117,8 +121,13 @@ public class WaiverService {
         if (expiresAt == null) {
             throw new WaiverValidationException("a waiver must carry an expiry; unlimited waivers are not accepted");
         }
-        if (!expiresAt.isAfter(Instant.now())) {
+        Instant now = Instant.now();
+        if (!expiresAt.isAfter(now)) {
             throw new WaiverValidationException("a waiver's expiry must be in the future");
+        }
+        if (expiresAt.isAfter(now.plus(MAX_LIFETIME))) {
+            throw new WaiverValidationException("a waiver may run for at most %d days; renew it rather than extend it"
+                    .formatted(MAX_LIFETIME.toDays()));
         }
         if (content != null && scope != WaiverScope.SNAPSHOT) {
             throw new WaiverValidationException("a finding-group waiver is scoped to this snapshot only");

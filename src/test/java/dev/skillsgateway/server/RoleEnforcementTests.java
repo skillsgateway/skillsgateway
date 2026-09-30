@@ -281,7 +281,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"ruleId\": \"aws-access-key-id\", \"scope\": \"path\","
                                 + " \"path\": \"plugins/hello\", \"justification\": \"scoping test\","
-                                + " \"expiresAt\": \"2036-01-01T00:00:00Z\"}"))
+                                + " \"expiresAt\": \"" + java.time.Instant.now().plus(java.time.Duration.ofDays(30))
+                                + "\"}"))
                 .andExpect(status().isCreated());
         String waiversOfA = mockMvc.perform(
                         get("/api/v1/marketplaces/{name}/waivers", nameA).with(bob))
@@ -320,7 +321,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                 WaiverScope.PATH,
                 "plugins/hello",
                 "arranged for the cross-marketplace denial",
-                Instant.parse("2036-01-01T00:00:00Z"),
+                Instant.now().plus(java.time.Duration.ofDays(30)),
                 "root");
         mockMvc.perform(post("/api/v1/marketplaces/{name}/ingest", nameB).with(bob))
                 .andExpect(status().isForbidden());
