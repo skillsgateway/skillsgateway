@@ -115,7 +115,7 @@ function MarketplaceAudit({ name }: { name: string }) {
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       {sha ? sha.slice(0, 12) : "—"}
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
+                    <TableCell className="text-xs whitespace-normal break-words text-muted-foreground">
                       {row.detail ? String(row.detail) : "—"}
                     </TableCell>
                   </TableRow>
@@ -449,7 +449,7 @@ export function MarketplaceLayout() {
     <div className="space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
         <div className="min-w-0 space-y-1">
-          <h1 className="text-2xl font-semibold">{marketplace.name}</h1>
+          <h1 className="text-2xl font-semibold break-words">{marketplace.name}</h1>
           <p className="break-all text-sm text-muted-foreground">{marketplace.url}</p>
           {/* The page-level half of GW_AUTH_0043: a clone of a marketplace that serves nothing is
               answered with 404, and saying so here is what stops that reading as an outage. */}

@@ -201,7 +201,7 @@ export function AuditSinksPage() {
               {sinks.data.map((sink) => (
                 <TableRow key={sink.id}>
                   <TableCell>{sink.name}</TableCell>
-                  <TableCell className="break-all">{sink.url}</TableCell>
+                  <TableCell className="whitespace-normal break-all">{sink.url}</TableCell>
                   <TableCell className="font-mono text-xs">{sink.cursorPosition}</TableCell>
                   <TableCell>
                     <span className="rounded-md border bg-muted px-2 py-0.5 text-xs">

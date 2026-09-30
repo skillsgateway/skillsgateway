@@ -618,7 +618,7 @@ export function SnapshotExplorer({
           <div
             role="region"
             aria-label="Selected file"
-            className="flex flex-col gap-3 rounded-lg border p-4 lg:min-h-0"
+            className="flex min-w-0 flex-col gap-3 rounded-lg border p-4 lg:min-h-0"
           >
             {selectedPath ? (
               <>

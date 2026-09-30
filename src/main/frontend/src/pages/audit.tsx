@@ -245,7 +245,7 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
         enableColumnFilter: false,
         enableSorting: false,
         cell: ({ getValue }) => (
-          <span className="text-xs text-muted-foreground">{getValue<string>()}</span>
+          <span className="text-xs whitespace-normal break-words text-muted-foreground">{getValue<string>()}</span>
         ),
       },
     ],
