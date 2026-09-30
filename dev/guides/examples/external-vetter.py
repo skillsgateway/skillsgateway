@@ -11,7 +11,15 @@ import re
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # One rule: a piped-to-shell install line, which a skill should never carry.
-CURL_PIPE_SH = re.compile(r"curl\s[^\n|]*\|\s*(ba|z|)sh\b")
+# Two linear scans rather than one pattern spanning the line: a pattern that
+# scans from every "curl" to the pipe is quadratic on a line of repeated "curl ".
+CURL = re.compile(r"\bcurl\s")
+PIPE_TO_SHELL = re.compile(r"\|\s*(?:ba|z)?sh\b")
+
+
+def pipes_curl_to_shell(line):
+    curl = CURL.search(line)
+    return curl is not None and PIPE_TO_SHELL.search(line, curl.end()) is not None
 
 
 def review_with_model(_files):
@@ -30,7 +38,7 @@ def review(files):
         if not entry.get("scanned") or not entry.get("content"):
             continue  # sent unscanned by the gateway: oversized or not UTF-8 text
         for lineno, line in enumerate(entry["content"].splitlines(), start=1):
-            if CURL_PIPE_SH.search(line):
+            if pipes_curl_to_shell(line):
                 findings.append({
                     "id": "curl-pipe-sh",
                     "severity": "high",
