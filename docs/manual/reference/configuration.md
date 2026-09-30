@@ -1613,9 +1613,17 @@ scalar:
   path: /docs        # the Scalar UI
   url: /v3/api-docs  # the OpenAPI document it renders
   theme: purple
+  with-default-fonts: false
 ```
 
 Both paths sit behind the OIDC login like the rest of the web surface.
+
+`with-default-fonts` is off because Scalar otherwise loads its fonts from
+`fonts.scalar.com`, which the web surface's content security policy refuses.
+With it off, the reference renders in the browser's own fonts. The page at
+`path` is the one page whose policy allows inline script, because Scalar starts
+itself with one. Moving `path` moves that exception with it. See
+[Trust boundaries](../concepts/trust-boundaries.md#the-web-surface).
 
 ---
 

@@ -359,6 +359,30 @@ the control, because honouring it is the browser's choice; `Strict` is
 deliberately not used, and
 [Configuration](../reference/configuration.md#session-cookie) says why.
 
+**Browser hardening.** Every response on this chain carries a
+`Content-Security-Policy`. It allows script, styles, fonts, images and
+connections from the gateway's own origin only. It also allows no plugins, no
+framing by another page, and no form submission elsewhere:
+
+```text
+default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+```
+
+The portal has no HTML pipeline, so the policy is defence in depth. If an
+injection were ever found, it could not load script from elsewhere, and it could
+not send what it reads off-site.
+
+- **Inline styles are allowed** because the portal's toast and component
+  libraries inject them at run time.
+- **Inline script is allowed on the API reference (`scalar.path`, `/docs`) and on
+  no other page.** Its third-party page starts itself from an inline script built
+  from its configuration, and it renders only the gateway's own API description.
+
+The git, publication, revocation-check, webhook and machine chains serve no
+documents, so they carry no policy. A proxy in front of the gateway may add its
+own policy. Browsers enforce every policy they receive, so a second policy can
+only narrow this one.
+
 !!! warning "dev-insecure-auth"
 
     `skills-gateway.dev-insecure-auth=true` makes the **entire web surface**
