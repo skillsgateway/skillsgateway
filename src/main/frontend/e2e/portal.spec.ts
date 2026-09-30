@@ -27,13 +27,18 @@ async function login(page: Page, username: string) {
  * envs), so once the first marketplace is registered against a given fixture, every
  * later registration against that same fixture is a legitimate collision that the
  * warning correctly flags — not a bug in the gating.
+ *
+ * Returns once the gateway has answered: a caller that navigated straight after the click could
+ * unload the page before the request was sent, and then find no such marketplace (#549).
  */
 async function submitRegister(page: Page) {
+  const name = await page.getByLabel("Name").inputValue();
   const registerAnyway = page.getByRole("checkbox", { name: "Register anyway" });
   if (await registerAnyway.isVisible().catch(() => false)) {
     await registerAnyway.check();
   }
   await page.getByRole("button", { name: "Register", exact: true }).click();
+  await expect(page.getByText(`Marketplace '${name}' registered`)).toBeVisible();
 }
 
 /** Opens the signed-in user's menu in the header — identity, roles, theme, tokens, sign out. */

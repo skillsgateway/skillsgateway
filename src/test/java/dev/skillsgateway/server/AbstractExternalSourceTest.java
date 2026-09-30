@@ -7,7 +7,8 @@ import dev.skillsgateway.server.persistence.SnapshotClosureRepository;
 import dev.skillsgateway.server.storage.GitStorage;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.ServerSocket;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.file.Path;
 import java.security.KeyPair;
 import java.util.Map;
@@ -84,9 +85,16 @@ abstract class AbstractExternalSourceTest extends AbstractGatewayTest {
     protected static final String PRIVATE_TOKEN = "tok-private-a93f27";
     protected static final String OTHER_TOKEN = "tok-other-0d64b8";
 
+    /**
+     * A loopback port bound for the whole run and never listened on, so a connection is refused. A
+     * port found free and released is not closed: another test's server can take it later, as one
+     * did in CI, answering the {@code /deadapi/} entry's token request with 406.
+     */
     private static int closedPort() {
-        try (ServerSocket socket = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
-            return socket.getLocalPort();
+        try {
+            Socket held = new Socket();
+            held.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0));
+            return held.getLocalPort();
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }

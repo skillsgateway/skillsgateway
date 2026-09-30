@@ -268,6 +268,10 @@ class UpstreamGitHubAppIntegrationTests extends AbstractExternalSourceTest {
         assertThat(GITHUB_API.requestedPaths()).isEmpty();
     }
 
+    /**
+     * The {@code /deadapi/} case relies on a port nothing listens on; it is held for the run rather
+     * than found free and released, which let another test's server answer in its place (#549).
+     */
     @Test
     @SVCs({"SVC_GW_INGEST_0059"})
     void each_api_refusal_is_reported_with_its_own_reason() throws Exception {
