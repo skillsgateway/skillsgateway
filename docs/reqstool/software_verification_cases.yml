@@ -631,8 +631,8 @@ cases:
     description: |
       GIVEN a marketplace in webhook mode with a gateway-generated secret returned exactly once
       WHEN the inbound endpoint receives a validly signed request, requests with a missing, malformed, or wrong-secret signature, a tampered body, an oversized body, and requests for an unknown marketplace and one not in webhook mode
-      THEN only the validly signed request triggers ingestion of the registered upstream's default branch (a foreign URL or ref in the payload is ignored), a held snapshot appears for it, and every other request is rejected with no snapshot created
-    revision: "0.1.0"
+      THEN only the validly signed request triggers ingestion of the registered upstream's default branch (a foreign URL or ref in the payload is ignored), a held snapshot appears for it, every other request is rejected with no snapshot created, every refusal other than the oversized body answers the same not-found status and body whether the marketplace is unknown, not in webhook mode, or the signature did not verify, and an oversized body is refused alike for an unknown and a registered marketplace
+    revision: "0.2.0"
 
   - id: SVC_GW_INGEST_0013
     requirement_ids: ["GW_INGEST_0013"]

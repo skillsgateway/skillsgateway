@@ -257,9 +257,8 @@ and lands `held` like any other.
 | Status | Cause |
 | --- | --- |
 | 202 | Signature valid; ingestion queued. |
-| 403 | Missing or invalid signature. Nothing was ingested. |
-| 404 | Unknown marketplace, or its sync mode is not `webhook`. |
-| 413 | Body exceeds `skills-gateway.sync.max-webhook-body-bytes`; rejected before verification. |
+| 404 | Unknown marketplace, not in webhook mode, or the signature did not verify. One answer for all three, so the status does not reveal which names exist. Nothing was ingested. |
+| 413 | Body exceeds `skills-gateway.sync.max-webhook-body-bytes`; rejected before the marketplace is looked up. |
 
 ---
 

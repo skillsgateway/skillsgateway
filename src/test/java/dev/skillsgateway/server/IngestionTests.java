@@ -40,6 +40,37 @@ class IngestionTests extends AbstractGatewayTest {
     }
 
     @Test
+    void theMarketplaceListCarriesEachMarketplacesOwnSnapshotsInOrder() throws Exception {
+        Path upstream = createUpstream(DEFAULT_MANIFEST);
+        Registered twice = registerAndIngest(uniqueName("list"), upstream);
+        addUpstreamCommit(upstream, "second");
+        ingestionService.ingest(twice.marketplace(), null);
+        String empty = uniqueName("list-empty");
+        marketplaceRepository.register(
+                empty, createUpstream(DEFAULT_MANIFEST).toAbsolutePath().toString());
+
+        String body = mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        // Read in one query for every marketplace, each still gets exactly the per-marketplace read.
+        List<Integer> ids = JsonPath.read(
+                body,
+                "$[?(@.name == '%s')].snapshots[*].id"
+                        .formatted(twice.marketplace().name()));
+        assertThat(ids.stream().map(Integer::longValue).toList())
+                .hasSize(2)
+                .isEqualTo(
+                        snapshotRepository.listByMarketplace(twice.marketplace().id()).stream()
+                                .map(Snapshot::id)
+                                .toList());
+        List<List<Object>> none = JsonPath.read(body, "$[?(@.name == '%s')].snapshots".formatted(empty));
+        assertThat(none).containsExactly(List.of());
+    }
+
+    @Test
     @SVCs({"SVC_GW_INGEST_0002"})
     void ingestingValidUpstreamCreatesHeldSnapshotPinnedToUpstreamHead() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);

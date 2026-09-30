@@ -583,6 +583,13 @@ public record SkillsGatewayProperties(
             }
         }
 
+        /** The secret key is deliberately absent: a record's generated toString would print it. */
+        @Override
+        public String toString() {
+            return "Credentials[mode=%s, accessKeyId=%s, roleArn=%s, tokenFile=%s]"
+                    .formatted(mode, accessKeyId, roleArn, tokenFile);
+        }
+
         /** How credentials are resolved. */
         public enum Mode {
             /** The SDK's own provider chain. */
@@ -696,7 +703,14 @@ public record SkillsGatewayProperties(
      *
      * @param events event filter, or null/empty for every event
      */
-    public record DeclaredWebhook(String name, String url, List<String> events, String secret) {}
+    public record DeclaredWebhook(String name, String url, List<String> events, String secret) {
+
+        /** The secret is deliberately absent: a record's generated toString would print it. */
+        @Override
+        public String toString() {
+            return "DeclaredWebhook[name=%s, url=%s, events=%s]".formatted(name, url, events);
+        }
+    }
 
     /**
      * A declared audit export sink (GW_ESTATE_0004); the secret contract is {@link DeclaredWebhook}'s.
@@ -705,7 +719,14 @@ public record SkillsGatewayProperties(
      *     runtime progress and is never touched by a later reconciliation
      * @param batchSize maximum ledger entries per batch; null uses the audit-export default
      */
-    public record DeclaredAuditSink(String name, String url, String secret, Long after, Integer batchSize) {}
+    public record DeclaredAuditSink(String name, String url, String secret, Long after, Integer batchSize) {
+
+        /** The secret is deliberately absent: a record's generated toString would print it. */
+        @Override
+        public String toString() {
+            return "DeclaredAuditSink[name=%s, url=%s, after=%s, batchSize=%s]".formatted(name, url, after, batchSize);
+        }
+    }
 
     /**
      * A declared CEL policy deny rule (GW_APPROVAL_0006), reconciled through the same compiled, audited
@@ -1203,7 +1224,7 @@ public record SkillsGatewayProperties(
             if (compactionInterval == null) {
                 compactionInterval = Duration.ofHours(6);
             }
-            if (batchSize == null) {
+            if (batchSize == null || batchSize <= 0) {
                 batchSize = 200;
             }
             // A day, because the only cost of being wrong upwards is disk and the cost of being
@@ -1308,13 +1329,14 @@ public record SkillsGatewayProperties(
             if (lag == null) {
                 lag = Duration.ofSeconds(5);
             }
-            if (batchSize == null) {
+            if (batchSize == null || batchSize <= 0) {
                 batchSize = 500;
             }
-            if (defaultPageSize == null) {
+            if (defaultPageSize == null || defaultPageSize <= 0) {
                 defaultPageSize = 1000;
             }
-            if (maxPageSize == null) {
+            // Zero would make every audit read's clamp to [1, max] throw.
+            if (maxPageSize == null || maxPageSize <= 0) {
                 maxPageSize = 10000;
             }
         }
@@ -1343,13 +1365,13 @@ public record SkillsGatewayProperties(
             if (maxBackoff == null) {
                 maxBackoff = Duration.ofHours(1);
             }
-            if (maxAttempts == null) {
+            if (maxAttempts == null || maxAttempts <= 0) {
                 maxAttempts = 5;
             }
             if (timeout == null) {
                 timeout = Duration.ofSeconds(10);
             }
-            if (batchSize == null) {
+            if (batchSize == null || batchSize <= 0) {
                 batchSize = 50;
             }
         }

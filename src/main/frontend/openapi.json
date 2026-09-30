@@ -7820,16 +7820,6 @@
           "202": {
             "description": "Trigger accepted; ingestion queued"
           },
-          "403": {
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description": "Missing or invalid signature"
-          },
           "404": {
             "content": {
               "application/problem+json": {
@@ -7838,7 +7828,7 @@
                 }
               }
             },
-            "description": "Unknown marketplace, or its sync mode is not webhook"
+            "description": "Unknown marketplace, not in webhook mode, or the signature did not verify"
           },
           "413": {
             "content": {

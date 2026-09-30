@@ -27,7 +27,8 @@ import org.springframework.web.server.ResponseStatusException;
  * PAT, so its rules are strict: authentication is solely the HMAC-SHA256 signature of the exact
  * raw body against the marketplace's gateway-generated secret, and authority is nil — the payload
  * is never read, a valid signature only triggers ingestion of the registered upstream URL's
- * default branch into held quarantine, which the schedule would have done anyway.
+ * default branch into held quarantine, which the schedule would have done anyway. Every refusal
+ * but the size bound answers 404, whatever its cause.
  */
 @RestController
 public class InboundWebhookController {
@@ -62,30 +63,40 @@ public class InboundWebhookController {
                     + " The payload is ignored: a valid signature only causes the registered upstream URL's"
                     + " default branch to be ingested into a held quarantine snapshot, asynchronously.")
     @ApiResponse(responseCode = "202", description = "Trigger accepted; ingestion queued")
-    @ApiResponse(responseCode = "403", description = "Missing or invalid signature")
-    @ApiResponse(responseCode = "404", description = "Unknown marketplace, or its sync mode is not webhook")
+    @ApiResponse(
+            responseCode = "404",
+            description = "Unknown marketplace, not in webhook mode, or the signature did not verify")
     @ApiResponse(responseCode = "413", description = "Request body exceeds the configured bound")
     public ResponseEntity<Void> trigger(
             @PathVariable String marketplace,
             @RequestHeader(value = SIGNATURE_HEADER, required = false) String signature,
             HttpServletRequest request)
             throws IOException {
+        // The bound comes before the lookup so that 413 says something about the body only.
+        byte[] body = readBounded(request, properties.maxWebhookBodyBytes());
         Marketplace registered = marketplaceRepository
                 .findByName(marketplace)
                 .filter(m -> Marketplace.SYNC_WEBHOOK.equals(m.syncMode()))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "not found"));
+                .orElseThrow(InboundWebhookController::notFound);
         Optional<String> secret = marketplaceRepository.webhookSecret(marketplace);
         if (signature == null || secret.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "invalid signature");
+            throw notFound();
         }
-        byte[] body = readBounded(request, properties.maxWebhookBodyBytes());
         String expected = signer.sign(secret.get(), body);
         if (!MessageDigest.isEqual(
                 expected.getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8))) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "invalid signature");
+            throw notFound();
         }
         syncService.queueWebhookIngest(registered);
         return ResponseEntity.accepted().build();
+    }
+
+    /**
+     * Every refusal is this one answer: the endpoint is unauthenticated, so a status that differed
+     * by cause would tell anyone which marketplaces exist and which are in webhook mode.
+     */
+    private static ResponseStatusException notFound() {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND, "not found");
     }
 
     /**

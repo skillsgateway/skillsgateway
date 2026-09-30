@@ -49,6 +49,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -428,7 +429,10 @@ public class AdminController {
             description = "All registered marketplaces with every snapshot and its state"
                     + " (held, approved, rejected, or revoked).")
     public List<MarketplaceView> listMarketplaces() {
-        return marketplaceRepository.list().stream()
+        List<Marketplace> marketplaces = marketplaceRepository.list();
+        Map<Long, List<Snapshot>> snapshots = snapshotRepository.listByMarketplaces(
+                marketplaces.stream().map(Marketplace::id).toList());
+        return marketplaces.stream()
                 .map(marketplace -> new MarketplaceView(
                         marketplace.id(),
                         marketplace.name(),
@@ -447,7 +451,7 @@ public class AdminController {
                         marketplace.lastIngestAt(),
                         marketplace.lastIngestOutcome(),
                         marketplace.lastIngestReason(),
-                        snapshotRepository.listByMarketplace(marketplace.id())))
+                        snapshots.get(marketplace.id())))
                 .toList();
     }
 

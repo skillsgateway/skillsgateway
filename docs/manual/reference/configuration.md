@@ -269,9 +269,9 @@ skills-gateway:
 | `skills-gateway.webhooks.poll-interval` | duration | `5s` | Fixed delay between dispatch passes. |
 | `skills-gateway.webhooks.base-backoff` | duration | `10s` | First retry delay; doubles per attempt. |
 | `skills-gateway.webhooks.max-backoff` | duration | `1h` | Ceiling on the doubling. |
-| `skills-gateway.webhooks.max-attempts` | integer | `5` | Attempt budget per delivery. |
+| `skills-gateway.webhooks.max-attempts` | integer | `5` | Attempt budget per delivery. Zero or negative falls back to the default. |
 | `skills-gateway.webhooks.timeout` | duration | `10s` | Connect and read timeout per attempt. |
-| `skills-gateway.webhooks.batch-size` | integer | `50` | Deliveries claimed per pass. |
+| `skills-gateway.webhooks.batch-size` | integer | `50` | Deliveries claimed per pass. Zero or negative falls back to the default. |
 
 !!! warning "Raising the retry budget raises the retry window"
 
@@ -406,9 +406,9 @@ skills-gateway:
 | `skills-gateway.audit-export.enabled` | boolean | `true` | `false` pauses push export; the pull endpoint is unaffected. |
 | `skills-gateway.audit-export.poll-interval` | duration | `30s` | Fixed delay between export passes. |
 | `skills-gateway.audit-export.lag` | duration | `5s` | Entries younger than this are withheld from both paths. |
-| `skills-gateway.audit-export.batch-size` | integer | `500` | Per-sink default; a sink may set its own, clamped to `max-page-size`. |
-| `skills-gateway.audit-export.default-page-size` | integer | `1000` | Applied when `?limit=` is absent. |
-| `skills-gateway.audit-export.max-page-size` | integer | `10000` | Hard ceiling on `?limit=` and on a sink's batch size. |
+| `skills-gateway.audit-export.batch-size` | integer | `500` | Per-sink default; a sink may set its own, clamped to `max-page-size`. Zero or negative falls back to the default. |
+| `skills-gateway.audit-export.default-page-size` | integer | `1000` | Applied when `?limit=` is absent. Zero or negative falls back to the default. |
+| `skills-gateway.audit-export.max-page-size` | integer | `10000` | Hard ceiling on `?limit=` and on a sink's batch size. Zero or negative falls back to the default. |
 
 !!! warning "`lag: 0` reintroduces the skip window"
 
@@ -1059,7 +1059,7 @@ skills-gateway:
 | `skills-gateway.retention.enabled` | boolean | `false` | Runs the scheduled passes. The on-demand endpoints are unaffected. |
 | `skills-gateway.retention.poll-interval` | duration | `1h` | Evaluation (soft delete) interval. |
 | `skills-gateway.retention.compaction-interval` | duration | `6h` | Compaction (hard delete) interval. |
-| `skills-gateway.retention.batch-size` | integer | `200` | Snapshots per marketplace per pass. |
+| `skills-gateway.retention.batch-size` | integer | `200` | Snapshots per marketplace per pass. Zero or negative falls back to the default. |
 | `skills-gateway.retention.staging-ref-max-age` | duration | `24h` | How long an abandoned publication staging ref must be observed before compaction removes it. Zero or negative disables the sweep. |
 | `skills-gateway.retention.ledger-max-age` | _(unset)_ | How old an audit-ledger read entry must be before the compaction pass may remove it. **Unset, zero or negative switches the trim off**, and it removes nothing regardless unless an enabled [export sink](../guides/exporting-the-audit-ledger.md) has already taken the entries — see [Bound the audit ledger](../guides/snapshot-retention.md#7-bound-the-audit-ledger). |
 | `skills-gateway.retention.defaults.held-max-age` | duration | `90d` | Zero or negative disables the criterion. |

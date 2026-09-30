@@ -434,8 +434,10 @@ lands `held` in quarantine exactly as the polling sweep would have produced.
 The worst a forged-but-signed request can cause is therefore a redundant fetch
 of content the gateway already governs; nothing on this path can name a URL, a
 ref, or a commit, and nothing on it can approve or publish. Body size is
-bounded before the HMAC is computed, and requests for marketplaces not in
-webhook mode are refused without revealing why.
+bounded before the marketplace is looked up, and every other refusal — an
+unknown marketplace, one not in webhook mode, a signature that did not
+verify — is the same `404`, so the endpoint reveals neither why it refused nor
+which marketplace names exist.
 
 ## 5. Publication — a publisher's push becomes quarantined content
 

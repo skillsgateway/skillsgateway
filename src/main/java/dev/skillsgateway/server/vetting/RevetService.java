@@ -200,7 +200,12 @@ public class RevetService {
                 .orElseThrow(() -> new IllegalArgumentException("marketplace '%s' not found".formatted(name)));
         List<RevetResult> results = new ArrayList<>();
         for (Snapshot snapshot : snapshotRepository.approvedByMarketplace(marketplace.id())) {
-            results.add(revet(snapshot, VettingRepository.TRIGGER_REVET_MANUAL, actor));
+            try {
+                results.add(revet(snapshot, VettingRepository.TRIGGER_REVET_MANUAL, actor));
+            } catch (RuntimeException e) {
+                // As in sweep: one snapshot's failure does not cost the rest of the marketplace.
+                log.warn("re-vetting of snapshot {} failed", snapshot.id(), e);
+            }
         }
         return summarize(results);
     }

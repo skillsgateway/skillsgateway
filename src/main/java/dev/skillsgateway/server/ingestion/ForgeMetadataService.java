@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.persistence.MarketplaceRepository.ForgeMetadata;
 import io.github.reqstool.annotations.Requirements;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -32,6 +33,9 @@ public class ForgeMetadataService {
     private static final Logger log = LoggerFactory.getLogger(ForgeMetadataService.class);
     private static final Duration TIMEOUT = Duration.ofSeconds(3);
     private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    /** A repository metadata document is a few kilobytes; nothing a forge sends past this is read. */
+    static final int MAX_RESPONSE_BYTES = 1024 * 1024;
 
     private final RestClient restClient;
 
@@ -146,7 +150,15 @@ public class ForgeMetadataService {
 
     private Optional<ForgeMetadata> fetch(ForgeTarget target) {
         try {
-            String raw = restClient.get().uri(target.apiUrl()).retrieve().body(String.class);
+            byte[] raw = restClient.get().uri(target.apiUrl()).exchange((request, response) -> {
+                if (!response.getStatusCode().is2xxSuccessful()) {
+                    return null;
+                }
+                try (InputStream in = response.getBody()) {
+                    byte[] bytes = in.readNBytes(MAX_RESPONSE_BYTES + 1);
+                    return bytes.length > MAX_RESPONSE_BYTES ? null : bytes;
+                }
+            });
             JsonNode body = raw == null ? null : MAPPER.readTree(raw);
             if (body == null || !body.isObject()) {
                 return Optional.empty();

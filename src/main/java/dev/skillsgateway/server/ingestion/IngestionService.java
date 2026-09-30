@@ -185,6 +185,9 @@ public class IngestionService {
                 return snapshotRepository
                         .findByMarketplaceAndSha(marketplace.id(), sha.name())
                         .orElseThrow(() -> raced);
+            } catch (RuntimeException failed) {
+                unpin(repo, marketplace, sha, failed);
+                throw failed;
             }
             if (Snapshot.HELD.equals(state)) {
                 // Recorded once, before the chain so a failure shows without waiting on it
@@ -208,6 +211,31 @@ public class IngestionService {
                     "ingestion failed for marketplace '%s': %s".formatted(marketplace.name(), failure.describe()),
                     failure,
                     e);
+        }
+    }
+
+    /**
+     * Takes back the pin of a snapshot whose row could not be written, which nothing would ever
+     * prune. Every doubt keeps the pin: an orphan pin costs storage, while a row without its pin is
+     * the state GW_INGEST_0018 forbids. So it goes only while no row names the commit, and comes back
+     * if a row (another gateway instance's) appeared meanwhile. Failures ride on {@code failed}.
+     */
+    private void unpin(Repository repo, Marketplace marketplace, ObjectId sha, RuntimeException failed) {
+        String pin = "refs/snapshots/" + sha.name();
+        try {
+            if (snapshotRepository
+                    .findByMarketplaceAndSha(marketplace.id(), sha.name())
+                    .isPresent()) {
+                return;
+            }
+            RefTransitions.delete(repo, pin);
+            if (snapshotRepository
+                    .findByMarketplaceAndSha(marketplace.id(), sha.name())
+                    .isPresent()) {
+                RefTransitions.write(repo, pin, sha);
+            }
+        } catch (IOException | RuntimeException cleanup) {
+            failed.addSuppressed(cleanup);
         }
     }
 
