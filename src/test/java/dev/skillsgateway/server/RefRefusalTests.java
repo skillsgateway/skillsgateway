@@ -6,6 +6,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 import com.jayway.jsonpath.JsonPath;
+import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.retention.RetentionService;
 import dev.skillsgateway.server.storage.GitStorage;
@@ -19,6 +20,8 @@ import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
  * What the other reference transitions do when they are refused.
@@ -36,6 +39,9 @@ class RefRefusalTests extends AbstractGatewayTest {
 
     @Autowired
     private RetentionService retentionService;
+
+    @Autowired
+    private JdbcClient jdbc;
 
     @Autowired
     private dev.skillsgateway.server.catalog.CatalogService catalogService;
@@ -128,6 +134,27 @@ class RefRefusalTests extends AbstractGatewayTest {
                         registered.marketplace().id(), nextSha))
                 .as("nothing is approvable that publication would later fail to find")
                 .isEmpty();
+    }
+
+    @Test
+    void an_ingestion_whose_snapshot_row_cannot_be_written_leaves_no_pin() throws Exception {
+        String name = uniqueName("orphan");
+        Marketplace marketplace = marketplaceRepository.register(
+                name, createUpstream(DEFAULT_MANIFEST).toAbsolutePath().toString());
+        // The row goes from underneath the ingestion, so the snapshot insert fails on its foreign
+        // key after the pin is written: a failure that is not the duplicate-key race.
+        jdbc.sql("DELETE FROM marketplaces WHERE id = :id")
+                .param("id", marketplace.id())
+                .update();
+
+        assertThatThrownBy(() -> ingestionService.ingest(marketplace, null))
+                .isInstanceOf(DataIntegrityViolationException.class);
+
+        try (Repository quarantine = storage.quarantine(name)) {
+            assertThat(quarantine.getRefDatabase().getRefsByPrefix("refs/snapshots/"))
+                    .as("a pin no row names is never pruned, so a failed insert must not leave one")
+                    .isEmpty();
+        }
     }
 
     @Test
