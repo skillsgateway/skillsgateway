@@ -258,8 +258,8 @@ export function SetupWizard({
             testId="wizard-add-command"
           />
           <Snippet
-            title="Or clone directly (CI and other clients)"
-            command={`git clone --depth 1 ${protocol}//token:${token}@${host}/git/${marketplace}`}
+            title="Or clone directly (after storing the credential above)"
+            command={`git clone --depth 1 ${cloneUrl}`}
             copyLabel="Copy clone command"
             testId="wizard-clone-command"
           />
