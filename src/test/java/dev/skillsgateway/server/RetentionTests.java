@@ -14,13 +14,17 @@ import dev.skillsgateway.server.storage.GitStorage;
 import io.github.reqstool.annotations.SVCs;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
  * Snapshot retention: criteria evaluation (GW_RETENTION_0001), soft deletion with a restore window
@@ -34,6 +38,9 @@ class RetentionTests extends AbstractGatewayTest {
 
     @Autowired
     private GitStorage storage;
+
+    @Autowired
+    private JdbcClient jdbc;
 
     /** Ingests the current upstream head as a new snapshot of the marketplace. */
     private Snapshot ingest(Marketplace marketplace) {
@@ -227,5 +234,109 @@ class RetentionTests extends AbstractGatewayTest {
                 .isTrue();
         assertThat(hasEvent(entries, "snapshot-restored", snapshot.sha())).isTrue();
         assertThat(hasEvent(entries, "snapshot-purged", snapshot.sha())).isTrue();
+    }
+
+    private long subscriber() {
+        return jdbc.sql("INSERT INTO webhook_subscribers (name, url, secret, events, enabled, created_at)"
+                        + " VALUES (:name, 'https://sweep.invalid', 'x', ARRAY['*'], TRUE, NOW()) RETURNING id")
+                .param("name", uniqueName("sweep"))
+                .query(Long.class)
+                .single();
+    }
+
+    /** A delivery row in the given state, last touched {@code age} ago. */
+    private long delivery(long subscriberId, String state, Duration age) {
+        return jdbc.sql("INSERT INTO webhook_deliveries (subscriber_id, event, payload, state, attempts,"
+                        + " next_attempt_at, created_at, updated_at) VALUES (:s, 'x', '{}', CAST(:state AS"
+                        + " webhook_delivery_state), 1, :at, :at, :at) RETURNING id")
+                .param("s", subscriberId)
+                .param("state", state)
+                .param("at", OffsetDateTime.ofInstant(Instant.now().minus(age), ZoneOffset.UTC))
+                .query(Long.class)
+                .single();
+    }
+
+    private boolean exists(long deliveryId) {
+        return jdbc.sql("SELECT COUNT(*) FROM webhook_deliveries WHERE id = :id")
+                        .param("id", deliveryId)
+                        .query(Long.class)
+                        .single()
+                == 1;
+    }
+
+    private long sweepEntries() {
+        return fetchLogRepository.list().stream()
+                .filter(entry -> String.valueOf(entry.get("event")).startsWith("webhook-deliveries-swept:"))
+                .count();
+    }
+
+    @Test
+    @SVCs({"SVC_GW_RETENTION_0011"})
+    void compactionSweepsOnlySettledDeliveriesPastTheAgeAndNeverPendingOnes() {
+        jdbc.sql("DELETE FROM webhook_deliveries WHERE updated_at < NOW() - INTERVAL '30 days'")
+                .update();
+        long before = sweepEntries();
+        long sub = subscriber();
+        Duration old = RetentionService.DELIVERY_MAX_AGE.plusDays(1);
+        long oldDelivered = delivery(sub, "delivered", old);
+        long oldFailed = delivery(sub, "failed", old);
+        long oldPending = delivery(sub, "pending", old);
+        long recentDelivered = delivery(sub, "delivered", RetentionService.DELIVERY_MAX_AGE.minusDays(1));
+        long recentFailed = delivery(sub, "failed", Duration.ofMinutes(1));
+
+        retentionService.compact("alice");
+
+        assertThat(exists(oldDelivered)).isFalse();
+        assertThat(exists(oldFailed)).isFalse();
+        assertThat(exists(oldPending)).isTrue();
+        assertThat(exists(recentDelivered)).isTrue();
+        assertThat(exists(recentFailed)).isTrue();
+        assertThat(sweepEntries()).isEqualTo(before + 1);
+        assertThat(ledgerFor("-")).anyMatch(e -> "webhook-deliveries-swept:removed=2".equals(e.get("event")));
+
+        retentionService.compact("alice");
+        assertThat(sweepEntries())
+                .as("a pass that removes nothing writes no entry")
+                .isEqualTo(before + 1);
+    }
+
+    @Test
+    @SVCs({"SVC_GW_RETENTION_0011"})
+    void theDeliverySweepRemovesNoMoreThanOneBatchPerPass() {
+        jdbc.sql("DELETE FROM webhook_deliveries WHERE updated_at < NOW() - INTERVAL '30 days'")
+                .update();
+        long sub = subscriber();
+        int batch = 200;
+        jdbc.sql("INSERT INTO webhook_deliveries (subscriber_id, event, payload, state, attempts,"
+                        + " next_attempt_at, created_at, updated_at)"
+                        + " SELECT :s, 'x', '{}', 'delivered', 1, NOW() - INTERVAL '40 days',"
+                        + " NOW() - INTERVAL '40 days', NOW() - INTERVAL '40 days' FROM generate_series(1, :n)")
+                .param("s", sub)
+                .param("n", batch + 5)
+                .update();
+
+        assertThat(retentionService.sweepWebhookDeliveries("alice")).isEqualTo(batch);
+        assertThat(retentionService.sweepWebhookDeliveries("alice")).isEqualTo(5);
+    }
+
+    /**
+     * The indexes exist as shaped. Whether the planner picks one is not asserted: on a table this
+     * small it chooses by cost, whichever index is cheapest to scan in full, so a plan assertion
+     * would be a flaky test rather than evidence.
+     */
+    @Test
+    void theLedgerAndDeliveryIndexesAreShapedForTheirQueries() {
+        assertThat(indexDef("idx_fetch_log_sha_marketplace_ts"))
+                .contains("(sha, marketplace, ts)")
+                .contains("sha IS NOT NULL");
+        assertThat(indexDef("idx_fetch_log_ts")).contains("(ts)").contains("upload-pack");
+        assertThat(indexDef("idx_webhook_deliveries_subscriber")).contains("(subscriber_id, id)");
+    }
+
+    private String indexDef(String name) {
+        return jdbc.sql("SELECT indexdef FROM pg_indexes WHERE indexname = :name")
+                .param("name", name)
+                .query(String.class)
+                .single();
     }
 }

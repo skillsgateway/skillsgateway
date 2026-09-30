@@ -10,6 +10,7 @@ import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.persistence.StagingRefSightingRepository;
+import dev.skillsgateway.server.persistence.WebhookDeliveryRepository;
 import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.storage.RefTransitions;
 import dev.skillsgateway.server.webhook.WebhookEvent;
@@ -74,6 +75,9 @@ public class RetentionService {
 
     private static final Duration LEDGER_TRIM_BUDGET = Duration.ofMinutes(2);
 
+    /** How long a delivered or failed webhook delivery is kept (GW_RETENTION_0011); a constant, not a leaf. */
+    public static final Duration DELIVERY_MAX_AGE = Duration.ofDays(30);
+
     private final MarketplaceRepository marketplaceRepository;
     private final SnapshotRepository snapshotRepository;
     private final StagingRefSightingRepository sightingRepository;
@@ -82,6 +86,7 @@ public class RetentionService {
     private final WebhookService webhookService;
     private final AuditSinkRepository auditSinkRepository;
     private final FetchLogRepository fetchLogRepository;
+    private final WebhookDeliveryRepository deliveryRepository;
     private final SkillsGatewayProperties.Retention properties;
 
     public RetentionService(
@@ -93,6 +98,7 @@ public class RetentionService {
             WebhookService webhookService,
             AuditSinkRepository auditSinkRepository,
             FetchLogRepository fetchLogRepository,
+            WebhookDeliveryRepository deliveryRepository,
             SkillsGatewayProperties properties) {
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
@@ -102,6 +108,7 @@ public class RetentionService {
         this.webhookService = webhookService;
         this.auditSinkRepository = auditSinkRepository;
         this.fetchLogRepository = fetchLogRepository;
+        this.deliveryRepository = deliveryRepository;
         this.properties = properties.retention();
     }
 
@@ -294,7 +301,27 @@ public class RetentionService {
         } catch (RuntimeException e) {
             log.warn("staging-reference sweep failed; the purge pass is unaffected", e);
         }
+        try {
+            sweepWebhookDeliveries(actor);
+        } catch (RuntimeException e) {
+            log.warn("webhook-delivery sweep failed; the purge pass is unaffected", e);
+        }
         return new PassResult(due.size(), purged);
+    }
+
+    /**
+     * Removes up to one batch of delivered and failed webhook deliveries older than
+     * {@link #DELIVERY_MAX_AGE}, and records one ledger entry when it removed any. Pending deliveries
+     * are never touched.
+     */
+    @Requirements({"GW_RETENTION_0011"})
+    public int sweepWebhookDeliveries(String actor) {
+        int removed =
+                deliveryRepository.deleteSettledBefore(Instant.now().minus(DELIVERY_MAX_AGE), properties.batchSize());
+        if (removed > 0) {
+            auditLogger.record(actor, NO_MARKETPLACE, "webhook-deliveries-swept:removed=%d".formatted(removed), null);
+        }
+        return removed;
     }
 
     /**

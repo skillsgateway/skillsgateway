@@ -2431,6 +2431,19 @@ cases:
       and an event kind outside that set is not eligible
     revision: "0.1.0"
 
+  - id: SVC_GW_RETENTION_0011
+    requirement_ids: ["GW_RETENTION_0011"]
+    title: Only settled deliveries past the age are swept, a batch at a time
+    verification: automated-test
+    description: |
+      GIVEN delivered, failed and pending webhook deliveries older than thirty days, and delivered
+      and failed ones newer than that
+      WHEN the compaction pass runs
+      THEN only the old delivered and failed deliveries are removed, no pending delivery is removed
+      whatever its age, no more than one configured batch is removed per pass, the pass writes one
+      ledger entry naming how many it removed, and a pass that removes nothing writes none
+    revision: "0.1.0"
+
   - id: SVC_GW_VETTING_0038
     requirement_ids: ["GW_VETTING_0038"]
     title: A run's chain is compared with the chain in force, and undetermined is its own answer
