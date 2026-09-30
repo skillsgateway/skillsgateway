@@ -3093,6 +3093,10 @@ longer window.</p>
 <td>Each compaction removal, carrying the SHA.</td>
 </tr>
 <tr>
+<td><code>webhook-deliveries-swept:removed=&lt;n&gt;</code></td>
+<td>Each compaction pass that removed delivered or failed webhook deliveries last updated more than 30 days ago (at most <code>batch-size</code> per pass; pending deliveries are never removed).</td>
+</tr>
+<tr>
 <td><code>staging-refs-swept:count=&lt;n&gt;</code></td>
 <td>Each compaction pass that removed abandoned staging refs from a marketplace's published repository.</td>
 </tr>

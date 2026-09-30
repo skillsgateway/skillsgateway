@@ -3260,6 +3260,8 @@ subscriber, state, attempt count and last response — see
 </div>
 </div>
 </div>
+<p>When <a href="../snapshot-retention/#webhook-delivery-history">retention</a> is enabled, delivered and
+failed deliveries older than 30 days are removed, so the listing covers the last 30 days.</p>
 <p>Each row carries <code>state</code>, <code>attempts</code>, <code>lastStatus</code> and <code>lastError</code>, which is
 enough to tell a receiver that is down from one that is rejecting the payload.</p>
 <h2 id="remove-a-subscriber">Remove a subscriber<a class="headerlink" href="#remove-a-subscriber" title="Permanent link">&para;</a></h2>

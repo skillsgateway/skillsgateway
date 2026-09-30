@@ -833,6 +833,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="5. Enable the schedulers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#webhook-delivery-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webhook delivery history
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2596,6 +2613,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="5. Enable the schedulers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#webhook-delivery-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webhook delivery history
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2772,10 +2806,16 @@ collection. The counts above do not include them; the ledger entry
 observation for <code>staging-ref-max-age</code> (default <code>24h</code>), so a publication running
 right now is never disturbed. See
 <a href="../../reference/retention/#abandoned-publication-staging-references">Snapshot retention</a>.</p>
+<h3 id="webhook-delivery-history">Webhook delivery history<a class="headerlink" href="#webhook-delivery-history" title="Permanent link">&para;</a></h3>
+<p>The same pass removes webhook deliveries that are <code>delivered</code> or <code>failed</code> and were last
+updated more than 30 days ago, up to <code>batch-size</code> per pass. A <code>pending</code> delivery is never
+removed, whatever its age. The age is fixed, not a setting; it is not <code>ledger-max-age</code>. Each
+pass that removes any writes <code>webhook-deliveries-swept:removed=&lt;n&gt;</code> to the ledger. With
+retention off, delivery history is kept.</p>
 <h2 id="6-watch-it">6. Watch it<a class="headerlink" href="#6-watch-it" title="Permanent link">&para;</a></h2>
 <p>Every retention action is in the append-only ledger with the acting identity:
 <code>retention-evaluated:…</code>, <code>snapshot-soft-deleted:&lt;reason&gt;</code>, <code>snapshot-restored</code>,
-<code>snapshot-purged</code> and <code>staging-refs-swept:count=&lt;n&gt;</code>. Policy-driven deletions are
+<code>snapshot-purged</code>, <code>staging-refs-swept:count=&lt;n&gt;</code> and <code>webhook-deliveries-swept:removed=&lt;n&gt;</code>. Policy-driven deletions are
 attributed to <code>retention-policy</code> rather than to a person.</p>
 <p>Soft delete and restore also fire the <code>marketplace.snapshot.soft_deleted</code> and
 <code>marketplace.snapshot.restored</code> webhook events, so an inventory system can follow deletions
