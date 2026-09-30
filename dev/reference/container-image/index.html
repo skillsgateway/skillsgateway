@@ -2047,10 +2047,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sbom-attestation" class="md-nav__link">
+  <a href="#sbom-and-provenance-attestations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SBOM attestation
+        SBOM and provenance attestations
       
     </span>
   </a>
@@ -2553,10 +2553,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sbom-attestation" class="md-nav__link">
+  <a href="#sbom-and-provenance-attestations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SBOM attestation
+        SBOM and provenance attestations
       
     </span>
   </a>
@@ -2692,13 +2692,17 @@ need a token with the <code>read:packages</code> scope:</p>
 </code></pre></div>
 <p>Package visibility can later be made public in the GHCR package settings,
 independently of the repository's visibility.</p>
-<h2 id="sbom-attestation">SBOM attestation<a class="headerlink" href="#sbom-attestation" title="Permanent link">&para;</a></h2>
-<p>The published image index carries the build's CycloneDX SBOM as a registry
-attestation (the same SBOM the running gateway serves at <code>/actuator/sbom</code>),
-against the digest the publish prints and that a deployment pins. Verify what a
-pinned digest contains with:</p>
+<h2 id="sbom-and-provenance-attestations">SBOM and provenance attestations<a class="headerlink" href="#sbom-and-provenance-attestations" title="Permanent link">&para;</a></h2>
+<p>The published image index carries two registry attestations against the digest
+the publish prints and that a deployment pins. One is the build's CycloneDX SBOM,
+the same SBOM the running gateway serves at <code>/actuator/sbom</code>. The other is SLSA
+build provenance: which workflow run, from which commit, produced the image.</p>
+<p><code>gh attestation verify</code> checks the provenance by default, and the SBOM when
+asked for its predicate type:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>gh<span class="w"> </span>attestation<span class="w"> </span>verify<span class="w"> </span>oci://ghcr.io/skillsgateway/skillsgateway@sha256:…<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span>--owner<span class="w"> </span>skillsgateway
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="gp">$ </span>gh<span class="w"> </span>attestation<span class="w"> </span>verify<span class="w"> </span>oci://ghcr.io/skillsgateway/skillsgateway@sha256:…<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span>--owner<span class="w"> </span>skillsgateway<span class="w"> </span>--predicate-type<span class="w"> </span>https://cyclonedx.org/bom
 </code></pre></div>
 
 
