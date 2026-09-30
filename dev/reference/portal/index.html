@@ -4166,10 +4166,12 @@ the header.</p>
    family.</li>
 <li><strong>Add the marketplace to Claude Code</strong> —
    <code>claude plugin marketplace add {origin}/git/{name}</code>.</li>
-<li><strong>Clone directly</strong> — the CI-shaped <code>git clone</code> URL with the token inline.</li>
+<li><strong>Clone directly</strong> — a plain <code>git clone</code> of the facade URL, with no token in it:
+   the credential stored by step 2 authenticates it, and nothing lands in
+   <code>.git/config</code> or shell history.</li>
 </ol>
 <p>The remaining snippets have icon copy buttons. Until a token is minted the
-snippets carry the <code>&lt;YOUR_TOKEN&gt;</code> placeholder.</p>
+credential snippet carries the <code>&lt;YOUR_TOKEN&gt;</code> placeholder.</p>
 <h3 id="vetting">Vetting<a class="headerlink" href="#vetting" title="Permanent link">&para;</a></h3>
 <p>The snapshot card's <strong>Vetting</strong> tab — the tab a card opens on — is fed by
 <code>GET /api/v1/snapshots/{id}/vetting</code>.</p>
