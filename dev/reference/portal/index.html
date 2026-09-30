@@ -3732,8 +3732,11 @@ action leading elsewhere. Read-only — nothing here changes state.</p>
 are <code>held</code>, <code>approved</code> and <code>rejected</code> across all of them. When any snapshot is
 held, a secondary badge reads <em>"{n} awaiting review"</em> and links to the
 <a href="#review-queue">review queue</a>. Action: <strong>Manage marketplaces</strong>.</p>
-<p><strong>Fetch ledger</strong> — chip with the total recorded fetches. Action: <strong>Open audit
-log</strong>.</p>
+<p><strong>Fetch ledger</strong> — a chip with how many entries the ledger holds: <em>"{n} ledger
+entries"</em>, or <em>"about {n} ledger entries"</em> once the ledger is large enough that the
+server estimates rather than counts (see <a href="../api/audit/#get-apiv1audit"><code>GET /api/v1/audit</code></a>).
+It counts every entry: fetches, administrative actions and vetting bookkeeping.
+Action: <strong>Open audit log</strong>.</p>
 <p><strong>Access tokens</strong> — chips for active and revoked counts. Action: <strong>Manage
 tokens</strong>.</p>
 <p>Data comes from <code>GET /api/v1/marketplaces</code>, <code>GET /api/v1/tokens</code> and <code>GET /api/v1/audit</code>;
@@ -4393,11 +4396,13 @@ quarantine ref permanently and the card disappears. See
 </div>
 <p>Empty state: "No snapshots yet."</p>
 <h3 id="audit-log">Audit log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h3>
-<p>Below the snapshots, the marketplace's slice of the ledger: the entries from
-<code>GET /api/v1/audit</code> whose marketplace is this one, newest first, with the same
+<p>Below the snapshots, the marketplace's slice of the ledger: the entries
+<code>GET /api/v1/audit?marketplace={name}</code> returns, newest first, with the same
 verdict colouring as the <a href="#audit-log">Audit log</a> page — a blocked verdict reads
-red here too. A <strong>See the full ledger</strong> link goes to <code>/audit</code>. Empty state:
-"Nothing recorded against this marketplace yet."</p>
+red here too. The server does the narrowing, so a quiet marketplace's entries
+show however many newer entries belong to others. <strong>Load older entries</strong>
+fetches the next page while there is one. A <strong>See the full ledger</strong> link goes
+to <code>/audit</code>. Empty state: "Nothing recorded against this marketplace yet."</p>
 <hr />
 <h2 id="snapshot-contents">Snapshot contents<a class="headerlink" href="#snapshot-contents" title="Permanent link">&para;</a></h2>
 <p><strong>Route:</strong> <code>/marketplaces/:name/snapshots/:id/files</code> · <strong>Heading:</strong> Snapshot
@@ -4603,9 +4608,14 @@ administrative action, exportable to an external compliance system."</p>
 not a fetch through the API client. The line beneath it states how many
 <a href="#audit-sinks">audit sinks</a> push the same feed onwards and links to them.</p>
 <h3 id="ledger">Ledger<a class="headerlink" href="#ledger" title="Permanent link">&para;</a></h3>
-<p>The table, from <code>GET /api/v1/audit</code>, <strong>newest first</strong> — the API answers in ledger
-order, so the page sorts it by timestamp descending to open on what just
-happened. Any column header re-sorts it.</p>
+<p>The table, from <code>GET /api/v1/audit</code>, <strong>newest first</strong>. The API pages the ledger
+newest first, and the table sorts the entries it has loaded by timestamp
+descending, so it opens on what just happened. Any column header re-sorts it.</p>
+<p>The table starts with the newest page of the ledger (1,000 entries by default).
+Below it, <strong>Load older entries</strong> fetches the next older page and adds it to the
+table. Beside the control, a line says how many entries are loaded. Once the
+oldest entry the ledger holds is loaded, the control goes and the line reads
+<em>"{n} entries loaded — nothing older is recorded."</em></p>
 <table>
 <thead>
 <tr>
@@ -4648,9 +4658,10 @@ happened. Any column header re-sorts it.</p>
 <strong>completion</strong> from the values actually present, so you pick rather than type
 blind. The event, principal and commit lists are the distinct values in the
 loaded rows; the marketplace list draws on the registered marketplaces, so it
-completes beyond the rows on screen. Because the table paginates client-side
-(25 rows a page) over the JSON ledger, the event/principal/commit suggestions
-cover only the rows loaded so far. The status is a <strong>read-only legibility
+completes beyond the rows on screen. The table sorts, filters and paginates
+(25 rows a page) client-side over the entries loaded so far. The footer reads
+<em>"{shown} of {loaded} loaded entries"</em>, and the filters and the
+event/principal/commit suggestions cover only the loaded entries. The status is a <strong>read-only legibility
 aid</strong> derived from what the ledger already records — it does not correct the
 ledger; the lossy verdict detail and the actor-type on automated vetting
 principals are tracked in <a href="https://github.com/skillsgateway/skillsgateway/issues/221">#221</a>.

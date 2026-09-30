@@ -3073,9 +3073,12 @@ unaccounted for, and content served while the ledger was unreachable would
 falsify that claim for exactly the incident the ledger exists to answer. Size
 the database for the serving path, not for the reporting one.</p>
 <h3 id="reading-it">Reading it<a class="headerlink" href="#reading-it" title="Permanent link">&para;</a></h3>
-<p><code>GET /api/v1/audit</code> returns the whole table, and the portal's
-<a href="../../reference/portal/#audit-log">Audit log page</a> renders it. There is no
-filtering, search or paging: it is a recent-activity view.</p>
+<p><a href="../../reference/api/audit/#get-apiv1audit"><code>GET /api/v1/audit</code></a> returns the ledger
+a bounded page at a time, newest first, optionally narrowed to one marketplace,
+with a count of the whole ledger on every page. The portal's
+<a href="../../reference/portal/#audit-log">Audit log page</a> renders it and loads older
+pages on request, and each marketplace's Activity section reads its own slice.
+For a complete pull, use the NDJSON export and its cursor.</p>
 <p>Because entries carry the principal, marketplace and SHA, the inventory question
 — "every identity that fetched this exact content" — is a single query against
 the ledger.</p>
