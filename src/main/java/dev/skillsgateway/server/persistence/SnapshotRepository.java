@@ -5,7 +5,11 @@ import io.github.reqstool.annotations.Requirements;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.jdbc.core.DataClassRowMapper;
 import org.springframework.jdbc.core.RowMapper;
@@ -112,6 +116,24 @@ public class SnapshotRepository {
                 .param("marketplaceId", marketplaceId)
                 .query(Snapshot.class)
                 .list();
+    }
+
+    /**
+     * {@link #listByMarketplace} for many marketplaces in one query: each id maps to its snapshots
+     * in the same order, and an id with none maps to an empty list.
+     */
+    public Map<Long, List<Snapshot>> listByMarketplaces(Collection<Long> marketplaceIds) {
+        Map<Long, List<Snapshot>> byMarketplace = new HashMap<>();
+        marketplaceIds.forEach(id -> byMarketplace.put(id, new ArrayList<>()));
+        if (marketplaceIds.isEmpty()) {
+            return byMarketplace;
+        }
+        jdbc.sql("SELECT * FROM snapshots WHERE marketplace_id IN (:marketplaceIds) ORDER BY id")
+                .param("marketplaceIds", List.copyOf(marketplaceIds))
+                .query(Snapshot.class)
+                .list()
+                .forEach(snapshot -> byMarketplace.get(snapshot.marketplaceId()).add(snapshot));
+        return byMarketplace;
     }
 
     /**
