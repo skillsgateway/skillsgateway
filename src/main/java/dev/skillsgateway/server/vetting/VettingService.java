@@ -7,6 +7,8 @@ import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -326,9 +328,10 @@ public class VettingService {
                         snapshot.sha(),
                         verdictDetail(vetter, verdict, runId));
             }
-        } catch (Exception e) {
+        } catch (IOException | UncheckedIOException e) {
             // The content itself could not be opened: nothing was vetted, so nothing clears. The
-            // run keeps the blocked outcome it was created with.
+            // run keeps the blocked outcome it was created with. Only that is a snapshot-access
+            // verdict; any other failure (the database) propagates, leaving the run unfinished.
             log.warn("vetting chain could not read snapshot {} ({})", snapshot.id(), snapshot.sha(), e);
             vettingRepository.recordVerdict(
                     runId, "snapshot-access", 0, Verdict.error("snapshot-access", String.valueOf(e.getMessage())));
@@ -383,7 +386,7 @@ public class VettingService {
                         effect.suppressions().size()));
     }
 
-    private QuarantineSnapshot open(Snapshot snapshot, String marketplace) throws java.io.IOException {
+    private QuarantineSnapshot open(Snapshot snapshot, String marketplace) throws IOException {
         return new QuarantineSnapshot(
                 snapshot.id(),
                 marketplace,
