@@ -125,6 +125,88 @@ class ObjectStoreBackendTests {
         }
     }
 
+    // --- a write that landed but was reported refused ------------------------------------------
+
+    /**
+     * A conditional write whose response is lost and whose SDK retry gets 412 has already replaced
+     * the manifest. Re-evaluating against it finds the caller's own edit and, before #549, reported
+     * that as the reference having moved: {@code LOCK_FAILURE} on a write that succeeded.
+     */
+    // a new reference whose write landed but was reported refused is created, not a lock failure
+    @Test
+    @SVCs({"SVC_GW_FACADE_0011"})
+    void aCreationThatLandedButWasReportedRefusedSucceeds() throws Exception {
+        LandingButRefusingObjectStoreClient client =
+                new LandingButRefusingObjectStoreClient(ObjectStoreTestSupport.client());
+        ObjectStoreStatistics statistics = new ObjectStoreStatistics();
+        ObjectStoreGitStorage storage = new ObjectStoreGitStorage(
+                client,
+                ObjectStoreTestSupport.properties(ObjectStoreTestSupport.isolatedPrefix("landed"), Duration.ofHours(1)),
+                statistics);
+
+        try (Repository published = storage.published(marketplace())) {
+            ObjectId tip = commit(published, "approved");
+            client.arm(1);
+
+            RefUpdate update = published.updateRef(SNAPSHOT_PREFIX + tip.name());
+            update.setNewObjectId(tip);
+
+            assertThat(update.forceUpdate())
+                    .as("the write landed; the refusal was only its lost response")
+                    .isEqualTo(RefUpdate.Result.NEW);
+            assertThat(published.exactRef(SNAPSHOT_PREFIX + tip.name())).isNotNull();
+        }
+        assertThat(statistics.conflicts())
+                .as("the refusal is still counted, so an unreliable store stays visible")
+                .isEqualTo(1);
+    }
+
+    // a removal whose write landed but was reported refused is a removal, not a lock failure
+    @Test
+    @SVCs({"SVC_GW_FACADE_0011"})
+    void aRemovalThatLandedButWasReportedRefusedSucceeds() throws Exception {
+        LandingButRefusingObjectStoreClient client =
+                new LandingButRefusingObjectStoreClient(ObjectStoreTestSupport.client());
+        ObjectStoreGitStorage storage =
+                ObjectStoreTestSupport.storage(client, ObjectStoreTestSupport.isolatedPrefix("landed-removal"));
+
+        try (Repository published = storage.published(marketplace())) {
+            ObjectId tip = commit(published, "approved");
+            String snapshot = SNAPSHOT_PREFIX + tip.name();
+            setRef(published, snapshot, tip);
+            client.arm(1);
+
+            RefUpdate removal = published.updateRef(snapshot);
+            removal.setForceUpdate(true);
+
+            assertThat(removal.delete()).isEqualTo(RefUpdate.Result.FORCED);
+            assertThat(published.exactRef(snapshot)).isNull();
+        }
+    }
+
+    // an atomic push whose write landed but was reported refused reports every command OK
+    @Test
+    @SVCs({"SVC_GW_FACADE_0011"})
+    void anAtomicPushThatLandedButWasReportedRefusedSucceeds() throws Exception {
+        LandingButRefusingObjectStoreClient client =
+                new LandingButRefusingObjectStoreClient(ObjectStoreTestSupport.client());
+        ObjectStoreGitStorage storage =
+                ObjectStoreTestSupport.storage(client, ObjectStoreTestSupport.isolatedPrefix("landed-push"));
+
+        try (Repository published = storage.published(marketplace())) {
+            ObjectId tip = commit(published, "approved");
+            List<ReceiveCommand> commands = List.of(
+                    new ReceiveCommand(ObjectId.zeroId(), tip, SNAPSHOT_PREFIX + tip.name()),
+                    new ReceiveCommand(ObjectId.zeroId(), tip, MAIN));
+            client.arm(1);
+
+            execute(published, commands, true);
+
+            assertThat(commands).extracting(ReceiveCommand::getResult).containsOnly(ReceiveCommand.Result.OK);
+            assertThat(advertised(published)).contains(SNAPSHOT_PREFIX + tip.name(), MAIN);
+        }
+    }
+
     // --- one push, one transition -------------------------------------------------------------
 
     /**

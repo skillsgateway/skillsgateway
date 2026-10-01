@@ -146,13 +146,20 @@ public final class ManifestStore {
             if (step.next() == null) {
                 return step.result();
             }
-            appendWal(description, step.next());
-            Optional<String> etag = store.putIfMatch(manifestKey, step.next().toJson(), base.etag());
+            RepositoryManifest next = step.next().writtenBy(UUID.randomUUID().toString());
+            appendWal(description, next);
+            Optional<String> etag = store.putIfMatch(manifestKey, next.toJson(), base.etag());
             if (etag.isPresent()) {
-                remember(new Snapshot(step.next(), etag.get()));
+                remember(new Snapshot(next, etag.get()));
                 return step.result();
             }
             statistics.conflict();
+            // A refusal can be the retry of a write that already landed (lost response, then 412);
+            // re-evaluating against our own edit would report it as a conflict. Not recognised if
+            // another writer has already replaced it by the time of this read.
+            if (next.equals(reload().manifest())) {
+                return step.result();
+            }
         }
         statistics.exhausted();
         throw new IOException(("could not apply %s: the repository manifest %s was rewritten by another writer"

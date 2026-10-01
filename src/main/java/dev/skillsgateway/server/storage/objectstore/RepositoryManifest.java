@@ -34,6 +34,8 @@ import java.util.TreeMap;
  * @param tombstones packs no live manifest references any more, and when they stopped being
  *     referenced. They are not deleted at that moment: a replica part-way through streaming one
  *     would get a 404 in the middle of a fetch, so deletion waits out a grace period
+ * @param writer the write attempt that stored this state, or null before any; identical states
+ *     proposed by two writers still differ here
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record RepositoryManifest(
@@ -41,7 +43,8 @@ public record RepositoryManifest(
         long sequence,
         SortedMap<String, String> refs,
         List<PackEntry> packs,
-        Map<String, Long> tombstones) {
+        Map<String, Long> tombstones,
+        String writer) {
 
     /** The only schema version so far. */
     public static final int CURRENT_VERSION = 1;
@@ -87,7 +90,7 @@ public record RepositoryManifest(
     public static RepositoryManifest created(String headTarget) {
         SortedMap<String, String> refs = new TreeMap<>();
         refs.put(org.eclipse.jgit.lib.Constants.HEAD, SYMBOLIC_PREFIX + headTarget);
-        return new RepositoryManifest(CURRENT_VERSION, 0L, refs, List.of(), Map.of());
+        return new RepositoryManifest(CURRENT_VERSION, 0L, refs, List.of(), Map.of(), null);
     }
 
     public static RepositoryManifest parse(byte[] json) throws IOException {
@@ -103,6 +106,11 @@ public record RepositoryManifest(
         return MAPPER.writeValueAsBytes(this);
     }
 
+    /** This state stamped with the attempt that proposes it, so that attempt can recognise its own write. */
+    public RepositoryManifest writtenBy(String attempt) {
+        return new RepositoryManifest(version, sequence, refs, packs, tombstones, attempt);
+    }
+
     /** The value of a reference, or null when it is not there. */
     public String ref(String name) {
         return refs.get(name);
@@ -112,7 +120,7 @@ public record RepositoryManifest(
     public RepositoryManifest withRef(String name, String value) {
         SortedMap<String, String> next = new TreeMap<>(refs);
         next.put(name, value);
-        return new RepositoryManifest(version, sequence + 1, next, packs, tombstones);
+        return new RepositoryManifest(version, sequence + 1, next, packs, tombstones, null);
     }
 
     /** This manifest with a set of reference edits applied as one step; a null value removes. */
@@ -125,14 +133,14 @@ public record RepositoryManifest(
                 next.put(name, value);
             }
         });
-        return new RepositoryManifest(version, sequence + 1, next, packs, tombstones);
+        return new RepositoryManifest(version, sequence + 1, next, packs, tombstones, null);
     }
 
     /** This manifest with one reference removed, at the next sequence. */
     public RepositoryManifest withoutRef(String name) {
         SortedMap<String, String> next = new TreeMap<>(refs);
         next.remove(name);
-        return new RepositoryManifest(version, sequence + 1, next, packs, tombstones);
+        return new RepositoryManifest(version, sequence + 1, next, packs, tombstones, null);
     }
 
     /**
@@ -155,13 +163,14 @@ public record RepositoryManifest(
             live.put(pack.name(), pack);
             graves.remove(pack.name());
         }
-        return new RepositoryManifest(version, sequence + 1, refs, List.copyOf(live.values()), Map.copyOf(graves));
+        return new RepositoryManifest(
+                version, sequence + 1, refs, List.copyOf(live.values()), Map.copyOf(graves), null);
     }
 
     /** This manifest with the named tombstones forgotten, their objects having been deleted. */
     public RepositoryManifest withoutTombstones(List<String> names) {
         Map<String, Long> graves = new HashMap<>(tombstones);
         names.forEach(graves::remove);
-        return new RepositoryManifest(version, sequence + 1, refs, packs, Map.copyOf(graves));
+        return new RepositoryManifest(version, sequence + 1, refs, packs, Map.copyOf(graves), null);
     }
 }
