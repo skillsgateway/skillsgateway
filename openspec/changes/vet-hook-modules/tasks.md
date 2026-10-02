@@ -63,7 +63,7 @@ guards exists, or against a throwaway mutant when it passes on first run.
 
 ## 5. Evidence of precision
 
-- [ ] 5.1 Manual mutation: at least five mutants over the new code in
+- [x] 5.1 Manual mutation: at least five mutants over the new code in
   `mutants.sh` in this change. Each is killed.
 
 ## 6. Docs (same PR)
