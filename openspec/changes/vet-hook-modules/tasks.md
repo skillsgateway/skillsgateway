@@ -44,7 +44,7 @@ guards exists, or against a throwaway mutant when it passes on first run.
 
 ## 4. Vetting (SVC_GW_VETTING_0057–0060)
 
-- [ ] 4.1 `ExecutableSurfaceVetterTests`: one medium `auto-run-module` per
+- [x] 4.1 `ExecutableSurfaceVetterTests`: one medium `auto-run-module` per
   module naming its events; `module-steers-agent` at a `tool.call` and at a
   `prompt.compose` line; `module-runs-process` and low `module-calls-model` at
   their lines; a module whose `$.process` call runs `curl … | sh`, and an
@@ -53,10 +53,10 @@ guards exists, or against a throwaway mutant when it passes on first run.
   `hook-config-unreadable`. Negatives: a module reaching only `$.ui` has no
   capability finding; a file both a hook and a module load is scanned once.
   Watch each fail.
-- [ ] 4.2 Implement in `ExecutableSurfaceVetter`
+- [x] 4.2 Implement in `ExecutableSurfaceVetter`
   (`@Requirements GW_VETTING_0057, GW_VETTING_0058, GW_VETTING_0059, GW_VETTING_0060`),
   with its description and coverage summary updated. Make 4.1 green.
-- [ ] 4.3 Integration: extend `ExecutableSurfaceTests`
+- [x] 4.3 Integration: extend `ExecutableSurfaceTests`
   (`@SVCs SVC_GW_VETTING_0057, SVC_GW_VETTING_0058, SVC_GW_VETTING_0059, SVC_GW_VETTING_0060`):
   a mod plugin is held with the module findings; a module with download-and-
   execute blocks at approval; waivers clear the medium findings.
