@@ -439,8 +439,8 @@ past pattern rules anyway, which is why this vetter is triage.
 
 ### `executable-surface`
 
-Reads each plugin's hooks, MCP servers and LSP servers and flags the code a
-plugin runs without anyone invoking it. It also flags code a plugin installs
+Reads each plugin's hooks, hook modules, MCP servers and LSP servers and flags
+the code a plugin runs without anyone invoking it. It also flags code a plugin installs
 or fetches after the snapshot was pinned: dependency manifests, and installs
 in its skills, commands and agents. A plugin's hooks come from its `hooks/hooks.json`, from the hook
 files or inline hooks that its `plugin.json` and its marketplace entry declare,
@@ -456,8 +456,12 @@ served, so its hooks are still read.
 | `auto-run-hook` | A hook runs automatically. The finding names its trigger (the event and the tool matcher) and what it runs, at the `path:line` where it is declared | medium: warns |
 | `runtime-fetch-exec` | A hook's command, or a file of the snapshot the hook launches, downloads code and executes it. That covers three shapes: a download piped into an interpreter; an interpreter fed a download through `$(…)` or `<(…)`; and a file that both downloads to a file and makes that same file executable | high: blocks |
 | `runtime-package-run` | A hook runs a package runner (`npx`, `uvx`, `pnpm dlx`, `pipx run`, …) or installs packages (`pip install`, `npm install`, …). Either way, it fetches its code from a registry at run time | high: blocks |
-| `hook-config-unreadable` | A hook file, a `plugin.json` or the manifest could not be parsed, so the hooks it declares could not be read | medium: warns |
-| `hook-target-unscanned` | A hook runs a file that is binary or over the scan size limit, so no rule could read it | medium: warns |
+| `hook-config-unreadable` | A hook file, a `plugin.json` or the manifest could not be parsed, so the hooks it declares could not be read; or a hooks object holds a key the reader does not recognise, or a module path that leaves the plugin. The finding names the key | medium: warns |
+| `hook-target-unscanned` | A hook runs a file that is binary or over the scan size limit, so no rule could read it; or a hook module, or a file it imports, is missing, binary, over the size limit, or a package outside the plugin | medium: warns |
+| `auto-run-module` | A hook module runs in-process in every session. The finding names the events it registers and the `$` interfaces it reaches, at the line that names the module | medium: warns |
+| `module-steers-agent` | A hook module registers `tool.call` (it can deny or rewrite any tool call) or `prompt.compose` (it can rewrite the system prompt), at that registration | medium: warns |
+| `module-runs-process` | A hook module reaches `$.process`, so it runs programs on the user's machine, at its first use | medium: warns |
+| `module-calls-model` | A hook module reaches `$.model`, so it sends content to a model, at its first use | low: warns |
 | `mcp-fetch-exec` | A local MCP server's command, or a file of the plugin it launches, downloads code and executes it, in the shapes `runtime-fetch-exec` recognises | high: blocks |
 | `mcp-package-run` | A local MCP server runs a package runner or installs packages, as `runtime-package-run` recognises them | medium: warns |
 | `lsp-fetch-exec` | An LSP server's command, or a file of the plugin it launches, downloads code and executes it, as for an MCP server | high: blocks |
@@ -520,6 +524,26 @@ one. Every LSP server runs as a local process, so every one is scanned exactly
 as a local MCP server is, below, under the `lsp-` ids. A language server on
 `PATH` (`gopls`) is the user's install, and is silent.
 
+**Hook modules.** A Claude Code plugin can name TypeScript or JavaScript
+modules under `modules` in its `hooks/hooks.json` (`{"modules": ["./register.tsx"]}`)
+instead of an event map. A module's `register(on, options)` hooks engine events
+with `on('…')` and reaches the engine through `$`, in-process, for every
+session. `modules` is read wherever a hooks object is: in `hooks/hooks.json`,
+and in a hook file or inline object that `plugin.json` or the marketplace entry
+declares. The module and every plugin file it imports (`import … from './…'`,
+`import './…'`, `export … from './…'`, resolved with Claude Code's suffixes and
+`index` files) are scanned as a hook's launched files are, up to 50 files.
+`claude-code` imports are types only and are skipped.
+
+Each capability has a rule of its own, so a waiver for one does not cover a
+capability a later version of the module adds. Other interfaces (`$.fs`,
+`$.agent`, `$.tool`, `$.ui`, …) are named in the `auto-run-module` finding and
+the inventory, not flagged one by one. A hooks key the reader does not
+recognise is `hook-config-unreadable` rather than an empty list, so the next
+change to the hooks format shows up instead of reading as a plugin with
+nothing to run. An event name it has not seen is not a problem when its value
+is a list of matcher groups.
+
 **MCP servers.** The servers come from the plugin's `.mcp.json` and from the
 `mcpServers` its `plugin.json` and its marketplace entry declare. For a local
 (stdio) server, the `command` and its `args` are scanned as one command line,
@@ -562,6 +586,13 @@ yield one finding per line of it, not one per hook.
     though both can fetch code when the server starts. Hook files for other
     harnesses (`.codex/`, `.cursor/`) are not Claude Code plugin hooks and are
     not read.
+
+    A hook module is read lexically, not parsed: comments are blanked and
+    `on('…')`, `$.<name>` and import declarations are matched as text. A
+    renamed `$`, an interface held in a variable (`const p = $.process`) or an
+    event name built at run time walks past the capability rules, though the
+    module itself is always `auto-run-module`. A `$.process` named inside a
+    string still fires.
 
     Dependencies are reported, not resolved. No lockfile is parsed, no
     version range is evaluated, and no package is looked up for known

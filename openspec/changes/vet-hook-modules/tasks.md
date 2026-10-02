@@ -68,7 +68,7 @@ guards exists, or against a throwaway mutant when it passes on first run.
 
 ## 6. Docs (same PR)
 
-- [ ] 6.1 `docs/manual/concepts/vetting.md`: the new rules in the
+- [x] 6.1 `docs/manual/concepts/vetting.md`: the new rules in the
   `executable-surface` table, hook modules beside hooks, and the lexical scan's
   limits. `docs/manual/reference/portal.md`: the inventory kinds. Verify with
   `mkdocs build --strict`.
