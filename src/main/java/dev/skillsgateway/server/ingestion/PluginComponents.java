@@ -84,8 +84,42 @@ public final class PluginComponents {
                             + " in that skill's or agent's frontmatter, which runs while it is active")
             String declaredBy) {}
 
-    /** A hook declaration that could not be read. */
-    public record Problem(String path, String message) {}
+    @Schema(name = "PluginHookProblem", description = "Something a hook declares that could not be read")
+    public record Problem(
+            @Schema(description = "The file, or path:line of the declaration or import")
+            String path,
+
+            @Schema(description = "What could not be read, and why")
+            String message) {}
+
+    @Schema(name = "PluginSite", description = "A name a hook module uses, and where")
+    public record Site(
+            @Schema(description = "The event name, or the engine interface after $.")
+            String name,
+
+            @Schema(description = "path:line of its first appearance")
+            String location) {}
+
+    @Schema(
+            name = "PluginHookModule",
+            description = "A hook module (GW_INGEST_0065): code Claude Code loads in-process for every session")
+    public record HookModule(
+            @Schema(description = "The module's file") String path,
+
+            @Schema(description = "path:line of the declaration that names it")
+            String location,
+
+            @Schema(description = "Events it registers with on(...) calls a source scan can see")
+            List<Site> events,
+
+            @Schema(description = "Engine interfaces it reaches as $.<name>")
+            List<Site> uses,
+
+            @Schema(description = "The module and every plugin file it imports, in the order followed")
+            List<String> files,
+
+            @Schema(description = "Files it loads that could not be read, so no rule read them")
+            List<Problem> unscanned) {}
 
     /**
      * A local (stdio) MCP server: what Claude Code runs to start it, located at its {@code command}
@@ -101,6 +135,7 @@ public final class PluginComponents {
             List<Component> commands,
             List<Component> agents,
             List<Hook> hooks,
+            List<HookModule> hookModules,
             List<Component> mcpServers,
             List<McpCommand> mcpCommands,
             List<Component> lspServers,
@@ -180,7 +215,7 @@ public final class PluginComponents {
 
         Manifest defaultHooks = reader.json(join(root, "hooks/hooks.json"), true);
         if (defaultHooks != null) {
-            reader.hooks(defaultHooks.root(), defaultHooks, "", "plugin", hooks);
+            reader.hooks(defaultHooks.root(), defaultHooks, "", join(root, "hooks"), hooks);
         }
         if (plugin != null) {
             reader.hookDeclaration(plugin.root().path("hooks"), plugin, "/hooks", hooks);
@@ -225,6 +260,7 @@ public final class PluginComponents {
                 List.copyOf(commands),
                 List.copyOf(agents),
                 List.copyOf(hooks),
+                List.copyOf(reader.modules.values()),
                 List.copyOf(mcp),
                 List.copyOf(mcpCommands),
                 List.copyOf(lsp.servers().values()),
@@ -266,6 +302,7 @@ public final class PluginComponents {
         private final Files files;
         private final String root;
         private final List<Problem> problems = new ArrayList<>();
+        private final Map<String, HookModule> modules = new LinkedHashMap<>();
 
         Reader(Files files, String root) {
             this.files = files;
@@ -356,12 +393,18 @@ public final class PluginComponents {
         /** A plugin.json or marketplace-entry {@code hooks} value: a path, an inline object, or an array of both. */
         void hookDeclaration(JsonNode value, Manifest doc, String pointer, List<Hook> out) {
             if (value.isTextual()) {
-                Manifest file = json(resolve(root, value.asText()), true);
+                String path = resolve(root, value.asText());
+                Manifest file = json(path, true);
                 if (file != null) {
-                    hooks(file.root(), file, "", "plugin", out);
+                    hooks(
+                            file.root(),
+                            file,
+                            "",
+                            path.contains("/") ? path.substring(0, path.lastIndexOf('/')) : "",
+                            out);
                 }
             } else if (value.isObject()) {
-                hooks(value, doc, pointer, "plugin", out);
+                hooks(value, doc, pointer, root, out);
             } else if (value.isArray()) {
                 for (int i = 0; i < value.size(); i++) {
                     hookDeclaration(value.get(i), doc, pointer + "/" + i, out);
@@ -369,16 +412,79 @@ public final class PluginComponents {
             }
         }
 
-        /** A hooks object — {@code {"hooks": {Event: [...]}}} or the bare event map. */
-        void hooks(JsonNode value, Manifest doc, String pointer, String declaredBy, List<Hook> out) {
-            JsonNode events = value;
+        /**
+         * A hooks object — {@code {"hooks": {Event: [...]}}}, {@code {"modules": [...]}}, both, or the
+         * bare event map. Module paths resolve against {@code directory}, the declaring file's.
+         */
+        @Requirements({"GW_INGEST_0065", "GW_VETTING_0060"})
+        void hooks(JsonNode value, Manifest doc, String pointer, String directory, List<Hook> out) {
+            boolean wrapped = value.has("hooks") || value.has("modules");
+            JsonNode events = wrapped ? MAPPER.createObjectNode() : value;
             String base = pointer;
+            Iterator<Map.Entry<String, JsonNode>> fields = value.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                JsonNode v = field.getValue();
+                boolean recognised =
+                        switch (field.getKey()) {
+                            case "hooks" -> v.isObject();
+                            case "modules" ->
+                                v.isArray()
+                                        && StreamSupport.stream(v.spliterator(), false)
+                                                .allMatch(JsonNode::isTextual);
+                            case "description" -> v.isTextual();
+                            default -> !wrapped && matcherGroups(v);
+                        };
+                if (!recognised) {
+                    unrecognised(field.getKey(), doc, pointer);
+                }
+            }
             if (value.path("hooks").isObject()) {
                 events = value.get("hooks");
                 base = pointer + "/hooks";
+                String hooksPointer = base;
+                events.fields().forEachRemaining(event -> {
+                    if (!matcherGroups(event.getValue())) {
+                        unrecognised(event.getKey(), doc, hooksPointer);
+                    }
+                });
             }
             String eventsPointer = base;
-            events(events, declaredBy, handlerPointer -> doc.locate(eventsPointer + handlerPointer), out);
+            events(events, "plugin", handlerPointer -> doc.locate(eventsPointer + handlerPointer), out);
+            JsonNode declared = value.path("modules");
+            if (declared.isArray()) {
+                for (int i = 0; i < declared.size(); i++) {
+                    if (declared.get(i).isTextual()) {
+                        module(declared.get(i).asText(), directory, doc.locate(pointer + "/modules/" + i));
+                    }
+                }
+            }
+        }
+
+        /** An event's value: a list of matcher groups, each an object. */
+        private static boolean matcherGroups(JsonNode value) {
+            return value.isArray()
+                    && StreamSupport.stream(value.spliterator(), false).allMatch(JsonNode::isObject);
+        }
+
+        private void unrecognised(String key, Manifest doc, String pointer) {
+            problems.add(new Problem(
+                    doc.locate(pointer + "/" + escape(key)),
+                    "\"%s\" is not a hook declaration this reader recognises, so hooks it holds were not read"
+                            .formatted(key)));
+        }
+
+        /** A declared module, read once however many declarations name it. */
+        private void module(String declared, String directory, String location) {
+            String path = resolve("", join(directory, declared));
+            if (path == null || !(root.isEmpty() || path.startsWith(root + "/"))) {
+                problems.add(new Problem(
+                        location, "module '%s' resolves outside the plugin, so it was not read".formatted(declared)));
+                return;
+            }
+            if (!modules.containsKey(path)) {
+                modules.put(path, HookModules.read(files, root, path, location));
+            }
         }
 
         /**
@@ -395,6 +501,9 @@ public final class PluginComponents {
             }
             events.fields().forEachRemaining(event -> {
                 JsonNode groups = event.getValue();
+                if (!groups.isArray()) {
+                    return;
+                }
                 for (int g = 0; g < groups.size(); g++) {
                     JsonNode group = groups.get(g);
                     String matcher = group.path("matcher").isTextual()

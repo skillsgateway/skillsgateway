@@ -3593,6 +3593,16 @@ cases:
       THEN the refusal and the form's hint and field error state the rule in words and that the name is the /git/<name> path clients clone, and the form's Register control stays disabled
     revision: "0.3.0"
 
+  - id: SVC_GW_INGEST_0065
+    requirement_ids: ["GW_INGEST_0065"]
+    title: The inventory lists hook modules with their events, interfaces and imports, and what it could not scan
+    verification: automated-test
+    description: |
+      GIVEN a plugin whose hooks file names a module that registers events, reaches engine interfaces and imports plugin files through relative, suffix-less and index specifiers, plus a bare package, a missing file and a binary file; and modules named from an inline plugin manifest hooks object and a marketplace entry
+      WHEN the snapshot's content inventory is read
+      THEN each module is listed with its path, its declaring path:line, every event and interface at path:line, every imported file, and the package, the missing and the binary file as not scanned; a commented-out registration is not listed
+    revision: "0.4.0"
+
   - id: SVC_GW_VETTING_0040
     requirement_ids: ["GW_VETTING_0040"]
     title: The lines that raised false positives raise nothing, and the payloads the rules exist for still fail
@@ -3728,10 +3738,10 @@ cases:
     title: The inventory shows collapsed counts per component kind that expand in place
     verification: automated-test
     description: |
-      GIVEN a snapshot whose plugin has one skill, four agents and three hooks
-      WHEN the reviewer opens the Inventory tab and expands the hooks
-      THEN the plugin reads one count per kind it has and none for a kind it lacks, every list is collapsed, and expanding the hooks shows each trigger and command in place while the others stay collapsed
-    revision: "0.3.0"
+      GIVEN a snapshot whose plugin has one skill, four agents, three hooks and a hook module
+      WHEN the reviewer opens the Inventory tab and expands the hooks and the hook modules
+      THEN the plugin reads one count per kind it has and none for a kind it lacks, every list is collapsed, expanding the hooks shows each trigger and command in place while the others stay collapsed, and expanding the hook modules shows each module's path, events and interfaces
+    revision: "0.4.0"
 
   - id: SVC_GW_VETTING_0047
     requirement_ids: ["GW_VETTING_0047"]
@@ -3832,3 +3842,43 @@ cases:
       WHEN the chain runs
       THEN each positive raises one high skill-fetch-exec finding at its first matching line and the verdict fails, a script that also installs raises one runtime-dependency beside it, and the negatives raise none
     revision: "0.3.0"
+
+  - id: SVC_GW_VETTING_0057
+    requirement_ids: ["GW_VETTING_0057"]
+    title: Every hook module is a medium finding naming its events
+    verification: automated-test
+    description: |
+      GIVEN a plugin whose hooks file names a module registering session.start and ui.render
+      WHEN the chain runs
+      THEN one medium auto-run-module finding is raised at the line naming the module, its message naming both events and the interfaces it reaches, and the snapshot is held for review
+    revision: "0.4.0"
+
+  - id: SVC_GW_VETTING_0058
+    requirement_ids: ["GW_VETTING_0058"]
+    title: A module hooking tool.call or prompt.compose, reaching $.process or reaching $.model is flagged under its own rule
+    verification: automated-test
+    description: |
+      GIVEN a module registering tool.call and prompt.compose and reaching $.process and $.model, one capability in an imported file; and a module reaching only $.ui
+      WHEN the chain runs
+      THEN module-steers-agent is raised at each registration, module-runs-process medium and module-calls-model low at their first use, each in the file it appears in, and the $.ui-only module raises none of them
+    revision: "0.4.0"
+
+  - id: SVC_GW_VETTING_0059
+    requirement_ids: ["GW_VETTING_0059"]
+    title: Download-and-execute in a module or an import blocks; an unreadable module or import is reported
+    verification: automated-test
+    description: |
+      GIVEN a module whose process call pipes a download into a shell, an imported file doing the same, and a module importing a missing file, a binary file and a package outside the plugin
+      WHEN the chain runs
+      THEN each download-and-execute raises a high finding at its path:line and the verdict fails, and each file that could not be read raises one medium hook-target-unscanned finding naming it
+    revision: "0.4.0"
+
+  - id: SVC_GW_VETTING_0060
+    requirement_ids: ["GW_VETTING_0060"]
+    title: An unrecognised hooks key is reported; an unfamiliar event of the right shape is not
+    verification: automated-test
+    description: |
+      GIVEN hooks files holding modules as a string, an unknown top-level key beside hooks, an event whose value is an object, and an event inside hooks whose value is a string; and negatives: a description beside hooks, and a bare event map with an event name the reader has not seen
+      WHEN the chain runs
+      THEN each positive raises one medium hook-config-unreadable finding naming the file and the key, and the negatives raise none
+    revision: "0.4.0"

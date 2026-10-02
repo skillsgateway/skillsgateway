@@ -2633,6 +2633,16 @@ requirements:
     categories: ["interaction-capability"]
     revision: 0.3.0
 
+  - id: GW_INGEST_0065
+    title: The inventory lists each hook module a plugin declares, with the events it registers and the interfaces it reaches
+    significance: shall
+    description: "The system shall list, for each plugin of a snapshot's content inventory, every hook module that a hooks declaration names under modules, with the module's path, the path:line of the declaration that names it, each event it registers through an on(...) call a source scan can see, each engine interface it reaches as $.<name>, and every file of the plugin it imports, followed transitively, each event and interface located at path:line; and shall record a module or imported file that is missing, binary, over the scan size limit or a package outside the plugin as not scanned rather than leave it out."
+    references:
+      requirement_ids: ["GW_INGEST_0045"]
+    rationale: "A hook module runs in-process in every session and can deny or rewrite tool calls and the system prompt, yet a hooks file that names modules instead of events read as a plugin with no hooks. A reviewer approves what the inventory shows, so the inventory must show the module, what it hooks and what it reaches, or the most powerful executable surface a plugin can ship is invisible."
+    categories: ["security", "functional-suitability"]
+    revision: 0.4.0
+
   - id: GW_VETTING_0040
     title: Prompt-injection markers do not fire on formatting instructions or command names
     significance: shall
@@ -2764,12 +2774,12 @@ requirements:
   - id: GW_INGEST_0046
     title: The portal inventory shows each plugin's components as expandable counts
     significance: shall
-    description: "The system shall show, in the portal's snapshot inventory, each plugin's components as one count per kind it has — skills, commands, agents, hooks and MCP servers — collapsed by default, each count expanding its own list in place; and shall show for each hook its trigger and what it runs."
+    description: "The system shall show, in the portal's snapshot inventory, each plugin's components as one count per kind it has — skills, commands, agents, hooks, hook modules, MCP servers and LSP servers — collapsed by default, each count expanding its own list in place; shall show for each hook its trigger and what it runs; and shall show for each hook module its path, the events it registers and the engine interfaces it reaches."
     references:
       requirement_ids: ["GW_INGEST_0045"]
     rationale: "Counts give the shape of a plugin at a glance: one skill and three hooks is a different review from forty skills. Collapsed lists keep a large marketplace readable, and a hook's trigger and command are the two things a reviewer needs to judge it without opening a file."
     categories: ["interaction-capability", "security"]
-    revision: 0.3.0
+    revision: 0.4.0
 
   - id: GW_VETTING_0047
     title: Hooks that run automatically are flagged with their trigger
@@ -2870,3 +2880,43 @@ requirements:
     rationale: "Code fetched and executed at run time was never in the snapshot the gateway pinned, whatever starts it, so it blocks here as it does in a hook, an MCP server or an LSP server, waivable per group once a reviewer has decided the source is trusted."
     categories: ["security"]
     revision: 0.3.0
+
+  - id: GW_VETTING_0057
+    title: A hook module is flagged as code that runs in every session
+    significance: shall
+    description: "The system shall raise, in the executable-surface vetter, one medium-severity finding per hook module a plugin declares, located at the declaration that names it, stating that the module runs in every session without the user invoking it and naming the events it registers and the engine interfaces it reaches."
+    references:
+      requirement_ids: ["GW_VETTING_0047", "GW_INGEST_0065"]
+    rationale: "A hook module runs automatically, as a command hook does, and in-process with access to the engine, so it is at least the finding a command hook is; approving the plugin is approving that module running in every session."
+    categories: ["security"]
+    revision: 0.4.0
+
+  - id: GW_VETTING_0058
+    title: A hook module that can steer the agent, run programs or call models is flagged for each
+    significance: shall
+    description: "The system shall raise, in the executable-surface vetter, for a hook module or a file it imports: a medium-severity finding where it registers the tool.call or prompt.compose event, located at that registration; a medium-severity finding where it reaches the process interface, located at its first use; and a low-severity finding where it reaches the model interface, located at its first use; each under a rule id of its own."
+    references:
+      requirement_ids: ["GW_VETTING_0057"]
+    rationale: "Hooking tool.call or prompt.compose lets a module deny or rewrite what the agent does or is told, the process interface runs programs on the user's machine, and the model interface sends content to a model. Separate rule ids keep a waiver for one capability from covering a capability a later version adds."
+    categories: ["security"]
+    revision: 0.4.0
+
+  - id: GW_VETTING_0059
+    title: A hook module and the plugin files it imports are scanned, and what cannot be read is reported
+    significance: shall
+    description: "The system shall scan a hook module and every plugin file it imports with the rules that detect downloading code and executing it, raising a high-severity finding at the matching path:line as for a file a hook launches; and shall raise a medium-severity finding, rather than pass silently, for a module or imported file that is missing, binary, over the scan size limit, or a package outside the plugin, naming it."
+    references:
+      requirement_ids: ["GW_VETTING_0048", "GW_VETTING_0049", "GW_VETTING_0057"]
+    rationale: "Code a module fetches at run time was never in the snapshot the gateway pinned, wherever in the module's import graph the fetch sits. A file the vetter cannot read has not been shown to fetch nothing, so a pass would claim what the vetter did not establish."
+    categories: ["security"]
+    revision: 0.4.0
+
+  - id: GW_VETTING_0060
+    title: A hook declaration of a shape the reader does not recognise is reported
+    significance: shall
+    description: "The system shall raise a medium-severity finding, naming the file and the key, for a hooks declaration holding a key that is neither a recognised key of the right type nor, in an event map, an event whose value is a list of matcher groups; and shall not raise one for an event name it has not seen before whose value has that shape."
+    references:
+      requirement_ids: ["GW_VETTING_0049"]
+    rationale: "Hook modules arrived as a new key in a file the reader parsed as valid JSON, and the reader recorded no hooks and raised nothing. Reporting an unrecognised shape makes the next format change visible to a reviewer instead of reading as a plugin with nothing to run."
+    categories: ["security"]
+    revision: 0.4.0
