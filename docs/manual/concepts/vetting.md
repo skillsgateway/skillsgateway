@@ -587,8 +587,9 @@ yield one finding per line of it, not one per hook.
     harnesses (`.codex/`, `.cursor/`) are not Claude Code plugin hooks and are
     not read.
 
-    A hook module is read lexically, not parsed: comments are blanked and
-    `on('…')`, `$.<name>` and import declarations are matched as text. A
+    A hook module is read lexically, not parsed: comments are blanked before
+    `on('…')` and `$.<name>` are matched as text. Imports are matched with and
+    without comments, so a commented-out import is still followed. A
     renamed `$`, an interface held in a variable (`const p = $.process`) or an
     event name built at run time walks past the capability rules, though the
     module itself is always `auto-run-module`. A `$.process` named inside a
