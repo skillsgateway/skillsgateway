@@ -34,3 +34,6 @@ data/
 # pattern containing a slash otherwise matches only the repository root.
 **/.impeccable/config.local.json
 **/.impeccable/hook.cache.json
+# The Impeccable engine binary: the launcher beside it downloads the pinned,
+# checksummed build into ~/.impeccable on first use, per platform.
+.claude/skills/impeccable/scripts/bin/
