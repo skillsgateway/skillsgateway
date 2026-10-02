@@ -130,7 +130,7 @@ class HookModulesTests {
                 .containsExactlyInAnyOrder("p/hooks/register.tsx:5", "p/hooks/register.tsx:6", "p/hooks/lib/blob.js");
         assertThat(module.unscanned())
                 .extracting(Problem::message)
-                .anySatisfy(message -> assertThat(message).contains("'lodash'"))
+                .anySatisfy(message -> assertThat(message).contains("the package 'lodash'"))
                 .anySatisfy(message -> assertThat(message).contains("'./missing'"))
                 .anySatisfy(message -> assertThat(message).contains("binary"));
     }

@@ -514,7 +514,7 @@ class ExecutableSurfaceVetterTests {
         assertThat(rule(verdict, "hook-target-unscanned"))
                 .extracting(Finding::message)
                 .anySatisfy(message -> assertThat(message).contains("binary"))
-                .anySatisfy(message -> assertThat(message).contains("'lodash'"))
+                .anySatisfy(message -> assertThat(message).contains("the package 'lodash'"))
                 .anySatisfy(message -> assertThat(message).contains("not in the snapshot"));
     }
 
