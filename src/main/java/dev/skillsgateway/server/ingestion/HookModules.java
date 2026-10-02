@@ -72,7 +72,8 @@ final class HookModules {
             String code = blankComments(text);
             collect(EVENT, 2, code, file, events);
             collect(USE, 1, code, file, uses);
-            for (Import imported : imports(code)) {
+            // The raw text too: a commented or oddly hidden import is followed, never missed.
+            for (Import imported : imports(code, text)) {
                 String target = target(files, root, file, imported, unscanned);
                 if (target != null && visited.add(target)) {
                     queue.add(target);
@@ -124,16 +125,20 @@ final class HookModules {
         }
     }
 
-    private static List<Import> imports(String code) {
-        List<Import> found = new ArrayList<>();
-        for (Pattern pattern : List.of(IMPORT_FROM, IMPORT_BARE)) {
-            Matcher matcher = pattern.matcher(code);
-            while (matcher.find()) {
-                found.add(new Import(matcher.group(2), lineAt(code, matcher.start(2))));
+    private static List<Import> imports(String... texts) {
+        Map<String, Import> found = new LinkedHashMap<>();
+        for (String text : texts) {
+            for (Pattern pattern : List.of(IMPORT_FROM, IMPORT_BARE)) {
+                Matcher matcher = pattern.matcher(text);
+                while (matcher.find()) {
+                    Import imported = new Import(matcher.group(2), lineAt(text, matcher.start(2)));
+                    found.putIfAbsent(imported.specifier() + "\0" + imported.line(), imported);
+                }
             }
         }
-        found.sort((a, b) -> Integer.compare(a.line(), b.line()));
-        return found;
+        List<Import> sorted = new ArrayList<>(found.values());
+        sorted.sort((a, b) -> Integer.compare(a.line(), b.line()));
+        return sorted;
     }
 
     /**
@@ -209,6 +214,25 @@ final class HookModules {
                 for (; i < stop; i++) {
                     out.append(text.charAt(i) == '\n' ? '\n' : ' ');
                 }
+            } else if (c == '/' && regexMayStart(out)) {
+                // A regex literal: its contents are kept, so a '//' inside it is not a comment.
+                boolean inClass = false;
+                out.append(c);
+                i++;
+                while (i < text.length() && text.charAt(i) != '\n' && (inClass || text.charAt(i) != '/')) {
+                    char r = text.charAt(i);
+                    if (r == '\\' && i + 1 < text.length()) {
+                        out.append(text.charAt(i++));
+                    } else if (r == '[') {
+                        inClass = true;
+                    } else if (r == ']') {
+                        inClass = false;
+                    }
+                    out.append(text.charAt(i++));
+                }
+                if (i < text.length() && text.charAt(i) == '/') {
+                    out.append(text.charAt(i++));
+                }
             } else if (c == '\'' || c == '"' || c == '`') {
                 out.append(c);
                 i++;
@@ -227,6 +251,15 @@ final class HookModules {
             }
         }
         return out.toString();
+    }
+
+    /** A {@code /} starts a regex literal, not a division, after an operator, an opening bracket or nothing. */
+    private static boolean regexMayStart(StringBuilder before) {
+        int i = before.length() - 1;
+        while (i >= 0 && Character.isWhitespace(before.charAt(i))) {
+            i--;
+        }
+        return i < 0 || "(,=:[!&|?{};+-*%<>~^".indexOf(before.charAt(i)) >= 0;
     }
 
     private static int lineAt(String text, int offset) {

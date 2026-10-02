@@ -91,4 +91,8 @@ run M13-unscanned-unreported java $T aModuleOrImportThatCannotBeReadIsReported "
   'for (PluginComponents.Problem problem : module.unscanned()) {' 'for (PluginComponents.Problem problem : List.<PluginComponents.Problem>of()) {'
 run M14-module-reported-as-hook java $X aHookModuleIsHeldWithItsFindingsAndItsImportedFetchBlocksUntilWaived "$E" \
   'static final String AUTO_RUN_MODULE = "auto-run-module";' 'static final String AUTO_RUN_MODULE = "auto-run-hook";'
+run M15-regex-taken-for-comment java $H hostileModulesAreReadAsWritten "$M" \
+  "} else if (c == '/' && regexMayStart(out)) {" "} else if (false) {"
+run M16-raw-imports-ignored java $H hostileModulesAreReadAsWritten "$M" \
+  'for (Import imported : imports(code, text)) {' 'for (Import imported : imports(code)) {'
 if [[ -n "${DRY:-}" ]]; then echo "dry run: every mutant applies"; else echo "all mutants killed"; fi

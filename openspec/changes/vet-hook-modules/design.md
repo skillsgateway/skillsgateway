@@ -81,6 +81,14 @@ Over the module text, comments stripped (`//…`, `/*…*/`, string contents kep
   and `claude-code/*` are ignored (types only). Any other bare specifier is an
   unscanned problem: the vetter cannot see a package outside the snapshot.
 
+*Revised during apply (adversarial pass):* a regex literal holding `//`
+(`/a\/\//`) was blanked as a comment, hiding an import or a `$.process` after it
+on the same line. The blanker now keeps a regex literal where one can start (after
+an operator, an opening bracket or nothing), and imports are matched on the raw
+text as well as the blanked one, so a hidden or commented-out import is followed
+(a commented import of a missing file is then reported unscanned, which errs
+toward the reviewer seeing it).
+
 Imports are followed breadth-first with a visited set and capped at 50 files
 (the cap itself is reported as an unscanned problem when hit). Events and uses
 are collected across all followed files, located in the file they appear in.

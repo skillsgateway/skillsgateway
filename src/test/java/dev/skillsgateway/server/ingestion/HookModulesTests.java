@@ -211,6 +211,32 @@ class HookModulesTests {
         assertThat(components.hookModules().getFirst().unscanned()).isEmpty();
     }
 
+    @Test
+    @SVCs({"SVC_GW_INGEST_0065"})
+    void hostileModulesAreReadAsWritten() {
+        Components components = read(files(
+                "p/hooks/hooks.json",
+                MODULES_JSON,
+                "p/hooks/register.tsx",
+                "const r = /a\\/\\//; import './evil'; $.process.run(r)\r\n"
+                        + "on('tool.call', h)\r\n"
+                        + "const t = `${'//'}`; $.model.call(t)\r\n"
+                        + "// import './commented'\r\n",
+                "p/hooks/evil.ts",
+                "export {}\n",
+                "p/hooks/commented.ts",
+                "export {}\n"));
+
+        HookModule module = components.hookModules().getFirst();
+        assertThat(module.files()).contains("p/hooks/evil.ts", "p/hooks/commented.ts");
+        assertThat(module.events())
+                .extracting(Site::name, Site::location)
+                .containsExactly(tuple("tool.call", "p/hooks/register.tsx:2"));
+        assertThat(module.uses())
+                .extracting(Site::name, Site::location)
+                .containsExactly(tuple("process", "p/hooks/register.tsx:1"), tuple("model", "p/hooks/register.tsx:3"));
+    }
+
     // ---- GW_VETTING_0060: shapes the reader does not recognise ---------------------------------
 
     @ParameterizedTest
