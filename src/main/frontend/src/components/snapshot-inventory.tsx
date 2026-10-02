@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 
 type Plugin = NonNullable<SnapshotContent["plugins"]>[number];
 type Hook = NonNullable<Plugin["hooks"]>[number];
-type Kind = "skills" | "commands" | "agents" | "hooks" | "mcpServers" | "lspServers";
+type HookModule = NonNullable<Plugin["hookModules"]>[number];
+type Kind = "skills" | "commands" | "agents" | "hooks" | "hookModules" | "mcpServers" | "lspServers";
 
 const KINDS: readonly { kind: Kind; one: string; many: string }[] = [
   { kind: "skills", one: "skill", many: "skills" },
   { kind: "commands", one: "command", many: "commands" },
   { kind: "agents", one: "agent", many: "agents" },
   { kind: "hooks", one: "hook", many: "hooks" },
+  { kind: "hookModules", one: "hook module", many: "hook modules" },
   { kind: "mcpServers", one: "MCP server", many: "MCP servers" },
   { kind: "lspServers", one: "LSP server", many: "LSP servers" },
 ];
@@ -35,6 +37,47 @@ function HookRow({ hook }: { hook: Hook }) {
       </div>
       {hook.runs ? <code className="block font-mono break-all">{hook.runs}</code> : null}
       <span className="block font-mono break-all text-muted-foreground">{hook.location}</span>
+    </li>
+  );
+}
+
+/** A hook module: the events it registers, the engine interfaces it reaches, and what it loads. */
+function HookModuleRow({ module }: { module: HookModule }) {
+  const events = module.events ?? [];
+  const uses = module.uses ?? [];
+  const imports = (module.files ?? []).slice(1);
+  return (
+    <li className="space-y-1 rounded-md border p-2 text-xs">
+      <code className="block font-mono font-medium break-all">{module.path}</code>
+      <div className="flex flex-wrap items-center gap-1">
+        {events.length === 0 ? (
+          <span className="text-muted-foreground">no events a scan can see</span>
+        ) : (
+          events.map((event) => (
+            <span
+              key={event.name}
+              title={event.location}
+              className="rounded-md border bg-muted px-2 py-0.5 font-medium"
+            >
+              {event.name}
+            </span>
+          ))
+        )}
+        {uses.map((use) => (
+          <code key={use.name} title={use.location} className="rounded-md border px-2 py-0.5 font-mono">
+            {`$.${use.name}`}
+          </code>
+        ))}
+      </div>
+      {imports.length > 0 ? (
+        <span className="block font-mono break-all text-muted-foreground">{`imports ${imports.join(", ")}`}</span>
+      ) : null}
+      {(module.unscanned ?? []).map((problem) => (
+        <span key={`${problem.path}:${problem.message}`} className="block break-all">
+          {`not scanned: ${problem.path} — ${problem.message}`}
+        </span>
+      ))}
+      <span className="block font-mono break-all text-muted-foreground">{`declared at ${module.location}`}</span>
     </li>
   );
 }
@@ -62,6 +105,15 @@ function KindList({ plugin, kind }: { plugin: Plugin; kind: Kind }) {
       </ul>
     );
   }
+  if (kind === "hookModules") {
+    return (
+      <ul className="space-y-2">
+        {(plugin.hookModules ?? []).map((module) => (
+          <HookModuleRow key={module.path} module={module} />
+        ))}
+      </ul>
+    );
+  }
   return (
     <ul className="space-y-1 text-sm">
       {(plugin[kind] ?? []).map((component, index) => (
@@ -77,7 +129,7 @@ function KindList({ plugin, kind }: { plugin: Plugin; kind: Kind }) {
 /**
  * One plugin's components as one count per kind it has, all collapsed; each count expands its own
  * list in place. A hook runs without anyone invoking it, so its trigger and command are what a
- * reviewer reads.
+ * reviewer reads; a hook module's events and the interfaces it reaches are the same for a module.
  *
  * @Requirements GW_INGEST_0045, GW_INGEST_0046
  */

@@ -90,6 +90,12 @@ public class SnapshotContentService {
                             + " Code runs without the user invoking it")
             List<PluginComponents.Hook> hooks,
 
+            @Schema(
+                    description = "Hook modules the plugin declares (GW_INGEST_0065): code Claude Code loads"
+                            + " in-process for every session, with the events it registers and the interfaces it"
+                            + " reaches")
+            List<PluginComponents.HookModule> hookModules,
+
             @Schema(description = "MCP servers the plugin provides (GW_INGEST_0045); empty when there are none")
             List<PluginComponents.Component> mcpServers,
 
@@ -100,7 +106,7 @@ public class SnapshotContentService {
 
         /** A plugin with skills only: what the content diff compares, which has no use for components. */
         PluginContent(String name, String description, String source, List<SkillInfo> skills) {
-            this(name, description, source, skills, List.of(), List.of(), List.of(), List.of(), List.of());
+            this(name, description, source, skills, List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
         }
     }
 
@@ -205,7 +211,7 @@ public class SnapshotContentService {
      * every other component each provides (GW_INGEST_0045). The diff compares skills only, so it
      * does not pay for reading component declarations.
      */
-    @Requirements({"GW_INGEST_0008", "GW_INGEST_0045"})
+    @Requirements({"GW_INGEST_0008", "GW_INGEST_0045", "GW_INGEST_0065"})
     private static List<PluginContent> plugins(Repository repo, RevCommit commit, boolean withComponents)
             throws IOException {
         byte[] manifestBytes = readFile(repo, commit, MANIFEST_PATH);
@@ -237,6 +243,7 @@ public class SnapshotContentService {
                     components.commands(),
                     components.agents(),
                     components.hooks(),
+                    components.hookModules(),
                     components.mcpServers(),
                     components.lspServers()));
         }

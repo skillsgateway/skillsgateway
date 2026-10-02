@@ -5,7 +5,7 @@ import { PluginInventory } from "./snapshot-inventory";
 
 /**
  * One plugin of a snapshot's inventory: a collapsed count per component kind, each expanding in
- * place. The fixture has the trial's shape — one skill, four agents, three hooks.
+ * place. The fixture has the trial's shape — one skill, four agents, three hooks — plus a hook module.
  *
  * @Requirements GW_INGEST_0046
  */
@@ -48,10 +48,54 @@ export const HooksExpanded: Story = {
 export const AllExpanded: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    for (const name of ["1 skill", "4 agents", "3 hooks"]) {
+    for (const name of ["1 skill", "4 agents", "3 hooks", "1 hook module"]) {
       await userEvent.click(canvas.getByRole("button", { name }));
     }
     await expect(canvas.getByRole("region", { name: "agents of review" })).toBeVisible();
+  },
+};
+
+/** The hook module expanded: its events, the engine interfaces it reaches, and what it imports. */
+export const HookModulesExpanded: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "1 hook module" }));
+    const modules = canvas.getByRole("region", { name: "hook modules of review" });
+    await expect(within(modules).getByText("tool.call")).toBeVisible();
+    await expect(within(modules).getByText("$.process")).toBeVisible();
+  },
+};
+
+/** A mod whose imports could not all be read: each one is named, so nothing passes unseen. */
+export const HookModuleNotScanned: Story = {
+  args: {
+    plugin: {
+      name: "mod",
+      source: "./mod",
+      skills: [],
+      hookModules: [
+        {
+          path: "mod/hooks/register.ts",
+          location: "mod/hooks/hooks.json:1",
+          events: [],
+          uses: [{ name: "model", location: "mod/hooks/register.ts:9" }],
+          files: ["mod/hooks/register.ts"],
+          unscanned: [
+            {
+              path: "mod/hooks/register.ts:2",
+              message: "imports the package 'lodash', which is outside the plugin, so no rule read it",
+            },
+            { path: "mod/hooks/engine.js", message: "binary, so no rule can read it" },
+          ],
+        },
+      ],
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "1 hook module" }));
+    await expect(canvas.getByText(/not scanned: mod\/hooks\/engine.js/)).toBeVisible();
+    await expect(canvasElement.scrollWidth).toBeLessThanOrEqual(canvasElement.clientWidth);
   },
 };
 

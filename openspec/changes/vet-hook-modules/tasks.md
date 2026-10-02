@@ -34,10 +34,10 @@ guards exists, or against a throwaway mutant when it passes on first run.
 
 ## 3. Inventory API and portal (SVC_GW_INGEST_0065, SVC_GW_INGEST_0046)
 
-- [ ] 3.1 `PluginContent.hookModules` in `SnapshotContentService`; extend
+- [x] 3.1 `PluginContent.hookModules` in `SnapshotContentService`; extend
   `ContentTests` (`@SVCs SVC_GW_INGEST_0065`). Regenerate `openapi.json` and
   `types.gen.ts`; confirm the diff is additive.
-- [ ] 3.2 Portal: a "hook module" kind in `snapshot-inventory.tsx` showing path,
+- [x] 3.2 Portal: a "hook module" kind in `snapshot-inventory.tsx` showing path,
   events and uses; story and component test (`@SVCs SVC_GW_INGEST_0046`). Verify
   with `pnpm test:stories` and the component test. Before/after screenshots for
   the PR (`.claude/skills/ui-screenshots`).
