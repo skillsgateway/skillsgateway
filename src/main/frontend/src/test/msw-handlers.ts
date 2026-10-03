@@ -938,6 +938,22 @@ export const snapshotContent: Schemas["SnapshotContent"] = {
           declaredBy: "plugin",
         },
       ],
+      hookModules: [
+        {
+          path: "plugins/review/mod/register.tsx",
+          location: "plugins/review/mod/hooks.json:2",
+          events: [
+            { name: "session.start", location: "plugins/review/mod/register.tsx:6" },
+            { name: "tool.call", location: "plugins/review/mod/register.tsx:11" },
+          ],
+          uses: [
+            { name: "process", location: "plugins/review/mod/register.tsx:7" },
+            { name: "ui", location: "plugins/review/mod/panel.tsx:3" },
+          ],
+          files: ["plugins/review/mod/register.tsx", "plugins/review/mod/panel.tsx"],
+          unscanned: [],
+        },
+      ],
       mcpServers: [],
     },
   ],

@@ -2418,6 +2418,13 @@
             "description": "Plugin description from the manifest",
             "type": "string"
           },
+          "hookModules": {
+            "description": "Hook modules the plugin declares (GW_INGEST_0065): code Claude Code loads in-process for every session, with the events it registers and the interfaces it reaches",
+            "items": {
+              "$ref": "#/components/schemas/PluginHookModule"
+            },
+            "type": "array"
+          },
           "hooks": {
             "description": "Hooks the plugin declares, each with its trigger (GW_INGEST_0045): the code Claude Code runs without the user invoking it",
             "items": {
@@ -2524,6 +2531,76 @@
               "prompt",
               "agent"
             ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PluginHookModule": {
+        "description": "A hook module (GW_INGEST_0065): code Claude Code loads in-process for every session",
+        "properties": {
+          "events": {
+            "description": "Events it registers with on(...) calls a source scan can see",
+            "items": {
+              "$ref": "#/components/schemas/PluginSite"
+            },
+            "type": "array"
+          },
+          "files": {
+            "description": "The module and every plugin file it imports, in the order followed",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "location": {
+            "description": "path:line of the declaration that names it",
+            "type": "string"
+          },
+          "path": {
+            "description": "The module's file",
+            "type": "string"
+          },
+          "unscanned": {
+            "description": "Files it loads that could not be read, so no rule read them",
+            "items": {
+              "$ref": "#/components/schemas/PluginHookProblem"
+            },
+            "type": "array"
+          },
+          "uses": {
+            "description": "Engine interfaces it reaches as $.<name>",
+            "items": {
+              "$ref": "#/components/schemas/PluginSite"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PluginHookProblem": {
+        "description": "Something a hook declares that could not be read",
+        "properties": {
+          "message": {
+            "description": "What could not be read, and why",
+            "type": "string"
+          },
+          "path": {
+            "description": "The file, or path:line of the declaration or import",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PluginSite": {
+        "description": "A name a hook module uses, and where",
+        "properties": {
+          "location": {
+            "description": "path:line of its first appearance",
+            "type": "string"
+          },
+          "name": {
+            "description": "The event name, or the engine interface after $.",
             "type": "string"
           }
         },

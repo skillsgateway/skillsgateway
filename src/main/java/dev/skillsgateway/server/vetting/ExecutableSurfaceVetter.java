@@ -2,6 +2,7 @@ package dev.skillsgateway.server.vetting;
 
 import dev.skillsgateway.server.ingestion.PluginComponents;
 import dev.skillsgateway.server.ingestion.PluginComponents.Hook;
+import dev.skillsgateway.server.ingestion.PluginComponents.HookModule;
 import dev.skillsgateway.server.ingestion.PluginComponents.McpCommand;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
@@ -41,6 +42,12 @@ import org.springframework.stereotype.Component;
  * server starts that way, and download-and-execute blocks, as in a hook. An LSP server's command
  * is scanned the same way under ids of its own (GW_VETTING_0055).
  *
+ * <p>A hook module (a mod) runs in-process in every session, so each is a medium finding naming its
+ * events (GW_VETTING_0057); hooking {@code tool.call} or {@code prompt.compose}, reaching
+ * {@code $.process} and reaching {@code $.model} each add a finding of their own (GW_VETTING_0058);
+ * the module and the plugin files it imports are scanned as a hook's launched files are, and what
+ * {@link PluginComponents} could not read is reported (GW_VETTING_0059).
+ *
  * <p>Code installed after the snapshot was pinned is flagged outside hooks and servers too
  * (GW_VETTING_0053, GW_VETTING_0054, GW_VETTING_0056): a dependency manifest, and an install in a
  * skill's scripts or in a fenced block of a skill, command or agent, warn; download-and-execute
@@ -74,6 +81,15 @@ public class ExecutableSurfaceVetter implements Vetter {
     static final String LSP_PACKAGE_RUN = "lsp-package-run";
     static final String RUNTIME_DEPENDENCY = "runtime-dependency";
     static final String SKILL_FETCH_EXEC = "skill-fetch-exec";
+    static final String AUTO_RUN_MODULE = "auto-run-module";
+    static final String MODULE_STEERS_AGENT = "module-steers-agent";
+    static final String MODULE_RUNS_PROCESS = "module-runs-process";
+    static final String MODULE_CALLS_MODEL = "module-calls-model";
+
+    /** Events whose hook can deny or rewrite what the agent does or is told, and what each lets it do. */
+    private static final Map<String, String> STEERING = Map.of(
+            "tool.call", "deny or rewrite any tool call",
+            "prompt.compose", "rewrite the system prompt");
 
     /** Installed or built trees: vendored content, not a declaration of what to install. */
     private static final Set<String> VENDORED = Set.of("node_modules", ".venv", "venv", "site-packages", "target");
@@ -113,7 +129,9 @@ public class ExecutableSurfaceVetter implements Vetter {
     @Override
     public String description() {
         return "Lists every hook a plugin declares with its trigger, and blocks where a hook — or a script it"
-                + " launches — downloads code and executes it, or runs a package fetched at run time. Scans local"
+                + " launches — downloads code and executes it, or runs a package fetched at run time. Lists every"
+                + " hook module with its events, flags one that hooks tool.call or prompt.compose, runs programs or"
+                + " calls models, and scans it and its imports for runtime fetches. Scans local"
                 + " MCP and LSP server commands too: a package runner warns, download-and-execute blocks. Warns on"
                 + " dependency manifests and on installs in skill scripts and in fenced blocks of skills, commands"
                 + " and agents, where download-and-execute blocks. Shape-based: indirection and encoding walk past"
@@ -132,7 +150,11 @@ public class ExecutableSurfaceVetter implements Vetter {
         "GW_VETTING_0053",
         "GW_VETTING_0054",
         "GW_VETTING_0055",
-        "GW_VETTING_0056"
+        "GW_VETTING_0056",
+        "GW_VETTING_0057",
+        "GW_VETTING_0058",
+        "GW_VETTING_0059",
+        "GW_VETTING_0060"
     })
     public Verdict vet(SnapshotUnderVetting snapshot) {
         try {
@@ -153,6 +175,7 @@ public class ExecutableSurfaceVetter implements Vetter {
         private final Map<Server, Set<String>> serverScanned =
                 Map.of(Server.MCP, new HashSet<>(), Server.LSP, new HashSet<>());
         private int hooks;
+        private int modules;
         private int servers;
         private int lspServers;
         private int manifestsRead;
@@ -193,6 +216,9 @@ public class ExecutableSurfaceVetter implements Vetter {
                 for (Hook hook : components.hooks()) {
                     hook(root.getKey(), hook);
                 }
+                for (HookModule module : components.hookModules()) {
+                    module(module);
+                }
                 for (McpCommand server : components.mcpCommands()) {
                     servers++;
                     server(root.getKey(), server, Server.MCP);
@@ -207,12 +233,14 @@ public class ExecutableSurfaceVetter implements Vetter {
             installed(roots.keySet(), skillDirectories, instructions, launched);
             return Verdict.of(
                     List.copyOf(findings.values()),
-                    ("examined %d plugin root(s): %d hook(s), %d MCP server command(s), %d LSP server command(s),"
+                    ("examined %d plugin root(s): %d hook(s), %d hook module(s), %d MCP server command(s),"
+                                    + " %d LSP server command(s),"
                                     + " %d launched file(s) scanned for runtime fetches; %d dependency manifest(s) and %d"
                                     + " skill, command or agent file(s) read; monitor commands are not examined")
                             .formatted(
                                     roots.size(),
                                     hooks,
+                                    modules,
                                     servers,
                                     lspServers,
                                     launched.size(),
@@ -262,6 +290,62 @@ public class ExecutableSurfaceVetter implements Vetter {
                 add(new Finding(match.rule(), Severity.HIGH, hook.location(), "this hook " + match.message()));
             }
             follow(hook.runs(), root, hook.location(), null);
+        }
+
+        /**
+         * A hook module: one finding for running in every session, one per capability it reaches, and
+         * a scan of every file it loads that no hook scanned already.
+         */
+        @Requirements({"GW_VETTING_0057", "GW_VETTING_0058", "GW_VETTING_0059"})
+        private void module(HookModule module) throws IOException {
+            modules++;
+            add(new Finding(AUTO_RUN_MODULE, Severity.MEDIUM, module.location(), describe(module)));
+            for (PluginComponents.Site event : module.events()) {
+                String steers = STEERING.get(event.name());
+                if (steers != null) {
+                    add(new Finding(
+                            MODULE_STEERS_AGENT,
+                            Severity.MEDIUM,
+                            event.location(),
+                            "this hook module registers %s, so it can %s".formatted(event.name(), steers)));
+                }
+            }
+            for (PluginComponents.Site use : module.uses()) {
+                if (use.name().equals("process")) {
+                    add(new Finding(
+                            MODULE_RUNS_PROCESS,
+                            Severity.MEDIUM,
+                            use.location(),
+                            "this hook module reaches $.process, so it runs programs on the user's machine"));
+                } else if (use.name().equals("model")) {
+                    add(new Finding(
+                            MODULE_CALLS_MODEL,
+                            Severity.LOW,
+                            use.location(),
+                            "this hook module reaches $.model, so it sends content to a model"));
+                }
+            }
+            for (String file : module.files()) {
+                if (!scanned.add(file)) {
+                    continue;
+                }
+                String text = ContentRules.text(files.read(file));
+                for (RuntimeFetch.Match match :
+                        text == null ? List.<RuntimeFetch.Match>of() : RuntimeFetch.scan(text, true)) {
+                    add(new Finding(
+                            match.rule(),
+                            Severity.HIGH,
+                            "%s:%d".formatted(file, match.line()),
+                            "a file a hook module loads " + match.message()));
+                }
+            }
+            for (PluginComponents.Problem problem : module.unscanned()) {
+                add(new Finding(
+                        "hook-target-unscanned",
+                        Severity.MEDIUM,
+                        problem.path(),
+                        "hook module %s: %s".formatted(module.path(), problem.message())));
+            }
         }
 
         /**
@@ -634,6 +718,28 @@ public class ExecutableSurfaceVetter implements Vetter {
     private static String pathOf(String location) {
         String path = WaiverScope.pathOf(location);
         return path == null ? "" : path;
+    }
+
+    /** The reviewer's line for a module: that it always runs, what it hooks, and what it reaches. */
+    private static String describe(HookModule module) {
+        String events = module.events().isEmpty()
+                ? "registers no event a source scan can see"
+                : "registers "
+                        + String.join(
+                                ", ",
+                                module.events().stream()
+                                        .map(PluginComponents.Site::name)
+                                        .toList());
+        String uses = module.uses().isEmpty()
+                ? ""
+                : "; reaches "
+                        + String.join(
+                                ", ",
+                                module.uses().stream()
+                                        .map(use -> "$." + use.name())
+                                        .toList());
+        return "hook module %s runs in-process in every session without the user invoking it; %s%s"
+                .formatted(module.path(), events, uses);
     }
 
     /** The reviewer's line: when it fires, for which tools, declared by what, and what it runs. */

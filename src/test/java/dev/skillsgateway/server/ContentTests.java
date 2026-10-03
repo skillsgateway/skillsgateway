@@ -140,6 +140,45 @@ class ContentTests extends AbstractGatewayTest {
     }
 
     @Test
+    @SVCs({"SVC_GW_INGEST_0065"})
+    void snapshotContentListsHookModulesWithTheirEventsAndUses() throws Exception {
+        Path upstream = createUpstream(
+                TWO_PLUGIN_MANIFEST,
+                java.util.Map.of(
+                        "plugins/review/hooks/hooks.json", "{\"modules\": [\"./register.ts\"]}",
+                        "plugins/review/hooks/register.ts",
+                                "import { h } from './lib'\nexport const register = (on) => {\n"
+                                        + "  on('tool.call', ($, e, next) => next(e))\n}\n",
+                        "plugins/review/hooks/lib.ts", "export const h = ($) => $.process.run({})\n"));
+
+        Registered registered = registerAndIngest(uniqueName("corp"), upstream);
+
+        String body = mockMvc.perform(get("/api/v1/snapshots/%d/content"
+                                .formatted(registered.snapshot().id()))
+                        .with(oidcLogin()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String module = "$.plugins[?(@.name == 'review')].hookModules[0]";
+        assertThat((List<String>) JsonPath.read(body, module + ".path"))
+                .containsExactly("plugins/review/hooks/register.ts");
+        assertThat((List<String>) JsonPath.read(body, module + ".location"))
+                .containsExactly("plugins/review/hooks/hooks.json:1");
+        assertThat((List<String>) JsonPath.read(body, module + ".events[*].name"))
+                .containsExactly("tool.call");
+        assertThat((List<String>) JsonPath.read(body, module + ".uses[*].location"))
+                .containsExactly("plugins/review/hooks/lib.ts:1");
+        assertThat((List<String>) JsonPath.read(body, module + ".files[*]"))
+                .containsExactly("plugins/review/hooks/register.ts", "plugins/review/hooks/lib.ts");
+        assertThat((List<Object>) JsonPath.read(body, "$.plugins[?(@.name == 'review')].hooks[*]"))
+                .isEmpty();
+        assertThat((List<Object>) JsonPath.read(body, "$.plugins[?(@.name == 'hello')].hookModules[*]"))
+                .isEmpty();
+    }
+
+    @Test
     @SVCs({"SVC_GW_INGEST_0009"})
     void forgeMetadataIsCapturedAtRegistrationWhenAvailable() throws Exception {
         // A forge whose REST API and git service share one origin: registration reads the git

@@ -3219,6 +3219,8 @@ export interface components {
             commands?: components["schemas"]["PluginComponent"][];
             /** @description Plugin description from the manifest */
             description?: string;
+            /** @description Hook modules the plugin declares (GW_INGEST_0065): code Claude Code loads in-process for every session, with the events it registers and the interfaces it reaches */
+            hookModules?: components["schemas"]["PluginHookModule"][];
             /** @description Hooks the plugin declares, each with its trigger (GW_INGEST_0045): the code Claude Code runs without the user invoking it */
             hooks?: components["schemas"]["PluginHook"][];
             /** @description LSP servers the plugin provides (GW_INGEST_0045), each a local process Claude Code starts for matching files; empty when there are none */
@@ -3265,6 +3267,35 @@ export interface components {
              * @enum {string}
              */
             type?: "command" | "http" | "mcp_tool" | "prompt" | "agent";
+        };
+        /** @description A hook module (GW_INGEST_0065): code Claude Code loads in-process for every session */
+        PluginHookModule: {
+            /** @description Events it registers with on(...) calls a source scan can see */
+            events?: components["schemas"]["PluginSite"][];
+            /** @description The module and every plugin file it imports, in the order followed */
+            files?: string[];
+            /** @description path:line of the declaration that names it */
+            location?: string;
+            /** @description The module's file */
+            path?: string;
+            /** @description Files it loads that could not be read, so no rule read them */
+            unscanned?: components["schemas"]["PluginHookProblem"][];
+            /** @description Engine interfaces it reaches as $.<name> */
+            uses?: components["schemas"]["PluginSite"][];
+        };
+        /** @description Something a hook declares that could not be read */
+        PluginHookProblem: {
+            /** @description What could not be read, and why */
+            message?: string;
+            /** @description The file, or path:line of the declaration or import */
+            path?: string;
+        };
+        /** @description A name a hook module uses, and where */
+        PluginSite: {
+            /** @description path:line of its first appearance */
+            location?: string;
+            /** @description The event name, or the engine interface after $. */
+            name?: string;
         };
         /** @description A CEL policy deny rule, evaluated fail-closed at approval time */
         PolicyRule: {

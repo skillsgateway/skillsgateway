@@ -138,6 +138,14 @@ pointer; the page it points at is where the mechanism is explained.
     [`executable-surface`](vetting.md#executable-surface) vetter flags each
     one. It blocks a hook that fetches code at run time.
 
+**Hook module**
+:   A TypeScript or JavaScript module a plugin names under `modules` in its
+    hooks file (a "mod"). Claude Code loads it in-process in every session,
+    where it hooks engine events such as `tool.call` and reaches programs,
+    files and models through `$`. The inventory lists each one with its events
+    and the interfaces it reaches, and the
+    [`executable-surface`](vetting.md#executable-surface) vetter flags each one.
+
 **Hosted marketplace**
 :   A marketplace whose content is pushed straight to the gateway rather than
     fetched, so it has **no upstream** and takes no clone URL. Everything after
