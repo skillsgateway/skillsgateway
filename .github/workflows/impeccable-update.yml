@@ -1,0 +1,97 @@
+# The vendored Impeccable skill (.claude/skills/impeccable) is plain files, so
+# Renovate has nothing to track. This runs the skill's own updater weekly and,
+# when it changes anything, pushes the result to chore/impeccable-update and
+# keeps one open issue linking a ready-made PR.
+#
+# It does not open the PR itself: a PR or push made with GITHUB_TOKEN starts no
+# workflow, so CI would never report on it. A PR opened by a person runs CI as
+# usual.
+
+name: Impeccable update
+
+on:
+  schedule:
+    # Weekly, Monday 05:00 UTC
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: impeccable-update
+  cancel-in-progress: false
+
+env:
+  BRANCH: chore/impeccable-update
+  ISSUE_TITLE: Impeccable update available
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the update branch
+      issues: write # the one tracking issue
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The updater is third-party code: it must not find the write token in .git/config.
+          persist-credentials: false
+
+      - name: Run the updater
+        # stdin closed: the updater's one confirmation prompt then takes its default (yes).
+        run: npx --yes impeccable@latest update < /dev/null
+
+      - name: Push the update branch
+        id: push
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          # The engine binary is fetched per machine by the launcher, never committed.
+          paths=(.claude/skills/impeccable .claude/agents ':!.claude/skills/impeccable/scripts/bin')
+          if [ -z "$(git status --porcelain -- "${paths[@]}")" ]; then
+            echo "Impeccable is up to date."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          version=$(sed -n 's/^version: *//p' .claude/skills/impeccable/SKILL.md | head -n 1)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$BRANCH"
+          git add -A -- "${paths[@]}"
+          git commit -s -m "chore(skills): update Impeccable to ${version}" \
+            -m "Produced by .github/workflows/impeccable-update.yml (npx impeccable update)."
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "$BRANCH"
+          {
+            echo "changed=true"
+            echo "version=${version}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the tracking issue
+        if: steps.push.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.push.outputs.version }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          issue=$(gh issue list --repo "$REPO" --state open --search "in:title \"$ISSUE_TITLE\"" \
+            --json number,title --jq "map(select(.title == env.ISSUE_TITLE)) | .[0].number // empty")
+          if [ -z "$issue" ]; then
+            issue=$(gh issue create --repo "$REPO" --title "$ISSUE_TITLE" --body "Preparing…" | sed 's#.*/##')
+          fi
+          title=$(jq -rn --arg v "$VERSION" '"chore(skills): update Impeccable to \($v)" | @uri')
+          body=$(jq -rn --arg i "$issue" '"Closes #\($i)" | @uri')
+          compare="https://github.com/${REPO}/compare/main...${BRANCH}?expand=1&title=${title}&body=${body}"
+          gh issue edit "$issue" --repo "$REPO" --body-file - <<EOF
+          \`npx impeccable update\` changed the vendored skill: it now reads version **${VERSION}**.
+
+          The result is on [\`${BRANCH}\`](https://github.com/${REPO}/tree/${BRANCH}). **[Open the PR](${compare})**. CI runs once a person opens it.
+
+          Before merging, read the diff for anything beyond the skill's own files, such as new hooks, agents or settings.
+
+          If a PR from \`${BRANCH}\` is already open, this run force-pushed to it, and pushes from GITHUB_TOKEN start no CI, so re-run the checks there.
+
+          Last run: ${RUN_URL}
+          EOF
