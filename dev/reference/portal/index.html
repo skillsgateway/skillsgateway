@@ -4045,7 +4045,7 @@ it.
 </tr>
 <tr>
 <td><strong>Inventory</strong></td>
-<td>What the snapshot ships: one block per declared plugin with its <code>source</code> and description. Below them is one count per component kind the plugin has (skills, commands, agents, hooks, MCP servers and LSP servers), for example "1 skill · 4 agents · 3 hooks". Each count is collapsed and expands its own list in place. A hook row shows its trigger (the event, and the tool matcher when there is one), what it runs, and where it is declared. Read from <code>GET /api/v1/snapshots/{id}/content</code></td>
+<td>What the snapshot ships: one block per declared plugin with its <code>source</code> and description. Below them is one count per component kind the plugin has (skills, commands, agents, hooks, hook modules, MCP servers and LSP servers), for example "1 skill · 4 agents · 3 hooks". Each count is collapsed and expands its own list in place. A hook row shows its trigger (the event, and the tool matcher when there is one), what it runs, and where it is declared. A hook module row shows its file, the events it registers, the <code>$</code> interfaces it reaches, the plugin files it imports, anything it loads that could not be scanned, and where it is declared. Read from <code>GET /api/v1/snapshots/{id}/content</code></td>
 </tr>
 <tr>
 <td><strong>Provenance</strong></td>

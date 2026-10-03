@@ -3290,9 +3290,9 @@ severity alone decides the outcome: a medium finding warns, a high one blocks
 approval until it is waived. Findings are keyed by the git blob they were
 found in, and are grouped and waived per group
 (<a href="../concepts/vetting/">Vetting</a>). What a plugin runs is read from its
-manifests, never self-declared: hooks, MCP and LSP servers, the code they
-launch, and dependencies installed at run time are <code>executable-surface</code>
-findings.</p>
+manifests, never self-declared: hooks, hook modules, MCP and LSP servers, the
+code they launch or import, and dependencies installed at run time are
+<code>executable-surface</code> findings.</p>
 <p>A change in what a plugin runs is still a review trigger. Every update is held
 until approved. The review card's <strong>Diff</strong> and <strong>Inventory</strong> tabs show what was
 added. A new hook or script is a new blob, so its finding falls outside every

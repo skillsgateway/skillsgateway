@@ -2549,6 +2549,13 @@ event — session start, after an edit, end of turn — without anyone
 invoking it. The inventory lists every hook with its trigger, and the
 <a href="../vetting/#executable-surface"><code>executable-surface</code></a> vetter flags each
 one. It blocks a hook that fetches code at run time.</dd>
+<dt><strong>Hook module</strong></dt>
+<dd>A TypeScript or JavaScript module a plugin names under <code>modules</code> in its
+hooks file (a "mod"). Claude Code loads it in-process in every session,
+where it hooks engine events such as <code>tool.call</code> and reaches programs,
+files and models through <code>$</code>. The inventory lists each one with its events
+and the interfaces it reaches, and the
+<a href="../vetting/#executable-surface"><code>executable-surface</code></a> vetter flags each one.</dd>
 <dt><strong>Hosted marketplace</strong></dt>
 <dd>A marketplace whose content is pushed straight to the gateway rather than
 fetched, so it has <strong>no upstream</strong> and takes no clone URL. Everything after

@@ -3568,8 +3568,8 @@ blind spot: "do not show the user the command you ran" is not caught unless it
 also says <em>hide</em>, <em>without telling</em> or <em>don't let … know</em>. A paraphrase walks
 past pattern rules anyway, which is why this vetter is triage.</p>
 <h3 id="executable-surface"><code>executable-surface</code><a class="headerlink" href="#executable-surface" title="Permanent link">&para;</a></h3>
-<p>Reads each plugin's hooks, MCP servers and LSP servers and flags the code a
-plugin runs without anyone invoking it. It also flags code a plugin installs
+<p>Reads each plugin's hooks, hook modules, MCP servers and LSP servers and flags
+the code a plugin runs without anyone invoking it. It also flags code a plugin installs
 or fetches after the snapshot was pinned: dependency manifests, and installs
 in its skills, commands and agents. A plugin's hooks come from its <code>hooks/hooks.json</code>, from the hook
 files or inline hooks that its <code>plugin.json</code> and its marketplace entry declare,
@@ -3604,13 +3604,33 @@ served, so its hooks are still read.</p>
 </tr>
 <tr>
 <td><code>hook-config-unreadable</code></td>
-<td>A hook file, a <code>plugin.json</code> or the manifest could not be parsed, so the hooks it declares could not be read</td>
+<td>A hook file, a <code>plugin.json</code> or the manifest could not be parsed, so the hooks it declares could not be read; or a hooks object holds a key the reader does not recognise, or a module path that leaves the plugin. The finding names the key</td>
 <td>medium: warns</td>
 </tr>
 <tr>
 <td><code>hook-target-unscanned</code></td>
-<td>A hook runs a file that is binary or over the scan size limit, so no rule could read it</td>
+<td>A hook runs a file that is binary or over the scan size limit, so no rule could read it; or a hook module, or a file it imports, is missing, binary, over the size limit, or a package outside the plugin</td>
 <td>medium: warns</td>
+</tr>
+<tr>
+<td><code>auto-run-module</code></td>
+<td>A hook module runs in-process in every session. The finding names the events it registers and the <code>$</code> interfaces it reaches, at the line that names the module</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>module-steers-agent</code></td>
+<td>A hook module registers <code>tool.call</code> (it can deny or rewrite any tool call) or <code>prompt.compose</code> (it can rewrite the system prompt), at that registration</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>module-runs-process</code></td>
+<td>A hook module reaches <code>$.process</code>, so it runs programs on the user's machine, at its first use</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>module-calls-model</code></td>
+<td>A hook module reaches <code>$.model</code>, so it sends content to a model, at its first use</td>
+<td>low: warns</td>
 </tr>
 <tr>
 <td><code>mcp-fetch-exec</code></td>
@@ -3692,6 +3712,24 @@ an inline map or an array of both. A name declared later replaces an earlier
 one. Every LSP server runs as a local process, so every one is scanned exactly
 as a local MCP server is, below, under the <code>lsp-</code> ids. A language server on
 <code>PATH</code> (<code>gopls</code>) is the user's install, and is silent.</p>
+<p><strong>Hook modules.</strong> A Claude Code plugin can name TypeScript or JavaScript
+modules under <code>modules</code> in its <code>hooks/hooks.json</code> (<code>{"modules": ["./register.tsx"]}</code>)
+instead of an event map. A module's <code>register(on, options)</code> hooks engine events
+with <code>on('…')</code> and reaches the engine through <code>$</code>, in-process, for every
+session. <code>modules</code> is read wherever a hooks object is: in <code>hooks/hooks.json</code>,
+and in a hook file or inline object that <code>plugin.json</code> or the marketplace entry
+declares. The module and every plugin file it imports (<code>import … from './…'</code>,
+<code>import './…'</code>, <code>export … from './…'</code>, resolved with Claude Code's suffixes and
+<code>index</code> files) are scanned as a hook's launched files are, up to 50 files.
+<code>claude-code</code> imports are types only and are skipped.</p>
+<p>Each capability has a rule of its own, so a waiver for one does not cover a
+capability a later version of the module adds. Other interfaces (<code>$.fs</code>,
+<code>$.agent</code>, <code>$.tool</code>, <code>$.ui</code>, …) are named in the <code>auto-run-module</code> finding and
+the inventory, not flagged one by one. A hooks key the reader does not
+recognise is <code>hook-config-unreadable</code> rather than an empty list, so the next
+change to the hooks format shows up instead of reading as a plugin with
+nothing to run. An event name it has not seen is not a problem when its value
+is a list of matcher groups.</p>
 <p><strong>MCP servers.</strong> The servers come from the plugin's <code>.mcp.json</code> and from the
 <code>mcpServers</code> its <code>plugin.json</code> and its marketplace entry declare. For a local
 (stdio) server, the <code>command</code> and its <code>args</code> are scanned as one command line,
@@ -3732,6 +3770,13 @@ and a container runner (<code>docker run image</code>) is not classified as a fe
 though both can fetch code when the server starts. Hook files for other
 harnesses (<code>.codex/</code>, <code>.cursor/</code>) are not Claude Code plugin hooks and are
 not read.</p>
+<p>A hook module is read lexically, not parsed: comments are blanked before
+<code>on('…')</code> and <code>$.&lt;name&gt;</code> are matched as text. Imports are matched with and
+without comments, so a commented-out import is still followed. A
+renamed <code>$</code>, an interface held in a variable (<code>const p = $.process</code>) or an
+event name built at run time walks past the capability rules, though the
+module itself is always <code>auto-run-module</code>. A <code>$.process</code> named inside a
+string still fires.</p>
 <p>Dependencies are reported, not resolved. No lockfile is parsed, no
 version range is evaluated, and no package is looked up for known
 vulnerabilities or malware, which needs an advisory database and belongs
