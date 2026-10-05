@@ -214,10 +214,11 @@ public class MarketplaceRegistrationService {
         UpstreamException unreadable = readUpstream(name, url, reachability);
         MarketplaceRepository.UrlChange change = marketplaceRepository.changeUrlBeforeFirstSnapshot(
                 current.id(), url, forgeMetadataService.resolve(url).orElse(null), actor);
-        switch (change) {
-            case NOT_LIVE -> throw notFound(name);
-            case HAS_SNAPSHOT -> throw snapshotExists(name);
-            case CHANGED -> {}
+        if (change == MarketplaceRepository.UrlChange.NOT_LIVE) {
+            throw notFound(name);
+        }
+        if (change == MarketplaceRepository.UrlChange.HAS_SNAPSHOT) {
+            throw snapshotExists(name);
         }
         Marketplace changed = marketplaceRepository.findById(current.id()).orElseThrow();
         auditLogger.record(
