@@ -61,4 +61,4 @@ shown failing before the code it guards exists.
 
 - [x] 6.1 All gates fresh after the last code edit; `evidence.md` with the
   commands, result tails and commit SHA.
-- [ ] 6.2 `/opsx:archive` as the final commit.
+- [x] 6.2 `/opsx:archive` as the final commit.
