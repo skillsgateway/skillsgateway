@@ -175,6 +175,17 @@ same question from its metrics, by pass and by `taken` or `skipped`
 (GW_OBSERVABILITY_0005 — Each instance reports the background-pass turns it
 took and skipped; see [Observability](../reference/observability.md#background-passes)).
 
+### Sessions need no affinity
+
+Browser sign-in state lives in the gateway's database too: the half-finished
+sign-in while the identity provider has the browser, and the session once it
+returns. The provider's redirect back can land on a different replica from the
+one that started the sign-in, and every later request can go to any replica.
+A round-robin load balancer without session affinity is therefore fine
+(GW_AUTH_0053 — A browser session does not depend on which instance answers).
+When a sign-in still fails, the page and the log say why; see
+[Identity providers](identity-providers.md#when-sign-in-fails).
+
 ### What each pass leases
 
 | Pass | Lease key | Lease lasts | Runs when |

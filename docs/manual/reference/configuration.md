@@ -1581,6 +1581,16 @@ cross-site request cannot act on an ambient session; the control itself is the
 CSRF token on the web chain, described under
 [The web surface](../concepts/trust-boundaries.md#the-web-surface).
 
+The cookie is named `SESSION`. The session it names is stored in the gateway's
+database, not in the replica's memory, so any replica can answer any request of
+it and a load balancer needs no session affinity (GW_AUTH_0053 — A browser
+session does not depend on which instance answers). The session's lifetime is
+`server.servlet.session.timeout`, 30 minutes unless set. Expired sessions are
+removed by a cleanup that runs every minute on every replica, which is safe to
+run on all of them. A stored session the running version cannot read, for
+example one written before an upgrade, counts as no session, and its holder
+signs in again.
+
 ---
 
 ## Actuator

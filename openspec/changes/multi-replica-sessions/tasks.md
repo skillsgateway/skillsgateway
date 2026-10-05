@@ -16,16 +16,16 @@
 
 ## 3. Sessions in the database
 
-- [ ] 3.1 Test: two gateway instances on one database. The sign-in starts on one and the callback
+- [x] 3.1 Test: two gateway instances on one database. The sign-in starts on one and the callback
   completes on the other against a stub provider, and the session cookie then authenticates
   `/api/v1/me` on both. Also: a session row whose attribute cannot be deserialized yields 401, not
   500. Watch it fail.
-- [ ] 3.2 Add `@SVCs({"SVC_GW_AUTH_0053"})` to the test methods from 3.1.
-- [ ] 3.3 `spring-boot-starter-session-jdbc`, the Spring Session tables in `V1__init.sql`,
+- [x] 3.2 Add `@SVCs({"SVC_GW_AUTH_0053"})` to the test methods from 3.1.
+- [x] 3.3 `spring-boot-starter-session-jdbc`, the Spring Session tables in `V1__init.sql`,
   `spring.session.jdbc.initialize-schema: never`, the tolerant conversion service; 3.1 passes and
   `SessionCookieTests` expects `SESSION`.
-- [ ] 3.4 Add `@Requirements({"GW_AUTH_0053"})` to the session configuration from 3.3.
-- [ ] 3.5 Docs: storage guide's multi-replica section (sessions are shared, no affinity needed),
+- [x] 3.4 Add `@Requirements({"GW_AUTH_0053"})` to the session configuration from 3.3.
+- [x] 3.5 Docs: storage guide's multi-replica section (sessions are shared, no affinity needed),
   configuration reference's session-cookie row, identity-providers guide.
 
 ## 4. Failed sign-in
