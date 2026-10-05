@@ -64,9 +64,13 @@ class MarketplaceUrlChangeTests extends AbstractGatewayTest {
 
     /** A marketplace registered with a typo, as a declared registration with an unreadable upstream is. */
     private Marketplace typoed(String name) {
+        return typoed(name, "file:///nowhere/" + name + "/typo.git");
+    }
+
+    private Marketplace typoed(String name, String url) {
         return marketplaceRepository.register(
                 name,
-                "file:///nowhere/" + name + "/typo.git",
+                url,
                 new ForgeMetadata("github", "acme/typo", "stale description", null),
                 Marketplace.ORIGIN_UPSTREAM,
                 Marketplace.PUSH_APPEND_ONLY,
@@ -99,11 +103,12 @@ class MarketplaceUrlChangeTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_INGEST_0066"})
     void an_administrator_corrects_the_url_and_becomes_its_registrant() throws Exception {
         String name = uniqueName("urlfix");
-        Marketplace before = typoed(name);
-        // Over HTTP: the duplicate comparison normalizes URLs with a host, which a file URL lacks.
+        // Over HTTP: the duplicate comparison normalizes URLs with a host, which a file URL lacks. The
+        // typo is a missing .git, which normalizes to the corrected URL: no warning about itself.
         String repo = "acme/" + name;
         forge.publish(repo, Map.of(MANIFEST_PATH, DEFAULT_MANIFEST));
         String corrected = forge.baseUrl() + "/" + repo + ".git";
+        Marketplace before = typoed(name, forge.baseUrl() + "/" + repo);
         String other = uniqueName("urlother");
         marketplaceRepository.register(other, corrected);
 
@@ -133,7 +138,6 @@ class MarketplaceUrlChangeTests extends AbstractGatewayTest {
                             .contains(corrected);
                 });
 
-        // The typo'd URL is unreadable, so an ingest that succeeds has read the corrected one.
         assertThat(ingestionService.ingest(after, "ingrid").state()).isEqualTo(Snapshot.HELD);
     }
 
