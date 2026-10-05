@@ -50,6 +50,6 @@
 
 ## 6. Gates, evidence, archive
 
-- [ ] 6.1 All gates from `AGENTS.md`; `reqstool status` ends PASS; `evidence.md` with the result
+- [x] 6.1 All gates from `AGENTS.md`; `reqstool status` ends PASS; `evidence.md` with the result
   tails and the commit SHA.
 - [ ] 6.2 Archive as the final commit.
