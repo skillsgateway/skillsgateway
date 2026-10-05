@@ -83,13 +83,13 @@ Failure model (each maps to a test or a mutant in `evidence.md`):
 
 ## 7. Gates, evidence, archive
 
-- [ ] 7.1 Mutants (`mutants.sh` in the change): drop the scheme check from
+- [x] 7.1 Mutants (`mutants.sh` in the change): drop the scheme check from
   `changeUrl`, drop the snapshot check under the lock, drop the `FOR SHARE`
   URL comparison, keep the old registrant, make the estate use `changeUrl`
   without the snapshot refusal. Each must be killed.
-- [ ] 7.2 Real execution: run the jar, register a typo'd URL, correct it via
+- [x] 7.2 Real execution: run the jar, register a typo'd URL, correct it via
   the API and the portal, ingest.
-- [ ] 7.3 One fresh run of all gates after the last code edit; write
+- [x] 7.3 One fresh run of all gates after the last code edit; write
   `evidence.md` with commit SHA.
-- [ ] 7.4 Before/after screenshots (owner approves each upload) and the PR.
+- [x] 7.4 Before/after screenshots captured (upload awaits the owner's approval) and the PR.
 - [ ] 7.5 `/opsx:archive` as the final commit.
