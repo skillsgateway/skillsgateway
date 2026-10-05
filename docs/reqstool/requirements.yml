@@ -759,10 +759,10 @@ requirements:
   - id: GW_ESTATE_0002
     title: Declared marketplaces pass the registration trust boundary
     significance: shall
-    description: The system shall register a declared marketplace through the same validation as the administrative API — the marketplace name rules, the reserved catalog name, and the URL scheme allowlist — with the ingested ref remaining the gateway's decision because the declaration cannot express one, shall accept a declared sync mode of on-demand or scheduled applied through the same audited path as the API and refuse webhook mode as an entry failure, shall leave the stored sync mode untouched when the declaration omits one, and shall treat a declared marketplace whose stored upstream URL differs from the declared URL as a reconciliation failure rather than an update.
-    rationale: Registration is the trust boundary and a second copy of it would drift into a hole, so the declaration must be another caller of the same gate; webhook sync mode is excluded because its inbound HMAC secret is generated and shown exactly once, which has no declarative form; and refusing URL drift keeps a configuration edit from swapping the supply chain underneath already-approved snapshots — a power the API itself deliberately does not have.
+    description: The system shall register a declared marketplace through the same validation as the administrative API — the marketplace name rules, the reserved catalog name, and the URL scheme allowlist — with the ingested ref remaining the gateway's decision because the declaration cannot express one, shall accept a declared sync mode of on-demand or scheduled applied through the same audited path as the API and refuse webhook mode as an entry failure, shall leave the stored sync mode untouched when the declaration omits one, and shall treat a declared marketplace whose stored upstream URL differs from the declared URL as a change of its URL made through the administrative URL correction, with an upstream that cannot be read reported rather than refused as for a declared registration, and as a reconciliation failure that changes nothing wherever that correction refuses the change.
+    rationale: Registration is the trust boundary and a second copy of it would drift into a hole, so the declaration must be another caller of the same gate; webhook sync mode is excluded because its inbound HMAC secret is generated and shown exactly once, which has no declarative form; and a configuration edit may change a URL exactly where the API may, before the marketplace's first snapshot, so that a declared typo is corrected where it was made, while drift after that is still refused because it would swap the supply chain underneath snapshots that name the stored upstream as their source.
     categories: ["security"]
-    revision: 0.1.0
+    revision: 0.5.0
 
   - id: GW_ESTATE_0003
     title: Declared role grants through the audited grant path
@@ -2642,6 +2642,26 @@ requirements:
     rationale: "A hook module runs in-process in every session and can deny or rewrite tool calls and the system prompt, yet a hooks file that names modules instead of events read as a plugin with no hooks. A reviewer approves what the inventory shows, so the inventory must show the module, what it hooks and what it reaches, or the most powerful executable surface a plugin can ship is invisible."
     categories: ["security", "functional-suitability"]
     revision: 0.4.0
+
+  - id: GW_INGEST_0066
+    title: An administrator can correct an upstream marketplace's URL until its first snapshot
+    significance: shall
+    description: "The system shall let an administrator replace the URL of a registered upstream marketplace while no snapshot of that marketplace exists in any state. It shall pass the new URL through the same URL validations and duplicate-URL warning as registration, excluding the marketplace itself from the duplicate comparison, and shall then read the upstream as registration does, refusing the change when the upstream cannot be read. It shall record the administrator who made the change as the marketplace's registrant, shall resolve the forge metadata again for the new URL, and shall append the change, with the acting identity and the previous and new URL, to the append-only audit ledger. It shall refuse the change for a hosted marketplace, for a marketplace with any snapshot, for a caller who is not an administrator, and for a name that no live marketplace has, and a refused change shall change nothing. It shall not record a snapshot whose content was fetched from a URL other than the marketplace's URL at the moment the snapshot is recorded."
+    references:
+      requirement_ids: ["GW_INGEST_0001", "GW_INGEST_0005", "GW_INGEST_0029", "GW_INGEST_0040", "GW_INGEST_0054", "GW_APPROVAL_0010"]
+    rationale: "A URL mistyped at registration could only be corrected by removing the marketplace on a stated reason and registering it again. Until the first snapshot the URL is the source of nothing, so correcting it in place loses no provenance; from the first snapshot on, a snapshot's source is read from its marketplace, so the URL must stay what that content came from and removal remains the path. The new URL is a registration decision and faces registration's checks. The person who chose the upstream now in effect is the one the separation-of-duties rule must keep from approving its content, so the editor becomes the registrant. An ingestion that fetched from the previous URL and records its snapshot after the change would attribute that content to the new URL, which is why recording a snapshot is conditional on the URL it was fetched from."
+    categories: ["security", "functional-suitability"]
+    revision: 0.5.0
+
+  - id: GW_INGEST_0067
+    title: Correcting a marketplace's URL from the portal
+    significance: shall
+    description: "The system shall offer an administrator, in the portal on an upstream marketplace's own settings, a control that changes the marketplace's URL through the administrative URL correction, only while the marketplace has no snapshot. It shall show the reason for a refused change while leaving the stored URL in place, shall show any warning the change returns, shall make the control unavailable, stating why, for a marketplace the estate configuration declares, shall state for a marketplace with a snapshot that its URL can no longer change and that it can be removed and registered again, and shall not show the control to a user who is not an administrator."
+    references:
+      requirement_ids: ["GW_INGEST_0066"]
+    rationale: "The correction is needed exactly when an administrator has just registered a marketplace and is looking at it, so it belongs where the URL is shown. A declared marketplace's URL is owned by the declaration, which the next reconciliation applies, so changing it in the portal would be undone or refused."
+    categories: ["interaction-capability", "functional-suitability"]
+    revision: 0.5.0
 
   - id: GW_VETTING_0040
     title: Prompt-injection markers do not fire on formatting instructions or command names
