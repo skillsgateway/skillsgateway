@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
 import dev.skillsgateway.server.admin.MarketplaceRegistrationService;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredAuditSink;
@@ -255,8 +256,8 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         var mallory = oidcLogin().idToken(token -> token.subject("mallory"));
         mockMvc.perform(post("/api/v1/marketplaces/estate-alpha/ingest").with(mallory))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/v1/marketplaces/estate-alpha/ingest").with(approver))
-                .andExpect(status().isBadGateway());
+        assertThat((String) JsonPath.read(ingestViaApi("estate-alpha", approver), "$.last.outcome"))
+                .isEqualTo("failed");
 
         // A grant may reference an API-registered marketplace; an unknown one fails in isolation.
         String apiSide = uniqueName("estate-apiside");

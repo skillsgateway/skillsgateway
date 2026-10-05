@@ -34,13 +34,8 @@ class AdminAuditTests extends AbstractGatewayTest {
                         .content("{\"name\":\"%s\",\"url\":\"%s\"}"
                                 .formatted(name, upstream.toUri().toString())))
                 .andExpect(status().isCreated());
-        String snapshot = mockMvc.perform(
-                        post("/api/v1/marketplaces/%s/ingest".formatted(name)).with(oidcLogin()))
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-        int snapshotId = JsonPath.read(snapshot, "$.id");
+        String snapshot = ingestViaApi(name, oidcLogin());
+        int snapshotId = JsonPath.read(snapshot, "$.last.snapshotId");
         mockMvc.perform(post("/api/v1/snapshots/%d/approve".formatted(snapshotId))
                         .with(oidcLogin()))
                 .andExpect(status().isOk());

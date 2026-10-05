@@ -1249,6 +1249,15 @@ export const estateReport: Schemas["EstateReconciliation"] = {
   failed: 0,
 };
 
+/** A marketplace with no ingest running and none finished yet (GW_INGEST_0066). */
+export const idleIngest = (name: string): Schemas["IngestStatus"] => ({ marketplace: name });
+
+/** What a fresh POST answers: the ingest claimed and queued, nothing fetched yet. */
+export const queuedIngest = (name: string): Schemas["IngestStatus"] => ({
+  marketplace: name,
+  running: { stage: "queued", startedAt: new Date().toISOString(), interrupted: false },
+});
+
 export const handlers = [
   http.get("/api/v1/adoption", () => HttpResponse.json(marketplaceAdoption)),
   http.get("/api/v1/adoption/staleness", () => HttpResponse.json(staleIdentities)),
@@ -1256,6 +1265,12 @@ export const handlers = [
     HttpResponse.json({ username: "alice", roles: [], claimsTruncated: false, version: "0.3.0" }),
   ),
   http.get("/api/v1/marketplaces", () => HttpResponse.json([marketplace])),
+  http.get("/api/v1/marketplaces/:name/ingest", ({ params }) =>
+    HttpResponse.json(idleIngest(String(params.name))),
+  ),
+  http.post("/api/v1/marketplaces/:name/ingest", ({ params }) =>
+    HttpResponse.json(queuedIngest(String(params.name)), { status: 202 }),
+  ),
   http.post("/api/v1/marketplaces", () =>
     HttpResponse.json<Schemas["RegisteredMarketplace"]>(
       { id: 2, name: "new-marketplace", url: "https://example.com/m.git", warnings: [] },

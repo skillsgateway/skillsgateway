@@ -112,44 +112,40 @@ API directly.
 
 ## Ingesting the first snapshot
 
-Registration captures nothing. Press **Ingest** in the marketplace's header, or:
+Registration captures nothing. Press **Ingest** in the marketplace's header. The
+header then shows the ingest's stages (queued, fetching, evaluating the manifest,
+vetting) and how long it has been running. When it ends, the snapshot opens on
+Review. From a script:
 
 ```console
 $ curl -X POST localhost:8080/api/v1/marketplaces/acme/ingest
+$ curl localhost:8080/api/v1/marketplaces/acme/ingest     # repeat until "running" is null
 ```
 
 ```json
-{"id":1,"marketplaceId":1,"sha":"3f9c2ab...","state":"held",
- "violation":null,"createdAt":"...","decidedBy":null,"decidedAt":null}
+{"marketplace":"acme","running":null,
+ "last":{"at":"...","outcome":"succeeded","snapshotId":1,"snapshotState":"held",
+         "reason":null,"failure":null}}
 ```
 
 The gateway clones the upstream default branch into quarantine, pins the tip
 commit as `refs/snapshots/{sha}`, and creates a snapshot in state `held`.
-Nothing is served yet.
+Nothing is served yet. A manifest that breaks policy still captures a snapshot,
+in state `rejected`. See [the endpoints](../reference/api/marketplaces.md#post-marketplacesnameingest)
+for every field.
 
-| Status | Cause |
-| --- | --- |
-| 201 | Snapshot captured. A manifest that breaks policy still captures one, in state `rejected`. |
-| 404 | Unknown marketplace. |
-| 502 | Ingestion failed. The problem carries `reason`, `rootCause` and `nextStep`, as for registration above. |
+Ingesting the same upstream commit twice does not create a second snapshot, and
+pressing **Ingest** while an ingest is running follows that one rather than
+starting another.
 
-Ingesting the same upstream commit twice does not create a second snapshot.
+!!! note "A first ingest takes minutes"
 
-!!! note "A first ingest can outlast your proxy's timeout"
-
-    The ingest runs inside the request, and the first one downloads the
-    upstream's whole history. For a repository with a long history that takes
-    minutes, not seconds: one with 1,900 commits and a 370 MiB pack took about
-    100 seconds, nearly all of it the download (vetting took 6). A later ingest
-    fetches only what changed and returns in under a second.
-
-    A proxy in front of the gateway may give up first. An nginx ingress and an
-    AWS Application Load Balancer both default to 60 seconds, and the portal then
-    shows a timeout. **The ingest carries on regardless**: it finishes in the
-    gateway and is recorded as the last ingest (below), so refresh rather than
-    press **Ingest** again. To keep the response, raise the proxy's timeout; see
-    [Deploying on Kubernetes](deploying-on-kubernetes.md#ingress-and-tls) and
-    [Deploying without Kubernetes](deploying-without-kubernetes.md#running-behind-a-proxy).
+    The first ingest downloads the upstream's whole history. For a repository
+    with a long history that takes minutes, not seconds: one with 1,900 commits
+    and a 370 MiB pack took about 100 seconds, nearly all of it the download
+    (vetting took 6). A later ingest fetches only what changed and finishes in
+    under a second. The request answers at once whatever the length, so no proxy
+    timeout applies to it.
 
 ## When an ingest fails
 
@@ -165,7 +161,12 @@ Every ingest attempt is recorded, whether it was run by hand, by the
   the attempt, with the reason as its `detail`.
 - **In the log:** a `WARN` line naming the marketplace and the reason.
 
-The next successful ingest replaces the record.
+The next successful ingest replaces the record. A script reads the same failure
+from the ingest status, as `last.reason` and its parts under `last.failure`.
+
+If the gateway instance running an ingest stops (a restart, a lost pod), the
+ingest cannot finish. Its status reads `interrupted` within a minute, the portal
+says so, and **Ingest** starts it again.
 
 ## Keeping it current
 

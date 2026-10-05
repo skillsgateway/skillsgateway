@@ -97,7 +97,9 @@ public final class MachineApiRegistry {
                         // which the catalog already publishes.
                         get("/api/v1/snapshots/{id}/name-collisions")));
         scopes.put("marketplaces:register", Set.of(post("/api/v1/marketplaces")));
-        scopes.put("marketplaces:ingest", Set.of(post("/api/v1/marketplaces/{name}/ingest")));
+        scopes.put(
+                "marketplaces:ingest",
+                Set.of(post("/api/v1/marketplaces/{name}/ingest"), get("/api/v1/marketplaces/{name}/ingest")));
         scopes.put(
                 "vetting:run", Set.of(post("/api/v1/marketplaces/{name}/revet"), post("/api/v1/snapshots/{id}/revet")));
         scopes.put("waivers:read", Set.of(get("/api/v1/marketplaces/{name}/waivers")));

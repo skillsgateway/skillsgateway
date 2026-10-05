@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.SignedJWT;
 import dev.skillsgateway.server.GitHttpFixture.ApiRequest;
@@ -104,8 +105,8 @@ class UpstreamGitHubAppIntegrationTests extends AbstractExternalSourceTest {
         String name = uniqueName("app");
 
         register(name, FORGE.baseUrl() + "/appco/" + repo + ".git").andExpect(status().isCreated());
-        ingest(name).andExpect(status().isCreated());
-        ingest(name).andExpect(status().isCreated());
+        assertSucceeded(ingest(name));
+        assertSucceeded(ingest(name));
 
         assertThat(FORGE.authorizations())
                 .filteredOn(request -> request[0].startsWith("/appco/"))
@@ -155,8 +156,8 @@ class UpstreamGitHubAppIntegrationTests extends AbstractExternalSourceTest {
         String name = uniqueName("short");
 
         register(name, FORGE.baseUrl() + "/pinned/" + repo + ".git").andExpect(status().isCreated());
-        ingest(name).andExpect(status().isCreated());
-        ingest(name).andExpect(status().isCreated());
+        assertSucceeded(ingest(name));
+        assertSucceeded(ingest(name));
 
         assertThat(tokenRequests()).isEqualTo(3);
     }
@@ -174,20 +175,18 @@ class UpstreamGitHubAppIntegrationTests extends AbstractExternalSourceTest {
         // Revoked early: the upstream now wants the token the API now issues.
         issues("77", "ghs_second_" + repo, Duration.ofHours(1));
         FORGE.requireBasic("/pinned/", "x-access-token", "ghs_second_" + repo);
-        ingest(name).andExpect(status().isCreated());
+        assertSucceeded(ingest(name));
         assertThat(tokenRequests()).isEqualTo(2);
 
         // A lasting refusal: the renewed token is refused too, and nothing mints a third time.
         FORGE.requireBasic("/pinned/", "x-access-token", "ghs_nobody_has_this");
-        ingest(name)
-                .andExpect(status().isBadGateway())
-                .andExpect(jsonPath("$.reason").value(UpstreamFailure.NOT_FOUND_OR_AUTH));
+        assertThat(failure(ingest(name), "reason")).isEqualTo(UpstreamFailure.NOT_FOUND_OR_AUTH);
         assertThat(tokenRequests()).isEqualTo(3);
 
         // The refused token was dropped: the next read mints, is refused, and is not retried.
         issues("77", "ghs_fourth_" + repo, Duration.ofHours(1));
         int before = FORGE.authorizations().size();
-        ingest(name).andExpect(status().isBadGateway());
+        failure(ingest(name), "reason");
         assertThat(tokenRequests()).isEqualTo(4);
         List<String[]> seen = FORGE.authorizations();
         assertThat(seen.subList(before, seen.size()))
@@ -331,10 +330,9 @@ class UpstreamGitHubAppIntegrationTests extends AbstractExternalSourceTest {
         FORGE.requireBasic("/pinned/", "x-access-token", "ghs_someone_else");
         GITHUB_API.respond(
                 "POST", "/app/installations/77/access_tokens", 500, "{\"message\":\"token " + token + " revoked\"}");
-        ingest(name)
-                .andExpect(status().isBadGateway())
-                .andExpect(jsonPath("$.reason").value(UpstreamFailure.APP_NO_TOKEN))
-                .andExpect(jsonPath("$.rootCause", Matchers.containsString("token *** revoked")));
+        String refused = ingest(name);
+        assertThat(failure(refused, "reason")).isEqualTo(UpstreamFailure.APP_NO_TOKEN);
+        assertThat(failure(refused, "rootCause")).contains("token *** revoked");
 
         // And a refused token on a fresh registration.
         String refusedRepo = repository("pinned");
@@ -417,11 +415,24 @@ class UpstreamGitHubAppIntegrationTests extends AbstractExternalSourceTest {
         return result;
     }
 
-    private ResultActions ingest(String name) throws Exception {
-        ResultActions result = mockMvc.perform(
-                post("/api/v1/marketplaces/%s/ingest".formatted(name)).with(oidcLogin()));
-        remember(result.andReturn());
-        return result;
+    /** Starts an ingest, waits for it to end, and returns its final status (GW_INGEST_0066). */
+    private String ingest(String name) throws Exception {
+        remember(mockMvc.perform(
+                        post("/api/v1/marketplaces/%s/ingest".formatted(name)).with(oidcLogin()))
+                .andExpect(status().isAccepted())
+                .andReturn());
+        String status = awaitIngest(name, oidcLogin());
+        bodies.add(status);
+        return status;
+    }
+
+    private static void assertSucceeded(String status) {
+        assertThat((String) JsonPath.read(status, "$.last.outcome")).isEqualTo("succeeded");
+    }
+
+    private static String failure(String status, String part) {
+        assertThat((String) JsonPath.read(status, "$.last.outcome")).isEqualTo("failed");
+        return JsonPath.read(status, "$.last.failure." + part);
     }
 
     private void remember(MvcResult result) throws Exception {

@@ -1,5 +1,6 @@
 package dev.skillsgateway.server;
 
+import com.jayway.jsonpath.JsonPath;
 import dev.skillsgateway.server.approval.ApprovalService;
 import dev.skillsgateway.server.auth.TokenService;
 import dev.skillsgateway.server.ingestion.IngestionService;
@@ -30,6 +31,8 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -227,6 +230,38 @@ abstract class AbstractGatewayTest {
                 registrant);
         Snapshot snapshot = ingestionService.ingest(marketplace, ingestActor);
         return new Registered(marketplace, snapshot);
+    }
+
+    /**
+     * Requests an on-demand ingest over HTTP and waits for it to end (GW_INGEST_0066).
+     *
+     * @return the final ingest status, as JSON
+     */
+    protected String ingestViaApi(String name, RequestPostProcessor caller) throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/marketplaces/{name}/ingest", name)
+                        .with(caller))
+                .andExpect(MockMvcResultMatchers.status().isAccepted());
+        return awaitIngest(name, caller);
+    }
+
+    /** Polls the marketplace's ingest status until nothing is running, and returns it as JSON. */
+    protected String awaitIngest(String name, RequestPostProcessor caller) throws Exception {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(60);
+        while (true) {
+            String status = mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/marketplaces/{name}/ingest", name)
+                            .with(caller))
+                    .andExpect(MockMvcResultMatchers.status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+            if (JsonPath.read(status, "$.running") == null) {
+                return status;
+            }
+            if (System.nanoTime() > deadline) {
+                throw new AssertionError("ingest of '%s' still running: %s".formatted(name, status));
+            }
+            Thread.sleep(25);
+        }
     }
 
     protected Snapshot approve(long snapshotId) {

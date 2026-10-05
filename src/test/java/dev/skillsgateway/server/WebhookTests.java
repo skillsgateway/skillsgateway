@@ -322,14 +322,9 @@ class WebhookTests extends AbstractGatewayTest {
                         .content("{\"name\":\"%s\",\"url\":\"%s\"}"
                                 .formatted(marketplace, upstream.toUri().toString())))
                 .andExpect(status().isCreated());
-        String ingested = mockMvc.perform(post("/api/v1/marketplaces/%s/ingest".formatted(marketplace))
-                        .with(oidcLogin()))
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-        long snapshotId = ((Number) JsonPath.read(ingested, "$.id")).longValue();
-        String sha = JsonPath.read(ingested, "$.sha");
+        String ingested = ingestViaApi(marketplace, oidcLogin());
+        long snapshotId = ((Number) JsonPath.read(ingested, "$.last.snapshotId")).longValue();
+        String sha = snapshotRepository.findById(snapshotId).orElseThrow().sha();
         mockMvc.perform(post("/api/v1/snapshots/%d/approve".formatted(snapshotId))
                         .with(oidcLogin()))
                 .andExpect(status().isOk());

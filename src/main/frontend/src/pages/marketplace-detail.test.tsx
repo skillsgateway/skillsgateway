@@ -10,6 +10,7 @@ import {
   clearVetting,
   compositeProvenance,
   heldSnapshot,
+  idleIngest,
   ledgerEntries,
   locatedVetting,
   marketplace,
@@ -429,18 +430,65 @@ test("the_header_offers_ingest_and_the_client_wizard_on_every_section", async ()
   expect(await screen.findByTestId("setup-held-notice")).toHaveTextContent("404");
 });
 
-test("ingest_opens_what_arrived_on_review", async () => {
+/**
+ * Ingest answers at once; the header follows the job through its stages and, when it ends, opens
+ * what arrived on Review.
+ *
+ * @SVCs SVC_GW_INGEST_0066
+ */
+test("ingest_shows_its_stages_and_opens_what_arrived_on_review", async () => {
+  let polls = 0;
   server.use(
-    http.post("/api/v1/marketplaces/:name/ingest", () =>
-      HttpResponse.json({ ...held(9, 30) }, { status: 201 }),
-    ),
+    http.get("/api/v1/marketplaces/:name/ingest", ({ params }) => {
+      polls += 1;
+      if (polls === 1) return HttpResponse.json(idleIngest(String(params.name)));
+      if (polls === 2)
+        return HttpResponse.json({
+          marketplace: String(params.name),
+          running: { stage: "vetting", startedAt: new Date(Date.now() - 75_000).toISOString(), interrupted: false },
+        });
+      return HttpResponse.json({
+        marketplace: String(params.name),
+        last: { at: new Date().toISOString(), outcome: "succeeded", snapshotId: 9, snapshotState: "held" },
+      });
+    }),
   );
   const user = userEvent.setup();
   renderPage("", "settings");
   await user.click(await screen.findByRole("button", { name: "Ingest corp-marketplace" }));
+
+  const progress = await screen.findByTestId("ingest-progress");
+  expect(within(progress).getByRole("list", { name: "Ingest stages" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Ingest corp-marketplace" })).toBeDisabled();
   await expect
-    .poll(() => screen.getByTestId("location").textContent)
+    .poll(() => progress.querySelector("[aria-current='step']")?.textContent, { timeout: 5000 })
+    .toBe("Vetting");
+  expect(screen.getByTestId("ingest-elapsed")).toHaveTextContent(/^1m 1\ds$/);
+
+  await expect
+    .poll(() => screen.getByTestId("location").textContent, { timeout: 5000 })
     .toBe("/marketplaces/corp-marketplace?snapshot=9");
+  expect(screen.queryByTestId("ingest-progress")).not.toBeInTheDocument();
+});
+
+/**
+ * An ingest whose gateway instance stopped reads as interrupted, and Ingest is offered again.
+ *
+ * @SVCs SVC_GW_INGEST_0067
+ */
+test("an_interrupted_ingest_is_said_to_be_and_can_be_started_again", async () => {
+  server.use(
+    http.get("/api/v1/marketplaces/:name/ingest", ({ params }) =>
+      HttpResponse.json({
+        marketplace: String(params.name),
+        running: { stage: "fetching", startedAt: "2026-09-24T08:30:00Z", interrupted: true },
+      }),
+    ),
+  );
+  renderPage("", "settings");
+  expect(await screen.findByTestId("ingest-interrupted")).toHaveTextContent(/interrupted while fetching/);
+  expect(screen.queryByTestId("ingest-progress")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Ingest corp-marketplace" })).toBeEnabled();
 });
 
 test("settings_shows_the_upstream_and_the_activity_section_shows_the_ledger", async () => {

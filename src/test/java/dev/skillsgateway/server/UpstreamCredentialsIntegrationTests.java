@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
 import dev.skillsgateway.server.ingestion.UpstreamFailure;
 import io.github.reqstool.annotations.SVCs;
 import java.nio.charset.StandardCharsets;
@@ -67,9 +68,11 @@ class UpstreamCredentialsIntegrationTests extends AbstractExternalSourceTest {
         String name = uniqueName("private");
 
         register(name, FORGE.baseUrl() + "/private/skills.git").andExpect(status().isCreated());
-        ingest(name)
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.sha").value(FORGE.headSha("private/skills")));
+        String ingested = ingest(name);
+        assertSucceeded(ingested);
+        long snapshotId = ((Number) JsonPath.read(ingested, "$.last.snapshotId")).longValue();
+        assertThat(snapshotRepository.findById(snapshotId).orElseThrow().sha())
+                .isEqualTo(FORGE.headSha("private/skills"));
 
         List<String[]> seen = FORGE.authorizations();
         assertThat(seen)
@@ -165,9 +168,7 @@ class UpstreamCredentialsIntegrationTests extends AbstractExternalSourceTest {
         FORGE.requireBasic("/private/", "sgw", PRIVATE_TOKEN);
         register(revoked, FORGE.baseUrl() + "/private/skills.git").andExpect(status().isCreated());
         FORGE.requireBasic("/private/", "sgw", "tok-rotated-at-the-forge");
-        ingest(revoked)
-                .andExpect(status().isBadGateway())
-                .andExpect(jsonPath("$.reason").value(UpstreamFailure.NOT_FOUND_OR_AUTH));
+        assertThat(failure(ingest(revoked), "reason")).isEqualTo(UpstreamFailure.NOT_FOUND_OR_AUTH);
 
         // A server that quotes the token back: JGit repeats a refused redirect's Location in its error.
         FORGE.requireBasic("/private/", "sgw", PRIVATE_TOKEN);
@@ -175,9 +176,7 @@ class UpstreamCredentialsIntegrationTests extends AbstractExternalSourceTest {
         register(uniqueName("quoted"), FORGE.baseUrl() + "/private/skills.git")
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.rootCause", Matchers.containsString("echo-***")));
-        ingest(revoked)
-                .andExpect(status().isBadGateway())
-                .andExpect(jsonPath("$.rootCause", Matchers.containsString("echo-***")));
+        assertThat(failure(ingest(revoked), "rootCause")).contains("echo-***");
         remember(mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin()))
                 .andExpect(status().isOk())
                 .andReturn());
@@ -252,11 +251,24 @@ class UpstreamCredentialsIntegrationTests extends AbstractExternalSourceTest {
         return result;
     }
 
-    private ResultActions ingest(String name) throws Exception {
-        ResultActions result = mockMvc.perform(
-                post("/api/v1/marketplaces/%s/ingest".formatted(name)).with(oidcLogin()));
-        remember(result.andReturn());
-        return result;
+    /** Starts an ingest, waits for it to end, and returns its final status (GW_INGEST_0066). */
+    private String ingest(String name) throws Exception {
+        remember(mockMvc.perform(
+                        post("/api/v1/marketplaces/%s/ingest".formatted(name)).with(oidcLogin()))
+                .andExpect(status().isAccepted())
+                .andReturn());
+        String status = awaitIngest(name, oidcLogin());
+        bodies.add(status);
+        return status;
+    }
+
+    private static void assertSucceeded(String status) {
+        assertThat((String) JsonPath.read(status, "$.last.outcome")).isEqualTo("succeeded");
+    }
+
+    private static String failure(String status, String part) {
+        assertThat((String) JsonPath.read(status, "$.last.outcome")).isEqualTo("failed");
+        return JsonPath.read(status, "$.last.failure." + part);
     }
 
     private void remember(MvcResult result) throws Exception {

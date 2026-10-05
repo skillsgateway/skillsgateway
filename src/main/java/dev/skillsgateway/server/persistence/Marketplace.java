@@ -61,7 +61,12 @@ public record Marketplace(
         @Schema(
                 description = "Why the last ingest attempt failed: reason, root cause and next step"
                         + " (GW_INGEST_0038); null unless it failed")
-        String lastIngestReason) {
+        String lastIngestReason,
+
+        @Schema(
+                description = "The snapshot the last successful ingest recorded (GW_INGEST_0066); null when it"
+                        + " failed, before the first, or once that snapshot has been purged")
+        Long lastIngestSnapshotId) {
 
     public static final String INGEST_SUCCEEDED = "succeeded";
     public static final String INGEST_FAILED = "failed";

@@ -175,6 +175,9 @@ class RoleEnforcementTests extends AbstractGatewayTest {
     private static final Set<String> OPEN_READS = Set.of(
             "GET /api/v1/catalog",
             "GET /api/v1/marketplaces",
+            // The ingest status is the last-ingest record the marketplace list already shows, plus the
+            // stage of one in progress; it starts nothing.
+            "GET /api/v1/marketplaces/{name}/ingest",
             "GET /api/v1/marketplaces/{name}/waivers",
             "GET /api/v1/snapshots/{id}/content",
             "GET /api/v1/snapshots/{id}/content-diff",
@@ -300,15 +303,10 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                         .with(bob))
                 .andExpect(status().isOk());
         addUpstreamCommit(upstreamA, "reject-me");
-        String heldOnA = mockMvc.perform(
-                        post("/api/v1/marketplaces/{name}/ingest", nameA).with(bob))
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+        String heldOnA = ingestViaApi(nameA, bob);
         mockMvc.perform(post(
                                 "/api/v1/snapshots/{id}/reject",
-                                MAPPER.readTree(heldOnA).get("id").asLong())
+                                MAPPER.readTree(heldOnA).at("/last/snapshotId").asLong())
                         .with(bob))
                 .andExpect(status().isOk());
 

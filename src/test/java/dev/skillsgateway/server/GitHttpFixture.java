@@ -52,6 +52,8 @@ final class GitHttpFixture implements AutoCloseable {
     private volatile String unauthorizedPrefix;
     private volatile String basicPrefix;
     private volatile String basicExpected;
+    private volatile String holdPrefix;
+    private volatile java.util.concurrent.CountDownLatch holdRelease;
     private final List<String[]> authorizations = new CopyOnWriteArrayList<>();
     private final Map<String, Route> routes = new ConcurrentHashMap<>();
     private final List<ApiRequest> apiRequests = new CopyOnWriteArrayList<>();
@@ -184,7 +186,18 @@ final class GitHttpFixture implements AutoCloseable {
         json.put(path, body);
     }
 
+    /** Requests whose path starts with this wait until {@code release} opens: an upstream slow enough to watch. */
+    void hold(String pathPrefix, java.util.concurrent.CountDownLatch release) {
+        this.holdRelease = release;
+        this.holdPrefix = pathPrefix;
+    }
+
     void reset() {
+        if (holdRelease != null) {
+            holdRelease.countDown();
+        }
+        holdPrefix = null;
+        holdRelease = null;
         unauthorizedPrefix = null;
         basicPrefix = null;
         basicExpected = null;
@@ -219,6 +232,14 @@ final class GitHttpFixture implements AutoCloseable {
         String authorization = exchange.getRequestHeaders().getFirst("Authorization");
         authorizations.add(new String[] {path, authorization == null ? "" : authorization});
         try {
+            java.util.concurrent.CountDownLatch release = holdRelease;
+            if (holdPrefix != null && release != null && path.startsWith(holdPrefix)) {
+                try {
+                    release.await(60, java.util.concurrent.TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
             // Before the redirect, so a redirect is answered only to a request that authenticated:
             // what a forge does for a renamed private repository.
             if (basicPrefix != null && path.startsWith(basicPrefix) && !basicExpected.equals(authorization)) {

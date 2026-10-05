@@ -37,14 +37,16 @@ its principal's approver or admin role. See
  "forge":"github","forgeProject":"acme/skills",
  "description":"Acme internal skills","upstreamUpdatedAt":"2026-08-14T18:20:00Z",
  "servedSha":"3f9c2ab...","lastIngestAt":"2026-08-15T09:01:00Z",
- "lastIngestOutcome":"succeeded","lastIngestReason":null,"snapshots":[]}
+ "lastIngestOutcome":"succeeded","lastIngestReason":null,
+ "lastIngestSnapshotId":7,"snapshots":[]}
 ```
 
 `lastIngestAt`, `lastIngestOutcome` and `lastIngestReason` describe how the last
 ingest attempt ended, whatever triggered it. `lastIngestOutcome` is `succeeded`
 or `failed`. `lastIngestReason` is set only for a failure: the reason, the root
 cause and a next step, in one line. All three are `null` before the first
-attempt. A manifest rejected by policy is a `succeeded` ingest: the snapshot it
+attempt. `lastIngestSnapshotId` names the snapshot a successful ingest
+recorded. A manifest rejected by policy is a `succeeded` ingest: the snapshot it
 captured is what is `rejected`.
 
 `servedSha` is the commit the facade currently serves for this marketplace, read
@@ -190,24 +192,75 @@ the portal's primary query; there is no per-marketplace endpoint.
 
 ## `POST /marketplaces/{name}/ingest`
 
-Clone the source's default branch into quarantine and pin the tip commit as
-`refs/snapshots/{sha}`. Creates a snapshot in state `held`. For a hosted
-marketplace the source is its own origin repository, and a push already does
-this — the endpoint stays available to re-ingest.
+Start an ingest: clone the source's default branch into quarantine, pin the tip
+commit as `refs/snapshots/{sha}`, and record a snapshot in state `held`. For a
+hosted marketplace the source is its own origin repository, and a push already
+does this — the endpoint stays available to re-ingest.
+
+The request answers at once, before anything is fetched, and the ingest runs on
+the gateway (GW_INGEST_0066 — An on-demand ingest runs as a job whose progress can be followed). Follow it at the
+`Location` it returns, the status endpoint below.
 
 ```console
-$ curl -X POST localhost:8080/api/v1/marketplaces/acme/ingest
+$ curl -i -X POST localhost:8080/api/v1/marketplaces/acme/ingest
+HTTP/1.1 202
+Location: /api/v1/marketplaces/acme/ingest
+
+{"marketplace":"acme",
+ "running":{"stage":"queued","startedAt":"2026-10-05T12:00:00Z","interrupted":false},
+ "last":null}
 ```
 
 | Status | Cause |
 | --- | --- |
-| 201 | Snapshot captured; returns it. A manifest that breaks policy captures a `rejected` snapshot. |
+| 202 | Ingest started, or one is already running (whatever triggered it), in which case nothing new starts. The body is its status. |
 | 404 | Unknown marketplace. |
-| 502 | Ingestion failed. The problem carries `reason`, `rootCause` and `nextStep`. |
 
 Ingesting a commit already captured does not create a second snapshot. Every
 attempt, from any trigger, updates the marketplace's `lastIngest*` fields, and a
 failed one is recorded on the ledger as `ingest-failed`.
+
+!!! warning "Changed before 1.0"
+
+    The request used to run the whole ingest and answer `201` with the snapshot,
+    or `502` with the failure. A client that read the snapshot from the response
+    now reads `last.snapshotId` from the status once `running` is `null`.
+
+## `GET /marketplaces/{name}/ingest`
+
+The marketplace's ingest status: the ingest in progress, if any, whatever
+triggered it, and how the last finished one ended.
+
+```console
+$ curl localhost:8080/api/v1/marketplaces/acme/ingest
+```
+
+```json
+{"marketplace":"acme",
+ "running":{"stage":"vetting","startedAt":"2026-10-05T12:00:00Z","interrupted":false},
+ "last":{"at":"2026-10-04T09:12:00Z","outcome":"failed","snapshotId":null,
+         "snapshotState":null,
+         "reason":"repository not found or requires authentication (...). Check ...",
+         "failure":{"reason":"repository not found or requires authentication",
+                    "rootCause":"...","nextStep":"..."}}}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `running` | `null` when no ingest is running. `stage` is `queued`, `fetching`, `evaluating-manifest` or `vetting` (vetting runs only for a snapshot that is held). `startedAt` is when it was requested. |
+| `running.interrupted` | `true` when the gateway instance running it stopped and it will not finish (GW_INGEST_0067 — An ingest whose replica stopped is reported as interrupted). A new `POST` starts one in its place. |
+| `last` | `null` before the first ingest ends. `outcome` is `succeeded` or `failed`. |
+| `last.snapshotId`, `last.snapshotState` | The snapshot a successful ingest recorded and its current state: `held`, or `rejected` when the manifest broke policy. `null` for a failure, or once the snapshot is purged. |
+| `last.reason`, `last.failure` | For a failure, the readable sentence and its parts (`reason`, `rootCause`, `nextStep`), which the `POST` used to return as a `502` problem. |
+
+Poll it every second or so while `running` is set and not interrupted. The
+status is kept in the database, so a poll that reaches another replica sees the
+same answer.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The status. |
+| 404 | Unknown marketplace. |
 
 ---
 
