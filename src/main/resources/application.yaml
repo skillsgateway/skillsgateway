@@ -17,6 +17,10 @@ server:
 spring:
   application:
     name: skills-gateway
+  session:
+    jdbc:
+      # The tables are in V1__init.sql (GW_AUTH_0053); Flyway is the only writer of the schema.
+      initialize-schema: never
   mvc:
     # Every refusal is an RFC 7807 document (GW_API_0007). Off by default in Boot, which is why
     # ~35 ResponseStatusException call sites were answering with an empty body and no content type

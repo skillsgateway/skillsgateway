@@ -285,7 +285,7 @@ class ObjectStoreObservabilityTests {
         }
 
         @Override
-        public void probe() throws IOException {
+        public void probe(String keyPrefix) throws IOException {
             throw new IOException("the bucket could not be reached");
         }
     }

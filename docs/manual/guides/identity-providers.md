@@ -227,6 +227,23 @@ $ curl -s -b session.txt https://<gateway-host>/api/v1/me | jq
 `source: claim` is the confirmation that the mapping — not a grant row — is
 what made this session an admin.
 
+## When sign-in fails
+
+A failed sign-in gets a page that says which of three things happened, shows the
+OAuth2 error code and links back to the start of the sign-in
+(GW_AUTH_0054 — A failed browser sign-in is logged and names its reason). Every
+failure is also logged at `WARN` with the registration and the code:
+
+```text
+WARN … SignInFailureHandler : browser sign-in failed: registration=idp error=access_denied description=…
+```
+
+| The page says | Error code | Where to look |
+| --- | --- | --- |
+| Sign-in could not be completed | `authorization_request_not_found` | The gateway no longer had the sign-in the provider answered: a stale tab, a sign-in left too long, or a restart in between. Starting again fixes it. If it happens on every attempt, the session cookie is not reaching the gateway on the redirect back. Check what sits between the browser and the gateway. Replicas share sessions through the database, so affinity is not the cause. |
+| The identity provider declined the sign-in | a code the provider sent, e.g. `access_denied`, `consent_required` | The provider refused it. Its own sign-in logs, indexed by that code, say why. Typical causes are a user not assigned to the application and consent not granted. |
+| The identity provider's answer could not be accepted | e.g. `invalid_token_response`, `invalid_id_token`, `invalid_nonce` | The gateway rejected what came back. The log line's description says why: a token endpoint it cannot reach, a client secret the provider refuses, an issuer that does not match, or a clock out of step. |
+
 ## Locked out?
 
 Add yourself to `skills-gateway.roles.admins` and restart: that is configuration

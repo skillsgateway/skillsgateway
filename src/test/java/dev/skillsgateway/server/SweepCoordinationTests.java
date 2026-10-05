@@ -16,6 +16,8 @@ import dev.skillsgateway.server.vetting.RevetScheduler;
 import dev.skillsgateway.server.vetting.WaiverExpirySweep;
 import dev.skillsgateway.server.webhook.WebhookDispatcher;
 import io.github.reqstool.annotations.SVCs;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -144,6 +146,39 @@ class SweepCoordinationTests extends AbstractGatewayTest {
                 .as("a failed pass does not hand its turn straight back")
                 .isFalse();
         assertThat(ran).hasValue(0);
+    }
+
+    /**
+     * The same question answered from the metrics an operator already scrapes rather than from the
+     * database. Two instances here share a hostname and so a holder, which the lease refuses exactly
+     * as it refuses a second replica.
+     */
+    @Test
+    @SVCs({"SVC_GW_OBSERVABILITY_0005"})
+    void eachInstanceCountsTheTurnsItTookAndSkipped() {
+        String key = uniqueName("lease-counted");
+        SimpleMeterRegistry first = new SimpleMeterRegistry();
+        SimpleMeterRegistry second = new SimpleMeterRegistry();
+
+        assertThat(new SweepLeases(leaseRepository, first).runIfLeader(key, Duration.ofMinutes(30), () -> {}))
+                .isTrue();
+        assertThat(new SweepLeases(leaseRepository, second).runIfLeader(key, Duration.ofMinutes(30), () -> {}))
+                .isFalse();
+
+        assertThat(turns(first, key, "taken")).isEqualTo(1.0);
+        assertThat(turns(first, key, "skipped"))
+                .as("both outcomes exist from the first turn, so a replica that always wins still reports zero")
+                .isEqualTo(0.0);
+        assertThat(turns(second, key, "skipped")).isEqualTo(1.0);
+        assertThat(turns(second, key, "taken")).isEqualTo(0.0);
+    }
+
+    private static double turns(MeterRegistry registry, String pass, String outcome) {
+        return registry.get("skills_gateway.sweep.lease")
+                .tag("pass", pass)
+                .tag("outcome", outcome)
+                .counter()
+                .count();
     }
 
     /** Which replica ran the pass has to be answerable afterwards, or the column is decoration. */

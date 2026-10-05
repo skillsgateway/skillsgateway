@@ -204,8 +204,8 @@ public final class S3ObjectStoreClient implements ObjectStoreClient, AutoCloseab
     }
 
     @Override
-    public void probe() throws IOException {
-        String key = "_probe/" + UUID.randomUUID();
+    public void probe(String keyPrefix) throws IOException {
+        String key = keyPrefix + "_probe/" + UUID.randomUUID();
         byte[] first = "probe".getBytes(StandardCharsets.UTF_8);
         try {
             String etag = put(key, first);

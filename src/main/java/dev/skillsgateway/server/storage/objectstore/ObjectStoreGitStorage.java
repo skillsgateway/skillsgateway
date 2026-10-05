@@ -64,7 +64,7 @@ public final class ObjectStoreGitStorage implements GitStorage, AutoCloseable {
 
     /** Refuse to run against a store that cannot serialize reference transitions. */
     public void probe() throws IOException {
-        store.probe();
+        store.probe(prefix);
         probedAt = Instant.now();
     }
 
