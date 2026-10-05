@@ -14,6 +14,7 @@ import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.storage.RefTransitions;
 import dev.skillsgateway.server.vetting.VettingService;
 import io.github.reqstool.annotations.Requirements;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
@@ -21,6 +22,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
@@ -32,7 +36,6 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -83,6 +86,11 @@ public class IngestionService {
     private final UpstreamGit upstreamGit;
     private final MarketplaceRepository marketplaceRepository;
     private final AdminAuditLogger auditLogger;
+    private final ScheduledExecutorService heartbeats = Executors.newSingleThreadScheduledExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "ingest-heartbeat");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     public IngestionService(
             GitStorage storage,
@@ -107,6 +115,12 @@ public class IngestionService {
         this.upstreamGit = upstreamGit;
         this.marketplaceRepository = marketplaceRepository;
         this.auditLogger = auditLogger;
+        heartbeats.scheduleWithFixedDelay(this::heartbeat, HEARTBEAT_MILLIS, HEARTBEAT_MILLIS, TimeUnit.MILLISECONDS);
+    }
+
+    @PreDestroy
+    void stopHeartbeats() {
+        heartbeats.shutdownNow();
     }
 
     /**
@@ -169,10 +183,10 @@ public class IngestionService {
     }
 
     /**
-     * Keeps this replica's attempts from reading as interrupted (GW_INGEST_0067). Not an estate sweep:
-     * it touches only the rows this replica owns, so it needs no lease.
+     * Keeps this replica's attempts from reading as interrupted (GW_INGEST_0067). Deliberately not a
+     * {@code @Scheduled} sweep: it touches only the rows this replica owns, so it runs on every replica
+     * and takes no lease.
      */
-    @Scheduled(fixedDelay = HEARTBEAT_MILLIS)
     @Requirements({"GW_INGEST_0067"})
     public void heartbeat() {
         try {

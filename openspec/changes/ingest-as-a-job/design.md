@@ -96,7 +96,7 @@ on the lock and runs after.
 
 A replica that dies mid-ingest leaves its row saying `vetting` forever, and D2
 would then refuse every later ingest. So each replica keeps the attempts it owns
-(claimed or running) in a set. A `@Scheduled(fixedDelay = 10 s)` method renews
+(claimed or running) in a set. A single-thread timer of its own, every 10 s, renews
 `ingest_heartbeat_at = now()` for exactly those ids. A status read treats an
 attempt whose heartbeat is older than 60 s as **interrupted**
 (GW_INGEST_0067 — An ingest whose replica stopped is reported as interrupted),
@@ -105,7 +105,8 @@ replica clock skew does not matter. The intervals are constants, not
 configuration: they bound a display, and no operator has a reason to tune them.
 
 This is not an estate sweep. It touches only its own replica's rows and needs
-no lease (GW_FACADE_0030 — A scheduled background pass runs on one replica at a time).
+no lease (GW_FACADE_0030 — A scheduled background pass runs on one replica at a time). It is
+deliberately not `@Scheduled`, the mark `SweepLeaseDisciplineTests` reserves for leased sweeps.
 
 ### D4. Stages
 
