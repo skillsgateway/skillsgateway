@@ -3094,7 +3094,8 @@ one writer anyway.</p>
 <p>On the <code>object-store</code> backend concurrent writers are safe by construction and
 more than one replica is supported as it renders: the scheduled background
 passes take a lease apiece, so each one still runs once per interval however
-many replicas there are. See
+many replicas there are. Browser sessions are stored in the database, so the
+Service and the Ingress need no session affinity. See
 <a href="../storage-backends/#running-more-than-one-replica">Running more than one replica</a>.</p>
 <h2 id="ingress-and-tls">Ingress and TLS<a class="headerlink" href="#ingress-and-tls" title="Permanent link">&para;</a></h2>
 <p>The Ingress is off by default:</p>

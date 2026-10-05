@@ -697,6 +697,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#sessions-need-no-affinity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sessions need no affinity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#what-each-pass-leases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2678,6 +2689,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#sessions-need-no-affinity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sessions need no affinity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#what-each-pass-leases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2978,7 +3000,9 @@ can put content on the wire without <code>ApprovalService</code> ever seeing it.
 the gateway a narrow policy — object read, write and delete under its own
 prefix, no bucket administration — and inherit the encryption and
 access-logging expectations of the volume it replaces. The gateway cannot
-enforce this for you.</p>
+enforce this for you. That grant is enough to start: the startup probe
+writes, reads and deletes its test object at <code>&lt;prefix&gt;/_probe/</code>, never at
+the bucket root.</p>
 </div>
 <h2 id="what-it-costs">What it costs<a class="headerlink" href="#what-it-costs" title="Permanent link">&para;</a></h2>
 <p>A replica that has never seen a repository reads one small manifest and then
@@ -3014,7 +3038,20 @@ unlock to leak and no stale lock to clear by hand.</p>
 <p><strong>No configuration was added, and none is needed.</strong> A lease lasts its pass's own
 interval, so the interval you already set is the lease. The row also records a
 <code>holder</code> — the pod hostname, which under Kubernetes is the pod name — so <em>which</em>
-replica ran a pass stays answerable afterwards.</p>
+replica ran a pass stays answerable afterwards. Where the database is private
+to the gateway, each replica's <code>skills_gateway.sweep.lease</code> counter answers the
+same question from its metrics, by pass and by <code>taken</code> or <code>skipped</code>
+(GW_OBSERVABILITY_0005 — Each instance reports the background-pass turns it
+took and skipped; see <a href="../../reference/observability/#background-passes">Observability</a>).</p>
+<h3 id="sessions-need-no-affinity">Sessions need no affinity<a class="headerlink" href="#sessions-need-no-affinity" title="Permanent link">&para;</a></h3>
+<p>Browser sign-in state lives in the gateway's database too: the half-finished
+sign-in while the identity provider has the browser, and the session once it
+returns. The provider's redirect back can land on a different replica from the
+one that started the sign-in, and every later request can go to any replica.
+A round-robin load balancer without session affinity is therefore fine
+(GW_AUTH_0053 — A browser session does not depend on which instance answers).
+When a sign-in still fails, the page and the log say why; see
+<a href="../identity-providers/#when-sign-in-fails">Identity providers</a>.</p>
 <h3 id="what-each-pass-leases">What each pass leases<a class="headerlink" href="#what-each-pass-leases" title="Permanent link">&para;</a></h3>
 <table>
 <thead>

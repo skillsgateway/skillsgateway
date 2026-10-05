@@ -841,6 +841,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#when-sign-in-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When sign-in fails
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#locked-out" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2755,6 +2766,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#when-sign-in-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When sign-in fails
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#locked-out" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3023,6 +3045,39 @@ unreadable; pick which cost you would rather pay, and be consistent.</p>
 </code></pre></div>
 <p><code>source: claim</code> is the confirmation that the mapping — not a grant row — is
 what made this session an admin.</p>
+<h2 id="when-sign-in-fails">When sign-in fails<a class="headerlink" href="#when-sign-in-fails" title="Permanent link">&para;</a></h2>
+<p>A failed sign-in gets a page that says which of three things happened, shows the
+OAuth2 error code and links back to the start of the sign-in
+(GW_AUTH_0054 — A failed browser sign-in is logged and names its reason). Every
+failure is also logged at <code>WARN</code> with the registration and the code:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>WARN … SignInFailureHandler : browser sign-in failed: registration=idp error=access_denied description=…
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>The page says</th>
+<th>Error code</th>
+<th>Where to look</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sign-in could not be completed</td>
+<td><code>authorization_request_not_found</code></td>
+<td>The gateway no longer had the sign-in the provider answered: a stale tab, a sign-in left too long, or a restart in between. Starting again fixes it. If it happens on every attempt, the session cookie is not reaching the gateway on the redirect back. Check what sits between the browser and the gateway. Replicas share sessions through the database, so affinity is not the cause.</td>
+</tr>
+<tr>
+<td>The identity provider declined the sign-in</td>
+<td>a code the provider sent, e.g. <code>access_denied</code>, <code>consent_required</code></td>
+<td>The provider refused it. Its own sign-in logs, indexed by that code, say why. Typical causes are a user not assigned to the application and consent not granted.</td>
+</tr>
+<tr>
+<td>The identity provider's answer could not be accepted</td>
+<td>e.g. <code>invalid_token_response</code>, <code>invalid_id_token</code>, <code>invalid_nonce</code></td>
+<td>The gateway rejected what came back. The log line's description says why: a token endpoint it cannot reach, a client secret the provider refuses, an issuer that does not match, or a clock out of step.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="locked-out">Locked out?<a class="headerlink" href="#locked-out" title="Permanent link">&para;</a></h2>
 <p>Add yourself to <code>skills-gateway.roles.admins</code> and restart: that is configuration
 rather than a stored grant, so it cannot be revoked through the API

@@ -2138,6 +2138,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#background-passes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background passes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-read-only-forge-mirror" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2566,6 +2577,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#background-passes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background passes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-read-only-forge-mirror" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2805,6 +2827,32 @@ design is checked against its own assumptions rather than trusted.</p>
 reference transition and belongs on an alert. <code>wal.depth</code> and <code>packs.live</code>
 climbing without falling back is compaction falling behind, which shows up as a
 slow restore long before it shows up as anything else.</p>
+<h3 id="background-passes">Background passes<a class="headerlink" href="#background-passes" title="Permanent link">&para;</a></h3>
+<p>Recorded on every gateway, per replica. Each scheduled pass takes a lease before
+it runs (GW_FACADE_0030 — A scheduled background pass runs on one replica at a
+time), and this counts what each replica got.</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Tags</th>
+<th>Recorded around</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills_gateway.sweep.lease</code></td>
+<td>counter</td>
+<td><code>pass</code> (the lease key), <code>outcome=taken\|skipped</code></td>
+<td>Every turn of a pass on this replica: <code>taken</code> when it held the lease and ran the pass, <code>skipped</code> when another replica held it. Both outcomes exist from a pass's first turn, so a replica that never loses still reports <code>skipped</code> as zero.</td>
+</tr>
+</tbody>
+</table>
+<p>This is how to confirm, after scaling out, that each pass runs once per interval
+estate-wide rather than once per replica: summed across replicas, the rate of
+<code>outcome="taken"</code> for a pass is one per interval. The lease keys are listed in
+<a href="../../guides/storage-backends/#what-each-pass-leases">What each pass leases</a>.</p>
 <h3 id="the-read-only-forge-mirror">The read-only forge mirror<a class="headerlink" href="#the-read-only-forge-mirror" title="Permanent link">&para;</a></h3>
 <p>Recorded on every gateway. A deployment with no mirror configured publishes them
 as zeros, which is what "nothing has diverged" looks like and is true. Turning
@@ -2861,8 +2909,9 @@ the mirror on is in
 <p>On a scaled-out deployment these gauges are written by whichever replica took
 the reconciliation lease for that tick, and each replica reports what it last
 wrote itself — so scrape every replica and read the freshest, rather than
-picking one and trusting it. Which replica ran a given pass is answerable from
-the <code>holder</code> column on its lease row in the database; no metric reports it. See
+picking one and trusting it. Which replica ran a given pass is reported by
+<code>skills_gateway.sweep.lease{pass="mirror-drift", outcome="taken"}</code> on that
+replica (see <a href="#background-passes">Background passes</a>). See
 <a href="../../guides/storage-backends/#running-more-than-one-replica">Running more than one replica</a>.</p>
 <p>Read <code>stale_refs</code> and <code>seconds_since_success</code> together, always. The counts are
 written by reconciliations and by the drift report, never computed when a

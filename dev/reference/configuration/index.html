@@ -5731,6 +5731,15 @@ which is the vector. Naming the attribute is one half of GW_AUTH_0030 — A
 cross-site request cannot act on an ambient session; the control itself is the
 CSRF token on the web chain, described under
 <a href="../../concepts/trust-boundaries/#the-web-surface">The web surface</a>.</p>
+<p>The cookie is named <code>SESSION</code>. The session it names is stored in the gateway's
+database, not in the replica's memory, so any replica can answer any request of
+it and a load balancer needs no session affinity (GW_AUTH_0053 — A browser
+session does not depend on which instance answers). The session's lifetime is
+<code>server.servlet.session.timeout</code>, 30 minutes unless set. Expired sessions are
+removed by a cleanup that runs every minute on every replica, which is safe to
+run on all of them. A stored session the running version cannot read, for
+example one written before an upgrade, counts as no session, and its holder
+signs in again.</p>
 <hr />
 <h2 id="actuator">Actuator<a class="headerlink" href="#actuator" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nt">management</span><span class="p">:</span>
