@@ -41,11 +41,11 @@
 - [x] 4.1 Update the portal manual's waiver section (label, coverage count,
   multi-select, partial-failure behaviour). Verify with
   `mkdocs build --strict`.
-- [ ] 4.2 Take before and after screenshots for the PR body
+- [x] 4.2 Take before and after screenshots for the PR body
   (`.claude/skills/ui-screenshots`), run `/impeccable audit` and `harden` on
   the vetting surface, and fix or dismiss each finding in the PR body.
 
 ## 5. Gates and evidence
 
-- [ ] 5.1 Run every gate fresh after the last code edit and record it in
+- [x] 5.1 Run every gate fresh after the last code edit and record it in
   `evidence.md` with the commit SHA.
