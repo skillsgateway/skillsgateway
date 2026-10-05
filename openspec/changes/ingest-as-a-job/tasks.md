@@ -45,10 +45,10 @@ shown failing before the code it guards exists.
 
 ## 4. Portal (SVC_GW_INGEST_0066)
 
-- [ ] 4.1 `useIngest` / `useIngestStatus` with polling; stage steps with elapsed
+- [x] 4.1 `useIngest` / `useIngestStatus` with polling; stage steps with elapsed
   time and the outcome on `marketplace-detail.tsx`; MSW handlers; component test
   and story (axe-clean); e2e ingest step waits on the status.
-- [ ] 4.2 Before/after screenshots (`.claude/skills/ui-screenshots`); run
+- [x] 4.2 Before/after screenshots (`.claude/skills/ui-screenshots`); run
   `/impeccable audit` on the changed page.
 
 ## 5. Docs
@@ -59,6 +59,6 @@ shown failing before the code it guards exists.
 
 ## 6. Gates and evidence
 
-- [ ] 6.1 All gates fresh after the last code edit; `evidence.md` with the
+- [x] 6.1 All gates fresh after the last code edit; `evidence.md` with the
   commands, result tails and commit SHA.
 - [ ] 6.2 `/opsx:archive` as the final commit.
