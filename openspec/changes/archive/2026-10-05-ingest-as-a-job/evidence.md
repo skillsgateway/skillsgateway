@@ -71,3 +71,23 @@ code (a mutant), and each mutant was killed:
 `oasdiff breaking` against `main`: one change,
 `response-success-status-removed` on `POST /api/v1/marketplaces/{name}/ingest`
 (`201`). This is the declared break.
+
+## After merging `main`
+
+`main` was merged in (`3d21b6d5`, then `2b8cdbfd`). The only manual resolution
+was keeping both sides of `docs/reqstool/requirements.yml` and
+`software_verification_cases.yml`, which no code depends on. Every gate ran again
+in CI on `2b8cdbfd` (run 37387412879):
+
+| Gate | Result |
+| --- | --- |
+| `./mvnw clean verify` | 1081 tests, 0 failures, 9 skipped; vitest 222 passed · BUILD SUCCESS |
+| `pnpm test:stories` | 20 files, 104 tests passed |
+| `pnpm e2e` | 26 passed (first attempt: `a_finding_is_waived_…` timed out in the shared register helper, which this change does not touch; passed on re-run) |
+| `reqstool status` | 337/337 complete · PASS |
+| `openspec validate --all --strict` | 30 passed, 0 failed |
+| `mkdocs build --strict` | built |
+
+Locally on `3d21b6d5`, the Java suite passed with the same counts. The local
+frontend run timed out under machine load from other work, which is why CI is
+the record here.
