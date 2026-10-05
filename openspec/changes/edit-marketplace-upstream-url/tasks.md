@@ -16,14 +16,14 @@ Failure model (each maps to a test or a mutant in `evidence.md`):
 
 ## 1. Requirements (reqstool)
 
-- [ ] 1.1 Add GW_INGEST_0066 and GW_INGEST_0067 with SVC_GW_INGEST_0066,
+- [x] 1.1 Add GW_INGEST_0066 and GW_INGEST_0067 with SVC_GW_INGEST_0066,
   SVC_GW_INGEST_0066.1 and SVC_GW_INGEST_0067; revise GW_ESTATE_0002 and
   SVC_GW_ESTATE_0002 (revision 0.5.0). Verify with
   `openspec validate edit-marketplace-upstream-url --strict`.
 
 ## 2. The edit (SVC_GW_INGEST_0066)
 
-- [ ] 2.1 `MarketplaceUrlChangeTests` (`@SVCs SVC_GW_INGEST_0066`): the
+- [x] 2.1 `MarketplaceUrlChangeTests` (`@SVCs SVC_GW_INGEST_0066`): the
   accepted change (new URL, editor as registrant, forge metadata re-resolved,
   duplicate warning naming the other marketplace and not itself, one ledger
   entry with previous and new URL, next ingest fetches the new URL), an
@@ -31,13 +31,13 @@ Failure model (each maps to a test or a mutant in `evidence.md`):
   scheme 400, credential 400, unreadable 502, non-admin 403, snapshot 409,
   hosted 400, removed 404, unknown 404) leaving URL, registrant and ledger
   unchanged. Watch each fail.
-- [ ] 2.2 `MarketplaceRepository.changeUrlBeforeFirstSnapshot` (transaction:
+- [x] 2.2 `MarketplaceRepository.changeUrlBeforeFirstSnapshot` (transaction:
   `FOR UPDATE`, snapshot check, update) and
   `MarketplaceRegistrationService.changeUrl` sharing the registration
   validations; `PUT /api/v1/marketplaces/{name}/url` in `AdminController` with
   `@Tag`/`@Operation`/`@ApiResponse`/`@Schema`. `@Requirements GW_INGEST_0066`.
   Make 2.1 green with every existing test unchanged.
-- [ ] 2.3 Four-eyes (F5): extend 2.1 so the edited marketplace's snapshot is
+- [x] 2.3 Four-eyes (F5): extend 2.1 so the edited marketplace's snapshot is
   refused to the editor and allowed to the original registrant under the
   enforcing mode. Watch fail, then green.
 
