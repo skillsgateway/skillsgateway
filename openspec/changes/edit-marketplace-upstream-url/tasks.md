@@ -54,11 +54,11 @@ Failure model (each maps to a test or a mutant in `evidence.md`):
 
 ## 4. Estate (SVC_GW_ESTATE_0002)
 
-- [ ] 4.1 Extend the `SVC_GW_ESTATE_0002` test: the existing differing-URL
+- [x] 4.1 Extend the `SVC_GW_ESTATE_0002` test: the existing differing-URL
   entry gets a snapshot (still fails, URL kept); a new entry without a
   snapshot is reported updated with the declared URL and a ledger entry.
   Watch the new case fail.
-- [ ] 4.2 `EstateReconciler.reconcileMarketplace` calls `changeUrl(…,
+- [x] 4.2 `EstateReconciler.reconcileMarketplace` calls `changeUrl(…,
   REPORT)`; update its comment. Green.
 
 ## 5. Portal (SVC_GW_INGEST_0067)
