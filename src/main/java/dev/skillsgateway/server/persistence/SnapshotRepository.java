@@ -98,7 +98,8 @@ public class SnapshotRepository {
                 .param("marketplaceId", marketplaceId)
                 .query(Boolean.class)
                 .optional()
-                .orElse(false);
+                // No row at all is the foreign key's to refuse, not a URL that changed.
+                .orElse(true);
         if (!current) {
             throw new MarketplaceUrlChangedException(marketplaceId);
         }
