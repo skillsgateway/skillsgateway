@@ -518,8 +518,8 @@ async function registerTainted(page: Page, prefix: string): Promise<Locator> {
  * finding's own button disappear.
  */
 async function waiveAllFindings(dialog: Locator) {
-  // "Waive finding <rule> at <path:line>", or "Waive all <n> locations of <rule>" for a group.
-  const waiveButtons = dialog.getByRole("button", { name: /^Waive (finding|all) / });
+  // "Waive <rule> at <path:line>", or "Waive <rule> at <n> locations" for a group.
+  const waiveButtons = dialog.getByRole("button", { name: /^Waive \S+ at / });
   // A finding shown as accepted rather than blocking. The badge appears only when
   // the waiver POST's refetch has committed, which makes its count the loop's
   // settle signal: a waive button is HIDDEN while its inline form is open and
@@ -542,8 +542,7 @@ async function waiveAllFindings(dialog: Locator) {
     if (label == null) {
       throw new Error("Waive button has no aria-label; cannot name the finding to waive");
     }
-    const named = /^Waive (?:finding (\S+) at |all \d+ locations of (\S+)$)/.exec(label);
-    const rule = named?.[1] ?? named?.[2];
+    const rule = /^Waive (\S+) at /.exec(label)?.[1];
     if (rule == null) {
       throw new Error(`Cannot read the rule from the waive button label: ${label}`);
     }
@@ -559,7 +558,7 @@ async function waiveAllFindings(dialog: Locator) {
       await expect(justification).toBeVisible({ timeout: 1_000 });
     }).toPass({ timeout: 15_000 });
     await justification.fill("accepted for the pilot ring");
-    await dialog.getByRole("button", { name: `Record waiver for ${rule}` }).click();
+    await dialog.getByRole("button", { name: new RegExp(`^Record waiver for \\d+ findings? of ${rule}$`) }).click();
     // The round-trip is complete only when the refetch commits and at least one
     // more finding is shown as accepted rather than blocking (a snapshot-scope
     // waiver may suppress several findings of the same rule at once).
@@ -756,11 +755,11 @@ test("a_vendored_copy_is_one_group_with_every_location_and_one_waiver_covers_it"
   ).toBeVisible();
 
   // One row and one action for both copies; the narrowest acceptance is the default.
-  const waive = card.getByRole("button", { name: "Waive all 2 locations of instruction-override" });
+  const waive = card.getByRole("button", { name: "Waive instruction-override at 2 locations" });
   await waive.click();
   await expect(card.getByLabel("Scope")).toHaveValue("group");
   await card.getByLabel("Justification").fill("vendored copy of a reviewed skill");
-  await card.getByRole("button", { name: "Record waiver for instruction-override" }).click();
+  await card.getByRole("button", { name: "Record waiver for 2 findings of instruction-override" }).click();
 
   await expect(waive).toHaveCount(0);
   await expect(card.getByText(/waived by alice until/).first()).toBeVisible();
@@ -769,6 +768,35 @@ test("a_vendored_copy_is_one_group_with_every_location_and_one_waiver_covers_it"
     blocking.getByText("plugins/hello/skills/copy/SKILL.md:5, plugins/hello/skills/hello/SKILL.md:5"),
   ).toBeVisible();
   await expect(card.getByRole("button", { name: /Approve snapshot \d+/ })).toBeDisabled();
+});
+
+/**
+ * @SVCs SVC_GW_VETTING_0061
+ */
+test("blocking_groups_of_two_rules_are_waived_together_with_one_justification", async ({ page }) => {
+  await login(page, "alice");
+  const card = await registerTainted(page, "bulk");
+  await expect(card.getByText("vetting blocked").first()).toBeVisible();
+
+  // Every blocking group of the tainted fixture is tied to content, so each can be selected.
+  const boxes = card.getByRole("checkbox", { name: /^Select \S+ at / });
+  await expect(boxes.first()).toBeVisible();
+  const count = await boxes.count();
+  expect(count).toBeGreaterThanOrEqual(2);
+  for (let i = 0; i < count; i++) await boxes.nth(i).click();
+
+  const selection = card.getByRole("region", { name: "Selected findings" });
+  await expect(selection).toContainText(`${count} groups,`);
+  await expect(selection).toContainText("instruction-override");
+  await selection.getByRole("button", { name: `Waive ${count} selected groups` }).click();
+  await selection.getByLabel("Justification").fill("reviewed together for the pilot ring");
+  await selection.getByRole("button", { name: new RegExp(`^Record ${count} waivers for \\d+ findings$`) }).click();
+
+  // Each group is now accepted on its own, and nothing is left blocking approval.
+  await expect(selection).toHaveCount(0);
+  await expect(boxes).toHaveCount(0);
+  await expect(card.getByText(/waived by alice until/)).toHaveCount(count);
+  await expect(card.getByRole("button", { name: /Approve snapshot \d+/ })).toBeEnabled();
 });
 
 /**

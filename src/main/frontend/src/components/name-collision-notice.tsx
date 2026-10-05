@@ -4,10 +4,19 @@ import type { NameCollision, NameCollisionCheck } from "@/api/queries";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { WaiveForm } from "@/components/vetting-report";
+import { WaiveForm, type RunFinding } from "@/components/vetting-report";
 import { targetOf } from "@/lib/vetting-flow";
 
-function CollisionRow({ snapshotId, collision }: { snapshotId: number; collision: NameCollision }) {
+function CollisionRow({
+  snapshotId,
+  collision,
+  runFindings,
+}: {
+  snapshotId: number;
+  collision: NameCollision;
+  /** Every collision of the snapshot: a snapshot waiver on the rule covers them all. */
+  runFindings: RunFinding[];
+}) {
   const [waiving, setWaiving] = useState(false);
   const waiver = collision.waiver;
   const incumbents = collision.incumbents ?? [];
@@ -41,6 +50,7 @@ function CollisionRow({ snapshotId, collision }: { snapshotId: number; collision
         <WaiveForm
           snapshotId={snapshotId}
           target={targetOf(collision.finding)}
+          runFindings={runFindings}
           snapshotOnly
           onDone={() => setWaiving(false)}
           onCancel={() => setWaiving(false)}
@@ -77,6 +87,11 @@ export function NameCollisionNotice({
   }
   const collisions = check.collisions ?? [];
   if (collisions.length === 0) return null;
+  const runFindings = collisions.flatMap((collision) =>
+    collision.finding?.location
+      ? [{ ruleId: collision.finding.id ?? "", location: collision.finding.location }]
+      : [],
+  );
   return (
     <section aria-label="Plugin name collisions" className="space-y-2 rounded-md border p-3">
       <div className="flex items-center gap-2">
@@ -90,7 +105,12 @@ export function NameCollisionNotice({
       </p>
       <ul className="space-y-2">
         {collisions.map((collision) => (
-          <CollisionRow key={collision.pluginName} snapshotId={snapshotId} collision={collision} />
+          <CollisionRow
+            key={collision.pluginName}
+            snapshotId={snapshotId}
+            collision={collision}
+            runFindings={runFindings}
+          />
         ))}
       </ul>
     </section>

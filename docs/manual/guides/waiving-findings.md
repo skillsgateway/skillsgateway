@@ -69,9 +69,10 @@ Covering only some of them changes nothing.
 
 === "Portal"
 
-    In the approve dialog, each blocking group carries a button: **Waive
-    finding** for a single location, or **Waive all N locations** for a group.
-    The button opens a small form beside the group, with these controls:
+    In the approve dialog, each blocking group carries a button that names its
+    rule: **Waive {rule}…** for a single location, or **Waive {rule} at N
+    locations…** for a group. The button opens a small form beside the group,
+    with these controls:
 
     - **Scope** — one of the following:
         - *These N identical copies, in this snapshot* (or *This finding, in
@@ -83,9 +84,21 @@ Covering only some of them changes nothing.
     - **Expires on** — defaults to 30 days out.
     - **Justification** — required; the confirm button stays disabled without it.
 
-    **Record waiver** applies it immediately. The group is struck through and
-    badged with who accepted it and until when. The outcome badge changes to
-    **vetting clear with waivers** once nothing is left uncovered.
+    Under the scope, the form says how many findings of this snapshot the
+    chosen scope covers, and the button carries the same count: **Record
+    waiver for N findings**. It applies the waiver immediately. The group is
+    struck through and badged with who accepted it and until when. The outcome
+    badge changes to **vetting clear with waivers** once nothing is left
+    uncovered.
+
+    **Several groups at once.** Each blocking group tied to content also has a
+    checkbox. Select groups across rules and vetters, and a bar above the
+    verdicts shows how many groups and findings are selected and which rules
+    they belong to. **Waive selected…** opens one form with one expiry and one
+    justification. **Record N waivers for M findings** records one group
+    waiver per selected group, each exactly as narrow as waiving that group on
+    its own. Each waiver stands alone. If the gateway refuses one, the bar
+    names it, that group stays selected, and the others stay recorded.
 
 === "API"
 
