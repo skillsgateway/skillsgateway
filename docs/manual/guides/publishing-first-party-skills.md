@@ -35,8 +35,8 @@ created here, so you can push the moment this returns.
 !!! note "The origin is immutable"
 
     A marketplace is hosted or upstream at registration and stays that way, for
-    the same reason an upstream URL is immutable: changing it would swap the
-    supply chain under snapshots that were already approved.
+    the same reason an upstream URL is fixed once it has a snapshot: changing it
+    would swap the supply chain under snapshots that were already ingested.
 
 ## Step 2 — mint a push-scoped token
 

@@ -96,7 +96,11 @@ public final class MachineApiRegistry {
                         // meet, deciding nothing. It names incumbents' marketplaces and plugin names,
                         // which the catalog already publishes.
                         get("/api/v1/snapshots/{id}/name-collisions")));
-        scopes.put("marketplaces:register", Set.of(post("/api/v1/marketplaces")));
+        scopes.put(
+                "marketplaces:register",
+                // Correcting the URL before the first snapshot (GW_INGEST_0066) is the registration
+                // decision made again: it chooses an upstream and publishes or withdraws nothing.
+                Set.of(post("/api/v1/marketplaces"), put("/api/v1/marketplaces/{name}/url")));
         scopes.put("marketplaces:ingest", Set.of(post("/api/v1/marketplaces/{name}/ingest")));
         scopes.put(
                 "vetting:run", Set.of(post("/api/v1/marketplaces/{name}/revet"), post("/api/v1/snapshots/{id}/revet")));

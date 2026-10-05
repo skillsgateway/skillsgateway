@@ -113,6 +113,14 @@ with snapshots the card says to remove and register again. A marketplace the
 estate declares gets the button disabled with the reason (edit the declaration
 and restart), as `RemoveMarketplace` does.
 
+### D7. Machine reach: under `marketplaces:register`
+
+Added during implementation, when `MachineApiRegistryTests` required the route
+to be classified. A credential that may register may also correct a URL before
+the first snapshot: both choose an upstream, neither publishes nor withdraws
+anything, and the estate already makes the same change with no person in the
+loop. Removal stays unreachable by any scope.
+
 ## Risks / Trade-offs
 
 - [An edit lands between an ingest's fetch and its insert] → D3; the ingest

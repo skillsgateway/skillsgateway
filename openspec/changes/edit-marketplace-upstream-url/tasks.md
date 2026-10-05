@@ -77,7 +77,7 @@ Failure model (each maps to a test or a mutant in `evidence.md`):
 
 ## 6. Docs
 
-- [ ] 6.1 `docs/manual/`: correcting a URL beside removal (how-to and API
+- [x] 6.1 `docs/manual/`: correcting a URL beside removal (how-to and API
   reference), the estate reconciliation rule, the portal settings page, and
   the webhook-mode note (move the upstream hook yourself).
 
