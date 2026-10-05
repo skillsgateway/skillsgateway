@@ -3650,8 +3650,8 @@ cases:
     description: |
       GIVEN a snapshot whose vetting run has a group of identical content at several locations and a group at one location
       WHEN the reviewer opens the vetting surface and waives the first group
-      THEN each group is one row listing its locations, each blocking group's action says what it waives, the waiver form defaults to the group, offers no path for a group of several locations, and records a waiver naming the group's blob and line
-    revision: "0.1.0"
+      THEN each group is one row listing its locations, each blocking group's action names its rule and, for several locations, how many, the form states for each scope how many findings of the snapshot it covers, the waiver form defaults to the group, offers no path for a group of several locations, and records a waiver naming the group's blob and line
+    revision: "0.5.0"
 
   - id: SVC_GW_APPROVAL_0022
     requirement_ids: ["GW_APPROVAL_0022"]
@@ -3882,3 +3882,13 @@ cases:
       WHEN the chain runs
       THEN each positive raises one medium hook-config-unreadable finding naming the file and the key, and the negatives raise none
     revision: "0.4.0"
+
+  - id: SVC_GW_VETTING_0061
+    requirement_ids: ["GW_VETTING_0061"]
+    title: Blocking groups of two rules are waived in one action, each as its own group waiver
+    verification: automated-test
+    description: |
+      GIVEN a blocked snapshot with blocking finding groups of two rules in two vetters
+      WHEN the reviewer selects them, writes one justification and one expiry, and records the waivers, and the server refuses one of them
+      THEN the selection states its rules and how many findings it covers, the action stays disabled until the justification and expiry are valid, one waiver limited to each selected group is posted with that justification and expiry, and the result names the refused group, which stays selected
+    revision: "0.5.0"
