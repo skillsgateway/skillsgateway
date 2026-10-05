@@ -16,3 +16,8 @@ where GW_RETENTION_0009 deliberately trims nothing because no sink consumes it.
 #### Scenario: SVC_GW_OBSERVABILITY_0003
 The system SHALL pass SVC_GW_OBSERVABILITY_0003.
 
+### Requirement: GW_OBSERVABILITY_0005
+The system SHALL implement GW_OBSERVABILITY_0005.
+
+#### Scenario: SVC_GW_OBSERVABILITY_0005
+The system SHALL pass SVC_GW_OBSERVABILITY_0005.

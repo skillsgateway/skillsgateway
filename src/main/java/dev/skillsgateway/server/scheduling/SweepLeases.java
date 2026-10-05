@@ -2,6 +2,8 @@ package dev.skillsgateway.server.scheduling;
 
 import dev.skillsgateway.server.persistence.SweepLeaseRepository;
 import io.github.reqstool.annotations.Requirements;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
@@ -38,8 +40,11 @@ public class SweepLeases {
     private final SweepLeaseRepository repository;
     private final String holder;
 
-    public SweepLeases(SweepLeaseRepository repository) {
+    private final MeterRegistry meters;
+
+    public SweepLeases(SweepLeaseRepository repository, MeterRegistry meters) {
         this.repository = repository;
+        this.meters = meters;
         this.holder = localHolder();
     }
 
@@ -55,15 +60,31 @@ public class SweepLeases {
      * @param lease how long the sweep's turn lasts; the sweep's own interval, so a lease cannot
      *     outlive the gap it protects
      */
-    @Requirements({"GW_FACADE_0030"})
+    @Requirements({"GW_FACADE_0030", "GW_OBSERVABILITY_0005"})
     public boolean runIfLeader(String name, Duration lease, Runnable body) {
         Instant now = Instant.now();
-        if (!repository.claim(name, holder, now.plus(lease), now)) {
+        Instant until = now.plus(lease);
+        boolean taken = repository.claim(name, holder, until, now);
+        Counter takenTurns = turns(name, "taken");
+        Counter skippedTurns = turns(name, "skipped");
+        if (!taken) {
+            skippedTurns.increment();
             log.debug("sweep {} skipped: another replica holds the lease", name);
             return false;
         }
+        takenTurns.increment();
+        log.debug("sweep {} taken by {} until {}", name, holder, until);
         body.run();
         return true;
+    }
+
+    /** Both outcomes are registered on every turn, so a replica that never loses still reports zero. */
+    private Counter turns(String pass, String outcome) {
+        return Counter.builder("skills_gateway.sweep.lease")
+                .description("Turns of a scheduled pass this replica took, or skipped because another held it")
+                .tag("pass", pass)
+                .tag("outcome", outcome)
+                .register(meters);
     }
 
     /**

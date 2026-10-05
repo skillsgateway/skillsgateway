@@ -68,7 +68,7 @@ export const Refused: Story = {
     await userEvent.click(canvas.getByRole("button", { name: /Waive name collision/ }));
     const scope = canvas.getByLabelText("Scope");
     await expect(within(scope).getAllByRole("option")).toHaveLength(1);
-    await expect(canvas.getByRole("button", { name: /Record waiver for plugin-name-collision/ })).toBeDisabled();
+    await expect(canvas.getByRole("button", { name: /Record waiver for 1 finding of plugin-name-collision/ })).toBeDisabled();
   },
 };
 

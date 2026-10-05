@@ -78,6 +78,9 @@ public interface ObjectStoreClient {
      * is refused rather than accepted. A store that fails this cannot be supported by weakening
      * the model — last-writer-wins on the manifest is exactly the lost update the design exists to
      * prevent — so the only honest response is to refuse to start.
+     *
+     * @param keyPrefix the gateway's own prefix, empty or ending in {@code /}; the probe writes
+     *     nothing outside it, so a grant scoped to the prefix is enough to start
      */
-    void probe() throws IOException;
+    void probe(String keyPrefix) throws IOException;
 }

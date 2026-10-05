@@ -18,14 +18,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.TestPropertySource;
 
 /**
  * The facade's second credential kind, attacked (GW_AUTH_0040, GW_AUTH_0041, GW_AUTH_0042).
  *
- * <p>Its own Spring context: whether the facade accepts identity-provider bearer tokens is a
+ * <p>Its own Spring context ({@link AbstractIdentityProviderTest}): whether the facade accepts identity-provider bearer tokens is a
  * deployment decision with no per-request form, so the only way to exercise both states is to run
  * two gateways. {@link IdpBearerDisabledTests} is the other one, and it runs in the shared default
  * context precisely because the default is "off".
@@ -36,14 +33,7 @@ import org.springframework.test.context.TestPropertySource;
  * clone}, because "the protocol works end to end with this header" is not something an HTTP
  * assertion can stand in for.
  */
-@TestPropertySource(properties = "skills-gateway.facade.idp-bearer.enabled=true")
-class IdpBearerFacadeTests extends AbstractGatewayTest {
-
-    @DynamicPropertySource
-    static void identityProvider(DynamicPropertyRegistry registry) {
-        registry.add("spring.security.oauth2.client.provider.idp.jwk-set-uri", IdpBearerFixture::jwkSetUri);
-        registry.add("skills-gateway.oidc.issuer", () -> IdpBearerFixture.ISSUER);
-    }
+class IdpBearerFacadeTests extends AbstractIdentityProviderTest {
 
     private static final HttpClient HTTP =
             HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();

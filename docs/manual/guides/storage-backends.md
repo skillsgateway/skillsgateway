@@ -123,7 +123,9 @@ storage:
     the gateway a narrow policy — object read, write and delete under its own
     prefix, no bucket administration — and inherit the encryption and
     access-logging expectations of the volume it replaces. The gateway cannot
-    enforce this for you.
+    enforce this for you. That grant is enough to start: the startup probe
+    writes, reads and deletes its test object at `<prefix>/_probe/`, never at
+    the bucket root.
 
 ## What it costs
 
@@ -167,7 +169,22 @@ unlock to leak and no stale lock to clear by hand.
 **No configuration was added, and none is needed.** A lease lasts its pass's own
 interval, so the interval you already set is the lease. The row also records a
 `holder` — the pod hostname, which under Kubernetes is the pod name — so *which*
-replica ran a pass stays answerable afterwards.
+replica ran a pass stays answerable afterwards. Where the database is private
+to the gateway, each replica's `skills_gateway.sweep.lease` counter answers the
+same question from its metrics, by pass and by `taken` or `skipped`
+(GW_OBSERVABILITY_0005 — Each instance reports the background-pass turns it
+took and skipped; see [Observability](../reference/observability.md#background-passes)).
+
+### Sessions need no affinity
+
+Browser sign-in state lives in the gateway's database too: the half-finished
+sign-in while the identity provider has the browser, and the session once it
+returns. The provider's redirect back can land on a different replica from the
+one that started the sign-in, and every later request can go to any replica.
+A round-robin load balancer without session affinity is therefore fine
+(GW_AUTH_0053 — A browser session does not depend on which instance answers).
+When a sign-in still fails, the page and the log say why; see
+[Identity providers](identity-providers.md#when-sign-in-fails).
 
 ### What each pass leases
 

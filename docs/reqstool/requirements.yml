@@ -2684,12 +2684,12 @@ requirements:
   - id: GW_VETTING_0044
     title: The portal presents each finding group once with a waive action that says what it covers
     significance: shall
-    description: "The system shall present, in the portal vetting surface, each finding group once with every location it stands for; shall offer for a blocking group a waive action whose label states what it waives; and shall default a waiver created from a group to that group alone, offering the rule across the snapshot and, for a group of a single location, a path in the marketplace as wider choices that are described as such."
+    description: "The system shall present, in the portal vetting surface, each finding group once with every location it stands for; shall offer for a blocking group a waive action whose visible label names the rule it waives and, for a group of several locations, how many; shall state in the waiver form, before it is submitted, how many findings of the snapshot the chosen scope covers; and shall default a waiver created from a group to that group alone, offering the rule across the snapshot and, for a group of a single location, a path in the marketplace as wider choices that are described as such."
     references:
       requirement_ids: ["GW_VETTING_0010"]
-    rationale: "A label reading 'Waive…' looks truncated and says nothing about what will be accepted, and a scope named 'This snapshot only' concealed that it accepted the rule everywhere in the snapshot. The narrowest acceptance is the one a reviewer should reach for first, so it is the default, and every wider one says how wide it is."
+    rationale: "A label reading 'Waive…' looks truncated and says nothing about what will be accepted, a label without the rule leaves the reviewer to work out which acceptance it is, and a scope with no count leaves the reach unknown until after it is recorded; and a scope named 'This snapshot only' concealed that it accepted the rule everywhere in the snapshot. The narrowest acceptance is the one a reviewer should reach for first, so it is the default, and every wider one says how wide it is."
     categories: ["security", "interaction-capability"]
-    revision: 0.1.0
+    revision: 0.5.0
 
   - id: GW_APPROVAL_0022
     title: The vetting refusal names each blocking finding group at its path:line locations
@@ -2939,4 +2939,40 @@ requirements:
       requirement_ids: ["GW_INGEST_0066"]
     rationale: "An instance that stops mid-ingest cannot clear its own progress, and a running ingest refuses a second one, so without a heartbeat one crash would show a marketplace as ingesting for ever and refuse every later ingest of it."
     categories: ["reliability"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0053
+    title: A browser session does not depend on which instance answers
+    significance: shall
+    description: "The system shall keep the state of a browser sign-in in progress, and of the session it establishes, where every instance of the gateway sharing its database can read it, so that a sign-in started on one instance completes on another and every request of an established session is authenticated whichever instance answers it; and shall treat a stored session it can no longer read as no session, so that its holder signs in again rather than receiving an error."
+    rationale: "A load balancer without affinity sends the identity provider's redirect back to whichever instance it picks, and an authorization request held in another instance's memory is a sign-in that fails about half the time and a session that is lost on the next request. Keeping the state in the database the instances already share removes the dependency on affinity rather than documenting it. A stored session can become unreadable when the gateway is upgraded under it; signing in again is the cost of that, an error page for every user until their session expires is not."
+    categories: ["reliability", "security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0054
+    title: A failed browser sign-in is logged and names its reason
+    significance: shall
+    description: "The system shall record every failed browser sign-in in its log at warning level with the identity-provider registration and the error code, and shall answer it with a page that states whether the sign-in was lost and should be started again, was declined by the identity provider, or returned an answer the gateway could not accept, that shows the error code, and that offers to start the sign-in again."
+    rationale: "A sign-in that fails silently and reads as a wrong password sends an operator looking at credentials when the cause is a lost handshake, a provider-side refusal or a token the gateway rejected, and those three have different owners. The error code is what the identity provider's own logs and documentation are indexed by, and the log line is what makes a failure diagnosable without reasoning backwards from the deployment's shape."
+    categories: ["interaction-capability", "maintainability", "security"]
+    revision: 0.5.0
+
+  - id: GW_OBSERVABILITY_0005
+    title: Each instance reports the background-pass turns it took and skipped
+    significance: shall
+    description: "The system shall record, through its metrics registry and on each instance separately, every turn of a scheduled background pass that instance took and every turn it skipped because another instance held it, identified by the pass."
+    references:
+      requirement_ids: ["GW_FACADE_0030"]
+    rationale: "That each pass runs on one instance at a time is the property an operator most wants to confirm after scaling out, and recording the holder in the database answers it only for whoever can query that database. A per-instance count of turns taken and skipped answers it from the metrics an operator already scrapes: across the instances, the taken counts of one pass sum to one per interval."
+    categories: ["maintainability", "reliability"]
+    revision: 0.5.0
+
+  - id: GW_VETTING_0061
+    title: Several blocking finding groups are waived in one action
+    significance: shall
+    description: "The system shall let a reviewer, in the portal vetting surface, select several blocking finding groups of one snapshot across rules and vetters and waive them in one action with one justification and one expiry; shall state, before submitting, which rules are selected and how many findings the waivers will cover; shall record each selected group as a waiver limited to that group under the same mandatory justification and expiry bound as a single waiver; and shall report which groups were recorded and which were refused."
+    references:
+      requirement_ids: ["GW_VETTING_0010", "GW_VETTING_0042"]
+    rationale: "A reviewer clearing a snapshot with findings from several rules repeated the same form, justification and expiry per rule. Selecting groups keeps each acceptance as narrow as a single group waiver while writing the reason once; a wider bulk scope would accept content nobody selected. Each waiver stands on its own, so a refusal of one is reported rather than undoing the others."
+    categories: ["security", "interaction-capability"]
     revision: 0.5.0

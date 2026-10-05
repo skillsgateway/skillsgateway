@@ -91,7 +91,7 @@ class SessionCookieTests {
 
         assertThat(cookies)
                 .as("Lax, not Strict: Strict withholds this cookie on the redirect back from the provider")
-                .filteredOn(cookie -> cookie.startsWith("JSESSIONID="))
+                .filteredOn(cookie -> cookie.startsWith("SESSION="))
                 .singleElement()
                 .asString()
                 .contains("SameSite=Lax");

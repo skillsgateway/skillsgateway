@@ -63,6 +63,21 @@ reference transition and belongs on an alert. `wal.depth` and `packs.live`
 climbing without falling back is compaction falling behind, which shows up as a
 slow restore long before it shows up as anything else.
 
+### Background passes
+
+Recorded on every gateway, per replica. Each scheduled pass takes a lease before
+it runs (GW_FACADE_0030 — A scheduled background pass runs on one replica at a
+time), and this counts what each replica got.
+
+| Metric | Type | Tags | Recorded around |
+| --- | --- | --- | --- |
+| `skills_gateway.sweep.lease` | counter | `pass` (the lease key), `outcome=taken\|skipped` | Every turn of a pass on this replica: `taken` when it held the lease and ran the pass, `skipped` when another replica held it. Both outcomes exist from a pass's first turn, so a replica that never loses still reports `skipped` as zero. |
+
+This is how to confirm, after scaling out, that each pass runs once per interval
+estate-wide rather than once per replica: summed across replicas, the rate of
+`outcome="taken"` for a pass is one per interval. The lease keys are listed in
+[What each pass leases](../guides/storage-backends.md#what-each-pass-leases).
+
 ### The read-only forge mirror
 
 Recorded on every gateway. A deployment with no mirror configured publishes them
@@ -82,8 +97,9 @@ the mirror on is in
 On a scaled-out deployment these gauges are written by whichever replica took
 the reconciliation lease for that tick, and each replica reports what it last
 wrote itself — so scrape every replica and read the freshest, rather than
-picking one and trusting it. Which replica ran a given pass is answerable from
-the `holder` column on its lease row in the database; no metric reports it. See
+picking one and trusting it. Which replica ran a given pass is reported by
+`skills_gateway.sweep.lease{pass="mirror-drift", outcome="taken"}` on that
+replica (see [Background passes](#background-passes)). See
 [Running more than one replica](../guides/storage-backends.md#running-more-than-one-replica).
 
 Read `stale_refs` and `seconds_since_success` together, always. The counts are
