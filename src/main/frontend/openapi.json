@@ -586,6 +586,17 @@
         },
         "type": "object"
       },
+      "ChangeMarketplaceUrlRequest": {
+        "description": "Correct an upstream marketplace's URL",
+        "properties": {
+          "url": {
+            "description": "The corrected upstream clone URL; scheme must be on the configured allowlist",
+            "example": "https://github.com/acme/skills-marketplace.git",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ChangeSyncModeRequest": {
         "description": "Sync mode change request",
         "properties": {
@@ -5005,6 +5016,97 @@
         "summary": "Change a marketplace's sync mode",
         "tags": [
           "Sync"
+        ]
+      }
+    },
+    "/api/v1/marketplaces/{name}/url": {
+      "put": {
+        "description": "Replaces an upstream marketplace's clone URL while it has no snapshot in any state. The new URL faces the same checks as at registration, and the upstream is read before anything changes. The caller becomes the marketplace's registrant for the four-eyes rule. Once a snapshot exists the URL is its source of record: remove the marketplace and register it again instead. An unchanged URL is answered as it stands. Admin-only.",
+        "operationId": "changeMarketplaceUrl",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMarketplaceUrlRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisteredMarketplace"
+                }
+              }
+            },
+            "description": "URL changed, or already the one given"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Disallowed URL scheme, a credential in the URL, or a hosted marketplace"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "No registered marketplace has that name"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "The marketplace has a snapshot; its URL can no longer change"
+          },
+          "502": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "The upstream could not be read or has no default branch; nothing was changed. The problem carries reason, rootCause and nextStep (GW_INGEST_0040)"
+          }
+        },
+        "summary": "Correct a marketplace's upstream URL",
+        "tags": [
+          "Marketplaces"
         ]
       }
     },

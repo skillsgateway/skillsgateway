@@ -32,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MarketplaceVettingChain } from "@/components/marketplace-vetting-chain";
+import { EditMarketplaceUrl } from "@/components/edit-marketplace-url";
 import { RemoveMarketplace } from "@/components/remove-marketplace";
 import { SetupWizard } from "@/components/setup-wizard";
 import { SnapshotCard, SnapshotLine } from "@/components/snapshot-card";
@@ -353,12 +354,12 @@ export function MarketplaceActivityPage() {
 }
 
 /**
- * Settings: what was registered, and — for an administrator only — the vetting chain and
- * removal. Neither is shown to marketplace-scoped approvers, and the server refuses both
- * independently.
+ * Settings: what was registered, and — for an administrator only — the URL correction, the
+ * vetting chain and removal. None is shown to marketplace-scoped approvers, and the server refuses
+ * each independently.
  */
 export function MarketplaceSettingsPage() {
-  const { marketplace } = useMarketplaceContext();
+  const { marketplace, snapshots } = useMarketplaceContext();
   const isAdmin = useIsAdmin();
   return (
     <div className="space-y-6">
@@ -395,6 +396,15 @@ export function MarketplaceSettingsPage() {
             <dt className="font-medium">Registered by</dt>
             <dd>{marketplace.registeredBy ?? "—"}</dd>
           </dl>
+          {isAdmin && marketplace.origin !== "hosted" && marketplace.url ? (
+            <div className="mt-4">
+              <EditMarketplaceUrl
+                name={marketplace.name ?? ""}
+                url={marketplace.url}
+                snapshotCount={snapshots.length}
+              />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
       {isAdmin ? <MarketplaceVettingChain marketplace={marketplace.name ?? ""} /> : null}

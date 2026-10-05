@@ -78,6 +78,19 @@ export function useRegisterMarketplace() {
   });
 }
 
+/** Corrects an upstream marketplace's URL before its first snapshot; the answer carries any warnings. */
+export function useChangeMarketplaceUrl() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ name, url }: { name: string; url: string }) =>
+      api<RegisteredMarketplace>(`/api/v1/marketplaces/${encodeURIComponent(name)}/url`, {
+        method: "PUT",
+        body: JSON.stringify({ url }),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketplaces"] }),
+  });
+}
+
 export type MarketplaceRemoval = components["schemas"]["Removal"];
 
 /**

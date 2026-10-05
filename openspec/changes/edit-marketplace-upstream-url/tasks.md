@@ -63,13 +63,13 @@ Failure model (each maps to a test or a mutant in `evidence.md`):
 
 ## 5. Portal (SVC_GW_INGEST_0067)
 
-- [ ] 5.1 Regenerate `openapi.json` and `types.gen.ts`; confirm the diff is
+- [x] 5.1 Regenerate `openapi.json` and `types.gen.ts`; confirm the diff is
   additive.
-- [ ] 5.2 `components/edit-marketplace-url.tsx` (`@Requirements
+- [x] 5.2 `components/edit-marketplace-url.tsx` (`@Requirements
   GW_INGEST_0067`) in the Settings › Upstream card; `useChangeMarketplaceUrl`
   in `api/queries.ts`; a story per state (editable, refused, has snapshot,
   declared).
-- [ ] 5.3 Vitest unit tests and a Playwright e2e
+- [x] 5.3 Vitest unit tests and a Playwright e2e
   `marketplace_url_is_corrected_from_settings` (`@SVCs SVC_GW_INGEST_0067`).
   Watch fail, then green.
 - [ ] 5.4 `/impeccable audit` on the settings page; fix findings within
