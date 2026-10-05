@@ -477,9 +477,9 @@ lists every uncovered group, as *{rule} at {path:line}, …*, with the first
 three locations spelled out and the rest counted.
 
 Each blocking group carries a button that opens an inline form beside it:
-**Waive finding** (accessible name *Waive finding {rule} at {path:line}*) for a
-single location, or **Waive all N locations** (*Waive all N locations of
-{rule}*) for a group.
+**Waive {rule}…** (accessible name *Waive {rule} at {path:line}*) for a single
+location, or **Waive {rule} at N locations…** (*Waive {rule} at N locations*)
+for a group.
 
 | Control | Notes |
 | --- | --- |
@@ -487,15 +487,36 @@ single location, or **Waive all N locations** (*Waive all N locations of
 | **Expires on** | date input, defaulting to 30 days out; must be in the future — the waiver lapses at the end of the chosen day |
 | **Justification** | required; whitespace does not count |
 
-*Record waiver for {rule}* stays disabled until the justification is non-blank
-**and** the expiry is still in the future, which is exactly what the server
-requires.
+Under the scope, *This waiver covers N findings in this snapshot* counts what
+the chosen scope matches in this run: the group's locations, every finding of
+the rule, or every finding of the rule under the path. A path scope adds *and
+any under {path} in later snapshots*. The submit button carries the same count:
+**Record waiver for N findings** (accessible name *Record waiver for N findings
+of {rule}*). It stays disabled until the justification is non-blank **and**
+the expiry is still in the future, which is exactly what the server requires.
 
-*Record waiver for {rule}* calls `POST /api/v1/snapshots/{id}/waivers` and toasts
+It calls `POST /api/v1/snapshots/{id}/waivers` and toasts
 *Waiver recorded for {rule}*. The group is then struck through and badged
 **waived by {approver} until {date}** (or **k of N waived** when a wider waiver
 covers only some of its locations), and the outcome badge becomes
 **vetting clear with waivers** once nothing is left uncovered.
+
+#### Waiving several groups at once
+
+A blocking group tied to content also carries a checkbox (*Select {rule} at
+{path:line}*, or *Select {rule} at N locations*). Once one is checked, a
+*Selected findings* bar above the verdicts reads *G groups, N findings
+selected*, lists the selected rules, and offers **Waive selected…** and
+**Clear selection**. A group that a refresh shows as waived drops out of the
+selection.
+
+**Waive selected…** opens one form with **Expires on** and **Justification**,
+under the same rules as the single form. **Record G waivers for N findings**
+posts one group waiver per selected group, one at a time, each scoped to that
+group in this snapshot and never wider. If every waiver is recorded, it toasts
+*Recorded G waivers* and closes. If any is refused, an alert reads *Recorded k
+of G waivers. Refused: {rule} at {location} — {reason}*, and the refused groups
+stay selected.
 
 Below the verdicts, **Accepted risks** lists every waiver whose rule appears in
 this run — active, expired and revoked alike — with its rule, scope,

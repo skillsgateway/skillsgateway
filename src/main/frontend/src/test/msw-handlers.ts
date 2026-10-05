@@ -518,6 +518,19 @@ export const vendoredVetting: Schemas["VettingView"] = {
 };
 
 /**
+ * Two vetters objecting under two rules: the leaked key and both concealment groups block, so a
+ * reviewer clearing the snapshot waives three groups of two rules (GW_VETTING_0061).
+ */
+export const twoRuleVetting: Schemas["VettingView"] = {
+  ...vendoredVetting,
+  uncovered: [...(blockedVetting.uncovered ?? []), ...(vendoredVetting.uncovered ?? [])],
+  run: {
+    ...vendoredVetting.run,
+    verdicts: [blockedVetting.run!.verdicts![0]!, vendoredVetting.run!.verdicts![1]!],
+  },
+};
+
+/**
  * The same evidence, produced by a chain this marketplace no longer runs (GW_VETTING_0038): a
  * vetter was switched off after the run, so the run's description and the one in force differ.
  */
