@@ -3650,8 +3650,8 @@ cases:
     description: |
       GIVEN a snapshot whose vetting run has a group of identical content at several locations and a group at one location
       WHEN the reviewer opens the vetting surface and waives the first group
-      THEN each group is one row listing its locations, each blocking group's action says what it waives, the waiver form defaults to the group, offers no path for a group of several locations, and records a waiver naming the group's blob and line
-    revision: "0.1.0"
+      THEN each group is one row listing its locations, each blocking group's action names its rule and, for several locations, how many, the form states for each scope how many findings of the snapshot it covers, the waiver form defaults to the group, offers no path for a group of several locations, and records a waiver naming the group's blob and line
+    revision: "0.5.0"
 
   - id: SVC_GW_APPROVAL_0022
     requirement_ids: ["GW_APPROVAL_0022"]
@@ -3891,7 +3891,7 @@ cases:
       GIVEN two gateway instances sharing one database and an identity provider that answers the token request
       WHEN a browser starts the sign-in on the first instance, the provider's redirect is delivered to the second, and the established session is then presented to each instance; and separately a session whose stored state cannot be read is presented
       THEN the sign-in completes, the session is authenticated on both instances, and the unreadable session is answered as no session rather than as an error
-    revision: "0.4.0"
+    revision: "0.5.0"
 
   - id: SVC_GW_AUTH_0054
     requirement_ids: ["GW_AUTH_0054"]
@@ -3901,7 +3901,7 @@ cases:
       GIVEN a gateway with a configured identity provider
       WHEN a sign-in callback arrives with no sign-in in progress, with an error the provider returned, and with a token response the gateway cannot accept
       THEN each is logged at warning level with the registration and the error code, and answered with a page naming its reason class, its code and a way to start again
-    revision: "0.4.0"
+    revision: "0.5.0"
 
   - id: SVC_GW_OBSERVABILITY_0005
     requirement_ids: ["GW_OBSERVABILITY_0005"]
@@ -3911,4 +3911,14 @@ cases:
       GIVEN a metrics registry and a background pass whose turn is free
       WHEN one holder takes the turn and a second holder then asks for it within its interval
       THEN the first instance counts one taken turn for that pass and the second counts one skipped turn for it
-    revision: "0.4.0"
+    revision: "0.5.0"
+
+  - id: SVC_GW_VETTING_0061
+    requirement_ids: ["GW_VETTING_0061"]
+    title: Blocking groups of two rules are waived in one action, each as its own group waiver
+    verification: automated-test
+    description: |
+      GIVEN a blocked snapshot with blocking finding groups of two rules in two vetters
+      WHEN the reviewer selects them, writes one justification and one expiry, and records the waivers, and the server refuses one of them
+      THEN the selection states its rules and how many findings it covers, the action stays disabled until the justification and expiry are valid, one waiver limited to each selected group is posted with that justification and expiry, and the result names the refused group, which stays selected
+    revision: "0.5.0"
