@@ -329,7 +329,7 @@ public class SecurityConfig {
                         .permitAll()
                         .anyRequest()
                         .authenticated())
-                .oauth2Login(Customizer.withDefaults())
+                .oauth2Login(login -> login.failureHandler(new SignInFailureHandler()))
                 .csrf(CsrfConfigurer::spa)
                 .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
                         new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),

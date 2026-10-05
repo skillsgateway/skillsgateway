@@ -2921,6 +2921,32 @@ requirements:
     categories: ["security"]
     revision: 0.4.0
 
+  - id: GW_AUTH_0053
+    title: A browser session does not depend on which instance answers
+    significance: shall
+    description: "The system shall keep the state of a browser sign-in in progress, and of the session it establishes, where every instance of the gateway sharing its database can read it, so that a sign-in started on one instance completes on another and every request of an established session is authenticated whichever instance answers it; and shall treat a stored session it can no longer read as no session, so that its holder signs in again rather than receiving an error."
+    rationale: "A load balancer without affinity sends the identity provider's redirect back to whichever instance it picks, and an authorization request held in another instance's memory is a sign-in that fails about half the time and a session that is lost on the next request. Keeping the state in the database the instances already share removes the dependency on affinity rather than documenting it. A stored session can become unreadable when the gateway is upgraded under it; signing in again is the cost of that, an error page for every user until their session expires is not."
+    categories: ["reliability", "security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0054
+    title: A failed browser sign-in is logged and names its reason
+    significance: shall
+    description: "The system shall record every failed browser sign-in in its log at warning level with the identity-provider registration and the error code, and shall answer it with a page that states whether the sign-in was lost and should be started again, was declined by the identity provider, or returned an answer the gateway could not accept, that shows the error code, and that offers to start the sign-in again."
+    rationale: "A sign-in that fails silently and reads as a wrong password sends an operator looking at credentials when the cause is a lost handshake, a provider-side refusal or a token the gateway rejected, and those three have different owners. The error code is what the identity provider's own logs and documentation are indexed by, and the log line is what makes a failure diagnosable without reasoning backwards from the deployment's shape."
+    categories: ["interaction-capability", "maintainability", "security"]
+    revision: 0.5.0
+
+  - id: GW_OBSERVABILITY_0005
+    title: Each instance reports the background-pass turns it took and skipped
+    significance: shall
+    description: "The system shall record, through its metrics registry and on each instance separately, every turn of a scheduled background pass that instance took and every turn it skipped because another instance held it, identified by the pass."
+    references:
+      requirement_ids: ["GW_FACADE_0030"]
+    rationale: "That each pass runs on one instance at a time is the property an operator most wants to confirm after scaling out, and recording the holder in the database answers it only for whoever can query that database. A per-instance count of turns taken and skipped answers it from the metrics an operator already scrapes: across the instances, the taken counts of one pass sum to one per interval."
+    categories: ["maintainability", "reliability"]
+    revision: 0.5.0
+
   - id: GW_VETTING_0061
     title: Several blocking finding groups are waived in one action
     significance: shall

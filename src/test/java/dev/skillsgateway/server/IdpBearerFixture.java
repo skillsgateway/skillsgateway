@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * A stand-in identity provider: a real RSA key pair, a real JWKS endpoint, and a token builder that
+ * A stand-in identity provider: a real RSA key pair, a real JWKS endpoint, a token endpoint, and a token builder that
  * can mint every token in this change's failure model.
  *
  * <p>Static and process-wide, because the key set's URL has to be known before the Spring context
@@ -54,6 +54,16 @@ final class IdpBearerFixture {
     static String jwkSetUri() {
         return "http://" + SERVER.getAddress().getAddress().getHostAddress() + ":"
                 + SERVER.getAddress().getPort() + "/jwks";
+    }
+
+    /**
+     * The token endpoint. It answers any authorization code with an ID token for {@code user}, and
+     * takes the code to be the nonce the sign-in's authorization request carried, so a test can
+     * complete a sign-in without the endpoint holding any state of its own.
+     */
+    static String tokenUri() {
+        return "http://" + SERVER.getAddress().getAddress().getHostAddress() + ":"
+                + SERVER.getAddress().getPort() + "/token";
     }
 
     /** A token that should be accepted: right issuer, right audience, valid now, signed by the published key. */
@@ -120,6 +130,23 @@ final class IdpBearerFixture {
                 exchange.sendResponseHeaders(200, body.length);
                 try (OutputStream out = exchange.getResponseBody()) {
                     out.write(body);
+                }
+            });
+            server.createContext("/token", exchange -> {
+                String form = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                String code = java.util.Arrays.stream(form.split("&"))
+                        .filter(pair -> pair.startsWith("code="))
+                        .map(pair -> java.net.URLDecoder.decode(pair.substring(5), StandardCharsets.UTF_8))
+                        .findFirst()
+                        .orElse("");
+                String idToken = token("user", claims -> claims.claim("nonce", code));
+                byte[] answer = ("{\"access_token\":\"opaque\",\"token_type\":\"Bearer\",\"expires_in\":300,"
+                                + "\"scope\":\"openid\",\"id_token\":\"" + idToken + "\"}")
+                        .getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, answer.length);
+                try (OutputStream out = exchange.getResponseBody()) {
+                    out.write(answer);
                 }
             });
             server.setExecutor(java.util.concurrent.Executors.newCachedThreadPool());

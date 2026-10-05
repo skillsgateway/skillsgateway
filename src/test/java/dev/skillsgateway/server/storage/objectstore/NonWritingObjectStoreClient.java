@@ -17,7 +17,7 @@ import java.util.Optional;
 final class NonWritingObjectStoreClient implements ObjectStoreClient {
 
     @Override
-    public void probe() {
+    public void probe(String keyPrefix) {
         // Selection tests are about which backend was chosen, not about the store behind it.
     }
 
