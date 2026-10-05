@@ -2741,9 +2741,10 @@ real credential is how it reaches every developer who installs the skill.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Portal</label><label for="__tabbed_1_2">API</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<p>In the approve dialog, each blocking group carries a button: <strong>Waive
-finding</strong> for a single location, or <strong>Waive all N locations</strong> for a group.
-The button opens a small form beside the group, with these controls:</p>
+<p>In the approve dialog, each blocking group carries a button that names its
+rule: <strong>Waive {rule}…</strong> for a single location, or <strong>Waive {rule} at N
+locations…</strong> for a group. The button opens a small form beside the group,
+with these controls:</p>
 <ul>
 <li><strong>Scope</strong> — one of the following:<ul>
 <li><em>These N identical copies, in this snapshot</em> (or <em>This finding, in
@@ -2757,9 +2758,20 @@ The button opens a small form beside the group, with these controls:</p>
 <li><strong>Expires on</strong> — defaults to 30 days out.</li>
 <li><strong>Justification</strong> — required; the confirm button stays disabled without it.</li>
 </ul>
-<p><strong>Record waiver</strong> applies it immediately. The group is struck through and
-badged with who accepted it and until when. The outcome badge changes to
-<strong>vetting clear with waivers</strong> once nothing is left uncovered.</p>
+<p>Under the scope, the form says how many findings of this snapshot the
+chosen scope covers, and the button carries the same count: <strong>Record
+waiver for N findings</strong>. It applies the waiver immediately. The group is
+struck through and badged with who accepted it and until when. The outcome
+badge changes to <strong>vetting clear with waivers</strong> once nothing is left
+uncovered.</p>
+<p><strong>Several groups at once.</strong> Each blocking group tied to content also has a
+checkbox. Select groups across rules and vetters, and a bar above the
+verdicts shows how many groups and findings are selected and which rules
+they belong to. <strong>Waive selected…</strong> opens one form with one expiry and one
+justification. <strong>Record N waivers for M findings</strong> records one group
+waiver per selected group, each exactly as narrow as waiving that group on
+its own. Each waiver stands alone. If the gateway refuses one, the bar
+names it, that group stays selected, and the others stay recorded.</p>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/snapshots/1/waivers<span class="w"> </span><span class="se">\</span>

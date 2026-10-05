@@ -2292,6 +2292,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#waiving-several-groups-at-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waiving several groups at once
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3208,6 +3219,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#waiving-several-groups-at-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waiving several groups at once
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4101,9 +4123,9 @@ rest. Above the verdicts, <em>Approval is blocked until each of these is waived<
 lists every uncovered group, as <em>{rule} at {path:line}, …</em>, with the first
 three locations spelled out and the rest counted.</p>
 <p>Each blocking group carries a button that opens an inline form beside it:
-<strong>Waive finding</strong> (accessible name <em>Waive finding {rule} at {path:line}</em>) for a
-single location, or <strong>Waive all N locations</strong> (<em>Waive all N locations of
-{rule}</em>) for a group.</p>
+<strong>Waive {rule}…</strong> (accessible name <em>Waive {rule} at {path:line}</em>) for a single
+location, or <strong>Waive {rule} at N locations…</strong> (<em>Waive {rule} at N locations</em>)
+for a group.</p>
 <table>
 <thead>
 <tr>
@@ -4126,14 +4148,32 @@ single location, or <strong>Waive all N locations</strong> (<em>Waive all N loca
 </tr>
 </tbody>
 </table>
-<p><em>Record waiver for {rule}</em> stays disabled until the justification is non-blank
-<strong>and</strong> the expiry is still in the future, which is exactly what the server
-requires.</p>
-<p><em>Record waiver for {rule}</em> calls <code>POST /api/v1/snapshots/{id}/waivers</code> and toasts
+<p>Under the scope, <em>This waiver covers N findings in this snapshot</em> counts what
+the chosen scope matches in this run: the group's locations, every finding of
+the rule, or every finding of the rule under the path. A path scope adds <em>and
+any under {path} in later snapshots</em>. The submit button carries the same count:
+<strong>Record waiver for N findings</strong> (accessible name <em>Record waiver for N findings
+of {rule}</em>). It stays disabled until the justification is non-blank <strong>and</strong>
+the expiry is still in the future, which is exactly what the server requires.</p>
+<p>It calls <code>POST /api/v1/snapshots/{id}/waivers</code> and toasts
 <em>Waiver recorded for {rule}</em>. The group is then struck through and badged
 <strong>waived by {approver} until {date}</strong> (or <strong>k of N waived</strong> when a wider waiver
 covers only some of its locations), and the outcome badge becomes
 <strong>vetting clear with waivers</strong> once nothing is left uncovered.</p>
+<h4 id="waiving-several-groups-at-once">Waiving several groups at once<a class="headerlink" href="#waiving-several-groups-at-once" title="Permanent link">&para;</a></h4>
+<p>A blocking group tied to content also carries a checkbox (<em>Select {rule} at
+{path:line}</em>, or <em>Select {rule} at N locations</em>). Once one is checked, a
+<em>Selected findings</em> bar above the verdicts reads <em>G groups, N findings
+selected</em>, lists the selected rules, and offers <strong>Waive selected…</strong> and
+<strong>Clear selection</strong>. A group that a refresh shows as waived drops out of the
+selection.</p>
+<p><strong>Waive selected…</strong> opens one form with <strong>Expires on</strong> and <strong>Justification</strong>,
+under the same rules as the single form. <strong>Record G waivers for N findings</strong>
+posts one group waiver per selected group, one at a time, each scoped to that
+group in this snapshot and never wider. If every waiver is recorded, it toasts
+<em>Recorded G waivers</em> and closes. If any is refused, an alert reads <em>Recorded k
+of G waivers. Refused: {rule} at {location} — {reason}</em>, and the refused groups
+stay selected.</p>
 <p>Below the verdicts, <strong>Accepted risks</strong> lists every waiver whose rule appears in
 this run — active, expired and revoked alike — with its rule, scope,
 justification, approver and expiry. An active one carries
