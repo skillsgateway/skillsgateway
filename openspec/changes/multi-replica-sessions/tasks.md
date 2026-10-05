@@ -40,12 +40,12 @@
 
 ## 5. Lease counter
 
-- [ ] 5.1 Test: a taken and a refused lease each increment `skills_gateway.sweep.lease` with their
+- [x] 5.1 Test: a taken and a refused lease each increment `skills_gateway.sweep.lease` with their
   pass and outcome. Watch it fail.
-- [ ] 5.2 Add `@SVCs({"SVC_GW_OBSERVABILITY_0005"})` to the test method from 5.1.
-- [ ] 5.3 Counter and DEBUG line in `SweepLeases.runIfLeader`; 5.1 passes.
-- [ ] 5.4 Add `GW_OBSERVABILITY_0005` to the `@Requirements` on `SweepLeases.runIfLeader`.
-- [ ] 5.5 Docs: observability reference metric row (drop "no metric reports it"), storage guide's
+- [x] 5.2 Add `@SVCs({"SVC_GW_OBSERVABILITY_0005"})` to the test method from 5.1.
+- [x] 5.3 Counter and DEBUG line in `SweepLeases.runIfLeader`; 5.1 passes.
+- [x] 5.4 Add `GW_OBSERVABILITY_0005` to the `@Requirements` on `SweepLeases.runIfLeader`.
+- [x] 5.5 Docs: observability reference metric row (drop "no metric reports it"), storage guide's
   lease section.
 
 ## 6. Gates, evidence, archive

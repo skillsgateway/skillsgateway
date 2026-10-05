@@ -169,7 +169,11 @@ unlock to leak and no stale lock to clear by hand.
 **No configuration was added, and none is needed.** A lease lasts its pass's own
 interval, so the interval you already set is the lease. The row also records a
 `holder` — the pod hostname, which under Kubernetes is the pod name — so *which*
-replica ran a pass stays answerable afterwards.
+replica ran a pass stays answerable afterwards. Where the database is private
+to the gateway, each replica's `skills_gateway.sweep.lease` counter answers the
+same question from its metrics, by pass and by `taken` or `skipped`
+(GW_OBSERVABILITY_0005 — Each instance reports the background-pass turns it
+took and skipped; see [Observability](../reference/observability.md#background-passes)).
 
 ### What each pass leases
 
