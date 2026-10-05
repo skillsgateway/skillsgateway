@@ -30,13 +30,13 @@
 
 ## 4. Failed sign-in
 
-- [ ] 4.1 Test: a callback with no sign-in in progress, a callback carrying `error=access_denied`,
+- [x] 4.1 Test: a callback with no sign-in in progress, a callback carrying `error=access_denied`,
   and a token endpoint failure each get a 401 page naming their class, their code and a start-again
   link, and log WARN with the registration id and the code. Watch it fail.
-- [ ] 4.2 Add `@SVCs({"SVC_GW_AUTH_0054"})` to the test methods from 4.1.
-- [ ] 4.3 The failure handler, wired into `oauth2Login`; 4.1 passes.
-- [ ] 4.4 Add `@Requirements({"GW_AUTH_0054"})` to the failure handler's entry method from 4.3.
-- [ ] 4.5 Docs: identity-providers guide, "When sign-in fails".
+- [x] 4.2 Add `@SVCs({"SVC_GW_AUTH_0054"})` to the test methods from 4.1.
+- [x] 4.3 The failure handler, wired into `oauth2Login`; 4.1 passes.
+- [x] 4.4 Add `@Requirements({"GW_AUTH_0054"})` to the failure handler's entry method from 4.3.
+- [x] 4.5 Docs: identity-providers guide, "When sign-in fails".
 
 ## 5. Lease counter
 
