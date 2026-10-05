@@ -62,14 +62,17 @@ class SignInFailureTests {
         SignIn signIn = start();
 
         HttpResponse<String> response = get(
-                CALLBACK + "?error=access_denied&error_description=no%0Aforged-line&state=" + signIn.state(),
+                CALLBACK + "?error=access_denied&error_description=no%0Aforged-line%E2%80%A8also-forged&state="
+                        + signIn.state(),
                 signIn.cookies());
 
         assertFailurePage(response, "access_denied", "declined");
         assertLogged(output, "access_denied");
         assertThat(output.getAll())
                 .as("the provider's description is logged on one line, so it cannot forge a second entry")
-                .doesNotContain("\nforged-line");
+                .doesNotContain("\nforged-line")
+                .as("nor with a Unicode line separator, which log viewers also break on")
+                .doesNotContain("\u2028also-forged");
     }
 
     @Test

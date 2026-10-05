@@ -127,7 +127,8 @@ final class SignInFailureHandler implements AuthenticationFailureHandler {
         if (text == null || text.isBlank()) {
             return "-";
         }
-        String flat = text.replaceAll("\\p{Cntrl}", " ").strip();
+        // Line breaks named explicitly, plus the Unicode separators log viewers also break on.
+        String flat = text.replaceAll("[\\r\\n\\p{Cntrl}\\u2028\\u2029]", " ").strip();
         return flat.length() > limit ? flat.substring(0, limit) + "…" : flat;
     }
 }
