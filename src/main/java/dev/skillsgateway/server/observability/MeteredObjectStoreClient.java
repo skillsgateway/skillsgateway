@@ -98,9 +98,9 @@ public final class MeteredObjectStoreClient implements ObjectStoreClient, AutoCl
     }
 
     @Override
-    public void probe() throws IOException {
+    public void probe(String keyPrefix) throws IOException {
         time("probe", () -> {
-            delegate.probe();
+            delegate.probe(keyPrefix);
             return null;
         });
     }

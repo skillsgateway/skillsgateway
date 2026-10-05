@@ -8,11 +8,11 @@
 
 ## 2. Probe under the prefix
 
-- [ ] 2.1 Test (S3 dev service) that the probe of a storage with a prefix writes only under it.
+- [x] 2.1 Test (S3 dev service) that the probe of a storage with a prefix writes only under it.
   Watch it fail.
-- [ ] 2.2 `ObjectStoreClient.probe(String keyPrefix)`, passed by `ObjectStoreGitStorage`; update the
+- [x] 2.2 `ObjectStoreClient.probe(String keyPrefix)`, passed by `ObjectStoreGitStorage`; update the
   test delegates; 2.1 passes.
-- [ ] 2.3 Storage guide IAM section: a grant scoped to the prefix is enough; `mkdocs build --strict`.
+- [x] 2.3 Storage guide IAM section: a grant scoped to the prefix is enough; `mkdocs build --strict`.
 
 ## 3. Sessions in the database
 

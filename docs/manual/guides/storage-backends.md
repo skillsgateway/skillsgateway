@@ -123,7 +123,9 @@ storage:
     the gateway a narrow policy — object read, write and delete under its own
     prefix, no bucket administration — and inherit the encryption and
     access-logging expectations of the volume it replaces. The gateway cannot
-    enforce this for you.
+    enforce this for you. That grant is enough to start: the startup probe
+    writes, reads and deletes its test object at `<prefix>/_probe/`, never at
+    the bucket root.
 
 ## What it costs
 

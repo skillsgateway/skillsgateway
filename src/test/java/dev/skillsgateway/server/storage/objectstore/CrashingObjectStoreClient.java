@@ -88,7 +88,7 @@ public final class CrashingObjectStoreClient implements ObjectStoreClient {
     }
 
     @Override
-    public void probe() throws IOException {
-        delegate.probe();
+    public void probe(String keyPrefix) throws IOException {
+        delegate.probe(keyPrefix);
     }
 }
