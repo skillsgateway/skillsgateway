@@ -72,7 +72,7 @@ Failure model (each maps to a test or a mutant in `evidence.md`):
 - [x] 5.3 Vitest unit tests and a Playwright e2e
   `marketplace_url_is_corrected_from_settings` (`@SVCs SVC_GW_INGEST_0067`).
   Watch fail, then green.
-- [ ] 5.4 `/impeccable audit` on the settings page; fix findings within
+- [x] 5.4 `/impeccable audit` on the settings page; fix findings within
   design-conventions.
 
 ## 6. Docs

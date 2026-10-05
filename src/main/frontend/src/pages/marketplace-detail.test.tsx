@@ -906,3 +906,28 @@ test("a_user_who_is_not_an_administrator_is_not_offered_the_url_correction", asy
   expect(screen.queryByRole("button", { name: "Edit URL…" })).not.toBeInTheDocument();
   expect(screen.queryByText(/can no longer change/)).not.toBeInTheDocument();
 });
+
+/**
+ * A snapshot arriving while the dialog is open: the server refuses, and the page stops offering
+ * a correction it can no longer make.
+ *
+ * @SVCs SVC_GW_INGEST_0067
+ */
+test("a_snapshot_arriving_mid_correction_withdraws_the_control", async () => {
+  asAdmin();
+  let view = unsnapshotted;
+  server.use(
+    http.get("/api/v1/marketplaces", () => HttpResponse.json([view])),
+    http.put("/api/v1/marketplaces/:name/url", () => {
+      view = marketplace;
+      return HttpResponse.json({ detail: "marketplace 'corp-marketplace' has a snapshot" }, { status: 409 });
+    }),
+  );
+  const user = userEvent.setup();
+  renderPage("", "settings");
+  await user.click(await screen.findByRole("button", { name: "Edit URL…" }));
+  const dialog = await screen.findByRole("dialog", { name: "Correct the URL of corp-marketplace" });
+  await user.click(within(dialog).getByRole("button", { name: "Save URL" }));
+  expect(await screen.findByText(/can no longer change/)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Edit URL…" })).not.toBeInTheDocument();
+});

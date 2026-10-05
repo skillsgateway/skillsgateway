@@ -78,7 +78,10 @@ export function useRegisterMarketplace() {
   });
 }
 
-/** Corrects an upstream marketplace's URL before its first snapshot; the answer carries any warnings. */
+/**
+ * Corrects an upstream marketplace's URL before its first snapshot; the answer carries any warnings.
+ * Refreshed on a refusal too: a 409 means a snapshot arrived, and the page must stop offering this.
+ */
 export function useChangeMarketplaceUrl() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -87,7 +90,7 @@ export function useChangeMarketplaceUrl() {
         method: "PUT",
         body: JSON.stringify({ url }),
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketplaces"] }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["marketplaces"] }),
   });
 }
 
