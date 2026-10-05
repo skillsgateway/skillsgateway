@@ -43,12 +43,12 @@ Failure model (each maps to a test or a mutant in `evidence.md`):
 
 ## 3. Ingest race (SVC_GW_INGEST_0066.1)
 
-- [ ] 3.1 `MarketplaceUrlChangeRaceTests` (`@SVCs SVC_GW_INGEST_0066.1`):
+- [x] 3.1 `MarketplaceUrlChangeRaceTests` (`@SVCs SVC_GW_INGEST_0066.1`):
   drive `SnapshotRepository.create` with a stale fetched URL after a change
   (no row, ingest fails with the stated reason, pin removed), and hold a
   snapshot insert's transaction open while a change waits on the row (change
   refused 409 after the insert commits). Watch fail.
-- [ ] 3.2 `SnapshotRepository.create` takes the fetched URL and checks it
+- [x] 3.2 `SnapshotRepository.create` takes the fetched URL and checks it
   under `FOR SHARE`; `IngestionService` passes `marketplace.url()`. Update
   other callers of `create`. Green.
 
