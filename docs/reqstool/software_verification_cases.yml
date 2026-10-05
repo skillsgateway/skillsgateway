@@ -3882,3 +3882,33 @@ cases:
       WHEN the chain runs
       THEN each positive raises one medium hook-config-unreadable finding naming the file and the key, and the negatives raise none
     revision: "0.4.0"
+
+  - id: SVC_GW_AUTH_0053
+    requirement_ids: ["GW_AUTH_0053"]
+    title: A sign-in started on one instance completes on another, and its session is honoured by both
+    verification: automated-test
+    description: |
+      GIVEN two gateway instances sharing one database and an identity provider that answers the token request
+      WHEN a browser starts the sign-in on the first instance, the provider's redirect is delivered to the second, and the established session is then presented to each instance; and separately a session whose stored state cannot be read is presented
+      THEN the sign-in completes, the session is authenticated on both instances, and the unreadable session is answered as no session rather than as an error
+    revision: "0.4.0"
+
+  - id: SVC_GW_AUTH_0054
+    requirement_ids: ["GW_AUTH_0054"]
+    title: Each class of failed sign-in is logged with its code and answered with its reason
+    verification: automated-test
+    description: |
+      GIVEN a gateway with a configured identity provider
+      WHEN a sign-in callback arrives with no sign-in in progress, with an error the provider returned, and with a token response the gateway cannot accept
+      THEN each is logged at warning level with the registration and the error code, and answered with a page naming its reason class, its code and a way to start again
+    revision: "0.4.0"
+
+  - id: SVC_GW_OBSERVABILITY_0005
+    requirement_ids: ["GW_OBSERVABILITY_0005"]
+    title: A taken and a skipped turn are each counted under their pass
+    verification: automated-test
+    description: |
+      GIVEN a metrics registry and a background pass whose turn is free
+      WHEN one holder takes the turn and a second holder then asks for it within its interval
+      THEN the first instance counts one taken turn for that pass and the second counts one skipped turn for it
+    revision: "0.4.0"
