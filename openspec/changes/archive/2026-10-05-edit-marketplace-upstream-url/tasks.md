@@ -92,4 +92,4 @@ Failure model (each maps to a test or a mutant in `evidence.md`):
 - [x] 7.3 One fresh run of all gates after the last code edit; write
   `evidence.md` with commit SHA.
 - [x] 7.4 Before/after screenshots captured (upload awaits the owner's approval) and the PR.
-- [ ] 7.5 `/opsx:archive` as the final commit.
+- [x] 7.5 `/opsx:archive` as the final commit.

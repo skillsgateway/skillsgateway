@@ -6,7 +6,7 @@
 - **Tier:** 3 (registration trust boundary, concurrency), under
   `.claude/skills/old-coder`.
 - **Spec approval:** the owner replied "continue" to the request to approve the
-  spec as written in `d533d352`, and that was taken as approval of it, including
+  spec as written in `6736decb`, and that was taken as approval of it, including
   the three decisions it flagged (the row lock against the ingest race, the
   editor becoming registrant, the estate converging before the first snapshot).
   Revised visibly after approval: `design.md` D7 (machine reach under
