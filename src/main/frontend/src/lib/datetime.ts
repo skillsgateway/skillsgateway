@@ -87,3 +87,12 @@ export function formatRelative(value: string | null | undefined): string {
   // for a value recorded during the request that rendered the page.
   return relativeFormat.format(0, "minute");
 }
+
+/** "8s", "1m 12s", "1h 3m": precise enough to see it move, short enough for a header. */
+export function formatElapsed(ms: number) {
+  const seconds = Math.max(0, Math.floor(ms / 1000));
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ${seconds % 60}s`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+}

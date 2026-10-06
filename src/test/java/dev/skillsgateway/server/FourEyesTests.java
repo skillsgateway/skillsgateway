@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
 import dev.skillsgateway.server.approval.FourEyesGate;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.Snapshot;
@@ -151,11 +152,10 @@ class FourEyesTests extends AbstractNamedAdminsTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.registeredBy").value("dana"));
 
-        mockMvc.perform(post("/api/v1/marketplaces/{name}/ingest", name)
-                        .with(oidcLogin().idToken(token -> token.subject("ingrid")))
-                        .with(csrf()))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.ingestedBy").value("ingrid"));
+        String ingested = ingestViaApi(name, oidcLogin().idToken(token -> token.subject("ingrid")));
+        long ingestedId = ((Number) JsonPath.read(ingested, "$.last.snapshotId")).longValue();
+        assertThat(snapshotRepository.findById(ingestedId).orElseThrow().ingestedBy())
+                .isEqualTo("ingrid");
 
         mockMvc.perform(get("/api/v1/marketplaces").with(oidcLogin()))
                 .andExpect(status().isOk())

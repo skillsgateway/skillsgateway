@@ -10,6 +10,7 @@ import {
   clearVetting,
   compositeProvenance,
   heldSnapshot,
+  idleIngest,
   ledgerEntries,
   locatedVetting,
   marketplace,
@@ -429,18 +430,65 @@ test("the_header_offers_ingest_and_the_client_wizard_on_every_section", async ()
   expect(await screen.findByTestId("setup-held-notice")).toHaveTextContent("404");
 });
 
-test("ingest_opens_what_arrived_on_review", async () => {
+/**
+ * Ingest answers at once; the header follows the job through its stages and, when it ends, opens
+ * what arrived on Review.
+ *
+ * @SVCs SVC_GW_INGEST_0068
+ */
+test("ingest_shows_its_stages_and_opens_what_arrived_on_review", async () => {
+  let polls = 0;
   server.use(
-    http.post("/api/v1/marketplaces/:name/ingest", () =>
-      HttpResponse.json({ ...held(9, 30) }, { status: 201 }),
-    ),
+    http.get("/api/v1/marketplaces/:name/ingest", ({ params }) => {
+      polls += 1;
+      if (polls === 1) return HttpResponse.json(idleIngest(String(params.name)));
+      if (polls === 2)
+        return HttpResponse.json({
+          marketplace: String(params.name),
+          running: { stage: "vetting", startedAt: new Date(Date.now() - 75_000).toISOString(), interrupted: false },
+        });
+      return HttpResponse.json({
+        marketplace: String(params.name),
+        last: { at: new Date().toISOString(), outcome: "succeeded", snapshotId: 9, snapshotState: "held" },
+      });
+    }),
   );
   const user = userEvent.setup();
   renderPage("", "settings");
   await user.click(await screen.findByRole("button", { name: "Ingest corp-marketplace" }));
+
+  const progress = await screen.findByTestId("ingest-progress");
+  expect(within(progress).getByRole("list", { name: "Ingest stages" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Ingest corp-marketplace" })).toBeDisabled();
   await expect
-    .poll(() => screen.getByTestId("location").textContent)
+    .poll(() => progress.querySelector("[aria-current='step']")?.textContent, { timeout: 5000 })
+    .toBe("Vetting");
+  expect(screen.getByTestId("ingest-elapsed")).toHaveTextContent(/^1m 1\ds$/);
+
+  await expect
+    .poll(() => screen.getByTestId("location").textContent, { timeout: 5000 })
     .toBe("/marketplaces/corp-marketplace?snapshot=9");
+  expect(screen.queryByTestId("ingest-progress")).not.toBeInTheDocument();
+});
+
+/**
+ * An ingest whose gateway instance stopped reads as interrupted, and Ingest is offered again.
+ *
+ * @SVCs SVC_GW_INGEST_0069
+ */
+test("an_interrupted_ingest_is_said_to_be_and_can_be_started_again", async () => {
+  server.use(
+    http.get("/api/v1/marketplaces/:name/ingest", ({ params }) =>
+      HttpResponse.json({
+        marketplace: String(params.name),
+        running: { stage: "fetching", startedAt: "2026-09-24T08:30:00Z", interrupted: true },
+      }),
+    ),
+  );
+  renderPage("", "settings");
+  expect(await screen.findByTestId("ingest-interrupted")).toHaveTextContent(/interrupted while fetching/);
+  expect(screen.queryByTestId("ingest-progress")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Ingest corp-marketplace" })).toBeEnabled();
 });
 
 test("settings_shows_the_upstream_and_the_activity_section_shows_the_ledger", async () => {
@@ -791,3 +839,143 @@ test("activity_loads_older_entries_through_the_cursor", async () => {
   expect(befores).toEqual(["", "4"]);
 });
 
+
+/** A marketplace just registered: nothing ingested yet, so its URL may still be corrected. */
+const unsnapshotted: Schemas["MarketplaceView"] = { ...marketplace, origin: "upstream", snapshots: [] };
+
+/**
+ * The correction is offered while nothing has been ingested; the server's refusal is shown in the
+ * dialog with the stored URL left in place, and an accepted URL replaces the one shown.
+ *
+ * @SVCs SVC_GW_INGEST_0067
+ */
+test("an_admin_corrects_the_url_before_the_first_snapshot", async () => {
+  asAdmin();
+  let view = unsnapshotted;
+  const sent: unknown[] = [];
+  server.use(
+    http.get("/api/v1/marketplaces", () => HttpResponse.json([view])),
+    http.put("/api/v1/marketplaces/:name/url", async ({ request }) => {
+      const body = (await request.json()) as { url: string };
+      sent.push(body);
+      if (body.url.includes("missing")) {
+        return HttpResponse.json(
+          { detail: "the upstream repository was not found or needs credentials" },
+          { status: 502 },
+        );
+      }
+      view = { ...view, url: body.url, registeredBy: "alice" };
+      return HttpResponse.json<Schemas["RegisteredMarketplace"]>({
+        id: 1,
+        name: "corp-marketplace",
+        url: body.url,
+        registeredBy: "alice",
+        warnings: [],
+      });
+    }),
+  );
+  const user = userEvent.setup();
+  renderPage("", "settings");
+  await user.click(await screen.findByRole("button", { name: "Edit URL…" }));
+  const dialog = await screen.findByRole("dialog", { name: "Correct the URL of corp-marketplace" });
+  const field = within(dialog).getByLabelText("Clone URL");
+  const save = within(dialog).getByRole("button", { name: "Save URL" });
+  expect(field).toHaveValue("https://github.com/corp/marketplace.git");
+  expect(field).toHaveAccessibleDescription(/without a credential/);
+
+  await user.clear(field);
+  expect(save).toBeDisabled();
+  await user.type(field, "   ");
+  expect(save).toBeDisabled();
+  await user.clear(field);
+  await user.type(field, "https://user:secret@github.com/corp/fixed.git");
+  expect(save).toBeDisabled();
+  expect(within(dialog).getByRole("alert")).toHaveTextContent(/Remove the credential/);
+
+  await user.clear(field);
+  await user.type(field, "https://github.com/corp/missing.git");
+  await user.click(save);
+  expect(await within(dialog).findByRole("alert")).toHaveTextContent(/not found or needs credentials/);
+  expect(screen.getByText("https://github.com/corp/marketplace.git", { selector: "dd" })).toBeInTheDocument();
+
+  await user.clear(field);
+  await user.type(field, "  https://github.com/corp/fixed.git ");
+  await user.click(save);
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  expect(await screen.findByText("https://github.com/corp/fixed.git", { selector: "dd" })).toBeInTheDocument();
+  expect(sent.at(-1)).toEqual({ url: "https://github.com/corp/fixed.git" });
+});
+
+/** @SVCs SVC_GW_INGEST_0067 */
+test("a_marketplace_with_a_snapshot_offers_no_url_correction_and_says_why", async () => {
+  asAdmin();
+  renderPage("", "settings");
+  expect(await screen.findByText(/can no longer change/)).toHaveTextContent(/remove the marketplace and register it again/);
+  expect(screen.queryByRole("button", { name: "Edit URL…" })).not.toBeInTheDocument();
+});
+
+/** @SVCs SVC_GW_INGEST_0067 */
+test("a_declared_marketplace_url_is_corrected_in_its_declaration", async () => {
+  asAdmin();
+  withMarketplace(unsnapshotted);
+  server.use(
+    http.get("/api/v1/estate", () =>
+      HttpResponse.json<Schemas["EstateReconciliation"]>({
+        trigger: "startup",
+        entries: [{ kind: "marketplace", name: "corp-marketplace", action: "unchanged" }],
+      }),
+    ),
+  );
+  renderPage("", "settings");
+  const button = await screen.findByRole("button", { name: "Edit URL…" });
+  await waitFor(() => expect(button).toHaveAccessibleDescription(/declared in the estate configuration/));
+  expect(button).toBeDisabled();
+});
+
+/** @SVCs SVC_GW_INGEST_0067 */
+test("a_user_who_is_not_an_administrator_is_not_offered_the_url_correction", async () => {
+  let identified = false;
+  withMarketplace(unsnapshotted);
+  server.use(
+    http.get("/api/v1/me", () => {
+      identified = true;
+      return HttpResponse.json<Schemas["MeView"]>({
+        username: "bob",
+        roles: [{ role: "approver", marketplace: "corp-marketplace", source: "config" }],
+        claimsTruncated: false,
+        version: "0.3.0",
+      });
+    }),
+  );
+  renderPage("", "settings");
+  expect(await screen.findByText("Upstream")).toBeInTheDocument();
+  await waitFor(() => expect(identified).toBe(true));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(screen.queryByRole("button", { name: "Edit URL…" })).not.toBeInTheDocument();
+  expect(screen.queryByText(/can no longer change/)).not.toBeInTheDocument();
+});
+
+/**
+ * A snapshot arriving while the dialog is open: the server refuses, and the page stops offering
+ * a correction it can no longer make.
+ *
+ * @SVCs SVC_GW_INGEST_0067
+ */
+test("a_snapshot_arriving_mid_correction_withdraws_the_control", async () => {
+  asAdmin();
+  let view = unsnapshotted;
+  server.use(
+    http.get("/api/v1/marketplaces", () => HttpResponse.json([view])),
+    http.put("/api/v1/marketplaces/:name/url", () => {
+      view = marketplace;
+      return HttpResponse.json({ detail: "marketplace 'corp-marketplace' has a snapshot" }, { status: 409 });
+    }),
+  );
+  const user = userEvent.setup();
+  renderPage("", "settings");
+  await user.click(await screen.findByRole("button", { name: "Edit URL…" }));
+  const dialog = await screen.findByRole("dialog", { name: "Correct the URL of corp-marketplace" });
+  await user.click(within(dialog).getByRole("button", { name: "Save URL" }));
+  expect(await screen.findByText(/can no longer change/)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Edit URL…" })).not.toBeInTheDocument();
+});

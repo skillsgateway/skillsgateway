@@ -279,11 +279,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Read a marketplace's ingest status
+         * @description The ingest in progress, if any, whatever triggered it — its stage and when it started, or interrupted when the gateway instance running it stopped (GW_INGEST_0069) — and how the last finished ingest ended.
+         */
+        get: operations["ingestStatus"];
         put?: never;
         /**
-         * Ingest the upstream default branch
-         * @description Fetches the marketplace's upstream default branch into quarantine and records an immutable snapshot pinned to the upstream commit SHA. The snapshot is held until a reviewer approves it; manifests declaring non-local plugin sources are rejected.
+         * Start an ingest of the upstream default branch
+         * @description Starts fetching the marketplace's upstream default branch into quarantine and answers at once, before anything is fetched. The ingest records an immutable snapshot pinned to the upstream commit SHA, held until a reviewer approves it; manifests declaring non-local plugin sources are rejected. Follow it at the Location returned, which reports the stage (queued, fetching, evaluating-manifest, vetting) and, when it ends, the outcome: the snapshot and its state, or for a failure the reason, root cause and next step (GW_INGEST_0038). While an ingest of the marketplace is already running, whatever triggered it, the answer is that ingest's status and nothing new is started.
          */
         post: operations["ingest"];
         delete?: never;
@@ -325,6 +329,26 @@ export interface paths {
          * @description Sets how upstream content reaches quarantine: on-demand (operator-triggered, the default), scheduled (the gateway polls upstream), or webhook (a signed forge push webhook triggers ingestion). Enabling webhook mode generates the HMAC secret and returns it exactly once — re-enabling rotates it, and no read endpoint ever returns it. No mode bypasses approval: sync-triggered snapshots land held.
          */
         put: operations["changeSyncMode"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/marketplaces/{name}/url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Correct a marketplace's upstream URL
+         * @description Replaces an upstream marketplace's clone URL while it has no snapshot in any state. The new URL faces the same checks as at registration, and the upstream is read before anything changes. The caller becomes the marketplace's registrant for the four-eyes rule. Once a snapshot exists the URL is its source of record: remove the marketplace and register it again instead. An unchanged URL is answered as it stands. Admin-only.
+         */
+        put: operations["changeMarketplaceUrl"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2105,6 +2129,14 @@ export interface components {
             /** @description Identity of the rule set the vetter currently carries */
             version?: string;
         };
+        /** @description Correct an upstream marketplace's URL */
+        ChangeMarketplaceUrlRequest: {
+            /**
+             * @description The corrected upstream clone URL; scheme must be on the configured allowlist
+             * @example https://github.com/acme/skills-marketplace.git
+             */
+            url?: string;
+        };
         /** @description Sync mode change request */
         ChangeSyncModeRequest: {
             /**
@@ -2768,6 +2800,14 @@ export interface components {
             /** @description Marketplace-and-commit pairs the client holds, at most 256 */
             holdings?: components["schemas"]["HeldContentQuery"][];
         };
+        /** @description A marketplace's ingest in progress, if any, and how the last one ended (GW_INGEST_0068). Both can be set at once: an ingest is running and the previous one has ended. */
+        IngestStatus: {
+            /** @description How the last finished ingest ended; null before the first */
+            last?: components["schemas"]["Last"];
+            marketplace?: string;
+            /** @description The ingest in progress, whatever triggered it; null when none is running */
+            running?: components["schemas"]["Running"];
+        };
         /** @description A freshly issued token; the only time the cleartext is ever returned */
         IssuedToken: {
             /** @description Administrative API scopes this credential may exercise; empty grants no administrative reach at all */
@@ -2804,6 +2844,27 @@ export interface components {
             sessionDerived?: boolean;
             /** @description Cleartext token value - shown exactly once, only a hash is stored */
             token?: string;
+        };
+        /** @description The last finished ingest: the record kept on the marketplace (GW_INGEST_0039) */
+        Last: {
+            /**
+             * Format: date-time
+             * @description When it ended
+             */
+            at?: string;
+            /** @description The same failure's parts, for a client to act on; null unless it failed */
+            failure?: components["schemas"]["UpstreamFailure"];
+            /** @enum {string} */
+            outcome?: "succeeded" | "failed";
+            /** @description Why it failed, readable on its own (GW_INGEST_0038); null unless it failed */
+            reason?: string;
+            /**
+             * Format: int64
+             * @description The snapshot it recorded; null for a failure, or once that snapshot is purged
+             */
+            snapshotId?: number;
+            /** @description That snapshot's current state: held, or rejected by the manifest policy, until a reviewer decides it */
+            snapshotState?: string;
         };
         /** @description The licenses a snapshot declares, evaluated under the configured policy */
         LicenseReport: {
@@ -2909,6 +2970,11 @@ export interface components {
             /** @description Why the last ingest attempt failed: reason, root cause and next step (GW_INGEST_0038); null unless it failed */
             lastIngestReason?: string;
             /**
+             * Format: int64
+             * @description The snapshot the last successful ingest recorded (GW_INGEST_0068); null when it failed, before the first, or once that snapshot has been purged
+             */
+            lastIngestSnapshotId?: number;
+            /**
              * Format: date-time
              * @description Last sync attempt (success or failure), or null before the first one
              */
@@ -3006,6 +3072,11 @@ export interface components {
             lastIngestOutcome?: "succeeded" | "failed";
             /** @description Why the last ingest attempt failed: reason, root cause and next step (GW_INGEST_0038); null unless it failed */
             lastIngestReason?: string;
+            /**
+             * Format: int64
+             * @description The snapshot the last successful ingest recorded (GW_INGEST_0068); null when it failed, before the first, or once that snapshot has been purged
+             */
+            lastIngestSnapshotId?: number;
             /** @description Gateway-local name (also the facade clone path) */
             name?: string;
             /**
@@ -3599,6 +3670,21 @@ export interface components {
             /** @description The run's verdicts, in chain order */
             verdicts?: components["schemas"]["VerdictView"][];
         };
+        /** @description An ingest in progress */
+        Running: {
+            /** @description True when the gateway instance running it stopped renewing it (GW_INGEST_0069): it will not finish, and a new ingest may be started in its place */
+            interrupted?: boolean;
+            /**
+             * @description The stage it has reached
+             * @enum {string}
+             */
+            stage?: "queued" | "fetching" | "evaluating-manifest" | "vetting";
+            /**
+             * Format: date-time
+             * @description When it was requested or, for an automated trigger, started
+             */
+            startedAt?: string;
+        };
         /** @description Session credential request: the lifetime is the gateway's, so there is no field for it */
         SessionCredentialRequest: {
             /**
@@ -3991,6 +4077,11 @@ export interface components {
             enabled?: boolean;
             /** @description CEL expression; must compile to a boolean */
             expression?: string;
+        };
+        UpstreamFailure: {
+            nextStep?: string;
+            reason?: string;
+            rootCause?: string;
         };
         /** @description One vetter's recorded verdict within a chain run */
         VerdictView: {
@@ -4780,7 +4871,7 @@ export interface operations {
             };
         };
     };
-    ingest: {
+    ingestStatus: {
         parameters: {
             query?: never;
             header?: never;
@@ -4791,13 +4882,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Snapshot recorded (held, or rejected on policy violation) */
-            201: {
+            /** @description The marketplace's ingest status */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Snapshot"];
+                    "*/*": components["schemas"]["IngestStatus"];
                 };
             };
             /** @description Marketplace not found */
@@ -4809,8 +4900,32 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
-            /** @description Upstream fetch failed; the problem carries reason, rootCause and nextStep (GW_INGEST_0038) */
-            502: {
+        };
+    };
+    ingest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ingest started, or already running; the body is its status */
+            202: {
+                headers: {
+                    /** @description The ingest status of this marketplace */
+                    Location?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IngestStatus"];
+                };
+            };
+            /** @description Marketplace not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4886,6 +5001,77 @@ export interface operations {
             };
             /** @description Not a valid sync mode */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    changeMarketplaceUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ChangeMarketplaceUrlRequest"];
+            };
+        };
+        responses: {
+            /** @description URL changed, or already the one given */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RegisteredMarketplace"];
+                };
+            };
+            /** @description Disallowed URL scheme, a credential in the URL, or a hosted marketplace */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No registered marketplace has that name */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The marketplace has a snapshot; its URL can no longer change */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The upstream could not be read or has no default branch; nothing was changed. The problem carries reason, rootCause and nextStep (GW_INGEST_0040) */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

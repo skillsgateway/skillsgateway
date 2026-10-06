@@ -3,7 +3,7 @@
 The core API: registration, ingestion, the approval gate and provenance. All
 paths are relative to `/api`.
 
-Registration, removal and sync-mode changes require **admin**; ingest, approve, reject,
+Registration, URL correction, removal and sync-mode changes require **admin**; ingest, approve, reject,
 re-vet, and waiver create/delete require **approver of the marketplace** (or
 admin) — resolved server-side from the addressed snapshot or waiver where the
 route carries an id; every `GET` on this page stays open to any session, except
@@ -18,8 +18,8 @@ enabling or disabling a vetter. See
 **Machine reach.** `marketplaces:read` covers `GET /marketplaces`, `GET
 /catalog` and a snapshot's `/content`, `/content-diff`, `/licenses`,
 `/provenance` and `/release-age`; `snapshots:read` covers `/diff`, `/file`,
-`/files`, `/vetting`, `/fetchers`, `/four-eyes` and `/name-collisions`; `marketplaces:register`,
-`marketplaces:ingest`, `vetting:run`, `sync:write` and `waivers:read` cover
+`/files`, `/vetting`, `/fetchers`, `/four-eyes` and `/name-collisions`; `marketplaces:register` (registration and
+[URL correction](#put-marketplacesnameurl)), `marketplaces:ingest`, `vetting:run`, `sync:write` and `waivers:read` cover
 the corresponding mutations and the waiver listing. **Approve, reject, waiver
 create, waiver delete, snapshot delete, snapshot restore and marketplace removal
 are reachable by no scope at all** — they publish, refuse or retract content. A scope grants reach,
@@ -37,14 +37,16 @@ its principal's approver or admin role. See
  "forge":"github","forgeProject":"acme/skills",
  "description":"Acme internal skills","upstreamUpdatedAt":"2026-08-14T18:20:00Z",
  "servedSha":"3f9c2ab...","lastIngestAt":"2026-08-15T09:01:00Z",
- "lastIngestOutcome":"succeeded","lastIngestReason":null,"snapshots":[]}
+ "lastIngestOutcome":"succeeded","lastIngestReason":null,
+ "lastIngestSnapshotId":7,"snapshots":[]}
 ```
 
 `lastIngestAt`, `lastIngestOutcome` and `lastIngestReason` describe how the last
 ingest attempt ended, whatever triggered it. `lastIngestOutcome` is `succeeded`
 or `failed`. `lastIngestReason` is set only for a failure: the reason, the root
 cause and a next step, in one line. All three are `null` before the first
-attempt. A manifest rejected by policy is a `succeeded` ingest: the snapshot it
+attempt. `lastIngestSnapshotId` names the snapshot a successful ingest
+recorded. A manifest rejected by policy is a `succeeded` ingest: the snapshot it
 captured is what is `rejected`.
 
 `servedSha` is the commit the facade currently serves for this marketplace, read
@@ -108,7 +110,7 @@ tips on the ledger. See
 | --- | --- |
 | 201 | Registered; returns the marketplace plus `warnings` (see below). |
 | 400 | URL scheme not allowlisted, a `url` with userinfo (a credential in the URL), `ref` present and not `main`, a hosted registration supplying a `url`, an upstream one omitting it, or a `pushPolicy` on an upstream marketplace. |
-| 409 | A live marketplace has that name. A [removed](#delete-marketplacesname) marketplace's name is free. |
+| 409 | A live marketplace has that name. A [removed](#delete-marketplacesname) marketplace's name is free. A mistyped URL can be [corrected](#put-marketplacesnameurl) until the first snapshot. |
 | 422 | Name fails `^[a-z0-9][a-z0-9_-]{0,62}$` (at most 63 characters; the reason says the name is the `/git/<name>` path clients clone), or an unknown `origin`/`pushPolicy`. |
 | 502 | The upstream could not be read, or has no default branch. Nothing was registered. The problem carries `reason`, `rootCause` and `nextStep`; see [Registering a marketplace](../../guides/registering-a-marketplace.md#what-is-validated-and-why). |
 
@@ -126,6 +128,49 @@ suffix), reads `"url already registered as <name>"` for each match. Tracking
 one upstream under two names is a legitimate way to test a marketplace before
 promoting it, so this never refuses the registration — see [Registering a
 marketplace](../../guides/registering-a-marketplace.md#duplicate-upstream-urls).
+
+---
+
+## `PUT /marketplaces/{name}/url`
+
+Correct an upstream marketplace's clone URL while it has **no snapshot in any
+state**. **Admin**; a machine credential needs `marketplaces:register`.
+
+**Body** — `{url}`
+
+```console
+$ curl -X PUT localhost:8080/api/v1/marketplaces/acme/url \
+    -H 'Content-Type: application/json' \
+    -d '{"url":"https://github.com/acme/skills.git"}'
+```
+
+The new URL faces the checks of [`POST /marketplaces`](#post-marketplaces), in
+the same order: the scheme allowlist and the refusal of a credential in the
+URL, then the upstream is read, and only then is anything written. The answer
+is the marketplace in the shape registration returns, with `warnings` for a
+URL another marketplace already has (the marketplace itself is not compared
+with). Forge metadata is resolved again for the new URL.
+
+The caller becomes the marketplace's `registeredBy`: whoever chose the upstream
+now in effect is the one the [four-eyes rule](../../guides/approving-snapshots.md)
+keeps from approving its content. The ledger records
+`marketplace-url-changed` with the previous and the new URL. A URL identical to
+the stored one is answered `200` as it stands, and nothing is recorded.
+
+| Status | Cause |
+| --- | --- |
+| 200 | Changed, or already the URL given. |
+| 400 | URL scheme not allowlisted, a credential in the URL, no URL, or a hosted marketplace (it has no upstream). |
+| 403 | Not an administrator. |
+| 404 | No live marketplace has that name. |
+| 409 | The marketplace has a snapshot, in any state. Its URL is the source of record for that snapshot; [remove it](#delete-marketplacesname) and register again instead. |
+| 502 | The upstream could not be read, or has no default branch. Nothing changed. Same problem body as registration. |
+
+The upstream is read only after every other check has passed, so a request
+refused with `400`, `404` or `409` never contacts it. A URL change and an
+ingest that is about to record a snapshot cannot both succeed: if the URL
+changes after the ingest fetched, the ingest fails with *the URL changed while
+it was being ingested* and records nothing; ingest again.
 
 ---
 
@@ -190,24 +235,75 @@ the portal's primary query; there is no per-marketplace endpoint.
 
 ## `POST /marketplaces/{name}/ingest`
 
-Clone the source's default branch into quarantine and pin the tip commit as
-`refs/snapshots/{sha}`. Creates a snapshot in state `held`. For a hosted
-marketplace the source is its own origin repository, and a push already does
-this — the endpoint stays available to re-ingest.
+Start an ingest: clone the source's default branch into quarantine, pin the tip
+commit as `refs/snapshots/{sha}`, and record a snapshot in state `held`. For a
+hosted marketplace the source is its own origin repository, and a push already
+does this — the endpoint stays available to re-ingest.
+
+The request answers at once, before anything is fetched, and the ingest runs on
+the gateway (GW_INGEST_0068 — An on-demand ingest runs as a job whose progress can be followed). Follow it at the
+`Location` it returns, the status endpoint below.
 
 ```console
-$ curl -X POST localhost:8080/api/v1/marketplaces/acme/ingest
+$ curl -i -X POST localhost:8080/api/v1/marketplaces/acme/ingest
+HTTP/1.1 202
+Location: /api/v1/marketplaces/acme/ingest
+
+{"marketplace":"acme",
+ "running":{"stage":"queued","startedAt":"2026-10-05T12:00:00Z","interrupted":false},
+ "last":null}
 ```
 
 | Status | Cause |
 | --- | --- |
-| 201 | Snapshot captured; returns it. A manifest that breaks policy captures a `rejected` snapshot. |
+| 202 | Ingest started, or one is already running (whatever triggered it), in which case nothing new starts. The body is its status. |
 | 404 | Unknown marketplace. |
-| 502 | Ingestion failed. The problem carries `reason`, `rootCause` and `nextStep`. |
 
 Ingesting a commit already captured does not create a second snapshot. Every
 attempt, from any trigger, updates the marketplace's `lastIngest*` fields, and a
 failed one is recorded on the ledger as `ingest-failed`.
+
+!!! warning "Changed before 1.0"
+
+    The request used to run the whole ingest and answer `201` with the snapshot,
+    or `502` with the failure. A client that read the snapshot from the response
+    now reads `last.snapshotId` from the status once `running` is `null`.
+
+## `GET /marketplaces/{name}/ingest`
+
+The marketplace's ingest status: the ingest in progress, if any, whatever
+triggered it, and how the last finished one ended.
+
+```console
+$ curl localhost:8080/api/v1/marketplaces/acme/ingest
+```
+
+```json
+{"marketplace":"acme",
+ "running":{"stage":"vetting","startedAt":"2026-10-05T12:00:00Z","interrupted":false},
+ "last":{"at":"2026-10-04T09:12:00Z","outcome":"failed","snapshotId":null,
+         "snapshotState":null,
+         "reason":"repository not found or requires authentication (...). Check ...",
+         "failure":{"reason":"repository not found or requires authentication",
+                    "rootCause":"...","nextStep":"..."}}}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `running` | `null` when no ingest is running. `stage` is `queued`, `fetching`, `evaluating-manifest` or `vetting` (vetting runs only for a snapshot that is held). `startedAt` is when it was requested. |
+| `running.interrupted` | `true` when the gateway instance running it stopped and it will not finish (GW_INGEST_0069 — An ingest whose replica stopped is reported as interrupted). A new `POST` starts one in its place. |
+| `last` | `null` before the first ingest ends. `outcome` is `succeeded` or `failed`. |
+| `last.snapshotId`, `last.snapshotState` | The snapshot a successful ingest recorded and its current state: `held`, or `rejected` when the manifest broke policy. `null` for a failure, or once the snapshot is purged. |
+| `last.reason`, `last.failure` | For a failure, the readable sentence and its parts (`reason`, `rootCause`, `nextStep`), which the `POST` used to return as a `502` problem. |
+
+Poll it every second or so while `running` is set and not interrupted. The
+status is kept in the database, so a poll that reaches another replica sees the
+same answer.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The status. |
+| 404 | Unknown marketplace. |
 
 ---
 

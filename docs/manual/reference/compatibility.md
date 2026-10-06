@@ -176,6 +176,15 @@ grow too.
     to be updated. This was a declared break under the rules below, and it is the
     kind of change that costs a major release once the contract is frozen.
 
+!!! warning "Ingest became a job, before 1.0"
+
+    `POST /api/v1/marketplaces/{name}/ingest` answers `202` with the ingest's
+    status instead of `201` with the snapshot, and a failure is read from that
+    status instead of a `502`. A client that read the snapshot from the response
+    follows `GET` of the same path until `running` is `null`, then reads
+    `last.snapshotId` ([the endpoints](api/marketplaces.md#post-marketplacesnameingest)).
+    This was a declared break under the rules below.
+
 | Change | Additive? |
 | --- | --- |
 | A new endpoint, a new optional field, a new enum value | **Yes.** Ships as a minor. |

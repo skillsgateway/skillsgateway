@@ -50,7 +50,7 @@ public class SnapshotRepository {
      */
     @Requirements({"GW_APPROVAL_0010", "GW_FACADE_0009"})
     public Snapshot create(long marketplaceId, String sha, String state, String violation, String ingestedBy) {
-        return create(marketplaceId, sha, sha, state, violation, ingestedBy, null);
+        return insert(marketplaceId, sha, sha, state, violation, ingestedBy);
     }
 
     /**
@@ -62,8 +62,10 @@ public class SnapshotRepository {
      * with the row.
      *
      * @param closure the resolved closure, or null for a snapshot that resolved nothing
+     * @param fetchedFrom the URL the content was fetched from: null for a hosted marketplace
+     * @throws MarketplaceUrlChangedException if the marketplace no longer has that URL
      */
-    @Requirements({"GW_APPROVAL_0010", "GW_FACADE_0009", "GW_INGEST_0030.2", "GW_INGEST_0030.3"})
+    @Requirements({"GW_APPROVAL_0010", "GW_FACADE_0009", "GW_INGEST_0030.2", "GW_INGEST_0030.3", "GW_INGEST_0066"})
     @Transactional
     public Snapshot create(
             long marketplaceId,
@@ -72,12 +74,35 @@ public class SnapshotRepository {
             String state,
             String violation,
             String ingestedBy,
-            SnapshotClosure closure) {
+            SnapshotClosure closure,
+            String fetchedFrom) {
+        requireFetchedFromCurrentUrl(marketplaceId, fetchedFrom);
         Snapshot snapshot = insert(marketplaceId, sha, upstreamSha, state, violation, ingestedBy);
         if (closure != null && !closure.isEmpty()) {
             closures.record(snapshot.id(), closure);
         }
         return snapshot;
+    }
+
+    /**
+     * The marketplace's URL is still the one the content came from (GW_INGEST_0066). Read under a share
+     * lock, which a URL change's exclusive one waits for and which waits for it, so a change cannot
+     * commit between this check and the insert; the foreign key's own lock is taken only at the
+     * insert, too late for a check made before it.
+     */
+    @Requirements({"GW_INGEST_0066"})
+    private void requireFetchedFromCurrentUrl(long marketplaceId, String fetchedFrom) {
+        boolean current = jdbc.sql("SELECT url IS NOT DISTINCT FROM CAST(:fetchedFrom AS TEXT) FROM marketplaces"
+                        + " WHERE id = :marketplaceId FOR SHARE")
+                .param("fetchedFrom", fetchedFrom)
+                .param("marketplaceId", marketplaceId)
+                .query(Boolean.class)
+                .optional()
+                // No row at all is the foreign key's to refuse, not a URL that changed.
+                .orElse(true);
+        if (!current) {
+            throw new MarketplaceUrlChangedException(marketplaceId);
+        }
     }
 
     private Snapshot insert(

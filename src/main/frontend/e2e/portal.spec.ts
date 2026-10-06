@@ -85,7 +85,8 @@ async function ingestOnReview(page: Page, name: string): Promise<Locator> {
   }
   const before = page.url();
   await page.getByRole("button", { name: `Ingest ${name}` }).click();
-  await expect(page).not.toHaveURL(before);
+  // The ingest runs as a job (GW_INGEST_0068): the page opens what arrived once it ends.
+  await expect(page).not.toHaveURL(before, { timeout: 60_000 });
   await expect(page).toHaveURL(/\?snapshot=\d+$/);
   const card = page.getByTestId("snapshot-card");
   await expect(card.getByText("held", { exact: true }).first()).toBeVisible();
@@ -249,6 +250,50 @@ test("admin_removes_a_marketplace_from_its_settings", async ({ page }) => {
   await expect(page).toHaveURL(/\/marketplaces$/);
   await expect(page.getByText(`Marketplace '${name}' removed; 1 approved snapshot withdrawn`)).toBeVisible();
   await expect(page.getByRole("link", { name, exact: true })).toHaveCount(0);
+});
+
+/**
+ * Correcting a URL from the portal (GW_INGEST_0067): the gateway's refusal is shown in the dialog,
+ * an accepted URL replaces the one shown, and once something has been ingested from it the URL
+ * can no longer change.
+ *
+ * @SVCs SVC_GW_INGEST_0067
+ */
+test("admin_corrects_a_marketplace_url_before_its_first_snapshot", async ({ page }) => {
+  await login(page, "alice");
+  await page.goto("/marketplaces");
+  const name = uniqueName("typo");
+  const registered = process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream";
+  const corrected = process.env.E2E_TAINTED_UPSTREAM_URL ?? "file:///tmp/e2e-tainted";
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page.getByLabel("Clone URL").fill(registered);
+  await submitRegister(page);
+  await expect(page.getByText(`Marketplace '${name}' registered`)).toBeVisible();
+
+  await openMarketplace(page, name);
+  await openSection(page, name, "Settings");
+  await page.getByRole("button", { name: "Edit URL…" }).click();
+  const dialog = page.getByRole("dialog", { name: `Correct the URL of ${name}` });
+  const field = dialog.getByLabel("Clone URL");
+  const save = dialog.getByRole("button", { name: "Save URL" });
+  await field.fill("");
+  await expect(save).toBeDisabled();
+  await field.fill("ftp://example.invalid/acme/skills.git");
+  await save.click();
+  await expect(dialog.getByRole("alert")).toContainText("url scheme must be one of");
+  await expect(page.locator("dd", { hasText: registered })).toBeVisible();
+
+  await field.fill(corrected);
+  await save.click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText(`URL of '${name}' changed`)).toBeVisible();
+  await expect(page.locator("dd", { hasText: corrected })).toBeVisible();
+
+  await ingestOnReview(page, name);
+  await openSection(page, name, "Settings");
+  await expect(page.getByText(/can no longer change/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit URL…" })).toHaveCount(0);
 });
 
 /**

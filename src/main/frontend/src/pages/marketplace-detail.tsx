@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Link,
   Outlet,
@@ -10,14 +11,17 @@ import {
 import { toast } from "sonner";
 import {
   auditRows,
+  ingestLive,
   useAuditPages,
   useIngest,
+  useIngestStatus,
   useIsAdmin,
   useMarketplaces,
   type MarketplaceView,
   type Snapshot,
 } from "@/api/queries";
 import { AuditStatusBadge, auditRowClass } from "@/components/audit-status";
+import { IngestProgress } from "@/components/ingest-progress";
 import { LoadOlderEntries } from "@/components/load-older-entries";
 import { auditStatus } from "@/lib/audit-status";
 import { Timestamp } from "@/components/timestamp";
@@ -32,6 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MarketplaceVettingChain } from "@/components/marketplace-vetting-chain";
+import { EditMarketplaceUrl } from "@/components/edit-marketplace-url";
 import { RemoveMarketplace } from "@/components/remove-marketplace";
 import { SetupWizard } from "@/components/setup-wizard";
 import { SnapshotCard, SnapshotLine } from "@/components/snapshot-card";
@@ -353,12 +358,12 @@ export function MarketplaceActivityPage() {
 }
 
 /**
- * Settings: what was registered, and — for an administrator only — the vetting chain and
- * removal. Neither is shown to marketplace-scoped approvers, and the server refuses both
- * independently.
+ * Settings: what was registered, and — for an administrator only — the URL correction, the
+ * vetting chain and removal. None is shown to marketplace-scoped approvers, and the server refuses
+ * each independently.
  */
 export function MarketplaceSettingsPage() {
-  const { marketplace } = useMarketplaceContext();
+  const { marketplace, snapshots } = useMarketplaceContext();
   const isAdmin = useIsAdmin();
   return (
     <div className="space-y-6">
@@ -384,6 +389,18 @@ export function MarketplaceSettingsPage() {
               {marketplace.lastIngestOutcome ? (
                 <>
                   {marketplace.lastIngestOutcome} · <Timestamp value={marketplace.lastIngestAt} />
+                  {/* The outcome names what it recorded (GW_INGEST_0068). */}
+                  {marketplace.lastIngestSnapshotId != null ? (
+                    <>
+                      {" · "}
+                      <Link
+                        className="underline underline-offset-2"
+                        to={`/marketplaces/${marketplace.name}?snapshot=${marketplace.lastIngestSnapshotId}`}
+                      >
+                        snapshot {marketplace.lastIngestSnapshotId}
+                      </Link>
+                    </>
+                  ) : null}
                 </>
               ) : (
                 "never"
@@ -395,6 +412,15 @@ export function MarketplaceSettingsPage() {
             <dt className="font-medium">Registered by</dt>
             <dd>{marketplace.registeredBy ?? "—"}</dd>
           </dl>
+          {isAdmin && marketplace.origin !== "hosted" && marketplace.url ? (
+            <div className="mt-4">
+              <EditMarketplaceUrl
+                name={marketplace.name ?? ""}
+                url={marketplace.url}
+                snapshotCount={snapshots.length}
+              />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
       {isAdmin ? <MarketplaceVettingChain marketplace={marketplace.name ?? ""} /> : null}
@@ -411,15 +437,42 @@ export function MarketplaceSettingsPage() {
  * Connect a client is a header action rather than the page's leading panel: it is a step each
  * consumer takes once, and leading with it pushed the reviewer's daily work below the fold.
  *
- * @Requirements GW_INGEST_0007, GW_AUTH_0043, GW_INGEST_0033, GW_INGEST_0039
+ * The ingest runs as a job the header follows (GW_INGEST_0068): its stages while it runs, whatever
+ * started it, and what arrived once it ends — opened on Review when it was started from here.
+ *
+ * @Requirements GW_INGEST_0007, GW_AUTH_0043, GW_INGEST_0033, GW_INGEST_0039, GW_INGEST_0068
  */
 export function MarketplaceLayout() {
   const { name } = useParams<{ name: string }>();
   const marketplaces = useMarketplaces();
   const ingest = useIngest();
+  const ingestStatus = useIngestStatus(name ?? "");
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [wizardOpen, setWizardOpen] = useState(false);
   const marketplace = marketplaces.data?.find((m) => m.name === name);
+  const live = ingestLive(ingestStatus.data);
+  // Which marketplace's live ingest this page last saw, so switching marketplaces never reads as one ending.
+  const watched = useRef<string | null>(null);
+  const startedHere = useRef<string | null>(null);
+
+  // An ingest this page watched has ended: refresh the marketplace, and say what came of it.
+  useEffect(() => {
+    const status = ingestStatus.data;
+    if (watched.current === name && !live && status && !status.running) {
+      void queryClient.invalidateQueries({ queryKey: ["marketplaces"] });
+      const last = status.last;
+      if (last?.outcome === "succeeded" && last.snapshotId != null) {
+        toast.success(`Snapshot ${last.snapshotId} is ${last.snapshotState}`);
+        // Open what arrived on Review, rather than leave it to be found.
+        if (startedHere.current === name) void navigate(`/marketplaces/${name}?snapshot=${last.snapshotId}`);
+      } else if (last?.outcome === "failed") {
+        toast.error(`Ingest failed: ${last.reason}`);
+      }
+      startedHere.current = null;
+    }
+    watched.current = live ? (name ?? null) : null;
+  }, [live, ingestStatus.data, queryClient, navigate, name]);
 
   if (marketplaces.isLoading) return <p>Loading…</p>;
   if (marketplaces.isError)
@@ -447,15 +500,17 @@ export function MarketplaceLayout() {
   };
   const serving = context.servedSha !== null;
 
-  const runIngest = () =>
+  const runIngest = () => {
+    startedHere.current = marketplace.name ?? null;
     ingest.mutate(marketplace.name ?? "", {
-      // Open what arrived on Review, rather than announce it in a toast and leave it to be found.
-      onSuccess: (snapshot) => {
-        toast.success(`Snapshot ${snapshot.sha?.slice(0, 12)} is ${snapshot.state}`);
-        void navigate(`/marketplaces/${marketplace.name}?snapshot=${snapshot.id}`);
+      onError: (error) => {
+        startedHere.current = null;
+        toast.error(error.message);
       },
-      onError: (error) => toast.error(error.message),
     });
+  };
+  const running = ingestStatus.data?.running;
+  const busy = ingest.isPending || live;
 
   return (
     <div className="space-y-6">
@@ -490,15 +545,16 @@ export function MarketplaceLayout() {
               {marketplace.lastIngestReason}
             </p>
           ) : null}
+          {running ? <IngestProgress running={running} /> : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             onClick={runIngest}
-            disabled={ingest.isPending}
+            disabled={busy}
             aria-label={`Ingest ${marketplace.name}`}
           >
-            {ingest.isPending ? "Ingesting…" : "Ingest"}
+            {busy ? "Ingesting…" : "Ingest"}
           </Button>
           <Button variant="outline" onClick={() => setWizardOpen(true)} aria-expanded={wizardOpen}>
             Connect a client

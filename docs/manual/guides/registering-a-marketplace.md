@@ -112,44 +112,40 @@ API directly.
 
 ## Ingesting the first snapshot
 
-Registration captures nothing. Press **Ingest** in the marketplace's header, or:
+Registration captures nothing. Press **Ingest** in the marketplace's header. The
+header then shows the ingest's stages (queued, fetching, evaluating the manifest,
+vetting) and how long it has been running. When it ends, the snapshot opens on
+Review. From a script:
 
 ```console
 $ curl -X POST localhost:8080/api/v1/marketplaces/acme/ingest
+$ curl localhost:8080/api/v1/marketplaces/acme/ingest     # repeat until "running" is null
 ```
 
 ```json
-{"id":1,"marketplaceId":1,"sha":"3f9c2ab...","state":"held",
- "violation":null,"createdAt":"...","decidedBy":null,"decidedAt":null}
+{"marketplace":"acme","running":null,
+ "last":{"at":"...","outcome":"succeeded","snapshotId":1,"snapshotState":"held",
+         "reason":null,"failure":null}}
 ```
 
 The gateway clones the upstream default branch into quarantine, pins the tip
 commit as `refs/snapshots/{sha}`, and creates a snapshot in state `held`.
-Nothing is served yet.
+Nothing is served yet. A manifest that breaks policy still captures a snapshot,
+in state `rejected`. See [the endpoints](../reference/api/marketplaces.md#post-marketplacesnameingest)
+for every field.
 
-| Status | Cause |
-| --- | --- |
-| 201 | Snapshot captured. A manifest that breaks policy still captures one, in state `rejected`. |
-| 404 | Unknown marketplace. |
-| 502 | Ingestion failed. The problem carries `reason`, `rootCause` and `nextStep`, as for registration above. |
+Ingesting the same upstream commit twice does not create a second snapshot, and
+pressing **Ingest** while an ingest is running follows that one rather than
+starting another.
 
-Ingesting the same upstream commit twice does not create a second snapshot.
+!!! note "A first ingest takes minutes"
 
-!!! note "A first ingest can outlast your proxy's timeout"
-
-    The ingest runs inside the request, and the first one downloads the
-    upstream's whole history. For a repository with a long history that takes
-    minutes, not seconds: one with 1,900 commits and a 370 MiB pack took about
-    100 seconds, nearly all of it the download (vetting took 6). A later ingest
-    fetches only what changed and returns in under a second.
-
-    A proxy in front of the gateway may give up first. An nginx ingress and an
-    AWS Application Load Balancer both default to 60 seconds, and the portal then
-    shows a timeout. **The ingest carries on regardless**: it finishes in the
-    gateway and is recorded as the last ingest (below), so refresh rather than
-    press **Ingest** again. To keep the response, raise the proxy's timeout; see
-    [Deploying on Kubernetes](deploying-on-kubernetes.md#ingress-and-tls) and
-    [Deploying without Kubernetes](deploying-without-kubernetes.md#running-behind-a-proxy).
+    The first ingest downloads the upstream's whole history. For a repository
+    with a long history that takes minutes, not seconds: one with 1,900 commits
+    and a 370 MiB pack took about 100 seconds, nearly all of it the download
+    (vetting took 6). A later ingest fetches only what changed and finishes in
+    under a second. The request answers at once whatever the length, so no proxy
+    timeout applies to it.
 
 ## When an ingest fails
 
@@ -165,7 +161,12 @@ Every ingest attempt is recorded, whether it was run by hand, by the
   the attempt, with the reason as its `detail`.
 - **In the log:** a `WARN` line naming the marketplace and the reason.
 
-The next successful ingest replaces the record.
+The next successful ingest replaces the record. A script reads the same failure
+from the ingest status, as `last.reason` and its parts under `last.failure`.
+
+If the gateway instance running an ingest stops (a restart, a lost pod), the
+ingest cannot finish. Its status reads `interrupted` within a minute, the portal
+says so, and **Ingest** starts it again.
 
 ## Keeping it current
 
@@ -183,11 +184,42 @@ $ curl -X POST -u ... https://skills.corp.example/api/v1/marketplaces/acme/inges
     what clients receive. Ingesting frequently costs quarantine storage, never
     availability.
 
+## Correcting a URL before the first snapshot
+
+A URL with a typo can be corrected in place until something has been ingested
+from the marketplace. Nothing was ever fetched from it, so nothing has it as a
+source.
+
+=== "Portal"
+
+    On the marketplace's **Settings**, in **Upstream**, choose **Edit URL…**,
+    enter the corrected URL and **Save URL**. See
+    [Correct the URL](../reference/portal.md#correct-the-url-administrators).
+
+=== "API"
+
+    ```console
+    $ curl -X PUT -u ... https://skills.corp.example/api/v1/marketplaces/acme/url \
+        -H 'Content-Type: application/json' \
+        -d '{"url":"https://github.com/acme/skills.git"}'
+    ```
+
+    See the [reference](../reference/api/marketplaces.md#put-marketplacesnameurl).
+
+The corrected URL is validated exactly as at registration, upstream read
+included, and you become the marketplace's registrant, so another reviewer
+approves its first snapshot. The ledger records the previous and the new URL.
+A marketplace in webhook sync mode keeps its inbound secret; move the forge's
+webhook to the corrected repository yourself.
+
+Once the marketplace has a snapshot, in any state, the URL is fixed: the
+snapshot's provenance names it. Remove the marketplace and register it again.
+
 ## Removing a marketplace
 
-A marketplace registered with a typo, one whose upstream is abandoned, and one
-whose upstream moved all end the same way: remove it, and register again if
-there is anything to register.
+A marketplace whose upstream is abandoned, one whose upstream moved, and one
+registered with a typo that has already been ingested all end the same way:
+remove it, and register again if there is anything to register.
 
 === "Portal"
 
@@ -208,8 +240,9 @@ Removal withdraws everything the marketplace serves and stops it being synced or
 fetched, but keeps its snapshots and their history. It needs an administrator,
 and it states a reason, which the ledger records.
 
-**An upstream that moved.** The URL cannot be changed — that would relabel the
-provenance of content already approved from somewhere else — so remove the
+**An upstream that moved.** Once a snapshot exists the URL cannot be changed —
+that would relabel the provenance of content already ingested from somewhere
+else — so remove the
 marketplace and register the same name against the new URL. Clients keep their
 clone URL. They see nothing served until a snapshot of the new upstream is
 approved: the old approvals were decisions about a different upstream and do not
