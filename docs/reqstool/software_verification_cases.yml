@@ -2485,6 +2485,7 @@ cases:
       THEN only the old delivered and failed deliveries are removed, no pending delivery is removed
       whatever its age, no more than one configured batch is removed per pass, the pass writes one
       ledger entry naming how many it removed, and a pass that removes nothing writes none
+    revision: "0.1.0"
 
   - id: SVC_GW_RETENTION_0012
     requirement_ids: ["GW_RETENTION_0012"]
@@ -2495,7 +2496,6 @@ cases:
       WHEN the ledger trim runs
       THEN the first identity's older pack send, the anonymous one and the advertisement are removed, each identity's most recent pack send survives, and the latest-fetch read the staleness and presence reports share still names both identities with what they hold
     revision: "0.5.0"
-    revision: "0.1.0"
 
   - id: SVC_GW_VETTING_0038
     requirement_ids: ["GW_VETTING_0038"]
