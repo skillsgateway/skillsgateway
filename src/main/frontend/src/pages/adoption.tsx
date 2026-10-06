@@ -171,16 +171,16 @@ export function PresenceTable({ report }: { report: PresenceReport }) {
           <TableBody>
             {skills.map((skill) => (
               <TableRow key={`${skill.marketplace}/${skill.plugin}/${skill.skill}`}>
-                <TableCell>
+                <TableCell className="min-w-56 whitespace-normal">
                   <div className="font-medium">{skill.skill}</div>
                   {skill.path ? (
-                    <div className="font-mono text-xs text-muted-foreground">{skill.path}</div>
+                    <div className="font-mono text-xs break-all text-muted-foreground">{skill.path}</div>
                   ) : null}
                 </TableCell>
                 <TableCell>{skill.plugin ?? "—"}</TableCell>
                 <TableCell>{skill.marketplace}</TableCell>
-                <TableCell>{skill.identitiesHolding}</TableCell>
-                <TableCell>{skill.snapshotsDelivering}</TableCell>
+                <TableCell className="tabular-nums">{skill.identitiesHolding}</TableCell>
+                <TableCell className="tabular-nums">{skill.snapshotsDelivering}</TableCell>
                 <TableCell className="text-xs"><Timestamp value={skill.firstDelivered} /></TableCell>
                 <TableCell className="text-xs"><Timestamp value={skill.lastDelivered} /></TableCell>
               </TableRow>
@@ -197,7 +197,7 @@ export function PresenceTable({ report }: { report: PresenceReport }) {
           </p>
           <ul className="mt-2 space-y-1">
             {unresolved.map((entry) => (
-              <li key={`${entry.marketplace}/${entry.sha}`} className="flex flex-wrap gap-2">
+              <li key={`${entry.marketplace}/${entry.sha}`} className="flex flex-wrap items-baseline gap-2">
                 <span>{entry.marketplace}</span>
                 <span className="font-mono text-xs" title={entry.sha}>
                   {shortSha(entry.sha)}

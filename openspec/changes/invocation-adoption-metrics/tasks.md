@@ -109,7 +109,7 @@ gate red, so the entries land with the code that satisfies them.
 - [x] 9.4 A SHA counts once per skill even when a manifest repeats a plugin name
 - [x] 9.5 The cache-hit assertion measures the second read alone
 - [x] 9.6 The skill's `SKILL.md` path is visible in the portal, not only on hover
-- [ ] 9.7 `/impeccable audit` and `harden` on the Adoption page; material findings fixed
+- [x] 9.7 `/impeccable audit` and `harden` on the Adoption page; material findings fixed
 - [ ] 9.8 Gates re-run, `evidence.md` rewritten with the commit SHA, change re-archived
 
 ## Where the implementation departs from the text above
