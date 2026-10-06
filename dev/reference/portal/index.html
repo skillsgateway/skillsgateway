@@ -3942,15 +3942,23 @@ line, and the next successful ingest removes it.</p>
 <p>Two actions, both outline buttons so that <strong>Approve</strong> stays the page's one
 primary control:</p>
 <ul>
-<li><strong>Ingest</strong> (<code>POST /api/v1/marketplaces/{name}/ingest</code>) toasts <em>Snapshot {sha12}
-  is {state}</em> and opens what arrived on Review.</li>
+<li><strong>Ingest</strong> (<code>POST /api/v1/marketplaces/{name}/ingest</code>) starts the ingest and the
+  header follows it: the stages <em>Queued → Fetching → Evaluating manifest →
+  Vetting</em>, the current one marked, and the elapsed time. While it runs the
+  button reads <em>Ingesting…</em> and is disabled. When it ends the page toasts
+  <em>Snapshot {id} is {state}</em> and opens what arrived on Review, or toasts the
+  failure. An ingest started elsewhere (the sync sweep, a webhook, another
+  reviewer) shows the same stages when the page is opened during it. One whose
+  gateway instance stopped reads <em>Ingest interrupted</em>, and <strong>Ingest</strong> is offered
+  again.</li>
 <li><strong>Connect a client</strong> opens the <a href="#connect-a-client">client wizard</a> under the
   header.</li>
 </ul>
 <h3 id="upstream">Upstream<a class="headerlink" href="#upstream" title="Permanent link">&para;</a></h3>
 <p>On <strong>Settings</strong>. Forge metadata captured at registration, best effort: <strong>Clone
 URL</strong>, <strong>Forge</strong>, <strong>Project</strong>, <strong>Description</strong>, <strong>Last upstream update</strong>,
-<strong>Last ingest</strong> (its outcome and time, or "never"), <strong>Registered</strong>, <strong>Registered
+<strong>Last ingest</strong> (its outcome, time and a link to the snapshot it recorded, or
+"never"), <strong>Registered</strong>, <strong>Registered
 by</strong>. Anything not captured shows "—".</p>
 <h4 id="correct-the-url-administrators">Correct the URL (administrators)<a class="headerlink" href="#correct-the-url-administrators" title="Permanent link">&para;</a></h4>
 <p>In the <strong>Upstream</strong> card of an upstream marketplace, <strong>shown only to a session

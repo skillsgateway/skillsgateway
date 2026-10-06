@@ -2949,6 +2949,15 @@ operator action was needed; a receiver matching on the name it was given has
 to be updated. This was a declared break under the rules below, and it is the
 kind of change that costs a major release once the contract is frozen.</p>
 </div>
+<div class="admonition warning">
+<p class="admonition-title">Ingest became a job, before 1.0</p>
+<p><code>POST /api/v1/marketplaces/{name}/ingest</code> answers <code>202</code> with the ingest's
+status instead of <code>201</code> with the snapshot, and a failure is read from that
+status instead of a <code>502</code>. A client that read the snapshot from the response
+follows <code>GET</code> of the same path until <code>running</code> is <code>null</code>, then reads
+<code>last.snapshotId</code> (<a href="../api/marketplaces/#post-marketplacesnameingest">the endpoints</a>).
+This was a declared break under the rules below.</p>
+</div>
 <table>
 <thead>
 <tr>
