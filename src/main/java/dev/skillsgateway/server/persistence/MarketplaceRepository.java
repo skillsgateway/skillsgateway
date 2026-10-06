@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class MarketplaceRepository {
@@ -279,6 +280,60 @@ public class MarketplaceRepository {
                 .param("id", id)
                 .query(Instant.class)
                 .optional();
+    }
+
+    /** What {@link #changeUrlBeforeFirstSnapshot} did. */
+    public enum UrlChange {
+        CHANGED,
+        NOT_LIVE,
+        HAS_SNAPSHOT
+    }
+
+    /** Whether any snapshot of this marketplace exists, in any state (GW_INGEST_0066). */
+    public boolean hasSnapshot(long id) {
+        return jdbc.sql("SELECT EXISTS (SELECT 1 FROM snapshots WHERE marketplace_id = :id)")
+                .param("id", id)
+                .query(Boolean.class)
+                .single();
+    }
+
+    /**
+     * Replaces the URL of a live marketplace that has no snapshot, with the forge metadata resolved
+     * for it and the editor as registrant (GW_INGEST_0066). The row is locked before the snapshot check,
+     * and {@code SnapshotRepository.create} takes it shared before recording a snapshot, so of an edit
+     * and a snapshot insert racing for one marketplace exactly one goes through.
+     */
+    @Requirements({"GW_INGEST_0066", "GW_APPROVAL_0010"})
+    @Transactional
+    public UrlChange changeUrlBeforeFirstSnapshot(long id, String url, ForgeMetadata metadata, String actor) {
+        boolean live = jdbc.sql("SELECT deleted_at IS NULL FROM marketplaces WHERE id = :id FOR UPDATE")
+                .param("id", id)
+                .query(Boolean.class)
+                .optional()
+                .orElse(false);
+        if (!live) {
+            return UrlChange.NOT_LIVE;
+        }
+        // A statement of its own, so it sees a snapshot committed while this one waited for the lock.
+        if (hasSnapshot(id)) {
+            return UrlChange.HAS_SNAPSHOT;
+        }
+        jdbc.sql("UPDATE marketplaces SET url = :url, registered_by = :actor, forge = :forge,"
+                        + " forge_project = :forgeProject, description = :description,"
+                        + " upstream_updated_at = :upstreamUpdatedAt WHERE id = :id")
+                .param("url", url)
+                .param("actor", actor)
+                .param("forge", metadata == null ? null : metadata.forge())
+                .param("forgeProject", metadata == null ? null : metadata.project())
+                .param("description", metadata == null ? null : metadata.description())
+                .param(
+                        "upstreamUpdatedAt",
+                        metadata == null || metadata.updatedAt() == null
+                                ? null
+                                : metadata.updatedAt().atOffset(java.time.ZoneOffset.UTC))
+                .param("id", id)
+                .update();
+        return UrlChange.CHANGED;
     }
 
     /** Removed marketplaces that held this name, most recent first (GW_INGEST_0035). */

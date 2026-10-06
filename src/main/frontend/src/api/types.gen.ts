@@ -336,6 +336,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/marketplaces/{name}/url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Correct a marketplace's upstream URL
+         * @description Replaces an upstream marketplace's clone URL while it has no snapshot in any state. The new URL faces the same checks as at registration, and the upstream is read before anything changes. The caller becomes the marketplace's registrant for the four-eyes rule. Once a snapshot exists the URL is its source of record: remove the marketplace and register it again instead. An unchanged URL is answered as it stands. Admin-only.
+         */
+        put: operations["changeMarketplaceUrl"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/marketplaces/{name}/vetting-chain": {
         parameters: {
             query?: never;
@@ -2108,6 +2128,14 @@ export interface components {
             updatedBy?: string;
             /** @description Identity of the rule set the vetter currently carries */
             version?: string;
+        };
+        /** @description Correct an upstream marketplace's URL */
+        ChangeMarketplaceUrlRequest: {
+            /**
+             * @description The corrected upstream clone URL; scheme must be on the configured allowlist
+             * @example https://github.com/acme/skills-marketplace.git
+             */
+            url?: string;
         };
         /** @description Sync mode change request */
         ChangeSyncModeRequest: {
@@ -4973,6 +5001,77 @@ export interface operations {
             };
             /** @description Not a valid sync mode */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    changeMarketplaceUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ChangeMarketplaceUrlRequest"];
+            };
+        };
+        responses: {
+            /** @description URL changed, or already the one given */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RegisteredMarketplace"];
+                };
+            };
+            /** @description Disallowed URL scheme, a credential in the URL, or a hosted marketplace */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No registered marketplace has that name */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The marketplace has a snapshot; its URL can no longer change */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The upstream could not be read or has no default branch; nothing was changed. The problem carries reason, rootCause and nextStep (GW_INGEST_0040) */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

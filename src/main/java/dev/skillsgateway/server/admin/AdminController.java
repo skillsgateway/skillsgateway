@@ -62,6 +62,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -255,6 +256,47 @@ public class AdminController {
                 request.name(), request.url(), request.origin(), request.pushPolicy(), authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(RegisteredMarketplace.of(outcome.marketplace(), outcome.warnings()));
+    }
+
+    @Schema(description = "Correct an upstream marketplace's URL")
+    public record ChangeMarketplaceUrlRequest(
+            @Schema(
+                    description = "The corrected upstream clone URL; scheme must be on the configured allowlist",
+                    example = "https://github.com/acme/skills-marketplace.git")
+            String url) {}
+
+    @PutMapping("/marketplaces/{name}/url")
+    @Requirements({"GW_INGEST_0066"})
+    @Tag(name = "Marketplaces")
+    @Operation(
+            summary = "Correct a marketplace's upstream URL",
+            description = "Replaces an upstream marketplace's clone URL while it has no snapshot in any state. The"
+                    + " new URL faces the same checks as at registration, and the upstream is read before anything"
+                    + " changes. The caller becomes the marketplace's registrant for the four-eyes rule. Once a"
+                    + " snapshot exists the URL is its source of record: remove the marketplace and register it"
+                    + " again instead. An unchanged URL is answered as it stands. Admin-only.")
+    @ApiResponse(responseCode = "200", description = "URL changed, or already the one given")
+    @ApiResponse(
+            responseCode = "400",
+            description = "Disallowed URL scheme, a credential in the URL, or a hosted marketplace")
+    @ApiResponse(responseCode = "403", description = "Caller does not hold the administrative role")
+    @ApiResponse(responseCode = "404", description = "No registered marketplace has that name")
+    @ApiResponse(responseCode = "409", description = "The marketplace has a snapshot; its URL can no longer change")
+    @ApiResponse(
+            responseCode = "502",
+            description = "The upstream could not be read or has no default branch; nothing was changed."
+                    + " The problem carries reason, rootCause and nextStep (GW_INGEST_0040)")
+    public RegisteredMarketplace changeMarketplaceUrl(
+            @PathVariable String name,
+            @RequestBody(required = false) ChangeMarketplaceUrlRequest request,
+            Authentication authentication) {
+        roleService.requireAdmin(authentication);
+        MarketplaceRegistrationService.RegistrationOutcome outcome = registrationService.changeUrl(
+                name,
+                request == null ? null : request.url(),
+                authentication.getName(),
+                MarketplaceRegistrationService.Reachability.REFUSE);
+        return RegisteredMarketplace.of(outcome.marketplace(), outcome.warnings());
     }
 
     @Schema(description = "Remove a marketplace, stating why")

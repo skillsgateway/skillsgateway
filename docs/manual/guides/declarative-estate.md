@@ -150,10 +150,14 @@ converges:
 
 Two failures are policy, not typos:
 
-- **A declared URL that differs from the registered one.** Marketplace
-  upstream URLs are immutable — changing one would swap the supply chain under
-  already-approved snapshots, a power the API itself does not have. Register a
-  new marketplace instead.
+- **A declared URL that differs from the registered one, once the marketplace
+  has a snapshot.** That snapshot names the stored URL as its source, so
+  changing it would swap the supply chain underneath it. Remove the marketplace
+  and declare it again. Before the first snapshot the declared URL is applied,
+  through the same [URL correction](../reference/api/marketplaces.md#put-marketplacesnameurl)
+  the API offers, and the entry is reported `updated` with `url=<new>`; an
+  upstream that cannot be read is reported in the entry, as for a declared
+  registration.
 - **`sync-mode: webhook`.** Enabling webhook sync generates the inbound HMAC
   secret and returns it exactly once, which has no declarative form. Set it
   through [`PUT /api/v1/marketplaces/{name}/sync`](../reference/api/marketplaces.md)
@@ -186,8 +190,8 @@ sharpest case of the rule above rather than an exception to it.
 
     `DELETE /api/v1/marketplaces/{name}` exists, but no machine scope reaches it:
     it withdraws served content, and that takes a person with a reason. So
-    `terraform destroy` still has nothing it may call, and there is no `PUT` —
-    a marketplace's URL is immutable.
+    `terraform destroy` still has nothing it may call, and a marketplace's URL
+    can change only before its first snapshot.
 
 ## What stays interactive, and drift
 

@@ -199,7 +199,12 @@ class EstateReconciliationTests extends AbstractGatewayTest {
     void declared_marketplaces_face_the_same_registration_gate_as_the_api() throws Exception {
         String drift = uniqueName("estate-drift");
         String original = readableUpstream();
-        registrationService.register(drift, original, "alice");
+        // A snapshot makes the stored URL its source of record; before one, the URL may be corrected.
+        ingestionService.ingest(
+                registrationService.register(drift, original, "alice").marketplace(), null);
+        String typo = uniqueName("estate-typo");
+        String typoed = readableUpstream();
+        registrationService.register(typo, typoed, "alice");
         long ledgerHead = fetchLogRepository.maxId();
 
         String fresh = uniqueName("estate-fresh");
@@ -208,6 +213,7 @@ class EstateReconciliationTests extends AbstractGatewayTest {
                         new DeclaredMarketplace("estate-evil", "ssh://evil.invalid/repo.git", null, null, null),
                         new DeclaredMarketplace("catalog", "https://example.invalid/catalog.git", null, null, null),
                         new DeclaredMarketplace(drift, "https://example.invalid/other.git", null, null, null),
+                        new DeclaredMarketplace(typo, "https://example.invalid/corrected.git", null, null, null),
                         new DeclaredMarketplace(
                                 "estate-webhookmode", "https://example.invalid/wh.git", "webhook", null, null),
                         new DeclaredMarketplace(fresh, "https://example.invalid/fresh.git", "scheduled", null, null)),
@@ -228,8 +234,21 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         assertThat(marketplaceRepository.findByName("catalog")).isEmpty();
         assertThat(marketplaceRepository.findByName("estate-webhookmode")).isEmpty();
         assertThat(marketplaceRepository.findByName(drift).orElseThrow().url())
-                .as("a declared URL never rewrites a registered upstream")
+                .as("a declared URL never rewrites the upstream of a marketplace with a snapshot")
                 .isEqualTo(original);
+        // Before the first snapshot it is converged, an unreadable upstream reported as at registration.
+        assertThat(actionOf(report, typo)).isEqualTo("updated");
+        assertThat(entryOf(report, typo).detail())
+                .contains("url=https://example.invalid/corrected.git")
+                .contains("upstream unreachable");
+        Marketplace corrected = marketplaceRepository.findByName(typo).orElseThrow();
+        assertThat(corrected.url()).isEqualTo("https://example.invalid/corrected.git");
+        assertThat(corrected.registeredBy()).isEqualTo(EstateReconciler.ACTOR);
+        assertThat(ledger("marketplace-url-changed", EstateReconciler.ACTOR))
+                .filteredOn(entry -> typo.equals(entry.get("marketplace")))
+                .singleElement()
+                .satisfies(
+                        entry -> assertThat(String.valueOf(entry.get("detail"))).contains(typoed));
         Marketplace created = marketplaceRepository.findByName(fresh).orElseThrow();
         assertThat(created.syncMode()).isEqualTo("scheduled");
 

@@ -258,7 +258,14 @@ public class IngestionService {
                 // resolved are one fact, and the completeness gate at approval is what refuses the
                 // state in which they are not.
                 snapshot = snapshotRepository.create(
-                        marketplace.id(), sha.name(), upstream.name(), state, violation, actor, served.closure());
+                        marketplace.id(),
+                        sha.name(),
+                        upstream.name(),
+                        state,
+                        violation,
+                        actor,
+                        served.closure(),
+                        marketplace.url());
             } catch (DuplicateKeyException raced) {
                 // Belt-and-braces under the per-marketplace lock: another instance of the gateway
                 // (or a path the lock cannot see) recorded the same commit first — same content,

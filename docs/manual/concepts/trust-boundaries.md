@@ -63,6 +63,14 @@ publication is a designed future feature and will arrive as promotion per
 Marketplace names are additionally constrained to `^[a-z0-9][a-z0-9_-]*$`, which
 is also what makes them safe as path segments on the facade.
 
+**A corrected URL is a registration.** Until a marketplace's first snapshot an
+administrator can replace its URL, and the new one passes the scheme allowlist,
+the credential refusal and the reachability check below, in that order. From
+the first snapshot on the URL is the snapshots' source of record and cannot
+change. A snapshot is recorded only while the marketplace still has the URL its
+content was fetched from, so a correction racing an ingest cannot relabel what
+that ingest pulled in.
+
 **Reachability.** Only after those checks pass does the gateway list the
 upstream's references, resolve the default branch it will pin, and refuse the
 registration when it cannot. The listing goes through the same connection path

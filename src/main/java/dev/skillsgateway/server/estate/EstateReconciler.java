@@ -171,10 +171,10 @@ public class EstateReconciler {
      * A declared marketplace enters through the exact registration gate the API uses (GW_ESTATE_0002):
      * name rules, reserved catalog name, URL scheme allowlist. The declaration has no ref field,
      * so the gateway-pinned ref (GW_INGEST_0006) cannot be overridden; a stored URL that differs from the
-     * declared one is a failure, never an update — the API deliberately has no URL update, and the
-     * reconciler must not acquire a power the API refuses to have.
+     * declared one is changed exactly where the API may change it, before the first snapshot
+     * (GW_INGEST_0066), and is a failure everywhere else.
      */
-    @Requirements({"GW_ESTATE_0002", "GW_INGEST_0041"})
+    @Requirements({"GW_ESTATE_0002", "GW_INGEST_0041", "GW_INGEST_0066"})
     private Entry reconcileMarketplace(DeclaredMarketplace declared) {
         String mode = declared.syncMode();
         if (mode != null && !DECLARABLE_SYNC_MODES.contains(mode)) {
@@ -201,24 +201,29 @@ public class EstateReconciler {
                     "marketplace", declared.name(), warnings.isEmpty() ? null : String.join("; ", warnings));
         }
         Marketplace stored = existing.get();
-        // Null-safe on both sides: a hosted marketplace has no url at all (GW_FACADE_0006), and declaring
-        // one for it — or dropping the one an upstream marketplace was registered with — is the
-        // same supply-chain swap the immutability rule exists to refuse.
-        if (!Objects.equals(stored.url(), declared.url())) {
-            throw validationFailure("declared url differs from the registered upstream; a marketplace URL is immutable"
-                    + " because changing it would swap the supply chain under approved snapshots");
-        }
         String declaredOrigin = declared.origin() == null ? Marketplace.ORIGIN_UPSTREAM : declared.origin();
         if (!declaredOrigin.equals(stored.origin())) {
             throw validationFailure("declared origin '%s' differs from the registered '%s'; where a marketplace's"
                             .formatted(declaredOrigin, stored.origin())
-                    + " content comes from is immutable for the same reason its url is");
+                    + " content comes from cannot change, because its snapshots name it as their source");
+        }
+        List<String> changes = new ArrayList<>();
+        // Through the API's URL correction (GW_INGEST_0066), whose refusals are this entry's failure:
+        // a marketplace with a snapshot, a hosted one, and a declared null URL for an upstream one.
+        if (!Objects.equals(stored.url(), declared.url())) {
+            changes.add("url=" + declared.url());
+            changes.addAll(registrationService
+                    .changeUrl(
+                            declared.name(), declared.url(), ACTOR, MarketplaceRegistrationService.Reachability.REPORT)
+                    .warnings());
         }
         if (mode != null && !mode.equals(stored.syncMode())) {
             syncService.changeMode(declared.name(), mode, ACTOR);
-            return Entry.updated("marketplace", declared.name(), "sync-mode=" + mode);
+            changes.add("sync-mode=" + mode);
         }
-        return Entry.unchanged("marketplace", declared.name());
+        return changes.isEmpty()
+                ? Entry.unchanged("marketplace", declared.name())
+                : Entry.updated("marketplace", declared.name(), String.join("; ", changes));
     }
 
     /**
