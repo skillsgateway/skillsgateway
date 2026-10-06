@@ -257,13 +257,21 @@ jobs:
             -d '{"name":"smoke","url":"file:///fixture"}')
           [ "$code" = "201" ] || fail "register returned $code: $(cat "$RUNNER_TEMP/register.json")"
 
-          # 2. Ingest, and insist the snapshot is held -- not approved, and not
-          # rejected on a policy violation.
-          curl -sS -b "$JAR" -c "$JAR" -o "$RUNNER_TEMP/snapshot.json" \
-            -X POST "$BASE/api/v1/marketplaces/smoke/ingest" -H "X-XSRF-TOKEN: $(csrf)"
-          id=$(jq -r '.id' "$RUNNER_TEMP/snapshot.json")
-          state=$(jq -r '.state' "$RUNNER_TEMP/snapshot.json")
-          [ "$state" = "held" ] || fail "ingest produced state '$state', expected held: $(cat "$RUNNER_TEMP/snapshot.json")"
+          # 2. Ingest, follow the job to its end, and insist the snapshot is held --
+          # not approved, and not rejected on a policy violation.
+          code=$(curl -sS -b "$JAR" -c "$JAR" -o "$RUNNER_TEMP/ingest.json" -w '%{http_code}' \
+            -X POST "$BASE/api/v1/marketplaces/smoke/ingest" -H "X-XSRF-TOKEN: $(csrf)")
+          [ "$code" = "202" ] || fail "ingest returned $code: $(cat "$RUNNER_TEMP/ingest.json")"
+          for _ in $(seq 1 60); do
+            curl -sS -b "$JAR" -c "$JAR" -o "$RUNNER_TEMP/ingest.json" "$BASE/api/v1/marketplaces/smoke/ingest"
+            jq -e '.running == null and .last != null' "$RUNNER_TEMP/ingest.json" >/dev/null && break
+            sleep 2
+          done
+          jq -e '.running == null' "$RUNNER_TEMP/ingest.json" >/dev/null \
+            || fail "ingest did not finish: $(cat "$RUNNER_TEMP/ingest.json")"
+          id=$(jq -r '.last.snapshotId' "$RUNNER_TEMP/ingest.json")
+          state=$(jq -r '.last.snapshotState' "$RUNNER_TEMP/ingest.json")
+          [ "$state" = "held" ] || fail "ingest produced state '$state', expected held: $(cat "$RUNNER_TEMP/ingest.json")"
 
           # 3. Approve. Only this publishes; the clone below is what proves it did.
           code=$(curl -sS -b "$JAR" -c "$JAR" -o "$RUNNER_TEMP/approve.json" -w '%{http_code}' \
