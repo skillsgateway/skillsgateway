@@ -3390,6 +3390,11 @@ and the content is exactly what the facade already serves to authenticated
 readers — never quarantined content, because the only repository the mirror reads
 is the published one.</p>
 <h2 id="what-is-not-a-boundary-yet">What is not a boundary yet<a class="headerlink" href="#what-is-not-a-boundary-yet" title="Permanent link">&para;</a></h2>
+<p><strong>Client telemetry</strong> is a boundary the gateway deliberately does not have. It
+accepts no usage or invocation reports from agent clients, because every
+identifying attribute in them is asserted by the client and forgeable. Adoption
+figures come from the ledger and the stored commit trees only; see
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md">ADR 0016</a>.</p>
 <p>A <strong>second recorded approval</strong> — a queue in which two identities each decide,
 rather than one deciding while the gateway checks who they are — is not
 implemented. The four-eyes rule refuses a conflicted approval; it does not

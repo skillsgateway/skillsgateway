@@ -2165,6 +2165,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#client-telemetry-is-not-ingested" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Client telemetry is not ingested
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#health" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2604,6 +2615,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#client-telemetry-is-not-ingested" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Client telemetry is not ingested
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#health" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2744,6 +2766,12 @@ a time series.</p>
 <td>gauge</td>
 <td>—</td>
 <td>Age of the oldest ledger entry no enabled export sink has taken. <strong>Watch this</strong>: with no sink registered the <a href="../../guides/snapshot-retention/#7-bound-the-audit-ledger">ledger trim</a> removes nothing by design, and this is the line that climbs while it does. Zero when every entry has been exported.</td>
+</tr>
+<tr>
+<td><code>skills_gateway.adoption.presence_cache</code></td>
+<td>counter</td>
+<td><code>result=hit\|miss</code></td>
+<td>Each commit-tree lookup the <a href="../api/adoption/#get-apiv1adoptionpresence">presence report</a> makes. A pinned commit never changes, so a hit is final; misses track how many new snapshots were delivered.</td>
 </tr>
 </tbody>
 </table>
@@ -2919,6 +2947,19 @@ monitoring system scrapes — a gauge that contacted a code host on read would p
 a third party on the scrape path. So a gateway that cannot reach the mirror does
 not know what it holds, and <code>reachable</code> at <code>0</code> with <code>seconds_since_success</code>
 climbing is what says the count beside them is old rather than low.</p>
+<h2 id="client-telemetry-is-not-ingested">Client telemetry is not ingested<a class="headerlink" href="#client-telemetry-is-not-ingested" title="Permanent link">&para;</a></h2>
+<p>The gateway has no endpoint that accepts usage telemetry from agent clients,
+no OpenTelemetry receiver (<code>/v1/metrics</code>, <code>/v1/logs</code>, <code>/v1/traces</code> are not
+mapped), and no adoption figure derived from anything a client reported. Every
+number in the <a href="../api/adoption/">adoption endpoints</a> comes from the gateway's own
+ledger, its served references and the commit trees it stores. A test fails if
+that changes.</p>
+<p>Client telemetry goes to your own OpenTelemetry collector and metrics backend,
+configured on the clients. To correlate it with what the gateway served, join it
+there against the <a href="../api/adoption/#get-apiv1adoptionpresence">presence report</a>,
+which carries the served marketplace, plugin and skill names. The reasons, and
+what would reopen the decision, are in
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md">ADR 0016</a>.</p>
 <h2 id="health">Health<a class="headerlink" href="#health" title="Permanent link">&para;</a></h2>
 <p><code>/actuator/health</code> carries a <code>gitStorage</code> indicator on both backends. It names
 the backend actually in use — which is the point, since a gateway serving from

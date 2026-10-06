@@ -3356,8 +3356,10 @@ not one mechanism.</p>
 <ul>
 <li><strong>Fetch-level audit:</strong> every façade access logged <code>{identity, marketplace,
   plugin, SHA, client UA, timestamp}</code> → SIEM. This alone answers T6.</li>
-<li><strong>Install inventory:</strong> derived from fetch logs — who holds a skill, never who
-  invokes it. Client-reported usage telemetry is not ingested
+<li><strong>Install inventory:</strong> derived from fetch logs and the served commit trees —
+  who holds a skill, never who invokes it
+  (<a href="../reference/api/adoption/#get-apiv1adoptionpresence">presence report</a>).
+  Client-reported usage telemetry is not ingested
   (<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md">ADR 0016 — Client invocation telemetry is not ingested; the gateway publishes presence instead</a>).</li>
 <li><strong>Blast radius as a query:</strong> "all identities that fetched
   <code>skill-x@*</code> in the last 90 days" is one ledger query, feeding recall (§5).</li>

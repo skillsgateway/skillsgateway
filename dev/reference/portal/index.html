@@ -2558,6 +2558,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#skill-presence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skill presence
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3496,6 +3507,17 @@
     <span class="md-ellipsis">
       
         Stale identities
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skill-presence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skill presence
       
     </span>
   </a>
@@ -4771,9 +4793,9 @@ For a full, resumable pull, use the <a href="#export">NDJSON export</a> and its 
 <hr />
 <h2 id="adoption">Adoption<a class="headerlink" href="#adoption" title="Permanent link">&para;</a></h2>
 <p><strong>Route:</strong> <code>/adoption</code> · <strong>Heading:</strong> Adoption</p>
-<p>The <a href="../api/adoption/">adoption and staleness reports</a>, read-only. Subtitle:
+<p>The <a href="../api/adoption/">adoption, staleness and presence reports</a>, read-only. Subtitle:
 "Who fetches what through the facade, aggregated from the append-only ledger,
-and which identities are not on the served tip." Both underlying reads require
+and which identities are not on the served tip." Every underlying read requires
 the auditor role (see <a href="#authorization">Authorization</a>), so a session without
 it sees the page's error state.</p>
 <h3 id="window-and-totals">Window and totals<a class="headerlink" href="#window-and-totals" title="Permanent link">&para;</a></h3>
@@ -4817,12 +4839,55 @@ Inside, the per-SHA breakdown:</p>
 <p>Empty state: "No fetches in the last {n} days. Adoption appears once content
 is fetched through the facade."</p>
 <h3 id="stale-identities">Stale identities<a class="headerlink" href="#stale-identities" title="Permanent link">&para;</a></h3>
-<p>The <a href="../api/adoption/#get-apiadoptionstaleness">staleness report</a>, window-free:
+<p>The <a href="../api/adoption/#get-apiv1adoptionstaleness">staleness report</a>, window-free:
 identity, marketplace, last received SHA, the served tip it diverges from —
 or a destructive <code>not serving</code> badge when the marketplace stopped serving
 entirely — and the last fetch time. The page says what the report is: facts,
 not verdicts.</p>
 <p>Empty state: "Every identity is on the served tip."</p>
+<h3 id="skill-presence">Skill presence<a class="headerlink" href="#skill-presence" title="Permanent link">&para;</a></h3>
+<p>The <a href="../api/adoption/#get-apiv1adoptionpresence">presence report</a>, window-free
+and not driven by the report window. The report's own statement sits above the
+table, saying the counts are presence, not invocation, and are uniform within a
+snapshot.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Skill</td>
+<td>Skill directory name, with the <code>SKILL.md</code> path beneath it.</td>
+</tr>
+<tr>
+<td>Plugin</td>
+<td>Plugin name from the manifest.</td>
+</tr>
+<tr>
+<td>Marketplace</td>
+<td>Marketplace name as served.</td>
+</tr>
+<tr>
+<td>Identities holding</td>
+<td>Identities whose latest fetch holds a snapshot containing the skill.</td>
+</tr>
+<tr>
+<td>Snapshots delivering</td>
+<td>Distinct delivered snapshots containing it.</td>
+</tr>
+<tr>
+<td>First delivered / Last delivered</td>
+<td>First and most recent fetch of any of them.</td>
+</tr>
+</tbody>
+</table>
+<p>Delivered snapshots whose content cannot be resolved are listed beneath the
+table under <strong>Content not resolvable</strong>, each with its holder count.</p>
+<p>Empty state: "No skills delivered yet. Presence appears once content is fetched
+through the facade."</p>
 <hr />
 <h2 id="webhooks">Webhooks<a class="headerlink" href="#webhooks" title="Permanent link">&para;</a></h2>
 <p><strong>Route:</strong> <code>/integrations/webhooks</code> (<code>/webhooks</code> redirects here) · <strong>Heading:</strong> Webhooks</p>
