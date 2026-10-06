@@ -1,7 +1,7 @@
 # snapshot-retention Specification
 
 ## Purpose
-Keeping storage and the ledger bounded without losing what must be kept: retention policy evaluation, soft delete with a restore window and scheduled compaction, the portal deletion surface, and the guarantees that approved snapshots, administrative revocations and administrative ledger entries are never removed, and that ledger reads are trimmed only behind every export sink's position.
+Keeping storage and the ledger bounded without losing what must be kept: retention policy evaluation, soft delete with a restore window and scheduled compaction, the portal deletion surface, and the guarantees that approved snapshots, administrative revocations and administrative ledger entries are never removed, and that ledger reads are trimmed only behind every export sink's position, keeping each identity's latest pack send per marketplace.
 ## Requirements
 ### Requirement: GW_RETENTION_0001
 The system SHALL implement GW_RETENTION_0001.
@@ -91,3 +91,9 @@ The system SHALL implement GW_RETENTION_0011.
 
 #### Scenario: SVC_GW_RETENTION_0011
 The system SHALL pass SVC_GW_RETENTION_0011.
+
+### Requirement: GW_RETENTION_0012
+The system SHALL implement GW_RETENTION_0012.
+
+#### Scenario: SVC_GW_RETENTION_0012
+The system SHALL pass SVC_GW_RETENTION_0012.
