@@ -85,7 +85,8 @@ async function ingestOnReview(page: Page, name: string): Promise<Locator> {
   }
   const before = page.url();
   await page.getByRole("button", { name: `Ingest ${name}` }).click();
-  await expect(page).not.toHaveURL(before);
+  // The ingest runs as a job (GW_INGEST_0068): the page opens what arrived once it ends.
+  await expect(page).not.toHaveURL(before, { timeout: 60_000 });
   await expect(page).toHaveURL(/\?snapshot=\d+$/);
   const card = page.getByTestId("snapshot-card");
   await expect(card.getByText("held", { exact: true }).first()).toBeVisible();

@@ -101,7 +101,9 @@ public final class MachineApiRegistry {
                 // Correcting the URL before the first snapshot (GW_INGEST_0066) is the registration
                 // decision made again: it chooses an upstream and publishes or withdraws nothing.
                 Set.of(post("/api/v1/marketplaces"), put("/api/v1/marketplaces/{name}/url")));
-        scopes.put("marketplaces:ingest", Set.of(post("/api/v1/marketplaces/{name}/ingest")));
+        scopes.put(
+                "marketplaces:ingest",
+                Set.of(post("/api/v1/marketplaces/{name}/ingest"), get("/api/v1/marketplaces/{name}/ingest")));
         scopes.put(
                 "vetting:run", Set.of(post("/api/v1/marketplaces/{name}/revet"), post("/api/v1/snapshots/{id}/revet")));
         scopes.put("waivers:read", Set.of(get("/api/v1/marketplaces/{name}/waivers")));

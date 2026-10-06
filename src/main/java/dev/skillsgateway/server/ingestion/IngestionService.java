@@ -1,5 +1,7 @@
 package dev.skillsgateway.server.ingestion;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.Marketplace;
@@ -12,10 +14,17 @@ import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.storage.RefTransitions;
 import dev.skillsgateway.server.vetting.VettingService;
 import io.github.reqstool.annotations.Requirements;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
@@ -36,6 +45,18 @@ public class IngestionService {
 
     /** Ledger event for an ingest attempt that failed, whatever triggered it (GW_AUDIT_0010). */
     public static final String EVENT_INGEST_FAILED = "ingest-failed";
+
+    public static final String STAGE_QUEUED = "queued";
+    public static final String STAGE_FETCHING = "fetching";
+    public static final String STAGE_EVALUATING_MANIFEST = "evaluating-manifest";
+    public static final String STAGE_VETTING = "vetting";
+
+    /** How often a replica renews its attempts' heartbeat, and how stale one must be to read as interrupted. */
+    static final long HEARTBEAT_MILLIS = 10_000;
+
+    public static final Duration HEARTBEAT_STALE = Duration.ofSeconds(60);
+
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     private static final String INCOMING_REF = "refs/quarantine/incoming";
     private static final String MANIFEST_PATH = ".claude-plugin/marketplace.json";
@@ -58,10 +79,18 @@ public class IngestionService {
      */
     private final ConcurrentHashMap<Long, ReentrantLock> ingestLocks = new ConcurrentHashMap<>();
 
+    /** The attempts this replica has claimed or is running, whose heartbeat it renews (GW_INGEST_0069). */
+    private final Set<UUID> owned = ConcurrentHashMap.newKeySet();
+
     private final GatewayMetrics metrics;
     private final UpstreamGit upstreamGit;
     private final MarketplaceRepository marketplaceRepository;
     private final AdminAuditLogger auditLogger;
+    private final ScheduledExecutorService heartbeats = Executors.newSingleThreadScheduledExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "ingest-heartbeat");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     public IngestionService(
             GitStorage storage,
@@ -86,6 +115,12 @@ public class IngestionService {
         this.upstreamGit = upstreamGit;
         this.marketplaceRepository = marketplaceRepository;
         this.auditLogger = auditLogger;
+        heartbeats.scheduleWithFixedDelay(this::heartbeat, HEARTBEAT_MILLIS, HEARTBEAT_MILLIS, TimeUnit.MILLISECONDS);
+    }
+
+    @PreDestroy
+    void stopHeartbeats() {
+        heartbeats.shutdownNow();
     }
 
     /**
@@ -103,16 +138,30 @@ public class IngestionService {
      */
     @Requirements({"GW_INGEST_0002", "GW_APPROVAL_0001", "GW_VETTING_0001", "GW_APPROVAL_0010"})
     public Snapshot ingest(Marketplace marketplace, String actor) {
+        return ingest(marketplace, actor, UUID.randomUUID());
+    }
+
+    /**
+     * {@link #ingest(Marketplace, String)} as the given attempt: an on-demand ingest passes the attempt
+     * it claimed, so the progress it reported while queued is the progress that continues
+     * (GW_INGEST_0068). The attempt heartbeats from here until it is recorded (GW_INGEST_0069).
+     */
+    @Requirements({"GW_INGEST_0068", "GW_INGEST_0069"})
+    public Snapshot ingest(Marketplace marketplace, String actor, UUID attempt) {
         ReentrantLock lock = ingestLocks.computeIfAbsent(marketplace.id(), id -> new ReentrantLock());
+        owned.add(attempt);
         lock.lock();
         try {
+            marketplaceRepository.startIngest(marketplace.id(), attempt);
+            Progress progress = stage -> marketplaceRepository.advanceIngest(marketplace.id(), attempt, stage);
             // Observation only (GW_OBSERVABILITY_0003): timing and outcome around the unchanged ingestion.
-            Snapshot snapshot = metrics.observeIngestion(() -> ingestLocked(marketplace, actor));
-            marketplaceRepository.recordIngest(marketplace.id(), Marketplace.INGEST_SUCCEEDED, null);
+            Snapshot snapshot = metrics.observeIngestion(() -> ingestLocked(marketplace, actor, progress));
+            marketplaceRepository.recordIngest(
+                    marketplace.id(), attempt, Marketplace.INGEST_SUCCEEDED, null, null, snapshot.id());
             return snapshot;
         } catch (RuntimeException e) {
             try {
-                recordFailure(marketplace, actor, e);
+                recordFailure(marketplace, actor, attempt, e);
             } catch (RuntimeException recording) {
                 // The ingest's own failure is the one the caller must see; this one rides along.
                 e.addSuppressed(recording);
@@ -120,7 +169,37 @@ public class IngestionService {
             throw e;
         } finally {
             lock.unlock();
+            owned.remove(attempt);
         }
+    }
+
+    /** A queued attempt is owned, and so heartbeats, from its claim until its run takes over. */
+    void own(UUID attempt) {
+        owned.add(attempt);
+    }
+
+    void disown(UUID attempt) {
+        owned.remove(attempt);
+    }
+
+    /**
+     * Keeps this replica's attempts from reading as interrupted (GW_INGEST_0069). Deliberately not a
+     * {@code @Scheduled} sweep: it touches only the rows this replica owns, so it runs on every replica
+     * and takes no lease.
+     */
+    @Requirements({"GW_INGEST_0069"})
+    public void heartbeat() {
+        try {
+            marketplaceRepository.heartbeat(List.copyOf(owned));
+        } catch (RuntimeException e) {
+            log.warn("could not renew the ingest heartbeat", e);
+        }
+    }
+
+    /** Reports the stage an ingest has reached (GW_INGEST_0068). */
+    @FunctionalInterface
+    private interface Progress {
+        void stage(String stage);
     }
 
     /**
@@ -130,14 +209,15 @@ public class IngestionService {
      * gateway's own and says so.
      */
     @Requirements({"GW_INGEST_0038", "GW_INGEST_0039", "GW_AUDIT_0010"})
-    private void recordFailure(Marketplace marketplace, String actor, RuntimeException e) {
+    private void recordFailure(Marketplace marketplace, String actor, UUID attempt, RuntimeException e) {
         UpstreamFailure failure = e instanceof IngestionException ingestion && ingestion.failure() != null
                 ? ingestion.failure()
                 : UpstreamFailure.unclassified(e);
         String reason = failure.describe();
         log.warn("ingestion of marketplace '{}' failed: {}", marketplace.name(), reason);
         log.debug("ingestion of marketplace '{}' failed", marketplace.name(), e);
-        marketplaceRepository.recordIngest(marketplace.id(), Marketplace.INGEST_FAILED, reason);
+        marketplaceRepository.recordIngest(
+                marketplace.id(), attempt, Marketplace.INGEST_FAILED, reason, failureJson(failure), null);
         auditLogger.record(actor, marketplace, EVENT_INGEST_FAILED, null, reason);
     }
 
@@ -151,9 +231,10 @@ public class IngestionService {
         "GW_INGEST_0030.3",
         "GW_INGEST_0036"
     })
-    private Snapshot ingestLocked(Marketplace marketplace, String actor) {
+    private Snapshot ingestLocked(Marketplace marketplace, String actor, Progress progress) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
             ObjectId upstream = fetchIncoming(repo, marketplace);
+            progress.stage(STAGE_EVALUATING_MANIFEST);
             // The manifest is decided before anything is pinned, because which commit the snapshot
             // *is* now depends on the answer: a manifest with resolved external sources is served
             // as a composite, not as the upstream commit. The upstream commit stays reachable
@@ -197,6 +278,7 @@ public class IngestionService {
                 throw failed;
             }
             if (Snapshot.HELD.equals(state)) {
+                progress.stage(STAGE_VETTING);
                 // Recorded once, before the chain so a failure shows without waiting on it
                 // (GW_INGEST_0036). The chain never reads them (GW_VETTING_0039), and a failure here is
                 // logged by the service rather than failing the ingestion.
@@ -342,6 +424,14 @@ public class IngestionService {
                     source.inflatedBytes()));
         }
         return new SnapshotClosure(upstreamSha.name(), manifestRewriter.transformerVersion(), members);
+    }
+
+    private static String failureJson(UpstreamFailure failure) {
+        try {
+            return JSON.writeValueAsString(failure);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private static byte[] manifestBytes(Repository repo, ObjectId sha) throws IOException {

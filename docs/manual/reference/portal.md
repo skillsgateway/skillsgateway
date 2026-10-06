@@ -246,8 +246,15 @@ line, and the next successful ingest removes it.
 Two actions, both outline buttons so that **Approve** stays the page's one
 primary control:
 
-- **Ingest** (`POST /api/v1/marketplaces/{name}/ingest`) toasts *Snapshot {sha12}
-  is {state}* and opens what arrived on Review.
+- **Ingest** (`POST /api/v1/marketplaces/{name}/ingest`) starts the ingest and the
+  header follows it: the stages *Queued → Fetching → Evaluating manifest →
+  Vetting*, the current one marked, and the elapsed time. While it runs the
+  button reads *Ingesting…* and is disabled. When it ends the page toasts
+  *Snapshot {id} is {state}* and opens what arrived on Review, or toasts the
+  failure. An ingest started elsewhere (the sync sweep, a webhook, another
+  reviewer) shows the same stages when the page is opened during it. One whose
+  gateway instance stopped reads *Ingest interrupted*, and **Ingest** is offered
+  again.
 - **Connect a client** opens the [client wizard](#connect-a-client) under the
   header.
 
@@ -255,7 +262,8 @@ primary control:
 
 On **Settings**. Forge metadata captured at registration, best effort: **Clone
 URL**, **Forge**, **Project**, **Description**, **Last upstream update**,
-**Last ingest** (its outcome and time, or "never"), **Registered**, **Registered
+**Last ingest** (its outcome, time and a link to the snapshot it recorded, or
+"never"), **Registered**, **Registered
 by**. Anything not captured shows "—".
 
 #### Correct the URL (administrators)

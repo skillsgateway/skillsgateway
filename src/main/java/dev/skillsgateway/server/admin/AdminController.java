@@ -22,8 +22,9 @@ import dev.skillsgateway.server.approval.SnapshotWithdrawnException;
 import dev.skillsgateway.server.approval.VettingBlockedException;
 import dev.skillsgateway.server.approval.VettingOverrideRecord;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.ingestion.IngestJobs;
+import dev.skillsgateway.server.ingestion.IngestStatus;
 import dev.skillsgateway.server.ingestion.IngestionException;
-import dev.skillsgateway.server.ingestion.IngestionService;
 import dev.skillsgateway.server.ingestion.SnapshotContentService;
 import dev.skillsgateway.server.ingestion.UpstreamException;
 import dev.skillsgateway.server.ingestion.UpstreamFailure;
@@ -44,9 +45,11 @@ import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +80,7 @@ public class AdminController {
     private final MarketplaceRemovalService removalService;
     private final MarketplaceRepository marketplaceRepository;
     private final SnapshotRepository snapshotRepository;
-    private final IngestionService ingestionService;
+    private final IngestJobs ingestJobs;
     private final ApprovalService approvalService;
     private final RevocationService revocationService;
     private final FetchLogRepository fetchLogRepository;
@@ -94,7 +97,7 @@ public class AdminController {
             MarketplaceRemovalService removalService,
             MarketplaceRepository marketplaceRepository,
             SnapshotRepository snapshotRepository,
-            IngestionService ingestionService,
+            IngestJobs ingestJobs,
             ApprovalService approvalService,
             RevocationService revocationService,
             FetchLogRepository fetchLogRepository,
@@ -109,7 +112,7 @@ public class AdminController {
         this.removalService = removalService;
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
-        this.ingestionService = ingestionService;
+        this.ingestJobs = ingestJobs;
         this.approvalService = approvalService;
         this.revocationService = revocationService;
         this.fetchLogRepository = fetchLogRepository;
@@ -220,6 +223,11 @@ public class AdminController {
                     description = "Why the last ingest attempt failed: reason, root cause and next step"
                             + " (GW_INGEST_0038); null unless it failed")
             String lastIngestReason,
+
+            @Schema(
+                    description = "The snapshot the last successful ingest recorded (GW_INGEST_0068); null when it"
+                            + " failed, before the first, or once that snapshot has been purged")
+            Long lastIngestSnapshotId,
 
             @Schema(description = "All snapshots of this marketplace, any state")
             List<Snapshot> snapshots) {}
@@ -493,33 +501,56 @@ public class AdminController {
                         marketplace.lastIngestAt(),
                         marketplace.lastIngestOutcome(),
                         marketplace.lastIngestReason(),
+                        marketplace.lastIngestSnapshotId(),
                         snapshots.get(marketplace.id())))
                 .toList();
     }
 
     @PostMapping("/marketplaces/{name}/ingest")
+    @Requirements({"GW_INGEST_0068", "GW_INGEST_0069"})
     @Tag(name = "Marketplaces")
     @Operation(
-            summary = "Ingest the upstream default branch",
-            description = "Fetches the marketplace's upstream default branch into quarantine and records an"
-                    + " immutable snapshot pinned to the upstream commit SHA. The snapshot is held until a reviewer"
-                    + " approves it; manifests declaring non-local plugin sources are rejected.")
-    @ApiResponse(responseCode = "201", description = "Snapshot recorded (held, or rejected on policy violation)")
-    @ApiResponse(responseCode = "404", description = "Marketplace not found")
+            summary = "Start an ingest of the upstream default branch",
+            description = "Starts fetching the marketplace's upstream default branch into quarantine and answers at"
+                    + " once, before anything is fetched. The ingest records an immutable snapshot pinned to the"
+                    + " upstream commit SHA, held until a reviewer approves it; manifests declaring non-local"
+                    + " plugin sources are rejected. Follow it at the Location returned, which reports the stage"
+                    + " (queued, fetching, evaluating-manifest, vetting) and, when it ends, the outcome: the"
+                    + " snapshot and its state, or for a failure the reason, root cause and next step"
+                    + " (GW_INGEST_0038). While an ingest of the marketplace is already running, whatever"
+                    + " triggered it, the answer is that ingest's status and nothing new is started.")
     @ApiResponse(
-            responseCode = "502",
-            description =
-                    "Upstream fetch failed; the problem carries reason, rootCause and nextStep" + " (GW_INGEST_0038)")
-    public ResponseEntity<Snapshot> ingest(@PathVariable String name, Authentication authentication) {
+            responseCode = "202",
+            description = "Ingest started, or already running; the body is its status",
+            headers = @Header(name = "Location", description = "The ingest status of this marketplace"))
+    @ApiResponse(responseCode = "404", description = "Marketplace not found")
+    public ResponseEntity<IngestStatus> ingest(@PathVariable String name, Authentication authentication) {
         roleService.requireApprover(authentication, name);
         Marketplace marketplace = marketplaceRepository
                 .findByName(name)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(name)));
-        Snapshot snapshot = ingestionService.ingest(marketplace, authentication.getName());
-        auditLogger.record(authentication.getName(), marketplace.name(), "snapshot-ingested", snapshot.sha());
-        emit(WebhookEvent.SNAPSHOT_INGESTED, marketplace.name(), snapshot, authentication.getName());
-        return ResponseEntity.status(HttpStatus.CREATED).body(snapshot);
+        IngestStatus status = ingestJobs.start(marketplace, authentication.getName());
+        return ResponseEntity.accepted()
+                .location(URI.create("/api/v1/marketplaces/%s/ingest".formatted(marketplace.name())))
+                .body(status);
+    }
+
+    @GetMapping("/marketplaces/{name}/ingest")
+    @Requirements({"GW_AUTH_0001", "GW_INGEST_0068", "GW_INGEST_0069"})
+    @Tag(name = "Marketplaces")
+    @Operation(
+            summary = "Read a marketplace's ingest status",
+            description = "The ingest in progress, if any, whatever triggered it — its stage and when it started,"
+                    + " or interrupted when the gateway instance running it stopped (GW_INGEST_0069) — and how"
+                    + " the last finished ingest ended.")
+    @ApiResponse(responseCode = "200", description = "The marketplace's ingest status")
+    @ApiResponse(responseCode = "404", description = "Marketplace not found")
+    public IngestStatus ingestStatus(@PathVariable String name) {
+        return ingestJobs
+                .status(name)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(name)));
     }
 
     @Schema(description = "Optional approval body carrying an administrative override of a blocked vetting outcome")

@@ -3913,6 +3913,26 @@ cases:
       THEN each positive raises one medium hook-config-unreadable finding naming the file and the key, and the negatives raise none
     revision: "0.4.0"
 
+  - id: SVC_GW_INGEST_0068
+    requirement_ids: ["GW_INGEST_0068"]
+    title: An on-demand ingest answers at once and its stage and outcome can be followed
+    verification: automated-test
+    description: |
+      GIVEN a registered marketplace whose upstream answers only when released, one whose manifest is rejected, one whose upstream is unreadable, and a scheduled marketplace
+      WHEN an ingest is requested, requested again while it runs, the upstream is released, and the sync sweep runs over the scheduled one
+      THEN the request is accepted with the status and its location before the upstream answers; the status shows queued or fetching, and fetching while the upstream is held; the second request answers the same ingest and one snapshot is recorded; the last ingest then reads succeeded with the snapshot and held; the rejected manifest ends with its snapshot rejected; the unreadable upstream ends failed with reason, root cause and next step; the sweep's ingest is reported the same way; and the portal shows the stage, the elapsed time and the outcome on the marketplace's page
+    revision: "0.5.0"
+
+  - id: SVC_GW_INGEST_0069
+    requirement_ids: ["GW_INGEST_0069"]
+    title: An ingest whose heartbeat lapsed reads as interrupted and does not block the next one
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose running ingest's heartbeat is older than the bound, and two attempts of which the second started after the first
+      WHEN its status is read, an ingest is requested, and the first attempt reports progress and finishes
+      THEN the status reads interrupted, the request starts a new ingest, and the first attempt neither changes nor clears the second attempt's progress
+    revision: "0.5.0"
+
   - id: SVC_GW_AUTH_0053
     requirement_ids: ["GW_AUTH_0053"]
     title: A sign-in started on one instance completes on another, and its session is honoured by both

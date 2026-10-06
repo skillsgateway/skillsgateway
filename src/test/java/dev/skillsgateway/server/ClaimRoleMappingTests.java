@@ -85,9 +85,7 @@ class ClaimRoleMappingTests extends AbstractClaimMappingTest {
         mockMvc.perform(post("/api/v1/snapshots/{id}/approve", own.snapshot().id())
                         .with(bob))
                 .andExpect(status().isOk());
-        mockMvc.perform(post("/api/v1/marketplaces/{name}/ingest", "claim-approver-mkt")
-                        .with(bob))
-                .andExpect(status().isCreated());
+        ingestViaApi("claim-approver-mkt", bob);
 
         // Another marketplace is refused by name and through a bare snapshot id (GW_AUTH_0011).
         mockMvc.perform(post(

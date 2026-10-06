@@ -13,6 +13,7 @@ CREATE TYPE marketplace_origin AS ENUM ('upstream', 'hosted');
 CREATE TYPE marketplace_push_policy AS ENUM ('append-only', 'allow-rewrite');
 CREATE TYPE marketplace_sync_mode AS ENUM ('on-demand', 'scheduled', 'webhook');
 CREATE TYPE marketplace_last_ingest_outcome AS ENUM ('succeeded', 'failed');
+CREATE TYPE marketplace_ingest_stage AS ENUM ('queued', 'fetching', 'evaluating-manifest', 'vetting');
 CREATE TYPE snapshot_state AS ENUM ('held', 'approved', 'rejected', 'revoked');
 -- Who decided a revocation, which is what decides how it can be lifted (GW_APPROVAL_0017).
 -- 'revet' is a chain verdict against a finding: it lifts when the finding is cleared, by a waiver
@@ -87,6 +88,17 @@ CREATE TABLE marketplaces (
     last_ingest_at TIMESTAMPTZ,
     last_ingest_outcome marketplace_last_ingest_outcome,
     last_ingest_reason TEXT,
+    -- The same failure's parts, {reason, rootCause, nextStep}, for a client to act on (GW_INGEST_0068).
+    last_ingest_failure JSONB,
+    -- The snapshot the last successful ingest recorded; a FK added after snapshots (GW_INGEST_0068).
+    last_ingest_snapshot_id BIGINT,
+    -- The ingest in progress, whatever triggered it (GW_INGEST_0068): all null when none runs. Every
+    -- progress write is conditional on the attempt, so one attempt never clears another's; a heartbeat
+    -- older than the bound reads as interrupted and may be claimed over (GW_INGEST_0069).
+    ingest_attempt UUID,
+    ingest_stage marketplace_ingest_stage,
+    ingest_started_at TIMESTAMPTZ,
+    ingest_heartbeat_at TIMESTAMPTZ,
     -- Removal (GW_INGEST_0034) retires the row rather than deleting it: snapshots restrict deletion
     -- because they are the approval history, and the ledger keeps this row's id as its referent.
     deleted_at TIMESTAMPTZ,
@@ -97,7 +109,12 @@ CREATE TABLE marketplaces (
     -- An upstream marketplace is defined by its clone URL; a hosted one has none (GW_FACADE_0006).
     CONSTRAINT marketplaces_last_ingest_is_recorded_whole CHECK (
         (last_ingest_at IS NULL) = (last_ingest_outcome IS NULL)
-        AND (last_ingest_reason IS NOT NULL) = (last_ingest_outcome IS NOT DISTINCT FROM 'failed')),
+        AND (last_ingest_reason IS NOT NULL) = (last_ingest_outcome IS NOT DISTINCT FROM 'failed')
+        AND (last_ingest_failure IS NULL OR last_ingest_outcome = 'failed')),
+    CONSTRAINT marketplaces_running_ingest_is_recorded_whole CHECK (
+        (ingest_attempt IS NULL) = (ingest_stage IS NULL)
+        AND (ingest_attempt IS NULL) = (ingest_started_at IS NULL)
+        AND (ingest_attempt IS NULL) = (ingest_heartbeat_at IS NULL)),
     CONSTRAINT marketplaces_upstream_has_url CHECK (origin = 'hosted' OR url IS NOT NULL),
     -- A hosted marketplace has no upstream to poll or be notified about: its ingestion trigger is
     -- the push itself, so the sweep must never see it (GW_FACADE_0006).
@@ -156,6 +173,10 @@ CREATE TABLE snapshots (
     purge_after TIMESTAMPTZ,
     UNIQUE (marketplace_id, sha)
 );
+
+-- Declared here because marketplaces precedes snapshots. Purging the snapshot forgets the link, not the outcome.
+ALTER TABLE marketplaces ADD CONSTRAINT marketplaces_last_ingest_snapshot_fk
+    FOREIGN KEY (last_ingest_snapshot_id) REFERENCES snapshots (id) ON DELETE SET NULL;
 
 -- The resolved closure of a composite snapshot: what each external plugin source was declared as,
 -- what it resolved to, and where it was grafted, copied as values at ingestion (GW_INGEST_0030.1).

@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
@@ -17,7 +16,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,12 +73,12 @@ class IngestFailureTests extends AbstractGatewayTest {
                 "$.username");
 
         forge.unauthorized("/" + repo);
-        mockMvc.perform(post("/api/v1/marketplaces/%s/ingest".formatted(name)).with(oidcLogin()))
-                .andExpect(status().isBadGateway())
-                .andExpect(jsonPath("$.detail", Matchers.containsString(UpstreamFailure.NOT_FOUND_OR_AUTH)))
-                .andExpect(jsonPath("$.reason").value(UpstreamFailure.NOT_FOUND_OR_AUTH))
-                .andExpect(jsonPath("$.rootCause", Matchers.not(Matchers.emptyOrNullString())))
-                .andExpect(jsonPath("$.nextStep", Matchers.not(Matchers.emptyOrNullString())));
+        String status = ingestViaApi(name, oidcLogin());
+        assertThat((String) JsonPath.read(status, "$.last.reason")).contains(UpstreamFailure.NOT_FOUND_OR_AUTH);
+        assertThat((String) JsonPath.read(status, "$.last.failure.reason"))
+                .isEqualTo(UpstreamFailure.NOT_FOUND_OR_AUTH);
+        assertThat((String) JsonPath.read(status, "$.last.failure.rootCause")).isNotBlank();
+        assertThat((String) JsonPath.read(status, "$.last.failure.nextStep")).isNotBlank();
 
         Map<String, Object> failed = listed(name);
         assertThat(failed.get("lastIngestOutcome")).isEqualTo("failed");
@@ -96,8 +94,8 @@ class IngestFailureTests extends AbstractGatewayTest {
                 .containsPattern("WARN.*" + name + ".*" + UpstreamFailure.NOT_FOUND_OR_AUTH);
 
         forge.reset();
-        mockMvc.perform(post("/api/v1/marketplaces/%s/ingest".formatted(name)).with(oidcLogin()))
-                .andExpect(status().isCreated());
+        assertThat((String) JsonPath.read(ingestViaApi(name, oidcLogin()), "$.last.outcome"))
+                .isEqualTo("succeeded");
 
         Map<String, Object> recovered = listed(name);
         assertThat(recovered.get("lastIngestOutcome")).isEqualTo("succeeded");

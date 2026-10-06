@@ -122,13 +122,35 @@ export function useEstateReport(enabled = true) {
   });
 }
 
+export type IngestStatus = components["schemas"]["IngestStatus"];
+
+const ingestKey = (name: string) => ["ingest", name] as const;
+
+/** True while an ingest is running that will still finish: an interrupted one never will (GW_INGEST_0069). */
+export function ingestLive(status: IngestStatus | undefined) {
+  return !!status?.running && !status.running.interrupted;
+}
+
+/**
+ * The marketplace's ingest in progress and how the last one ended (GW_INGEST_0068). Polled once a
+ * second while an ingest is live, and not at all otherwise.
+ */
+export function useIngestStatus(name: string) {
+  return useQuery({
+    queryKey: ingestKey(name),
+    queryFn: () => api<IngestStatus>(`/api/v1/marketplaces/${encodeURIComponent(name)}/ingest`),
+    refetchInterval: (query) => (ingestLive(query.state.data) ? 1000 : false),
+    enabled: name !== "",
+  });
+}
+
+/** Starts an ingest; the server answers at once with its status, which seeds the poll above. */
 export function useIngest() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (name: string) =>
-      api<Snapshot>(`/api/v1/marketplaces/${encodeURIComponent(name)}/ingest`, { method: "POST" }),
-    // A failure is recorded on the marketplace too (GW_INGEST_0039), so either way the read is stale.
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["marketplaces"] }),
+      api<IngestStatus>(`/api/v1/marketplaces/${encodeURIComponent(name)}/ingest`, { method: "POST" }),
+    onSuccess: (status, name) => queryClient.setQueryData(ingestKey(name), status),
   });
 }
 
