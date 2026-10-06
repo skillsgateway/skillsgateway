@@ -44,6 +44,9 @@ public class MarketplaceRegistrationService {
     /** Ledger event for a marketplace registered although its upstream could not be read (GW_INGEST_0041). */
     public static final String EVENT_UPSTREAM_UNREACHABLE = "marketplace-upstream-unreachable";
 
+    /** Ledger event for an upstream marketplace's URL corrected before its first snapshot (GW_INGEST_0066). */
+    public static final String EVENT_URL_CHANGED = "marketplace-url-changed";
+
     /**
      * What an unreadable upstream does to a registration (GW_INGEST_0040, GW_INGEST_0041): an
      * administrator at the API is refused and can correct the URL; a declaration converged at
@@ -153,7 +156,7 @@ public class MarketplaceRegistrationService {
         } else {
             requireAllowlistedScheme(url);
             requireNoUserinfo(url);
-            warnings = duplicateUrlWarnings(url);
+            warnings = duplicateUrlWarnings(url, name);
         }
         if (marketplaceRepository.findByName(name).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "marketplace '%s' already exists".formatted(name));
@@ -174,22 +177,89 @@ public class MarketplaceRegistrationService {
         }
         auditLogger.record(
                 actor, marketplace.name(), "marketplace-registered", null, registrationDetail(resolvedOrigin, url));
-        if (unreadable != null) {
-            auditLogger.record(
-                    actor,
-                    marketplace,
-                    EVENT_UPSTREAM_UNREACHABLE,
-                    null,
-                    unreadable.failure().describe());
-            warnings = Stream.concat(
-                            warnings.stream(),
-                            Stream.of("upstream unreachable: "
-                                    + unreadable.failure().describe()))
-                    .toList();
-        }
+        warnings = withUnreachable(actor, marketplace, warnings, unreadable);
         webhookService.emitMarketplace(
                 WebhookEvent.MARKETPLACE_REGISTERED, marketplace.name(), actor, "origin=" + resolvedOrigin);
         return new RegistrationOutcome(marketplace, warnings);
+    }
+
+    /**
+     * Corrects an upstream marketplace's URL until its first snapshot (GW_INGEST_0066): the new URL faces
+     * registration's checks in registration's order, and the editor becomes the registrant because
+     * the editor chose the upstream now in effect. An unchanged URL is answered as it stands, unrecorded.
+     */
+    @Requirements({
+        "GW_INGEST_0066",
+        "GW_INGEST_0005",
+        "GW_INGEST_0029",
+        "GW_INGEST_0040",
+        "GW_INGEST_0041",
+        "GW_INGEST_0054"
+    })
+    public RegistrationOutcome changeUrl(String name, String url, String actor, Reachability reachability) {
+        Marketplace current = marketplaceRepository.findByName(name).orElseThrow(() -> notFound(name));
+        if (current.hosted()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "a hosted marketplace has no upstream url; it is pushed to");
+        }
+        if (marketplaceRepository.hasSnapshot(current.id())) {
+            throw snapshotExists(name);
+        }
+        requireAllowlistedScheme(url);
+        requireNoUserinfo(url);
+        if (url.equals(current.url())) {
+            return new RegistrationOutcome(current, List.of());
+        }
+        List<String> warnings = duplicateUrlWarnings(url, name);
+        UpstreamException unreadable = readUpstream(name, url, reachability);
+        MarketplaceRepository.UrlChange change = marketplaceRepository.changeUrlBeforeFirstSnapshot(
+                current.id(), url, forgeMetadataService.resolve(url).orElse(null), actor);
+        if (change == MarketplaceRepository.UrlChange.NOT_LIVE) {
+            throw notFound(name);
+        }
+        if (change == MarketplaceRepository.UrlChange.HAS_SNAPSHOT) {
+            throw snapshotExists(name);
+        }
+        Marketplace changed = marketplaceRepository.findById(current.id()).orElseThrow();
+        auditLogger.record(
+                actor,
+                changed,
+                EVENT_URL_CHANGED,
+                null,
+                "from=%s to=%s%s".formatted(current.url(), url, credentialDetail(url)));
+        return new RegistrationOutcome(changed, withUnreachable(actor, changed, warnings, unreadable));
+    }
+
+    private static ResponseStatusException notFound(String name) {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND, "marketplace '%s' not found".formatted(name));
+    }
+
+    private static ResponseStatusException snapshotExists(String name) {
+        return new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                ("marketplace '%s' has a snapshot, so its url is the source of record and cannot change;"
+                                + " remove the marketplace and register it again")
+                        .formatted(name));
+    }
+
+    /** An upstream read under {@link Reachability#REPORT} that failed: on the ledger and in the warnings. */
+    @Requirements({"GW_INGEST_0041"})
+    private List<String> withUnreachable(
+            String actor, Marketplace marketplace, List<String> warnings, UpstreamException unreadable) {
+        if (unreadable == null) {
+            return warnings;
+        }
+        auditLogger.record(
+                actor,
+                marketplace,
+                EVENT_UPSTREAM_UNREACHABLE,
+                null,
+                unreadable.failure().describe());
+        return Stream.concat(
+                        warnings.stream(),
+                        Stream.of(
+                                "upstream unreachable: " + unreadable.failure().describe()))
+                .toList();
     }
 
     /**
@@ -250,13 +320,13 @@ public class MarketplaceRegistrationService {
      * duplicate that only case, a trailing slash or a {@code .git} suffix disguises.
      */
     @Requirements({"GW_INGEST_0029"})
-    private List<String> duplicateUrlWarnings(String url) {
+    private List<String> duplicateUrlWarnings(String url, String self) {
         String normalized = CloneUrlNormalizer.normalize(url);
         if (normalized == null) {
             return List.of();
         }
         return marketplaceRepository.list().stream()
-                .filter(m -> m.url() != null)
+                .filter(m -> m.url() != null && !m.name().equals(self))
                 .filter(m -> normalized.equals(CloneUrlNormalizer.normalize(m.url())))
                 .map(m -> "url already registered as " + m.name())
                 .toList();
@@ -305,11 +375,16 @@ public class MarketplaceRegistrationService {
         if (Marketplace.ORIGIN_HOSTED.equals(origin)) {
             return detail;
         }
+        return detail + credentialDetail(url);
+    }
+
+    @Requirements({"GW_INGEST_0055", "GW_INGEST_0062"})
+    private String credentialDetail(String url) {
         return upstreamCredentials
                 .select(url)
-                .map(selected -> detail + " credential=" + selected.urlPrefix()
-                        + (selected.isGitHubApp() ? " (github-app)" : ""))
-                .orElse(detail);
+                .map(selected ->
+                        " credential=" + selected.urlPrefix() + (selected.isGitHubApp() ? " (github-app)" : ""))
+                .orElse("");
     }
 
     /**

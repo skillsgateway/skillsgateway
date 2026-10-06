@@ -183,11 +183,42 @@ $ curl -X POST -u ... https://skills.corp.example/api/v1/marketplaces/acme/inges
     what clients receive. Ingesting frequently costs quarantine storage, never
     availability.
 
+## Correcting a URL before the first snapshot
+
+A URL with a typo can be corrected in place until something has been ingested
+from the marketplace. Nothing was ever fetched from it, so nothing has it as a
+source.
+
+=== "Portal"
+
+    On the marketplace's **Settings**, in **Upstream**, choose **Edit URL…**,
+    enter the corrected URL and **Save URL**. See
+    [Correct the URL](../reference/portal.md#correct-the-url-administrators).
+
+=== "API"
+
+    ```console
+    $ curl -X PUT -u ... https://skills.corp.example/api/v1/marketplaces/acme/url \
+        -H 'Content-Type: application/json' \
+        -d '{"url":"https://github.com/acme/skills.git"}'
+    ```
+
+    See the [reference](../reference/api/marketplaces.md#put-marketplacesnameurl).
+
+The corrected URL is validated exactly as at registration, upstream read
+included, and you become the marketplace's registrant, so another reviewer
+approves its first snapshot. The ledger records the previous and the new URL.
+A marketplace in webhook sync mode keeps its inbound secret; move the forge's
+webhook to the corrected repository yourself.
+
+Once the marketplace has a snapshot, in any state, the URL is fixed: the
+snapshot's provenance names it. Remove the marketplace and register it again.
+
 ## Removing a marketplace
 
-A marketplace registered with a typo, one whose upstream is abandoned, and one
-whose upstream moved all end the same way: remove it, and register again if
-there is anything to register.
+A marketplace whose upstream is abandoned, one whose upstream moved, and one
+registered with a typo that has already been ingested all end the same way:
+remove it, and register again if there is anything to register.
 
 === "Portal"
 
@@ -208,8 +239,9 @@ Removal withdraws everything the marketplace serves and stops it being synced or
 fetched, but keeps its snapshots and their history. It needs an administrator,
 and it states a reason, which the ledger records.
 
-**An upstream that moved.** The URL cannot be changed — that would relabel the
-provenance of content already approved from somewhere else — so remove the
+**An upstream that moved.** Once a snapshot exists the URL cannot be changed —
+that would relabel the provenance of content already ingested from somewhere
+else — so remove the
 marketplace and register the same name against the new URL. Clients keep their
 clone URL. They see nothing served until a snapshot of the new upstream is
 approved: the old approvals were decisions about a different upstream and do not

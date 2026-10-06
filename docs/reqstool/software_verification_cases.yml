@@ -966,10 +966,10 @@ cases:
     title: Declared marketplaces face the same registration gate as the API
     verification: automated-test
     description: |
-      GIVEN declarations containing a marketplace with a disallowed URL scheme, one under the reserved catalog name, one whose declared URL differs from its registered URL, one declaring webhook sync mode, and a valid one declaring scheduled sync
+      GIVEN declarations containing a marketplace with a disallowed URL scheme, one under the reserved catalog name, one whose declared URL differs from the registered URL of a marketplace that has a snapshot, one whose declared URL differs from the registered URL of a marketplace that has none, one declaring webhook sync mode, and a valid one declaring scheduled sync
       WHEN reconciliation runs
-      THEN the invalid entries each fail with a ledger record and create or change nothing, the registered marketplace keeps its stored URL, and the valid entry is registered with its sync mode applied through the audited sync-mode path
-    revision: "0.1.0"
+      THEN the invalid entries each fail with a ledger record and create or change nothing, the marketplace with a snapshot keeps its stored URL, the marketplace without one is reported updated and carries the declared URL with the change on the ledger, and the valid entry is registered with its sync mode applied through the audited sync-mode path
+    revision: "0.5.0"
 
   - id: SVC_GW_ESTATE_0003
     requirement_ids: ["GW_ESTATE_0003"]
@@ -3602,6 +3602,36 @@ cases:
       WHEN the snapshot's content inventory is read
       THEN each module is listed with its path, its declaring path:line, every event and interface at path:line, every imported file, and the package, the missing and the binary file as not scanned; a commented-out registration is not listed
     revision: "0.4.0"
+
+  - id: SVC_GW_INGEST_0066
+    requirement_ids: ["GW_INGEST_0066"]
+    title: An administrator corrects an upstream marketplace's URL before its first snapshot, and every refusal changes nothing
+    verification: automated-test
+    description: |
+      GIVEN an upstream marketplace with no snapshot registered by one administrator, a second upstream marketplace whose URL the first one's new URL duplicates, a marketplace with a snapshot, a hosted marketplace, and a removed marketplace
+      WHEN a second administrator changes the first marketplace's URL to a readable upstream, and then URL changes are requested with a disallowed scheme, an embedded credential, an unreadable upstream, by a caller who is not an administrator, for the marketplace with a snapshot, for the hosted marketplace, for the removed marketplace and for an unknown name
+      THEN the first change is answered with the marketplace carrying the new URL, the second administrator as registrant and a duplicate-URL warning naming the other marketplace but not itself, the ledger holds one entry naming the previous and new URL with the second administrator as actor, and the next ingest fetches from the new URL; each later request is refused with the status registration uses for the same cause (403, 404, 409 for the snapshot, 400 for the hosted marketplace) and leaves the stored URL, registrant and ledger unchanged, and the unreadable upstream is answered with its reason
+    revision: "0.5.0"
+
+  - id: SVC_GW_INGEST_0066.1
+    requirement_ids: ["GW_INGEST_0066"]
+    title: A URL change and a snapshot of content fetched from the previous URL cannot both be recorded
+    verification: automated-test
+    description: |
+      GIVEN an upstream marketplace with no snapshot whose content has been fetched from its URL and whose snapshot is about to be recorded
+      WHEN the marketplace's URL is changed before the snapshot is recorded, and separately, when a snapshot is recorded while a URL change waits for it
+      THEN in the first case no snapshot is recorded and the ingest fails stating that the URL changed while it was being ingested, and in the second the snapshot is recorded and the URL change is refused because a snapshot exists
+    revision: "0.5.0"
+
+  - id: SVC_GW_INGEST_0067
+    requirement_ids: ["GW_INGEST_0067"]
+    title: An administrator corrects a marketplace's URL from its settings in the portal
+    verification: automated-test
+    description: |
+      GIVEN an administrator on the settings of an upstream marketplace with no snapshot, the settings of one with a snapshot, of one the estate declares, and a user who is not an administrator
+      WHEN the administrator opens the URL correction, submits a URL the server refuses, and then one it accepts
+      THEN the refusal's reason is shown and the stored URL stays, the accepted URL replaces the shown one; the marketplace with a snapshot shows no control and says it can be removed and registered again, the declared marketplace's control is unavailable with its reason, and the user who is not an administrator sees no control
+    revision: "0.5.0"
 
   - id: SVC_GW_VETTING_0040
     requirement_ids: ["GW_VETTING_0040"]

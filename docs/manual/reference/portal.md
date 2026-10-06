@@ -226,7 +226,7 @@ A marketplace is divided by what a visit is for, most frequent first:
 | **Review** (default) | What awaits a decision — the [snapshot cards](#the-card) and the decision |
 | **Snapshots** | What is served, and every earlier snapshot |
 | **Activity** | This marketplace's slice of the [audit log](#audit-log) |
-| **Settings** | The [upstream](#upstream) facts and, for an administrator, the [vetting chain](#vetting-chain-administrators) and [removal](#remove-marketplace-administrators) |
+| **Settings** | The [upstream](#upstream) facts and, for an administrator, the [URL correction](#correct-the-url-administrators), the [vetting chain](#vetting-chain-administrators) and [removal](#remove-marketplace-administrators) |
 
 ### Header
 
@@ -257,6 +257,28 @@ On **Settings**. Forge metadata captured at registration, best effort: **Clone
 URL**, **Forge**, **Project**, **Description**, **Last upstream update**,
 **Last ingest** (its outcome and time, or "never"), **Registered**, **Registered
 by**. Anything not captured shows "—".
+
+#### Correct the URL (administrators)
+
+In the **Upstream** card of an upstream marketplace, **shown only to a session
+holding the `admin` role**. While the marketplace has no snapshot, **Edit URL…**
+opens a dialog titled *Correct the URL of _name_* with the **Clone URL**
+prefilled. It states that the upstream is read before anything changes and that
+the editor becomes the registrant. **Save URL** is disabled while the field is
+empty or whitespace, or while the URL carries a credential (an alert says to
+configure upstream credentials on the gateway instead), and reads *Saving…*
+while the request is in flight. The scheme allowlist and the upstream read are
+the server's: a refusal is shown in the dialog with the server's reason, and
+the stored URL is unchanged. On success the dialog closes, a toast confirms it,
+any warning (such as a URL another marketplace already has) is a toast of its
+own, and the card shows the new URL and registrant.
+
+Once the marketplace has a snapshot the button is gone and the card says the
+URL can no longer change, and that the marketplace can be
+[removed](#remove-marketplace-administrators) and registered again. A
+marketplace the estate configuration declares has the button disabled, with
+the reason: correct the declaration and restart. The dialog calls
+[`PUT /api/v1/marketplaces/{name}/url`](api/marketplaces.md#put-marketplacesnameurl).
 
 ### Vetting chain (administrators)
 
