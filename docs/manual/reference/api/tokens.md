@@ -272,7 +272,7 @@ credential reaches the union of its scopes' endpoints and nothing more.
 | `retention:read` | `GET /api/v1/retention/candidates` |
 | `estate:read` | `GET /api/v1/estate` |
 | `estate:reconcile` | `POST /api/v1/estate/reconcile` |
-| `adoption:read` | `GET /api/v1/adoption`, `GET /api/v1/adoption/staleness` |
+| `adoption:read` | `GET /api/v1/adoption`, `GET /api/v1/adoption/staleness`, `GET /api/v1/adoption/presence` |
 | `roles:read` | `GET /api/v1/roles` |
 
 `POST /api/v1/policy/playground` sits under `policy:read` because it evaluates a

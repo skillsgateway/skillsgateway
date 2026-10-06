@@ -2724,6 +2724,42 @@
         },
         "type": "object"
       },
+      "PresenceReport": {
+        "description": "Which identities hold which served skills: presence, not invocation",
+        "properties": {
+          "measure": {
+            "description": "What the counts measure; always \"presence\"",
+            "enum": [
+              "presence"
+            ],
+            "type": "string"
+          },
+          "since": {
+            "description": "Identities whose latest fetch predates this were left out; null for all time",
+            "format": "date-time",
+            "type": "string"
+          },
+          "skills": {
+            "description": "One entry per (marketplace, plugin, skill) any delivered snapshot contains",
+            "items": {
+              "$ref": "#/components/schemas/SkillPresence"
+            },
+            "type": "array"
+          },
+          "statement": {
+            "description": "What the counts mean and do not mean, stated in the payload itself",
+            "type": "string"
+          },
+          "unresolved": {
+            "description": "Delivered snapshots whose content can no longer be resolved; their holders may hold any skill",
+            "items": {
+              "$ref": "#/components/schemas/UnresolvedSnapshot"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "ProblemDetail": {
         "description": "An RFC 7807 problem document. Every refusal uses this shape, whatever raised it.",
         "properties": {
@@ -3314,6 +3350,55 @@
         },
         "type": "object"
       },
+      "SkillPresence": {
+        "description": "One skill's presence across every delivered snapshot that contains it",
+        "properties": {
+          "firstDelivered": {
+            "description": "First fetch of any of those snapshots",
+            "format": "date-time",
+            "type": "string"
+          },
+          "identitiesHolding": {
+            "description": "Identities whose latest fetch of the marketplace received a snapshot containing this skill. Uniform across a snapshot's skills by construction",
+            "format": "int64",
+            "type": "integer"
+          },
+          "lastDelivered": {
+            "description": "Most recent fetch of any of those snapshots",
+            "format": "date-time",
+            "type": "string"
+          },
+          "marketplace": {
+            "description": "Marketplace name as served",
+            "type": "string"
+          },
+          "path": {
+            "description": "Path of the SKILL.md in the most recently delivered snapshot",
+            "type": "string"
+          },
+          "plugin": {
+            "description": "Plugin name from the manifest, as served",
+            "type": "string"
+          },
+          "skill": {
+            "description": "Skill directory name, as served",
+            "type": "string"
+          },
+          "snapshots": {
+            "description": "Those snapshots, most recently fetched first",
+            "items": {
+              "$ref": "#/components/schemas/SnapshotHolding"
+            },
+            "type": "array"
+          },
+          "snapshotsDelivering": {
+            "description": "Distinct snapshots containing this skill that the facade delivered",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "Snapshot": {
         "description": "An immutable, SHA-identified snapshot of an upstream marketplace",
         "properties": {
@@ -3496,6 +3581,30 @@
           "truncated": {
             "description": "True when this page does not hold every changed path; see nextOffset",
             "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "SnapshotHolding": {
+        "description": "One delivered snapshot and the identities whose latest fetch it is",
+        "properties": {
+          "current": {
+            "description": "Whether this SHA is the currently served tip",
+            "type": "boolean"
+          },
+          "identitiesHolding": {
+            "description": "Identities whose latest fetch of the marketplace is this SHA",
+            "format": "int64",
+            "type": "integer"
+          },
+          "lastFetch": {
+            "description": "Most recent fetch of this SHA",
+            "format": "date-time",
+            "type": "string"
+          },
+          "sha": {
+            "description": "Commit SHA the facade delivered",
+            "type": "string"
           }
         },
         "type": "object"
@@ -3803,6 +3912,39 @@
           },
           "vetter": {
             "description": "Vetter whose verdict carried the finding",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UnresolvedSnapshot": {
+        "description": "A delivered snapshot whose content is not resolvable; reported, never dropped",
+        "properties": {
+          "current": {
+            "description": "Whether this SHA is the currently served tip",
+            "type": "boolean"
+          },
+          "firstDelivered": {
+            "description": "First fetch of this SHA",
+            "format": "date-time",
+            "type": "string"
+          },
+          "identitiesHolding": {
+            "description": "Identities whose latest fetch of the marketplace is this SHA",
+            "format": "int64",
+            "type": "integer"
+          },
+          "lastDelivered": {
+            "description": "Most recent fetch of this SHA",
+            "format": "date-time",
+            "type": "string"
+          },
+          "marketplace": {
+            "description": "Marketplace name as the ledger records it",
+            "type": "string"
+          },
+          "sha": {
+            "description": "Commit SHA the facade delivered",
             "type": "string"
           }
         },
@@ -4361,6 +4503,40 @@
           }
         },
         "summary": "Adoption report over the fetch ledger",
+        "tags": [
+          "Adoption"
+        ]
+      }
+    },
+    "/api/v1/adoption/presence": {
+      "get": {
+        "description": "Per (marketplace, plugin, skill) in any snapshot the facade delivered: the identities whose latest fetch received a snapshot containing it, and the snapshots that delivered it over what span. Presence, not invocation: a git fetch transfers a whole snapshot, so every skill in one snapshot shares its identity count. Snapshots whose content can no longer be resolved are listed under unresolved, never dropped. Window-free; names of the holders of one snapshot are at GET /api/v1/snapshots/{id}/fetchers.",
+        "operationId": "presence",
+        "parameters": [
+          {
+            "description": "Leave out identities whose latest fetch predates this instant (ISO-8601); omitted means all time",
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresenceReport"
+                }
+              }
+            },
+            "description": "The presence report"
+          }
+        },
+        "summary": "Which identities hold which served skills",
         "tags": [
           "Adoption"
         ]

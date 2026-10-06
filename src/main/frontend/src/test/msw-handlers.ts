@@ -1251,6 +1251,67 @@ export const staleIdentities: Schemas["StaleIdentity"][] = [
   },
 ];
 
+/** Presence: two skills of one snapshot sharing its holders, one older SHA no longer resolvable. */
+export const presenceReport: Schemas["PresenceReport"] = {
+  measure: "presence",
+  statement:
+    "Presence, not invocation: these counts say which identities received a skill through the facade, never whether it was used. A git fetch transfers a whole snapshot, so every skill in one snapshot has that snapshot's identity count.",
+  skills: [
+    {
+      marketplace: "corp-marketplace",
+      plugin: "toolkit",
+      skill: "code-review",
+      path: "plugins/toolkit/skills/code-review/SKILL.md",
+      identitiesHolding: 3,
+      snapshotsDelivering: 2,
+      firstDelivered: "2026-08-01T09:00:00Z",
+      lastDelivered: "2026-08-14T22:10:00Z",
+      snapshots: [
+        {
+          sha: "aaaabbbbccccddddeeeeffff0000111122223333",
+          identitiesHolding: 2,
+          lastFetch: "2026-08-14T22:10:00Z",
+          current: true,
+        },
+        {
+          sha: "1111222233334444555566667777888899990000",
+          identitiesHolding: 1,
+          lastFetch: "2026-08-12T08:00:00Z",
+          current: false,
+        },
+      ],
+    },
+    {
+      marketplace: "corp-marketplace",
+      plugin: "toolkit",
+      skill: "release-notes",
+      path: "plugins/toolkit/skills/release-notes/SKILL.md",
+      identitiesHolding: 2,
+      snapshotsDelivering: 1,
+      firstDelivered: "2026-08-13T10:00:00Z",
+      lastDelivered: "2026-08-14T22:10:00Z",
+      snapshots: [
+        {
+          sha: "aaaabbbbccccddddeeeeffff0000111122223333",
+          identitiesHolding: 2,
+          lastFetch: "2026-08-14T22:10:00Z",
+          current: true,
+        },
+      ],
+    },
+  ],
+  unresolved: [
+    {
+      marketplace: "corp-marketplace",
+      sha: "5555666677778888999900001111222233334444",
+      identitiesHolding: 1,
+      firstDelivered: "2026-06-02T07:00:00Z",
+      lastDelivered: "2026-06-03T07:00:00Z",
+      current: false,
+    },
+  ],
+};
+
 /** A reconciliation that declared nothing: the default, as in a deployment without an estate. */
 export const estateReport: Schemas["EstateReconciliation"] = {
   ranAt: "2026-09-25T08:00:00Z",
@@ -1274,6 +1335,7 @@ export const queuedIngest = (name: string): Schemas["IngestStatus"] => ({
 export const handlers = [
   http.get("/api/v1/adoption", () => HttpResponse.json(marketplaceAdoption)),
   http.get("/api/v1/adoption/staleness", () => HttpResponse.json(staleIdentities)),
+  http.get("/api/v1/adoption/presence", () => HttpResponse.json(presenceReport)),
   http.get("/api/v1/me", () =>
     HttpResponse.json({ username: "alice", roles: [], claimsTruncated: false, version: "0.3.0" }),
   ),

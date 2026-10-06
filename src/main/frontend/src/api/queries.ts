@@ -38,6 +38,8 @@ export type RevetResult = components["schemas"]["RevetResult"];
 export type Fetcher = components["schemas"]["Fetcher"];
 export type MarketplaceAdoption = components["schemas"]["MarketplaceAdoption"];
 export type SnapshotAdoption = components["schemas"]["SnapshotAdoption"];
+export type PresenceReport = components["schemas"]["PresenceReport"];
+export type SkillPresence = components["schemas"]["SkillPresence"];
 export type StaleIdentity = components["schemas"]["StaleIdentity"];
 export type Eligibility = components["schemas"]["Eligibility"];
 export type FourEyesCheck = components["schemas"]["FourEyesCheck"];
@@ -730,6 +732,17 @@ export function useAdoption(days: number) {
   return useQuery({
     queryKey: ["adoption", days],
     queryFn: () => api<MarketplaceAdoption[]>(`/api/v1/adoption?days=${days}`),
+  });
+}
+
+/**
+ * The presence report (GW_OBSERVABILITY_0006): which identities hold which served skills,
+ * window-free. Presence, not invocation.
+ */
+export function usePresence() {
+  return useQuery({
+    queryKey: ["adoption-presence"],
+    queryFn: () => api<PresenceReport>("/api/v1/adoption/presence"),
   });
 }
 

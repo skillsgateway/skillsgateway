@@ -137,7 +137,9 @@ public final class MachineApiRegistry {
         scopes.put("retention:read", Set.of(get("/api/v1/retention/candidates")));
         scopes.put("estate:read", Set.of(get("/api/v1/estate")));
         scopes.put("estate:reconcile", Set.of(post("/api/v1/estate/reconcile")));
-        scopes.put("adoption:read", Set.of(get("/api/v1/adoption"), get("/api/v1/adoption/staleness")));
+        scopes.put(
+                "adoption:read",
+                Set.of(get("/api/v1/adoption"), get("/api/v1/adoption/staleness"), get("/api/v1/adoption/presence")));
         scopes.put("roles:read", Set.of(get("/api/v1/roles")));
         return Map.copyOf(scopes);
     }

@@ -2987,6 +2987,36 @@ requirements:
     categories: ["maintainability", "reliability"]
     revision: 0.5.0
 
+  - id: GW_OBSERVABILITY_0006
+    title: Skill-level presence inventory from the fetch ledger and the served commit trees
+    significance: shall
+    description: "The system shall report, from the append-only fetch ledger and the commit trees of the snapshots it records a content-transferring fetch of, without recording anything new, every skill those commits contain, keyed by marketplace, plugin and skill, with the number of identities whose most recent content-transferring fetch of that marketplace received a commit containing the skill, the distinct delivered commits containing it and the first and most recent fetch of any of them; shall take the set of commits only from the ledger and report names and paths only, never file content; shall list a delivered commit whose content cannot be resolved, with its measures, rather than omit it; shall optionally leave out identities whose most recent fetch predates a caller-given instant; and shall restrict the report to callers permitted to read the ledger."
+    references:
+      requirement_ids: ["GW_OBSERVABILITY_0001", "GW_INGEST_0008"]
+    rationale: "The question an advisory about a malicious skill raises is which identities hold it, and before this an operator had to work out by hand which marketplaces at which commits contained it. The ledger and the pinned trees already hold the answer and no client can move either. Taking the commits from the ledger alone means nothing held is ever named, and a recall answer that silently dropped the oldest, reclaimed commits would leave out the installs most likely to be running revoked content. ADR 0016."
+    categories: ["functional-suitability", "security"]
+    revision: 0.5.0
+
+  - id: GW_OBSERVABILITY_0007
+    title: The presence report states in its payload that it measures presence
+    significance: shall
+    description: "The system shall carry, in the presence report's own payload, a measure identifying the report as presence and a statement that its counts say which identities received a skill and never whether it was used, and that every skill of one snapshot shares that snapshot's counts; shall name its per-skill measures for holding and delivery rather than for fetching or use; and shall carry the marketplace, plugin and skill names as served, which an external metrics backend joins on."
+    references:
+      requirement_ids: ["GW_OBSERVABILITY_0006"]
+    rationale: "A git fetch is all-or-nothing, so per-skill counts are uniform within a snapshot by construction, and a table of skills with per-skill numbers will otherwise be read as the invocation measure it was built instead of. A caveat in the documentation does not travel with an exported payload; a field does. Correlating with invocation is left to the organisation's own backend, joined on the served names. ADR 0016."
+    categories: ["functional-suitability", "interaction-capability"]
+    revision: 0.5.0
+
+  - id: GW_OBSERVABILITY_0008
+    title: No client-reported usage telemetry is ingested or reported
+    significance: shall
+    description: "The system shall expose no surface that accepts client-reported usage or invocation telemetry, including no OpenTelemetry receiver path, and shall derive no adoption figure it reports from anything other than its fetch ledger, its served references and the commit trees it stores."
+    references:
+      requirement_ids: ["GW_OBSERVABILITY_0001", "GW_OBSERVABILITY_0006"]
+    rationale: "Every identifying attribute in client telemetry is asserted by the client and forgeable, and placing such a figure beside a ledger-derived one in the same report would lend it the ledger's standing. A negative stated only in prose decays, so the requirement is held by a test that fails when a later change adds such a surface. ADR 0016."
+    categories: ["security"]
+    revision: 0.5.0
+
   - id: GW_VETTING_0061
     title: Several blocking finding groups are waived in one action
     significance: shall

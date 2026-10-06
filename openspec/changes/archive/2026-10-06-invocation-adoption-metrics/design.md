@@ -122,7 +122,7 @@ that reason, is **how many distinct snapshots delivered a skill and over what
 span** — a skill present since the first snapshot differs from one added last
 week, and that difference is real.
 
-### 6. GW_0215 is verified by a test that fails when someone adds an endpoint
+### 6. GW_OBSERVABILITY_0008 is verified by a test that fails when someone adds an endpoint
 
 A requirement stating that no surface accepts client-reported telemetry is only
 worth having if something notices when one appears. The verification is a
@@ -158,7 +158,7 @@ helper — those would be building the join the ADR just said cannot currently c
   touched only PostgreSQL and the served tips, and a storage outage now degrades
   the report rather than only the facade. It degrades to decision 4's
   unresolvable marker rather than to an error.
-- **GW_0215 is a negative and negatives rot.** Decision 6 is the answer; if that
+- **GW_OBSERVABILITY_0008 is a negative and negatives rot.** Decision 6 is the answer; if that
   test is ever weakened, the requirement is gone whatever the YAML says.
 - **The upstream redaction could change without anyone noticing**, at which point
   ADR 0016's rejected option 3 becomes live. Nothing here detects that; it needs a
@@ -171,16 +171,15 @@ None. Additive report, no schema change, no configuration change, no behaviour
 change to any existing endpoint. A deployment that never calls the new path is
 unaffected.
 
-## Open Questions
+## Open Questions (resolved in the implementing PR)
 
-- **Machine reach**: does the presence report sit under the existing
-  `adoption:read` scope, or its own? It enumerates identities against named
-  content, which is a slightly sharper capability than the marketplace-level
-  report — argues for its own scope; but a second scope for one path argues for
-  reuse. Decide in the implementing PR, and whichever way it goes, the estate
-  declaration obligation in `AGENTS.md` applies to a new grantable scope.
-- **Window semantics**: GW_OBSERVABILITY_0001 windows and GW_OBSERVABILITY_0002 deliberately does not, because
-  staleness is a property of an identity's latest state. Presence is arguably the
-  same — *holds*, not *held during a window* — which would make the window
-  optional rather than defaulted. Leaning window-free with an optional bound, but
-  it is a product call.
+- **Machine reach**: the existing `adoption:read` scope. The report is gated to
+  auditor or admin like staleness, which already names identities against a
+  marketplace and SHA, and the skill names it adds are what
+  `marketplaces:read` already discloses for served snapshots. A scope never
+  narrows once issued, so a split that turned out wrong would be permanent. No
+  new grantable value, so no estate declaration change.
+- **Window semantics**: window-free, with an optional `since` instant that drops
+  identities whose latest fetch predates it. Not `days`, which on
+  `/api/v1/adoption` means activity in a period and would invite exactly the
+  reading this report exists to prevent.

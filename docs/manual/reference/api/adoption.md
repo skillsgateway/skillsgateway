@@ -5,7 +5,7 @@ tips of the published repositories. Nothing here writes anything — the ledger
 holds the raw entries, these endpoints aggregate them. For the raw feed see
 [Audit](audit.md).
 
-**Machine reach.** `adoption:read` covers both endpoints on this page. See
+**Machine reach.** `adoption:read` covers every endpoint on this page. See
 [Machine API credentials](tokens.md#machine-api-credentials).
 
 Only `upload-pack` entries count: a ref advertisement (`info-refs`) fires on
@@ -19,9 +19,20 @@ identities that never received anything.
     Mapping identities to teams is the identity provider's knowledge, and it
     is deliberately not reconstructed here.
 
+!!! warning "Presence, not usage"
+
+    The [presence report](#get-apiv1adoptionpresence) counts per skill, but a
+    git fetch transfers a whole snapshot: every skill in one snapshot has that
+    snapshot's identity count, by construction. It says who *holds* a skill,
+    never who *used* it. The gateway does not ingest client usage telemetry
+    ([ADR 0016](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md)),
+    and **adherence** — whether the guidance was followed — is outside what
+    the gateway can observe; that belongs to CI and policy gates in the
+    consuming repositories.
+
 ---
 
-Both reads require **auditor** (or admin) — they enumerate identities off the
+Every read requires **auditor** (or admin) — they enumerate identities off the
 ledger, exactly like the ledger reads themselves. See
 [Delegated administration](../../guides/delegated-administration.md).
 
@@ -86,3 +97,62 @@ blast-radius case the report exists for.
     An identity may be pinned to an old SHA on purpose. The report states what
     was received and what is served; deciding whether that is a problem is the
     operator's call.
+
+---
+
+## `GET /api/v1/adoption/presence`
+
+Skill-level presence: for every skill in any snapshot the facade delivered,
+keyed by marketplace, plugin and skill, the identities whose latest fetch of
+that marketplace holds it, and the snapshots that delivered it over what span.
+It answers the recall question — *who holds `skill-x`* — without first working
+out which marketplaces at which SHAs contained it.
+
+| Parameter | Meaning |
+| --- | --- |
+| `since` | Optional ISO-8601 instant. Identities whose latest fetch predates it are left out of the counts, for an estate where older installs are presumed decommissioned. It never narrows which deliveries are considered. Omitted means all time. |
+
+```console
+$ curl localhost:8080/api/v1/adoption/presence
+```
+
+```json
+{"measure":"presence",
+ "statement":"Presence, not invocation: these counts say which identities received a skill ...",
+ "since":null,
+ "skills":[
+   {"marketplace":"acme","plugin":"toolkit","skill":"code-review",
+    "path":"plugins/toolkit/skills/code-review/SKILL.md",
+    "identitiesHolding":3,"snapshotsDelivering":2,
+    "firstDelivered":"2026-08-01T09:00:00Z","lastDelivered":"2026-08-15T09:04:11Z",
+    "snapshots":[
+      {"sha":"3f9c2ab...","identitiesHolding":2,"lastFetch":"2026-08-15T09:04:11Z","current":true},
+      {"sha":"9d01c44...","identitiesHolding":1,"lastFetch":"2026-08-12T08:00:00Z","current":false}]}],
+ "unresolved":[
+   {"marketplace":"acme","sha":"5e1f0aa...","identitiesHolding":1,
+    "firstDelivered":"2026-06-02T07:00:00Z","lastDelivered":"2026-06-03T07:00:00Z","current":false}]}
+```
+
+**200.** Window-free like staleness: an identity holds what its most recent
+fetch of a marketplace received, so it counts against exactly one SHA per
+marketplace. `measure` and `statement` are part of the payload so that an
+export carries its own caveat.
+
+- **Only delivered snapshots.** The SHAs come from `upload-pack` ledger entries
+  alone, never from a snapshot id the caller names, so a held snapshot's
+  contents are never named here. Names and paths only; file content stays behind
+  [snapshot file inspection](marketplaces.md).
+- **`unresolved` is not empty.** A delivered SHA whose objects retention
+  reclaimed, or whose manifest no longer parses, is listed with its holders
+  instead of being dropped. Its holders may hold any skill.
+- **Who, by name.** The counts do not name identities. For the holders of one
+  snapshot use [`GET /api/v1/snapshots/{id}/fetchers`](marketplaces.md), which
+  is gated to that marketplace's approvers.
+- **Joining with client telemetry.** `marketplace`, `plugin` and `skill` are the
+  names as served, the keys an organisation's own metrics backend would join
+  invocation data on. Whether a client reports them unredacted is up to the
+  client ([ADR 0016](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md)).
+
+A snapshot's content is resolved once per process and cached; the
+`skills_gateway.adoption.presence_cache` counter (`result=hit|miss`) shows how
+often the report reads a commit tree.

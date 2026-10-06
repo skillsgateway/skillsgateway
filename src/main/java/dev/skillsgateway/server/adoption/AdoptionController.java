@@ -6,7 +6,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.Instant;
 import java.util.List;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,9 +16,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The adoption reporting surface (GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002): read-only, derived entirely from the fetch
- * ledger and the served tips. Both reads enumerate identities off the ledger, so they are gated
- * exactly like the ledger itself (auditor or admin).
+ * The adoption reporting surface (GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002, GW_OBSERVABILITY_0006): read-only,
+ * derived entirely from the fetch ledger, the served tips and the served commit trees. Every read
+ * enumerates identities off the ledger, so each is gated exactly like the ledger itself (auditor
+ * or admin).
  */
 @RestController
 @RequestMapping("/api/v1/adoption")
@@ -67,5 +70,29 @@ public class AdoptionController {
     public List<AdoptionService.StaleIdentity> staleness(Authentication authentication) {
         roleService.requireAuditor(authentication);
         return adoptionService.staleness();
+    }
+
+    @GetMapping("/presence")
+    @Requirements({"GW_OBSERVABILITY_0006", "GW_OBSERVABILITY_0007"})
+    @Tag(name = "Adoption")
+    @Operation(
+            summary = "Which identities hold which served skills",
+            description = "Per (marketplace, plugin, skill) in any snapshot the facade delivered: the identities"
+                    + " whose latest fetch received a snapshot containing it, and the snapshots that delivered it"
+                    + " over what span. Presence, not invocation: a git fetch transfers a whole snapshot, so every"
+                    + " skill in one snapshot shares its identity count. Snapshots whose content can no longer be"
+                    + " resolved are listed under unresolved, never dropped. Window-free; names of the holders of"
+                    + " one snapshot are at GET /api/v1/snapshots/{id}/fetchers.")
+    @ApiResponse(responseCode = "200", description = "The presence report")
+    public AdoptionService.PresenceReport presence(
+            @Parameter(
+                            description = "Leave out identities whose latest fetch predates this instant (ISO-8601);"
+                                    + " omitted means all time")
+                    @RequestParam(required = false)
+                    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                    Instant since,
+            Authentication authentication) {
+        roleService.requireAuditor(authentication);
+        return adoptionService.presence(since);
     }
 }

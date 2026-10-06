@@ -207,6 +207,38 @@ public class SnapshotContentService {
     }
 
     /**
+     * The manifest's plugins and their skills at commit {@code sha} of a marketplace, addressed by
+     * commit rather than by snapshot row (GW_OBSERVABILITY_0006). Quarantine is read first because
+     * revocation leaves it untouched; the published repository second, because a virtual catalog
+     * commit exists only there. Neither is created when absent.
+     *
+     * <p>Empty when the content cannot be resolved — the commit's objects are gone, or the
+     * manifest is absent or does not parse — which a caller must report as unknown, never as
+     * containing nothing. Names and paths only; no component declarations are read.
+     */
+    @Requirements({"GW_OBSERVABILITY_0006"})
+    public Optional<List<PluginContent>> skillsAt(String marketplace, String sha) {
+        for (GitStorage.Role role : List.of(GitStorage.Role.QUARANTINE, GitStorage.Role.PUBLISHED)) {
+            try {
+                if (!storage.marketplaces(role).contains(marketplace)) {
+                    continue;
+                }
+                try (Repository repo = storage.open(role, marketplace);
+                        RevWalk walk = new RevWalk(repo)) {
+                    RevCommit commit = walk.parseCommit(ObjectId.fromString(sha));
+                    if (readFile(repo, commit, MANIFEST_PATH) != null) {
+                        return Optional.of(plugins(repo, commit, false));
+                    }
+                }
+            } catch (IOException | IllegalArgumentException e) {
+                // A missing object and a malformed manifest are both IOExceptions; a SHA that is not
+                // hex is the IllegalArgumentException. Each means "not resolvable here".
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
      * The manifest's plugins with their skills, at one commit, and — when {@code withComponents} —
      * every other component each provides (GW_INGEST_0045). The diff compares skills only, so it
      * does not pay for reading component declarations.

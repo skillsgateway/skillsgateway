@@ -319,6 +319,27 @@ public class FetchLogRepository {
                 .list();
     }
 
+    /**
+     * Every (marketplace, sha) the ledger records a content-transferring fetch of, with the first
+     * and most recent such fetch (GW_OBSERVABILITY_0006). Window-free: the set is bounded by how
+     * often the estate approves, and a recall answer must not lose the oldest deliveries.
+     */
+    @Requirements({"GW_OBSERVABILITY_0006"})
+    public List<ShaDelivery> deliveriesPerSha() {
+        return jdbc.sql("SELECT marketplace, sha, MIN(ts) AS first_fetch, MAX(ts) AS last_fetch FROM fetch_log"
+                        + " WHERE event = 'upload-pack' AND sha IS NOT NULL"
+                        + " GROUP BY marketplace, sha ORDER BY marketplace, MIN(ts)")
+                .query((rs, rowNum) -> new ShaDelivery(
+                        rs.getString("marketplace"),
+                        rs.getString("sha"),
+                        Timestamps.instant(rs, "first_fetch"),
+                        Timestamps.instant(rs, "last_fetch")))
+                .list();
+    }
+
+    /** One (marketplace, sha)'s first and most recent content-transferring fetch. */
+    public record ShaDelivery(String marketplace, String sha, Instant firstFetch, Instant lastFetch) {}
+
     /** One (marketplace, sha) adoption aggregate over the report window. */
     public record ShaAdoption(String marketplace, String sha, long fetches, long identities, Instant lastFetch) {}
 

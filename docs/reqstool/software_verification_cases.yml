@@ -3972,3 +3972,33 @@ cases:
       WHEN the reviewer selects them, writes one justification and one expiry, and records the waivers, and the server refuses one of them
       THEN the selection states its rules and how many findings it covers, the action stays disabled until the justification and expiry are valid, one waiver limited to each selected group is posted with that justification and expiry, and the result names the refused group, which stays selected
     revision: "0.5.0"
+
+  - id: SVC_GW_OBSERVABILITY_0006
+    requirement_ids: ["GW_OBSERVABILITY_0006"]
+    title: Presence names served skills with their holders and reports unresolvable snapshots rather than dropping them
+    verification: automated-test
+    description: |
+      GIVEN one identity that fetched a first approved snapshot, another that fetched a second approved snapshot adding a skill, a third held snapshot adding a skill that was never served, and ledger entries for one delivered SHA whose objects are gone and one whose manifest does not parse
+      WHEN the presence report is read, then read with a since bound after every fetch
+      THEN the shared skill counts both holders across both snapshots and the added skill counts one, the held snapshot's skill appears nowhere, both unresolvable SHAs are listed with their holder, the bounded report keeps the skills with no holders, a second read is served from the content cache, and the deny-by-default authorization walk classifies the read as privileged like the ledger
+    revision: "0.5.0"
+
+  - id: SVC_GW_OBSERVABILITY_0007
+    requirement_ids: ["GW_OBSERVABILITY_0007"]
+    title: The presence report says in its payload that it measures presence, uniformly per snapshot
+    verification: automated-test
+    description: |
+      GIVEN one approved snapshot carrying two skills, fetched through the facade by two identities
+      WHEN the presence report is read
+      THEN the payload identifies its measure as presence with a statement that it is not invocation and that a fetch transfers a whole snapshot, both skills carry the same holder count, and no skill row carries a fetch or invocation field
+    revision: "0.5.0"
+
+  - id: SVC_GW_OBSERVABILITY_0008
+    requirement_ids: ["GW_OBSERVABILITY_0008"]
+    title: No surface accepts client-reported telemetry and no adoption figure reads from one
+    verification: automated-test
+    description: |
+      GIVEN the running application's mapped request handlers and servlet registrations
+      WHEN every POST, PUT and PATCH route is enumerated and the OpenTelemetry receiver paths are posted to
+      THEN every write route sits on a known operator, publisher or machine surface and none is named for telemetry intake, no servlet beyond the facade and publish paths is mounted, no receiver path accepts the post, and the adoption reports depend only on the ledger, the served tips and the stored commit trees
+    revision: "0.5.0"
