@@ -198,7 +198,7 @@ hosted marketplace the source is its own origin repository, and a push already
 does this — the endpoint stays available to re-ingest.
 
 The request answers at once, before anything is fetched, and the ingest runs on
-the gateway (GW_INGEST_0066 — An on-demand ingest runs as a job whose progress can be followed). Follow it at the
+the gateway (GW_INGEST_0068 — An on-demand ingest runs as a job whose progress can be followed). Follow it at the
 `Location` it returns, the status endpoint below.
 
 ```console
@@ -248,7 +248,7 @@ $ curl localhost:8080/api/v1/marketplaces/acme/ingest
 | Field | Meaning |
 | --- | --- |
 | `running` | `null` when no ingest is running. `stage` is `queued`, `fetching`, `evaluating-manifest` or `vetting` (vetting runs only for a snapshot that is held). `startedAt` is when it was requested. |
-| `running.interrupted` | `true` when the gateway instance running it stopped and it will not finish (GW_INGEST_0067 — An ingest whose replica stopped is reported as interrupted). A new `POST` starts one in its place. |
+| `running.interrupted` | `true` when the gateway instance running it stopped and it will not finish (GW_INGEST_0069 — An ingest whose replica stopped is reported as interrupted). A new `POST` starts one in its place. |
 | `last` | `null` before the first ingest ends. `outcome` is `succeeded` or `failed`. |
 | `last.snapshotId`, `last.snapshotState` | The snapshot a successful ingest recorded and its current state: `held`, or `rejected` when the manifest broke policy. `null` for a failure, or once the snapshot is purged. |
 | `last.reason`, `last.failure` | For a failure, the readable sentence and its parts (`reason`, `rootCause`, `nextStep`), which the `POST` used to return as a `502` problem. |

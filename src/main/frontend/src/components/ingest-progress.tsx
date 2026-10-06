@@ -29,10 +29,10 @@ function useNow(ticking: boolean) {
 
 /**
  * An ingest in progress: the stages it passes through, the one it is at, and how long it has run
- * (GW_INGEST_0066). Only the stage is announced; the elapsed time ticks visibly but silently. An
- * ingest whose gateway instance stopped is said to be interrupted, not shown as running (GW_INGEST_0067).
+ * (GW_INGEST_0068). Only the stage is announced; the elapsed time ticks visibly but silently. An
+ * ingest whose gateway instance stopped is said to be interrupted, not shown as running (GW_INGEST_0069).
  *
- * @Requirements GW_INGEST_0066, GW_INGEST_0067
+ * @Requirements GW_INGEST_0068, GW_INGEST_0069
  */
 export function IngestProgress({ running, now: fixedNow }: { running: Running; now?: number }) {
   const ticking = fixedNow === undefined && !running.interrupted;

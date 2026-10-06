@@ -2921,7 +2921,7 @@ requirements:
     categories: ["security"]
     revision: 0.4.0
 
-  - id: GW_INGEST_0066
+  - id: GW_INGEST_0068
     title: An on-demand ingest runs as a job whose progress can be followed
     significance: shall
     description: "The system shall answer an on-demand ingest request as accepted before fetching anything, with the marketplace's ingest status and the location from which that status is read; shall, when an ingest of that marketplace is already running whatever triggered it, answer with that ingest's status and start no other; shall report for every ingest, whatever triggered it, its stage (queued, fetching, evaluating the manifest, vetting) and when it started, readable from any instance of the gateway; shall report for the last finished ingest the record stated under GW_INGEST_0039 together with the snapshot it recorded and that snapshot's state, and for a failure the reason, root cause and next step stated under GW_INGEST_0038; and the portal shall show a running ingest's stage and elapsed time on the marketplace's page and, when it ends, its outcome."
@@ -2931,12 +2931,12 @@ requirements:
     categories: ["interaction-capability", "reliability"]
     revision: 0.5.0
 
-  - id: GW_INGEST_0067
+  - id: GW_INGEST_0069
     title: An ingest whose replica stopped is reported as interrupted
     significance: shall
     description: "The system shall renew, while an ingest is queued or running, a heartbeat that every instance can read; shall report an ingest whose heartbeat has not been renewed within a bounded interval as interrupted rather than running; and shall let a new on-demand ingest of that marketplace start in its place."
     references:
-      requirement_ids: ["GW_INGEST_0066"]
+      requirement_ids: ["GW_INGEST_0068"]
     rationale: "An instance that stops mid-ingest cannot clear its own progress, and a running ingest refuses a second one, so without a heartbeat one crash would show a marketplace as ingesting for ever and refuse every later ingest of it."
     categories: ["reliability"]
     revision: 0.5.0

@@ -99,7 +99,7 @@ would then refuse every later ingest. So each replica keeps the attempts it owns
 (claimed or running) in a set. A single-thread timer of its own, every 10 s, renews
 `ingest_heartbeat_at = now()` for exactly those ids. A status read treats an
 attempt whose heartbeat is older than 60 s as **interrupted**
-(GW_INGEST_0067 — An ingest whose replica stopped is reported as interrupted),
+(GW_INGEST_0069 — An ingest whose replica stopped is reported as interrupted),
 and D2's claim takes it over. Both times come from the database's `now()`, so
 replica clock skew does not matter. The intervals are constants, not
 configuration: they bound a display, and no operator has a reason to tune them.

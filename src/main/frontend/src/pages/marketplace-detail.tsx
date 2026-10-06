@@ -388,7 +388,7 @@ export function MarketplaceSettingsPage() {
               {marketplace.lastIngestOutcome ? (
                 <>
                   {marketplace.lastIngestOutcome} · <Timestamp value={marketplace.lastIngestAt} />
-                  {/* The outcome names what it recorded (GW_INGEST_0066). */}
+                  {/* The outcome names what it recorded (GW_INGEST_0068). */}
                   {marketplace.lastIngestSnapshotId != null ? (
                     <>
                       {" · "}
@@ -427,10 +427,10 @@ export function MarketplaceSettingsPage() {
  * Connect a client is a header action rather than the page's leading panel: it is a step each
  * consumer takes once, and leading with it pushed the reviewer's daily work below the fold.
  *
- * The ingest runs as a job the header follows (GW_INGEST_0066): its stages while it runs, whatever
+ * The ingest runs as a job the header follows (GW_INGEST_0068): its stages while it runs, whatever
  * started it, and what arrived once it ends — opened on Review when it was started from here.
  *
- * @Requirements GW_INGEST_0007, GW_AUTH_0043, GW_INGEST_0033, GW_INGEST_0039, GW_INGEST_0066
+ * @Requirements GW_INGEST_0007, GW_AUTH_0043, GW_INGEST_0033, GW_INGEST_0039, GW_INGEST_0068
  */
 export function MarketplaceLayout() {
   const { name } = useParams<{ name: string }>();

@@ -41,9 +41,9 @@ None.
 ### Modified Capabilities
 
 - `marketplace-ingestion`: new
-  `GW_INGEST_0066 — An on-demand ingest runs as a job whose progress can be followed`
+  `GW_INGEST_0068 — An on-demand ingest runs as a job whose progress can be followed`
   and
-  `GW_INGEST_0067 — An ingest whose replica stopped is reported as interrupted`,
+  `GW_INGEST_0069 — An ingest whose replica stopped is reported as interrupted`,
   each with its `SVC_GW_INGEST_*` case. `SVC_GW_INGEST_0038` and
   `SVC_GW_INGEST_0039` are re-pointed from the synchronous response to the
   status resource. Their requirements are unchanged, and so is what the tests

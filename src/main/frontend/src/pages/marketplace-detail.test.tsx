@@ -434,7 +434,7 @@ test("the_header_offers_ingest_and_the_client_wizard_on_every_section", async ()
  * Ingest answers at once; the header follows the job through its stages and, when it ends, opens
  * what arrived on Review.
  *
- * @SVCs SVC_GW_INGEST_0066
+ * @SVCs SVC_GW_INGEST_0068
  */
 test("ingest_shows_its_stages_and_opens_what_arrived_on_review", async () => {
   let polls = 0;
@@ -474,7 +474,7 @@ test("ingest_shows_its_stages_and_opens_what_arrived_on_review", async () => {
 /**
  * An ingest whose gateway instance stopped reads as interrupted, and Ingest is offered again.
  *
- * @SVCs SVC_GW_INGEST_0067
+ * @SVCs SVC_GW_INGEST_0069
  */
 test("an_interrupted_ingest_is_said_to_be_and_can_be_started_again", async () => {
   server.use(

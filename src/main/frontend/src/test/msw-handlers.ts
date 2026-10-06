@@ -1262,7 +1262,7 @@ export const estateReport: Schemas["EstateReconciliation"] = {
   failed: 0,
 };
 
-/** A marketplace with no ingest running and none finished yet (GW_INGEST_0066). */
+/** A marketplace with no ingest running and none finished yet (GW_INGEST_0068). */
 export const idleIngest = (name: string): Schemas["IngestStatus"] => ({ marketplace: name });
 
 /** What a fresh POST answers: the ingest claimed and queued, nothing fetched yet. */

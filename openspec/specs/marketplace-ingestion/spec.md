@@ -428,14 +428,14 @@ The system SHALL implement GW_INGEST_0065.
 #### Scenario: SVC_GW_INGEST_0065
 The system SHALL pass SVC_GW_INGEST_0065.
 
-### Requirement: GW_INGEST_0066
-The system SHALL implement GW_INGEST_0066.
+### Requirement: GW_INGEST_0068
+The system SHALL implement GW_INGEST_0068.
 
-#### Scenario: SVC_GW_INGEST_0066
-The system SHALL pass SVC_GW_INGEST_0066.
+#### Scenario: SVC_GW_INGEST_0068
+The system SHALL pass SVC_GW_INGEST_0068.
 
-### Requirement: GW_INGEST_0067
-The system SHALL implement GW_INGEST_0067.
+### Requirement: GW_INGEST_0069
+The system SHALL implement GW_INGEST_0069.
 
-#### Scenario: SVC_GW_INGEST_0067
-The system SHALL pass SVC_GW_INGEST_0067.
+#### Scenario: SVC_GW_INGEST_0069
+The system SHALL pass SVC_GW_INGEST_0069.

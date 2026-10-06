@@ -64,7 +64,7 @@ public record Marketplace(
         String lastIngestReason,
 
         @Schema(
-                description = "The snapshot the last successful ingest recorded (GW_INGEST_0066); null when it"
+                description = "The snapshot the last successful ingest recorded (GW_INGEST_0068); null when it"
                         + " failed, before the first, or once that snapshot has been purged")
         Long lastIngestSnapshotId) {
 

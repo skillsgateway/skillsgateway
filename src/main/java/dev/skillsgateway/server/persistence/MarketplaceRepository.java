@@ -140,11 +140,11 @@ public class MarketplaceRepository {
     /**
      * Replaces the record of the last ingest attempt (GW_INGEST_0039): one row per marketplace, so it
      * stays bounded; the sequence of attempts is the ledger's. Clears the running ingest only where it
-     * is still this attempt's (GW_INGEST_0066), so a finishing attempt never hides a later one.
+     * is still this attempt's (GW_INGEST_0068), so a finishing attempt never hides a later one.
      *
      * @param failureJson the failure's parts as JSON, or null for a success
      */
-    @Requirements({"GW_INGEST_0039", "GW_INGEST_0066"})
+    @Requirements({"GW_INGEST_0039", "GW_INGEST_0068"})
     public void recordIngest(
             long id, UUID attempt, String outcome, String reason, String failureJson, Long snapshotId) {
         jdbc.sql("UPDATE marketplaces SET last_ingest_at = now(),"
@@ -170,13 +170,13 @@ public class MarketplaceRepository {
                     + " ingest_attempt = CASE WHEN ingest_attempt = :attempt THEN NULL ELSE ingest_attempt END";
 
     /**
-     * Claims the marketplace for an on-demand ingest (GW_INGEST_0066): succeeds only when no ingest is
-     * running, or the running one's heartbeat is older than {@code stale} (GW_INGEST_0067). One
+     * Claims the marketplace for an on-demand ingest (GW_INGEST_0068): succeeds only when no ingest is
+     * running, or the running one's heartbeat is older than {@code stale} (GW_INGEST_0069). One
      * conditional update, so of two concurrent claims on any replicas exactly one wins.
      *
      * @return whether this attempt now owns the marketplace's running ingest, queued
      */
-    @Requirements({"GW_INGEST_0066", "GW_INGEST_0067"})
+    @Requirements({"GW_INGEST_0068", "GW_INGEST_0069"})
     public boolean claimIngest(long id, UUID attempt, Duration stale) {
         return jdbc.sql("UPDATE marketplaces SET ingest_attempt = :attempt,"
                                 + " ingest_stage = 'queued'::marketplace_ingest_stage,"
@@ -195,7 +195,7 @@ public class MarketplaceRepository {
      * running ingest unconditionally. A claimed attempt keeps its start time, so the wait it spent
      * queued counts towards the elapsed time the portal shows.
      */
-    @Requirements({"GW_INGEST_0066"})
+    @Requirements({"GW_INGEST_0068"})
     public void startIngest(long id, UUID attempt) {
         jdbc.sql("UPDATE marketplaces SET"
                         + " ingest_started_at = CASE WHEN ingest_attempt = :attempt THEN ingest_started_at"
@@ -208,7 +208,7 @@ public class MarketplaceRepository {
     }
 
     /** Moves this attempt to its next stage; a no-op once another attempt has taken over. */
-    @Requirements({"GW_INGEST_0066"})
+    @Requirements({"GW_INGEST_0068"})
     public void advanceIngest(long id, UUID attempt, String stage) {
         jdbc.sql("UPDATE marketplaces SET ingest_stage = :stage::marketplace_ingest_stage,"
                         + " ingest_heartbeat_at = now() WHERE id = :id AND ingest_attempt = :attempt")
@@ -218,8 +218,8 @@ public class MarketplaceRepository {
                 .update();
     }
 
-    /** Renews the heartbeat of the attempts this replica owns (GW_INGEST_0067). */
-    @Requirements({"GW_INGEST_0067"})
+    /** Renews the heartbeat of the attempts this replica owns (GW_INGEST_0069). */
+    @Requirements({"GW_INGEST_0069"})
     public void heartbeat(Collection<UUID> attempts) {
         if (attempts.isEmpty()) {
             return;
@@ -231,9 +231,9 @@ public class MarketplaceRepository {
 
     /**
      * A marketplace's running and last finished ingest, read in one statement so the two halves
-     * agree (GW_INGEST_0066). Interrupted is decided by the database clock, as the claim is.
+     * agree (GW_INGEST_0068). Interrupted is decided by the database clock, as the claim is.
      */
-    @Requirements({"GW_INGEST_0066", "GW_INGEST_0067"})
+    @Requirements({"GW_INGEST_0068", "GW_INGEST_0069"})
     public Optional<IngestRecord> ingestRecord(String name, Duration stale) {
         return jdbc.sql("SELECT m.name, m.ingest_attempt, m.ingest_stage::text AS ingest_stage, m.ingest_started_at,"
                         + " m.ingest_heartbeat_at < now() - make_interval(secs => :stale) AS interrupted,"

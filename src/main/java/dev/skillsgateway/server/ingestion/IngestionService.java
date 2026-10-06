@@ -79,7 +79,7 @@ public class IngestionService {
      */
     private final ConcurrentHashMap<Long, ReentrantLock> ingestLocks = new ConcurrentHashMap<>();
 
-    /** The attempts this replica has claimed or is running, whose heartbeat it renews (GW_INGEST_0067). */
+    /** The attempts this replica has claimed or is running, whose heartbeat it renews (GW_INGEST_0069). */
     private final Set<UUID> owned = ConcurrentHashMap.newKeySet();
 
     private final GatewayMetrics metrics;
@@ -144,9 +144,9 @@ public class IngestionService {
     /**
      * {@link #ingest(Marketplace, String)} as the given attempt: an on-demand ingest passes the attempt
      * it claimed, so the progress it reported while queued is the progress that continues
-     * (GW_INGEST_0066). The attempt heartbeats from here until it is recorded (GW_INGEST_0067).
+     * (GW_INGEST_0068). The attempt heartbeats from here until it is recorded (GW_INGEST_0069).
      */
-    @Requirements({"GW_INGEST_0066", "GW_INGEST_0067"})
+    @Requirements({"GW_INGEST_0068", "GW_INGEST_0069"})
     public Snapshot ingest(Marketplace marketplace, String actor, UUID attempt) {
         ReentrantLock lock = ingestLocks.computeIfAbsent(marketplace.id(), id -> new ReentrantLock());
         owned.add(attempt);
@@ -183,11 +183,11 @@ public class IngestionService {
     }
 
     /**
-     * Keeps this replica's attempts from reading as interrupted (GW_INGEST_0067). Deliberately not a
+     * Keeps this replica's attempts from reading as interrupted (GW_INGEST_0069). Deliberately not a
      * {@code @Scheduled} sweep: it touches only the rows this replica owns, so it runs on every replica
      * and takes no lease.
      */
-    @Requirements({"GW_INGEST_0067"})
+    @Requirements({"GW_INGEST_0069"})
     public void heartbeat() {
         try {
             marketplaceRepository.heartbeat(List.copyOf(owned));
@@ -196,7 +196,7 @@ public class IngestionService {
         }
     }
 
-    /** Reports the stage an ingest has reached (GW_INGEST_0066). */
+    /** Reports the stage an ingest has reached (GW_INGEST_0068). */
     @FunctionalInterface
     private interface Progress {
         void stage(String stage);

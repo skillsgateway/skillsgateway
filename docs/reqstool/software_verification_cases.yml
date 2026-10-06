@@ -3883,8 +3883,8 @@ cases:
       THEN each positive raises one medium hook-config-unreadable finding naming the file and the key, and the negatives raise none
     revision: "0.4.0"
 
-  - id: SVC_GW_INGEST_0066
-    requirement_ids: ["GW_INGEST_0066"]
+  - id: SVC_GW_INGEST_0068
+    requirement_ids: ["GW_INGEST_0068"]
     title: An on-demand ingest answers at once and its stage and outcome can be followed
     verification: automated-test
     description: |
@@ -3893,8 +3893,8 @@ cases:
       THEN the request is accepted with the status and its location before the upstream answers; the status shows queued or fetching, and fetching while the upstream is held; the second request answers the same ingest and one snapshot is recorded; the last ingest then reads succeeded with the snapshot and held; the rejected manifest ends with its snapshot rejected; the unreadable upstream ends failed with reason, root cause and next step; the sweep's ingest is reported the same way; and the portal shows the stage, the elapsed time and the outcome on the marketplace's page
     revision: "0.5.0"
 
-  - id: SVC_GW_INGEST_0067
-    requirement_ids: ["GW_INGEST_0067"]
+  - id: SVC_GW_INGEST_0069
+    requirement_ids: ["GW_INGEST_0069"]
     title: An ingest whose heartbeat lapsed reads as interrupted and does not block the next one
     verification: automated-test
     description: |

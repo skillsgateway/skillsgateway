@@ -35,8 +35,8 @@ of them.
 ## `reqstool status local -p docs/reqstool`
 
 ```
-GW_INGEST_0066 … 6 tests, 6 passed
-GW_INGEST_0067 … 5 tests, 5 passed
+GW_INGEST_0068 … 6 tests, 6 passed
+GW_INGEST_0069 … 5 tests, 5 passed
 Passed tests 1082 · Failed tests 0 · Skipped 0 · SVCs missing tests 0 · SVCs missing MVRs 0
 ```
 

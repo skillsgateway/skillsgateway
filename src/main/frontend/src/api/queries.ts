@@ -110,13 +110,13 @@ export type IngestStatus = components["schemas"]["IngestStatus"];
 
 const ingestKey = (name: string) => ["ingest", name] as const;
 
-/** True while an ingest is running that will still finish: an interrupted one never will (GW_INGEST_0067). */
+/** True while an ingest is running that will still finish: an interrupted one never will (GW_INGEST_0069). */
 export function ingestLive(status: IngestStatus | undefined) {
   return !!status?.running && !status.running.interrupted;
 }
 
 /**
- * The marketplace's ingest in progress and how the last one ended (GW_INGEST_0066). Polled once a
+ * The marketplace's ingest in progress and how the last one ended (GW_INGEST_0068). Polled once a
  * second while an ingest is live, and not at all otherwise.
  */
 export function useIngestStatus(name: string) {

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * The on-demand ingest as a job (GW_INGEST_0066): claim the marketplace, answer at once, run the
+ * The on-demand ingest as a job (GW_INGEST_0068): claim the marketplace, answer at once, run the
  * ingestion on a gateway thread. The automated triggers keep their own paths and only share the
  * stage reporting, which lives in {@link IngestionService}.
  */
@@ -61,9 +61,9 @@ public class IngestJobs {
     /**
      * Starts an ingest of the marketplace unless one is already running anywhere, and answers with
      * the status either way: a second request follows the ingest in progress instead of queueing
-     * another (GW_INGEST_0066). A running ingest whose heartbeat lapsed is claimed over (GW_INGEST_0067).
+     * another (GW_INGEST_0068). A running ingest whose heartbeat lapsed is claimed over (GW_INGEST_0069).
      */
-    @Requirements({"GW_INGEST_0066", "GW_INGEST_0067"})
+    @Requirements({"GW_INGEST_0068", "GW_INGEST_0069"})
     public IngestStatus start(Marketplace marketplace, String actor) {
         UUID attempt = UUID.randomUUID();
         if (marketplaceRepository.claimIngest(marketplace.id(), attempt, IngestionService.HEARTBEAT_STALE)) {
@@ -98,7 +98,7 @@ public class IngestJobs {
     }
 
     /** The marketplace's running and last finished ingest; empty for an unknown marketplace. */
-    @Requirements({"GW_INGEST_0066", "GW_INGEST_0067"})
+    @Requirements({"GW_INGEST_0068", "GW_INGEST_0069"})
     public Optional<IngestStatus> status(String name) {
         return marketplaceRepository
                 .ingestRecord(name, IngestionService.HEARTBEAT_STALE)

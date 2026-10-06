@@ -6,10 +6,10 @@ const NOW = Date.parse("2026-10-05T12:00:00Z");
 const ago = (seconds: number) => new Date(NOW - seconds * 1000).toISOString();
 
 /**
- * An ingest in progress on the marketplace header (GW_INGEST_0066), at each stage, and one whose
- * gateway instance stopped (GW_INGEST_0067). The clock is fixed so the elapsed time is stable.
+ * An ingest in progress on the marketplace header (GW_INGEST_0068), at each stage, and one whose
+ * gateway instance stopped (GW_INGEST_0069). The clock is fixed so the elapsed time is stable.
  *
- * @Requirements GW_INGEST_0066, GW_INGEST_0067
+ * @Requirements GW_INGEST_0068, GW_INGEST_0069
  */
 const meta = {
   title: "Marketplace/IngestProgress",

@@ -224,7 +224,7 @@ public class AdminController {
             String lastIngestReason,
 
             @Schema(
-                    description = "The snapshot the last successful ingest recorded (GW_INGEST_0066); null when it"
+                    description = "The snapshot the last successful ingest recorded (GW_INGEST_0068); null when it"
                             + " failed, before the first, or once that snapshot has been purged")
             Long lastIngestSnapshotId,
 
@@ -465,7 +465,7 @@ public class AdminController {
     }
 
     @PostMapping("/marketplaces/{name}/ingest")
-    @Requirements({"GW_INGEST_0066", "GW_INGEST_0067"})
+    @Requirements({"GW_INGEST_0068", "GW_INGEST_0069"})
     @Tag(name = "Marketplaces")
     @Operation(
             summary = "Start an ingest of the upstream default branch",
@@ -495,12 +495,12 @@ public class AdminController {
     }
 
     @GetMapping("/marketplaces/{name}/ingest")
-    @Requirements({"GW_AUTH_0001", "GW_INGEST_0066", "GW_INGEST_0067"})
+    @Requirements({"GW_AUTH_0001", "GW_INGEST_0068", "GW_INGEST_0069"})
     @Tag(name = "Marketplaces")
     @Operation(
             summary = "Read a marketplace's ingest status",
             description = "The ingest in progress, if any, whatever triggered it — its stage and when it started,"
-                    + " or interrupted when the gateway instance running it stopped (GW_INGEST_0067) — and how"
+                    + " or interrupted when the gateway instance running it stopped (GW_INGEST_0069) — and how"
                     + " the last finished ingest ended.")
     @ApiResponse(responseCode = "200", description = "The marketplace's ingest status")
     @ApiResponse(responseCode = "404", description = "Marketplace not found")

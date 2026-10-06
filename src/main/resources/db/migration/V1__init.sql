@@ -88,13 +88,13 @@ CREATE TABLE marketplaces (
     last_ingest_at TIMESTAMPTZ,
     last_ingest_outcome marketplace_last_ingest_outcome,
     last_ingest_reason TEXT,
-    -- The same failure's parts, {reason, rootCause, nextStep}, for a client to act on (GW_INGEST_0066).
+    -- The same failure's parts, {reason, rootCause, nextStep}, for a client to act on (GW_INGEST_0068).
     last_ingest_failure JSONB,
-    -- The snapshot the last successful ingest recorded; a FK added after snapshots (GW_INGEST_0066).
+    -- The snapshot the last successful ingest recorded; a FK added after snapshots (GW_INGEST_0068).
     last_ingest_snapshot_id BIGINT,
-    -- The ingest in progress, whatever triggered it (GW_INGEST_0066): all null when none runs. Every
+    -- The ingest in progress, whatever triggered it (GW_INGEST_0068): all null when none runs. Every
     -- progress write is conditional on the attempt, so one attempt never clears another's; a heartbeat
-    -- older than the bound reads as interrupted and may be claimed over (GW_INGEST_0067).
+    -- older than the bound reads as interrupted and may be claimed over (GW_INGEST_0069).
     ingest_attempt UUID,
     ingest_stage marketplace_ingest_stage,
     ingest_started_at TIMESTAMPTZ,

@@ -233,7 +233,7 @@ abstract class AbstractGatewayTest {
     }
 
     /**
-     * Requests an on-demand ingest over HTTP and waits for it to end (GW_INGEST_0066).
+     * Requests an on-demand ingest over HTTP and waits for it to end (GW_INGEST_0068).
      *
      * @return the final ingest status, as JSON
      */

@@ -251,7 +251,7 @@ class UpstreamCredentialsIntegrationTests extends AbstractExternalSourceTest {
         return result;
     }
 
-    /** Starts an ingest, waits for it to end, and returns its final status (GW_INGEST_0066). */
+    /** Starts an ingest, waits for it to end, and returns its final status (GW_INGEST_0068). */
     private String ingest(String name) throws Exception {
         remember(mockMvc.perform(
                         post("/api/v1/marketplaces/%s/ingest".formatted(name)).with(oidcLogin()))

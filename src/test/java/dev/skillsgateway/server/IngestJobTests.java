@@ -29,8 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
- * An on-demand ingest answers before it fetches and is followed through its status (GW_INGEST_0066);
- * an ingest whose replica stopped reads as interrupted and does not block the next (GW_INGEST_0067).
+ * An on-demand ingest answers before it fetches and is followed through its status (GW_INGEST_0068);
+ * an ingest whose replica stopped reads as interrupted and does not block the next (GW_INGEST_0069).
  */
 class IngestJobTests extends AbstractGatewayTest {
 
@@ -58,7 +58,7 @@ class IngestJobTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0066"})
+    @SVCs({"SVC_GW_INGEST_0068"})
     void an_ingest_answers_before_the_upstream_does_and_is_followed_to_its_snapshot() throws Exception {
         String repo = forge.publish("acme/" + uniqueName("slow"), Map.of(MANIFEST_PATH, DEFAULT_MANIFEST));
         String name = uniqueName("slow");
@@ -104,7 +104,7 @@ class IngestJobTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0066"})
+    @SVCs({"SVC_GW_INGEST_0068"})
     void a_rejected_manifest_ends_with_its_snapshot_rejected() throws Exception {
         Path upstream = createUpstream("{ not a manifest");
         String name = uniqueName("rejected");
@@ -117,7 +117,7 @@ class IngestJobTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0066"})
+    @SVCs({"SVC_GW_INGEST_0068"})
     void an_unreadable_upstream_ends_failed_with_reason_root_cause_and_next_step() throws Exception {
         String repo = forge.publish("acme/" + uniqueName("private"), Map.of(MANIFEST_PATH, DEFAULT_MANIFEST));
         String name = uniqueName("private");
@@ -135,7 +135,7 @@ class IngestJobTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0066"})
+    @SVCs({"SVC_GW_INGEST_0068"})
     void an_automated_ingest_is_reported_the_same_way() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         String name = uniqueName("swept");
@@ -150,7 +150,7 @@ class IngestJobTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0066"})
+    @SVCs({"SVC_GW_INGEST_0068"})
     void an_unknown_marketplace_has_no_ingest_status() throws Exception {
         mockMvc.perform(get("/api/v1/marketplaces/{name}/ingest", uniqueName("nobody"))
                         .with(oidcLogin()))
@@ -158,7 +158,7 @@ class IngestJobTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0067"})
+    @SVCs({"SVC_GW_INGEST_0069"})
     void an_ingest_whose_heartbeat_lapsed_reads_interrupted_and_is_claimed_over() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         String name = uniqueName("orphan");
@@ -182,7 +182,7 @@ class IngestJobTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0067"})
+    @SVCs({"SVC_GW_INGEST_0069"})
     void a_running_ingest_renews_its_heartbeat() throws Exception {
         String repo = forge.publish("acme/" + uniqueName("beat"), Map.of(MANIFEST_PATH, DEFAULT_MANIFEST));
         String name = uniqueName("beat");
@@ -207,7 +207,7 @@ class IngestJobTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0067"})
+    @SVCs({"SVC_GW_INGEST_0069"})
     void a_live_ingest_is_not_claimed_over() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         Marketplace marketplace = marketplaceRepository.register(
@@ -222,7 +222,7 @@ class IngestJobTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_INGEST_0067"})
+    @SVCs({"SVC_GW_INGEST_0069"})
     void an_earlier_attempt_neither_moves_nor_clears_a_later_ones_progress() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST);
         Marketplace marketplace = marketplaceRepository.register(

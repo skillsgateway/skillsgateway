@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
 @Schema(
-        description = "A marketplace's ingest in progress, if any, and how the last one ended (GW_INGEST_0066)."
+        description = "A marketplace's ingest in progress, if any, and how the last one ended (GW_INGEST_0068)."
                 + " Both can be set at once: an ingest is running and the previous one has ended.")
 public record IngestStatus(
         String marketplace,
@@ -26,7 +26,7 @@ public record IngestStatus(
             Instant startedAt,
 
             @Schema(
-                    description = "True when the gateway instance running it stopped renewing it (GW_INGEST_0067):"
+                    description = "True when the gateway instance running it stopped renewing it (GW_INGEST_0069):"
                             + " it will not finish, and a new ingest may be started in its place")
             boolean interrupted) {}
 

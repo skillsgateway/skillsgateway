@@ -281,7 +281,7 @@ export interface paths {
         };
         /**
          * Read a marketplace's ingest status
-         * @description The ingest in progress, if any, whatever triggered it — its stage and when it started, or interrupted when the gateway instance running it stopped (GW_INGEST_0067) — and how the last finished ingest ended.
+         * @description The ingest in progress, if any, whatever triggered it — its stage and when it started, or interrupted when the gateway instance running it stopped (GW_INGEST_0069) — and how the last finished ingest ended.
          */
         get: operations["ingestStatus"];
         put?: never;
@@ -2772,7 +2772,7 @@ export interface components {
             /** @description Marketplace-and-commit pairs the client holds, at most 256 */
             holdings?: components["schemas"]["HeldContentQuery"][];
         };
-        /** @description A marketplace's ingest in progress, if any, and how the last one ended (GW_INGEST_0066). Both can be set at once: an ingest is running and the previous one has ended. */
+        /** @description A marketplace's ingest in progress, if any, and how the last one ended (GW_INGEST_0068). Both can be set at once: an ingest is running and the previous one has ended. */
         IngestStatus: {
             /** @description How the last finished ingest ended; null before the first */
             last?: components["schemas"]["Last"];
@@ -2943,7 +2943,7 @@ export interface components {
             lastIngestReason?: string;
             /**
              * Format: int64
-             * @description The snapshot the last successful ingest recorded (GW_INGEST_0066); null when it failed, before the first, or once that snapshot has been purged
+             * @description The snapshot the last successful ingest recorded (GW_INGEST_0068); null when it failed, before the first, or once that snapshot has been purged
              */
             lastIngestSnapshotId?: number;
             /**
@@ -3046,7 +3046,7 @@ export interface components {
             lastIngestReason?: string;
             /**
              * Format: int64
-             * @description The snapshot the last successful ingest recorded (GW_INGEST_0066); null when it failed, before the first, or once that snapshot has been purged
+             * @description The snapshot the last successful ingest recorded (GW_INGEST_0068); null when it failed, before the first, or once that snapshot has been purged
              */
             lastIngestSnapshotId?: number;
             /** @description Gateway-local name (also the facade clone path) */
@@ -3644,7 +3644,7 @@ export interface components {
         };
         /** @description An ingest in progress */
         Running: {
-            /** @description True when the gateway instance running it stopped renewing it (GW_INGEST_0067): it will not finish, and a new ingest may be started in its place */
+            /** @description True when the gateway instance running it stopped renewing it (GW_INGEST_0069): it will not finish, and a new ingest may be started in its place */
             interrupted?: boolean;
             /**
              * @description The stage it has reached

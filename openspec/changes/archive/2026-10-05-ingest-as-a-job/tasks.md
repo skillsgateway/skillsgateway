@@ -6,8 +6,8 @@ shown failing before the code it guards exists.
 
 ## 1. Requirements (reqstool)
 
-- [x] 1.1 Add GW_INGEST_0066 and GW_INGEST_0067 with SVC_GW_INGEST_0066 and
-  SVC_GW_INGEST_0067 to `docs/reqstool/` (revision 0.5.0). Verify with
+- [x] 1.1 Add GW_INGEST_0068 and GW_INGEST_0069 with SVC_GW_INGEST_0068 and
+  SVC_GW_INGEST_0069 to `docs/reqstool/` (revision 0.5.0). Verify with
   `openspec validate ingest-as-a-job --strict`.
 
 ## 2. Schema and repository
@@ -20,7 +20,7 @@ shown failing before the code it guards exists.
   `heartbeat`, `recordIngest` (finished record + conditional clear),
   `ingestStatus`. `Marketplace` gains the new columns.
 
-## 3. Job and stages (SVC_GW_INGEST_0066, SVC_GW_INGEST_0067)
+## 3. Job and stages (SVC_GW_INGEST_0068, SVC_GW_INGEST_0069)
 
 - [x] 3.1 `IngestJobTests`: a POST answers 202 with `queued`/running status and a
   Location before the upstream answers (a forge held on a latch), shows
@@ -33,7 +33,7 @@ shown failing before the code it guards exists.
   claims over it; an attempt cannot clear another attempt's progress. Watch each
   fail.
 - [x] 3.2 Implement `IngestJobs` and the stage/heartbeat path in
-  `IngestionService` (`@Requirements GW_INGEST_0066, GW_INGEST_0067`); controller
+  `IngestionService` (`@Requirements GW_INGEST_0068, GW_INGEST_0069`); controller
   POST → 202, new GET; machine scope; OpenAPI annotations.
 - [x] 3.3 Re-point the HTTP ingest call sites in existing tests (IngestFailure,
   AdminAudit, Webhook, FourEyes, RoleEnforcement, MarketplaceRemoval,
@@ -43,7 +43,7 @@ shown failing before the code it guards exists.
 - [x] 3.4 Regenerate `openapi.json` and `types.gen.ts`; confirm the only
   breaking diff is the POST's response.
 
-## 4. Portal (SVC_GW_INGEST_0066)
+## 4. Portal (SVC_GW_INGEST_0068)
 
 - [x] 4.1 `useIngest` / `useIngestStatus` with polling; stage steps with elapsed
   time and the outcome on `marketplace-detail.tsx`; MSW handlers; component test
