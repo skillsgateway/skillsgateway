@@ -1,0 +1,5105 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Enterprise gateway for git-distributed AI agent skill marketplaces — quarantined ingestion, hold-until-approved vetting, a read-only git facade, and an append-only audit ledger.">
+      
+      
+      
+        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/0.5.0/reference/portal/">
+      
+      
+        <link rel="prev" href="../compatibility/">
+      
+      
+        <link rel="next" href="../observability/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Admin portal - Skills Gateway</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#admin-portal" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Skills Gateway" class="md-header__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Skills Gateway
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Admin portal
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/skillsgateway/skillsgateway" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    skillsgateway/skillsgateway
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Skills Gateway" class="md-nav__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Skills Gateway
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/skillsgateway/skillsgateway" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    skillsgateway/skillsgateway
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/local-development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Try it locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy and operate
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deploy and operate
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/deploying-on-kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying on Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/deploying-without-kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying without Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/storage-backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing and migrating the storage backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/verifying-an-object-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verifying conditional writes against a real bucket
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/identity-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/delegated-administration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delegated administration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/declarative-estate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Declarative estate configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/snapshot-retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/backup-and-upgrade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backing up, restoring and upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exporting the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/client-enforcement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Making the gateway the only door
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/leaving-the-gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Leaving the gateway
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Govern the estate
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Govern the estate
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/registering-a-marketplace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/private-upstreams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reading a private upstream
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing first-party skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/upstream-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syncing from upstream automatically
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/approving-snapshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approving and rejecting snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/waiving-findings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Waiving a vetting finding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/policy-rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy deny rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/license-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    License compliance for skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/re-vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Re-vetting approved content
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/adding-an-external-vetter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adding an external vetter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Receiving lifecycle webhooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/read-only-forge-mirror/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The read-only forge mirror
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consume skills
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Consume skills
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/consuming-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consuming approved skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/virtual-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The virtual catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintain the project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Maintain the project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutting a release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Marketplaces and snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/tokens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Access tokens
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adoption/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adoption
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/estate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/mirror/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mirror
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshot retention
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../container-image/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Container image
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../git-facade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git smart-HTTP facade
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compatibility and allowlists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Admin portal
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Admin portal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User menu
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conventions-across-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conventions across pages
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authorization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authorization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#review-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Review queue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#marketplaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marketplaces
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Marketplaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#register-marketplace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Register marketplace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marketplace-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marketplace table
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#marketplace-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marketplace detail
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Marketplace detail">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#header" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Header
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upstream" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upstream
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upstream">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#correct-the-url-administrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correct the URL (administrators)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vetting-chain-administrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vetting chain (administrators)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remove-marketplace-administrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remove marketplace (administrators)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#review-and-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Review and Snapshots
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Review and Snapshots">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-card" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The card
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#approve-dialog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Approve dialog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#waiving-a-finding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waiving a finding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#waiving-several-groups-at-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waiving several groups at once
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connect-a-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connect a client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vetting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vetting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Vetting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-chain-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The chain flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chain-staleness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chain staleness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#re-vetting-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Re-vetting panel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retention-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retention controls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit log
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#snapshot-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Snapshot contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vetting-chain-governance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vetting chain (governance)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Vetting chain (governance)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-default-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The default chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bulk-edit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bulk edit
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-log_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit log
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Audit log">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ledger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ledger
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adoption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adoption
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adoption">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#window-and-totals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Window and totals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adoption-by-marketplace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adoption by marketplace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stale-identities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stale identities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webhooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webhooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Webhooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-subscriber" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New subscriber
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subscribers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subscribers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delivery-attempts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delivery attempts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-sinks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit sinks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Audit sinks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-sink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New sink
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sinks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sinks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#access-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access tokens
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../capability-map/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifecycle — quarantine to serve
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vetting — the connector chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/snapshots-and-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshots and the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/trust-boundaries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trust boundaries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/related-work/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Related work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User menu
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conventions-across-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conventions across pages
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authorization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authorization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#review-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Review queue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#marketplaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marketplaces
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Marketplaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#register-marketplace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Register marketplace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marketplace-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marketplace table
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#marketplace-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marketplace detail
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Marketplace detail">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#header" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Header
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upstream" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upstream
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upstream">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#correct-the-url-administrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correct the URL (administrators)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vetting-chain-administrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vetting chain (administrators)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remove-marketplace-administrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remove marketplace (administrators)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#review-and-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Review and Snapshots
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Review and Snapshots">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-card" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The card
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#approve-dialog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Approve dialog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#waiving-a-finding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waiving a finding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#waiving-several-groups-at-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waiving several groups at once
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connect-a-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connect a client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vetting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vetting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Vetting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-chain-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The chain flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chain-staleness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chain staleness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#re-vetting-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Re-vetting panel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retention-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retention controls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit log
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#snapshot-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Snapshot contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vetting-chain-governance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vetting chain (governance)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Vetting chain (governance)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-default-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The default chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bulk-edit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bulk edit
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-log_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit log
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Audit log">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ledger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ledger
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adoption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adoption
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adoption">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#window-and-totals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Window and totals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adoption-by-marketplace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adoption by marketplace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stale-identities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stale identities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webhooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webhooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Webhooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-subscriber" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New subscriber
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subscribers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subscribers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delivery-attempts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delivery attempts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-sinks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit sinks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Audit sinks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-sink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New sink
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sinks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sinks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#access-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access tokens
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/reference/portal.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="admin-portal">Admin portal<a class="headerlink" href="#admin-portal" title="Permanent link">&para;</a></h1>
+<p>The portal is a React single-page application bundled into the gateway jar by
+the Maven build and served at <code>/</code> behind the OIDC login. It holds no tokens; the
+session cookie is its only credential.</p>
+<h2 id="navigation">Navigation<a class="headerlink" href="#navigation" title="Permanent link">&para;</a></h2>
+<p>A fixed sidebar, grouped:</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Item</th>
+<th>Destination</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gateway</td>
+<td>Overview</td>
+<td><a href="#overview"><code>/</code></a></td>
+</tr>
+<tr>
+<td>Gateway</td>
+<td>Review queue</td>
+<td><a href="#review-queue"><code>/review</code></a> — with the count of snapshots awaiting a decision, absent at zero</td>
+</tr>
+<tr>
+<td>Gateway</td>
+<td>Marketplaces</td>
+<td><a href="#marketplaces"><code>/marketplaces</code></a></td>
+</tr>
+<tr>
+<td>Oversight</td>
+<td>Audit log</td>
+<td><a href="#audit-log"><code>/audit</code></a></td>
+</tr>
+<tr>
+<td>Oversight</td>
+<td>Adoption</td>
+<td><a href="#adoption"><code>/adoption</code></a></td>
+</tr>
+<tr>
+<td>Configuration</td>
+<td>Vetting chain</td>
+<td><a href="#vetting-chain-governance"><code>/vetting</code></a> — <strong>shown only to administrators</strong></td>
+</tr>
+<tr>
+<td>Configuration</td>
+<td>Integrations → Webhooks</td>
+<td><a href="#webhooks"><code>/integrations/webhooks</code></a></td>
+</tr>
+<tr>
+<td>Configuration</td>
+<td>Integrations → Audit sinks</td>
+<td><a href="#audit-sinks"><code>/integrations/sinks</code></a></td>
+</tr>
+<tr>
+<td>Reference</td>
+<td>API reference</td>
+<td><code>/docs</code> — the Scalar API reference, not a portal route</td>
+</tr>
+<tr>
+<td>Reference</td>
+<td>Documentation</td>
+<td>this manual — leaves the portal, opens in a new tab</td>
+</tr>
+<tr>
+<td>Reference</td>
+<td>Source code</td>
+<td>the project repository — leaves the portal, opens in a new tab</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Oversight</strong> holds what is read; <strong>Configuration</strong> holds what is set. The
+outbound integrations — webhook subscribers and audit export sinks, the same kind
+of object — are two sections listed beneath <strong>Integrations</strong> on every page;
+<code>/integrations</code> opens the first. The earlier address <code>/webhooks</code> redirects to
+<code>/integrations/webhooks</code>, so existing links keep working.</p>
+<p>Inside a marketplace, the sidebar lists that marketplace beneath <strong>Marketplaces</strong>
+with its <a href="#marketplace-detail">sections</a> — <strong>Review</strong> (with its own awaiting
+count), <strong>Snapshots</strong>, <strong>Activity</strong> and <strong>Settings</strong> — and the current section
+is the one highlighted entry. Leaving the marketplace closes the list; it is
+read from the address, never remembered. <a href="#snapshot-contents">Snapshot contents</a>
+is reached from a snapshot's card. <a href="#access-tokens">Access tokens</a> is a per-user concern, not
+estate-wide navigation — it is reached from the user menu, described next, and
+from the Overview page's Access tokens card; <code>/tokens</code> remains a resolvable
+address for existing bookmarks and links.</p>
+<p>The sidebar footer states the running build's version — <em>0.3.0</em> — read from
+<code>GET /api/v1/me</code>. It is the build artifact's own version and nothing a
+deployment can set, so it cannot claim to be a version it is not; a gateway run
+from an exploded build carries no build information and the footer is then
+absent entirely rather than saying "unknown".</p>
+<h2 id="user-menu">User menu<a class="headerlink" href="#user-menu" title="Permanent link">&para;</a></h2>
+<p>The header's breadcrumb sits opposite a menu named after the signed-in user
+(<code>GET /api/v1/me</code>). Opening it shows:</p>
+<ul>
+<li><strong>Signed in as</strong> the username.</li>
+<li><strong>Roles</strong> — one line per effective role the session holds, said in the
+  reader's own terms rather than the API's wire values: <code>admin — from your
+  identity provider</code>, <code>approver of acme-skills — granted in the portal</code>, and so
+  on for a role sourced from configuration or from the local development
+  authentication escape hatch. A session holding no role is told so, together
+  with what it can still do (read the portal, manage its own access tokens),
+  rather than shown an empty list. If the identity provider truncated the
+  membership claim, a line says the role list may be incomplete.</li>
+<li>The <strong>theme control</strong> — three-state, cycling <strong>system → light → dark</strong>: it
+  defaults to <em>system</em> (follow the operating system's appearance), and its icon
+  and label state the chosen mode — a monitor for system, a sun for light, a
+  moon for dark. The choice is remembered in the browser (<code>localStorage</code>);
+  <em>system</em> tracks the OS setting as it changes.</li>
+<li><strong>Your tokens</strong>, linking to <a href="#access-tokens">Access tokens</a>.</li>
+<li><strong>Sign out</strong>, which ends the browser session and returns to a fresh login.
+  Under the <code>skills-gateway.dev-insecure-auth</code> development escape hatch there is
+  no session to end, so the menu states that instead of offering a control that
+  would appear to fail.</li>
+</ul>
+<p>The menu only reports what the session holds; it never hides or disables a
+control by role — the server is the sole authority on what a request may do,
+and refuses what it must regardless of what the menu shows.</p>
+<h2 id="conventions-across-pages">Conventions across pages<a class="headerlink" href="#conventions-across-pages" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Every mutation reports through a toast — the action's success message, or the
+  server's RFC 7807 <code>detail</code> on failure.</li>
+<li>Destructive actions (Reject, Revoke) fire <strong>immediately</strong>; there are no
+  confirmation dialogs.</li>
+<li>Buttons disable while their mutation is in flight and swap to a progressive
+  label ("Registering…", "Ingesting…").</li>
+<li><strong>A form's submit button is disabled until every required field is valid</strong>, and
+  a muted hint beneath the form (bound to the fields with <code>aria-describedby</code>)
+  states what it is waiting for. The client rules mirror the server's; whitespace
+  never counts as a value. Rules the client cannot know — the URL scheme
+  allowlist — stay server-side and surface as an error toast.</li>
+<li>Every list renders a bare "Loading…" and, on failure, an error paragraph with
+  <code>role="alert"</code>.</li>
+<li>Timestamps render in the reader's own locale and time zone. The exact
+  instant is never lost: it stays in the <code>&lt;time datetime&gt;</code> attribute and on
+  the hover tooltip, so an auditor can always recover the recorded value. A
+  timestamp the portal cannot parse is shown verbatim rather than hidden, and
+  an absent one renders as an em dash.</li>
+</ul>
+<h2 id="authorization">Authorization<a class="headerlink" href="#authorization" title="Permanent link">&para;</a></h2>
+<p>The server refuses mutations, the audit
+surface and the <a href="#snapshot-contents">snapshot contents reads</a> to sessions without an
+applicable role — see
+<a href="../../guides/delegated-administration/">Delegated administration</a>; the portal
+surfaces those refusals as errors rather than hiding controls.</p>
+<p>Access tokens are scoped per principal server-side regardless: you only ever
+see and revoke your own.</p>
+<hr />
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/</code> · <strong>Heading:</strong> Gateway Overview</p>
+<p>The landing page. Three cards, each with counts derived client-side and one
+action leading elsewhere. Read-only — nothing here changes state.</p>
+<p><strong>Marketplaces</strong> — chips for the total marketplace count and how many snapshots
+are <code>held</code>, <code>approved</code> and <code>rejected</code> across all of them. When any snapshot is
+held, a secondary badge reads <em>"{n} awaiting review"</em> and links to the
+<a href="#review-queue">review queue</a>. Action: <strong>Manage marketplaces</strong>.</p>
+<p><strong>Fetch ledger</strong> — a chip with how many entries the ledger holds: <em>"{n} ledger
+entries"</em>, or <em>"about {n} ledger entries"</em> once the ledger is large enough that the
+server estimates rather than counts (see <a href="../api/audit/#get-apiv1audit"><code>GET /api/v1/audit</code></a>).
+It counts every entry: fetches, administrative actions and vetting bookkeeping.
+Action: <strong>Open audit log</strong>.</p>
+<p><strong>Access tokens</strong> — chips for active and revoked counts. Action: <strong>Manage
+tokens</strong>.</p>
+<p>Data comes from <code>GET /api/v1/marketplaces</code>, <code>GET /api/v1/tokens</code> and <code>GET /api/v1/audit</code>;
+counts are computed in the browser, as there is no summary endpoint. While the
+queries are in flight the chips show an ellipsis.</p>
+<hr />
+<h2 id="review-queue">Review queue<a class="headerlink" href="#review-queue" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/review</code> · <strong>Heading:</strong> Review queue</p>
+<p>Every snapshot awaiting a decision — <code>held</code> or <code>revoked</code>, not deleted — across
+every marketplace, newest first. One row each: <strong>Marketplace</strong> (a link to it),
+<strong>Commit</strong> (12 characters, a link that opens the snapshot on its marketplace's
+<a href="#marketplace-detail">Review</a>), <strong>State</strong>, <strong>Vetting</strong> outcome, and <strong>Ingested</strong>
+(when, and by whom).</p>
+<p>The queue offers <strong>no Approve or Reject</strong>. A decision is made on the snapshot's
+card, below the verdicts, diff and contents it rests on; the queue is where the
+work is found, not where it is done. Empty: "Nothing awaits a decision."</p>
+<p>Data comes from <code>GET /api/v1/marketplaces</code>, the same read the sidebar count uses,
+and one <code>GET /api/v1/snapshots/{id}/vetting</code> per row.</p>
+<hr />
+<h2 id="marketplaces">Marketplaces<a class="headerlink" href="#marketplaces" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/marketplaces</code> · <strong>Heading:</strong> Marketplaces</p>
+<p>The working surface: registered upstreams and their quarantined, held and
+approved snapshots.</p>
+<h3 id="register-marketplace">Register marketplace<a class="headerlink" href="#register-marketplace" title="Permanent link">&para;</a></h3>
+<p>The header action opens a dialog stating the constraint up front — "The gateway
+ingests the upstream default branch; the ref is not selectable."</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td><code>^[a-z0-9][a-z0-9_-]{0,62}$</code> — the hint reads "Up to 63 lowercase letters, digits, - and _; must start with a letter or digit. It is the /git/{name} path your clients clone."; a name that breaks it gets the API's own 422 wording as its field error</td>
+</tr>
+<tr>
+<td>Clone URL</td>
+<td>Must be a valid URL. The scheme allowlist, and whether the gateway can read the upstream, are checked server-side. A refusal surfaces as an error toast that gives the reason and a next step.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Register</strong> stays disabled until both fields are valid; it enables as soon as the
+name matches the pattern and the clone URL parses.</p>
+<p>If the clone URL already matches a registered marketplace — comparison ignores
+case, a trailing slash and a <code>.git</code> suffix — the dialog shows a <strong>warning</strong> naming
+the existing marketplace(s) and holds <strong>Register</strong> shut until <em>Register anyway</em> is
+ticked. This is a warning, not a block: the same upstream under a different name is
+a legitimate test setup, so the server still accepts it; the acknowledgement only
+makes the collision deliberate rather than silent.</p>
+<p>Submits <code>POST /api/v1/marketplaces</code>; toasts <em>Marketplace '{name}' registered</em>. The
+server runs the identical duplicate-URL check independently against every
+registered marketplace, not only the list this dialog already had loaded, and
+returns what it found in the response's <code>warnings</code>; each one is shown as its
+own warning toast, so a collision this dialog's own check missed still reaches
+the operator.</p>
+<h3 id="marketplace-table">Marketplace table<a class="headerlink" href="#marketplace-table" title="Permanent link">&para;</a></h3>
+<p>One sortable row per marketplace:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>The marketplace name, a link to its <a href="#marketplace-detail">page</a>.</td>
+</tr>
+<tr>
+<td>Source</td>
+<td>The detected forge (or the clone URL's host), with the clone URL beneath.</td>
+</tr>
+<tr>
+<td>Latest snapshot</td>
+<td>The newest snapshot's state badge and its vetting outcome badge.</td>
+</tr>
+<tr>
+<td>Upstream updated</td>
+<td>The last upstream update if known, else "—". Sortable.</td>
+</tr>
+<tr>
+<td>Snapshots</td>
+<td>A count badge.</td>
+</tr>
+<tr>
+<td>Awaiting</td>
+<td>How many snapshots await a decision, a link to the marketplace's Review; "—" at zero. Sortable.</td>
+</tr>
+</tbody>
+</table>
+<p>The table is an index. It does not expand, and it offers no Approve, Reject or
+Ingest: ingestion is on the marketplace's header, and a decision is made on its
+Review, beside the evidence.</p>
+<p>Empty state: "No marketplaces registered yet."</p>
+<hr />
+<h2 id="marketplace-detail">Marketplace detail<a class="headerlink" href="#marketplace-detail" title="Permanent link">&para;</a></h2>
+<p><strong>Routes:</strong> <code>/marketplaces/{name}</code> (Review), <code>/marketplaces/{name}/snapshots</code>,
+<code>/marketplaces/{name}/activity</code>, <code>/marketplaces/{name}/settings</code> · <strong>Heading:</strong>
+the marketplace name</p>
+<p>Reached from a marketplace's name, from the review queue, or from the sidebar
+once inside. The page resolves <code>{name}</code> from the marketplace list already held
+in the browser — there is no per-marketplace endpoint — so an unknown name
+renders "Marketplace '{name}' not found." with a link back.</p>
+<p>A marketplace is divided by what a visit is for, most frequent first:</p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Review</strong> (default)</td>
+<td>What awaits a decision — the <a href="#the-card">snapshot cards</a> and the decision</td>
+</tr>
+<tr>
+<td><strong>Snapshots</strong></td>
+<td>What is served, and every earlier snapshot</td>
+</tr>
+<tr>
+<td><strong>Activity</strong></td>
+<td>This marketplace's slice of the <a href="#audit-log">audit log</a></td>
+</tr>
+<tr>
+<td><strong>Settings</strong></td>
+<td>The <a href="#upstream">upstream</a> facts and, for an administrator, the <a href="#correct-the-url-administrators">URL correction</a>, the <a href="#vetting-chain-administrators">vetting chain</a> and <a href="#remove-marketplace-administrators">removal</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="header">Header<a class="headerlink" href="#header" title="Permanent link">&para;</a></h3>
+<p>On every section: the name, the clone URL, and one line stating what the facade
+serves — <em>Serving {sha12}</em>, or <em>Not served — a clone is answered with <code>404</code>
+until a snapshot is approved</em>. "Serving" is the marketplace read's <code>servedSha</code>,
+read from the published repository, not inferred from an approved snapshot
+existing — which is wrong after a withdrawal that left one approved and serves
+nothing.</p>
+<p>When the last ingest failed, a further line reads <em>Last ingest failed {when}:
+{reason}</em>. The reason includes the root cause and a next step. It is the
+marketplace read's <code>lastIngestReason</code>, so it covers ingests by the sync sweep,
+a webhook or a push as well as by hand. A failed <strong>Ingest</strong> also refreshes the
+line, and the next successful ingest removes it.</p>
+<p>Two actions, both outline buttons so that <strong>Approve</strong> stays the page's one
+primary control:</p>
+<ul>
+<li><strong>Ingest</strong> (<code>POST /api/v1/marketplaces/{name}/ingest</code>) starts the ingest and the
+  header follows it: the stages <em>Queued → Fetching → Evaluating manifest →
+  Vetting</em>, the current one marked, and the elapsed time. While it runs the
+  button reads <em>Ingesting…</em> and is disabled. When it ends the page toasts
+  <em>Snapshot {id} is {state}</em> and opens what arrived on Review, or toasts the
+  failure. An ingest started elsewhere (the sync sweep, a webhook, another
+  reviewer) shows the same stages when the page is opened during it. One whose
+  gateway instance stopped reads <em>Ingest interrupted</em>, and <strong>Ingest</strong> is offered
+  again.</li>
+<li><strong>Connect a client</strong> opens the <a href="#connect-a-client">client wizard</a> under the
+  header.</li>
+</ul>
+<h3 id="upstream">Upstream<a class="headerlink" href="#upstream" title="Permanent link">&para;</a></h3>
+<p>On <strong>Settings</strong>. Forge metadata captured at registration, best effort: <strong>Clone
+URL</strong>, <strong>Forge</strong>, <strong>Project</strong>, <strong>Description</strong>, <strong>Last upstream update</strong>,
+<strong>Last ingest</strong> (its outcome, time and a link to the snapshot it recorded, or
+"never"), <strong>Registered</strong>, <strong>Registered
+by</strong>. Anything not captured shows "—".</p>
+<h4 id="correct-the-url-administrators">Correct the URL (administrators)<a class="headerlink" href="#correct-the-url-administrators" title="Permanent link">&para;</a></h4>
+<p>In the <strong>Upstream</strong> card of an upstream marketplace, <strong>shown only to a session
+holding the <code>admin</code> role</strong>. While the marketplace has no snapshot, <strong>Edit URL…</strong>
+opens a dialog titled <em>Correct the URL of <em>name</em></em> with the <strong>Clone URL</strong>
+prefilled. It states that the upstream is read before anything changes and that
+the editor becomes the registrant. <strong>Save URL</strong> is disabled while the field is
+empty or whitespace, or while the URL carries a credential (an alert says to
+configure upstream credentials on the gateway instead), and reads <em>Saving…</em>
+while the request is in flight. The scheme allowlist and the upstream read are
+the server's: a refusal is shown in the dialog with the server's reason, and
+the stored URL is unchanged. On success the dialog closes, a toast confirms it,
+any warning (such as a URL another marketplace already has) is a toast of its
+own, and the card shows the new URL and registrant.</p>
+<p>Once the marketplace has a snapshot the button is gone and the card says the
+URL can no longer change, and that the marketplace can be
+<a href="#remove-marketplace-administrators">removed</a> and registered again. A
+marketplace the estate configuration declares has the button disabled, with
+the reason: correct the declaration and restart. The dialog calls
+<a href="../api/marketplaces/#put-marketplacesnameurl"><code>PUT /api/v1/marketplaces/{name}/url</code></a>.</p>
+<h3 id="vetting-chain-administrators">Vetting chain (administrators)<a class="headerlink" href="#vetting-chain-administrators" title="Permanent link">&para;</a></h3>
+<p>On <strong>Settings</strong>, <strong>shown only to a session holding the <code>admin</code> role</strong>. Fed by
+<code>GET /api/v1/marketplaces/{name}/vetting-chain</code>, which the server refuses to anyone
+else — the switch that governs the chain, and the visibility of its settings, sit
+above the content they govern.</p>
+<p>The card's description links to <a href="#vetting-chain-governance">Vetting chain</a>, which governs the
+default every setting here falls back to and lists every marketplace that departs
+from it.</p>
+<p>It draws the <a href="#the-chain-flow">same flow</a> without verdicts, headed by how much of
+the chain runs and what is off:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>2 of 3 vetters run · secret-scan off for this marketplace
+</code></pre></div>
+<p>Every configured vetter appears in the order it runs, each showing <code>enabled</code> or
+<code>disabled</code>, a chip naming <strong>where that state came from</strong> (<code>this marketplace</code>,
+<code>global</code>, <code>default</code>), and — for a vetter that is off — who switched it off.
+Opening a node gives the same source in full, the vetter's version, whether it
+is built in or external, when the deciding setting was last set, and the note left
+with it.</p>
+<p>The node's detail also carries the switch: an optional reason field and a single
+control that enables or disables that vetter <strong>for this marketplace</strong>, calling
+<code>PUT /api/v1/vetting/vetters/{name}/toggle</code>. A per-marketplace setting overrides
+the global one. Every change is written to the audit ledger with the acting
+administrator, the vetter, the scope, the new state and the reason.</p>
+<p>Switching vetters off narrows the evidence behind an approval; it never makes
+one automatic. What that means for a run is described in
+<a href="../../concepts/vetting/#switching-a-vetter-off">Switching a vetter off</a>.</p>
+<p>Beneath the drawing sit the two chain-level controls, fed by
+<code>GET /api/v1/marketplaces/{name}/vetting-chain-settings</code>.</p>
+<p><strong>When a vetter fails</strong> is a two-option control — <em>Run every vetter</em> or <em>Stop
+after a failure</em> — calling <code>PUT /api/v1/vetting/chain-mode</code> for this marketplace,
+with an optional reason. The hint beside it states the cost rather than leaving
+it to be discovered on a snapshot: stopping early spares the vetters after a
+failure, and it also means a reviewer no longer sees everything that is wrong
+with a snapshot in one pass, and that a run which stopped is blocked until it has
+been run again — even after the finding that stopped it is waived. The line ends
+with where the current mode came from.</p>
+<p><strong>The order they run in</strong> is a numbered list with a <strong>Move <em>vetter</em> up</strong> and a
+<strong>Move <em>vetter</em> down</strong> control on every row. The controls are ordinary buttons
+with names of their own, so the reordering is operable by keyboard and announced
+as what it does; there is no drag gesture to have an equivalent for. Movements
+are local until <strong>Save order</strong> writes the whole arrangement through
+<code>PUT /api/v1/vetting/chain-order</code> — one intended reordering is one audited change,
+not one per hop — and <strong>Discard changes</strong> puts it back. While an arrangement is
+unsaved the drawing above shows the proposed order and the list says it is not
+saved yet.</p>
+<h3 id="remove-marketplace-administrators">Remove marketplace (administrators)<a class="headerlink" href="#remove-marketplace-administrators" title="Permanent link">&para;</a></h3>
+<p>On <strong>Settings</strong>, last, and <strong>shown only to a session holding the <code>admin</code>
+role</strong>. <strong>Remove <em>name</em>…</strong> opens a confirmation titled with the marketplace's
+name. The confirmation states what removal does: every approved snapshot is
+withdrawn, so the facade serves nothing under the name; tokens lose their grant
+to publish to it and keep their grant to fetch it; the record, the snapshots and
+the ledger are kept; and the name can be registered again as a new marketplace.
+It also asks for a <strong>Reason</strong>, which is recorded on the removal and on each
+withdrawal. <strong>Remove <em>name</em></strong> is disabled until the reason holds something
+other than whitespace, and reads <em>Removing…</em> while the request is in flight.</p>
+<p>The confirmation calls
+<a href="../api/marketplaces/#delete-marketplacesname"><code>DELETE /api/v1/marketplaces/{name}</code></a>.
+On success the portal goes to <strong>Marketplaces</strong> and a toast states how many
+approved snapshots were withdrawn. A refusal is shown as a toast with the
+server's reason, and the confirmation stays open.</p>
+<p>A marketplace that the <a href="../../guides/declarative-estate/">declarative estate</a>
+declares is not offered for removal. The next reconciliation would register the
+name again as a new, empty marketplace. The button is disabled, and a line
+beneath it says to remove the declaration and restart the gateway first. The
+portal reads this from the last reconciliation report,
+<a href="../api/estate/"><code>GET /api/v1/estate</code></a>. If that report cannot be read, the
+button stays available, because the server accepts the removal.</p>
+<h3 id="review-and-snapshots">Review and Snapshots<a class="headerlink" href="#review-and-snapshots" title="Permanent link">&para;</a></h3>
+<p><strong>One snapshot is open at a time</strong> in either section, so neither grows longer
+with every ingest; the rest are one line each, and <strong>Open</strong> on a line opens that
+snapshot's card in its place.</p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Holds</th>
+<th>Shown as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Review — <strong>Awaiting decision (n)</strong></td>
+<td>Every <code>held</code> or <code>revoked</code> snapshot that is not deleted, newest first</td>
+<td>The newest open as a card; the rest one line each, with its delta. Empty: "Nothing awaits a decision."</td>
+</tr>
+<tr>
+<td>Snapshots — <strong>Serving</strong></td>
+<td>The snapshot whose commit the facade answers with</td>
+<td>Open by default. "Nothing is served." when <code>servedSha</code> is null — and, if a snapshot is still recorded approved, that it was withdrawn</td>
+</tr>
+<tr>
+<td>Snapshots — <strong>Earlier snapshots (n)</strong></td>
+<td>Everything else: rejected, deleted, approved but no longer served</td>
+<td>One line each</td>
+</tr>
+</tbody>
+</table>
+<p>Two snapshots can await a decision at once. The open snapshot, its tab, its
+file and the line in that file are in the address, so a link to the evidence
+restores all four:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>/marketplaces/acme?snapshot=41&amp;tab=contents&amp;path=plugins/hello/skills/hello/SKILL.md&amp;line=12
+</code></pre></div>
+<p><code>line</code> is optional. When present, the file opens at that line with the line
+focused. Choosing another file drops it.</p>
+<p>An address naming a snapshot that no longer awaits a decision — an older link to
+one since approved — still opens it on Review, under <strong>Linked snapshot</strong>, with a
+link to it among the snapshots.</p>
+<h4 id="the-card">The card<a class="headerlink" href="#the-card" title="Permanent link">&para;</a></h4>
+<p>Top to bottom, in this order on purpose:</p>
+<ol>
+<li><strong>Identity</strong> — the short SHA, the state badge, when it was ingested and by
+   whom, who decided it, and the retention control
+   (<a href="../../guides/snapshot-retention/">Delete / Restore</a>).</li>
+<li>
+<p><strong>The delta line</strong> — what is arriving, how big it is, and against what:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>1 skill added, 1 modified · 3 files · +48 −7 · vs 65f64622
+</code></pre></div>
+<p>File and line counts come from <code>GET /api/v1/snapshots/{id}/diff</code> (against
+what is served); skill counts from <code>GET /api/v1/snapshots/{id}/content-diff</code>
+(against the last approved snapshot). Skill counts are left out when those
+two baselines differ, rather than mixing counts taken against two commits.
+The file and line counts are the gateway's own totals over the whole diff,
+however large. With nothing served the line says approving serves all of
+it.
+3. The violation and, for an approved or revoked snapshot, the
+   <a href="#re-vetting-panel">re-vetting panel</a>.
+4. <strong>Tabs</strong> — the evidence. Only the open tab loads.</p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>Shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Vetting</strong> (default)</td>
+<td>The <a href="#the-chain-flow">vetting report</a>: chain outcome, verdicts, findings, waivers. Every <code>path:line</code> location is a link that opens the file at that line in <strong>Contents</strong> (not in the approve dialog, which stays on the decision)</td>
+</tr>
+<tr>
+<td><strong>Contents</strong></td>
+<td>The <a href="#snapshot-contents">file explorer</a>, inside the card</td>
+</tr>
+<tr>
+<td><strong>Diff</strong></td>
+<td>Changes since the last approved snapshot — plugins and skills marked added, changed, moved or removed, only what changed, from <code>content-diff</code>. With nothing approved yet it says there is no baseline. Below it, <strong>Files changed against the served commit</strong> lists every changed path from <code>diff</code>, 500 at a time, with <strong>Show N more</strong>, the totals over the whole diff, and each file's diff opened in place</td>
+</tr>
+<tr>
+<td><strong>Inventory</strong></td>
+<td>What the snapshot ships: one block per declared plugin with its <code>source</code> and description. Below them is one count per component kind the plugin has (skills, commands, agents, hooks, hook modules, MCP servers and LSP servers), for example "1 skill · 4 agents · 3 hooks". Each count is collapsed and expands its own list in place. A hook row shows its trigger (the event, and the tool matcher when there is one), what it runs, and where it is declared. A hook module row shows its file, the events it registers, the <code>$</code> interfaces it reaches, the plugin files it imports, anything it loads that could not be scanned, and where it is declared. Read from <code>GET /api/v1/snapshots/{id}/content</code></td>
+</tr>
+<tr>
+<td><strong>Provenance</strong></td>
+<td>Upstream URL and SHA, the served SHA, who decided it and when, and the closure of external plugin sources</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p><strong>The decision</strong> — <strong>Approve</strong> (<strong>Re-approve</strong> for a revoked snapshot) and
+   <strong>Reject</strong>, only for a snapshot awaiting one.</p>
+</li>
+</ol>
+<p>The decision is last because it rests on everything above it: an approval
+control is never shown above the evidence. When the gateway would refuse the
+approval — vetting blocked it, the minimum release age has not passed, or the
+four-eyes rule refuses you — <strong>Approve</strong> is disabled and the reason is on the
+card, rather than the press failing — inside the minimum release age the reason
+names when it opens, read from <code>GET /api/v1/snapshots/{id}/release-age</code> rather
+than the browser's clock, and <strong>Reject</strong> is never age-gated. <strong>Approve</strong> opens
+the <a href="#approve-dialog">review dialog</a>; <strong>Reject</strong> fires immediately and toasts
+<em>Snapshot {id} rejected</em>.</p>
+<p>When other snapshots await a decision, the card names them. Approving this one
+does not retire them: they stay held, and approving an older one afterwards
+would serve content older than this.</p>
+<p>This is the review surface, and it works on <code>held</code> snapshots — inspecting a
+snapshot must not require serving it.</p>
+<h4 id="approve-dialog">Approve dialog<a class="headerlink" href="#approve-dialog" title="Permanent link">&para;</a></h4>
+<p>Titled <em>Approve snapshot {id}</em>, it renders the <a href="#vetting">vetting report</a> for
+the snapshot. The confirm control (<em>Confirm approval of snapshot {id}</em>) is
+disabled for as long as the effective outcome is <code>BLOCKED</code>; there is no field to
+type past it. The way to enable it is to waive each blocking finding from the
+report itself. The server enforces the same rule independently, with <code>409</code>, so
+the disabled button mirrors policy rather than replacing it.</p>
+<p>Below the report, a <em>Plugin names already in use</em> section lists each plugin
+name the snapshot introduces that looks like one another marketplace already
+serves, with the manifest line declaring it and the incumbents it resembles.
+While any is uncovered the confirm control stays disabled. Each carries a
+<strong>Waive name collision</strong> button (accessible name <em>Waive name collision for
+{name}</em>) opening the same waiver form, offering <em>Every plugin-name-collision
+finding in this snapshot</em> as the only scope. The snapshot card does not shut
+<strong>Approve</strong> for a collision, since this dialog is where it is waived.</p>
+<p>The dialog is also shut by the minimum release age, and says so in its own note:
+that one has no way past it in the portal at all, and needs none — it opens by
+itself at the stated time.</p>
+<p>Confirming calls <code>POST /api/v1/snapshots/{id}/approve</code> with no body and toasts
+<em>Snapshot {id} approved</em>.</p>
+<h4 id="waiving-a-finding">Waiving a finding<a class="headerlink" href="#waiving-a-finding" title="Permanent link">&para;</a></h4>
+<p>The report lists each verdict's findings as <strong>finding groups</strong>. A group is the
+findings of one rule on one line of identical content (the same git blob). It
+shows its first location and, under <em>N more copies of the same content</em>, the
+rest. Above the verdicts, <em>Approval is blocked until each of these is waived</em>
+lists every uncovered group, as <em>{rule} at {path:line}, …</em>, with the first
+three locations spelled out and the rest counted.</p>
+<p>Each blocking group carries a button that opens an inline form beside it:
+<strong>Waive {rule}…</strong> (accessible name <em>Waive {rule} at {path:line}</em>) for a single
+location, or <strong>Waive {rule} at N locations…</strong> (<em>Waive {rule} at N locations</em>)
+for a group.</p>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Scope</strong></td>
+<td><em>These N identical copies, in this snapshot</em> (or <em>This finding, in this snapshot</em>) — the default, covering the group and nothing else; <em>Every {rule} finding in this snapshot</em>; and, for a single location, <em>Every {rule} finding under {path}, in later snapshots too</em></td>
+</tr>
+<tr>
+<td><strong>Expires on</strong></td>
+<td>date input, defaulting to 30 days out; must be in the future — the waiver lapses at the end of the chosen day</td>
+</tr>
+<tr>
+<td><strong>Justification</strong></td>
+<td>required; whitespace does not count</td>
+</tr>
+</tbody>
+</table>
+<p>Under the scope, <em>This waiver covers N findings in this snapshot</em> counts what
+the chosen scope matches in this run: the group's locations, every finding of
+the rule, or every finding of the rule under the path. A path scope adds <em>and
+any under {path} in later snapshots</em>. The submit button carries the same count:
+<strong>Record waiver for N findings</strong> (accessible name <em>Record waiver for N findings
+of {rule}</em>). It stays disabled until the justification is non-blank <strong>and</strong>
+the expiry is still in the future, which is exactly what the server requires.</p>
+<p>It calls <code>POST /api/v1/snapshots/{id}/waivers</code> and toasts
+<em>Waiver recorded for {rule}</em>. The group is then struck through and badged
+<strong>waived by {approver} until {date}</strong> (or <strong>k of N waived</strong> when a wider waiver
+covers only some of its locations), and the outcome badge becomes
+<strong>vetting clear with waivers</strong> once nothing is left uncovered.</p>
+<h4 id="waiving-several-groups-at-once">Waiving several groups at once<a class="headerlink" href="#waiving-several-groups-at-once" title="Permanent link">&para;</a></h4>
+<p>A blocking group tied to content also carries a checkbox (<em>Select {rule} at
+{path:line}</em>, or <em>Select {rule} at N locations</em>). Once one is checked, a
+<em>Selected findings</em> bar above the verdicts reads <em>G groups, N findings
+selected</em>, lists the selected rules, and offers <strong>Waive selected…</strong> and
+<strong>Clear selection</strong>. A group that a refresh shows as waived drops out of the
+selection.</p>
+<p><strong>Waive selected…</strong> opens one form with <strong>Expires on</strong> and <strong>Justification</strong>,
+under the same rules as the single form. <strong>Record G waivers for N findings</strong>
+posts one group waiver per selected group, one at a time, each scoped to that
+group in this snapshot and never wider. If every waiver is recorded, it toasts
+<em>Recorded G waivers</em> and closes. If any is refused, an alert reads <em>Recorded k
+of G waivers. Refused: {rule} at {location} — {reason}</em>, and the refused groups
+stay selected.</p>
+<p>Below the verdicts, <strong>Accepted risks</strong> lists every waiver whose rule appears in
+this run — active, expired and revoked alike — with its rule, scope,
+justification, approver and expiry. An active one carries
+<em>Revoke waiver {id}</em>, which calls <code>DELETE /api/v1/waivers/{id}</code>.</p>
+<h3 id="connect-a-client">Connect a client<a class="headerlink" href="#connect-a-client" title="Permanent link">&para;</a></h3>
+<p><strong>Connect a client</strong>, in the <a href="#header">header</a> of every section, opens a wizard
+that composes for this marketplace everything a consumer needs — every URL
+derived from the address the browser is already on. It is a header action
+rather than the page's first panel because a consumer takes this step once,
+while the reviewer's work is on Review every visit.</p>
+<p>When nothing is served, the header already says a clone is answered with <code>404</code>;
+the wizard repeats it, adding that this is not a credential problem — a wrong or
+revoked token is answered with <code>401</code> — for anyone who opens it without reading
+the header.</p>
+<p>Inside the wizard:</p>
+<ol>
+<li><strong>Personal access token</strong> — the same show-once creation flow as the
+   <a href="#access-tokens">Access tokens</a> page. The name defaults to
+   <code>{marketplace}-client</code> and the control disables again if it is emptied or left
+   whitespace. <strong>Expires</strong> is a button group — 7, 30 or 90 days, or no expiry —
+   defaulting to 30 days rather than to never; the
+   gateway's own cap
+   (<a href="../configuration/#access-tokens"><code>skills-gateway.tokens.max-ttl</code></a>) is not
+   exposed to the browser, so a longer choice than the deployment allows is
+   refused by the server and the refusal is shown beneath the field. A token
+   minted here is filled into the snippets <strong>only while the wizard stays open</strong>;
+   closing it drops the value, and no previously issued token's value is ever
+   shown.</li>
+<li><strong>Store the credential</strong> — a <code>git credential approve</code> line for this host.
+   This is the <strong>primary copy target</strong>, marked by a highlighted snippet box,
+   because a consumer who copies one thing should copy this. Its copy control is
+   the same corner icon button the other snippets use, so the three read as one
+   family.</li>
+<li><strong>Add the marketplace to Claude Code</strong> —
+   <code>claude plugin marketplace add {origin}/git/{name}</code>.</li>
+<li><strong>Clone directly</strong> — a plain <code>git clone</code> of the facade URL, with no token in it:
+   the credential stored by step 2 authenticates it, and nothing lands in
+   <code>.git/config</code> or shell history.</li>
+</ol>
+<p>The remaining snippets have icon copy buttons. Until a token is minted the
+credential snippet carries the <code>&lt;YOUR_TOKEN&gt;</code> placeholder.</p>
+<h3 id="vetting">Vetting<a class="headerlink" href="#vetting" title="Permanent link">&para;</a></h3>
+<p>The snapshot card's <strong>Vetting</strong> tab — the tab a card opens on — is fed by
+<code>GET /api/v1/snapshots/{id}/vetting</code>.</p>
+<h4 id="the-chain-flow">The chain flow<a class="headerlink" href="#the-chain-flow" title="Permanent link">&para;</a></h4>
+<p>Above the per-vetter list, the chain is drawn as an ordered flow — one node
+per step, left to right:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Ingest → secret-scan → prompt-injection → Outcome → Approval
+</code></pre></div>
+<p>The order is the order the vetters ran, taken from the run's own recorded
+positions; for a snapshot the chain has not run against yet, it is the configured
+chain in the order it will run.</p>
+<p>The flow never wraps: nodes narrow their names before the row breaks, and on a
+screen too narrow for the whole chain it scrolls sideways — faded at the edge it
+continues past — so the gate is never stranded on a line of its own, away from
+the result it follows.</p>
+<p>Above the nodes, one sentence states the answer and where the chain stopped, so
+it can be read without opening anything:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Blocked at step 1 · secret-scan found 1 critical finding
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Clear · 5 vetters, 0 findings
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Clear with waivers · 2 findings accepted
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Stopped at step 1 · secret-scan found 1 critical finding, so 2 later vetters
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>                    did not run — re-vet to see what they say
+</code></pre></div>
+<p>The last of those is the one a reader must not skim past: a chain that
+<a href="../../concepts/vetting/#stopping-the-chain-after-a-failure">stopped early</a> has a
+smaller verdict set, not a cleaner one, so the sentence says how many vetters
+never looked and what to do about it.</p>
+<p>How to read a node:</p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stage label</td>
+<td>Where the node sits: <code>Source</code>, <code>Step N</code> for each vetter in run order, <code>Result</code>, <code>Gate</code>.</td>
+</tr>
+<tr>
+<td>Name</td>
+<td><code>Ingest</code>, a vetter's name, <code>Outcome</code>, <code>Approval</code>.</td>
+</tr>
+<tr>
+<td>State word</td>
+<td><code>pass</code>, <code>warn</code>, <code>fail</code>, <code>error</code>, <code>pending</code>, <code>skipped</code> (switched off), <code>not reached</code> (the chain stopped before it), <code>not run</code> (no verdict at all) for a vetter; <code>clear</code>, <code>clear with waivers</code>, <code>blocked</code> for the outcome; <code>open</code> or <code>closed</code> for the approval gate. The word is always present — colour never carries a state on its own.</td>
+</tr>
+<tr>
+<td>Top edge</td>
+<td>The same state, as colour: the accent for a pass or warn, red for a fail or error, a plain hairline for anything that reached no conclusion. A second, scannable carrier of the word above it, never a replacement for it.</td>
+</tr>
+<tr>
+<td>Finding count</td>
+<td>How many findings that vetter raised, when it raised any.</td>
+</tr>
+<tr>
+<td><code>external</code> chip</td>
+<td>The verdict comes from an operator-configured external service, not from a built-in vetter.</td>
+</tr>
+<tr>
+<td><code>N waived</code> chip</td>
+<td>How many of that vetter's findings an active waiver is suppressing. The vetter keeps the verdict it reached: an accepted risk is never redrawn as a pass.</td>
+</tr>
+</tbody>
+</table>
+<p>The stage the chain arrives at — <code>Result</code> here, <code>Gate</code> on the marketplace chain —
+is drawn as a filled surface rather than an outline, so the end of the chain reads
+as the end.</p>
+<p>Every node is a button. Activating one opens its detail:</p>
+<ul>
+<li><strong>A vetter</strong> — its verdict, its version, whether it is built in or external,
+  its self-description, and its findings, with a waived one struck through and
+  badged. A <code>skipped</code> node states that an administrator switched the vetter
+  off for this marketplace and that the scope and reason are on the
+  <a href="#vetting-chain-administrators">marketplace's vetting chain</a>, which is
+  administrator-only. A <code>not reached</code> node states that the chain stopped before
+  it, that this is an absence rather than a result, and that a waiver on the
+  finding which stopped the chain lets the next run get this far without standing
+  in for the verdict this vetter never gave.</li>
+<li><strong>The outcome</strong> — how the aggregation reached its answer, what the vetters
+  themselves recorded, which vetters are objecting, the vetters the run never
+  reached, and the findings that still need a waiver.</li>
+<li><strong>Ingest</strong> and <strong>Approval</strong> — what the step is, and why the gate is where it is.</li>
+</ul>
+<p>The flow is an overview; the per-vetter list below it is where findings are
+read side by side and a waiver is written next to the one being accepted. Both
+are always shown.</p>
+<p>It shows the effective chain outcome badge and one block per vetter: an icon
+and badge for the verdict state, the vetter name, a one-line summary, and
+every finding as severity badge, rule id, <code>path:line</code>, and message. A vetter
+with nothing to report shows "Nothing found."</p>
+<p>A finding an active waiver is suppressing is struck through and badged
+<strong>waived by {approver} until {date}</strong>; one that still blocks carries a
+<strong>Waive finding {rule}</strong> button. When the effective outcome only clears because
+of a waiver, the header adds <em>the chain objected; active waivers are suppressing
+what it found</em>. Blocking findings are also summarised as a single line naming
+what must be waived before approval unblocks. See
+<a href="#waiving-a-finding">Waiving a finding</a> for the form and the
+<strong>Accepted risks</strong> list.</p>
+<p>A snapshot the chain never ran against says so explicitly, and states that there
+is nothing to waive — a snapshot with no evidence cannot be approved at all.</p>
+<p>A collapsed <em>What these vetters can and cannot see</em> disclosure lists each
+configured vetter and its self-description, so the limits of the heuristics
+are readable at the point of decision. The same section is embedded in the
+<a href="#approve-dialog">approve dialog</a>.</p>
+<h3 id="chain-staleness">Chain staleness<a class="headerlink" href="#chain-staleness" title="Permanent link">&para;</a></h3>
+<p>Enabling or disabling a vetter, or changing the chain's mode or order, <strong>re-runs
+nothing</strong>. For approved content the re-vetting sweep converges on it; for a
+snapshot still at the approval gate nothing does. So a snapshot ingested before
+a chain change can be approved on evidence a vetter in the chain today never
+produced.</p>
+<p>The vetting section says so, against the evidence it qualifies:</p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Shown</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The run came from the chain in force</td>
+<td>Nothing. A marking on every snapshot would be noise.</td>
+</tr>
+<tr>
+<td>The run came from a different chain</td>
+<td>A notice naming <strong>both</strong> chains — the one that produced the evidence and the one in force — and a <strong>Re-run the chain now</strong> button.</td>
+</tr>
+<tr>
+<td>The run records no chain identity</td>
+<td><em>This run records no chain identity, so whether it matches the chain in force is unknown.</em> No alarm and no button: the gateway does not know that anything is wrong.</td>
+</tr>
+</tbody>
+</table>
+<p>A chain is described as <code>vetter@version,…;mode=…</code>, and — when an administrator
+has switched vetters off — <code>;disabled=[…]</code>. A switched-off vetter stays named in
+the chain and is recorded on the run as a <code>disabled</code> verdict, so a toggle shows
+up in the <code>disabled=</code> part rather than by a name disappearing.</p>
+<p><strong>Approval is not blocked by this</strong>, and no configuration makes it block. The
+gateway states the fact and the reviewer decides, the same as for an override or
+a waiver. If they approve anyway, the ledger records
+<code>snapshot-approved-on-superseded-chain</code> naming both chains, beside the approval
+rather than instead of it.</p>
+<p><strong>Re-run the chain now</strong> calls <code>POST /api/v1/snapshots/{id}/revet</code>. For a held
+snapshot that is a <em>refresh</em>, not a re-vetting: the chain runs, the run is
+recorded, the snapshot stays held, and nothing is announced or retracted —
+there is nothing published to retract.</p>
+<h3 id="re-vetting-panel">Re-vetting panel<a class="headerlink" href="#re-vetting-panel" title="Permanent link">&para;</a></h3>
+<p>Above the tabs, the snapshot card carries the re-vetting surface.</p>
+<table>
+<thead>
+<tr>
+<th>Snapshot</th>
+<th>Shown</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>State <code>approved</code></td>
+<td>A <strong>Re-vet now</strong> button.</td>
+</tr>
+<tr>
+<td>State <code>revoked</code></td>
+<td><em>revoked by {revokedBy} on {revokedAt}</em>, and an <strong>Already fetched by</strong> panel.</td>
+</tr>
+<tr>
+<td>Anything else</td>
+<td>Nothing here — a held snapshot's evidence is refreshed from the <a href="#chain-staleness">chain staleness notice</a> instead, which is where the reason to refresh it appears.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Re-vet now</strong> calls <code>POST /api/v1/snapshots/{id}/revet</code> and toasts what the run
+concluded: <em>re-vetted clear</em>, <em>could not conclude</em>, <em>has a re-vetting violation;
+it is still published</em> (warn mode), or <em>revoked by a re-vetting violation</em>
+(enforce mode). Why the snapshot was revoked is the card's own <code>violation</code> line.</p>
+<p><strong>Already fetched by</strong> lists every identity that received the snapshot's content
+through the facade, each with a fetch count and a last-fetch time, from
+<code>GET /api/v1/snapshots/{id}/fetchers</code>. It is only requested for a revoked snapshot.
+When nobody fetched it, the panel says so rather than showing an empty list.
+This read is privileged — admin or an approver of this marketplace — so the
+panel shows an error to a session holding neither.</p>
+<p>The way back is on the <a href="#marketplaces">marketplaces</a> page: a revoked snapshot's
+approve control reads <strong>Re-approve</strong> and goes through the ordinary gate. See
+<a href="../../guides/re-vetting/">Re-vetting approved content</a>.</p>
+<h3 id="retention-controls">Retention controls<a class="headerlink" href="#retention-controls" title="Permanent link">&para;</a></h3>
+<p>Each snapshot card carries its retention state and the control that changes it:</p>
+<table>
+<thead>
+<tr>
+<th>Snapshot</th>
+<th>Shown</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Not deleted, state <code>held</code>, <code>rejected</code> or <code>revoked</code></td>
+<td>A <strong>Delete</strong> button.</td>
+</tr>
+<tr>
+<td>Not deleted, state <code>approved</code></td>
+<td>Nothing — an approved snapshot is served by the facade and the gateway refuses to delete it.</td>
+</tr>
+<tr>
+<td>Deleted</td>
+<td>A destructive <code>deleted</code> badge, "restorable until {purgeAfter}", and a <strong>Restore</strong> button.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Delete</strong> calls <code>DELETE /api/v1/snapshots/{id}</code> and toasts <em>Snapshot {id} deleted;
+it can be restored</em>. <strong>Restore</strong> calls <code>POST /api/v1/snapshots/{id}/restore</code> and
+toasts <em>Snapshot {id} restored</em>. Both fire immediately, like every other
+mutation in the portal — deletion here is a reversible mark, not a purge.</p>
+<div class="admonition warning">
+<p class="admonition-title">The restore deadline is the real one</p>
+<p>Once <code>purgeAfter</code> has passed, a compaction run removes the snapshot and its
+quarantine ref permanently and the card disappears. See
+<a href="../retention/">Snapshot retention</a>.</p>
+</div>
+<p>Empty state: "No snapshots yet."</p>
+<h3 id="audit-log">Audit log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h3>
+<p>Below the snapshots, the marketplace's slice of the ledger: the entries
+<code>GET /api/v1/audit?marketplace={name}</code> returns, newest first, with the same
+verdict colouring as the <a href="#audit-log">Audit log</a> page — a blocked verdict reads
+red here too. The server does the narrowing, so a quiet marketplace's entries
+show however many newer entries belong to others. <strong>Load older entries</strong>
+fetches the next page while there is one. A <strong>See the full ledger</strong> link goes
+to <code>/audit</code>. Empty state: "Nothing recorded against this marketplace yet."</p>
+<hr />
+<h2 id="snapshot-contents">Snapshot contents<a class="headerlink" href="#snapshot-contents" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/marketplaces/:name/snapshots/:id/files</code> · <strong>Heading:</strong> Snapshot
+contents</p>
+<p>The reviewer's file explorer for one snapshot: exactly the commit it pins. The
+same explorer is the <strong>Contents</strong> tab of the <a href="#the-card">snapshot card</a>; this
+full-width route renders it on its own, and keeps working for links already
+sent.</p>
+<p><strong>The address is the feature.</strong> Approval is a two-person decision
+(see <a href="../../guides/approving-snapshots/">Approving snapshots</a>), and this page is
+addressed so the first reviewer can send the second a link to a <em>file</em> rather
+than directions for finding it. The selected path is in the query string:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>/marketplaces/acme/snapshots/41/files?path=plugins/hello/skills/hello/SKILL.md
+</code></pre></div>
+<p>Opening that address restores the same file, with the directories above it
+already open. Back and forward walk the files visited. Which directories are
+open is not in the address — it is derived from the selection and from what you
+have since toggled.</p>
+<p>The page takes the whole window, and each pane scrolls on its own; the page
+itself does not scroll.</p>
+<p><strong>Left pane — the tree.</strong> The pinned commit, read one folder at a time
+(<code>GET /api/v1/snapshots/{id}/tree</code>). A folder's contents load when you open it.
+A folder with more than 500 entries shows the first 500 and a <strong>Show N more</strong>
+control, so every path of a snapshot of any size can be reached. Directories
+come before files. A file shows its size, or how it stands against what is
+served (<code>added</code>, <code>modified</code>, <code>removed</code>). A folder shows how many changed paths
+are beneath it, or how many files when none changed, so you can find the
+change without opening every folder. Paths this snapshot <em>removes</em> relative to
+what is served are listed and marked <code>removed</code>: a surface for reading a change
+that hid the deletions would be the wrong surface.</p>
+<p>Above the tree, a count line gives the snapshot's true totals, for example
+"3261 files, 12 changed". Below that is a <strong>search</strong> over every path in the
+snapshot (<code>GET /api/v1/snapshots/{id}/files?q=</code>). A search matches any part of
+the full path, regardless of case. The matches replace the tree while the
+search is up, each shown by its full path, and the count reads "12 matching of
+3261 files". Clearing the search gives back the folders you had open.</p>
+<p><strong>Right pane — the file.</strong> The selected blob
+(<code>GET /api/v1/snapshots/{id}/file?path=</code>), with a <strong>vs served</strong> toggle for that
+one file, read from <code>GET /api/v1/snapshots/{id}/diff?path=</code>. Files and the diff
+no longer compete for one box: switching to the diff leaves the tree where it
+is.</p>
+<p><strong>Findings in the file.</strong> The latest vetting run's findings
+(<code>GET /api/v1/snapshots/{id}/vetting</code>) are read onto the files they locate:</p>
+<ul>
+<li><strong>In the tree</strong>, a file that carries findings shows its highest severity
+  and the count, for example "high · 3". Directories carry no marker.</li>
+<li><strong>Above the file</strong>, "N findings in this file" lists each finding with its
+  severity, rule, line, vetter and message. An entry with a line moves to that
+  line. A finding whose location has no line, or whose line is beyond the part
+  of a truncated file that is shown, is listed there too.</li>
+<li><strong>In the file</strong>, a file is shown as numbered lines. Each line a finding
+  locates is tinted by its highest severity, and <strong>each finding on it is
+  written out beneath the line</strong>: severity, vetter, rule and message, and
+  "waived by … until …" when an active waiver covers it. Several findings on
+  one line are all shown. The line is described by them, so moving focus to it
+  reads what was found there. Colour is never the only signal.</li>
+<li><strong>Markdown and JSON</strong> open as they read (rendered, formatted), with the
+  findings listed above them. Following a finding, from that list or from a
+  link with a <code>line</code>, opens the numbered <strong>Source</strong>. A <strong>Source / Rendered</strong> (or
+  <strong>Formatted</strong>) control switches between the two. Other text always opens
+  numbered.</li>
+</ul>
+<p>A finding is marked on the one line its location names; a finding whose message
+names further lines marks only that one. <strong>Copy link</strong> includes the line once one is chosen, and the address of this
+route takes <code>?line=</code> beside <code>?path=</code>.</p>
+<p>A reviewer who may read contents but not vetting still gets the file, without
+markers.</p>
+<p>Every bound of these reads is a state this page renders on purpose:</p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>What the page says</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Folder wider than 500 entries</td>
+<td>"Show N more (500 of M shown)" beneath it</td>
+</tr>
+<tr>
+<td>Search with more than 2000 matches</td>
+<td>"Show N more (2000 of M shown)" beneath the matches</td>
+</tr>
+<tr>
+<td>Blob over 128 KiB</td>
+<td>"Truncated: showing the first part of N bytes.", with the first part; the full blob is not shown in the portal</td>
+</tr>
+<tr>
+<td>Binary blob</td>
+<td>"Binary file (N bytes) — content is not rendered."</td>
+</tr>
+<tr>
+<td>Path removed by this snapshot</td>
+<td>Marked <code>removed</code> in the tree; the pane shows the removal</td>
+</tr>
+<tr>
+<td>File unchanged vs served</td>
+<td>"Unchanged against the served commit."</td>
+</tr>
+<tr>
+<td>Nothing served yet</td>
+<td>No baseline; approving serves all of it</td>
+</tr>
+<tr>
+<td>No approver role</td>
+<td>"You cannot read this snapshot's contents.", naming the role needed</td>
+</tr>
+<tr>
+<td>Snapshot is not this marketplace's</td>
+<td>"Snapshot N is not a snapshot of X."</td>
+</tr>
+<tr>
+<td>A <code>.json</code> file that does not tokenise as JSON</td>
+<td>"Not valid JSON — shown as stored.", with the stored bytes</td>
+</tr>
+<tr>
+<td>A finding's line beyond a truncated blob</td>
+<td>Listed above the file, and written out below it as "Line N is beyond the part shown"</td>
+</tr>
+</tbody>
+</table>
+<p>The tree keeps one width whatever file is open; a long line scrolls inside the
+file pane rather than taking width from the tree.</p>
+<p><strong>JSON</strong> is shown re-indented, with a <strong>Formatted / Raw</strong> control switching to the
+stored bytes. It is re-indented by its tokens, not parsed: parsing would keep only
+the last of a key declared twice and rewrite number spellings (<code>1.0</code> to <code>1</code>) —
+the very differences a hostile manifest can use to show a reviewer one document
+and a client another — so every token is copied as written, in order, and only
+the whitespace between them changes. A truncated blob is shown as stored, since
+half a document cannot be formatted honestly.</p>
+<p>Markdown renders inertly — there is no HTML pipeline at all, so HTML embedded in
+a hostile file appears as visible text and links are shown but never navigable.
+Other text renders as numbered lines. This is inspection, not execution: nothing
+fetched here is ever run, followed or injected as markup, and the page changes
+nothing about what the facade serves.</p>
+<p>The reads are privileged — admin or an approver of this marketplace — and the
+page is gated by the server refusing them, not by the link being hidden.</p>
+<hr />
+<h2 id="vetting-chain-governance">Vetting chain (governance)<a class="headerlink" href="#vetting-chain-governance" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/vetting</code> · <strong>Heading:</strong> Vetting chain</p>
+<p><strong>Administrator-only.</strong> The sidebar offers the entry only to a session holding
+the <code>admin</code> role, and the page itself renders a stated refusal —
+<em>"This page needs the administrative role."</em> — to any other session rather than
+an empty shell. The server refuses each of the page's reads independently, which
+is what actually protects them.</p>
+<p>Where <a href="#vetting-chain-administrators">Marketplace detail</a> governs one
+marketplace's chain, this page governs the estate: the chain every marketplace
+runs unless it says otherwise, and the ones that say otherwise.</p>
+<h3 id="the-default-chain">The default chain<a class="headerlink" href="#the-default-chain" title="Permanent link">&para;</a></h3>
+<p>The chain as it applies to <strong>a marketplace with no override of its own</strong> — the
+same drawing, the same per-vetter switch, and the same two chain-level controls
+as the marketplace card, scoped globally. Fed by
+<code>GET /api/v1/vetting/global-chain</code> and <code>GET /api/v1/vetting/global-chain-settings</code>,
+which resolve in the gateway rather than being recomposed in the browser, so this
+page cannot disagree with what actually runs. The source a control reports here is
+<code>global</code> or <code>default</code>, never <code>this marketplace</code>.</p>
+<p>Writing here calls the same endpoints the marketplace card calls with the
+<code>marketplace</code> field omitted, which is the global setting. A marketplace that
+overrides the setting keeps its own; clearing that override is how it comes back.</p>
+<h3 id="overrides">Overrides<a class="headerlink" href="#overrides" title="Permanent link">&para;</a></h3>
+<p>One row per marketplace whose chain departs from the default, showing what it
+departs in — <code>mode: stop-after-fail</code>, <code>order: …</code>, <code>secret-scan: off</code> — and a
+<strong>Clear every chain override on <em>name</em></strong> control. Assembled from
+<code>GET /api/v1/vetting/chain-settings</code>, <code>GET /api/v1/vetting/vetter-toggles</code> and
+<code>GET /api/v1/marketplaces</code>; a stored override whose marketplace is no longer
+registered still gets a row, labelled by its id and with its control disabled.</p>
+<div class="admonition warning">
+<p class="admonition-title">Clearing is not setting the default value</p>
+<p>An override that happens to equal the default still pins the marketplace: its
+source stays <code>this marketplace</code>, so the next change to the default passes it by.
+<strong>Clear override</strong> removes the setting, which is the only thing that puts the
+source back to <code>global</code> or <code>default</code>. Clearing a marketplace that overrides
+nothing writes nothing and records nothing.</p>
+</div>
+<p>Empty state: <em>"No marketplace overrides the default chain. Everything in the
+estate runs exactly what is above."</em></p>
+<h3 id="bulk-edit">Bulk edit<a class="headerlink" href="#bulk-edit" title="Permanent link">&para;</a></h3>
+<p>Select marketplaces — individually or <strong>All marketplaces</strong> — then choose one
+change: <em>Set the chain mode</em>, <em>Set the vetter order</em>, <em>Switch a vetter</em>, or
+<em>Clear overrides</em>. Selection and every control are ordinary keyboard-operable
+controls; the order to apply uses the same named <strong>Move <em>vetter</em> up / down</strong>
+buttons the marketplace card uses.</p>
+<p><strong>Review the change</strong> is disabled until a selection exists, with a hint saying
+what is missing. It opens a confirm step that states the act in a sentence and
+lists every affected marketplace with its <strong>Now</strong> and <strong>After</strong> — stated as the
+marketplace's <em>own</em> setting (<code>no mode override</code> → <code>mode: stop-after-fail</code>),
+because that is what will be stored.</p>
+<p><strong>Apply to these marketplaces</strong> calls
+<a href="../api/marketplaces/#post-vettingchain-settingsbulk"><code>POST /api/v1/vetting/chain-settings/bulk</code></a>.
+The result is rendered per marketplace — <code>applied</code>, <code>unchanged</code>, <code>failed</code> with
+the server's reason — together with the <strong>correlation id</strong> every ledger entry the
+act wrote carries. A response in which anything was refused renders as a failure,
+with an error toast and an <code>alert</code>; it is never reported as a success.</p>
+<hr />
+<h2 id="audit-log_1">Audit log<a class="headerlink" href="#audit-log_1" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/audit</code> · <strong>Heading:</strong> Audit log</p>
+<p>The ledger. Subtitle: "Append-only ledger of every facade fetch and
+administrative action, exportable to an external compliance system."</p>
+<h3 id="export">Export<a class="headerlink" href="#export" title="Permanent link">&para;</a></h3>
+<p><strong>Download ledger (NDJSON)</strong>, the page's header action, points at
+<code>/api/v1/audit/export</code> — a plain same-origin, session-authenticated download,
+not a fetch through the API client. The line beneath it states how many
+<a href="#audit-sinks">audit sinks</a> push the same feed onwards and links to them.</p>
+<h3 id="ledger">Ledger<a class="headerlink" href="#ledger" title="Permanent link">&para;</a></h3>
+<p>The table, from <code>GET /api/v1/audit</code>, <strong>newest first</strong>. The API pages the ledger
+newest first, and the table sorts the entries it has loaded by timestamp
+descending, so it opens on what just happened. Any column header re-sorts it.</p>
+<p>The table starts with the newest page of the ledger (1,000 entries by default).
+Below it, <strong>Load older entries</strong> fetches the next older page and adds it to the
+table. Beside the control, a line says how many entries are loaded. Once the
+oldest entry the ledger holds is loaded, the control goes and the line reads
+<em>"{n} entries loaded — nothing older is recorded."</em></p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Status</td>
+<td>A verdict badge derived from the entry: a <code>vetting-completed</code> row reads from the <code>outcome=</code> in its detail, and refusal/violation events (rejected, revoked, refused approval, a re-vetting violation, a blocked private key) read <strong>blocked</strong>. A blocked row is drawn in the destructive colour — the same red the marketplace surfaces use — with a faint tint and a left accent so it is findable; a clear act reads in the accent, a warn one muted. Everything else (a fetch, an ingest, a token event) is neutral and uncoloured.</td>
+</tr>
+<tr>
+<td>When</td>
+<td>The entry timestamp. Sortable.</td>
+</tr>
+<tr>
+<td>Event</td>
+<td>The event name, monospace. Sortable and filterable.</td>
+</tr>
+<tr>
+<td>Principal</td>
+<td>The acting identity. Sortable and filterable.</td>
+</tr>
+<tr>
+<td>Marketplace</td>
+<td>A <strong>link</strong> to that marketplace's <a href="#marketplace-detail">detail page</a>; "—" for an entry not tied to a marketplace. Sortable and filterable.</td>
+</tr>
+<tr>
+<td>Commit</td>
+<td>First 12 characters of the SHA, or "—". Filterable.</td>
+</tr>
+<tr>
+<td>Detail</td>
+<td>The entry's free-text detail.</td>
+</tr>
+</tbody>
+</table>
+<p>The per-column filter boxes sit above the table; each is free-text but offers
+<strong>completion</strong> from the values actually present, so you pick rather than type
+blind. The event, principal and commit lists are the distinct values in the
+loaded rows; the marketplace list draws on the registered marketplaces, so it
+completes beyond the rows on screen. The table sorts, filters and paginates
+(25 rows a page) client-side over the entries loaded so far. The footer reads
+<em>"{shown} of {loaded} loaded entries"</em>, and the filters and the
+event/principal/commit suggestions cover only the loaded entries. The status is a <strong>read-only legibility
+aid</strong> derived from what the ledger already records — it does not correct the
+ledger; the lossy verdict detail and the actor-type on automated vetting
+principals are tracked in <a href="https://github.com/skillsgateway/skillsgateway/issues/221">#221</a>.
+For a full, resumable pull, use the <a href="#export">NDJSON export</a> and its cursor.</p>
+<p>Empty state: "No fetches recorded yet."</p>
+<hr />
+<h2 id="adoption">Adoption<a class="headerlink" href="#adoption" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/adoption</code> · <strong>Heading:</strong> Adoption</p>
+<p>The <a href="../api/adoption/">adoption and staleness reports</a>, read-only. Subtitle:
+"Who fetches what through the facade, aggregated from the append-only ledger,
+and which identities are not on the served tip." Both underlying reads require
+the auditor role (see <a href="#authorization">Authorization</a>), so a session without
+it sees the page's error state.</p>
+<h3 id="window-and-totals">Window and totals<a class="headerlink" href="#window-and-totals" title="Permanent link">&para;</a></h3>
+<p>A <strong>Report window</strong> button group — 7, 30 or 90 days, default 30, the active
+choice pressed — drives <code>GET /api/v1/adoption?days=</code>. Beside it, stat chips:
+total fetches in the window, marketplaces fetched, and stale identities.</p>
+<h3 id="adoption-by-marketplace">Adoption by marketplace<a class="headerlink" href="#adoption-by-marketplace" title="Permanent link">&para;</a></h3>
+<p>One row card per marketplace fetched in the window: name, a <code>serving</code> /
+<code>not serving</code> badge, and chips for fetches, identities and the last fetch.
+Inside, the per-SHA breakdown:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Snapshot SHA</td>
+<td>First 12 characters, monospace; full SHA on the tooltip.</td>
+</tr>
+<tr>
+<td>Fetches</td>
+<td>Content-transferring fetches of this SHA in the window.</td>
+</tr>
+<tr>
+<td>Identities</td>
+<td>Distinct identities that fetched it.</td>
+</tr>
+<tr>
+<td>Last fetch</td>
+<td>Most recent, in the reader's locale; the ISO-8601 instant on the tooltip.</td>
+</tr>
+<tr>
+<td>Tip</td>
+<td><code>current</code> (primary badge) or <code>superseded</code> (secondary).</td>
+</tr>
+</tbody>
+</table>
+<p>Empty state: "No fetches in the last {n} days. Adoption appears once content
+is fetched through the facade."</p>
+<h3 id="stale-identities">Stale identities<a class="headerlink" href="#stale-identities" title="Permanent link">&para;</a></h3>
+<p>The <a href="../api/adoption/#get-apiadoptionstaleness">staleness report</a>, window-free:
+identity, marketplace, last received SHA, the served tip it diverges from —
+or a destructive <code>not serving</code> badge when the marketplace stopped serving
+entirely — and the last fetch time. The page says what the report is: facts,
+not verdicts.</p>
+<p>Empty state: "Every identity is on the served tip."</p>
+<hr />
+<h2 id="webhooks">Webhooks<a class="headerlink" href="#webhooks" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/integrations/webhooks</code> (<code>/webhooks</code> redirects here) · <strong>Heading:</strong> Webhooks</p>
+<p>"Snapshot lifecycle events are POSTed to each subscriber that filters for them,
+signed with HMAC-SHA256 and retried with backoff until delivered."</p>
+<p>Reading requires the auditor role; adding and deleting require an administrator,
+and the page offers those controls to an administrator only.</p>
+<h3 id="new-subscriber">New subscriber<a class="headerlink" href="#new-subscriber" title="Permanent link">&para;</a></h3>
+<p><strong>New subscriber</strong> opens a dialog with <strong>Subscriber name</strong>, <strong>Target URL</strong> and <strong>Events</strong>. Events is
+a checkbox list built from <code>GET /api/v1/webhooks/events</code>, so the portal offers exactly
+the names this gateway emits rather than asking for them: <strong>All events</strong> ticks or
+clears every one, and the box above the list narrows what is shown without
+changing what is selected. Every event is ticked by default, and that state submits
+<code>*</code> rather than an enumeration — so a subscriber registered today also receives
+events added to the gateway later.</p>
+<p><strong>Add subscriber</strong> stays disabled until the name matches <code>^[a-z0-9][a-z0-9_-]*$</code>,
+the target URL parses with a scheme, and at least one event is ticked; only then is
+<code>POST /api/v1/webhooks</code> called. The scheme allowlist remains server-side and surfaces
+as an error toast.</p>
+<p>On success the dialog closes and a show-once dialog opens — "This signing secret is shown exactly
+once — copy it now." — with the <code>whsec_…</code> value in a code block and a clipboard
+button that flips to a checkmark for two seconds, the same pattern as
+<a href="#access-tokens">Access tokens</a>.</p>
+<h3 id="subscribers">Subscribers<a class="headerlink" href="#subscribers" title="Permanent link">&para;</a></h3>
+<p>The lifecycle subscribers. An audit sink's delivery channel — a subscriber the
+API marks with <code>auditSink</code> — is listed with its sink on <a href="#audit-sinks">Audit sinks</a>
+instead, and cannot be deleted from here.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>The subscriber name.</td>
+</tr>
+<tr>
+<td>Target URL</td>
+<td>The registered endpoint.</td>
+</tr>
+<tr>
+<td>Events</td>
+<td>The filter, rendered as a chip; <code>*</code> displays as "all events". A name absent from the served registry is flagged with an <strong>unknown event</strong> badge, whose tooltip names it.</td>
+</tr>
+<tr>
+<td>Status</td>
+<td><code>enabled</code> (primary badge) or <code>disabled</code> (secondary).</td>
+</tr>
+<tr>
+<td>Actions</td>
+<td><strong>Delete</strong>, which fires immediately — administrators only.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Delete</strong> calls <code>DELETE /api/v1/webhooks/{id}</code> and toasts <em>Subscriber '{name}'
+deleted</em>. It removes the delivery history with the subscriber.</p>
+<p>Empty state: "No subscribers yet."</p>
+<h3 id="delivery-attempts">Delivery attempts<a class="headerlink" href="#delivery-attempts" title="Permanent link">&para;</a></h3>
+<p>From <code>GET /api/v1/webhooks/deliveries</code> — the operator's view of a failing
+integration.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Event</td>
+<td>The lifecycle event name.</td>
+</tr>
+<tr>
+<td>Subscriber</td>
+<td>Resolved from the subscriber list held in the browser; falls back to the raw id. A sink's delivery reads "{sink} · audit sink" and links to <a href="#audit-sinks">Audit sinks</a>.</td>
+</tr>
+<tr>
+<td>State</td>
+<td>Badge — <code>delivered</code> (primary), <code>failed</code> (destructive), <code>pending</code> (secondary).</td>
+</tr>
+<tr>
+<td>Attempts</td>
+<td>Attempts made so far.</td>
+</tr>
+<tr>
+<td>Last response</td>
+<td>The last HTTP status, else the last error, else "—".</td>
+</tr>
+<tr>
+<td>Queued</td>
+<td>Enqueue timestamp.</td>
+</tr>
+</tbody>
+</table>
+<p>Read-only: there is no manual redelivery and no editing. Empty state: "No
+deliveries yet."</p>
+<p>The secret is never re-displayed anywhere on this page. See
+<a href="../../guides/lifecycle-webhooks/">Receiving lifecycle webhooks</a> for the payload,
+headers and signature verification.</p>
+<hr />
+<h2 id="audit-sinks">Audit sinks<a class="headerlink" href="#audit-sinks" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/integrations/sinks</code> · <strong>Heading:</strong> Audit sinks</p>
+<p>The audit ledger pushed to an external compliance system, each sink with its
+position in it. Reading the list requires the auditor role; adding, replaying
+and deleting require an administrator, and the page offers those controls to an
+administrator only.</p>
+<h3 id="new-sink">New sink<a class="headerlink" href="#new-sink" title="Permanent link">&para;</a></h3>
+<p><strong>New sink</strong> opens a dialog with <strong>Sink name</strong> and <strong>Target URL</strong>, which posts to
+<code>POST /api/v1/audit/sinks</code>. <strong>Add sink</strong> stays disabled until the name matches
+<code>^[a-z0-9][a-z0-9_-]*$</code> and the target URL parses with a scheme; the scheme
+allowlist itself stays server-side. On success the dialog closes and the same show-once secret dialog opens as
+<a href="#access-tokens">Access tokens</a> and <a href="#webhooks">Webhooks</a>.</p>
+<h3 id="sinks">Sinks<a class="headerlink" href="#sinks" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>The sink name.</td>
+</tr>
+<tr>
+<td>Target URL</td>
+<td>Where batches are POSTed.</td>
+</tr>
+<tr>
+<td>Position</td>
+<td>The sink's cursor — the last ledger sequence handed to it, monospace.</td>
+</tr>
+<tr>
+<td>Behind</td>
+<td>Entries not yet handed over, as "{n} entries".</td>
+</tr>
+<tr>
+<td>Status</td>
+<td><code>enabled</code> (primary badge) or <code>disabled</code> (secondary).</td>
+</tr>
+<tr>
+<td>Actions</td>
+<td><strong>Replay</strong> and <strong>Delete</strong>, both firing immediately — administrators only.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Replay</strong> sets the cursor to <code>0</code> — the whole ledger, from the beginning — and
+toasts <em>Sink '{name}' will replay the ledger</em>. Replaying to an arbitrary
+position is API-only (<code>PUT /api/v1/audit/sinks/{id}/cursor</code>).</p>
+<p><strong>Delete</strong> calls <code>DELETE /api/v1/audit/sinks/{id}</code>, taking the sink's delivery
+channel with it, and toasts <em>Sink '{name}' deleted</em>.</p>
+<p>Sink deliveries are ordinary webhook deliveries, so their attempts appear on the
+<a href="#webhooks">Webhooks</a> page rather than here, marked as the sink's.</p>
+<p>Empty state: "No export sinks yet."</p>
+<hr />
+<h2 id="access-tokens">Access tokens<a class="headerlink" href="#access-tokens" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/tokens</code> · <strong>Heading:</strong> Access tokens</p>
+<p>"Personal access tokens authenticate git clients against the facade. Values are
+hashed at rest and shown exactly once."</p>
+<p>An inline form with a <strong>Token name</strong> field and a <strong>Create token</strong> button posts to
+<code>POST /api/v1/tokens</code>. <strong>Create token</strong> stays disabled until the name field holds a
+non-blank value — the name is trimmed before it is sent. The response opens a
+show-once dialog — "This value is shown
+exactly once — copy it now. Only a hash is stored." — with the token in a code
+block and a clipboard button that flips to a checkmark for two seconds.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>The name you gave it.</td>
+</tr>
+<tr>
+<td>Created</td>
+<td>Creation timestamp.</td>
+</tr>
+<tr>
+<td>Last used</td>
+<td>How long ago the token last authenticated successfully, or <strong>never</strong>. Hover for the exact instant.</td>
+</tr>
+<tr>
+<td>Status</td>
+<td><code>active</code> (primary badge) or <code>revoked</code> (destructive).</td>
+</tr>
+<tr>
+<td>Actions</td>
+<td><strong>Revoke</strong>, shown only while active.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Last used</strong> is the column to read before revoking: it separates a token
+something still authenticates with from one nobody has used. It shows the
+recency rather than the instant, because recency is the question; the exact time
+stays on the hover title, as on every other timestamp in the portal. The gateway
+records it at most once a minute, so it can be up to a minute behind, and a
+refused authentication never moves it — see
+<a href="../api/tokens/#lastusedat"><code>lastUsedAt</code></a> for what a <strong>never</strong> does and does not
+prove.</p>
+<p><strong>Revoke</strong> calls <code>DELETE /api/v1/tokens/{id}</code> and toasts <em>Token '{name}' revoked</em>.
+It fires immediately. Revocation is recorded rather than deleted: the row stays
+with a <code>revoked</code> badge.</p>
+<p>Empty state: "No tokens yet."</p>
+<p>See <a href="../../guides/consuming-skills/">Consuming approved skills</a> for using a token
+with a git client.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Licensed under the Apache License 2.0
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.indexes", "content.code.copy", "content.action.edit", "search.highlight", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "dev", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

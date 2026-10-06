@@ -1,0 +1,4109 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Enterprise gateway for git-distributed AI agent skill marketplaces — quarantined ingestion, hold-until-approved vetting, a read-only git facade, and an append-only audit ledger.">
+      
+      
+      
+        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/0.5.0/concepts/vetting/">
+      
+      
+        <link rel="prev" href="../lifecycle/">
+      
+      
+        <link rel="next" href="../snapshots-and-ledger/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Vetting — the connector chain - Skills Gateway</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#vetting-the-vetter-chain" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Skills Gateway" class="md-header__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Skills Gateway
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Vetting — the connector chain
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/skillsgateway/skillsgateway" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    skillsgateway/skillsgateway
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Skills Gateway" class="md-nav__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Skills Gateway
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/skillsgateway/skillsgateway" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    skillsgateway/skillsgateway
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/local-development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Try it locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy and operate
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deploy and operate
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/deploying-on-kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying on Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/deploying-without-kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying without Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/storage-backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing and migrating the storage backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/verifying-an-object-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verifying conditional writes against a real bucket
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/identity-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/delegated-administration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delegated administration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/declarative-estate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Declarative estate configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/snapshot-retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/backup-and-upgrade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backing up, restoring and upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exporting the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/client-enforcement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Making the gateway the only door
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/leaving-the-gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Leaving the gateway
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Govern the estate
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Govern the estate
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/registering-a-marketplace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/private-upstreams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reading a private upstream
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing first-party skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/upstream-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syncing from upstream automatically
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/approving-snapshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approving and rejecting snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/waiving-findings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Waiving a vetting finding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/policy-rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy deny rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/license-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    License compliance for skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/re-vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Re-vetting approved content
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/adding-an-external-vetter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adding an external vetter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Receiving lifecycle webhooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/read-only-forge-mirror/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The read-only forge mirror
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consume skills
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Consume skills
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/consuming-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consuming approved skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/virtual-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The virtual catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintain the project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Maintain the project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutting a release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Marketplaces and snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/tokens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Access tokens
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/adoption/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adoption
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/estate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/mirror/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mirror
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshot retention
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/container-image/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Container image
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/git-facade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git smart-HTTP facade
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compatibility and allowlists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/portal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Admin portal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../capability-map/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifecycle — quarantine to serve
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vetting — the connector chain
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vetting — the connector chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-chain-sits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the chain sits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-vetter-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The vetter contract
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The vetter contract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#verdict-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verdict states
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#switching-a-vetter-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switching a vetter off
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stopping-the-chain-after-a-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stopping the chain after a failure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-order-the-vetters-run-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The order the vetters run in
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-the-settings-resolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the settings resolve
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fail-closed-aggregation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fail-closed aggregation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-approval-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The approval gate
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The approval gate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#not-a-vetter-the-minimum-release-age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not a vetter: the minimum release age
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-a-vetter-either-plugin-names-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not a vetter either: plugin names already in use
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#waivers-accepted-risks-with-a-scope-and-an-expiry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waivers: accepted risks with a scope and an expiry
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Waivers: accepted risks with a scope and an expiry">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-groups-and-the-waiver-on-one-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding groups, and the waiver on one group
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-effective-outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The effective outcome
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expiry-needs-no-scheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expiry needs no scheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-built-in-vetters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The built-in vetters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The built-in vetters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#secret-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        secret-scan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prompt-injection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prompt-injection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#executable-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        executable-surface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#license-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        license-scan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skill-conformance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        skill-conformance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#external-connectors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External connectors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coverage-gaps-are-reported-not-hidden" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coverage gaps are reported, not hidden
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-lands-in-the-ledger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What lands in the ledger
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-further" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading further
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../snapshots-and-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshots and the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trust-boundaries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trust boundaries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../related-work/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Related work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-chain-sits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the chain sits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-vetter-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The vetter contract
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The vetter contract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#verdict-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verdict states
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#switching-a-vetter-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switching a vetter off
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stopping-the-chain-after-a-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stopping the chain after a failure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-order-the-vetters-run-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The order the vetters run in
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-the-settings-resolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the settings resolve
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fail-closed-aggregation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fail-closed aggregation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-approval-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The approval gate
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The approval gate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#not-a-vetter-the-minimum-release-age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not a vetter: the minimum release age
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-a-vetter-either-plugin-names-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not a vetter either: plugin names already in use
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#waivers-accepted-risks-with-a-scope-and-an-expiry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waivers: accepted risks with a scope and an expiry
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Waivers: accepted risks with a scope and an expiry">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-groups-and-the-waiver-on-one-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding groups, and the waiver on one group
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-effective-outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The effective outcome
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expiry-needs-no-scheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expiry needs no scheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-built-in-vetters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The built-in vetters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The built-in vetters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#secret-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        secret-scan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prompt-injection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prompt-injection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#executable-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        executable-surface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#license-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        license-scan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skill-conformance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        skill-conformance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#external-connectors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External connectors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coverage-gaps-are-reported-not-hidden" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coverage gaps are reported, not hidden
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-lands-in-the-ledger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What lands in the ledger
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-further" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading further
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/concepts/vetting.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="vetting-the-vetter-chain">Vetting — the vetter chain<a class="headerlink" href="#vetting-the-vetter-chain" title="Permanent link">&para;</a></h1>
+<p>Every snapshot the gateway ingests is quarantined and pinned to an upstream
+commit SHA. Between that pin and the reviewer's decision the gateway runs a
+<strong>vetting chain</strong>: an ordered list of vetters, each of which looks at the
+snapshot's content and answers with a verdict. The verdicts and their findings
+are recorded against the snapshot and shown to the reviewer before any approve
+or reject decision.</p>
+<p>The gateway does not vet content itself. It orchestrates: it runs vetters,
+normalises what they answer, records it, and aggregates it into a single
+outcome that gates approval.</p>
+<h2 id="where-the-chain-sits">Where the chain sits<a class="headerlink" href="#where-the-chain-sits" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart TD
+    U["Upstream repository"] --&gt;|"POST /api/v1/marketplaces/{name}/ingest"| F["Fetch into quarantine&lt;br/&gt;pin refs/snapshots/&amp;lt;sha&amp;gt;"]
+    F --&gt; M{"Manifest policy&lt;br/&gt;local sources only"}
+    M --&gt;|violation| R["snapshot: rejected&lt;br/&gt;chain does not run"]
+    M --&gt;|ok| H["snapshot: held"]
+    H --&gt; C["Vetting chain"]
+
+    subgraph C["Vetting chain — ordered; every vetter by default"]
+        direction TB
+        C1["secret-scan (order 100)"] --&gt; C2["prompt-injection (order 200)"] --&gt; C5["executable-surface (order 250)"] --&gt; C3["license-scan (order 300)"] --&gt; C4["skill-conformance (order 400)"]
+    end
+
+    C --&gt; A["Aggregate verdicts&lt;br/&gt;clear iff every verdict is pass or warn"]
+    A --&gt; E["Effective outcome&lt;br/&gt;run + waivers active right now"]
+    E --&gt;|clear| RV["Reviewer sees verdicts&lt;br/&gt;Approve enabled"]
+    E --&gt;|clear with waivers| RW["Reviewer sees verdicts&lt;br/&gt;and what was accepted"]
+    E --&gt;|blocked| RB["Reviewer sees the findings&lt;br/&gt;no waiver covers"]
+    RV --&gt;|"POST /api/v1/snapshots/{id}/approve"| P["Published repository&lt;br/&gt;refs/heads/main"]
+    RW --&gt;|"POST /api/v1/snapshots/{id}/approve"| P
+    RB --&gt;|"POST /api/v1/snapshots/{id}/waivers per finding"| E</code></pre>
+<p>The chain never changes the snapshot's own state. A vetted snapshot is still
+<code>held</code>; what the chain decides is whether approving it is an ordinary act or one
+that has to be justified in writing.</p>
+<p>That separation is what lets the same chain run again, later, over a snapshot
+that is already approved and served — a new run against unchanged state. What
+such a run <em>means</em> is a separate judgement, described in
+<a href="../../guides/re-vetting/">Re-vetting approved content</a>: only a vetter that
+objects to the content can retract it, and a vetter that merely broke never
+can.</p>
+<h2 id="the-vetter-contract">The vetter contract<a class="headerlink" href="#the-vetter-contract" title="Permanent link">&para;</a></h2>
+<p>A vetter has a stable name, a position in the chain, and one method that
+takes the snapshot and returns a verdict. What it is given is deliberately
+narrow: the snapshot's id, its marketplace, its commit SHA, and a walk over the
+files in that commit. It is not given a repository handle, so a vetter cannot
+move a ref, write to quarantine, or read another marketplace's content.</p>
+<p>The walk takes the vetter's own selection of paths, and content is read only
+for the files that selection asks for. One chain run walks the commit's tree
+once and reads each selected file once however many vetters want it, so
+<code>license-scan</code> reading two file kinds no longer costs a full pass over the tree.
+What a vetter sees is unchanged by this: a file over the size limit is still
+handed over unread rather than omitted. How much content a run keeps for that
+reuse is bounded by
+<a href="../../reference/configuration/#vetting"><code>skills-gateway.vetting.content-cache-bytes</code></a>;
+beyond the bound content is read again rather than kept, so the setting costs
+speed and never coverage.</p>
+<p>A verdict carries a state, an optional external report URL, and a list of
+findings. A finding has a <strong>stable rule id</strong> (<code>aws-access-key-id</code>), a severity,
+a location (normally <code>path:line</code>), and a reviewer-facing message. The rule id is
+the identity a <a href="#waivers-accepted-risks-with-a-scope-and-an-expiry">scoped waiver</a>
+is written against, so it is part of the contract rather than a display string.</p>
+<h3 id="verdict-states">Verdict states<a class="headerlink" href="#verdict-states" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Meaning</th>
+<th>Blocks approval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PASS</code></td>
+<td>The vetter found nothing.</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>WARN</code></td>
+<td>Something worth showing the reviewer that does not block.</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>FAIL</code></td>
+<td>Something that blocks.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>ERROR</code></td>
+<td>The vetter produced no verdict: it threw, or it exceeded its time limit.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>PENDING</code></td>
+<td>The vetter was triggered and has not answered yet.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>DISABLED</code></td>
+<td>An administrator switched the vetter off for this marketplace, so the chain did not run it.</td>
+<td>No — and it does not clear either</td>
+</tr>
+<tr>
+<td><code>NOT_REACHED</code></td>
+<td>The chain stopped before this vetter, so it was not run.</td>
+<td>No — and it does not clear either, but see below</td>
+</tr>
+</tbody>
+</table>
+<p>A vetter does not choose its state directly: it emits findings, and the
+verdict follows the worst severity present — <code>HIGH</code> or <code>CRITICAL</code> fails,
+<code>LOW</code> or <code>MEDIUM</code> warns, and <code>INFO</code> alone still passes. That way a new rule only
+has to get its severity right.</p>
+<p><code>PENDING</code> exists so that an asynchronous vetter — one that is triggered over
+a webhook and answers later — fits without changing the gate. No built-in
+vetter returns it; a configured <a href="#external-connectors">external connector</a>
+that answers <code>pending</code> does, and it blocks until it is resolved.</p>
+<h3 id="switching-a-vetter-off">Switching a vetter off<a class="headerlink" href="#switching-a-vetter-off" title="Permanent link">&para;</a></h3>
+<p>An administrator can disable a vetter globally or for one marketplace. A
+disabled vetter is not run at ingestion or re-vetting; the chain records a
+<code>DISABLED</code> verdict in its place, so the disablement is part of the run's
+evidence rather than a silently shorter chain. Because <code>DISABLED</code> never clears,
+disabling every vetter leaves a run blocked — the switch is not a blanket
+approval. The settings, the audit events and the endpoints are in
+<a href="../../reference/api/marketplaces/#vetter-enabledisable">the API reference</a>.</p>
+<h3 id="stopping-the-chain-after-a-failure">Stopping the chain after a failure<a class="headerlink" href="#stopping-the-chain-after-a-failure" title="Permanent link">&para;</a></h3>
+<p>By default the chain runs every enabled vetter, whatever the ones before it
+concluded. An administrator can change that for one marketplace, or globally:</p>
+<table>
+<thead>
+<tr>
+<th>Chain mode</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run-all</code></td>
+<td>Every enabled vetter runs. The default.</td>
+</tr>
+<tr>
+<td><code>stop-after-fail</code></td>
+<td>The chain stops after the first vetter whose verdict still objects to the content, and the vetters after it are recorded <code>NOT_REACHED</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>What it buys is real: an expensive vetter — one billed per call, or one that
+detonates the snapshot in a sandbox — is not spent on content a cheap
+deterministic scan has already condemned, and that cost is otherwise paid again
+on every <a href="../../guides/re-vetting/">re-vetting</a> pass over the whole approved
+estate.</p>
+<p><strong>What it costs a reviewer</strong> is equally real, and is the reason it is off by
+default. A run that stopped early is not a shorter description of the same
+answer; it is a smaller answer. The reviewer no longer sees everything that is
+wrong with a snapshot in one pass, so a fix-and-re-ingest loop can take several
+rounds, each revealing one more objection. Under <code>run-all</code> a run's verdict set is
+complete by construction; under <code>stop-after-fail</code> it is not, and the portal says
+so above the chain.</p>
+<p>Three properties keep a shorter run from becoming a cleaner one:</p>
+<ul>
+<li><strong>Nothing is omitted.</strong> Every vetter of the chain still has a verdict. A
+  vetter that was not reached says so, and says which vetter stopped the chain.</li>
+<li><strong><code>NOT_REACHED</code> never clears.</strong> Like <code>DISABLED</code> it is an absence rather than a
+  conclusion, and the aggregation still requires at least one clearing verdict.</li>
+<li><strong>A run that stopped early is blocked, whatever is waived.</strong> This is the one
+  that matters. Accepting the finding that stopped the chain does <em>not</em> clear the
+  run — the vetters behind it never looked at the content, and a gate opened on
+  their silence would be indistinguishable from a gate opened on a clean chain. A
+  waiver makes the <strong>next</strong> run get further; the run that stopped stays blocked
+  until the chain has been run again. Re-vet the snapshot, and the gate is then
+  decided on complete evidence.</li>
+</ul>
+<p>Only a <code>FAIL</code> stops the chain — not an <code>ERROR</code>, which is a fact about the
+gateway rather than about the content, and not a <code>PENDING</code>, which has concluded
+nothing. And only a <code>FAIL</code> that a reviewer has not already accepted: a verdict
+whose findings are all waived does not condemn the snapshot, so the chain runs
+on past it.</p>
+<p>Changing the mode is an administrator-only, audited act, like the on/off switch.
+The endpoints are in
+<a href="../../reference/api/marketplaces/#chain-mode-and-vetter-order">the API reference</a>.</p>
+<h3 id="the-order-the-vetters-run-in">The order the vetters run in<a class="headerlink" href="#the-order-the-vetters-run-in" title="Permanent link">&para;</a></h3>
+<p>Order only becomes a control once the chain can stop: under <code>run-all</code> it decides
+nothing but the sequence of the run and the left-to-right position in the
+portal's chain flow. Under <code>stop-after-fail</code> it decides which vetters get to look
+at all, so the cheap and deterministic ones belong first.</p>
+<p>An administrator can set the order globally or for one marketplace. The
+arrangement need not name every vetter. The <strong>resolved</strong> order is:</p>
+<ol>
+<li>the vetters the arrangement names, in the order it names them;</li>
+<li>then every vetter it does not name, by its configured position, with ties
+   broken by the vetter's name.</li>
+</ol>
+<p>That rule is total and deterministic, so a recorded run is reproducible, and an
+arrangement can never drop a vetter by omission — including a vetter a later
+release of the gateway adds, or an <a href="#external-connectors">external
+connector</a> an operator configures afterwards. An
+arrangement naming a vetter that does not exist, or naming one twice, is refused
+rather than stored.</p>
+<h3 id="how-the-settings-resolve">How the settings resolve<a class="headerlink" href="#how-the-settings-resolve" title="Permanent link">&para;</a></h3>
+<p>Both settings resolve the same way the
+<a href="#switching-a-vetter-off">vetter on/off switch</a> does: the setting scoped to the
+marketplace when there is one, otherwise the global setting, otherwise the
+default. The administrative surface reports which of the three decided, so a
+default is never mistaken for a decision somebody made. The global level and the
+marketplaces that depart from it are governed together on the portal's
+<a href="../../reference/portal/#vetting-chain-governance">Vetting chain page</a>.</p>
+<p>Both are recorded with every run, in the run's <strong>chain identity</strong>, alongside each
+vetter's rule-set version — <code>secret-scan@3,prompt-injection@1;mode=run-all</code>. That
+is what keeps <a href="../../guides/re-vetting/">re-vetting</a> able to answer its own
+question: when a snapshot that cleared last month is blocked today, was it the
+content that changed, or the chain?</p>
+<h2 id="fail-closed-aggregation">Fail-closed aggregation<a class="headerlink" href="#fail-closed-aggregation" title="Permanent link">&para;</a></h2>
+<p>A chain run is <strong>clear</strong> if and only if it produced at least one clearing
+verdict and every verdict is <code>PASS</code>, <code>WARN</code>, <code>DISABLED</code> or <code>NOT_REACHED</code>.
+Everything else is <strong>blocked</strong>:</p>
+<ul>
+<li>any vetter that failed;</li>
+<li>any vetter that crashed or timed out — a crash is a blocked snapshot, never
+  a skipped vetter;</li>
+<li>any vetter that has not answered;</li>
+<li><strong>and a snapshot with no chain run at all.</strong></li>
+</ul>
+<p>That last case is the one that matters most. A snapshot ingested before the
+chain existed, or one whose run died halfway, is blocked — absence of evidence
+is not evidence of safety.</p>
+<ul>
+<li><strong>and a run that stopped early</strong>, however its verdicts aggregate and whatever
+  waivers are active: the vetters it did not reach have said nothing either way,
+  so the run is missing evidence rather than merely missing an objection.</li>
+</ul>
+<p>By default all vetters run, in order, and the chain does not stop at the first
+failure, because a reviewer should see everything that is wrong with a snapshot
+at once. An administrator can trade that away per marketplace — see
+<a href="#stopping-the-chain-after-a-failure">Stopping the chain after a failure</a>.</p>
+<h2 id="the-approval-gate">The approval gate<a class="headerlink" href="#the-approval-gate" title="Permanent link">&para;</a></h2>
+<p><code>POST /api/v1/snapshots/{id}/approve</code> takes no request body. It refuses a snapshot
+whose <strong>effective</strong> outcome is blocked, with <code>409</code> and a problem document naming
+both the blocking vetters and — in <code>uncoveredFindings</code> — every blocking
+finding that no active waiver covers. That array is the reviewer's worklist: it
+is exactly the set of waivers that must exist for the approval to succeed.</p>
+<p><strong>A reviewer has no override.</strong> The only way a reviewer gets past objecting
+vetters is to accept each blocking finding individually with a
+<a href="#waivers-accepted-risks-with-a-scope-and-an-expiry">waiver</a>.</p>
+<p>An <strong>administrator</strong> — and only an administrator — can approve a blocked
+snapshot outright, by supplying a mandatory reason. The override lifts only the
+vetting block: the policy, name-collision, minimum-release-age and four-eyes gates still decide,
+and it lands on the ledger as its own event, so it is never indistinguishable
+from an approval the chain cleared. See
+<a href="../../reference/api/marketplaces/#administrative-override-of-a-blocked-outcome">Administrative override of a blocked outcome</a>.</p>
+<h3 id="not-a-vetter-the-minimum-release-age">Not a vetter: the minimum release age<a class="headerlink" href="#not-a-vetter-the-minimum-release-age" title="Permanent link">&para;</a></h3>
+<p>The same gate carries one precondition the chain has nothing to do with. When
+<a href="../../reference/configuration/#minimum-release-age"><code>minimum-release-age</code></a> is
+configured, a snapshot the gateway ingested less than that long ago cannot be
+approved however clear its verdicts are — a cooling-off window that gives the
+world time to notice a compromised release before this gateway adopts it.</p>
+<p>It is deliberately not a vetter. A verdict is evidence about content at the
+moment it was gathered; "too young" is a fact about now. Recorded as a failing
+verdict it would keep blocking after the age had passed, until some later
+re-vetting run happened to replace it. Checked at the approval request instead,
+it clears itself and leaves nothing behind — the same reasoning that makes
+waiver expiry a comparison rather than a state.</p>
+<h3 id="not-a-vetter-either-plugin-names-already-in-use">Not a vetter either: plugin names already in use<a class="headerlink" href="#not-a-vetter-either-plugin-names-already-in-use" title="Permanent link">&para;</a></h3>
+<p>The gate also refuses a snapshot that would introduce a plugin name looking like
+one another marketplace already serves — the typosquat, <code>c0de-review</code> beside
+<code>code-review</code>. Every vetter answers a question about the pinned content; this
+asks whether <em>the rest of the estate</em> already has something called this, which
+is a fact about now, like the release age. Asked inside the chain it would make a
+verdict depend on an input no run records, and a changed verdict over unchanged
+content would stop meaning that the chain learned something — the property
+<a href="../../guides/re-vetting/">re-vetting</a> rests on. So a chain run never reads
+the estate, and this is checked at the approval request instead
+(<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0015-corpus-questions-are-approval-gate-preconditions.md">ADR 0015</a>).</p>
+<p>What it compares, deliberately narrowly:</p>
+<ul>
+<li><strong>Plugin names, never skill names.</strong> Clients reach a skill under its
+  plugin's name, so <code>init</code> or <code>review</code> in several plugins impersonates nothing.</li>
+<li><strong>Only names new to the marketplace.</strong> A name one of the marketplace's
+  earlier approved snapshots already carried is not checked again, so a
+  collision is raised once, when the name first arrives, and accepted once.</li>
+<li><strong>Against approved snapshots of other marketplaces.</strong> First come wins: the
+  incumbent is never re-evaluated, and nothing here can withdraw what is
+  already served.</li>
+<li><strong>Lookalikes, not near-misses.</strong> Names are compared after Unicode
+  normalisation, the Unicode confusable skeleton (UTS #39 — <code>0</code> for <code>o</code>, a
+  Cyrillic <code>о</code> for a Latin one, <code>rn</code> for <code>m</code>), case folding and removal of
+  <code>-</code>, <code>_</code>, <code>.</code> and spaces. <code>Claude-Skills</code>, <code>claude_skills</code>, <code>claudeskills</code>
+  and <code>cIaude-skills</code> are one name. There is no edit distance: <code>code-review</code> and
+  <code>code-reviews</code> do not collide.</li>
+</ul>
+<p>A refusal is accepted with a waiver on rule <code>plugin-name-collision</code> — a fork is
+the legitimate case — and the vetting override does not lift it. Restoring a
+revoked snapshot runs the check again, so one whose name another marketplace
+took while it was revoked needs that waiver first. Two approvals racing each
+other with colliding names cannot both succeed: the second waits for the first
+and is refused as a collision with it.</p>
+<h2 id="waivers-accepted-risks-with-a-scope-and-an-expiry">Waivers: accepted risks with a scope and an expiry<a class="headerlink" href="#waivers-accepted-risks-with-a-scope-and-an-expiry" title="Permanent link">&para;</a></h2>
+<p>A <strong>waiver</strong> is an accepted-risk exception for <strong>one finding rule</strong>, on <strong>one
+marketplace</strong>, within <strong>one scope</strong>, until <strong>one date</strong>. All four are mandatory,
+and so are a justification and the identity accepting the risk. There is no way
+to express an unlimited waiver — <code>expires_at</code> is <code>NOT NULL</code> in the schema, and an
+expiry in the past, or more than 90 days ahead, is refused at creation
+(refused, not shortened; a lapsed waiver is renewed, not extended).</p>
+<table>
+<thead>
+<tr>
+<th>Scope</th>
+<th>The scope value is</th>
+<th>It covers a finding when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SNAPSHOT</code></td>
+<td>the snapshot's commit SHA</td>
+<td>the finding is on that exact commit</td>
+</tr>
+<tr>
+<td><code>PATH</code></td>
+<td>a repository-relative path</td>
+<td>the finding's path is that path, or lies under it</td>
+</tr>
+</tbody>
+</table>
+<p>Scope is matched against the <strong>path part</strong> of a finding's location, never the
+line number: inserting a line above a finding moves the number, and a waiver
+that evaporates on an unrelated edit trains reviewers to re-waive without
+reading. Path matching is a prefix on a segment boundary — <code>plugins/a</code> covers
+<code>plugins/a/x.md</code> but never <code>plugins/ab.md</code> — and there is no glob syntax.</p>
+<h3 id="finding-groups-and-the-waiver-on-one-group">Finding groups, and the waiver on one group<a class="headerlink" href="#finding-groups-and-the-waiver-on-one-group" title="Permanent link">&para;</a></h3>
+<p>Every finding whose location names a file of the snapshot is identified by the
+<strong>git blob</strong> that file has in the pinned tree. The gateway reads that identity
+from the tree it pinned, after the vetter answers. It is never taken from the
+vetter. The vetting report then shows the findings of one verdict that share
+rule, severity, message, blob and line as one <strong>finding group</strong>, with every
+location. A file vendored into nineteen plugins is one group with nineteen
+locations, not nineteen rows. The recorded run keeps one finding per location.
+Content that differs by a single byte is a different blob, so it is a different
+group. A finding the gateway could not tie to a blob, such as an error verdict,
+is never grouped.</p>
+<p>A <code>SNAPSHOT</code> waiver may be narrowed to one group by naming its <code>content</code> (the
+blob id) and <code>line</code>. It then covers a finding only where the rule, the blob and
+the line all match, in that commit. So a new file carrying the same rule, another
+line of the same file, and the same bytes in the next snapshot are all outside
+it. A group waiver on <code>PATH</code> scope is refused, because it would outlive the
+content it was judged on. This is how a vendored finding is accepted in one
+step without a bulk waive: a bulk waive would accept content nobody opened.</p>
+<p>The approval refusal and the portal name each uncovered group once, with its
+rule and its <code>path:line</code> locations.</p>
+<p><code>SNAPSHOT</code> scope, narrowed to a group, is what the portal offers first. It dies
+with the SHA, so the next ingestion blocks again and the acceptance has to be
+made deliberately a second time. Without a group, a <code>SNAPSHOT</code> waiver accepts
+every finding of its rule in that commit. A <code>PATH</code> waiver survives re-ingestion,
+which is its purpose and also its cost — it covers content that does not exist
+under that path yet. That is why an expiry is mandatory rather than advisory.</p>
+<h3 id="the-effective-outcome">The effective outcome<a class="headerlink" href="#the-effective-outcome" title="Permanent link">&para;</a></h3>
+<p>The recorded chain run is never rewritten. It stays raw evidence of what the
+vetters said. What gates an approval is the <strong>effective outcome</strong>, computed
+on every read from that run plus the waivers active <em>at that instant</em>:</p>
+<ul>
+<li>a <code>PASS</code> or <code>WARN</code> verdict stays clearing — a waiver can only ever remove an
+  objection, never create one;</li>
+<li>a blocking verdict <strong>with no findings</strong> stays blocking. <code>PENDING</code> can never be
+  waived away, because there is nothing to name;</li>
+<li>a blocking verdict <strong>with</strong> findings is re-derived from the findings that are
+  left, by the same severity rule the vetter's own state came from. Waive
+  every <code>HIGH</code>/<code>CRITICAL</code> finding and the verdict clears.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Effective states</th>
+<th>A waiver suppressed something</th>
+<th>Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>all clearing, run non-empty</td>
+<td>no</td>
+<td><code>CLEAR</code></td>
+</tr>
+<tr>
+<td>all clearing, run non-empty</td>
+<td>yes</td>
+<td><code>CLEAR_WITH_WAIVERS</code></td>
+</tr>
+<tr>
+<td>anything else, or no run at all</td>
+<td>—</td>
+<td><code>BLOCKED</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>CLEAR_WITH_WAIVERS</code> is a different word from <code>CLEAR</code> on purpose. A reviewer or
+an auditor glancing at a badge must never read an accepted risk as a clean
+chain.</p>
+<h3 id="expiry-needs-no-scheduler">Expiry needs no scheduler<a class="headerlink" href="#expiry-needs-no-scheduler" title="Permanent link">&para;</a></h3>
+<p>A waiver is active only while <code>expires_at</code> is in the future and it has not been
+revoked, and that is decided at the moment the effective outcome is computed —
+on the approve request, on the vetting API read, on the portal poll. So an
+expired waiver stops suppressing on the very next evaluation, and the snapshot's
+effective outcome reverts to <code>BLOCKED</code> with nothing having had to run in the
+background. Revoking a waiver has the same effect immediately.</p>
+<p>An hourly sweep writes a <code>waiver-expired</code> entry the first time it notices a
+lapsed waiver. It has no authority over the gate — the gate is already correct
+without it — so it only decides whether the lapse is <em>announced</em> in the ledger
+rather than merely observable in it.</p>
+<div class="admonition warning">
+<p class="admonition-title">Expiry re-closes the gate immediately; retraction waits for a re-vet</p>
+<p>A snapshot approved while a waiver was active stays published the moment that
+waiver lapses. What returns instantly is the <em>gate</em>: the snapshot reads as
+blocked again, and any future approval needs a fresh acceptance.</p>
+<p>Taking the content back is
+<a href="../../guides/re-vetting/">continuous re-vetting</a>'s job. The next re-vetting
+run over that snapshot finds the finding uncovered again and reports a
+violation — recorded and announced in the default <code>warn</code> mode, and revoking
+the snapshot under <code>enforce</code>. So under enforcement a waiver's expiry is a
+real deadline, not a reminder.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title"><code>vetter-error</code> is waivable</p>
+<p>A vetter that crashed or timed out records a <code>vetter-error</code> finding,
+and the uniform rule above makes it waivable like any other. That is a real
+operational need — an external scanner down for a day — but it means
+accepting "the scanner never looked at this". It is the single most
+consequential thing a reviewer can write here, and the ledger names the rule
+so it can be found.</p>
+</div>
+<h2 id="the-built-in-vetters">The built-in vetters<a class="headerlink" href="#the-built-in-vetters" title="Permanent link">&para;</a></h2>
+<p>All five vetters ship in the gateway and run in every chain. The first four ask
+whether the content is dangerous; the fifth asks whether it is well formed.</p>
+<h3 id="secret-scan"><code>secret-scan</code><a class="headerlink" href="#secret-scan" title="Permanent link">&para;</a></h3>
+<p>Regex and entropy rules over every UTF-8 text file in the snapshot: AWS access
+key ids and secret keys, PEM private-key blocks, GitHub, Slack and Google
+tokens, JSON Web Tokens, and assignment-shaped values whose Shannon entropy is
+high enough to be a real credential rather than an identifier.</p>
+<p>Findings never echo the matched value — a finding that quoted the secret would
+put it in the ledger and the portal.</p>
+<h3 id="prompt-injection"><code>prompt-injection</code><a class="headerlink" href="#prompt-injection" title="Permanent link">&para;</a></h3>
+<p>Pattern heuristics over the snapshot's Markdown instruction content
+(<code>SKILL.md</code>, commands, agents):</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>What it looks for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>instruction-override</code></td>
+<td>"ignore all previous instructions" and its close relatives</td>
+</tr>
+<tr>
+<td><code>system-prompt-disclosure</code></td>
+<td>Asking the agent to reveal its prompt or instructions</td>
+</tr>
+<tr>
+<td><code>credential-path-reference</code></td>
+<td><code>~/.aws/credentials</code>, <code>~/.ssh</code>, <code>.npmrc</code>, <code>/etc/passwd</code>, …</td>
+</tr>
+<tr>
+<td><code>concealment-instruction</code></td>
+<td>Telling the agent to keep something from a person, within one clause: "do not tell / inform / mention / report / reveal … the user", "hide … from the reviewer", "without telling the user", "don't let the user know"</td>
+</tr>
+<tr>
+<td><code>pipe-to-shell</code></td>
+<td><code>curl … \| sh</code> inside instructions</td>
+</tr>
+<tr>
+<td><code>exfiltration-instruction</code></td>
+<td>Sending credentials or environment values to a host</td>
+</tr>
+<tr>
+<td><code>hidden-html-instruction</code></td>
+<td>Agent-directed text inside an HTML comment</td>
+</tr>
+<tr>
+<td><code>invisible-characters</code></td>
+<td>Zero-width, bidirectional, and Unicode-tag characters used to hide text from a human reading the diff</td>
+</tr>
+</tbody>
+</table>
+<p>The rules are tuned against real skill repositories as well as against payloads.
+A negation never reaches into the next sentence, so "do not silently overwrite
+it. Show the user the file" is not a finding. Verbs of <em>displaying</em> do not
+count as concealment: "do not show the user the raw JSON" is a formatting
+instruction and by far the commoner use of the phrase. Command names and flags
+such as <code>ignore-rule</code> or <code>--all-values</code> are not prose. The price is a known
+blind spot: "do not show the user the command you ran" is not caught unless it
+also says <em>hide</em>, <em>without telling</em> or <em>don't let … know</em>. A paraphrase walks
+past pattern rules anyway, which is why this vetter is triage.</p>
+<h3 id="executable-surface"><code>executable-surface</code><a class="headerlink" href="#executable-surface" title="Permanent link">&para;</a></h3>
+<p>Reads each plugin's hooks, hook modules, MCP servers and LSP servers and flags
+the code a plugin runs without anyone invoking it. It also flags code a plugin installs
+or fetches after the snapshot was pinned: dependency manifests, and installs
+in its skills, commands and agents. A plugin's hooks come from its <code>hooks/hooks.json</code>, from the hook
+files or inline hooks that its <code>plugin.json</code> and its marketplace entry declare,
+and from the frontmatter of its skills and agents. The vetter reads the same
+<a href="../../reference/portal/#review-and-snapshots">inventory</a> the portal shows.</p>
+<p>Plugins come from two places: those the manifest lists, and any directory that
+holds a <code>.claude-plugin/plugin.json</code>. A plugin left out of the manifest is still
+served, so its hooks are still read.</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>What it means</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>auto-run-hook</code></td>
+<td>A hook runs automatically. The finding names its trigger (the event and the tool matcher) and what it runs, at the <code>path:line</code> where it is declared</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>runtime-fetch-exec</code></td>
+<td>A hook's command, or a file of the snapshot the hook launches, downloads code and executes it. That covers three shapes: a download piped into an interpreter; an interpreter fed a download through <code>$(…)</code> or <code>&lt;(…)</code>; and a file that both downloads to a file and makes that same file executable</td>
+<td>high: blocks</td>
+</tr>
+<tr>
+<td><code>runtime-package-run</code></td>
+<td>A hook runs a package runner (<code>npx</code>, <code>uvx</code>, <code>pnpm dlx</code>, <code>pipx run</code>, …) or installs packages (<code>pip install</code>, <code>npm install</code>, …). Either way, it fetches its code from a registry at run time</td>
+<td>high: blocks</td>
+</tr>
+<tr>
+<td><code>hook-config-unreadable</code></td>
+<td>A hook file, a <code>plugin.json</code> or the manifest could not be parsed, so the hooks it declares could not be read; or a hooks object holds a key the reader does not recognise, or a module path that leaves the plugin. The finding names the key</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>hook-target-unscanned</code></td>
+<td>A hook runs a file that is binary or over the scan size limit, so no rule could read it; or a hook module, or a file it imports, is missing, binary, over the size limit, or a package outside the plugin</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>auto-run-module</code></td>
+<td>A hook module runs in-process in every session. The finding names the events it registers and the <code>$</code> interfaces it reaches, at the line that names the module</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>module-steers-agent</code></td>
+<td>A hook module registers <code>tool.call</code> (it can deny or rewrite any tool call) or <code>prompt.compose</code> (it can rewrite the system prompt), at that registration</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>module-runs-process</code></td>
+<td>A hook module reaches <code>$.process</code>, so it runs programs on the user's machine, at its first use</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>module-calls-model</code></td>
+<td>A hook module reaches <code>$.model</code>, so it sends content to a model, at its first use</td>
+<td>low: warns</td>
+</tr>
+<tr>
+<td><code>mcp-fetch-exec</code></td>
+<td>A local MCP server's command, or a file of the plugin it launches, downloads code and executes it, in the shapes <code>runtime-fetch-exec</code> recognises</td>
+<td>high: blocks</td>
+</tr>
+<tr>
+<td><code>mcp-package-run</code></td>
+<td>A local MCP server runs a package runner or installs packages, as <code>runtime-package-run</code> recognises them</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>lsp-fetch-exec</code></td>
+<td>An LSP server's command, or a file of the plugin it launches, downloads code and executes it, as for an MCP server</td>
+<td>high: blocks</td>
+</tr>
+<tr>
+<td><code>lsp-package-run</code></td>
+<td>An LSP server runs a package runner or installs packages, as for an MCP server</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>runtime-dependency</code></td>
+<td>A dependency manifest in a plugin declares dependencies; or a skill's script, or a fenced code block of a skill's Markdown or of a command or agent, installs packages or runs a package runner. The code arrives from a registry after the snapshot was pinned. One finding per rule per file, at the first line, naming every line</td>
+<td>medium: warns</td>
+</tr>
+<tr>
+<td><code>skill-fetch-exec</code></td>
+<td>A skill's script, or a fenced code block of a skill's Markdown or of a command or agent, downloads code and executes it, in the shapes <code>runtime-fetch-exec</code> recognises. One finding per file, at the first line, naming every line</td>
+<td>high: blocks</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why a hook only warns.</strong> A hook is a legitimate plugin feature. Its code is in
+the snapshot, and the rest of the chain reads it. Blocking every hook would
+teach reviewers to waive hooks unread. Medium puts each hook on the verdict row
+with its trigger, and does not hold the snapshot.</p>
+<p><strong>Why runtime fetching blocks.</strong> Code fetched at run time was never in the
+snapshot the gateway pinned. It bypasses quarantine, vetting and approval
+entirely. A reviewer who has decided that the source is trusted waives the
+finding group like any other. It blocks wherever it is found: in a hook, an
+MCP or LSP server, or a skill's files. On a Markdown line, <code>skill-fetch-exec</code>
+can coincide with <code>prompt-injection</code>'s <code>pipe-to-shell</code>. The overlap is
+deliberate: the two vetters are switched and waived apart, and
+<code>skill-fetch-exec</code> also sees shapes <code>pipe-to-shell</code> does not.</p>
+<p><strong>Why an MCP package runner only warns.</strong> Nearly every published MCP server is
+started with <code>npx -y</code> or <code>uvx</code>, so the package's current code is fetched each
+time the server starts. Blocking all of them would teach reviewers to switch
+the vetter off. The warning puts each one on the verdict row. Download-and-execute
+blocks, as it does in a hook. The MCP rules have their own ids, so waiving one
+never waives a hook that does the same.</p>
+<p><strong>Why a runtime dependency only warns.</strong> Claude Code documents
+<code>${CLAUDE_PLUGIN_DATA}</code> as the place for a plugin's installed dependencies, so
+installing at run time is a sanctioned pattern, as the MCP runner is. The
+finding says whether a lockfile sits beside a manifest, but a lockfile does
+not lower it: a lockfile fixes versions only when the install command honours
+it (<code>npm ci</code>, not <code>npm i</code>), and the code is fetched after pinning either way.
+A file is one finding per rule, so a skill of scaffolding commands is one
+decision for the reviewer, not one per line.</p>
+<p><strong>Dependency manifests.</strong> <code>package.json</code> (any of <code>dependencies</code>,
+<code>devDependencies</code>, <code>optionalDependencies</code>, <code>peerDependencies</code>),
+<code>requirements*.txt</code> (any requirement, <code>-r</code>, <code>-c</code> or <code>-e</code> line),
+<code>pyproject.toml</code> (<code>[project]</code> <code>dependencies</code>, a poetry dependency table other
+than <code>python</code>, <code>[dependency-groups]</code>) and <code>Cargo.toml</code> (any dependency table)
+anywhere in a plugin. The finding sits at the declaring line. A manifest that
+declares nothing, or that does not parse, is silent. Manifests inside
+<code>node_modules/</code>, <code>.venv/</code>, <code>venv/</code>, <code>site-packages/</code> and <code>target/</code> are vendored
+content and are not read, and neither are the skill files there.</p>
+<p><strong>Skill, command and agent files.</strong> A skill's directory is the one holding its
+<code>SKILL.md</code>. Its scripts (a known extension, or a <code>#!</code> first line) are scanned
+whole. Its Markdown files, and the command and agent files the inventory
+lists, are scanned in fenced code blocks only (<code>```</code> or <code>~~~</code>, at any
+indentation, so a fence nested in a list is read). Prose and inline code
+spans are mentions, not commands, and are not read. A file that a hook or a
+server launches is not read again here, so a line carries one finding.</p>
+<p><strong>LSP servers.</strong> The servers come from the plugin's <code>.lsp.json</code> and from the
+<code>lspServers</code> its <code>plugin.json</code> and its marketplace entry declare, as a path,
+an inline map or an array of both. A name declared later replaces an earlier
+one. Every LSP server runs as a local process, so every one is scanned exactly
+as a local MCP server is, below, under the <code>lsp-</code> ids. A language server on
+<code>PATH</code> (<code>gopls</code>) is the user's install, and is silent.</p>
+<p><strong>Hook modules.</strong> A Claude Code plugin can name TypeScript or JavaScript
+modules under <code>modules</code> in its <code>hooks/hooks.json</code> (<code>{"modules": ["./register.tsx"]}</code>)
+instead of an event map. A module's <code>register(on, options)</code> hooks engine events
+with <code>on('…')</code> and reaches the engine through <code>$</code>, in-process, for every
+session. <code>modules</code> is read wherever a hooks object is: in <code>hooks/hooks.json</code>,
+and in a hook file or inline object that <code>plugin.json</code> or the marketplace entry
+declares. The module and every plugin file it imports (<code>import … from './…'</code>,
+<code>import './…'</code>, <code>export … from './…'</code>, resolved with Claude Code's suffixes and
+<code>index</code> files) are scanned as a hook's launched files are, up to 50 files.
+<code>claude-code</code> imports are types only and are skipped.</p>
+<p>Each capability has a rule of its own, so a waiver for one does not cover a
+capability a later version of the module adds. Other interfaces (<code>$.fs</code>,
+<code>$.agent</code>, <code>$.tool</code>, <code>$.ui</code>, …) are named in the <code>auto-run-module</code> finding and
+the inventory, not flagged one by one. A hooks key the reader does not
+recognise is <code>hook-config-unreadable</code> rather than an empty list, so the next
+change to the hooks format shows up instead of reading as a plugin with
+nothing to run. An event name it has not seen is not a problem when its value
+is a list of matcher groups.</p>
+<p><strong>MCP servers.</strong> The servers come from the plugin's <code>.mcp.json</code> and from the
+<code>mcpServers</code> its <code>plugin.json</code> and its marketplace entry declare. For a local
+(stdio) server, the <code>command</code> and its <code>args</code> are scanned as one command line,
+and the finding is located at the line of <code>command</code>. Before matching:</p>
+<ul>
+<li>a <code>${VAR:-default}</code> is replaced by its default, which is what runs when the
+  variable is unset;</li>
+<li>a runner given as an absolute path (<code>/usr/local/bin/npx</code>) is read by its file
+  name, and an <code>env</code> launcher and its assignments are dropped;</li>
+<li>the script a shell wrapper is handed (<code>sh -c "…"</code>, <code>cmd /c …</code>,
+  <code>powershell -Command …</code>) is also scanned as a command of its own.</li>
+</ul>
+<p>A runner whose package is a path inside the plugin (<code>npx ./server</code>,
+<code>npx ${CLAUDE_PLUGIN_ROOT}/server</code>) is not a fetch. Files of the plugin that
+the server's command names are followed as a hook's are, and findings in them
+carry the MCP ids and severities. A binary a server runs is not reported: a
+server shipped as a compiled binary is ordinary, and its bytes are pinned in
+the snapshot. A remote server (<code>http</code>, <code>sse</code>, <code>ws</code>) runs nothing on the user's
+machine and is not scanned. Neither is an MCP bundle (<code>.mcpb</code>, <code>.dxt</code>), which
+is an archive.</p>
+<p><strong>Precision.</strong> Only the hook's own command and the files it launches are
+examined, so documentation that mentions <code>curl</code> is never a finding. A launched
+file is one the command names that exists in the snapshot under the plugin: a
+<code>${CLAUDE_PLUGIN_ROOT}/…</code> reference, or a path-shaped token. Launched files are
+followed to a depth of three, through the files they name in turn. Comment lines
+are skipped. So are a download that is never made executable, and a
+<code>command -v curl</code> probe. Quoting inserted into a command name (<code>c''url</code>,
+<code>"cu"rl</code>) is removed before matching. Several hooks that reach the same script
+yield one finding per line of it, not one per hook.</p>
+<div class="admonition warning">
+<p class="admonition-title">What it does not see</p>
+<p>It matches shapes. A fetch reached through variable indirection
+(<code>$FETCH "$url" | sh</code>) or an encoded payload walks past it, in a hook and
+in an MCP server alike. Monitor commands are listed in the inventory but
+not examined for runtime fetches. For MCP servers, a package-manager
+script (<code>bun run start</code>, <code>npm start</code>) is not looked up in <code>package.json</code>,
+and a container runner (<code>docker run image</code>) is not classified as a fetch,
+though both can fetch code when the server starts. Hook files for other
+harnesses (<code>.codex/</code>, <code>.cursor/</code>) are not Claude Code plugin hooks and are
+not read.</p>
+<p>A hook module is read lexically, not parsed: comments are blanked before
+<code>on('…')</code> and <code>$.&lt;name&gt;</code> are matched as text. Imports are matched with and
+without comments, so a commented-out import is still followed. A
+renamed <code>$</code>, an interface held in a variable (<code>const p = $.process</code>) or an
+event name built at run time walks past the capability rules, though the
+module itself is always <code>auto-run-module</code>. A <code>$.process</code> named inside a
+string still fires.</p>
+<p>Dependencies are reported, not resolved. No lockfile is parsed, no
+version range is evaluated, and no package is looked up for known
+vulnerabilities or malware, which needs an advisory database and belongs
+in an <a href="#external-connectors">external connector</a>. An install written as an
+inline code span in prose (<code>run `npm i` first</code>) is read as a mention and
+is not reported, and neither is a command inside a string argument
+(<code>os.system("npm install")</code>). Files under <code>bin/</code> are not scanned.</p>
+</div>
+<h3 id="license-scan"><code>license-scan</code><a class="headerlink" href="#license-scan" title="Permanent link">&para;</a></h3>
+<p>Deterministic license detection over the pinned content, evaluated against the
+<a href="../../reference/configuration/#vetting">configured allow/ban lists</a>: SPDX ids
+resolved from license/copying files anywhere in the tree,
+<code>SPDX-License-Identifier</code> tags inside them, and the marketplace manifest's
+<code>license</code> metadata fields. Exact fingerprint matching only — no scoring:</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>What it means</th>
+<th>Blocks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>license-detected</code></td>
+<td>A license was identified (always recorded, informational)</td>
+<td>never</td>
+</tr>
+<tr>
+<td><code>license-banned</code></td>
+<td>The license is on the configured ban list</td>
+<td>always</td>
+</tr>
+<tr>
+<td><code>license-not-allowed</code></td>
+<td>An allow list is configured and does not contain it</td>
+<td>always</td>
+</tr>
+<tr>
+<td><code>license-unknown</code></td>
+<td>The source identifies no known license — a first-class state, never a guess</td>
+<td>only when an allow list is configured; warns otherwise</td>
+</tr>
+<tr>
+<td><code>license-missing</code></td>
+<td>The snapshot carries no license information at all</td>
+<td>only when an allow list is configured; warns otherwise</td>
+</tr>
+</tbody>
+</table>
+<p>With neither list configured — the default — nothing blocks: detection is
+recorded, and unknown or missing licenses warn so a reviewer sees them without
+any estate being blocked by an upgrade. The vetter's recorded version
+carries a digest of the policy in force, so a changed list is visible in every
+run's chain identity. The task-shaped walkthrough is
+<a href="../../guides/license-compliance/">License compliance for skills</a>; the same
+detection is readable per snapshot at
+<a href="../../reference/api/marketplaces/#get-snapshotsidlicenses"><code>GET /api/v1/snapshots/{id}/licenses</code></a>.</p>
+<div class="admonition warning">
+<p class="admonition-title">What a passing verdict does <em>not</em> mean</p>
+<p>These are patterns, not understanding. An attacker who paraphrases
+("disregard the guidance you were given earlier"), splits an instruction
+across files, or encodes it walks past every rule above. The same is true of
+<code>secret-scan</code>: it matches shapes, so an unshaped or wrapped credential is
+invisible to it.</p>
+<p>A <code>PASS</code> means "no known marker matched". It is triage that tells a reviewer
+where to look first — it is not a statement that the snapshot is safe, and
+reading the content is still the reviewer's job. Semantic review of skill
+instructions needs an LLM review vetter, which the gateway does not ship
+but an operator can add as an <a href="#external-connectors">external connector</a>.</p>
+</div>
+<h3 id="skill-conformance"><code>skill-conformance</code><a class="headerlink" href="#skill-conformance" title="Permanent link">&para;</a></h3>
+<p>Validates every <code>SKILL.md</code> under a plugin's <code>skills/</code> directory against a
+<strong>vendored, dated</strong> copy of the <a href="https://agentskills.io/specification">Agent Skills specification</a>.
+This is the one vetter that answers a question about correctness rather than
+danger: whether the skill carries the frontmatter an agent needs to load and
+select it.</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>What it means</th>
+<th>Blocks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skill-frontmatter-missing</code></td>
+<td>The file does not open with a <code>---</code> frontmatter block</td>
+<td>only under enforcement</td>
+</tr>
+<tr>
+<td><code>skill-frontmatter-malformed</code></td>
+<td>The block is never closed, is not valid YAML, or is not a mapping</td>
+<td>only under enforcement</td>
+</tr>
+<tr>
+<td><code>skill-field-missing</code></td>
+<td>A required field — <code>name</code>, <code>description</code> — is absent</td>
+<td>only under enforcement</td>
+</tr>
+<tr>
+<td><code>skill-field-invalid</code></td>
+<td>A field is present and breaks its constraint: wrong type, over its length limit, a <code>name</code> that is not lowercase or does not match its directory</td>
+<td>only under enforcement</td>
+</tr>
+<tr>
+<td><code>skill-not-scanned</code></td>
+<td>The <code>SKILL.md</code> was over the size limit or not valid UTF-8, so conformance could not be checked</td>
+<td>only under enforcement</td>
+</tr>
+<tr>
+<td><code>skill-field-unknown</code></td>
+<td>A frontmatter field the pinned specification does not define</td>
+<td>never</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Advisory by default.</strong> With
+<a href="../../reference/configuration/#vetting"><code>skills-gateway.vetting.conformance.enforce</code></a>
+at its default <code>false</code>, every defect above is a <code>MEDIUM</code> finding: the reviewer
+sees it, and nothing is blocked. A verdict covers a whole snapshot, so a
+blocking default would let one malformed skill hold up every other skill beside
+it — and a formatting defect is not what the gateway's blocking states are for.
+Set the property to <code>true</code> and the same defects become <code>HIGH</code>, blocking and
+waivable like any other finding.</p>
+<p><code>skill-field-unknown</code> stays informational under both postures. The pinned
+specification is a snapshot of a document that still moves, and the
+specification defines a <code>metadata</code> mapping precisely so clients can carry
+properties it has no opinion about.</p>
+<p><strong>The specification is pinned, not fetched.</strong> The version in force is
+<code>agentskills-2026-08-04</code>, transcribed into
+<code>src/main/resources/vetting/agentskills-2026-08-04.json</code> and shipped inside the
+gateway. Nothing is retrieved over the network while vetting: a chain run has to
+be reproducible from the release alone, and
+<a href="../../guides/re-vetting/">continuous re-vetting</a> has to be able to say whether a
+changed answer about approved content came from the content or from the rules.
+The vetter's recorded version names the pin, a digest of its constraint table
+and the posture in force — <code>skill-conformance@agentskills-2026-08-04+schema-2ae36a+advisory</code>
+— so a specification bump is visible in every run's chain identity.</p>
+<div class="admonition note">
+<p class="admonition-title">Upstream publishes no version number</p>
+<p>The Agent Skills specification has no tags, no version field and no
+changelog. The version the gateway records is therefore <em>its own</em> dated pin:
+the date of the upstream commit the constraint table was transcribed from.
+Provenance for the current pin, and the two places it deliberately follows
+the upstream reference validator rather than the prose, are recorded in
+<code>src/main/resources/vetting/README.md</code>.</p>
+</div>
+<h2 id="external-connectors">External connectors<a class="headerlink" href="#external-connectors" title="Permanent link">&para;</a></h2>
+<p>A <strong>connector</strong> is the transport that lets a vetter running outside the gateway
+take part: an HTTP endpoint the gateway POSTs the snapshot's scannable content
+to and reads a normalized <code>{state, reportUrl, findings[]}</code> back from, configured
+under <code>skills-gateway.vetting.external</code> (see
+<a href="../../reference/configuration/#external-connectors">Configuration → External connectors</a>).
+Each configured connector contributes exactly one vetter to the chain — an LLM
+reviewer, a sandbox detonator, a corporate scanner — and that is the only thing
+the word means here; the five built-ins are vetters with no connector.</p>
+<p>A vetter that arrives over a connector runs in the chain at its position and is
+recorded, aggregated and waivable exactly like a built-in one — its findings and
+its external report link surface wherever a built-in's do. The administrative
+<a href="../../reference/api/marketplaces/#vetter-enabledisable">on/off switch</a> reaches
+it on the same terms too: an administrator can disable such a vetter globally or
+for one marketplace, and the run then records a <code>DISABLED</code> verdict in its place
+rather than a silently shorter chain.</p>
+<p>Because the endpoint is a dependency the gateway does not control, the connector
+is <strong>fail-closed</strong> in the strong sense: an unreachable, slow, oversized,
+unparseable, unrecognised or partial answer is an <code>ERROR</code> verdict, which blocks —
+a broken external reviewer holds a snapshot, it never lets one through. And the
+recorded state is the <strong>worse</strong> of what the endpoint declared and what its own
+findings imply, so an endpoint cannot pass content its evidence condemns. An
+endpoint that needs to answer later returns <code>PENDING</code>, which blocks until it is
+resolved.</p>
+<p>See <a href="../../guides/adding-an-external-vetter/">Adding an external vetter</a> for the
+wire contract and a minimal working example.</p>
+<h2 id="coverage-gaps-are-reported-not-hidden">Coverage gaps are reported, not hidden<a class="headerlink" href="#coverage-gaps-are-reported-not-hidden" title="Permanent link">&para;</a></h2>
+<p>A file larger than the configured size limit, or one that is not valid UTF-8, is
+not silently skipped. <code>secret-scan</code> and <code>prompt-injection</code> record one
+informational <code>file-not-scanned</code> finding per reason (over the size limit, or
+binary / not UTF-8). The finding says how many files it covers, names the first
+twenty and counts the rest. The vetter's coverage summary also states the gap
+("scanned 3210 text file(s); 51 file(s) not scanned (22 over the size limit, 29
+binary)"). A verdict whose findings are all informational shows that summary on
+its row rather than a count, so a pass that skipped files says so where the pass
+is read. <code>skill-conformance</code>, which reads only <code>SKILL.md</code> files, records
+<code>skill-not-scanned</code> for each skill it could not read. <code>executable-surface</code>
+records <code>hook-target-unscanned</code> for a file a hook runs that it could not read,
+and that one is medium, not informational: it is code that runs unattended and
+that no rule has read. Informational findings do
+not change the verdict, but they are visible, so "the scanner did not look at
+this" is never invisible.</p>
+<p>The one exception is deliberate: under
+<a href="../../reference/configuration/#vetting">conformance enforcement</a>
+<code>skill-not-scanned</code> blocks rather than informs, because an operator who has made
+conformance a publishing requirement must not have "we could not check" read as
+"it conformed".</p>
+<h2 id="what-lands-in-the-ledger">What lands in the ledger<a class="headerlink" href="#what-lands-in-the-ledger" title="Permanent link">&para;</a></h2>
+<p>Every chain run writes one entry for the run outcome (<code>vetting-completed</code>) to
+the append-only ledger, and the ingestion run adds one entry per vetter verdict
+(<code>vetting-verdict</code>). A re-vet adds a verdict entry only for a vetter whose
+verdict changed since the snapshot's previous run — a different state, finding
+count or worst severity, or a vetter version that was not in that run's chain —
+and states how many in the completion entry's <code>changed=</code>; the verdicts
+themselves are recorded for every vetter on every run and served in the vetting
+report. Both kinds of entry are attributed to the <code>system</code> actor kind — the chain
+is the gateway's own automated subsystem, not a person. A verdict entry leads
+with <code>vetter=state</code> and then carries the finding count, the worst severity
+present, and the id of the chain run, so the entry is auditable on its own; a
+clean pass additionally states what the vetter examined — the files it scanned
+and the rules it applied — so a pass in the ledger is never indistinguishable
+from a vetter that did not run. The completion entry carries the same run id,
+so a run's scattered verdict entries reassemble into the one run they came from.</p>
+<p>The whole waiver lifecycle lands there too:</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Written when</th>
+<th>Detail carries</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>waiver-created</code></td>
+<td>a risk is accepted</td>
+<td>rule, scope, expiry</td>
+</tr>
+<tr>
+<td><code>waiver-applied</code></td>
+<td>a waiver lets an approval through</td>
+<td>waiver id, rule, location, approver, expiry</td>
+</tr>
+<tr>
+<td><code>waiver-revoked</code></td>
+<td>a waiver is withdrawn</td>
+<td>rule, scope</td>
+</tr>
+<tr>
+<td><code>waiver-expired</code></td>
+<td>the sweep first notices a lapse</td>
+<td>rule, scope, approver, expiry</td>
+</tr>
+</tbody>
+</table>
+<p>An auditor asking "why is a snapshot with a critical finding being served" can
+answer it from the ledger alone — including what was accepted, by whom, and
+until when.</p>
+<h2 id="reading-further">Reading further<a class="headerlink" href="#reading-further" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../guides/approving-snapshots/">Approving and rejecting snapshots</a> — the
+  reviewer's task, end to end.</li>
+<li><a href="../../guides/waiving-findings/">Waiving a vetting finding</a> — accepting a risk,
+  end to end.</li>
+<li><a href="../../reference/portal/#vetting">Admin portal</a> — where the verdicts appear.
+  The chain above is drawn there as a
+  <a href="../../reference/portal/#the-chain-flow">flow per snapshot</a>, with a node per
+  step that opens its own evidence; an administrator gets the
+  <a href="../../reference/portal/#vetting-chain-administrators">same flow per marketplace</a>
+  showing which vetters actually run for it and why.</li>
+<li><a href="../../reference/configuration/#vetting">Configuration</a> — the knobs.</li>
+<li><a href="../trust-boundaries/">Trust boundaries</a> — why approval is the boundary the
+  chain protects.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Licensed under the Apache License 2.0
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.indexes", "content.code.copy", "content.action.edit", "search.highlight", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "dev", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
