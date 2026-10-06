@@ -1056,7 +1056,7 @@ snapshot.
 
 | Column | Contents |
 | --- | --- |
-| Skill | Skill directory name; the `SKILL.md` path on the tooltip. |
+| Skill | Skill directory name, with the `SKILL.md` path beneath it. |
 | Plugin | Plugin name from the manifest. |
 | Marketplace | Marketplace name as served. |
 | Identities holding | Identities whose latest fetch holds a snapshot containing the skill. |

@@ -1723,6 +1723,16 @@ requirements:
     categories: ["reliability", "performance-efficiency"]
     revision: 0.1.0
 
+  - id: GW_RETENTION_0012
+    title: The ledger trim keeps each identity's latest pack send per marketplace
+    significance: shall
+    description: "The system shall, when trimming audit ledger read entries, keep for each identity and marketplace the most recent pack-send entry that records a delivered commit, whatever its age and whatever the export positions permit."
+    rationale: "The staleness and presence reports say what an identity holds from its most recent fetch of a marketplace. A trim that took that entry would drop the identity from both, and the identities whose latest fetch is oldest are the ones a recall most needs to find. Keeping one entry per identity and marketplace leaves the table bounded by the estate's size rather than by its traffic."
+    references:
+      requirement_ids: ["GW_RETENTION_0009", "GW_OBSERVABILITY_0002", "GW_OBSERVABILITY_0006"]
+    categories: ["functional-suitability", "security"]
+    revision: 0.5.0
+
   - id: GW_VETTING_0038
     title: Chain staleness is stated at the approval gate
     significance: shall

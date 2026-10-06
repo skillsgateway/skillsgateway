@@ -125,13 +125,14 @@ public class AdoptionService {
             }
         }
         Map<String, Optional<String>> tips = new HashMap<>();
+        SnapshotContentResolver.Pass resolver = contentResolver.pass();
         Map<String, SkillAccumulator> skills = new LinkedHashMap<>();
         List<UnresolvedSnapshot> unresolved = new ArrayList<>();
         for (FetchLogRepository.ShaDelivery delivery : fetchLogRepository.deliveriesPerSha()) {
             String marketplace = delivery.marketplace();
             long holders = holding.getOrDefault(key(marketplace, delivery.sha()), 0L);
             boolean current = delivery.sha().equals(servedTip(tips, marketplace).orElse(null));
-            Optional<List<PluginContent>> content = contentResolver.resolve(marketplace, delivery.sha());
+            Optional<List<PluginContent>> content = resolver.resolve(marketplace, delivery.sha());
             if (content.isEmpty()) {
                 unresolved.add(new UnresolvedSnapshot(
                         marketplace, delivery.sha(), holders, delivery.firstFetch(), delivery.lastFetch(), current));
@@ -179,6 +180,10 @@ public class AdoptionService {
         }
 
         void add(String skillPath, FetchLogRepository.ShaDelivery delivery, long shaHolders, boolean current) {
+            // A manifest can repeat a plugin name; one SHA still counts once. A SHA's adds are adjacent.
+            if (!snapshots.isEmpty() && snapshots.getLast().sha().equals(delivery.sha())) {
+                return;
+            }
             snapshots.add(new SnapshotHolding(delivery.sha(), shaHolders, delivery.lastFetch(), current));
             holders += shaHolders;
             if (firstDelivered == null || delivery.firstFetch().isBefore(firstDelivered)) {

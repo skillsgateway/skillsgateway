@@ -171,8 +171,11 @@ export function PresenceTable({ report }: { report: PresenceReport }) {
           <TableBody>
             {skills.map((skill) => (
               <TableRow key={`${skill.marketplace}/${skill.plugin}/${skill.skill}`}>
-                <TableCell className="font-medium" title={skill.path}>
-                  {skill.skill}
+                <TableCell>
+                  <div className="font-medium">{skill.skill}</div>
+                  {skill.path ? (
+                    <div className="font-mono text-xs text-muted-foreground">{skill.path}</div>
+                  ) : null}
                 </TableCell>
                 <TableCell>{skill.plugin ?? "—"}</TableCell>
                 <TableCell>{skill.marketplace}</TableCell>

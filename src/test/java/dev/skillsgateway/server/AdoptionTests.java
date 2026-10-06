@@ -26,7 +26,11 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.dircache.DirCache;
+import org.eclipse.jgit.dircache.DirCacheBuilder;
+import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
@@ -34,7 +38,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.TreeFormatter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -277,19 +280,52 @@ class AdoptionTests extends AbstractNamedAdminsTest {
         }
 
         // since drops holders whose latest fetch predates it, never the deliveries themselves.
+        double hitsBefore = cacheCount("hit");
+        double missesBefore = cacheCount("miss");
         String future = Instant.now().plus(Duration.ofDays(1)).toString();
         JsonNode bounded = adoption("/api/v1/adoption/presence?since=" + future);
         assertThat(bounded.get("since").asText()).isNotEmpty();
         assertThat(skillEntry(bounded, name, "hello").get("identitiesHolding").asLong())
                 .isZero();
 
-        // The second pass resolves every SHA from the cache, never re-reading a pinned tree.
-        Counter hits = meterRegistry
+        // The second pass reads every resolvable SHA from the cache; only the unresolvable miss again.
+        assertThat(cacheCount("hit") - hitsBefore).isGreaterThanOrEqualTo(2);
+        assertThat(cacheCount("miss") - missesBefore)
+                .isEqualTo(bounded.get("unresolved").size());
+    }
+
+    private double cacheCount(String result) {
+        Counter counter = meterRegistry
                 .find(SnapshotContentResolver.CACHE)
-                .tag("result", "hit")
+                .tag("result", result)
                 .counter();
-        assertThat(hits).isNotNull();
-        assertThat(hits.count()).isGreaterThanOrEqualTo(2);
+        assertThat(counter).isNotNull();
+        return counter.count();
+    }
+
+    @Test
+    @SVCs({"SVC_GW_OBSERVABILITY_0006"})
+    void a_manifest_repeating_a_plugin_name_counts_each_snapshot_once_per_skill() throws Exception {
+        String name = uniqueName("repeat");
+        registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
+        String sha = commitInQuarantine(
+                name,
+                Map.of(
+                        ".claude-plugin/marketplace.json",
+                        """
+                        {"name": "repeat", "owner": {"name": "Test"}, "plugins": [
+                          {"name": "twice", "source": "./a"}, {"name": "twice", "source": "./b"}]}
+                        """,
+                        "a/skills/same/SKILL.md",
+                        CONFORMANT_SKILL,
+                        "b/skills/same/SKILL.md",
+                        CONFORMANT_SKILL));
+        plantFetch(name, uniqueName("eve"), sha, OffsetDateTime.now());
+
+        JsonNode same = skillEntry(adoption("/api/v1/adoption/presence"), name, "same");
+        assertThat(same.get("identitiesHolding").asLong()).isEqualTo(1);
+        assertThat(same.get("snapshotsDelivering").asInt()).isEqualTo(1);
+        assertThat(same.get("snapshots")).hasSize(1);
     }
 
     @Test
@@ -389,19 +425,29 @@ class AdoptionTests extends AbstractNamedAdminsTest {
 
     /** A commit in the marketplace's quarantine whose manifest is not JSON. */
     private String commitBrokenManifest(String marketplace) throws Exception {
+        return commitInQuarantine(marketplace, Map.of(".claude-plugin/marketplace.json", "{ not json"));
+    }
+
+    /** A parentless commit of exactly {@code files} in the marketplace's quarantine, on no ref. */
+    private String commitInQuarantine(String marketplace, Map<String, String> files) throws Exception {
         try (Repository repo = gitStorage.quarantine(marketplace);
                 ObjectInserter inserter = repo.newObjectInserter()) {
-            ObjectId blob = inserter.insert(Constants.OBJ_BLOB, "{ not json".getBytes(StandardCharsets.UTF_8));
-            TreeFormatter claudePlugin = new TreeFormatter();
-            claudePlugin.append("marketplace.json", FileMode.REGULAR_FILE, blob);
-            TreeFormatter root = new TreeFormatter();
-            root.append(".claude-plugin", FileMode.TREE, inserter.insert(claudePlugin));
+            DirCache index = DirCache.newInCore();
+            DirCacheBuilder builder = index.builder();
+            for (Map.Entry<String, String> file : new TreeMap<>(files).entrySet()) {
+                DirCacheEntry entry = new DirCacheEntry(file.getKey());
+                entry.setFileMode(FileMode.REGULAR_FILE);
+                entry.setObjectId(
+                        inserter.insert(Constants.OBJ_BLOB, file.getValue().getBytes(StandardCharsets.UTF_8)));
+                builder.add(entry);
+            }
+            builder.finish();
             PersonIdent who = new PersonIdent("Test", "test@example.invalid", Instant.now(), ZoneOffset.UTC);
             CommitBuilder commit = new CommitBuilder();
-            commit.setTreeId(inserter.insert(root));
+            commit.setTreeId(index.writeTree(inserter));
             commit.setAuthor(who);
             commit.setCommitter(who);
-            commit.setMessage("broken manifest " + uniqueName("fixture"));
+            commit.setMessage("fixture " + uniqueName("fixture"));
             ObjectId id = inserter.insert(commit);
             inserter.flush();
             return id.name();

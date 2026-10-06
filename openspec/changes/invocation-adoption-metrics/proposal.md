@@ -109,6 +109,10 @@ a boundary on the existing observability capability.
   usage measure (GW_OBSERVABILITY_0007). GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002 and GW_OBSERVABILITY_0004 are unchanged — the new
   report sits alongside them and shares their shape: ledger-derived, read-only,
   auditor-gated.
+- `snapshot-retention`: the ledger trim keeps each identity's most recent pack
+  send per marketplace (GW_RETENTION_0012 — *The ledger trim keeps each
+  identity's latest pack send per marketplace*), which both reports read. Added
+  in review: without it, a trim drops the oldest holders from both.
 - `observability`: gains the standing refusal to ingest client-reported telemetry
   (GW_OBSERVABILITY_0008). GW_OBSERVABILITY_0003 — *Always-recorded gateway metrics and observations* is
   untouched; it governs telemetry flowing outward.

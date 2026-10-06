@@ -1,8 +1,10 @@
 package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import dev.skillsgateway.server.persistence.AuditSinkRepository;
+import dev.skillsgateway.server.persistence.FetchLogRepository;
 import dev.skillsgateway.server.retention.RetentionService;
 import io.github.reqstool.annotations.SVCs;
 import java.time.Duration;
@@ -17,7 +19,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * The ledger trim (GW_RETENTION_0009, GW_RETENTION_0010) — the only pass in the gateway that
+ * The ledger trim (GW_RETENTION_0009, GW_RETENTION_0010, GW_RETENTION_0012) — the only pass in the gateway that
  * deletes audit evidence, tested the way a deletion has to be: by what it refuses to remove.
  *
  * <p>Every test here is a negative one. A happy path that removes old rows proves almost nothing;
@@ -72,6 +74,18 @@ class LedgerTrimTests extends AbstractGatewayTest {
 
     private long oldRead(String event) {
         return row(event, Duration.ofDays(30));
+    }
+
+    /** An old pack send that records a delivered commit, which {@code row} leaves out. */
+    private long oldPackSend(String principal, String sha) {
+        return jdbc.sql("INSERT INTO fetch_log (ts, source, principal, marketplace, event, sha)"
+                        + " VALUES (:ts, 'test', :principal, :marketplace, 'upload-pack', :sha) RETURNING id")
+                .param("ts", OffsetDateTime.ofInstant(Instant.now().minus(Duration.ofDays(30)), ZoneOffset.UTC))
+                .param("principal", principal)
+                .param("marketplace", MARKETPLACE)
+                .param("sha", sha)
+                .query(Long.class)
+                .single();
     }
 
     private String sink(String label, long cursor, boolean enabled) {
@@ -184,6 +198,39 @@ class LedgerTrimTests extends AbstractGatewayTest {
         for (long id : administrative) {
             assertThat(survives(id)).as("entry %d", id).isTrue();
         }
+    }
+
+    /**
+     * What an identity holds is its latest pack send, so that one row outlives the trim however
+     * old it is; everything older, and every row naming no identity or commit, is still taken.
+     */
+    @Test
+    @SVCs({"SVC_GW_RETENTION_0012"})
+    void each_identitys_latest_pack_send_survives_the_trim_and_still_answers_who_holds_what() {
+        String ada = uniqueName("ada");
+        String bob = uniqueName("bob");
+        String v1 = "1".repeat(40);
+        String v2 = "2".repeat(40);
+        long adaOlder = oldPackSend(ada, v1);
+        long adaLatest = oldPackSend(ada, v2);
+        long bobOnly = oldPackSend(bob, v1);
+        long anonymous = oldPackSend(null, v2);
+        long advertisement = oldRead("info-refs");
+
+        sink("takes-everything", advertisement, true);
+        RetentionService.LedgerTrim result = retentionService.trimLedger(RetentionService.POLICY_ACTOR);
+
+        assertThat(result.removed()).isGreaterThanOrEqualTo(3);
+        assertThat(survives(adaOlder)).as("superseded by a later pack send").isFalse();
+        assertThat(survives(anonymous)).as("no identity holds it").isFalse();
+        assertThat(survives(advertisement)).isFalse();
+        assertThat(survives(adaLatest)).as("what ada holds").isTrue();
+        assertThat(survives(bobOnly)).as("what bob holds, however old").isTrue();
+
+        assertThat(fetchLogRepository.latestFetchPerIdentity())
+                .filteredOn(latest -> MARKETPLACE.equals(latest.marketplace()))
+                .extracting(FetchLogRepository.LatestFetch::principal, FetchLogRepository.LatestFetch::sha)
+                .contains(tuple(ada, v2), tuple(bob, v1));
     }
 
     /**

@@ -1,6 +1,7 @@
 package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
@@ -68,15 +69,18 @@ class ClientTelemetryBoundaryTests extends AbstractGatewayTest {
         }
         assertThat(servlets).isSubsetOf(SERVLET_MAPPINGS);
 
+        // 404 exactly: a mapped receiver that refused this payload would still be a receiver. The CSRF
+        // token keeps a CSRF refusal from passing for "not mapped".
         for (String path : OTLP_PATHS) {
             int status = mockMvc.perform(post(path)
                             .with(oidcLogin().idToken(token -> token.subject("admin")))
+                            .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"resourceMetrics\":[]}"))
                     .andReturn()
                     .getResponse()
                     .getStatus();
-            assertThat(status / 100).as("POST %s is not accepted", path).isNotEqualTo(2);
+            assertThat(status).as("POST %s is not mapped", path).isEqualTo(404);
         }
 
         // The adoption reports read the ledger, the served tips and the published commit tree, and

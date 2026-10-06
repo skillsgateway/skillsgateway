@@ -145,6 +145,11 @@ export carries its own caveat.
 - **`unresolved` is not empty.** A delivered SHA whose objects retention
   reclaimed, or whose manifest no longer parses, is listed with its holders
   instead of being dropped. Its holders may hold any skill.
+- **The ledger trim keeps what this reads.** The
+  [ledger trim](../../guides/snapshot-retention.md#7-bound-the-audit-ledger)
+  never removes an identity's latest `upload-pack` of a marketplace, so trimming
+  does not drop holders. It can remove earlier deliveries, so `firstDelivered`
+  may be later than the true first fetch on a trimmed ledger.
 - **Who, by name.** The counts do not name identities. For the holders of one
   snapshot use [`GET /api/v1/snapshots/{id}/fetchers`](marketplaces.md), which
   is gated to that marketplace's approvers.

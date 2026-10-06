@@ -513,13 +513,21 @@ public class FetchLogRepository {
      * <p>Chunked so the enclosing pass can stop between chunks and resume on the next one: this
      * shares a lease with compaction, and the first run against a ledger years deep must not hold
      * it until it finishes.
+     *
+     * <p>Each identity's latest pack send of a marketplace stays (GW_RETENTION_0012): it is what
+     * {@link #latestFetchPerIdentity()} reads, so taking it would drop the identity from the
+     * staleness and presence reports.
      */
-    @Requirements({"GW_RETENTION_0009", "GW_RETENTION_0010"})
+    @Requirements({"GW_RETENTION_0009", "GW_RETENTION_0010", "GW_RETENTION_0012"})
     public int trimChunk(Instant cutoff, long watermark, int limit) {
         return jdbc.sql("DELETE FROM fetch_log WHERE id IN ("
-                        + " SELECT id FROM fetch_log"
-                        + "  WHERE event = ANY(:events) AND ts < :cutoff AND id <= :watermark"
-                        + "  ORDER BY id LIMIT :limit)")
+                        + " SELECT f.id FROM fetch_log f"
+                        + "  WHERE f.event = ANY(:events) AND f.ts < :cutoff AND f.id <= :watermark"
+                        + "   AND (f.event <> 'upload-pack' OR f.principal IS NULL OR f.sha IS NULL"
+                        + "    OR EXISTS (SELECT 1 FROM fetch_log n WHERE n.event = 'upload-pack'"
+                        + "     AND n.principal = f.principal AND n.marketplace = f.marketplace"
+                        + "     AND n.sha IS NOT NULL AND n.id > f.id))"
+                        + "  ORDER BY f.id LIMIT :limit)")
                 .param("events", TRIMMABLE_EVENTS.toArray(String[]::new))
                 .param("cutoff", OffsetDateTime.ofInstant(cutoff, ZoneOffset.UTC))
                 .param("watermark", watermark)

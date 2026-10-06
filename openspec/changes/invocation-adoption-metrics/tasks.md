@@ -97,6 +97,21 @@ gate red, so the entries land with the code that satisfies them.
 - [x] 8.1 Full gate run, `evidence.md` written from one final fresh run
 - [x] 8.2 Archive this change
 
+## 9. Review follow-ups
+
+- [x] 9.1 The ledger trim keeps each identity's latest pack send per marketplace
+      (GW_RETENTION_0012), with `SVC_GW_RETENTION_0012` in `LedgerTrimTests`, and
+      the retention guide and adoption reference say so
+- [x] 9.2 The boundary test's OTLP probe asserts 404 rather than any non-2xx, and
+      carries a CSRF token so a CSRF refusal cannot pass for "not mapped"
+- [x] 9.3 One presence pass lists the stored marketplaces at most once, and the
+      content cache holds more delivered SHAs than an estate approves in years
+- [x] 9.4 A SHA counts once per skill even when a manifest repeats a plugin name
+- [x] 9.5 The cache-hit assertion measures the second read alone
+- [x] 9.6 The skill's `SKILL.md` path is visible in the portal, not only on hover
+- [ ] 9.7 `/impeccable audit` and `harden` on the Adoption page; material findings fixed
+- [ ] 9.8 Gates re-run, `evidence.md` rewritten with the commit SHA, change re-archived
+
 ## Where the implementation departs from the text above
 
 - **Holding is latest-fetch.** 3.1 says "the window's distinct SHAs"; the

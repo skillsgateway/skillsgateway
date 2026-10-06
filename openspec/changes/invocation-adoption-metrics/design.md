@@ -103,6 +103,18 @@ Same rule for a snapshot whose manifest no longer parses: reported as
 unresolvable, not as containing nothing. Absence of evidence is not evidence of
 absence, and a recall query is precisely where that distinction bites.
 
+### 4a. The ledger trim keeps each identity's latest pack send
+
+Decision 4 covers reclaimed objects; the ledger trim (GW_RETENTION_0009 —
+*Audit ledger read entries are trimmed only behind every sink's export
+position*) is the other way the oldest holders would vanish. It removes every
+old `upload-pack` row, so an identity whose latest fetch was trimmed would drop
+out of presence and staleness alike, without even an `unresolved` entry. The
+trim now skips the most recent `upload-pack` row with a SHA per (principal,
+marketplace) (GW_RETENTION_0012), using `idx_fetch_log_adoption`. The rows kept
+are bounded by identities times marketplaces, not by traffic. `firstDelivered`
+can then read later than the true first fetch, which a recall does not need.
+
 ### 5. The uniformity caveat is a field, not a footnote
 
 Every skill in a snapshot shares that snapshot's fetch and identity counts,

@@ -2,6 +2,7 @@ package dev.skillsgateway.server.adoption;
 
 import dev.skillsgateway.server.ingestion.SnapshotContentService;
 import dev.skillsgateway.server.ingestion.SnapshotContentService.PluginContent;
+import dev.skillsgateway.server.storage.GitStorage;
 import io.github.reqstool.annotations.Requirements;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -9,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.stereotype.Component;
 
 /**
@@ -23,7 +25,8 @@ public class SnapshotContentResolver {
     /** Counter of cache lookups, tagged {@code result=hit|miss}. */
     public static final String CACHE = "skills_gateway.adoption.presence_cache";
 
-    static final int MAX_ENTRIES = 1024;
+    /** Above the SHAs an estate delivers in years: a report pass larger than the cap misses on every entry. */
+    static final int MAX_ENTRIES = 8192;
 
     private final SnapshotContentService contentService;
     private final Counter hits;
@@ -41,25 +44,41 @@ public class SnapshotContentResolver {
         this.misses = Counter.builder(CACHE).tag("result", "miss").register(meters);
     }
 
-    /** The commit's plugins and skills, or empty when its content cannot be resolved. */
-    @Requirements({"GW_OBSERVABILITY_0006"})
-    public Optional<List<PluginContent>> resolve(String marketplace, String sha) {
-        // NUL cannot occur in a marketplace name or a hex SHA.
-        String key = marketplace + '\0' + sha;
-        synchronized (cache) {
-            List<PluginContent> cached = cache.get(key);
-            if (cached != null) {
-                hits.increment();
-                return Optional.of(cached);
-            }
-        }
-        misses.increment();
-        Optional<List<PluginContent>> resolved = contentService.skillsAt(marketplace, sha);
-        resolved.ifPresent(plugins -> {
+    /** A resolver for one report pass. */
+    public Pass pass() {
+        return new Pass();
+    }
+
+    /** One report pass, which lists the stored marketplaces at most once, on its first cache miss. */
+    public final class Pass {
+
+        private Map<GitStorage.Role, Set<String>> stored;
+
+        private Pass() {}
+
+        /** The commit's plugins and skills, or empty when its content cannot be resolved. */
+        @Requirements({"GW_OBSERVABILITY_0006"})
+        public Optional<List<PluginContent>> resolve(String marketplace, String sha) {
+            // NUL cannot occur in a marketplace name or a hex SHA.
+            String key = marketplace + '\0' + sha;
             synchronized (cache) {
-                cache.put(key, plugins);
+                List<PluginContent> cached = cache.get(key);
+                if (cached != null) {
+                    hits.increment();
+                    return Optional.of(cached);
+                }
             }
-        });
-        return resolved;
+            misses.increment();
+            if (stored == null) {
+                stored = contentService.storedMarketplaces();
+            }
+            Optional<List<PluginContent>> resolved = contentService.skillsAt(stored, marketplace, sha);
+            resolved.ifPresent(plugins -> {
+                synchronized (cache) {
+                    cache.put(key, plugins);
+                }
+            });
+            return resolved;
+        }
     }
 }
