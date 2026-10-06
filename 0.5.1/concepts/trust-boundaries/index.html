@@ -1,0 +1,3468 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Enterprise gateway for git-distributed AI agent skill marketplaces — quarantined ingestion, hold-until-approved vetting, a read-only git facade, and an append-only audit ledger.">
+      
+      
+      
+        <link rel="canonical" href="https://skillsgateway.github.io/skillsgateway/0.5.1/concepts/trust-boundaries/">
+      
+      
+        <link rel="prev" href="../snapshots-and-ledger/">
+      
+      
+        <link rel="next" href="../related-work/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Trust boundaries - Skills Gateway</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#trust-boundaries" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Skills Gateway" class="md-header__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Skills Gateway
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Trust boundaries
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/skillsgateway/skillsgateway" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    skillsgateway/skillsgateway
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Skills Gateway" class="md-nav__button md-logo" aria-label="Skills Gateway" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Skills Gateway
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/skillsgateway/skillsgateway" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    skillsgateway/skillsgateway
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/local-development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Try it locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy and operate
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deploy and operate
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/deploying-on-kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying on Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/deploying-without-kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploying without Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/storage-backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing and migrating the storage backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/verifying-an-object-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verifying conditional writes against a real bucket
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/identity-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/delegated-administration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delegated administration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/declarative-estate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Declarative estate configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/snapshot-retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reclaiming snapshot storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/backup-and-upgrade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backing up, restoring and upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exporting the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/client-enforcement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Making the gateway the only door
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/leaving-the-gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Leaving the gateway
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Govern the estate
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Govern the estate
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/registering-a-marketplace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registering a marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/private-upstreams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reading a private upstream
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing first-party skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/upstream-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syncing from upstream automatically
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/approving-snapshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approving and rejecting snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/waiving-findings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Waiving a vetting finding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/policy-rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy deny rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/license-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    License compliance for skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/re-vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Re-vetting approved content
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/adding-an-external-vetter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adding an external vetter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/lifecycle-webhooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Receiving lifecycle webhooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/read-only-forge-mirror/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The read-only forge mirror
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consume skills
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Consume skills
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/consuming-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consuming approved skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/virtual-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The virtual catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintain the project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Maintain the project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutting a release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Marketplaces and snapshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/tokens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Access tokens
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/adoption/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adoption
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/estate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/mirror/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mirror
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/retention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshot retention
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/container-image/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Container image
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/git-facade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git smart-HTTP facade
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compatibility and allowlists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/portal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Admin portal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../capability-map/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifecycle — quarantine to serve
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vetting — the connector chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../snapshots-and-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshots and the audit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trust boundaries
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trust boundaries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#container-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Container view
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-registration-an-operators-url-becomes-an-outbound-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Registration — an operator's URL becomes an outbound fetch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1a-resolution-a-manifests-url-becomes-an-outbound-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1a. Resolution — a manifest's URL becomes an outbound request
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-facade-an-anonymous-network-peer-becomes-a-reader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The facade — an anonymous network peer becomes a reader
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-approval-held-content-becomes-served-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Approval — held content becomes served content
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-web-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The web surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-machine-api-a-credential-in-a-pipeline-becomes-a-control-plane-caller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The machine API — a credential in a pipeline becomes a control-plane caller
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The inbound webhook — a forge's push event becomes a fetch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-publication-a-publishers-push-becomes-quarantined-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Publication — a publisher's push becomes quarantined content
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-roles-what-an-authenticated-session-may-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Roles — what an authenticated session may do
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-storage-itself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The storage itself
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#credentials-at-rest-two-postures-and-the-reason-they-differ" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credentials at rest — two postures, and the reason they differ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-forge-mirror-outbound-and-outside-the-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The forge mirror — outbound, and outside the boundary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-not-a-boundary-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is not a boundary yet
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../related-work/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Related work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#container-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Container view
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-registration-an-operators-url-becomes-an-outbound-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Registration — an operator's URL becomes an outbound fetch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1a-resolution-a-manifests-url-becomes-an-outbound-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1a. Resolution — a manifest's URL becomes an outbound request
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-facade-an-anonymous-network-peer-becomes-a-reader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The facade — an anonymous network peer becomes a reader
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-approval-held-content-becomes-served-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Approval — held content becomes served content
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-web-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The web surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-machine-api-a-credential-in-a-pipeline-becomes-a-control-plane-caller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The machine API — a credential in a pipeline becomes a control-plane caller
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The inbound webhook — a forge's push event becomes a fetch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-publication-a-publishers-push-becomes-quarantined-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Publication — a publisher's push becomes quarantined content
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-roles-what-an-authenticated-session-may-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Roles — what an authenticated session may do
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-storage-itself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The storage itself
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#credentials-at-rest-two-postures-and-the-reason-they-differ" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credentials at rest — two postures, and the reason they differ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-forge-mirror-outbound-and-outside-the-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The forge mirror — outbound, and outside the boundary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-not-a-boundary-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is not a boundary yet
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/concepts/trust-boundaries.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="trust-boundaries">Trust boundaries<a class="headerlink" href="#trust-boundaries" title="Permanent link">&para;</a></h1>
+<p>Three boundaries carry the security weight of the system. Everything else is
+plumbing.</p>
+<div class="admonition danger">
+<p class="admonition-title">Changes here need adversarial tests</p>
+<p>A change touching facade authentication, <code>ApprovalService</code>, or the
+registration allowlist should ship with negative tests — rejected schemes,
+revoked tokens, quarantine unreachability, push attempts — not only
+happy-path coverage.</p>
+</div>
+<h2 id="container-view">Container view<a class="headerlink" href="#container-view" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>C4Container
+    title Skills Gateway — container view
+
+    Person(reviewer, "Reviewer / operator", "Registers marketplaces, approves snapshots, manages access tokens")
+    Person(developer, "Developer / CI", "Installs skills with an unmodified git client")
+
+    System_Ext(upstream, "Upstream git forge", "Hosts the marketplace repository")
+    System_Ext(idp, "OIDC identity provider", "Authorization-code login for the web surface")
+
+    Container_Boundary(gw, "Skills Gateway") {
+        Container(spa, "Admin portal", "React, Vite", "Served from the same jar at / behind OIDC")
+        Container(api, "Admin API", "Spring MVC, /api/**", "Registration, ingestion, approval, provenance, tokens, ledger read")
+        Container(facade, "Git facade", "JGit GitServlet, /git/**", "Read-only smart-HTTP, PAT auth, receive-pack disabled")
+        Container(publish, "Publish endpoint", "JGit GitServlet, /publish/**", "Push into a hosted marketplace's origin, PAT push scope")
+        ContainerDb(db, "PostgreSQL", "Flyway, JdbcClient", "Marketplaces, snapshots, access tokens, append-only fetch_log")
+        ContainerDb(store, "Git store", "Filesystem bare repos", "hosted/, quarantine/ and published/{name}.git")
+    }
+
+    Rel(reviewer, spa, "Uses", "HTTPS")
+    Rel(spa, api, "Calls", "JSON over session cookie")
+    Rel(reviewer, idp, "Authenticates with", "OIDC")
+    Rel(api, idp, "Validates login", "authorization code")
+    Rel(api, upstream, "Clones the default branch", "HTTPS via JGit")
+    Rel(api, store, "Writes quarantine pins, publishes refs/heads/main")
+    Rel(api, db, "Reads and writes")
+    Rel(developer, facade, "git clone / fetch", "smart-HTTP + PAT")
+    Rel(facade, store, "Reads the published repo only")
+    Rel(facade, db, "Appends fetch entries")</code></pre>
+<h2 id="1-registration-an-operators-url-becomes-an-outbound-fetch">1. Registration — an operator's URL becomes an outbound fetch<a class="headerlink" href="#1-registration-an-operators-url-becomes-an-outbound-fetch" title="Permanent link">&para;</a></h2>
+<p>Registering a marketplace hands the gateway a URL it will later clone. Two gates
+apply before the upstream is contacted at all. After them, a reachability check
+runs before the row is written.</p>
+<p><strong>URL scheme allowlist.</strong> The URL is parsed and its scheme lower-cased and
+matched against <code>skills-gateway.allowed-url-schemes</code> (default <code>http</code>, <code>https</code>).
+Anything else — <code>file:</code>, <code>ssh:</code>, <code>ext:</code>, and any URL that fails to parse or
+carries no scheme at all — is rejected <strong>fail-closed</strong> with 400. The same check
+guards every operator-supplied outbound URL in the product.</p>
+<p><strong>Gateway-pinned ref.</strong> The <code>ref</code> field must be absent or exactly <code>main</code>. Which
+ref gets ingested is the gateway's decision, not the registrant's. Multi-ref
+publication is a designed future feature and will arrive as promotion per
+<code>(upstream, ref)</code> — not by relaxing this check.</p>
+<p>Marketplace names are additionally constrained to <code>^[a-z0-9][a-z0-9_-]*$</code>, which
+is also what makes them safe as path segments on the facade.</p>
+<p><strong>A corrected URL is a registration.</strong> Until a marketplace's first snapshot an
+administrator can replace its URL, and the new one passes the scheme allowlist,
+the credential refusal and the reachability check below, in that order. From
+the first snapshot on the URL is the snapshots' source of record and cannot
+change. A snapshot is recorded only while the marketplace still has the URL its
+content was fetched from, so a correction racing an ingest cannot relabel what
+that ingest pulled in.</p>
+<p><strong>Reachability.</strong> Only after those checks pass does the gateway list the
+upstream's references, resolve the default branch it will pin, and refuse the
+registration when it cannot. The listing goes through the same connection path
+as ingestion's fetch, so registration opens no second route to the network. It is the scheme allowlist
+that bounds where the gateway may connect. Address-level egress controls apply
+to external plugin sources only, not to a marketplace upstream an administrator
+names.</p>
+<p><strong>Upstream credentials.</strong> A private upstream is read with the credential
+configured for the longest matching URL prefix. It is configuration, never a
+database row, and registration and ingestion get it through the same path.
+Three properties make it safe to hand to a server the gateway does not control:</p>
+<ul>
+<li>The gateway, not the git client, attaches the credential, and it decides
+  again on every request. A request outside the prefix the marketplace URL
+  selected, including every redirect hop out of it, carries nothing. The git
+  client alone would keep an established credential across a redirect to
+  another port, scheme or path of the same host.</li>
+<li>The token is scrubbed from every failure the gateway records or returns, and
+  a clone URL with userinfo is refused with <code>400</code>.</li>
+<li><strong>The token's scope is the limit.</strong> An administrator who registers under a
+  credentialed prefix can pull anything the token reads into quarantine. That
+  is why the token must be scoped to what may be ingested, and why the ledger
+  names the prefix each registration used. See
+  <a href="../../guides/private-upstreams/">Reading a private upstream</a>.</li>
+</ul>
+<p>A prefix's credential can instead be a <strong>GitHub App</strong>. The gateway then holds
+the App's private key, not a token, and mints an installation token per fetch.
+The same per-request attachment carries it, so the rules above hold unchanged.
+Three more properties bound the key:</p>
+<ul>
+<li>The signed assertion goes only to the API URL in configuration, never to an
+  address a marketplace URL chooses, and the gateway does not follow a
+  redirect from that API. The assertion never rides on a git request.</li>
+<li>Each installation token is scoped to the one repository being read, with
+  read access to contents and nothing else, and lives at most an hour.</li>
+<li>The key, the assertion and the tokens are scrubbed from everything the
+  gateway records or returns, and the ledger marks such a registration
+  <code>(github-app)</code>.</li>
+</ul>
+<p>See <a href="../../reference/compatibility/">Compatibility and allowlists</a> for the full
+matrix.</p>
+<p><strong>Declared marketplaces enter through the same gate.</strong> The
+<a href="../../reference/configuration/#declarative-estate">declarative estate block</a>
+is a second <em>caller</em> of this boundary, never a second implementation: a
+declared marketplace faces the same name rules, reserved name and scheme
+allowlist as an API registration, has no ref key to declare, and a failing
+entry is reported rather than registered. The exception is an unreadable
+upstream: a declared marketplace is registered anyway, and the failure is
+reported, so the estate does not depend on the network at startup. Reconciliation is additive — the
+declaration can create and converge, never deregister.</p>
+<p><strong>A manifest's plugin sources reach for this boundary too.</strong> A registered
+upstream's <code>marketplace.json</code> is attacker-influenceable content that names
+further URLs. Those sources are parsed into a typed model, and an external one is
+admitted only when <code>skills-gateway.ingestion.external-sources</code> says so — a
+setting that defaults to admitting nothing. An admitted source's derived clone
+URL passes <strong>the same scheme allowlist</strong> as a registration, so there is one
+scheme policy for every URL the gateway will ever dereference, plus an optional
+exact-host allowlist and a cap on external sources per manifest. <code>npm</code> and
+<code>archive</code> are refused above that gate, by no configuration.</p>
+<p>The standing invariant, and the reason the reversal can be staged safely: <strong>a
+snapshot is held only when every plugin source it declares resolves inside the
+snapshot the gateway serves.</strong> Held is what makes a snapshot approvable and
+therefore publishable, so a manifest still pointing a client at an external URL
+never reaches it — that is threat T4, and it stays closed whether the gateway
+cannot admit a source, cannot resolve one it has admitted, or failed part-way
+through resolving one. An enabled gateway satisfies the invariant by <em>rewriting</em>:
+the resolved content is grafted into the snapshot and the served manifest points
+at it, so the invariant holds by construction — and it is still checked, because
+the rewritten manifest is put back through the same local-only gate before the
+commit is used.</p>
+<h2 id="1a-resolution-a-manifests-url-becomes-an-outbound-request">1a. Resolution — a manifest's URL becomes an outbound request<a class="headerlink" href="#1a-resolution-a-manifests-url-becomes-an-outbound-request" title="Permanent link">&para;</a></h2>
+<p>This is the only outbound request the gateway makes whose target is chosen by
+content it does not control, and it exists only with
+<code>skills-gateway.ingestion.external-sources.enabled: true</code>. Its policy is applied
+to <strong>every</strong> request of a fetch, not only the first.</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>What it refuses</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>URL policy</td>
+<td>a scheme outside the allowlist; embedded credentials; an address literal spelled in decimal, octal or hexadecimal, or with fewer than four dotted parts — spellings that exist to read one way to a filter and another to a resolver</td>
+</tr>
+<tr>
+<td>Origin pin</td>
+<td>any request whose scheme, host or port is not the source's own, so a request cannot be made anywhere else however the server answers</td>
+</tr>
+<tr>
+<td>Address policy, always</td>
+<td>link-local (<code>169.254.0.0/16</code>, <code>fe80::/10</code> — the cloud metadata endpoint), multicast, unspecified, broadcast, <code>0.0.0.0/8</code>, <code>240.0.0.0/4</code>, and IPv4-mapped or IPv4-compatible spellings of any of them. No setting permits these</td>
+</tr>
+<tr>
+<td>Address policy, by configuration</td>
+<td>loopback, RFC1918, <code>100.64.0.0/10</code> and <code>fc00::/7</code>, unless <code>allow-private-networks: true</code>. Checked against <strong>every</strong> address the host resolves to, so a name answering with one public and one private address is refused as a whole</td>
+</tr>
+<tr>
+<td>Redirect policy</td>
+<td>a target that leaves the origin host or port, an <code>https</code> → <code>http</code> downgrade, a target carrying credentials, and a chain longer than <code>max-redirects</code>. Decided from the <code>Location</code> header <strong>before</strong> the hop is taken, so a forbidden target is never contacted</td>
+</tr>
+<tr>
+<td>Budgets</td>
+<td>received bytes (on the stream, mid-transfer), uncompressed bytes, expansion ratio, object count, largest file, tree depth, and a wall-clock deadline</td>
+</tr>
+</tbody>
+</table>
+<p>The two-tier address policy is deliberate rather than tidy. A development or
+test topology legitimately needs loopback; nothing legitimately needs the
+metadata endpoint. Keeping the link-local class unconditional means permitting
+the first cannot unlock the second.</p>
+<p>Any refusal — and any failure, timeout or budget breach — records the snapshot
+against the <strong>upstream</strong> commit as rejected, synthesises no commit, and leaves
+the content the facade serves untouched. There is no partial outcome: a manifest
+resolves completely or not at all.</p>
+<div class="admonition danger">
+<p class="admonition-title">The allowlists are not the control</p>
+<p>Manifest-driven fetching is gateway-originated traffic chosen by upstream
+data — the SSRF shape. Everything in the table above is <strong>defence in depth</strong>.
+The primary control is network topology: ingestion egress routed through a
+proxy or DMZ with no route to cloud metadata endpoints, internal APIs or
+anything holding corporate credentials. See
+<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0011-external-plugin-sources.md">ADR 0011</a>,
+and <a href="../../guides/deploying-on-kubernetes/#restricting-egress">Restricting egress</a>
+for a Kubernetes policy that enforces it.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">What this layer does not claim</p>
+<p>Two gaps, stated rather than implied.</p>
+<p><strong>The connection is made to the hostname, not to the address that was
+validated.</strong> A name that resolves differently between the check and the
+connect is not caught, because <code>HttpURLConnection</code> offers no way to pin an
+address without overriding a restricted request header process-wide. It is
+bounded today: a <code>github</code> source's host comes from <code>github-base-url</code>, which
+is operator configuration, and an <code>owner/repo</code> shorthand cannot carry a host
+— so no manifest chooses what is resolved. Address pinning belongs with the
+increment that admits manifest-supplied URLs.</p>
+<p><strong>The marketplace upstream fetch does not go through this policy.</strong> That URL
+is admin-supplied at registration and already scheme-checked, which is a
+different trust level from a manifest-derived one. Extending the policy to it
+is a deliberate follow-up rather than a side effect of this change.</p>
+</div>
+<h2 id="2-the-facade-an-anonymous-network-peer-becomes-a-reader">2. The facade — an anonymous network peer becomes a reader<a class="headerlink" href="#2-the-facade-an-anonymous-network-peer-becomes-a-reader" title="Permanent link">&para;</a></h2>
+<p><code>/git/**</code> is served by its own Spring Security filter chain, ordered ahead of
+the web chain, and it is <strong>stateless</strong>:</p>
+<ul>
+<li>HTTP Basic, with a provider manager whose only provider is the PAT provider.
+  An OIDC browser <strong>session</strong> can never authenticate a git fetch: no cookie is
+  read and no session is created on this chain.</li>
+<li>Optionally, and off by default, a second credential kind: an
+  <a href="../../reference/git-facade/#identity-provider-bearer-tokens">identity-provider bearer token</a>
+  from the same provider the web surface trusts (GW_AUTH_0040). It is validated the
+  way a resource server validates one — key-set signature, issuer, audience,
+  <code>exp</code>/<code>nbf</code> — and the issuer pin, which the facade requires on its own
+  account because a token arriving cold has none of the provenance a code
+  exchange has, and which the login requires as well (GW_AUTH_0017 — Enterprise
+  identity-provider session integrity). While the capability is off, no filter,
+  provider or decoder exists on the path at all. It changes what a credential may
+  <em>be</em>, and nothing about what it may <em>reach</em>: a bearer token carries no scope
+  list, so it permits exactly what an unscoped PAT permits, and it reaches
+  nothing on <code>/api/**</code> (GW_AUTH_0042). See
+  <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0019-facade-accepts-idp-bearer-tokens.md">ADR 0019</a>.</li>
+<li>Only the password field is read; the username is ignored (<code>token</code> by
+  convention). This is what makes the standard git credential helper work
+  unmodified.</li>
+<li>Tokens are <code>sgw_</code> + Base64url of 32 random bytes. Only an unsalted SHA-256 hex
+  digest is stored, and the cleartext is returned exactly once. Unsalted is
+  deliberate — these are high-entropy random tokens, not user-chosen passwords.</li>
+<li>A token may be <strong>scoped</strong> to named marketplaces (GW_AUTH_0006) and may <strong>expire</strong>
+  (GW_AUTH_0007). Both are enforced where they matter: expiry at authentication (an
+  expired token is refused exactly like a revoked one, by comparison, with no
+  sweep), scope in the facade resolver — an out-of-scope request gets the same
+  not-found a nonexistent marketplace gets, so a scoped token cannot probe what
+  else the gateway governs.</li>
+<li>Every fetch entry on the ledger names the token that authenticated it
+  (GW_AUTH_0009), not just the principal: a principal with several tokens is several
+  distinct credentials — and says whether that credential was derived from a
+  browser session (GW_AUTH_0018) or deliberately provisioned, which is a different
+  question from who held it.</li>
+<li>Receive-pack is disabled by construction on this endpoint, so there is no
+  write path here to reject at runtime. Publication into a gateway-hosted
+  marketplace is a separate boundary — see below.</li>
+</ul>
+<pre class="mermaid"><code>sequenceDiagram
+    participant G as git client
+    participant F as gitChain (Order 1)
+    participant PAT as PatAuthenticationProvider
+    participant S as Git storage
+    participant L as fetch_log
+
+    G-&gt;&gt;F: GET /git/acme/info/refs?service=git-upload-pack
+    F--&gt;&gt;G: 401 + WWW-Authenticate Basic
+    G-&gt;&gt;F: retry with Basic token:sgw_...
+    F-&gt;&gt;PAT: authenticate (password only)
+    PAT-&gt;&gt;PAT: sha256Hex(token) → find active token
+    alt no active token
+        PAT--&gt;&gt;G: 401 bad credentials
+    else valid
+        PAT--&gt;&gt;F: principal + ROLE_GIT
+        F-&gt;&gt;S: publishedIfServing("acme")
+        alt never approved
+            S--&gt;&gt;G: 404 repository not found
+        else serving
+            S--&gt;&gt;F: published repo (read-only)
+            F-&gt;&gt;L: record info-refs
+            F--&gt;&gt;G: advertise refs/heads/main
+            G-&gt;&gt;F: POST /git/acme/git-upload-pack
+            F-&gt;&gt;L: record upload-pack per wanted object
+            F--&gt;&gt;G: packfile
+        end
+    end</code></pre>
+<div class="admonition note">
+<p class="admonition-title">The facade chain is unconditional</p>
+<p>The <code>dev-insecure-auth</code> escape hatch does not touch it. <code>/git/**</code> requires a
+valid credential even in development mode.</p>
+</div>
+<h2 id="3-approval-held-content-becomes-served-content">3. Approval — held content becomes served content<a class="headerlink" href="#3-approval-held-content-becomes-served-content" title="Permanent link">&para;</a></h2>
+<p><code>ApprovalService</code> is the only publisher. The invariant is structural rather than
+procedural: nothing else in the codebase writes to <code>{data-dir}/published/</code>, and
+the facade reads nothing else.</p>
+<p>An <code>approved</code> or <code>rejected</code> snapshot cannot be decided again, so the published
+ref only ever advances through a deliberate, recorded decision.</p>
+<p>It can also <em>retreat</em>, and only one thing makes it: an enforced
+<a href="../../guides/re-vetting/">re-vetting</a> violation, which removes the published
+refs and moves the snapshot to <code>revoked</code>. That path never publishes — it only
+unpublishes — so <code>ApprovalService</code> remains the sole publisher, and a revoked
+snapshot returns to being served only by going back through it.</p>
+<p>Gates precede every publication, inside that single publisher and before any
+state transition: the fail-closed <a href="../vetting/">vetting gate</a> (evidence about the
+content, waivable finding by finding), then the fail-closed
+<a href="../../guides/policy-rules/">policy gate</a> (standing organizational deny rules,
+not waivable — the exception path is editing the rule, audited), then the
+cooling-off window, and last the
+<a href="../../guides/approving-snapshots/#separation-of-duties">four-eyes rule</a>. A
+refusal by any of them leaves the snapshot held and publishes nothing.</p>
+<p>The last one guards a different property from the others, and it is the property
+the whole boundary rests on. Vetting and policy ask <em>is this content
+acceptable</em>; four-eyes asks <em>is this decision an independent one</em> — whether the
+reviewer is the marketplace's registrant, the snapshot's ingestion actor, or the
+author of a waiver the approval leans on. Without it, one identity could carry
+content from an upstream URL all the way to the facade unaccompanied, and every
+recorded decision on the way would still look correct.</p>
+<p>It is the one gate whose strictness is a deployment decision rather than a
+constant. Under the default <code>warn</code> the conflict is recorded on the ledger and
+the approval proceeds — a deployment with a single administrator has no second
+pair of eyes to offer, and refusing there would only make the gateway
+unapprovable; under <code>enforce</code> the approval is refused. What has no off switch is
+the <em>detection</em>: a self-approval is on the ledger either way, which is what
+keeps <code>warn</code> a measurement rather than a blind spot. The automated sync triggers
+are not identities and never conflict.</p>
+<p>None of these gates can ever <em>open</em> on their own: none can approve. Policy rules
+in particular cannot auto-approve, because that would delegate the human decision
+this boundary exists to guarantee to an expression — a trust-model change,
+decided deliberately or not at all (ADR 0006 in
+<a href="https://github.com/skillsgateway/skillsgateway/tree/main/docs/decisions">the architecture decision records</a>).</p>
+<p>What <em>a human</em> can do, deliberately and audibly, is the airline-cockpit escape
+hatch (ADR 0009): an <strong>administrator</strong> can disconnect the automation. Two acts,
+both admin-only and both on the ledger. An administrator can <strong>override</strong> a
+blocked outcome on approve, by stating a reason — the override lifts only the
+vetting gate, leaving policy, cooling-off and four-eyes in force, and writes a
+distinct <code>snapshot-approved-over-vetting-failure</code> event plus a standing marker so
+the served snapshot is never indistinguishable from a clean approval. An
+administrator can also <strong>disable a vetter</strong>, globally or per marketplace — but
+the disablement is recorded as a <code>disabled</code> verdict on every run, and a run with
+nothing but disabled verdicts stays <em>blocked</em>, so switching the chain off is
+never a way to clear content. The override is the rarer, whole-outcome
+counterpart to a scoped, expiring waiver; neither is a silent bypass.</p>
+<h2 id="the-web-surface">The web surface<a class="headerlink" href="#the-web-surface" title="Permanent link">&para;</a></h2>
+<p>Everything that is not <code>/git/**</code> is the web chain: OIDC authorization-code login
+only, with the application acting as its own BFF. The browser never holds a
+token; the session cookie is its only credential. <code>/actuator/health</code> is the sole
+unauthenticated path.</p>
+<p>Requests to <code>/api/**</code> that lack a session get a clean <strong>401</strong> rather than a 302
+to the identity provider, so an expired session surfaces in the SPA as an error
+instead of an HTML login page rendered into a <code>fetch()</code>.</p>
+<p>The session cookie is the only <strong>ambient</strong> credential the gateway has, so this
+is the only chain that needs a CSRF token; the other four authenticate every
+request on their own and honour no cookie, so a forged cross-site request
+arrives at them unauthenticated. Every response here sets an <code>XSRF-TOKEN</code> cookie
+readable by script, and a state-changing request must echo it in an
+<code>X-XSRF-TOKEN</code> header. What that stops is the shape the JSON content-type
+requirement does not: <code>approve</code>, <code>reject</code>, <code>revet</code>, <code>restore</code> and the rebuild,
+reconcile, retention and rotation triggers are body-less <code>POST</code>s, which a plain
+cross-site HTML form can produce — and Firefox and Safari apply no default
+<code>SameSite</code>, so in those browsers such a request carried the session cookie. A
+logged-in reviewer visiting a hostile page could be made to approve a snapshot.</p>
+<p>The session cookie is named <code>SameSite=Lax</code> rather than left to the browser,
+which withholds it from every cross-site POST. That is a second layer and not
+the control, because honouring it is the browser's choice; <code>Strict</code> is
+deliberately not used, and
+<a href="../../reference/configuration/#session-cookie">Configuration</a> says why.</p>
+<p><strong>Browser hardening.</strong> Every response on this chain carries a
+<code>Content-Security-Policy</code>. It allows script, styles, fonts, images and
+connections from the gateway's own origin only. It also allows no plugins, no
+framing by another page, and no form submission elsewhere:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+</code></pre></div>
+<p>The portal has no HTML pipeline, so the policy is defence in depth. If an
+injection were ever found, it could not load script from elsewhere, and it could
+not send what it reads off-site.</p>
+<ul>
+<li><strong>Inline styles are allowed</strong> because the portal's toast and component
+  libraries inject them at run time.</li>
+<li><strong>Inline script is allowed on the API reference (<code>scalar.path</code>, <code>/docs</code>) and on
+  no other page.</strong> Its third-party page starts itself from an inline script built
+  from its configuration, and it renders only the gateway's own API description.</li>
+</ul>
+<p>The git, publication, revocation-check, webhook and machine chains serve no
+documents, so they carry no policy. A proxy in front of the gateway may add its
+own policy. Browsers enforce every policy they receive, so a second policy can
+only narrow this one.</p>
+<div class="admonition warning">
+<p class="admonition-title">dev-insecure-auth</p>
+<p><code>skills-gateway.dev-insecure-auth=true</code> makes the <strong>entire web surface</strong>
+unauthenticated and injects a synthetic principal <code>dev</code>. It exists for local
+development, logs a loud warning at startup, and must never be set in a
+deployed environment. See <a href="../../guides/local-development/">Local development</a>.</p>
+<p>Being off by default is the control; the second one is a startup guard. A
+gateway that has an identity provider configured and this flag on <strong>refuses
+to start</strong>, because the login it configured is the login the flag switches
+off. See <a href="../../reference/configuration/">Configuration</a>.</p>
+<p>It opens the <strong>browser</strong> surface only. A request carrying an
+<code>Authorization: Bearer</code> header is authenticated strictly even in this mode,
+the way the git facade is: a mode in which every bearer value authenticated
+would be a very quiet way to lose the control plane in a copied
+configuration.</p>
+<p>It opens <strong>authentication</strong>, not forgery protection: the CSRF token is
+required here exactly as it is with a configured identity provider, so the
+portal's token handling is exercised in the local loop instead of breaking
+only in production.</p>
+</div>
+<h2 id="the-machine-api-a-credential-in-a-pipeline-becomes-a-control-plane-caller">The machine API — a credential in a pipeline becomes a control-plane caller<a class="headerlink" href="#the-machine-api-a-credential-in-a-pipeline-becomes-a-control-plane-caller" title="Permanent link">&para;</a></h2>
+<p><code>/api/**</code> has a second entrance, taken by a request that carries an
+<code>Authorization: Bearer</code> header. It is a sibling of the git facade's chain rather
+than a mode on the web chain: stateless, no session created, no cookie honoured,
+and a request presenting both a bearer credential and a cookie is refused rather
+than resolved to either.</p>
+<p><strong>Authentication</strong> is a machine API credential — an access token whose API scope
+list is non-empty. That non-emptiness is a <em>precondition of authentication</em>, not
+a later authorization rule, so no controller can be the single point of failure.
+A perfectly valid personal access token — including the every-marketplace form,
+the most permissive fetch grant the system has — does not authenticate here at
+all.</p>
+<p><strong>The guarantee is symmetric.</strong> A credential holding API scopes reaches no
+marketplace through the facade and no marketplace through publication, <em>including
+the marketplaces its empty fetch scope list would otherwise grant</em>: the fetch
+default is conditional on the credential's shape.</p>
+<p><strong>Authorization</strong> is an allowlist over per-concern named scopes, enforced in the
+filter chain and therefore independent of the session chain's role checks.
+Reach is the intersection of the allowlist, the credential's scopes and its
+principal's roles — never their union. Every act of human judgement, every
+operation that retracts or republishes content, every role grant and the whole
+of <code>/api/v1/tokens/**</code> sits outside the allowlist, and no combination of scopes and
+no role reaches them. An endpoint added later is unreachable until somebody
+names it; a build-time check refuses an unclassified one.</p>
+<p><strong>Attribution.</strong> Every ledger entry now carries an explicit actor type —
+<code>human</code>, <code>machine</code> or <code>system</code> — beside the identity it names, denormalised so a
+row written years ago still says what it meant after the credential it names has
+been revoked and its row deleted. That replaces an implicit vocabulary in which
+<code>config-reconciler</code>, <code>scheduler</code> and <code>system</code> were magic strings in the identity
+column. A machine entry also carries the credential's id, so a leak trace has
+per-credential resolution.</p>
+<p>See <a href="../../reference/api/tokens/#machine-api-credentials">Access tokens</a>.</p>
+<h2 id="4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch">4. The inbound webhook — a forge's push event becomes a fetch<a class="headerlink" href="#4-the-inbound-webhook-a-forges-push-event-becomes-a-fetch" title="Permanent link">&para;</a></h2>
+<p><code>POST /hooks/{marketplace}</code> is the one endpoint reachable without an OIDC
+session or a PAT, so its authentication is cryptographic and its authority is
+deliberately nil. Authentication: an HMAC-SHA256 signature of the exact raw
+request body (GitHub-compatible <code>X-Hub-Signature-256</code>), verified in constant
+time against a per-marketplace secret the gateway generated and returned
+exactly once. Authority: the payload is never read — a valid signature only
+triggers ingestion of the <strong>registered</strong> upstream URL's default branch, which
+lands <code>held</code> in quarantine exactly as the polling sweep would have produced.</p>
+<p>The worst a forged-but-signed request can cause is therefore a redundant fetch
+of content the gateway already governs; nothing on this path can name a URL, a
+ref, or a commit, and nothing on it can approve or publish. Body size is
+bounded before the marketplace is looked up, and every other refusal — an
+unknown marketplace, one not in webhook mode, a signature that did not
+verify — is the same <code>404</code>, so the endpoint reveals neither why it refused nor
+which marketplace names exist.</p>
+<h2 id="5-publication-a-publishers-push-becomes-quarantined-content">5. Publication — a publisher's push becomes quarantined content<a class="headerlink" href="#5-publication-a-publishers-push-becomes-quarantined-content" title="Permanent link">&para;</a></h2>
+<p>A marketplace the gateway
+<a href="../../guides/publishing-first-party-skills/">hosts itself</a> has no upstream: its
+content arrives by <code>git push</code> to <code>/publish/{name}</code>. That is the only write path
+the gateway has, and four things keep it from being a way around the rest of
+this page.</p>
+<p><strong>It is somewhere else.</strong> A separate servlet, resolving a separate repository,
+behind a separate filter chain. <code>/git/**</code> keeps its null receive-pack factory,
+so no push can reach a published repository — not by misconfiguration, because
+there is no shared object to misconfigure (<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0007-first-party-hosting-and-the-publish-endpoint.md">ADR 0007 — First-party hosting and the publish endpoint</a>).</p>
+<p><strong>It writes to neither quarantine nor published.</strong> A push lands in the
+marketplace's <em>origin</em> repository. Ingestion then fetches out of it into
+quarantine exactly as it fetches from an upstream URL, so quarantine keeps the
+property that only the ingestion service writes it — and the
+<code>refs/snapshots/&lt;sha&gt;</code> namespace that vetting and approval address content by
+stays out of any external credential's reach.</p>
+<p><strong>The credential is one nobody holds.</strong> Push authority is a token scope
+separate from fetch scopes, and where an absent <em>fetch</em> scope means every
+marketplace (the compatibility rule for tokens predating scoping), an absent
+<em>push</em> scope means none. No token issued before this existed can publish, and
+no token can be granted publication to everything by omission. A push for a
+marketplace outside the scope answers exactly as one for a marketplace that
+does not exist.</p>
+<p><strong>A publisher may move one lineage, forward.</strong> Only <code>refs/heads/main</code> may be
+updated; no ref may be deleted; history may not be rewritten unless the
+marketplace was registered saying it may — and when it may, both tips land on
+the ledger, so "the lineage under that approved snapshot was rewritten" stays
+answerable.</p>
+<p>What a push does <strong>not</strong> do is shorten the pipeline. The commit is quarantined,
+manifest-checked, vetted and held like anything fetched, and is served only
+after a human approves it. First-party content removes a redundant system, not
+the review.</p>
+<h2 id="6-roles-what-an-authenticated-session-may-do">6. Roles — what an authenticated session may do<a class="headerlink" href="#6-roles-what-an-authenticated-session-may-do" title="Permanent link">&para;</a></h2>
+<p>Authentication says who a session is; the role model says what it may do.
+Three roles, enforced at the REST API by an explicit authorization call at the
+top of every privileged endpoint:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Scope</th>
+<th>Authority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>admin</code></td>
+<td>global</td>
+<td>Every operation, including managing grants.</td>
+</tr>
+<tr>
+<td><code>approver</code></td>
+<td>one marketplace</td>
+<td>Ingest, approve, reject, re-vet, waive — for that marketplace only. The owning marketplace is resolved from the addressed snapshot or waiver on the server side, so a bare id cannot reach another marketplace's content.</td>
+</tr>
+<tr>
+<td><code>auditor</code></td>
+<td>global</td>
+<td>Read the ledger, its export, the operational listings. No mutations.</td>
+</tr>
+</tbody>
+</table>
+<p>Enforcement is <strong>deny-by-default and unconditional</strong>: a session with no role
+keeps the browsing surface and its own tokens, and is refused everything else.
+There is no configuration that turns it off. A deployment that locks itself out
+is prevented at the other end instead — the gateway refuses to start unless its
+configuration grants the admin role to somebody, and principals in
+<code>skills-gateway.roles.admins</code> are admins by configuration and cannot be revoked
+through the API. Every grant and
+revocation is on the append-only ledger.</p>
+<p>A role can come from three places, and the union is what a session holds: the
+<code>skills-gateway.roles.admins</code> list, a grant row, or a <strong>claim</strong> of the identity
+provider's token mapped by <code>skills-gateway.roles.mappings</code>. Claim mapping moves
+part of this boundary into the directory — deliberately, because that is where
+membership is already governed — under three rules that keep it from widening
+it. Values are matched exactly, so a mapping cannot grant by resemblance. A
+malformed mapping refuses startup, so a typo cannot quietly grant nothing.
+And claims are read only from a session established through the identity
+provider: a PAT, the <code>dev-insecure-auth</code> principal and the anonymous webhook
+request carry no claims and derive no role, whatever authorities they hold.</p>
+<p>The identity token's own integrity is part of this: the gateway configures its
+provider endpoints explicitly rather than by discovery, so it compares the
+token's issuer only when <code>skills-gateway.oidc.issuer</code> names one. Where a single
+authorization endpoint serves many tenants, that comparison <em>is</em> the tenant
+boundary — every tenant's tokens verify against the same keys. So a gateway
+with an identity provider configured refuses to start without the issuer,
+rather than starting with the boundary open and only a log line to say so: the
+only symptom of that misconfiguration is logins accepted too broadly, which
+nobody observes.</p>
+<p>This boundary is the web surface's only. The facade's authorization is
+<a href="../../reference/api/tokens/">token scopes</a> — a different credential for a
+different surface — and roles never apply to PATs. See
+<a href="../../guides/delegated-administration/">Delegated administration</a> for the
+workflow, <a href="../../guides/identity-providers/">Identity providers</a> for claim
+mapping, and <a href="../../reference/api/roles/">Roles</a> for the grants API.</p>
+<h2 id="the-storage-itself">The storage itself<a class="headerlink" href="#the-storage-itself" title="Permanent link">&para;</a></h2>
+<p>Publication is a reference transition on the published repository, and the
+boundary is therefore wherever those references physically live.</p>
+<p>On the <code>filesystem</code> backend that is the mounted volume: anyone who can write to
+it can move <code>refs/heads/main</code> without <code>ApprovalService</code> ever running. That has
+always been true, and it is why the volume inherits the encryption and access
+expectations of the content it holds.</p>
+<p>On the <code>object-store</code> backend it is the bucket. The served reference map is one
+small object; <strong>anyone who can write that object can put content on the wire
+without approval</strong>, and can do it from outside the gateway entirely. The
+mitigation is a narrow bucket policy — object read, write and delete under the
+gateway's own prefix, no bucket administration — and treating the bucket as the
+same kind of asset the volume was.</p>
+<p>The gateway cannot enforce this. It has no way to distinguish its own write from
+anyone else's, and no way to detect one that already happened. What it does do
+is refuse to start against a store whose conditional writes are not faithful, so
+that its <em>own</em> concurrent writers cannot lose a transition. That is a different
+guarantee, and it is not a substitute for the policy.</p>
+<h2 id="credentials-at-rest-two-postures-and-the-reason-they-differ">Credentials at rest — two postures, and the reason they differ<a class="headerlink" href="#credentials-at-rest-two-postures-and-the-reason-they-differ" title="Permanent link">&para;</a></h2>
+<p>The database holds two kinds of secret, and they are stored differently on
+purpose. Stated here because the difference looks like an oversight and is not.</p>
+<p><strong>Personal access tokens are hashed.</strong> A PAT is verified by hashing what the
+client sent and comparing, so the gateway never needs the cleartext again. It is
+shown exactly once at creation and cannot be recovered afterwards — not by an
+administrator, not by a database reader.</p>
+<p><strong>Signing secrets are stored in cleartext.</strong> <code>webhook_subscribers.secret</code> and a
+hosted marketplace's <code>marketplaces.webhook_secret</code> are HMAC keys: signing an
+outbound delivery and verifying an inbound push both require the key itself, so a
+hash would make them useless. They are returned exactly once by the call that
+generates them and by no read endpoint afterwards, but they are readable to
+anything that can read the table.</p>
+<p>The consequence is worth being plain about: <strong>a database reader can forge a
+delivery signature and can forge an inbound push event.</strong> The mitigation is that
+the database is inside the trust boundary and is expected to be treated as such —
+the same expectation the storage volume carries above. Encrypting the column
+against a key held elsewhere would change that, and the gateway does not do it
+today.</p>
+<h2 id="the-forge-mirror-outbound-and-outside-the-boundary">The forge mirror — outbound, and outside the boundary<a class="headerlink" href="#the-forge-mirror-outbound-and-outside-the-boundary" title="Permanent link">&para;</a></h2>
+<p>The optional <a href="../../guides/read-only-forge-mirror/">read-only mirror</a> puts a copy
+of approved content on a host the gateway does not control. That copy is
+<strong>outside every boundary above</strong>, and it is easier to reason about once that is
+said plainly:</p>
+<ul>
+<li><strong>It is not a serving surface.</strong> Nothing the gateway does consults it. A
+  mirror that is down, stale, empty or tampered with does not change which
+  snapshot the facade serves, whether an approval succeeds, or whether a
+  revocation takes effect. Content that appears on it because somebody pushed
+  there directly is on the mirror, not on the facade, and the next
+  reconciliation removes it.</li>
+<li><strong>It is not on the ledger.</strong> A fetch from the mirror is a fetch from another
+  system: no identity, no SHA, no row. The inventory and blast-radius answers the
+  ledger gives are answers about the facade, and they stay complete only while
+  people install through the facade — which is why the guide says so loudly.</li>
+<li><strong>A revocation reaches it, but is not gated on it.</strong> The gateway's own state
+  is authoritative: the facade stops serving whether or not the mirror can be
+  updated, and a mirror that could not be updated is recorded and reportable
+  rather than blocking. A copy on somebody else's host can be raced by caches,
+  forks and clones in any case, so it was never what makes a revocation
+  effective.</li>
+</ul>
+<p>What crosses <em>outward</em> here is a standing write credential to another system and
+the approved content itself. Both are bounded the same way: the credential is
+configuration that never reaches a log line, a ledger entry or an API response,
+and the content is exactly what the facade already serves to authenticated
+readers — never quarantined content, because the only repository the mirror reads
+is the published one.</p>
+<h2 id="what-is-not-a-boundary-yet">What is not a boundary yet<a class="headerlink" href="#what-is-not-a-boundary-yet" title="Permanent link">&para;</a></h2>
+<p>A <strong>second recorded approval</strong> — a queue in which two identities each decide,
+rather than one deciding while the gateway checks who they are — is not
+implemented. The four-eyes rule refuses a conflicted approval; it does not
+require two approvals of an unconflicted one.</p>
+<p>Per-team catalog scoping (which identities see which virtual marketplaces) and
+a portal UI for managing grants are future capabilities; today the grants API
+and the claim mappings are the management surface. Where the role model is not enabled, treat <strong>access
+to the portal</strong> as the reviewer privilege and grant it through the identity
+provider.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Licensed under the Apache License 2.0
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.indexes", "content.code.copy", "content.action.edit", "search.highlight", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "dev", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
