@@ -75,9 +75,8 @@ Worth knowing before you open a PR:
   `Breaking change detection`, `semantic-pr / Validate PR title`,
   `Apply subsystem labels`, `DCO`, `CodeQL`, `Analyze (actions)`,
   `Analyze (java-kotlin)` and `Analyze (javascript-typescript)`. All review
-  threads must be resolved; no approving review is required, since an author
-  cannot approve their own PR. Direct pushes, force-pushes and branch deletion
-  are blocked.
+  threads must be resolved, and a maintainer's approving review is required.
+  Direct pushes, force-pushes and branch deletion are blocked.
 - **Tags are permanent.** No tag can be moved or deleted; a wrong release is
   fixed by a new one. Both rulesets are declared in
   `safe-settings/suborgs/product.yml` of the admin repo.
