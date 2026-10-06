@@ -62,7 +62,7 @@ Repository settings are not configured by clicking through the GitHub UI, and
 they are **not** in this repo. They live as code under `safe-settings/` in
 `skillsgateway/.github` and are applied by
 [`github/safe-settings`](https://github.com/github/safe-settings) — merge
-methods, the label set, the `protect-main` ruleset, and the deployment
+methods, the label set, the `protect-main` and `protect-tags` rulesets, and the deployment
 environments. This repo previously carried `.github/settings.yml` for the same
 purpose; it was retired in favour of that single source (issue #23).
 
@@ -74,9 +74,10 @@ Two consequences worth knowing before you open a PR:
   `Breaking change detection`, `semantic-pr / Validate PR title`,
   `Apply subsystem labels`, `DCO`, `CodeQL`, `Analyze (actions)`,
   `Analyze (java-kotlin)` and `Analyze (javascript-typescript)`. All review
-  threads must be resolved. The review rule is declared with the ruleset, in
-  `safe-settings/suborgs/product.yml` of the admin repo. Force-pushes and
-  branch deletion are blocked.
+  threads must be resolved; no approving review is required, since an author
+  cannot approve their own PR. Direct pushes, force-pushes and branch deletion
+  are blocked, and release tags cannot be moved or deleted. The rulesets are
+  declared in `safe-settings/suborgs/product.yml` of the admin repo.
 - **Labels are declarative.** `.github/labeler.yml` may only reference labels
   declared in the admin repo; a label that exists on the repo but not there is
   deleted on the next sync. Adding a label means a PR against that repo. CI
