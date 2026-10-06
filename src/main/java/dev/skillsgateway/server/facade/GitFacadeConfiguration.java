@@ -31,6 +31,9 @@ public class GitFacadeConfiguration {
 
     private static final String SERVED_REF = GitStorage.SERVED_REF;
 
+    /** The marketplace {@link #resolvePublished} resolved, for the upload pack built on the same request. */
+    private static final String MARKETPLACE_ATTRIBUTE = GitFacadeConfiguration.class.getName() + ".marketplace";
+
     /**
      * What the facade puts on the wire, stated rather than inherited (GW_FACADE_0016).
      *
@@ -116,6 +119,7 @@ public class GitFacadeConfiguration {
             throw new ServiceMayNotContinueException(e.getMessage(), e);
         }
         Repository repository = serving.orElseThrow(() -> new RepositoryNotFoundException(name));
+        request.setAttribute(MARKETPLACE_ATTRIBUTE, marketplace);
         if (request.getRequestURI().endsWith("/info/refs")) {
             String sha;
             try {
@@ -134,14 +138,10 @@ public class GitFacadeConfiguration {
     UploadPack createUploadPack(HttpServletRequest request, Repository repository) {
         UploadPack uploadPack = new UploadPack(repository);
         uploadPack.setRefFilter(SERVED_REFS);
-        uploadPack.setPreUploadHook(new AuditingPreUploadHook(
-                request.getRemoteAddr(), auditHook.currentPrincipal(), marketplaceName(repository)));
+        String marketplace = (String) request.getAttribute(MARKETPLACE_ATTRIBUTE);
+        uploadPack.setPreUploadHook(
+                new AuditingPreUploadHook(request.getRemoteAddr(), auditHook.currentPrincipal(), marketplace));
         return uploadPack;
-    }
-
-    private static String marketplaceName(Repository repository) {
-        String directory = repository.getDirectory().getName();
-        return directory.endsWith(".git") ? directory.substring(0, directory.length() - 4) : directory;
     }
 
     /**
