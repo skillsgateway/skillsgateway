@@ -11,6 +11,7 @@ import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -204,6 +205,56 @@ public class SnapshotContentService {
             throw new IngestionException(
                     "cannot read content of snapshot %d (%s)".formatted(snapshotId, snapshot.sha()), e);
         }
+    }
+
+    /** The marketplaces each store holds; a store that cannot be listed holds none here. */
+    @Requirements({"GW_OBSERVABILITY_0006"})
+    public Map<GitStorage.Role, Set<String>> storedMarketplaces() {
+        Map<GitStorage.Role, Set<String>> stored = new EnumMap<>(GitStorage.Role.class);
+        for (GitStorage.Role role : List.of(GitStorage.Role.QUARANTINE, GitStorage.Role.PUBLISHED)) {
+            try {
+                stored.put(role, storage.marketplaces(role));
+            } catch (IOException e) {
+                stored.put(role, Set.of());
+            }
+        }
+        return stored;
+    }
+
+    /**
+     * The manifest's plugins and their skills at commit {@code sha} of a marketplace, addressed by
+     * commit rather than by snapshot row (GW_OBSERVABILITY_0006). Quarantine is read first because
+     * revocation leaves it untouched; the published repository second, because a virtual catalog
+     * commit exists only there. Neither is created when absent.
+     *
+     * <p>{@code stored} is {@link #storedMarketplaces()}, listed once by a caller resolving many
+     * commits: on the object-store backend a listing reads every key under the role.
+     *
+     * <p>Empty when the content cannot be resolved — the commit's objects are gone, or the
+     * manifest is absent or does not parse — which a caller must report as unknown, never as
+     * containing nothing. Names and paths only; no component declarations are read.
+     */
+    @Requirements({"GW_OBSERVABILITY_0006"})
+    public Optional<List<PluginContent>> skillsAt(
+            Map<GitStorage.Role, Set<String>> stored, String marketplace, String sha) {
+        for (GitStorage.Role role : List.of(GitStorage.Role.QUARANTINE, GitStorage.Role.PUBLISHED)) {
+            try {
+                if (!stored.getOrDefault(role, Set.of()).contains(marketplace)) {
+                    continue;
+                }
+                try (Repository repo = storage.open(role, marketplace);
+                        RevWalk walk = new RevWalk(repo)) {
+                    RevCommit commit = walk.parseCommit(ObjectId.fromString(sha));
+                    if (readFile(repo, commit, MANIFEST_PATH) != null) {
+                        return Optional.of(plugins(repo, commit, false));
+                    }
+                }
+            } catch (IOException | IllegalArgumentException e) {
+                // A missing object and a malformed manifest are both IOExceptions; a SHA that is not
+                // hex is the IllegalArgumentException. Each means "not resolvable here".
+            }
+        }
+        return Optional.empty();
     }
 
     /**

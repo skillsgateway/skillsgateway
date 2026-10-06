@@ -65,3 +65,28 @@ test("a_failing_report_renders_an_alert_not_a_blank_page", async () => {
   renderPage();
   expect(await screen.findByRole("alert")).toBeInTheDocument();
 });
+
+test("skill_presence_states_what_it_measures_above_the_table_and_lists_unresolvable_snapshots", async () => {
+  renderPage();
+  expect(await screen.findByText(/Presence, not invocation/)).toBeInTheDocument();
+  const row = screen.getByRole("row", { name: /code-review.*toolkit/ });
+  expect(row).toHaveTextContent("3");
+  expect(screen.getByText("Content not resolvable")).toBeInTheDocument();
+  expect(screen.getByText("555566667777")).toBeInTheDocument();
+});
+
+test("no_delivered_skills_render_an_explicit_presence_empty_state", async () => {
+  server.use(
+    http.get("/api/v1/adoption/presence", () =>
+      HttpResponse.json({ measure: "presence", statement: "s", skills: [], unresolved: [] }),
+    ),
+  );
+  renderPage();
+  expect(await screen.findByText(/No skills delivered yet/)).toBeInTheDocument();
+});
+
+test("a_failing_presence_report_renders_an_alert", async () => {
+  server.use(http.get("/api/v1/adoption/presence", () => HttpResponse.json({}, { status: 500 })));
+  renderPage();
+  expect(await screen.findByRole("alert")).toBeInTheDocument();
+});

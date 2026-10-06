@@ -1008,9 +1008,9 @@ Empty state: "No fetches recorded yet."
 
 **Route:** `/adoption` · **Heading:** Adoption
 
-The [adoption and staleness reports](api/adoption.md), read-only. Subtitle:
+The [adoption, staleness and presence reports](api/adoption.md), read-only. Subtitle:
 "Who fetches what through the facade, aggregated from the append-only ledger,
-and which identities are not on the served tip." Both underlying reads require
+and which identities are not on the served tip." Every underlying read requires
 the auditor role (see [Authorization](#authorization)), so a session without
 it sees the page's error state.
 
@@ -1039,13 +1039,35 @@ is fetched through the facade."
 
 ### Stale identities
 
-The [staleness report](api/adoption.md#get-apiadoptionstaleness), window-free:
+The [staleness report](api/adoption.md#get-apiv1adoptionstaleness), window-free:
 identity, marketplace, last received SHA, the served tip it diverges from —
 or a destructive `not serving` badge when the marketplace stopped serving
 entirely — and the last fetch time. The page says what the report is: facts,
 not verdicts.
 
 Empty state: "Every identity is on the served tip."
+
+### Skill presence
+
+The [presence report](api/adoption.md#get-apiv1adoptionpresence), window-free
+and not driven by the report window. The report's own statement sits above the
+table, saying the counts are presence, not invocation, and are uniform within a
+snapshot.
+
+| Column | Contents |
+| --- | --- |
+| Skill | Skill directory name, with the `SKILL.md` path beneath it. |
+| Plugin | Plugin name from the manifest. |
+| Marketplace | Marketplace name as served. |
+| Identities holding | Identities whose latest fetch holds a snapshot containing the skill. |
+| Snapshots delivering | Distinct delivered snapshots containing it. |
+| First delivered / Last delivered | First and most recent fetch of any of them. |
+
+Delivered snapshots whose content cannot be resolved are listed beneath the
+table under **Content not resolvable**, each with its holder count.
+
+Empty state: "No skills delivered yet. Presence appears once content is fetched
+through the facade."
 
 ---
 

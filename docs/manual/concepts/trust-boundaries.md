@@ -640,6 +640,12 @@ is the published one.
 
 ## What is not a boundary yet
 
+**Client telemetry** is a boundary the gateway deliberately does not have. It
+accepts no usage or invocation reports from agent clients, because every
+identifying attribute in them is asserted by the client and forgeable. Adoption
+figures come from the ledger and the stored commit trees only; see
+[ADR 0016](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md).
+
 A **second recorded approval** — a queue in which two identities each decide,
 rather than one deciding while the gateway checks who they are — is not
 implemented. The four-eyes rule refuses a conflicted approval; it does not

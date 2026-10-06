@@ -214,6 +214,13 @@ low-volume one — survive every pass whatever their age. The admitted set is a
 closed allowlist, so a ledger event added to the gateway later is not trimmable
 until somebody deliberately admits it.
 
+**Each identity's latest pack send is kept.** The
+[staleness and presence reports](../reference/api/adoption.md) say what an
+identity holds from its most recent `upload-pack` of a marketplace, so the trim
+leaves that one entry per identity and marketplace, however old. Everything
+older is still trimmed, and the kept rows grow with the estate, not with
+traffic.
+
 Each pass is bounded by a fixed work budget and resumes on the next one, so the
 first run against a ledger years deep does not hold the compaction lease until it
 finishes. When a pass removes anything it logs how many and which sink bounded

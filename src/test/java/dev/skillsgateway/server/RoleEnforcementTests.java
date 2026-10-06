@@ -131,6 +131,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "GET /api/v1/audit/sinks",
             "GET /api/v1/adoption",
             "GET /api/v1/adoption/staleness",
+            "GET /api/v1/adoption/presence",
             "GET /api/v1/webhooks",
             "GET /api/v1/webhooks/events",
             "GET /api/v1/webhooks/deliveries",

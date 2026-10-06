@@ -67,7 +67,7 @@ as a requirement so it is checkable rather than a paragraph in a document.
 
 ## What Changes
 
-- **Presence inventory at skill granularity (GW_0213).** A report that resolves,
+- **Presence inventory at skill granularity (GW_OBSERVABILITY_0006).** A report that resolves,
   for each snapshot SHA the ledger records a content-transferring fetch of, the
   skills and plugins that SHA's pinned commit tree contains, and aggregates the
   existing ledger measures against them. Derived from two things the gateway
@@ -80,7 +80,7 @@ as a requirement so it is checkable rather than a paragraph in a document.
   without an operator first working out which marketplaces at which SHAs contained
   it.
 
-- **Presence is labelled presence, in the payload (GW_0214).** A git fetch is
+- **Presence is labelled presence, in the payload (GW_OBSERVABILITY_0007).** A git fetch is
   all-or-nothing: every identity that fetched a snapshot received every skill in
   it, so per-skill counts are uniform across a snapshot's contents *by
   construction*. The report states that in its own response and in the portal
@@ -89,7 +89,7 @@ as a requirement so it is checkable rather than a paragraph in a document.
   correlation with client telemetry is possible outside the gateway without the
   gateway holding either side of it.
 
-- **No client-reported data, stated as a requirement (GW_0215).** The gateway
+- **No client-reported data, stated as a requirement (GW_OBSERVABILITY_0008).** The gateway
   exposes no surface that accepts client-reported usage telemetry, and no adoption
   figure it reports is derived from data a client asserted. A negative that is
   only prose decays; a negative with a verification case is something a later
@@ -105,17 +105,21 @@ a boundary on the existing observability capability.
 ### Modified Capabilities
 
 - `adoption-reporting`: gains a presence report at skill and plugin granularity
-  (GW_0213) and the join-and-caveat contract that keeps it from being read as a
-  usage measure (GW_0214). GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002 and GW_OBSERVABILITY_0004 are unchanged — the new
+  (GW_OBSERVABILITY_0006) and the join-and-caveat contract that keeps it from being read as a
+  usage measure (GW_OBSERVABILITY_0007). GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002 and GW_OBSERVABILITY_0004 are unchanged — the new
   report sits alongside them and shares their shape: ledger-derived, read-only,
   auditor-gated.
+- `snapshot-retention`: the ledger trim keeps each identity's most recent pack
+  send per marketplace (GW_RETENTION_0012 — *The ledger trim keeps each
+  identity's latest pack send per marketplace*), which both reports read. Added
+  in review: without it, a trim drops the oldest holders from both.
 - `observability`: gains the standing refusal to ingest client-reported telemetry
-  (GW_0215). GW_OBSERVABILITY_0003 — *Always-recorded gateway metrics and observations* is
+  (GW_OBSERVABILITY_0008). GW_OBSERVABILITY_0003 — *Always-recorded gateway metrics and observations* is
   untouched; it governs telemetry flowing outward.
 
 ## Requirement ids
 
-**GW_0213, GW_0214 and GW_0215 are reserved by this proposal and are deliberately
+**GW_OBSERVABILITY_0006, GW_OBSERVABILITY_0007 and GW_OBSERVABILITY_0008 are reserved by this proposal and are deliberately
 not yet written into `docs/reqstool/requirements.yml`.** A requirement entered on
 `main` with no `@Requirements` annotation and no passing SVC turns the
 traceability gate red, so the entries and their verification cases land in the
@@ -128,7 +132,7 @@ remain free.
 ## Out of scope (named, so the boundary is explicit)
 
 - **Any inbound telemetry endpoint**, by any protocol, under any authentication.
-  Refused rather than deferred — see ADR 0016, and GW_0215 which makes the refusal
+  Refused rather than deferred — see ADR 0016, and GW_OBSERVABILITY_0008 which makes the refusal
   a checkable property.
 - **A pull-based, aggregate-only query against an organisation's metrics
   backend.** The better shape of the two, and pointless today because the series

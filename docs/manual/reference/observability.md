@@ -31,6 +31,7 @@ a time series.
 | `skills_gateway.catalog.collisions` | counter | — | Each catalog name a rebuild withheld because more than one plugin claimed it. Untagged for the reason above: *which* name is a [ledger](api/audit.md) question. |
 | `skills_gateway.ledger.entries` | gauge | — | Approximate rows in the audit ledger, from the planner's estimate rather than a count — reading it must not scan the table it exists to warn about. |
 | `skills_gateway.ledger.export_lag_seconds` | gauge | — | Age of the oldest ledger entry no enabled export sink has taken. **Watch this**: with no sink registered the [ledger trim](../guides/snapshot-retention.md#7-bound-the-audit-ledger) removes nothing by design, and this is the line that climbs while it does. Zero when every entry has been exported. |
+| `skills_gateway.adoption.presence_cache` | counter | `result=hit\|miss` | Each commit-tree lookup the [presence report](api/adoption.md#get-apiv1adoptionpresence) makes. A pinned commit never changes, so a hit is final; misses track how many new snapshots were delivered. |
 
 The ingestion and approval instruments are Micrometer *observations*, so when
 tracing is enabled they also produce spans with the same names and tags.
@@ -108,6 +109,22 @@ monitoring system scrapes — a gauge that contacted a code host on read would p
 a third party on the scrape path. So a gateway that cannot reach the mirror does
 not know what it holds, and `reachable` at `0` with `seconds_since_success`
 climbing is what says the count beside them is old rather than low.
+
+## Client telemetry is not ingested
+
+The gateway has no endpoint that accepts usage telemetry from agent clients,
+no OpenTelemetry receiver (`/v1/metrics`, `/v1/logs`, `/v1/traces` are not
+mapped), and no adoption figure derived from anything a client reported. Every
+number in the [adoption endpoints](api/adoption.md) comes from the gateway's own
+ledger, its served references and the commit trees it stores. A test fails if
+that changes.
+
+Client telemetry goes to your own OpenTelemetry collector and metrics backend,
+configured on the clients. To correlate it with what the gateway served, join it
+there against the [presence report](api/adoption.md#get-apiv1adoptionpresence),
+which carries the served marketplace, plugin and skill names. The reasons, and
+what would reopen the decision, are in
+[ADR 0016](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0016-client-invocation-telemetry-is-not-ingested.md).
 
 ## Health
 

@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skillsgateway.server.adoption.SnapshotContentResolver;
 import dev.skillsgateway.server.approval.VettingBlockedException;
 import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.storage.GitStorage;
@@ -15,21 +16,37 @@ import io.github.reqstool.annotations.SVCs;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.dircache.DirCache;
+import org.eclipse.jgit.dircache.DirCacheBuilder;
+import org.eclipse.jgit.dircache.DirCacheEntry;
+import org.eclipse.jgit.lib.CommitBuilder;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectInserter;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
- * Adoption and staleness reporting off the fetch ledger (GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002) and the always-recorded
- * gateway metrics (GW_OBSERVABILITY_0003). All fetches here are real git clones through the facade, so the
+ * Adoption, staleness and presence reporting off the fetch ledger (GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002,
+ * GW_OBSERVABILITY_0006, GW_OBSERVABILITY_0007) and the always-recorded gateway metrics (GW_OBSERVABILITY_0003). All fetches here are real git clones through the facade, so the
  * ledger rows under aggregation are exactly the rows production writes; the authorization walk of
- * the two reads lives in RoleEnforcementTests, whose enforcing context classifies them as
+ * the reads lives in RoleEnforcementTests, whose enforcing context classifies them as
  * privileged reads.
  */
 // Authorization is always enforced (GW_AUTH_0025), so this suite names the principal it acts as --
@@ -199,6 +216,147 @@ class AdoptionTests extends AbstractNamedAdminsTest {
         assertThat(refused.count()).isGreaterThanOrEqualTo(1);
     }
 
+    @Test
+    @SVCs({"SVC_GW_OBSERVABILITY_0006"})
+    void presence_names_served_skills_with_their_holders_and_reports_unresolvable_snapshots_rather_than_dropping_them()
+            throws Exception {
+        String name = uniqueName("presence");
+        Path upstream = createUpstream(DEFAULT_MANIFEST);
+        Registered first = registerAndIngest(name, upstream);
+        String v1 = approve(first.snapshot().id()).sha();
+        String alice = uniqueName("ada");
+        clone(name, alice); // alice holds v1: hello
+
+        addSkill(upstream, "extra");
+        String v2 =
+                approve(ingestionService.ingest(first.marketplace(), null).id()).sha();
+        String bob = uniqueName("bob");
+        clone(name, bob); // bob holds v2: hello and extra
+
+        // Held, never served: no report may name what it adds.
+        addSkill(upstream, "unreleased");
+        ingestionService.ingest(first.marketplace(), null);
+
+        // A delivered SHA whose objects are gone, and one whose manifest does not parse.
+        String reclaimed = "0".repeat(24) + Long.toHexString(System.nanoTime() | (1L << 60));
+        String carol = uniqueName("carol");
+        plantFetch(name, carol, reclaimed, OffsetDateTime.now());
+        String broken = commitBrokenManifest(name);
+        String dave = uniqueName("dave");
+        plantFetch(name, dave, broken, OffsetDateTime.now());
+
+        JsonNode report = adoption("/api/v1/adoption/presence");
+        JsonNode hello = skillEntry(report, name, "hello");
+        assertThat(hello.get("plugin").asText()).isEqualTo("hello");
+        assertThat(hello.get("path").asText()).isEqualTo("plugins/hello/skills/hello/SKILL.md");
+        assertThat(hello.get("identitiesHolding").asLong()).isEqualTo(2);
+        assertThat(hello.get("snapshotsDelivering").asInt()).isEqualTo(2);
+        assertThat(hello.get("firstDelivered").asText()).isNotEmpty();
+        assertThat(hello.get("snapshots"))
+                .extracting(node -> node.get("sha").asText())
+                .containsExactlyInAnyOrder(v1, v2);
+
+        JsonNode extra = skillEntry(report, name, "extra");
+        assertThat(extra.get("identitiesHolding").asLong()).isEqualTo(1);
+        assertThat(extra.get("snapshotsDelivering").asInt()).isEqualTo(1);
+        assertThat(extra.get("snapshots").get(0).get("sha").asText()).isEqualTo(v2);
+        assertThat(extra.get("snapshots").get(0).get("current").asBoolean()).isTrue();
+
+        assertThat(skillsOf(report, name))
+                .extracting(node -> node.get("skill").asText())
+                .containsExactlyInAnyOrder("hello", "extra");
+
+        List<JsonNode> unresolved = new ArrayList<>();
+        for (JsonNode entry : report.get("unresolved")) {
+            if (name.equals(entry.get("marketplace").asText())) {
+                unresolved.add(entry);
+            }
+        }
+        assertThat(unresolved)
+                .extracting(node -> node.get("sha").asText())
+                .containsExactlyInAnyOrder(reclaimed, broken);
+        for (JsonNode entry : unresolved) {
+            assertThat(entry.get("identitiesHolding").asLong()).isEqualTo(1);
+        }
+
+        // since drops holders whose latest fetch predates it, never the deliveries themselves.
+        double hitsBefore = cacheCount("hit");
+        double missesBefore = cacheCount("miss");
+        String future = Instant.now().plus(Duration.ofDays(1)).toString();
+        JsonNode bounded = adoption("/api/v1/adoption/presence?since=" + future);
+        assertThat(bounded.get("since").asText()).isNotEmpty();
+        assertThat(skillEntry(bounded, name, "hello").get("identitiesHolding").asLong())
+                .isZero();
+
+        // The second pass reads every resolvable SHA from the cache; only the unresolvable miss again.
+        assertThat(cacheCount("hit") - hitsBefore).isGreaterThanOrEqualTo(2);
+        assertThat(cacheCount("miss") - missesBefore)
+                .isEqualTo(bounded.get("unresolved").size());
+    }
+
+    private double cacheCount(String result) {
+        Counter counter = meterRegistry
+                .find(SnapshotContentResolver.CACHE)
+                .tag("result", result)
+                .counter();
+        assertThat(counter).isNotNull();
+        return counter.count();
+    }
+
+    @Test
+    @SVCs({"SVC_GW_OBSERVABILITY_0006"})
+    void a_manifest_repeating_a_plugin_name_counts_each_snapshot_once_per_skill() throws Exception {
+        String name = uniqueName("repeat");
+        registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
+        String sha = commitInQuarantine(
+                name,
+                Map.of(
+                        ".claude-plugin/marketplace.json",
+                        """
+                        {"name": "repeat", "owner": {"name": "Test"}, "plugins": [
+                          {"name": "twice", "source": "./a"}, {"name": "twice", "source": "./b"}]}
+                        """,
+                        "a/skills/same/SKILL.md",
+                        CONFORMANT_SKILL,
+                        "b/skills/same/SKILL.md",
+                        CONFORMANT_SKILL));
+        plantFetch(name, uniqueName("eve"), sha, OffsetDateTime.now());
+
+        JsonNode same = skillEntry(adoption("/api/v1/adoption/presence"), name, "same");
+        assertThat(same.get("identitiesHolding").asLong()).isEqualTo(1);
+        assertThat(same.get("snapshotsDelivering").asInt()).isEqualTo(1);
+        assertThat(same.get("snapshots")).hasSize(1);
+    }
+
+    @Test
+    @SVCs({"SVC_GW_OBSERVABILITY_0007"})
+    void the_presence_report_says_in_its_payload_that_it_measures_presence_uniformly_per_snapshot() throws Exception {
+        String name = uniqueName("uniform");
+        Path upstream = createUpstream(DEFAULT_MANIFEST);
+        addSkill(upstream, "second");
+        Registered fixture = registerAndIngest(name, upstream);
+        String sha = approve(fixture.snapshot().id()).sha();
+        clone(name, uniqueName("ada"));
+        clone(name, uniqueName("bob"));
+
+        JsonNode report = adoption("/api/v1/adoption/presence");
+        assertThat(report.get("measure").asText()).isEqualTo("presence");
+        assertThat(report.get("statement").asText()).contains("not invocation").contains("whole snapshot");
+        assertThat(report.get("since").isNull()).isTrue();
+
+        List<JsonNode> skills = skillsOf(report, name);
+        assertThat(skills).hasSize(2);
+        for (JsonNode skill : skills) {
+            assertThat(skill.get("identitiesHolding").asLong()).isEqualTo(2);
+            assertThat(skill.get("snapshots").get(0).get("sha").asText()).isEqualTo(sha);
+            assertThat(skill.get("snapshots").get(0).get("identitiesHolding").asLong())
+                    .isEqualTo(2);
+            // Named for what it is: nothing in a skill row may read as a usage measure.
+            assertThat(skill.has("fetches")).isFalse();
+            assertThat(skill.has("invocations")).isFalse();
+        }
+    }
+
     // ---------------------------------------------------------------- helpers
 
     /** One real clone through the facade, authenticated as {@code principal} via a fresh PAT. */
@@ -235,5 +393,82 @@ class AdoptionTests extends AbstractNamedAdminsTest {
             }
         }
         return entries;
+    }
+
+    /** Commits a second skill under the default plugin upstream. */
+    private static void addSkill(Path upstream, String skill) throws Exception {
+        Path file = upstream.resolve("plugins/hello/skills/" + skill + "/SKILL.md");
+        Files.createDirectories(file.getParent());
+        Files.writeString(file, CONFORMANT_SKILL.replace("name: hello", "name: " + skill));
+        try (Git git = Git.open(upstream.toFile())) {
+            git.add().addFilepattern(".").call();
+            PersonIdent ident = new PersonIdent("Test", "test@example.com");
+            git.commit()
+                    .setMessage("add " + skill + " " + uniqueName("fixture"))
+                    .setAuthor(ident)
+                    .setCommitter(ident)
+                    .setSign(false)
+                    .call();
+        }
+    }
+
+    private void plantFetch(String marketplace, String principal, String sha, OffsetDateTime ts) {
+        jdbc.sql("INSERT INTO fetch_log (ts, source, principal, marketplace, event, ref, sha)"
+                        + " VALUES (:ts, '127.0.0.1', :principal, :marketplace, 'upload-pack',"
+                        + " 'refs/heads/main', :sha)")
+                .param("ts", ts)
+                .param("principal", principal)
+                .param("marketplace", marketplace)
+                .param("sha", sha)
+                .update();
+    }
+
+    /** A commit in the marketplace's quarantine whose manifest is not JSON. */
+    private String commitBrokenManifest(String marketplace) throws Exception {
+        return commitInQuarantine(marketplace, Map.of(".claude-plugin/marketplace.json", "{ not json"));
+    }
+
+    /** A parentless commit of exactly {@code files} in the marketplace's quarantine, on no ref. */
+    private String commitInQuarantine(String marketplace, Map<String, String> files) throws Exception {
+        try (Repository repo = gitStorage.quarantine(marketplace);
+                ObjectInserter inserter = repo.newObjectInserter()) {
+            DirCache index = DirCache.newInCore();
+            DirCacheBuilder builder = index.builder();
+            for (Map.Entry<String, String> file : new TreeMap<>(files).entrySet()) {
+                DirCacheEntry entry = new DirCacheEntry(file.getKey());
+                entry.setFileMode(FileMode.REGULAR_FILE);
+                entry.setObjectId(
+                        inserter.insert(Constants.OBJ_BLOB, file.getValue().getBytes(StandardCharsets.UTF_8)));
+                builder.add(entry);
+            }
+            builder.finish();
+            PersonIdent who = new PersonIdent("Test", "test@example.invalid", Instant.now(), ZoneOffset.UTC);
+            CommitBuilder commit = new CommitBuilder();
+            commit.setTreeId(index.writeTree(inserter));
+            commit.setAuthor(who);
+            commit.setCommitter(who);
+            commit.setMessage("fixture " + uniqueName("fixture"));
+            ObjectId id = inserter.insert(commit);
+            inserter.flush();
+            return id.name();
+        }
+    }
+
+    /** The presence rows of one marketplace; other suites' fixtures are not ours. */
+    private static List<JsonNode> skillsOf(JsonNode report, String marketplace) {
+        List<JsonNode> skills = new ArrayList<>();
+        for (JsonNode entry : report.get("skills")) {
+            if (marketplace.equals(entry.get("marketplace").asText())) {
+                skills.add(entry);
+            }
+        }
+        return skills;
+    }
+
+    private static JsonNode skillEntry(JsonNode report, String marketplace, String skill) {
+        return skillsOf(report, marketplace).stream()
+                .filter(entry -> skill.equals(entry.get("skill").asText()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("skill %s/%s not in %s".formatted(marketplace, skill, report)));
     }
 }
