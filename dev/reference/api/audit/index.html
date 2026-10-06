@@ -2897,8 +2897,13 @@ the acting OIDC principal.</p>
 </tr>
 <tr>
 <td><code>marketplace-upstream-unreachable</code></td>
-<td>A marketplace declared in the estate was registered although its upstream could not be read. The principal is <code>config-reconciler</code>.</td>
+<td>A marketplace declared in the estate was registered, or had its URL corrected, although its upstream could not be read. The principal is <code>config-reconciler</code>.</td>
 <td>As above.</td>
+</tr>
+<tr>
+<td><code>marketplace-url-changed</code></td>
+<td>An upstream marketplace's URL was <a href="../marketplaces/#put-marketplacesnameurl">corrected</a> before its first snapshot.</td>
+<td><code>from=&lt;previous&gt; to=&lt;new&gt;</code>, plus <code>credential=&lt;prefix&gt;</code> when an upstream credential applies.</td>
 </tr>
 <tr>
 <td><code>marketplace-removed</code></td>

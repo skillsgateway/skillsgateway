@@ -2223,6 +2223,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Upstream">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#correct-the-url-administrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correct the URL (administrators)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -3150,6 +3167,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Upstream">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#correct-the-url-administrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correct the URL (administrators)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -3889,7 +3923,7 @@ renders "Marketplace '{name}' not found." with a link back.</p>
 </tr>
 <tr>
 <td><strong>Settings</strong></td>
-<td>The <a href="#upstream">upstream</a> facts and, for an administrator, the <a href="#vetting-chain-administrators">vetting chain</a> and <a href="#remove-marketplace-administrators">removal</a></td>
+<td>The <a href="#upstream">upstream</a> facts and, for an administrator, the <a href="#correct-the-url-administrators">URL correction</a>, the <a href="#vetting-chain-administrators">vetting chain</a> and <a href="#remove-marketplace-administrators">removal</a></td>
 </tr>
 </tbody>
 </table>
@@ -3918,6 +3952,25 @@ primary control:</p>
 URL</strong>, <strong>Forge</strong>, <strong>Project</strong>, <strong>Description</strong>, <strong>Last upstream update</strong>,
 <strong>Last ingest</strong> (its outcome and time, or "never"), <strong>Registered</strong>, <strong>Registered
 by</strong>. Anything not captured shows "—".</p>
+<h4 id="correct-the-url-administrators">Correct the URL (administrators)<a class="headerlink" href="#correct-the-url-administrators" title="Permanent link">&para;</a></h4>
+<p>In the <strong>Upstream</strong> card of an upstream marketplace, <strong>shown only to a session
+holding the <code>admin</code> role</strong>. While the marketplace has no snapshot, <strong>Edit URL…</strong>
+opens a dialog titled <em>Correct the URL of <em>name</em></em> with the <strong>Clone URL</strong>
+prefilled. It states that the upstream is read before anything changes and that
+the editor becomes the registrant. <strong>Save URL</strong> is disabled while the field is
+empty or whitespace, or while the URL carries a credential (an alert says to
+configure upstream credentials on the gateway instead), and reads <em>Saving…</em>
+while the request is in flight. The scheme allowlist and the upstream read are
+the server's: a refusal is shown in the dialog with the server's reason, and
+the stored URL is unchanged. On success the dialog closes, a toast confirms it,
+any warning (such as a URL another marketplace already has) is a toast of its
+own, and the card shows the new URL and registrant.</p>
+<p>Once the marketplace has a snapshot the button is gone and the card says the
+URL can no longer change, and that the marketplace can be
+<a href="#remove-marketplace-administrators">removed</a> and registered again. A
+marketplace the estate configuration declares has the button disabled, with
+the reason: correct the declaration and restart. The dialog calls
+<a href="../api/marketplaces/#put-marketplacesnameurl"><code>PUT /api/v1/marketplaces/{name}/url</code></a>.</p>
 <h3 id="vetting-chain-administrators">Vetting chain (administrators)<a class="headerlink" href="#vetting-chain-administrators" title="Permanent link">&para;</a></h3>
 <p>On <strong>Settings</strong>, <strong>shown only to a session holding the <code>admin</code> role</strong>. Fed by
 <code>GET /api/v1/marketplaces/{name}/vetting-chain</code>, which the server refuses to anyone

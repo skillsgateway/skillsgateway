@@ -2884,10 +2884,14 @@ converges:</p>
 </ul>
 <p>Two failures are policy, not typos:</p>
 <ul>
-<li><strong>A declared URL that differs from the registered one.</strong> Marketplace
-  upstream URLs are immutable — changing one would swap the supply chain under
-  already-approved snapshots, a power the API itself does not have. Register a
-  new marketplace instead.</li>
+<li><strong>A declared URL that differs from the registered one, once the marketplace
+  has a snapshot.</strong> That snapshot names the stored URL as its source, so
+  changing it would swap the supply chain underneath it. Remove the marketplace
+  and declare it again. Before the first snapshot the declared URL is applied,
+  through the same <a href="../../reference/api/marketplaces/#put-marketplacesnameurl">URL correction</a>
+  the API offers, and the entry is reported <code>updated</code> with <code>url=&lt;new&gt;</code>; an
+  upstream that cannot be read is reported in the entry, as for a declared
+  registration.</li>
 <li><strong><code>sync-mode: webhook</code>.</strong> Enabling webhook sync generates the inbound HMAC
   secret and returns it exactly once, which has no declarative form. Set it
   through <a href="../../reference/api/marketplaces/"><code>PUT /api/v1/marketplaces/{name}/sync</code></a>
@@ -2918,8 +2922,8 @@ sharpest case of the rule above rather than an exception to it.</p>
 <p class="admonition-title">A provider cannot converge a marketplace's whole lifecycle</p>
 <p><code>DELETE /api/v1/marketplaces/{name}</code> exists, but no machine scope reaches it:
 it withdraws served content, and that takes a person with a reason. So
-<code>terraform destroy</code> still has nothing it may call, and there is no <code>PUT</code> —
-a marketplace's URL is immutable.</p>
+<code>terraform destroy</code> still has nothing it may call, and a marketplace's URL
+can change only before its first snapshot.</p>
 </div>
 <h2 id="what-stays-interactive-and-drift">What stays interactive, and drift<a class="headerlink" href="#what-stays-interactive-and-drift" title="Permanent link">&para;</a></h2>
 <p>Personal access tokens are user-owned credentials and stay API-only by

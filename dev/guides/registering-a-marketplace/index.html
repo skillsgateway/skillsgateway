@@ -1081,6 +1081,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#correcting-a-url-before-the-first-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correcting a URL before the first snapshot
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#removing-a-marketplace" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2643,6 +2654,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#correcting-a-url-before-the-first-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correcting a URL before the first snapshot
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#removing-a-marketplace" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2923,11 +2945,38 @@ ingest endpoint:</p>
 what clients receive. Ingesting frequently costs quarantine storage, never
 availability.</p>
 </div>
-<h2 id="removing-a-marketplace">Removing a marketplace<a class="headerlink" href="#removing-a-marketplace" title="Permanent link">&para;</a></h2>
-<p>A marketplace registered with a typo, one whose upstream is abandoned, and one
-whose upstream moved all end the same way: remove it, and register again if
-there is anything to register.</p>
+<h2 id="correcting-a-url-before-the-first-snapshot">Correcting a URL before the first snapshot<a class="headerlink" href="#correcting-a-url-before-the-first-snapshot" title="Permanent link">&para;</a></h2>
+<p>A URL with a typo can be corrected in place until something has been ingested
+from the marketplace. Nothing was ever fetched from it, so nothing has it as a
+source.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Portal</label><label for="__tabbed_1_2">API</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>On the marketplace's <strong>Settings</strong>, in <strong>Upstream</strong>, choose <strong>Edit URL…</strong>,
+enter the corrected URL and <strong>Save URL</strong>. See
+<a href="../../reference/portal/#correct-the-url-administrators">Correct the URL</a>.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>-u<span class="w"> </span>...<span class="w"> </span>https://skills.corp.example/api/v1/marketplaces/acme/url<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"url":"https://github.com/acme/skills.git"}'</span>
+</code></pre></div>
+<p>See the <a href="../../reference/api/marketplaces/#put-marketplacesnameurl">reference</a>.</p>
+</div>
+</div>
+</div>
+<p>The corrected URL is validated exactly as at registration, upstream read
+included, and you become the marketplace's registrant, so another reviewer
+approves its first snapshot. The ledger records the previous and the new URL.
+A marketplace in webhook sync mode keeps its inbound secret; move the forge's
+webhook to the corrected repository yourself.</p>
+<p>Once the marketplace has a snapshot, in any state, the URL is fixed: the
+snapshot's provenance names it. Remove the marketplace and register it again.</p>
+<h2 id="removing-a-marketplace">Removing a marketplace<a class="headerlink" href="#removing-a-marketplace" title="Permanent link">&para;</a></h2>
+<p>A marketplace whose upstream is abandoned, one whose upstream moved, and one
+registered with a typo that has already been ingested all end the same way:
+remove it, and register again if there is anything to register.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Portal</label><label for="__tabbed_2_2">API</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p>On the marketplace's <strong>Settings</strong>, choose <strong>Remove <em>name</em>…</strong>, write the
@@ -2935,8 +2984,8 @@ reason, and confirm. The portal returns to <strong>Marketplaces</strong>. See
 <a href="../../reference/portal/#remove-marketplace-administrators">Remove marketplace</a>.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>-u<span class="w"> </span>...<span class="w"> </span>https://skills.corp.example/api/v1/marketplaces/acme<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"reason":"upstream moved"}'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>-u<span class="w"> </span>...<span class="w"> </span>https://skills.corp.example/api/v1/marketplaces/acme<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"reason":"upstream moved"}'</span>
 </code></pre></div>
 <p>See the <a href="../../reference/api/marketplaces/#delete-marketplacesname">reference</a>.</p>
 </div>
@@ -2945,8 +2994,9 @@ reason, and confirm. The portal returns to <strong>Marketplaces</strong>. See
 <p>Removal withdraws everything the marketplace serves and stops it being synced or
 fetched, but keeps its snapshots and their history. It needs an administrator,
 and it states a reason, which the ledger records.</p>
-<p><strong>An upstream that moved.</strong> The URL cannot be changed — that would relabel the
-provenance of content already approved from somewhere else — so remove the
+<p><strong>An upstream that moved.</strong> Once a snapshot exists the URL cannot be changed —
+that would relabel the provenance of content already ingested from somewhere
+else — so remove the
 marketplace and register the same name against the new URL. Clients keep their
 clone URL. They see nothing served until a snapshot of the new upstream is
 approved: the old approvals were decisions about a different upstream and do not
