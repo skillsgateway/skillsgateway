@@ -91,3 +91,22 @@ in CI on `2b8cdbfd` (run 37387412879):
 Locally on `3d21b6d5`, the Java suite passed with the same counts. The local
 frontend run timed out under machine load from other work, which is why CI is
 the record here.
+
+## After #603 landed
+
+#603 merged first and had allocated GW_INGEST_0066 and GW_INGEST_0067 for
+correcting a marketplace's upstream URL. This change's requirements moved to
+GW_INGEST_0068 and GW_INGEST_0069, ids only (`a1d56f4e`). The merge (`1196c2d3`)
+combined both changes' token scopes and kept both sides of the spec. Every gate
+ran again in CI on `1196c2d3` (run 37422980360):
+
+| Gate | Result |
+| --- | --- |
+| `./mvnw clean verify` | 1092 tests, 0 failures, 9 skipped; vitest 227 passed · BUILD SUCCESS |
+| `pnpm test:stories` | 21 files, 109 tests passed |
+| `pnpm e2e` | 27 passed |
+| `reqstool status` | 339/339 complete · PASS |
+| `openspec validate --all --strict` | 30 passed, 0 failed |
+| `mkdocs build --strict` | built |
+
+Locally on `1196c2d3`, the Java suite passed with the same count.
