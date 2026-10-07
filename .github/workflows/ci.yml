@@ -236,20 +236,23 @@ jobs:
           path: src/main/frontend/test-results
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        id: python
         with:
           python-version: '3.14.8'
 
+      # Keyed on the interpreter setup-python installed: a venv links to its
+      # interpreter, so a cached venv from another Python version cannot run.
       - name: Cache reqstool CLI
         id: reqstool-cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.reqstool-venv
-          key: reqstool-0.12.0-${{ runner.os }}-py3.13
+          key: reqstool-0.12.0-${{ runner.os }}-py${{ steps.python.outputs.python-version }}
 
       - name: Install reqstool CLI
         if: steps.reqstool-cache.outputs.cache-hit != 'true'
         run: |
-          python3.13 -m venv ~/.reqstool-venv
+          python -m venv ~/.reqstool-venv
           ~/.reqstool-venv/bin/pip install reqstool==0.12.0
 
       - name: Requirements traceability gate (backend + portal results)
