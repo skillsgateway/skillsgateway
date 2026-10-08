@@ -35,5 +35,5 @@
 
 ## 4. Gates and evidence
 
-- [ ] 4.1 Run every AGENTS.md gate fresh after the last code edit and record
+- [x] 4.1 Run every AGENTS.md gate fresh after the last code edit and record
   commands, result tails and the commit SHA in `evidence.md`.
