@@ -127,6 +127,7 @@ nav:
           - License compliance for skills: guides/license-compliance.md
           - Re-vetting approved content: guides/re-vetting.md
           - Adding an external vetter: guides/adding-an-external-vetter.md
+          - An LLM vetter on local Ollama: guides/llm-vetter.md
           - Receiving lifecycle webhooks: guides/lifecycle-webhooks.md
           - The read-only forge mirror: guides/read-only-forge-mirror.md
       - Consume skills:
