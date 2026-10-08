@@ -1772,6 +1772,22 @@ cases:
       approved
     revision: "0.2.0"
 
+  - id: SVC_GW_VETTING_0062
+    requirement_ids: ["GW_VETTING_0025"]
+    title: An external vetter is bounded by its own timeouts, not the chain-wide limit
+    verification: automated-test
+    description: |
+      GIVEN a short chain-wide vetter time limit, a built-in vetter that runs longer
+      than it, an external vetting connector with a longer read timeout whose endpoint
+      answers after the chain-wide limit, and a connector configured without a read
+      timeout whose endpoint never answers
+      WHEN each is run in the chain
+      THEN the built-in vetter is cut off at the chain-wide limit with an error verdict,
+      the connector with the longer read timeout is waited for and its passing answer
+      recorded, and the connector without a read timeout is given the chain-wide limit
+      as its read timeout and records an error verdict from its own read timeout
+    revision: "0.5.0"
+
   - id: SVC_GW_VETTING_0026
     requirement_ids: ["GW_VETTING_0026"]
     title: External verdicts take the worst of declared and derived, and carry their report link

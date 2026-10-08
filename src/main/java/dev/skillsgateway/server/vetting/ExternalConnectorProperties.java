@@ -34,7 +34,8 @@ import java.util.Set;
  * @param tokenScheme auth scheme prefix, applied only for the {@code Authorization} header; default
  *     {@code Bearer}. Blank sends the raw token value
  * @param connectTimeout how long to wait for the connection; exceeding it fails closed
- * @param readTimeout how long to wait for the response; exceeding it fails closed
+ * @param readTimeout how long to wait for the response; exceeding it fails closed. Null — unset —
+ *     takes {@code skills-gateway.vetting.timeout}, the limit the built-in vetters run under
  * @param maxRequestBytes cap on the snapshot bundle sent; a snapshot whose scannable content
  *     exceeds it fails closed rather than shipping partial evidence for a real verdict
  * @param maxResponseBytes cap on the response read; a larger response fails closed
@@ -95,8 +96,8 @@ public record ExternalConnectorProperties(
         if (connectTimeout == null || connectTimeout.isNegative() || connectTimeout.isZero()) {
             connectTimeout = Duration.ofSeconds(5);
         }
-        if (readTimeout == null || readTimeout.isNegative() || readTimeout.isZero()) {
-            readTimeout = Duration.ofSeconds(30);
+        if (readTimeout != null && (readTimeout.isNegative() || readTimeout.isZero())) {
+            readTimeout = null;
         }
         if (maxRequestBytes == null || maxRequestBytes <= 0) {
             maxRequestBytes = 5L * 1024 * 1024;

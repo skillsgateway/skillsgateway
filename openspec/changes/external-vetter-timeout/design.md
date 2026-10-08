@@ -57,7 +57,7 @@ JDK HTTP client's read timeout is fixed when the client is built.
 its time limit", which stays true and says nothing about which limit, so it is
 unchanged. `GW_VETTING_0025 — An external vetting connector fails closed on any
 inconclusive answer` names the connector's connect and read timeouts; it is
-revised (0.3.0) to say those, not the chain-wide limit, bound the wait, and that
+revised (revision 0.5.0) to say those, not the chain-wide limit, bound the wait, and that
 an unset read timeout takes the chain-wide limit. New SVC `SVC_GW_VETTING_0062`
 verifies both halves plus the built-in staying on the chain-wide limit. The id
 was checked against in-flight `openspec/changes/` and open PR branches; none

@@ -35,6 +35,7 @@ import io.github.reqstool.annotations.SVCs;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -236,6 +237,37 @@ class ExternalConnectorRegistrationTests {
             // and its version, so a run is attributable to the exact external chain that produced it.
             assertThat(vettingService.chainIdentity()).startsWith("llm-review@7,");
         });
+    }
+
+    @Test
+    @SVCs({"SVC_GW_VETTING_0062"})
+    void aConnectorWithoutAReadTimeoutIsBoundByTheChainWideLimit() {
+        Duration chainTimeout = Duration.ofSeconds(7);
+        contexts.withPropertyValues(
+                        "skills-gateway.vetting.timeout=7s",
+                        "skills-gateway.vetting.external[1].name=sandbox",
+                        "skills-gateway.vetting.external[1].url=http://127.0.0.1:59322/vet",
+                        "skills-gateway.vetting.external[1].connect-timeout=2s",
+                        "skills-gateway.vetting.external[1].read-timeout=5m")
+                .run(context -> {
+                    VettingService vettingService = context.getBean(VettingService.class);
+                    Vetter inheriting = vetterNamed(vettingService, "llm-review");
+                    Vetter configured = vetterNamed(vettingService, "sandbox");
+                    Vetter builtIn = vetterNamed(vettingService, "secret-scan");
+
+                    // Default 5s connect + the inherited 7s read + the margin.
+                    assertThat(inheriting.timeLimit(chainTimeout)).isEqualTo(Duration.ofSeconds(17));
+                    assertThat(configured.timeLimit(chainTimeout))
+                            .isEqualTo(Duration.ofMinutes(5).plusSeconds(7));
+                    assertThat(builtIn.timeLimit(chainTimeout)).isEqualTo(chainTimeout);
+                });
+    }
+
+    private static Vetter vetterNamed(VettingService vettingService, String name) {
+        return vettingService.vetters().stream()
+                .filter(vetter -> vetter.name().equals(name))
+                .findFirst()
+                .orElseThrow();
     }
 
     @Test
