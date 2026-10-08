@@ -1,5 +1,7 @@
 package dev.skillsgateway.server.vetting;
 
+import java.time.Duration;
+
 /**
  * The vetting SPI (GW_VETTING_0001). A vetter takes a quarantined, SHA-pinned snapshot and answers with
  * a {@link Verdict}; the gateway orchestrates, normalizes and records — it never vets itself
@@ -38,6 +40,15 @@ public interface Vetter {
 
     /** Reviewer-facing one-liner: what this vetter looks for, and what it cannot see. */
     String description();
+
+    /**
+     * How long the chain waits for this vetter before recording an error verdict. Default: the
+     * chain-wide {@code skills-gateway.vetting.timeout}; a vetter with timeouts of its own overrides
+     * it so that the limit an operator configured is the one that fires.
+     */
+    default Duration timeLimit(Duration chainTimeout) {
+        return chainTimeout;
+    }
 
     /**
      * Examines the snapshot. Returning {@link VerdictState#PENDING} is legal and means "triggered,

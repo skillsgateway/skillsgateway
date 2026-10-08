@@ -9,6 +9,7 @@ import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -449,18 +450,19 @@ public class VettingService {
 
     /**
      * One vetter, with both failure modes closed: anything it throws becomes an error verdict,
-     * and so does outrunning the configured timeout.
+     * and so does outrunning its time limit.
      */
-    @Requirements({"GW_VETTING_0002"})
+    @Requirements({"GW_VETTING_0002", "GW_VETTING_0025"})
     private Verdict runGuarded(Vetter vetter, SnapshotUnderVetting content) {
+        Duration limit = vetter.timeLimit(properties.timeout());
         Future<Verdict> future = executor.submit(() -> vetter.vet(content));
         try {
-            Verdict verdict = future.get(properties.timeout().toMillis(), TimeUnit.MILLISECONDS);
+            Verdict verdict = future.get(limit.toMillis(), TimeUnit.MILLISECONDS);
             return verdict == null ? Verdict.error(vetter.name(), "returned no verdict") : verdict;
         } catch (TimeoutException e) {
             future.cancel(true);
-            log.warn("vetter '{}' exceeded {}", vetter.name(), properties.timeout());
-            return Verdict.error(vetter.name(), "timed out after " + properties.timeout());
+            log.warn("vetter '{}' exceeded {}", vetter.name(), limit);
+            return Verdict.error(vetter.name(), "timed out after " + limit);
         } catch (InterruptedException e) {
             future.cancel(true);
             Thread.currentThread().interrupt();
