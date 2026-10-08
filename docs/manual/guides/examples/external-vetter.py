@@ -48,9 +48,21 @@ def review(files):
     return findings + review_with_model(files)
 
 
+def read_body(handler):
+    """The gateway streams its request chunked; curl sends a Content-Length. Accept both."""
+    if handler.headers.get("Transfer-Encoding", "").lower() == "chunked":
+        body = b""
+        while size := int(handler.rfile.readline().split(b";")[0], 16):
+            body += handler.rfile.read(size)
+            handler.rfile.readline()  # the CRLF closing each chunk
+        handler.rfile.readline()  # the CRLF closing the last, empty chunk
+        return body
+    return handler.rfile.read(int(handler.headers["Content-Length"]))
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
-        request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        request = json.loads(read_body(self))
         findings = review(request.get("files", []))
         body = json.dumps({
             "state": "fail" if findings else "pass",
