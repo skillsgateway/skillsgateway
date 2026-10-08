@@ -135,6 +135,8 @@ That is a real transcript: the script above, run and posted to with `curl`,
 produced exactly this output. `review_with_model(files)` is the seam for the
 part this example does not do: call out to an LLM or a sandbox and translate
 its answer into the same finding shape. It returns no findings on its own.
+[An LLM vetter on local Ollama](llm-vetter.md) fills that seam in with a
+local model, and is checked against real skills.
 
 ## 3. Configure the gateway
 
