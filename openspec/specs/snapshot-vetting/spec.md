@@ -111,6 +111,9 @@ The system SHALL implement GW_VETTING_0025.
 #### Scenario: SVC_GW_VETTING_0025
 The system SHALL pass SVC_GW_VETTING_0025.
 
+#### Scenario: SVC_GW_VETTING_0062
+The system SHALL pass SVC_GW_VETTING_0062.
+
 ### Requirement: GW_VETTING_0026
 The system SHALL implement GW_VETTING_0026.
 
