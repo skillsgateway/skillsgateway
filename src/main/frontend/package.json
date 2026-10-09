@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "packageManager": "pnpm@12.10.0",
+  "packageManager": "pnpm@12.10.1",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -35,7 +35,7 @@
     "react-dom": "19.3.0",
     "react-hook-form": "7.89.0",
     "react-router-dom": "7.18.4",
-    "shadcn": "4.21.2",
+    "shadcn": "4.21.3",
     "sonner": "2.0.8",
     "tailwind-merge": "3.7.0",
     "tailwindcss": "4.3.3",
@@ -64,7 +64,7 @@
     "playwright": "1.63.0",
     "storybook": "10.6.1",
     "typescript": "7.0.2",
-    "vite": "8.3.2",
+    "vite": "8.3.3",
     "vitest": "5.0.3",
     "yaml": "2.9.1"
   }
