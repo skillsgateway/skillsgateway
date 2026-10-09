@@ -721,6 +721,14 @@ findings imply, so an endpoint cannot pass content its evidence condemns. An
 endpoint that needs to answer later returns `PENDING`, which blocks until it is
 resolved.
 
+"Slow" means slower than the connector's own `connect-timeout` and
+`read-timeout`. Every vetter has a time limit, and a built-in's is the
+chain-wide `skills-gateway.vetting.timeout`; a connector's is its own two
+timeouts plus a few seconds, so the HTTP timeout fires first and the error names
+it. A slow reviewer — an LLM given minutes — is therefore configured on its
+connector alone, without loosening the limit that guards the built-ins against
+a hang. A connector that sets no `read-timeout` takes the chain-wide value.
+
 See [Adding an external vetter](../guides/adding-an-external-vetter.md) for the
 wire contract and a minimal working example.
 

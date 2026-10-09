@@ -228,54 +228,60 @@ class ExternalVettingConnectorTests extends AbstractGatewayTest {
     }
 
     private ExternalVettingConnector vetter(String name, String url) {
-        return new ExternalVettingConnector(new ExternalConnectorProperties(
-                name,
-                URI.create(url),
-                10,
-                "1",
-                "external test vetter",
-                null,
-                null,
-                null,
-                Duration.ofSeconds(2),
-                Duration.ofSeconds(5),
-                null,
-                null,
-                null));
+        return new ExternalVettingConnector(
+                new ExternalConnectorProperties(
+                        name,
+                        URI.create(url),
+                        10,
+                        "1",
+                        "external test vetter",
+                        null,
+                        null,
+                        null,
+                        Duration.ofSeconds(2),
+                        Duration.ofSeconds(5),
+                        null,
+                        null,
+                        null),
+                Duration.ofSeconds(30));
     }
 
     private ExternalVettingConnector shortTimeoutVetter(String name, String url) {
-        return new ExternalVettingConnector(new ExternalConnectorProperties(
-                name,
-                URI.create(url),
-                10,
-                "1",
-                "external test vetter (short read timeout)",
-                null,
-                null,
-                null,
-                Duration.ofSeconds(2),
-                Duration.ofMillis(300),
-                null,
-                null,
-                null));
+        return new ExternalVettingConnector(
+                new ExternalConnectorProperties(
+                        name,
+                        URI.create(url),
+                        10,
+                        "1",
+                        "external test vetter (short read timeout)",
+                        null,
+                        null,
+                        null,
+                        Duration.ofSeconds(2),
+                        Duration.ofMillis(300),
+                        null,
+                        null,
+                        null),
+                Duration.ofSeconds(30));
     }
 
     private ExternalVettingConnector tinyResponseVetter(String name, String url) {
-        return new ExternalVettingConnector(new ExternalConnectorProperties(
-                name,
-                URI.create(url),
-                10,
-                "1",
-                "external test vetter (tiny response cap)",
-                null,
-                null,
-                null,
-                Duration.ofSeconds(2),
-                Duration.ofSeconds(5),
-                null,
-                64L,
-                null));
+        return new ExternalVettingConnector(
+                new ExternalConnectorProperties(
+                        name,
+                        URI.create(url),
+                        10,
+                        "1",
+                        "external test vetter (tiny response cap)",
+                        null,
+                        null,
+                        null,
+                        Duration.ofSeconds(2),
+                        Duration.ofSeconds(5),
+                        null,
+                        64L,
+                        null),
+                Duration.ofSeconds(30));
     }
 
     /** A URL whose port had a server that has since stopped: a reliable connection refusal. */

@@ -1,5 +1,7 @@
 package dev.skillsgateway.server.vetting;
 
+import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import java.time.Duration;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -55,6 +57,11 @@ public class ExternalVettingConnectorRegistrar implements ImportBeanDefinitionRe
         List<ExternalConnectorProperties> vetters = Binder.get(environment)
                 .bind(PREFIX, Bindable.listOf(ExternalConnectorProperties.class))
                 .orElse(List.of());
+        Duration chainTimeout = Binder.get(environment)
+                .bind("skills-gateway.vetting", SkillsGatewayProperties.Vetting.class)
+                .orElseGet(
+                        () -> new SkillsGatewayProperties.Vetting(null, null, null, null, null, null, null, null, null))
+                .timeout();
         Set<String> seen = new LinkedHashSet<>();
         for (ExternalConnectorProperties props : vetters) {
             String key = props.name().toLowerCase(Locale.ROOT);
@@ -64,6 +71,7 @@ public class ExternalVettingConnectorRegistrar implements ImportBeanDefinitionRe
             }
             BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(ExternalVettingConnector.class);
             builder.addConstructorArgValue(props);
+            builder.addConstructorArgValue(chainTimeout);
             registry.registerBeanDefinition("externalVetter-" + props.name(), builder.getBeanDefinition());
             log.info(
                     "registered external vetting connector '{}' (order {}, version {}) -> {}",

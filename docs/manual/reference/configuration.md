@@ -628,8 +628,9 @@ in `application.yaml`.
 ```yaml
 skills-gateway:
   vetting:
-    # How long a single vetter may take before its verdict is recorded as an
-    # error — which blocks the snapshot. A wedged vetter must never wedge
+    # How long a single built-in vetter may take before its verdict is recorded
+    # as an error — which blocks the snapshot. External connectors are bounded
+    # by their own connect-timeout and read-timeout instead. A wedged vetter must never wedge
     # ingestion, and a vetter that never answers must never look like a pass.
     timeout: 30s
 
@@ -679,7 +680,7 @@ skills-gateway:
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `skills-gateway.vetting.timeout` | duration | `30s` | Per vetter, per run. Exceeding it is an `ERROR` verdict, which blocks. |
+| `skills-gateway.vetting.timeout` | duration | `30s` | Per built-in vetter, per run. Exceeding it is an `ERROR` verdict, which blocks. An external connector is bounded by its own timeouts instead, and takes this value as its `read-timeout` when it sets none. |
 | `skills-gateway.vetting.max-file-bytes` | integer | `1048576` | Zero or negative falls back to the default. |
 | `skills-gateway.vetting.content-cache-bytes` | integer | `33554432` | Content one chain run may retain for reuse across its vetters. Zero or negative falls back to the default. |
 | `skills-gateway.vetting.waiver-sweep-interval` | duration | `1h` | How often `waiver-expired` ledger entries are written. Has no effect on the gate. |
@@ -785,7 +786,7 @@ skills-gateway:
         token-header: Authorization   # default; any header name is accepted
         token-scheme: Bearer          # applied only for the Authorization header
         connect-timeout: 5s
-        read-timeout: 30s
+        read-timeout: 30s             # unset takes skills-gateway.vetting.timeout
         # Caps that keep a hostile or broken endpoint from exhausting memory, and
         # a too-large snapshot from earning a verdict about partial content.
         max-request-bytes: 5242880
@@ -810,7 +811,7 @@ back a normalized `{state, reportUrl, findings[]}` where `state` is one of
 | `…external[n].token-header` | string | `Authorization` | Header the credential is sent in. |
 | `…external[n].token-scheme` | string | `Bearer` | Prefix, applied only for `Authorization`. Blank sends the raw value. |
 | `…external[n].connect-timeout` | duration | `5s` | Exceeding it is an `ERROR` verdict, which blocks. |
-| `…external[n].read-timeout` | duration | `30s` | Exceeding it is an `ERROR` verdict, which blocks. |
+| `…external[n].read-timeout` | duration | `skills-gateway.vetting.timeout` | Exceeding it is an `ERROR` verdict, which blocks. The chain waits for this vetter `connect-timeout` + `read-timeout` + 5s, so the connector's own timeouts — not `skills-gateway.vetting.timeout` — are its limit. |
 | `…external[n].max-request-bytes` | integer | `5242880` | A snapshot whose scannable content exceeds this fails closed rather than shipping partial evidence. |
 | `…external[n].max-response-bytes` | integer | `1048576` | A larger response fails closed. |
 | `…external[n].max-file-bytes` | integer | `1048576` | Per-file cap on content in the bundle; a larger file is sent unscanned, not dropped. |

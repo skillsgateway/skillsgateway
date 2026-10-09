@@ -155,7 +155,10 @@ skills-gateway:
 
 `order` places it in the chain alongside the built-ins (`secret-scan=100`,
 `prompt-injection=200`, `license-scan=300`, `skill-conformance=400`); `version`
-is stamped into the chain identity, so bump it whenever your rules change. The
+is stamped into the chain identity, so bump it whenever your rules change. If
+your endpoint needs longer than 30 seconds to answer, set `read-timeout` on the
+connector: the chain waits for it as long as its own timeouts allow, and
+`skills-gateway.vetting.timeout` only bounds the built-in vetters. The
 full property list, including timeouts and size caps, is in
 [Configuration, External connectors](../reference/configuration.md#external-connectors).
 
