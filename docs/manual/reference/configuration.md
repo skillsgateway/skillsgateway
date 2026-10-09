@@ -810,7 +810,7 @@ back a normalized `{state, reportUrl, findings[]}` where `state` is one of
 | `…external[n].token-header` | string | `Authorization` | Header the credential is sent in. |
 | `…external[n].token-scheme` | string | `Bearer` | Prefix, applied only for `Authorization`. Blank sends the raw value. |
 | `…external[n].connect-timeout` | duration | `5s` | Exceeding it is an `ERROR` verdict, which blocks. |
-| `…external[n].read-timeout` | duration | `30s` | Exceeding it is an `ERROR` verdict, which blocks. |
+| `…external[n].read-timeout` | duration | `30s` | Exceeding it is an `ERROR` verdict, which blocks. The run is also capped by [`skills-gateway.vetting.timeout`](#vetting), which applies to every vetter, so raise both for a slow endpoint. |
 | `…external[n].max-request-bytes` | integer | `5242880` | A snapshot whose scannable content exceeds this fails closed rather than shipping partial evidence. |
 | `…external[n].max-response-bytes` | integer | `1048576` | A larger response fails closed. |
 | `…external[n].max-file-bytes` | integer | `1048576` | Per-file cap on content in the bundle; a larger file is sent unscanned, not dropped. |
