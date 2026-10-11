@@ -47,7 +47,7 @@ jobs:
 
       # The traceability job joins these with the e2e job's Playwright results.
       - name: Upload traceability inputs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: traceability-gates
           path: |
@@ -57,7 +57,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload CycloneDX SBOM
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sbom-cyclonedx
           path: target/classes/META-INF/sbom/application.cdx.json
@@ -103,7 +103,7 @@ jobs:
 
       - name: Upload story test results on failure
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: stories-artifacts
           path: src/main/frontend/test-results
@@ -166,7 +166,7 @@ jobs:
         run: pnpm e2e
 
       - name: Upload Playwright results for traceability
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: traceability-e2e
           path: src/main/frontend/test-results/playwright-junit.xml
@@ -174,7 +174,7 @@ jobs:
 
       - name: Upload e2e artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: e2e-artifacts
           path: |
