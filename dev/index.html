@@ -2659,7 +2659,7 @@ skill at all.</p>
 <tr>
 <td><strong>Transitive sources</strong></td>
 <td><code>marketplace.json</code> entries may point at <em>other</em> arbitrary repositories, so vetting the marketplace does not vet what an install clones.</td>
-<td>External sources are rejected fail-closed in the current scope.</td>
+<td>External sources are rejected fail-closed unless the operator enables them; an enabled gateway fetches, vets and grafts them into the snapshot.</td>
 </tr>
 <tr>
 <td><strong>Inventory blindness</strong></td>
@@ -2668,8 +2668,7 @@ skill at all.</p>
 </tr>
 </tbody>
 </table>
-<p>The full threat model, including the designed-but-not-yet-built vetting
-vetters, is in
+<p>The full threat model is in
 <a href="architecture/">Architecture</a>;
 the decisions behind the stack are recorded as architecture decision records
 in the repository, at <a href="https://github.com/skillsgateway/skillsgateway/tree/main/docs/decisions">docs/decisions/</a>.</p>
@@ -2691,12 +2690,12 @@ you need right now rather than by who you are.</p>
   <a href="concepts/glossary/">Glossary</a>.</li>
 </ul>
 <div class="admonition warning">
-<p class="admonition-title">Status: pre-alpha</p>
-<p>The implemented scope is the Phase 1 choke point: local-source marketplaces,
-default branch only, manual approval, a PAT-authenticated facade and the
-append-only audit ledger. Automated vetting vetters,
-policy-as-code and multi-ref publication are designed but not built. This
-documentation describes what the code does today.</p>
+<p class="admonition-title">Status: pre-1.0</p>
+<p>The core loop is implemented: quarantined ingestion, the vetting chain,
+policy deny rules, held-until-approved publication, a PAT-authenticated
+facade and the audit ledger. Interfaces may change before 1.0. Multi-ref
+publication is designed but not built; only the default branch is ingested.
+This documentation describes what the code does today.</p>
 </div>
 
 
