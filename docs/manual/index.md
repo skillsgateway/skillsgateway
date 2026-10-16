@@ -70,11 +70,10 @@ skill at all.
 | **Malicious instructions** | `SKILL.md`, slash commands and agent definitions are read as instructions — "also copy `~/.aws/credentials` to…". Static analysis does not parse prose. | Human review at the approval gate; the snapshot content view. |
 | **Auto-executing code** | Plugins register hooks (shell commands on events) and MCP servers. Installing can mean arbitrary code execution. | Approval gate; contents are enumerated before a decision. |
 | **Rug pulls** | Git refs are mutable. A marketplace reviewed Monday can serve different bytes Tuesday from the same URL. | SHA-pinned snapshots and held updates — the core of the design. |
-| **Transitive sources** | `marketplace.json` entries may point at *other* arbitrary repositories, so vetting the marketplace does not vet what an install clones. | External sources are rejected fail-closed in the current scope. |
+| **Transitive sources** | `marketplace.json` entries may point at *other* arbitrary repositories, so vetting the marketplace does not vet what an install clones. | External sources are rejected fail-closed unless the operator enables them; an enabled gateway fetches, vets and grafts them into the snapshot. |
 | **Inventory blindness** | "Which of our developers has this skill, at which version?" is unanswerable. | The append-only ledger records principal, marketplace and SHA per fetch. |
 
-The full threat model, including the designed-but-not-yet-built vetting
-vetters, is in
+The full threat model is in
 [Architecture](architecture.md);
 the decisions behind the stack are recorded as architecture decision records
 in the repository, at [docs/decisions/](https://github.com/skillsgateway/skillsgateway/tree/main/docs/decisions).
@@ -97,10 +96,10 @@ you need right now rather than by who you are.
   [REST API](reference/api/index.md), and the
   [Glossary](concepts/glossary.md).
 
-!!! warning "Status: pre-alpha"
+!!! warning "Status: pre-1.0"
 
-    The implemented scope is the Phase 1 choke point: local-source marketplaces,
-    default branch only, manual approval, a PAT-authenticated facade and the
-    append-only audit ledger. Automated vetting vetters,
-    policy-as-code and multi-ref publication are designed but not built. This
-    documentation describes what the code does today.
+    The core loop is implemented: quarantined ingestion, the vetting chain,
+    policy deny rules, held-until-approved publication, a PAT-authenticated
+    facade and the audit ledger. Interfaces may change before 1.0. Multi-ref
+    publication is designed but not built; only the default branch is ingested.
+    This documentation describes what the code does today.
