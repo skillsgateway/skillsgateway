@@ -5,6 +5,7 @@ import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -62,15 +63,24 @@ public class ExternalVettingConnector implements Vetter {
     private static final Map<VerdictState, Integer> RANK =
             Map.of(VerdictState.PASS, 0, VerdictState.WARN, 1, VerdictState.FAIL, 2);
 
+    /** Room for building the bundle and mapping the answer, so the HTTP timeouts fire first. */
+    static final Duration TIME_LIMIT_MARGIN = Duration.ofSeconds(5);
+
     private final ExternalConnectorProperties props;
+    private final Duration readTimeout;
     private final RestClient restClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ExternalVettingConnector(ExternalConnectorProperties props) {
+    /**
+     * @param chainTimeout {@code skills-gateway.vetting.timeout}, the read timeout of a connector
+     *     that sets none
+     */
+    public ExternalVettingConnector(ExternalConnectorProperties props, Duration chainTimeout) {
         this.props = props;
+        this.readTimeout = props.readTimeout() != null ? props.readTimeout() : chainTimeout;
         JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(
                 HttpClient.newBuilder().connectTimeout(props.connectTimeout()).build());
-        factory.setReadTimeout(props.readTimeout());
+        factory.setReadTimeout(readTimeout);
         this.restClient = RestClient.builder().requestFactory(factory).build();
     }
 
@@ -92,6 +102,13 @@ public class ExternalVettingConnector implements Vetter {
     @Override
     public String description() {
         return props.description();
+    }
+
+    /** Its own connect and read timeouts, plus a margin so that the HTTP client gives up first. */
+    @Override
+    @Requirements({"GW_VETTING_0025"})
+    public Duration timeLimit(Duration chainTimeout) {
+        return props.connectTimeout().plus(readTimeout).plus(TIME_LIMIT_MARGIN);
     }
 
     @Override

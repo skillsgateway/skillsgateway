@@ -916,7 +916,9 @@ public record SkillsGatewayProperties(
      * either way, so the only thing a kill switch would buy is a blocked estate with no findings.
      *
      * @param timeout how long a single vetter may take before its verdict is recorded as an
-     *     error, which blocks; a wedged vetter must never wedge ingestion
+     *     error, which blocks; a wedged vetter must never wedge ingestion. An external connector
+     *     is bounded by its own timeouts instead ({@code Vetter#timeLimit}) and inherits this as
+     *     its read timeout when it sets none
      * @param maxFileBytes files larger than this are handed to vetters as unread, and reported
      *     as an informational finding rather than skipped in silence
      * @param contentCacheBytes how much of a snapshot's content one chain run may hold so that the

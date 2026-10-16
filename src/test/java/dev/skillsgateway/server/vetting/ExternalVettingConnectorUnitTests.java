@@ -101,8 +101,22 @@ class ExternalVettingConnectorUnitTests {
     @SVCs({"SVC_GW_VETTING_0024"})
     void theConfiguredCredentialIsSentToTheEndpoint() {
         stub.respond(200, "{\"state\":\"pass\"}");
-        ExternalVettingConnector vetter = new ExternalVettingConnector(new ExternalConnectorProperties(
-                "llm", URI.create(stub.url()), 10, "1", "d", "sekret", null, null, null, null, null, null, null));
+        ExternalVettingConnector vetter = new ExternalVettingConnector(
+                new ExternalConnectorProperties(
+                        "llm",
+                        URI.create(stub.url()),
+                        10,
+                        "1",
+                        "d",
+                        "sekret",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null),
+                Duration.ofSeconds(30));
         vetter.vet(snapshotOf(Map.of("SKILL.md", "x")));
         assertThat(stub.lastHeader("Authorization")).isEqualTo("Bearer sekret");
     }
@@ -126,20 +140,22 @@ class ExternalVettingConnectorUnitTests {
     @SVCs({"SVC_GW_VETTING_0025"})
     void aReadTimeoutIsAnErrorVerdict() {
         stub.hang(Duration.ofSeconds(3));
-        ExternalVettingConnector vetter = new ExternalVettingConnector(new ExternalConnectorProperties(
-                "llm",
-                URI.create(stub.url()),
-                10,
-                "1",
-                "d",
-                null,
-                null,
-                null,
-                Duration.ofSeconds(2),
-                Duration.ofMillis(250),
-                null,
-                null,
-                null));
+        ExternalVettingConnector vetter = new ExternalVettingConnector(
+                new ExternalConnectorProperties(
+                        "llm",
+                        URI.create(stub.url()),
+                        10,
+                        "1",
+                        "d",
+                        null,
+                        null,
+                        null,
+                        Duration.ofSeconds(2),
+                        Duration.ofMillis(250),
+                        null,
+                        null,
+                        null),
+                Duration.ofSeconds(30));
         assertError(vetter.vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
@@ -205,8 +221,10 @@ class ExternalVettingConnectorUnitTests {
     @SVCs({"SVC_GW_VETTING_0025"})
     void anOversizedResponseIsAnErrorVerdict() {
         stub.respond(200, "{\"state\":\"pass\",\"reportUrl\":\"" + "x".repeat(4096) + "\"}");
-        ExternalVettingConnector vetter = new ExternalVettingConnector(new ExternalConnectorProperties(
-                "llm", URI.create(stub.url()), 10, "1", "d", null, null, null, null, null, null, 64L, null));
+        ExternalVettingConnector vetter = new ExternalVettingConnector(
+                new ExternalConnectorProperties(
+                        "llm", URI.create(stub.url()), 10, "1", "d", null, null, null, null, null, null, 64L, null),
+                Duration.ofSeconds(30));
         assertError(vetter.vet(snapshotOf(Map.of("SKILL.md", "x"))));
     }
 
@@ -214,8 +232,10 @@ class ExternalVettingConnectorUnitTests {
     @SVCs({"SVC_GW_VETTING_0025"})
     void aSnapshotBundleOverTheRequestCapIsAnErrorVerdict() {
         stub.respond(200, "{\"state\":\"pass\"}");
-        ExternalVettingConnector vetter = new ExternalVettingConnector(new ExternalConnectorProperties(
-                "llm", URI.create(stub.url()), 10, "1", "d", null, null, null, null, null, 8L, null, null));
+        ExternalVettingConnector vetter = new ExternalVettingConnector(
+                new ExternalConnectorProperties(
+                        "llm", URI.create(stub.url()), 10, "1", "d", null, null, null, null, null, 8L, null, null),
+                Duration.ofSeconds(30));
         // The single file's content exceeds max-request-bytes=8, so no valid bundle can be shipped.
         assertError(vetter.vet(snapshotOf(Map.of("SKILL.md", "this content is well over eight bytes"))));
     }
@@ -239,8 +259,10 @@ class ExternalVettingConnectorUnitTests {
     }
 
     private static ExternalVettingConnector vetter(String url) {
-        return new ExternalVettingConnector(new ExternalConnectorProperties(
-                "llm", URI.create(url), 10, "1", "d", null, null, null, null, null, null, null, null));
+        return new ExternalVettingConnector(
+                new ExternalConnectorProperties(
+                        "llm", URI.create(url), 10, "1", "d", null, null, null, null, null, null, null, null),
+                Duration.ofSeconds(30));
     }
 
     /** A URL whose server has stopped: a deterministic connection refusal. */
