@@ -425,16 +425,14 @@ public final class PluginComponents {
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> field = fields.next();
                 JsonNode v = field.getValue();
-                boolean recognised =
-                        switch (field.getKey()) {
-                            case "hooks" -> v.isObject();
-                            case "modules" ->
-                                v.isArray()
-                                        && StreamSupport.stream(v.spliterator(), false)
-                                                .allMatch(JsonNode::isTextual);
-                            case "description" -> v.isTextual();
-                            default -> !wrapped && matcherGroups(v);
-                        };
+                boolean recognised = switch (field.getKey()) {
+                    case "hooks" -> v.isObject();
+                    case "modules" ->
+                        v.isArray()
+                                && StreamSupport.stream(v.spliterator(), false).allMatch(JsonNode::isTextual);
+                    case "description" -> v.isTextual();
+                    default -> !wrapped && matcherGroups(v);
+                };
                 if (!recognised) {
                     unrecognised(field.getKey(), doc, pointer);
                 }
