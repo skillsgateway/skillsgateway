@@ -2851,7 +2851,10 @@ your endpoint:</p>
 </code></pre></div>
 <p><code>order</code> places it in the chain alongside the built-ins (<code>secret-scan=100</code>,
 <code>prompt-injection=200</code>, <code>license-scan=300</code>, <code>skill-conformance=400</code>); <code>version</code>
-is stamped into the chain identity, so bump it whenever your rules change. The
+is stamped into the chain identity, so bump it whenever your rules change. If
+your endpoint needs longer than 30 seconds to answer, set <code>read-timeout</code> on the
+connector: the chain waits for it as long as its own timeouts allow, and
+<code>skills-gateway.vetting.timeout</code> only bounds the built-in vetters. The
 full property list, including timeouts and size caps, is in
 <a href="../../reference/configuration/#external-connectors">Configuration, External connectors</a>.</p>
 <p>A docker compose fragment running the example alongside the gateway:</p>

@@ -4339,53 +4339,54 @@ for why that ordering was chosen.</p>
 in <code>application.yaml</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">vetting</span><span class="p">:</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="c1"># How long a single vetter may take before its verdict is recorded as an</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="c1"># error — which blocks the snapshot. A wedged vetter must never wedge</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="c1"># ingestion, and a vetter that never answers must never look like a pass.</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span><span class="c1"># Files larger than this are handed to vetters unread. They are reported</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="c1"># in one informational 'file-not-scanned' finding per vetter and reason,</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="c1"># and in the verdict's coverage summary; never skipped in silence.</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span><span class="nt">max-file-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1048576</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">    </span><span class="c1"># How much of a snapshot's content one chain run may hold so that the</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">    </span><span class="c1"># vetters after the first read it instead of inflating it again. Past</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">    </span><span class="c1"># this, content is re-read rather than kept: a snapshot larger than the</span>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">    </span><span class="c1"># bound costs speed, never coverage.</span>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">    </span><span class="nt">content-cache-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">33554432</span>
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">    </span><span class="c1"># How often lapsed waivers are noted in the audit ledger. This cannot open a</span>
-<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="w">    </span><span class="c1"># hole: a waiver stops suppressing its finding the moment the effective</span>
-<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">    </span><span class="c1"># outcome is next computed, whether or not this sweep has run.</span>
-<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">    </span><span class="nt">waiver-sweep-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
-<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="w">    </span><span class="nt">waiver-sweep-batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span>
-<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>
-<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="w">    </span><span class="c1"># The cooling-off window: how long a commit must have been in quarantine</span>
-<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="w">    </span><span class="c1"># before it can be approved. 0 — the default — is no window at all.</span>
-<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="w">    </span><span class="nt">minimum-release-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
-<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a>
-<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="w">    </span><span class="c1"># The organisation-level license policy, evaluated by the built-in</span>
-<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="w">    </span><span class="c1"># license-scan vetter. Both lists default to empty, under which</span>
-<a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="w">    </span><span class="c1"># identified licenses are informational and an unknown or missing license</span>
-<a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a><span class="w">    </span><span class="c1"># only warns — an upgrade blocks nothing.</span>
-<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="w">    </span><span class="nt">license</span><span class="p">:</span>
-<a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a><span class="w">      </span><span class="c1"># SPDX ids. Once non-empty, any license not on the list — and any</span>
-<a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a><span class="w">      </span><span class="c1"># unknown or missing license — is a blocking finding.</span>
-<a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a><span class="w">      </span><span class="nt">allowed</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">MIT</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Apache-2.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">BSD-3-Clause</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a><span class="w">      </span><span class="c1"># SPDX ids whose detection is a blocking finding. Checked before the</span>
-<a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a><span class="w">      </span><span class="c1"># allow list: a license on both is reported as banned.</span>
-<a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a><span class="w">      </span><span class="nt">banned</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">AGPL-3.0</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a>
-<a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a><span class="w">    </span><span class="c1"># The posture of the built-in skill-conformance vetter, which validates</span>
-<a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a><span class="w">    </span><span class="c1"># every SKILL.md against the Agent Skills specification vendored in the</span>
-<a id="__codelineno-7-43" name="__codelineno-7-43" href="#__codelineno-7-43"></a><span class="w">    </span><span class="c1"># gateway. Advisory by default: defects are recorded and shown to the</span>
-<a id="__codelineno-7-44" name="__codelineno-7-44" href="#__codelineno-7-44"></a><span class="w">    </span><span class="c1"># reviewer, and block nothing.</span>
-<a id="__codelineno-7-45" name="__codelineno-7-45" href="#__codelineno-7-45"></a><span class="w">    </span><span class="nt">conformance</span><span class="p">:</span>
-<a id="__codelineno-7-46" name="__codelineno-7-46" href="#__codelineno-7-46"></a><span class="w">      </span><span class="c1"># true makes every conformance defect a blocking finding, waivable like</span>
-<a id="__codelineno-7-47" name="__codelineno-7-47" href="#__codelineno-7-47"></a><span class="w">      </span><span class="c1"># any other. A verdict covers a whole snapshot, so one malformed skill</span>
-<a id="__codelineno-7-48" name="__codelineno-7-48" href="#__codelineno-7-48"></a><span class="w">      </span><span class="c1"># then holds up every other skill in the marketplace.</span>
-<a id="__codelineno-7-49" name="__codelineno-7-49" href="#__codelineno-7-49"></a><span class="w">      </span><span class="nt">enforce</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="c1"># How long a single built-in vetter may take before its verdict is recorded</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="c1"># as an error — which blocks the snapshot. External connectors are bounded</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="c1"># by their own connect-timeout and read-timeout instead. A wedged vetter must never wedge</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="c1"># ingestion, and a vetter that never answers must never look like a pass.</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="c1"># Files larger than this are handed to vetters unread. They are reported</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="c1"># in one informational 'file-not-scanned' finding per vetter and reason,</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span><span class="c1"># and in the verdict's coverage summary; never skipped in silence.</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">    </span><span class="nt">max-file-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1048576</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">    </span><span class="c1"># How much of a snapshot's content one chain run may hold so that the</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">    </span><span class="c1"># vetters after the first read it instead of inflating it again. Past</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">    </span><span class="c1"># this, content is re-read rather than kept: a snapshot larger than the</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">    </span><span class="c1"># bound costs speed, never coverage.</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">    </span><span class="nt">content-cache-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">33554432</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="w">    </span><span class="c1"># How often lapsed waivers are noted in the audit ledger. This cannot open a</span>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">    </span><span class="c1"># hole: a waiver stops suppressing its finding the moment the effective</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">    </span><span class="c1"># outcome is next computed, whether or not this sweep has run.</span>
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="w">    </span><span class="nt">waiver-sweep-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="w">    </span><span class="nt">waiver-sweep-batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span>
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="w">    </span><span class="c1"># The cooling-off window: how long a commit must have been in quarantine</span>
+<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="w">    </span><span class="c1"># before it can be approved. 0 — the default — is no window at all.</span>
+<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="w">    </span><span class="nt">minimum-release-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
+<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a>
+<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="w">    </span><span class="c1"># The organisation-level license policy, evaluated by the built-in</span>
+<a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="w">    </span><span class="c1"># license-scan vetter. Both lists default to empty, under which</span>
+<a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a><span class="w">    </span><span class="c1"># identified licenses are informational and an unknown or missing license</span>
+<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="w">    </span><span class="c1"># only warns — an upgrade blocks nothing.</span>
+<a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a><span class="w">    </span><span class="nt">license</span><span class="p">:</span>
+<a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a><span class="w">      </span><span class="c1"># SPDX ids. Once non-empty, any license not on the list — and any</span>
+<a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a><span class="w">      </span><span class="c1"># unknown or missing license — is a blocking finding.</span>
+<a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a><span class="w">      </span><span class="nt">allowed</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">MIT</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Apache-2.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">BSD-3-Clause</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a><span class="w">      </span><span class="c1"># SPDX ids whose detection is a blocking finding. Checked before the</span>
+<a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a><span class="w">      </span><span class="c1"># allow list: a license on both is reported as banned.</span>
+<a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a><span class="w">      </span><span class="nt">banned</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">AGPL-3.0</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a>
+<a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a><span class="w">    </span><span class="c1"># The posture of the built-in skill-conformance vetter, which validates</span>
+<a id="__codelineno-7-43" name="__codelineno-7-43" href="#__codelineno-7-43"></a><span class="w">    </span><span class="c1"># every SKILL.md against the Agent Skills specification vendored in the</span>
+<a id="__codelineno-7-44" name="__codelineno-7-44" href="#__codelineno-7-44"></a><span class="w">    </span><span class="c1"># gateway. Advisory by default: defects are recorded and shown to the</span>
+<a id="__codelineno-7-45" name="__codelineno-7-45" href="#__codelineno-7-45"></a><span class="w">    </span><span class="c1"># reviewer, and block nothing.</span>
+<a id="__codelineno-7-46" name="__codelineno-7-46" href="#__codelineno-7-46"></a><span class="w">    </span><span class="nt">conformance</span><span class="p">:</span>
+<a id="__codelineno-7-47" name="__codelineno-7-47" href="#__codelineno-7-47"></a><span class="w">      </span><span class="c1"># true makes every conformance defect a blocking finding, waivable like</span>
+<a id="__codelineno-7-48" name="__codelineno-7-48" href="#__codelineno-7-48"></a><span class="w">      </span><span class="c1"># any other. A verdict covers a whole snapshot, so one malformed skill</span>
+<a id="__codelineno-7-49" name="__codelineno-7-49" href="#__codelineno-7-49"></a><span class="w">      </span><span class="c1"># then holds up every other skill in the marketplace.</span>
+<a id="__codelineno-7-50" name="__codelineno-7-50" href="#__codelineno-7-50"></a><span class="w">      </span><span class="nt">enforce</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
 <table>
 <thead>
@@ -4401,7 +4402,7 @@ in <code>application.yaml</code>.</p>
 <td><code>skills-gateway.vetting.timeout</code></td>
 <td>duration</td>
 <td><code>30s</code></td>
-<td>Per vetter, per run. Exceeding it is an <code>ERROR</code> verdict, which blocks.</td>
+<td>Per built-in vetter, per run. Exceeding it is an <code>ERROR</code> verdict, which blocks. An external connector is bounded by its own timeouts instead, and takes this value as its <code>read-timeout</code> when it sets none.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.vetting.max-file-bytes</code></td>
@@ -4539,7 +4540,7 @@ fail-closed rules. An empty or absent list changes nothing.</p>
 <a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">        </span><span class="nt">token-header</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Authorization</span><span class="w">   </span><span class="c1"># default; any header name is accepted</span>
 <a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">        </span><span class="nt">token-scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Bearer</span><span class="w">          </span><span class="c1"># applied only for the Authorization header</span>
 <a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">        </span><span class="nt">connect-timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5s</span>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">        </span><span class="nt">read-timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">        </span><span class="nt">read-timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span><span class="w">             </span><span class="c1"># unset takes skills-gateway.vetting.timeout</span>
 <a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">        </span><span class="c1"># Caps that keep a hostile or broken endpoint from exhausting memory, and</span>
 <a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">        </span><span class="c1"># a too-large snapshot from earning a verdict about partial content.</span>
 <a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">        </span><span class="nt">max-request-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5242880</span>
@@ -4618,8 +4619,8 @@ back a normalized <code>{state, reportUrl, findings[]}</code> where <code>state<
 <tr>
 <td><code>…external[n].read-timeout</code></td>
 <td>duration</td>
-<td><code>30s</code></td>
-<td>Exceeding it is an <code>ERROR</code> verdict, which blocks.</td>
+<td><code>skills-gateway.vetting.timeout</code></td>
+<td>Exceeding it is an <code>ERROR</code> verdict, which blocks. The chain waits for this vetter <code>connect-timeout</code> + <code>read-timeout</code> + 5s, so the connector's own timeouts — not <code>skills-gateway.vetting.timeout</code> — are its limit.</td>
 </tr>
 <tr>
 <td><code>…external[n].max-request-bytes</code></td>

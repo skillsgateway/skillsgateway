@@ -3950,6 +3950,13 @@ recorded state is the <strong>worse</strong> of what the endpoint declared and w
 findings imply, so an endpoint cannot pass content its evidence condemns. An
 endpoint that needs to answer later returns <code>PENDING</code>, which blocks until it is
 resolved.</p>
+<p>"Slow" means slower than the connector's own <code>connect-timeout</code> and
+<code>read-timeout</code>. Every vetter has a time limit, and a built-in's is the
+chain-wide <code>skills-gateway.vetting.timeout</code>; a connector's is its own two
+timeouts plus a few seconds, so the HTTP timeout fires first and the error names
+it. A slow reviewer — an LLM given minutes — is therefore configured on its
+connector alone, without loosening the limit that guards the built-ins against
+a hang. A connector that sets no <code>read-timeout</code> takes the chain-wide value.</p>
 <p>See <a href="../../guides/adding-an-external-vetter/">Adding an external vetter</a> for the
 wire contract and a minimal working example.</p>
 <h2 id="coverage-gaps-are-reported-not-hidden">Coverage gaps are reported, not hidden<a class="headerlink" href="#coverage-gaps-are-reported-not-hidden" title="Permanent link">&para;</a></h2>
