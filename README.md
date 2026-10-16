@@ -16,8 +16,9 @@ with every fetch in an append-only audit ledger.
 JGit: ingestion into quarantine, hold until
 approved, and serving approved SHA-pinned content through the PAT-authenticated
 git smart-HTTP facade, with an admin portal and an append-only audit ledger.
-Lifecycle webhooks, ledger export, and snapshot retention build on that. There
-are no releases or tags yet, and interfaces may still change.
+Lifecycle webhooks, ledger export, and snapshot retention build on that.
+Releases are tagged and published on GitHub, and interfaces may still change
+before 1.0.
 
 ## What it does
 
