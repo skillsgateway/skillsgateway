@@ -308,9 +308,12 @@ jobs:
   # is skipped, which is not. `!inputs.dry-run` has to be spelled out for the same
   # reason: on a dry run every job above is skipped, and "nothing failed" would
   # otherwise be true.
+  #
+  # `verify` is the exception: it is skipped, not failed, when `image` or `assets`
+  # fails, so "nothing failed" would hold there too. It has to have succeeded.
   promote:
     needs: [prepare, verify]
-    if: ${{ !inputs.dry-run && !cancelled() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+    if: ${{ !inputs.dry-run && !cancelled() && needs.verify.result == 'success' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
     uses: skillsgateway/.github/.github/workflows/common-release-promote.yml@53030249aec4552ff11d9e73371a091ef8bfb095
     permissions:
       contents: write
