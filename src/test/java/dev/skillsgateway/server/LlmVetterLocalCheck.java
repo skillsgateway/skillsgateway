@@ -1,8 +1,6 @@
 package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.spy;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -206,20 +204,22 @@ class LlmVetterLocalCheck extends AbstractGatewayTest {
         files.put(SKILL, skill);
         String name = uniqueName("llmvet");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST, files));
-        ExternalVettingConnector vetter = new ExternalVettingConnector(new ExternalConnectorProperties(
-                "llm-vetter",
-                URI.create("http://127.0.0.1:" + vetterPort + "/"),
-                150,
-                "1",
-                "example LLM vetter on " + MODEL,
-                null,
-                null,
-                null,
-                Duration.ofSeconds(5),
-                Duration.ofMinutes(5),
-                null,
-                null,
-                null));
+        ExternalVettingConnector vetter = new ExternalVettingConnector(
+                new ExternalConnectorProperties(
+                        "llm-vetter",
+                        URI.create("http://127.0.0.1:" + vetterPort + "/"),
+                        150,
+                        "1",
+                        "example LLM vetter on " + MODEL,
+                        null,
+                        null,
+                        null,
+                        Duration.ofSeconds(5),
+                        Duration.ofMinutes(5),
+                        null,
+                        null,
+                        null),
+                properties.vetting().timeout());
         new VettingService(
                         List.of(vetter),
                         vettingRepository,
@@ -229,7 +229,7 @@ class LlmVetterLocalCheck extends AbstractGatewayTest {
                         waiverService,
                         vetterToggleService,
                         chainSettingsService,
-                        withVettingTimeout(Duration.ofMinutes(5)))
+                        properties)
                 .vet(registered.snapshot(), name);
         assertModelOnGpu();
         VettingRepository.VerdictView verdict =
@@ -239,18 +239,6 @@ class LlmVetterLocalCheck extends AbstractGatewayTest {
                         .orElseThrow();
         System.out.printf("llm-vetter on %s: %s %s%n", MODEL, verdict.state(), verdict.findings());
         return verdict;
-    }
-
-    /**
-     * A model call outlasts the 30s default, so a deployment raises {@code skills-gateway.vetting.timeout};
-     * here it is raised for this chain only, rather than in a context of its own.
-     */
-    private SkillsGatewayProperties withVettingTimeout(Duration timeout) {
-        SkillsGatewayProperties.Vetting vetting = spy(properties.vetting());
-        given(vetting.timeout()).willReturn(timeout);
-        SkillsGatewayProperties raised = spy(properties);
-        given(raised.vetting()).willReturn(vetting);
-        return raised;
     }
 
     private static void assertFailsWith(VettingRepository.VerdictView verdict, String... anyOfRules) {

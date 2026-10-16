@@ -80,14 +80,14 @@ It listens on `:8766`. `OLLAMA_MODEL`, `NUM_CTX`, `MAX_CHARS` and
 
 ## Configure the gateway
 
-Declare it like any external connector, and raise the vetting timeout: a model
-call outlasts the 30-second default, and `skills-gateway.vetting.timeout` caps
-every vetter in the chain, whatever the connector's own `read-timeout` says.
+Declare it like any external connector, and raise its `read-timeout`: a model
+call outlasts the 30-second default. The connector's own timeouts bound how long
+the chain waits for it, so `skills-gateway.vetting.timeout` stays as it is for
+the other vetters.
 
 ```yaml
 skills-gateway:
   vetting:
-    timeout: 5m
     external:
       - name: llm-vetter
         url: http://llm-vetter:8766/
