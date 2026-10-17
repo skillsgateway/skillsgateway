@@ -2,6 +2,7 @@ import { MemoryRouter } from "react-router-dom";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, userEvent, within } from "storybook/test";
 import { bulkPartialFailure, chainOverrides, vetterToggles } from "@/test/msw-handlers";
+import { labelContainsText } from "@/lib/accessible-name";
 import { overridesOf } from "@/lib/vetting-overrides";
 import type { MarketplaceView } from "@/api/queries";
 import { BulkEditor, OverridesTable, VettingRefusal } from "./vetting";
@@ -48,9 +49,9 @@ export const OverridesPresent: StoryObj = {
     await expect(canvas.getByText("secret-scan: off")).toBeVisible();
     // The control names the marketplace it would act on: "Clear override" alone would be three
     // identically named buttons on a longer estate.
-    await expect(
-      canvas.getByRole("button", { name: "Clear every chain override on corp-marketplace" }),
-    ).toBeEnabled();
+    const clear = canvas.getByRole("button", { name: "Clear override (corp-marketplace)" });
+    await expect(clear).toBeEnabled();
+    await expect(labelContainsText(clear)).toBe(true);
   },
 };
 
@@ -72,7 +73,7 @@ export const OverrideOfAVanishedMarketplace: StoryObj = {
     const canvas = within(canvasElement);
     await expect(canvas.getByText("marketplace #1 — no longer registered")).toBeVisible();
     await expect(
-      canvas.getByRole("button", { name: "Clear every chain override on marketplace #1" }),
+      canvas.getByRole("button", { name: "Clear override (marketplace #1)" }),
     ).toBeDisabled();
   },
 };

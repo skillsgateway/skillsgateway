@@ -31,6 +31,15 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/**
+ * A stage button, found by its label and state. The button is named by its content (eyebrow,
+ * label, state, meta, chips), so the name is matched in pieces rather than spelled out.
+ */
+function stage(canvas: ReturnType<typeof within>, label: string, state: string) {
+  const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return canvas.getByRole("button", { name: new RegExp(`\\b${escape(label)} ${escape(state)}\\b`) });
+}
+
 const SNAPSHOT_LABEL = "Vetting chain of snapshot 1";
 const MARKETPLACE_LABEL = "Vetting chain of corp-marketplace";
 
@@ -48,7 +57,7 @@ export const Clear: Story = {
     // The answer is stated once, above the drawing, before anything is clicked.
     await expect(canvas.getByText("Clear")).toBeInTheDocument();
     await expect(canvas.getByText("· 2 vetters, 0 findings")).toBeInTheDocument();
-    await expect(canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: Approval, open` })).toBeInTheDocument();
+    await expect(stage(canvas, "Approval", "open")).toBeInTheDocument();
   },
 };
 
@@ -60,9 +69,9 @@ export const Blocked: Story = {
     await expect(canvas.getByText("Blocked at step 1")).toBeInTheDocument();
     await expect(canvas.getByText("· secret-scan found 1 critical finding")).toBeInTheDocument();
     // Every state is a word on its own node, not only the headline and not only a colour.
-    await expect(canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: secret-scan, fail` })).toBeInTheDocument();
-    await expect(canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: Outcome, blocked` })).toBeInTheDocument();
-    await expect(canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: Approval, closed` })).toBeInTheDocument();
+    await expect(stage(canvas, "secret-scan", "fail")).toBeInTheDocument();
+    await expect(stage(canvas, "Outcome", "blocked")).toBeInTheDocument();
+    await expect(stage(canvas, "Approval", "closed")).toBeInTheDocument();
     // Ordered stages, not an undifferentiated row.
     await expect(canvas.getByText("Step 1")).toBeInTheDocument();
     await expect(canvas.getByText("Result")).toBeInTheDocument();
@@ -81,7 +90,7 @@ export const WithWaivers: Story = {
     await expect(canvas.getByText("· 1 finding accepted")).toBeInTheDocument();
     await expect(canvas.getByText("1 waived")).toBeInTheDocument();
     // Accepted risk is never redrawn as a clean result.
-    await expect(canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: secret-scan, fail` })).toBeInTheDocument();
+    await expect(stage(canvas, "secret-scan", "fail")).toBeInTheDocument();
   },
 };
 
@@ -94,7 +103,7 @@ export const VendoredCopies: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByText("· prompt-injection found 2 high findings")).toBeInTheDocument();
-    await userEvent.click(canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: prompt-injection, fail` }));
+    await userEvent.click(stage(canvas, "prompt-injection", "fail"));
     const dialog = within(await within(document.body).findByRole("dialog"));
     await expect(
       dialog.getByText(
@@ -135,12 +144,12 @@ export const ShortCircuited: Story = {
     // Each unreached vetter carries the state as a word on its own node, told apart from a
     // vetter an administrator switched off and from one with no verdict at all.
     await expect(
-      canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: prompt-injection, not reached` }),
+      stage(canvas, "prompt-injection", "not reached"),
     ).toBeInTheDocument();
     await expect(
-      canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: license-scan, not reached` }),
+      stage(canvas, "license-scan", "not reached"),
     ).toBeInTheDocument();
-    await expect(canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: Approval, closed` })).toBeInTheDocument();
+    await expect(stage(canvas, "Approval", "closed")).toBeInTheDocument();
   },
 };
 
@@ -157,7 +166,7 @@ export const ShortCircuitedDetail: Story = {
     const canvas = within(canvasElement);
     await step("open the first vetter the chain never reached", async () => {
       await userEvent.click(
-        canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: prompt-injection, not reached` }),
+        stage(canvas, "prompt-injection", "not reached"),
       );
     });
     const dialog = within(await within(document.body).findByRole("dialog"));
@@ -172,7 +181,7 @@ export const NodeDetail: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
     await step("open the failing vetter's node", async () => {
-      await userEvent.click(canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: secret-scan, fail` }));
+      await userEvent.click(stage(canvas, "secret-scan", "fail"));
     });
     const dialog = within(await within(document.body).findByRole("dialog"));
     await expect(dialog.getByText("aws-access-key-id")).toBeInTheDocument();
@@ -205,7 +214,7 @@ export const MarketplaceChainDetail: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(
-      canvas.getByRole("button", { name: `${MARKETPLACE_LABEL}: license-scan, enabled` }),
+      stage(canvas, "license-scan", "enabled"),
     );
     const dialog = within(await within(document.body).findByRole("dialog"));
     await expect(dialog.getByText("default — no setting recorded")).toBeInTheDocument();
@@ -270,7 +279,7 @@ export const SevenNodesNarrow: Story = {
 
     // The gate is still the last node of that line, and still reachable.
     await expect(
-      canvas.getByRole("button", { name: `${SNAPSHOT_LABEL}: Approval, open` }),
+      stage(canvas, "Approval", "open"),
     ).toBeInTheDocument();
   },
 };

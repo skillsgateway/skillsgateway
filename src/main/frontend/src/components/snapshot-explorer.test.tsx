@@ -90,7 +90,7 @@ test("the_tree_marks_a_file_with_findings", async () => {
 
   const tree = within(await screen.findByRole("navigation", { name: /File tree of snapshot/ }));
   expect(
-    await tree.findByRole("button", { name: `${SKILL}, modified, 3 findings, highest high` }),
+    await tree.findByRole("button", { name: `SKILL.md high · 3 modified (${SKILL}, 3 findings, highest high)` }),
   ).toHaveTextContent("high · 3");
 });
 

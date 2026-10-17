@@ -369,13 +369,14 @@ export function VettingFlow({
                 ) : null}
                 <button
                   type="button"
-                  aria-label={`${label}: ${node.label}, ${node.state}`}
                   onClick={() => setOpenNode(node.id)}
                   className={`flex min-h-20 min-w-0 flex-1 flex-col gap-0.5 rounded-md border border-t-[3px] px-3 py-2 text-left outline-none transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none ${toneEdge[node.tone]} ${terminal ? "bg-muted ring-1 ring-foreground/10" : "bg-muted/40"}`}
                 >
+                  {/* The button is named by its content, so a real space separates each piece: the
+                      names would otherwise run together ("Step 1secret-scanfail"). */}
                   <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                     {node.eyebrow}
-                  </span>
+                  </span>{" "}
                   <span
                     className={`flex items-center gap-1.5 text-sm ${terminal ? "font-semibold" : "font-medium"}`}
                   >
@@ -384,16 +385,23 @@ export function VettingFlow({
                       {node.label}
                     </span>
                   </span>
+                  {" "}
                   <span className={`text-xs ${toneText[node.tone]}`}>{node.state}</span>
                   {node.meta ? (
-                    <span className="text-[11px] text-muted-foreground">{node.meta}</span>
+                    <>
+                      {" "}
+                      <span className="text-[11px] text-muted-foreground">{node.meta}</span>
+                    </>
                   ) : null}
                   {node.external || (node.waived ?? 0) > 0 || node.setting ? (
-                    <span className="mt-auto flex flex-wrap gap-1 pt-1">
-                      {node.setting ? <NodeChip>{sourceChip(node.setting.source)}</NodeChip> : null}
-                      {node.external ? <NodeChip>external</NodeChip> : null}
-                      {(node.waived ?? 0) > 0 ? <NodeChip>{node.waived} waived</NodeChip> : null}
-                    </span>
+                    <>
+                      {" "}
+                      <span className="mt-auto flex flex-wrap gap-1 pt-1">
+                        {node.setting ? <NodeChip>{sourceChip(node.setting.source)}</NodeChip> : null}{" "}
+                        {node.external ? <NodeChip>external</NodeChip> : null}{" "}
+                        {(node.waived ?? 0) > 0 ? <NodeChip>{node.waived} waived</NodeChip> : null}
+                      </span>
+                    </>
                   ) : null}
                 </button>
               </li>

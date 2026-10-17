@@ -306,7 +306,7 @@ test("a_deep_link_restores_the_snapshot_the_tab_and_the_file", async () => {
   expect(screen.queryByRole("region", { name: "Snapshot 1" })).not.toBeInTheDocument();
 
   // Moving puts the move in the address, naming the snapshot explicitly.
-  await user.click(within(tree).getByRole("button", { name: /^\.claude-plugin,/ }));
+  await user.click(within(tree).getByRole("button", { name: /^\.claude-plugin / }));
   await user.click(await within(tree).findByRole("button", { name: /marketplace\.json/ }));
   expect(screen.getByTestId("address")).toHaveTextContent(
     "?snapshot=3&tab=contents&path=.claude-plugin%2Fmarketplace.json",
@@ -333,7 +333,7 @@ test("the_address_carries_the_line_of_the_file", async () => {
   await waitFor(() => expect(document.activeElement).toBe(container.querySelector('[data-line="5"]')));
 
   const tree = within(card).getByRole("navigation", { name: "File tree of snapshot 3" });
-  await user.click(within(tree).getByRole("button", { name: /^\.claude-plugin,/ }));
+  await user.click(within(tree).getByRole("button", { name: /^\.claude-plugin / }));
   await user.click(await within(tree).findByRole("button", { name: /marketplace\.json/ }));
   expect(screen.getByTestId("address")).toHaveTextContent(
     "?snapshot=3&tab=contents&path=.claude-plugin%2Fmarketplace.json",

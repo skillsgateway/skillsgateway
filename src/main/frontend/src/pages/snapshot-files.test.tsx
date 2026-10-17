@@ -40,12 +40,12 @@ test("the_tree_is_nested_and_a_file_is_reached_by_opening_its_directories", asyn
 
   // Directories, not a wall of full paths: the leaf is not on screen until its parents are open.
   expect(screen.queryByRole("button", { name: /SKILL\.md/ })).not.toBeInTheDocument();
-  await user.click(await screen.findByRole("button", { name: /^plugins,/ }));
-  await user.click(await screen.findByRole("button", { name: /^hello,/ }));
-  await user.click(await screen.findByRole("button", { name: /^skills,/ }));
+  await user.click(await screen.findByRole("button", { name: /^plugins / }));
+  await user.click(await screen.findByRole("button", { name: /^hello / }));
+  await user.click(await screen.findByRole("button", { name: /^skills / }));
   // Two directories are now named "hello"; the innermost is the one still closed.
-  await waitFor(() => expect(screen.getAllByRole("button", { name: /^hello,/ })).toHaveLength(2));
-  await user.click(screen.getAllByRole("button", { name: /^hello,/ }).at(-1) as HTMLElement);
+  await waitFor(() => expect(screen.getAllByRole("button", { name: /^hello / })).toHaveLength(2));
+  await user.click(screen.getAllByRole("button", { name: /^hello / }).at(-1) as HTMLElement);
   expect(await screen.findByRole("button", { name: /SKILL\.md/ })).toBeInTheDocument();
 });
 
@@ -69,7 +69,7 @@ test("selecting_a_file_puts_its_path_in_the_address", async () => {
   const user = userEvent.setup();
   renderPage();
   await screen.findByRole("navigation", { name: "File tree of snapshot 1" });
-  await user.click(await screen.findByRole("button", { name: /^data,/ }));
+  await user.click(await screen.findByRole("button", { name: /^data / }));
   await user.click(await screen.findByRole("button", { name: /huge\.txt/ }));
 
   expect(screen.getByLabelText("address")).toHaveTextContent(
@@ -156,7 +156,7 @@ test("a_folder_wider_than_a_page_is_read_when_opened_and_shows_the_rest_on_reque
   // Only the root has been read; the folder's contents wait for the reviewer to open it.
   expect(opened).toEqual([""]);
 
-  await user.click(await tree().findByRole("button", { name: "wide, 601 files" }));
+  await user.click(await tree().findByRole("button", { name: "wide 601 (601 files)" }));
   const more = await tree().findByRole("button", { name: "Show 101 more (500 of 601 shown)" });
   expect(tree().queryByRole("button", { name: /f0600\.txt/ })).not.toBeInTheDocument();
   await user.click(more);
@@ -168,7 +168,7 @@ test("a_binary_blob_is_described_rather_than_rendered", async () => {
   const user = userEvent.setup();
   renderPage();
   await screen.findByRole("navigation", { name: "File tree of snapshot 1" });
-  await user.click(await screen.findByRole("button", { name: /^assets,/ }));
+  await user.click(await screen.findByRole("button", { name: /^assets / }));
   await user.click(await screen.findByRole("button", { name: /logo\.bin/ }));
 
   expect(await screen.findByText(/Binary file \(4096 bytes\)/)).toBeInTheDocument();
@@ -178,7 +178,7 @@ test("a_removed_path_is_in_the_tree_and_shows_what_approving_drops", async () =>
   const user = userEvent.setup();
   renderPage();
   await screen.findByRole("navigation", { name: "File tree of snapshot 1" });
-  await user.click(await screen.findByRole("button", { name: /^docs,/ }));
+  await user.click(await screen.findByRole("button", { name: /^docs / }));
 
   const removed = await screen.findByRole("button", { name: /OLD\.md/ });
   expect(removed).toHaveTextContent("removed");
@@ -264,16 +264,16 @@ test("the_tree_marks_what_changed_so_the_delta_is_not_found_by_clicking", async 
   const user = userEvent.setup();
   renderPage();
   await screen.findByRole("navigation", { name: "File tree of snapshot 1" });
-  await user.click(await tree().findByRole("button", { name: /^plugins,/ }));
-  await user.click(await tree().findByRole("button", { name: /^hello,/ }));
-  await user.click(await tree().findByRole("button", { name: /^skills,/ }));
-  await waitFor(() => expect(tree().getAllByRole("button", { name: /^hello,/ })).toHaveLength(2));
-  await user.click(tree().getAllByRole("button", { name: /^hello,/ }).at(-1) as HTMLElement);
+  await user.click(await tree().findByRole("button", { name: /^plugins / }));
+  await user.click(await tree().findByRole("button", { name: /^hello / }));
+  await user.click(await tree().findByRole("button", { name: /^skills / }));
+  await waitFor(() => expect(tree().getAllByRole("button", { name: /^hello / })).toHaveLength(2));
+  await user.click(tree().getAllByRole("button", { name: /^hello / }).at(-1) as HTMLElement);
 
   // The fixture's diff calls this one modified; the reviewer sees that without opening it.
   expect(await tree().findByRole("button", { name: /SKILL\.md/ })).toHaveTextContent("modified");
   // An unchanged file reports its size instead, in units rather than raw bytes.
-  await user.click(await tree().findByRole("button", { name: /^assets,/ }));
+  await user.click(await tree().findByRole("button", { name: /^assets / }));
   expect(await tree().findByRole("button", { name: /logo\.bin/ })).toHaveTextContent("4 KiB");
 });
 
@@ -281,7 +281,7 @@ test("clearing_a_search_gives_back_the_shape_the_reviewer_had_built", async () =
   const user = userEvent.setup();
   renderPage();
   await screen.findByRole("navigation", { name: "File tree of snapshot 1" });
-  await user.click(await tree().findByRole("button", { name: /^data,/ }));
+  await user.click(await tree().findByRole("button", { name: /^data / }));
   expect(await tree().findByRole("button", { name: /huge\.txt/ })).toBeInTheDocument();
 
   // The search replaces the tree while it is up...
@@ -365,7 +365,7 @@ test("the_standalone_page_carries_the_line_too", async () => {
   await screen.findByRole("list", { name: "Lines of plugins/hello/skills/hello/SKILL.md" });
   await waitFor(() => expect(document.activeElement).toBe(container.querySelector('[data-line="5"]')));
 
-  await user.click(await tree().findByRole("button", { name: /^\.claude-plugin,/ }));
+  await user.click(await tree().findByRole("button", { name: /^\.claude-plugin / }));
   await user.click(await tree().findByRole("button", { name: /marketplace\.json/ }));
   expect(screen.getByLabelText("address")).toHaveTextContent("path=.claude-plugin%2Fmarketplace.json");
   expect(screen.getByLabelText("address")).not.toHaveTextContent("line=");

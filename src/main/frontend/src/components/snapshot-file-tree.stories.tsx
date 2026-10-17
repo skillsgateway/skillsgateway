@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState, type ReactNode } from "react";
 import { expect, userEvent, within } from "storybook/test";
 import type { SnapshotTreeChild } from "@/api/queries";
+import { labelContainsText } from "@/lib/accessible-name";
 import type { FileFinding } from "@/lib/file-findings";
 import { SnapshotFileTree } from "./snapshot-file-tree";
 
@@ -103,7 +104,7 @@ export const Collapsed: Story = {
   args: { open: [] },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByRole("button", { name: /^plugins,/ })).toHaveAttribute(
+    await expect(canvas.getByRole("button", { name: /^plugins / })).toHaveAttribute(
       "aria-expanded",
       "false",
     );
@@ -160,14 +161,16 @@ export const FoldersCountTheirChanges: Story = {
   args: { open: [] },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByRole("button", { name: /^plugins,/ })).toHaveAccessibleName(
-      "plugins, 3 files, 2 changed",
+    await expect(canvas.getByRole("button", { name: /^plugins / })).toHaveAccessibleName(
+      "plugins 2 changed (3 files)",
     );
-    await expect(canvas.getByRole("button", { name: /^plugins,/ })).toHaveTextContent("2 changed");
+    await expect(canvas.getByRole("button", { name: /^plugins / })).toHaveTextContent("2 changed");
     // Nothing changed beneath it: the slot gives the size of the folder instead.
-    await expect(canvas.getByRole("button", { name: /^\.claude-plugin,/ })).toHaveAccessibleName(
-      ".claude-plugin, 1 file",
+    await expect(canvas.getByRole("button", { name: /^\.claude-plugin / })).toHaveAccessibleName(
+      ".claude-plugin 1 (1 file)",
     );
+    // The name starts with the text the row shows (WCAG 2.5.3), whatever axe version is installed.
+    for (const row of canvas.getAllByRole("button")) expect(labelContainsText(row)).toBe(true);
   },
 };
 
@@ -193,11 +196,11 @@ export const TogglesFromTheKeyboard: Story = {
   args: { open: [] },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const plugins = canvas.getByRole("button", { name: /^plugins,/ });
+    const plugins = canvas.getByRole("button", { name: /^plugins / });
     plugins.focus();
     await userEvent.keyboard("{Enter}");
     await expect(plugins).toHaveAttribute("aria-expanded", "true");
-    await expect(canvas.getByRole("button", { name: /^hello,/ })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: /^hello / })).toBeVisible();
   },
 };
 
@@ -226,8 +229,9 @@ export const WithFindings: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(
-      canvas.getByRole("button", { name: /SKILL\.md, modified, 2 findings, highest high/ }),
+      canvas.getByRole("button", { name: /SKILL\.md high · 2 modified \(.*2 findings, highest high\)/ }),
     ).toHaveTextContent("high · 2");
+    for (const row of canvas.getAllByRole("button")) expect(labelContainsText(row)).toBe(true);
   },
 };
 
