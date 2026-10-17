@@ -623,14 +623,13 @@ class RoleEnforcementTests extends AbstractGatewayTest {
     private static MockHttpServletRequestBuilder request(String route, String snapshotId, String marketplace) {
         String[] parts = route.split(" ", 2);
         String path = parts[1].replace("{id}", snapshotId).replace("{name}", marketplace);
-        MockHttpServletRequestBuilder builder =
-                switch (parts[0]) {
-                    case "POST" -> post(path);
-                    case "PUT" -> put(path);
-                    case "DELETE" -> delete(path);
-                    case "GET" -> get(path);
-                    default -> throw new IllegalArgumentException(route);
-                };
+        MockHttpServletRequestBuilder builder = switch (parts[0]) {
+            case "POST" -> post(path);
+            case "PUT" -> put(path);
+            case "DELETE" -> delete(path);
+            case "GET" -> get(path);
+            default -> throw new IllegalArgumentException(route);
+        };
         if (path.endsWith("/file")) {
             // Its blob path is a required parameter, and argument binding runs before the handler:
             // without one the walk would meet a 400 raised before any authorization check.

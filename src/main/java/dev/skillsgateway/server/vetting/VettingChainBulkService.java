@@ -154,17 +154,15 @@ public class VettingChainBulkService {
             String correlationId) {
         List<String> cleared = new ArrayList<>();
         for (BulkChainChange.Clear kind : kinds) {
-            String removed =
-                    switch (kind) {
-                        case MODE ->
-                            settingsService.clearMode(marketplace, reason, principal, correlationId) ? "mode" : null;
-                        case ORDER ->
-                            settingsService.clearOrder(marketplace, reason, principal, correlationId) ? "order" : null;
-                        case VETTERS -> {
-                            int count = toggleService.clearAll(marketplace, reason, principal, correlationId);
-                            yield count == 0 ? null : count + " vetter override" + (count == 1 ? "" : "s");
-                        }
-                    };
+            String removed = switch (kind) {
+                case MODE -> settingsService.clearMode(marketplace, reason, principal, correlationId) ? "mode" : null;
+                case ORDER ->
+                    settingsService.clearOrder(marketplace, reason, principal, correlationId) ? "order" : null;
+                case VETTERS -> {
+                    int count = toggleService.clearAll(marketplace, reason, principal, correlationId);
+                    yield count == 0 ? null : count + " vetter override" + (count == 1 ? "" : "s");
+                }
+            };
             if (removed != null) {
                 cleared.add(removed);
             }

@@ -59,14 +59,13 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
      */
     private static MockHttpServletRequestBuilder request(Route route, String secret) {
         String path = route.pattern().replace("{id}", "999999").replace("{name}", "no-such-marketplace");
-        MockHttpServletRequestBuilder builder =
-                switch (route.method()) {
-                    case "GET" -> get(path);
-                    case "POST" -> post(path);
-                    case "PUT" -> put(path);
-                    case "DELETE" -> delete(path);
-                    default -> throw new IllegalArgumentException(route.toString());
-                };
+        MockHttpServletRequestBuilder builder = switch (route.method()) {
+            case "GET" -> get(path);
+            case "POST" -> post(path);
+            case "PUT" -> put(path);
+            case "DELETE" -> delete(path);
+            default -> throw new IllegalArgumentException(route.toString());
+        };
         if (route.method().equals("POST") || route.method().equals("PUT")) {
             builder.contentType(MediaType.APPLICATION_JSON).content(path.endsWith("/cursor") ? "{\"after\": 0}" : "{}");
         }

@@ -170,12 +170,11 @@ class OpenApiContractTests extends AbstractGatewayTest {
 
     private static void assertEachDeliveryReferencesItsOwnPayload(DocumentContext document) {
         for (String event : WebhookEvent.ALL) {
-            String expected =
-                    switch (WebhookEvent.shapeOf(event)) {
-                        case SNAPSHOT -> EVENT_PAYLOAD;
-                        case APPROVAL_PENDING -> APPROVAL_PENDING_PAYLOAD;
-                        case MARKETPLACE -> MARKETPLACE_PAYLOAD;
-                    };
+            String expected = switch (WebhookEvent.shapeOf(event)) {
+                case SNAPSHOT -> EVENT_PAYLOAD;
+                case APPROVAL_PENDING -> APPROVAL_PENDING_PAYLOAD;
+                case MARKETPLACE -> MARKETPLACE_PAYLOAD;
+            };
             assertThat(document.<String>read("$.webhooks['%s'].post.requestBody.content['application/json'].schema.$ref"
                             .formatted(event)))
                     .as("%s delivers the body the service actually emits for it", event)
