@@ -4719,7 +4719,8 @@ overrides the setting keeps its own; clearing that override is how it comes back
 <h3 id="overrides">Overrides<a class="headerlink" href="#overrides" title="Permanent link">&para;</a></h3>
 <p>One row per marketplace whose chain departs from the default, showing what it
 departs in — <code>mode: stop-after-fail</code>, <code>order: …</code>, <code>secret-scan: off</code> — and a
-<strong>Clear every chain override on <em>name</em></strong> control. Assembled from
+<strong>Clear override</strong> control, which a screen reader announces with the marketplace
+it acts on (<code>Clear override (name)</code>). Assembled from
 <code>GET /api/v1/vetting/chain-settings</code>, <code>GET /api/v1/vetting/vetter-toggles</code> and
 <code>GET /api/v1/marketplaces</code>; a stored override whose marketplace is no longer
 registered still gets a row, labelled by its id and with its control disabled.</p>
