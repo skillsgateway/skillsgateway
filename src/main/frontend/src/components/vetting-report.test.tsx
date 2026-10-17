@@ -37,7 +37,7 @@ test("evidence_from_the_chain_in_force_says_nothing_at_all", async () => {
   // A marking on every snapshot would be noise, and noise is not evidence.
   expect(screen.queryByText(/different chain than this marketplace runs now/)).not.toBeInTheDocument();
   expect(
-    screen.queryByRole("button", { name: /Re-run the vetting chain/ }),
+    screen.queryByRole("button", { name: /Re-run the chain/ }),
   ).not.toBeInTheDocument();
 });
 
@@ -70,7 +70,7 @@ test("the_marking_comes_with_the_way_to_act_on_it", async () => {
   renderReport();
 
   await user.click(
-    await screen.findByRole("button", { name: "Re-run the vetting chain on snapshot 1" }),
+    await screen.findByRole("button", { name: "Re-run the chain now (snapshot 1)" }),
   );
   expect(refreshed).toBe(1);
 });
@@ -86,7 +86,7 @@ test("an_undetermined_comparison_is_not_dressed_up_as_either_answer", async () =
     screen.queryByText(/different chain than this marketplace runs now/),
   ).not.toBeInTheDocument();
   expect(
-    screen.queryByRole("button", { name: /Re-run the vetting chain/ }),
+    screen.queryByRole("button", { name: /Re-run the chain/ }),
   ).not.toBeInTheDocument();
 });
 

@@ -33,8 +33,8 @@ test("a_file_with_findings_is_marked_with_its_count_and_highest_severity", () =>
     />,
   );
 
-  const marked = screen.getByRole("button", { name: "p/s.sh, 20 B, 2 findings, highest high" });
+  const marked = screen.getByRole("button", { name: "s.sh high · 2 20 B (p/s.sh, 2 findings, highest high)" });
   expect(marked).toHaveTextContent("high · 2");
-  expect(screen.getByRole("button", { name: "p/ok.md, 10 B" })).not.toHaveTextContent("·");
-  expect(screen.getByRole("button", { name: /^p, / })).not.toHaveTextContent("high");
+  expect(screen.getByRole("button", { name: "ok.md 10 B (p/ok.md)" })).not.toHaveTextContent("·");
+  expect(screen.getByRole("button", { name: /^p 2 / })).not.toHaveTextContent("high");
 });

@@ -27,9 +27,13 @@ function plural(count: number, noun: string): string {
  * The change is what the reviewer is deciding, so it takes the slot when there is one. Only
  * `removed` is destructive; added and modified are facts, not objections, and stay muted.
  */
+function fileMarkerText(node: SnapshotTreeChild): string {
+  return node.status ?? size(node.size);
+}
+
 function FileMarker({ node }: { node: SnapshotTreeChild }) {
   if (!node.status) {
-    return <span className="shrink-0 text-muted-foreground">{size(node.size)}</span>;
+    return <span className="shrink-0 text-muted-foreground">{fileMarkerText(node)}</span>;
   }
   return (
     <span
@@ -37,19 +41,24 @@ function FileMarker({ node }: { node: SnapshotTreeChild }) {
         node.status === "removed" ? "text-destructive" : "text-muted-foreground"
       }`}
     >
-      {node.status}
+      {fileMarkerText(node)}
     </span>
   );
 }
 
 /** A file's vetter findings at a glance: the highest severity and how many (GW_APPROVAL_0029). */
+function findingsMarkerText(findings: readonly FileFinding[]): string {
+  const highest = highestSeverity(findings);
+  return highest ? `${highest} · ${findings.length}` : "";
+}
+
 function FindingsMarker({ findings }: { findings: readonly FileFinding[] }) {
   const highest = highestSeverity(findings);
   if (!highest) return null;
   const strong = highest === "high" || highest === "critical";
   return (
     <span className={`shrink-0 font-sans text-xs ${strong ? "text-destructive" : "text-primary"}`}>
-      {highest} · {findings.length}
+      {findingsMarkerText(findings)}
     </span>
   );
 }
@@ -58,13 +67,13 @@ function FindingsMarker({ findings }: { findings: readonly FileFinding[] }) {
  * The right slot of a directory row: how many changes are beneath it, or how many files — so a
  * reviewer can find the change without opening every folder.
  */
-function DirectoryMarker({ node }: { node: SnapshotTreeChild }) {
+function directoryMarkerText(node: SnapshotTreeChild): string {
   const changed = node.changed ?? 0;
-  return (
-    <span className="shrink-0 text-muted-foreground">
-      {changed > 0 ? `${changed} changed` : (node.files ?? 0)}
-    </span>
-  );
+  return changed > 0 ? `${changed} changed` : String(node.files ?? 0);
+}
+
+function DirectoryMarker({ node }: { node: SnapshotTreeChild }) {
+  return <span className="shrink-0 text-muted-foreground">{directoryMarkerText(node)}</span>;
 }
 
 /**
@@ -108,18 +117,19 @@ export function SnapshotFileTree({
         const path = node.path ?? "";
         const name = node.name ?? path;
         const found = findings?.get(path) ?? [];
-        const foundLabel =
-          found.length > 0
-            ? `, ${plural(found.length, "finding")}, highest ${highestSeverity(found)}`
-            : "";
+        // The label starts with the text the row shows, in the order it shows it, and spells the
+        // terse markers out afterwards: a name has to contain its visible text (WCAG 2.5.3).
+        const shown = fullPaths ? path : name;
+        const fileMeaning = [
+          ...(shown === path ? [] : [path]),
+          ...(found.length > 0 ? [plural(found.length, "finding"), `highest ${highestSeverity(found)}`] : []),
+        ].join(", ");
         return node.kind === "directory" ? (
           <li key={`d:${path}`}>
             <button
               type="button"
               aria-expanded={expanded.has(path)}
-              aria-label={`${name}, ${plural(node.files ?? 0, "file")}${
-                (node.changed ?? 0) > 0 ? `, ${node.changed} changed` : ""
-              }`}
+              aria-label={`${name} ${directoryMarkerText(node)} (${plural(node.files ?? 0, "file")})`}
               onClick={() => onToggle(path)}
               className="flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs hover:bg-muted outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             >
@@ -134,6 +144,8 @@ export function SnapshotFileTree({
                 <Folder className="size-3.5 shrink-0 text-primary" aria-hidden />
               )}
               <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
+              {/* A real space between the spans: axe joins sibling text without one, so the
+                  label's spaced words would not otherwise be found in the visible text. */}{" "}
               <DirectoryMarker node={node} />
             </button>
             {expanded.has(path) ? (
@@ -145,7 +157,10 @@ export function SnapshotFileTree({
             <button
               type="button"
               aria-current={path === selectedPath ? "true" : undefined}
-              aria-label={`${path}, ${node.status ?? size(node.size)}${foundLabel}`}
+              aria-label={[shown, findingsMarkerText(found), fileMarkerText(node)]
+                .filter(Boolean)
+                .join(" ")
+                .concat(fileMeaning ? ` (${fileMeaning})` : "")}
               onClick={() => onSelect(path)}
               // Selected is a violet tint, hover is the neutral one. They have to differ by hue
               // rather than by token, because `--accent` and `--muted` are the same value in both
@@ -165,12 +180,11 @@ export function SnapshotFileTree({
                   />
                 );
               })()}
-              <span className="min-w-0 flex-1 truncate">{fullPaths ? path : name}</span>
+              <span className="min-w-0 flex-1 truncate">{shown}</span>{" "}
               {found.length > 0 ? (
                 // Stacked, so the slot is as wide as the wider marker and the name keeps its room.
                 <span className="flex shrink-0 flex-col items-end leading-tight">
-                  <FindingsMarker findings={found} />
-                  <FileMarker node={node} />
+                  <FindingsMarker findings={found} /> <FileMarker node={node} />
                 </span>
               ) : (
                 <FileMarker node={node} />

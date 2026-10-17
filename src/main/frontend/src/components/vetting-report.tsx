@@ -109,6 +109,10 @@ function defaultExpiry() {
 /** Mirrors `WaiverService.MAX_LIFETIME`: the server refuses an expiry further out than this. */
 const MAX_WAIVER_DAYS = 90;
 
+/** The re-run button's text; its accessible name starts with the same string. */
+const RERUN = "Re-run the chain now";
+const RERUNNING = "Re-running the chain…";
+
 /**
  * The last day whose end (the instant posted below) is still within the server's cap, so the
  * date control never offers a day the server refuses.
@@ -759,10 +763,10 @@ export function ChainStalenessNotice({
           size="sm"
           variant="outline"
           disabled={revet.isPending}
-          aria-label={`Re-run the vetting chain on snapshot ${snapshotId}`}
+          aria-label={`${revet.isPending ? RERUNNING : RERUN} (snapshot ${snapshotId})`}
           onClick={() => revet.mutate(snapshotId)}
         >
-          {revet.isPending ? "Re-running the chain…" : "Re-run the chain now"}
+          {revet.isPending ? RERUNNING : RERUN}
         </Button>
       ) : null}
     </div>

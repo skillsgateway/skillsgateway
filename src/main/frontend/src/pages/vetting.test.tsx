@@ -56,7 +56,7 @@ test("an_administrator_reads_the_default_chain_and_the_marketplaces_that_depart_
   // The override the marketplace holds, named as what it overrides rather than as a state.
   expect(await screen.findByText("mode: stop-after-fail")).toBeInTheDocument();
   expect(
-    await screen.findByRole("button", { name: "Clear every chain override on corp-marketplace" }),
+    await screen.findByRole("button", { name: "Clear override (corp-marketplace)" }),
   ).toBeEnabled();
 });
 

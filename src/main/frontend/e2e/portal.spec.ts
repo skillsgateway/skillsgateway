@@ -679,7 +679,7 @@ test("the_vetting_chain_is_drawn_as_a_flow_and_a_node_opens_its_evidence", async
   const flow = page.getByRole("list", { name: /^Vetting chain of snapshot \d+$/ }).first();
   await expect(flow).toBeVisible();
   const steps = await flow.getByRole("button").evaluateAll((els) =>
-    els.map((el) => el.getAttribute("aria-label") ?? ""),
+    els.map((el) => (el.textContent ?? "").replace(/\s+/g, " ").trim()),
   );
   expect(steps.at(0)).toContain("Ingest");
   expect(steps.at(-2)).toContain("Outcome");
@@ -690,7 +690,7 @@ test("the_vetting_chain_is_drawn_as_a_flow_and_a_node_opens_its_evidence", async
   expect(injection).toBeDefined();
 
   // A node is a control, and it opens that node's own evidence.
-  await flow.getByRole("button", { name: injection!, exact: true }).click();
+  await flow.getByRole("button", { name: /\bprompt-injection\b/ }).click();
   const detail = page.getByRole("dialog");
   await expect(detail.getByText("instruction-override").first()).toBeVisible();
 
@@ -700,7 +700,7 @@ test("the_vetting_chain_is_drawn_as_a_flow_and_a_node_opens_its_evidence", async
   await openSection(page, name, "Settings");
   const chain = page.getByRole("list", { name: `Vetting chain of ${name}` });
   await expect(chain).toBeVisible();
-  await expect(chain.getByRole("button", { name: /prompt-injection, enabled$/ })).toBeVisible();
+  await expect(chain.getByRole("button", { name: /\bprompt-injection enabled\b/ })).toBeVisible();
 });
 
 /**
@@ -756,10 +756,10 @@ test("an_admin_sets_the_chain_mode_and_order_and_a_stopped_run_says_so", async (
   // The headline says the chain stopped early and where, so a shorter chain is not read as a
   // cleaner one, and the vetters it never reached say so on their own nodes.
   await expect(page.getByText("Stopped at step 1")).toBeVisible();
-  await expect(flow.getByRole("button", { name: /secret-scan, not reached$/ })).toBeVisible();
+  await expect(flow.getByRole("button", { name: /\bsecret-scan not reached\b/ })).toBeVisible();
 
   // And the gate is shut: a run that stopped early is not a run that found nothing.
-  await expect(flow.getByRole("button", { name: /Approval, closed$/ })).toBeVisible();
+  await expect(flow.getByRole("button", { name: /\bApproval closed\b/ })).toBeVisible();
 });
 
 /**
@@ -1278,7 +1278,7 @@ test("an_admin_sets_the_default_chain_and_clears_a_marketplaces_override", async
   );
 
   // Clearing is a removal, not a write of the default value.
-  await page.getByRole("button", { name: `Clear every chain override on ${name}` }).click();
+  await page.getByRole("button", { name: `Clear override (${name})` }).click();
   await expect(page.getByRole("row", { name: new RegExp(name) })).toHaveCount(0);
 
   // And the marketplace now resolves from the global setting, which is what "cleared" has to mean.
@@ -1336,7 +1336,7 @@ test("a_chain_change_marks_held_evidence_superseded_and_the_reviewer_refreshes_i
   await expect(detailVetting.getByText(/Approval is not blocked by this/)).toBeVisible();
 
   // Refreshed in place: the chain runs again, and the snapshot is still held.
-  await detailVetting.getByRole("button", { name: /Re-run the vetting chain on snapshot \d+/ }).click();
+  await detailVetting.getByRole("button", { name: /Re-run the chain now \(snapshot \d+\)/ }).click();
   await expect(
     detailVetting.getByText(/different chain than this marketplace runs now/),
   ).toHaveCount(0);

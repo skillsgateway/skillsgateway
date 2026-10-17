@@ -912,7 +912,8 @@ overrides the setting keeps its own; clearing that override is how it comes back
 
 One row per marketplace whose chain departs from the default, showing what it
 departs in — `mode: stop-after-fail`, `order: …`, `secret-scan: off` — and a
-**Clear every chain override on _name_** control. Assembled from
+**Clear override** control, which a screen reader announces with the marketplace
+it acts on (`Clear override (name)`). Assembled from
 `GET /api/v1/vetting/chain-settings`, `GET /api/v1/vetting/vetter-toggles` and
 `GET /api/v1/marketplaces`; a stored override whose marketplace is no longer
 registered still gets a row, labelled by its id and with its control disabled.

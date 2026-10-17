@@ -61,6 +61,14 @@ parentheses (`plugins 2 changed (3 files)`, `reference.md high · 1 4 KiB (plugi
 The expansion stays, because `2 changed` and `high · 1` are not self-explanatory to a
 screen-reader user, but it follows the visible text instead of replacing it.
 
+**Found while implementing: axe joins sibling elements' text with no separator.** A row
+whose visible text is `<span>LICENSE</span><span>1 KiB</span>` is `LICENSE1 KiB` to axe, so
+no natural label (`LICENSE 1 KiB`) contains it; only an absurd one would. Checked in
+headless Chromium against axe-core 4.14: with a real space text node between the spans
+(`<span>…</span>{" "}<span>…</span>`) the spaced label passes, and a wrong label still
+fails. A whitespace-only text node in a flex container takes no space in the layout, so
+nothing visible moves. The rows carry `{" "}` between their spans for that reason.
+
 Alternative: drop the labels and let the content name the rows. Rejected: the markers
 are terse by design (a reviewer scanning a tree), and spoken as `plugins 3` they lose
 their meaning.
@@ -75,12 +83,16 @@ belong to.
 Alternative: keep a composed label containing every field. Rejected: it is the same
 duplication that drifted, with five inputs instead of two.
 
+The same space text nodes go between the pieces of the button, because a button named by
+its content also needs them: without them the name ran together (`Step 1secret-scanfail`).
+
 ### Decision 4: tests assert the property, not just the new strings
 
 Updating the queried names fixes the tests but would let the next hand-written label
 drift again unnoticed on a lock file that pins an older axe. Each affected story or
-component test also asserts that the control's accessible name contains its
-`textContent`, which holds independently of the axe version.
+component test also asserts, with `labelContainsText` (`lib/accessible-name.ts`), that the
+control's `aria-label` contains its visible text, which holds independently of the axe
+version. The helper ignores whitespace and case, as axe does.
 
 ## Risks / Trade-offs
 

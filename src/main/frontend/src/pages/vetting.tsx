@@ -246,6 +246,9 @@ function OverridesCard({
   return <OverridesTable overrides={overrides} loading={loading} clearing={clearing} onClear={clear} />;
 }
 
+/** The clear button's text; its accessible name starts with the same string. */
+const clearText = (busy: boolean) => (busy ? "Clearing…" : "Clear override");
+
 /**
  * One row per marketplace that departs from the default, and what it departs in.
  *
@@ -331,10 +334,10 @@ export function OverridesTable({
                         size="sm"
                         variant="outline"
                         disabled={!row.name || clearing === row.name}
-                        aria-label={`Clear every chain override on ${row.label}`}
+                        aria-label={`${clearText(clearing === row.name)} (${row.label})`}
                         onClick={() => clear(row)}
                       >
-                        {clearing === row.name ? "Clearing…" : "Clear override"}
+                        {clearText(clearing === row.name)}
                       </Button>
                     </TableCell>
                   </TableRow>

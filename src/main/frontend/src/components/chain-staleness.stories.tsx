@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, within } from "storybook/test";
+import { labelContainsText } from "@/lib/accessible-name";
 import { ChainStalenessNotice } from "./vetting-report";
 
 /**
@@ -59,9 +60,9 @@ export const Superseded: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByText(/different chain than this marketplace runs now/)).toBeVisible();
     await expect(canvas.getByText(/Approval is not blocked by this/)).toBeVisible();
-    await expect(
-      canvas.getByRole("button", { name: "Re-run the vetting chain on snapshot 1" }),
-    ).toBeEnabled();
+    const rerun = canvas.getByRole("button", { name: "Re-run the chain now (snapshot 1)" });
+    await expect(rerun).toBeEnabled();
+    await expect(labelContainsText(rerun)).toBe(true);
   },
 };
 
@@ -77,7 +78,7 @@ export const SupersededWithNothingToRefresh: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByText(/different chain than this marketplace runs now/)).toBeVisible();
     await expect(
-      canvas.queryByRole("button", { name: /Re-run the vetting chain/ }),
+      canvas.queryByRole("button", { name: /Re-run the chain/ }),
     ).not.toBeInTheDocument();
   },
 };
