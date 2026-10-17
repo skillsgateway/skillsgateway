@@ -27,8 +27,8 @@
 ## 6. Gates and evidence
 
 - [ ] 6.1 Run, in the foreground and fresh after the last edit: `./mvnw clean verify`, `pnpm test:stories` (with the lock file of 1.1 and with the repository's own), `pnpm e2e`, `reqstool status local -p docs/reqstool`, `openspec validate --all --strict`, `mkdocs build --strict`
-- [ ] 6.2 Write `evidence.md` with the commands, result tails and the commit SHA, and put its summary in the PR body
-- [ ] 6.3 Archive the change with `/opsx:archive` as the PR's last commit, using `--skip-specs` (`skip_specs: true`; the active change has no deltas, so `openspec validate` rejects it until it is archived, which is why archiving must be the last commit)
+- [x] 6.2 Write `evidence.md` with the commands, result tails and the commit SHA, and put its summary in the PR body
+- [x] 6.3 Archive the change with `/opsx:archive` as the PR's last commit, using `--skip-specs` (`skip_specs: true`; the active change has no deltas, so `openspec validate` rejects it until it is archived, which is why archiving must be the last commit)
 - [ ] 6.4 After merge, ask Renovate to rebase #646 and confirm its Storybook tests pass
 
 ## Notes from implementation
@@ -43,3 +43,12 @@
   directory count, a file of unknown size reading `—`, the pending-state names, and the space
   text nodes not moving the layout). `impeccable harden` found no data-dependent case the
   names mishandle: a long name is truncated by CSS only, and the label is not.
+- **6.1** is left unticked deliberately. The UI gates (unit, stories under both axe versions, e2e,
+  mkdocs) ran clean on `0d4cbf91`, but `./mvnw clean verify` was red locally for two backend tests
+  this change cannot reach, and `reqstool status` therefore had no test results to read. Both are
+  in `evidence.md`; CI is the arbiter for them.
+- **6.4** can only happen after the merge: ask Renovate to rebase #646 and confirm its Storybook
+  tests pass.
+- This change declares `skip_specs: true`, but openspec 1.3.1 (pinned in CI) does not honour it, so
+  `openspec status` shows `specs` as `ready` and `openspec validate` rejects the active change.
+  Neither matters once the change is archived, which is why archiving is the PR's last commit.
