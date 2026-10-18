@@ -37,7 +37,7 @@
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
         <checkstyle.version>14.3.0</checkstyle.version>
         <reqstool-plugin.version>1.1.0</reqstool-plugin.version>
-        <arconia.version>0.30.0</arconia.version>
+        <arconia.version>0.31.0</arconia.version>
         <awssdk.version>2.56.0</awssdk.version>
         <spring-cloud-aws.version>4.2.0</spring-cloud-aws.version>
         <cyclonedx-plugin.version>2.9.3</cyclonedx-plugin.version>
