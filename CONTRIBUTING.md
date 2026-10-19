@@ -282,3 +282,31 @@ it is, where it came from and under which license. It can only be accepted if
 that license is compatible with the Apache License 2.0, and it must keep its
 original notices. This is what the DCO's clause (b) and the CLA's section 3(d)
 refer to.
+
+### Commits made with AI tools
+
+You are the contributor, not the tool. A commit made with an AI coding tool is
+authored and signed off by you, the person who directed it. An AI identity is
+never a commit's author, a co-signer or a party to the CLA.
+
+- **Your sign-off covers the whole commit**, generated parts included. It
+  means you have reviewed what you submit and understand it well enough to
+  make the DCO's certification. On the maintainer's own agent-made commits,
+  that review is the one before merge.
+- **AI output is "a tool"** in the sense of [Code you did not write](#code-you-did-not-write):
+  check it for reproduced third-party code, and disclose any you find.
+- **Disclosure is welcome.** Mark substantial AI assistance with a trailer;
+  `Assisted-by:` and the tool's default `Co-Authored-By:` are both accepted.
+
+Some tools author commits under their own identity (Claude Code, for example,
+uses `noreply@anthropic.com`, which maps to the `claude` GitHub account). CLA
+Assistant checks each commit's author, so such a commit leaves `license/cla`
+pending however many times you sign. Set your own `user.name` and `user.email`,
+then re-author the branch's commits as yourself and force-push:
+
+```bash
+git rebase --exec 'git commit --amend --no-edit --reset-author -s' main
+```
+
+`-s` adds your own sign-off, which the `DCO` check matches against the new
+author. Remove any sign-off line the tool added under its own name.
