@@ -100,3 +100,6 @@ In the repository:
 Apache License 2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE). Third-party
 components are inventoried by the CycloneDX SBOM the build generates, which the
 running gateway serves from `/actuator/sbom`.
+
+The copyright holder also offers Skills Gateway under separate commercial
+terms. To ask about them, open an issue.
