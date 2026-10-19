@@ -273,6 +273,21 @@ comment on your pull request instead, under the name and email of your
 sign-offs: "I have read CLA.md and agree to it". A pull request from someone
 who has not agreed is not merged.
 
+**Commits made with AI tools.** You are the contributor, not the tool, so every
+commit must be authored by your own GitHub account. CLA Assistant checks each
+commit's author, and some tools author commits under their own identity (Claude
+Code, for example, uses `noreply@anthropic.com`, which maps to the `claude`
+account), which leaves `license/cla` pending however many times you sign.
+Set your own `user.name` and `user.email` for the repository, then re-author
+the branch's commits as yourself and force-push:
+
+```bash
+git rebase --exec 'git commit --amend --no-edit --reset-author -s' main
+```
+
+`-s` adds your own sign-off, because the `DCO` check matches the sign-off
+against the new author.
+
 ### Code you did not write
 
 If a contribution contains code, text, images or data that you did not author
