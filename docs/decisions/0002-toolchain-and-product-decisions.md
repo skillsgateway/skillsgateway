@@ -45,6 +45,8 @@ discussion, so the scaffold and the upcoming port have one reference.
   enterprise-lawyer-familiar). Open source now; a commercial/dual license
   remains possible later — copyright stays consolidated (DCO enforced on
   every commit; CLA to be considered when outside contributors appear).
+  *(Amended by [ADR 0022](0022-contributor-license-agreement-and-commercial-terms.md):
+  CLA adopted, commercial terms offered.)*
 - **Auth is in the port's scope from the beginning:** OIDC (OAuth2) login
   for the web portal + hashed personal access tokens for git clients
   (git cannot do interactive OIDC). OAuth device flow deferred. No SAML,

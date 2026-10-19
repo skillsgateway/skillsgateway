@@ -218,8 +218,64 @@ pip install -r docs/requirements.txt
 mkdocs build --strict
 ```
 
-## License
+## Contribution terms
 
-By contributing you agree that your contributions are licensed under the
-Apache License 2.0 and you certify the [Developer Certificate of
-Origin](https://developercertificate.org/).
+Nothing in this section is legal advice.
+
+Skills Gateway is licensed under the Apache License 2.0 ([`LICENSE`](LICENSE)),
+and a contribution is licensed to everyone under the same terms. Jimisola
+Laursen, the copyright holder, also offers Skills Gateway under separate
+commercial terms ([ADR 0022](docs/decisions/0022-contributor-license-agreement-and-commercial-terms.md)).
+Section 5 of the Apache License yields to a separate agreement with the
+licensor, and the CLA below is that agreement. Every contributor does two
+things:
+
+### 1. Sign off every commit (DCO)
+
+Every commit carries a Developer Certificate of Origin sign-off:
+
+```bash
+git commit -s
+```
+
+The sign-off certifies what the
+[DCO](https://github.com/skillsgateway/.github/blob/main/dco.txt) says: that
+you wrote the change or have the right to submit it under the license of the
+files you touched. Use your real name and a working email address. The `DCO`
+check is required, so a commit without a sign-off cannot be merged.
+
+### 2. Agree to the CLA once
+
+Before your first pull request is merged you will be asked to agree to
+[`CLA.md`](CLA.md). It is the Harmony Individual Contributor License Agreement
+with outbound Option Five, which means:
+
+- **You keep your copyright.** The CLA is a license to the maintainer, not an
+  assignment.
+- **The maintainer may license your contribution under other terms as well**,
+  including commercial or proprietary terms, and must always also offer it
+  under the license the project used on the day you submitted it.
+- **Governing law is Sweden.**
+
+What the CLA cannot do: withdraw a version already released. Every release
+under the Apache License 2.0 stays under it (the license grants in its
+sections 2 and 3 are irrevocable), and anyone may keep using and forking it.
+
+If you contribute as part of your job, your employer may own your work: have
+them approve the CLA before you agree to it, or ask the maintainer for an
+entity version for your employer to sign.
+
+**Signing the CLA.** There is no automated CLA check yet. The maintainer
+will ask you to comment on your pull request, under the name and email of
+your sign-offs: "I have read CLA.md and agree to it". A pull request from
+someone who has not agreed is not merged.
+
+### Code you did not write
+
+If a contribution contains code, text, images or data that you did not author
+yourself (copied from another project, generated with a tool from someone
+else's material, or written by a colleague), say so in the pull request: what
+it is, where it came from and under which license. It can only be accepted if
+that license is compatible with the Apache License 2.0, and it must keep its
+original notices. This is what the DCO's clause (b) and the CLA's section 3(d)
+refer to.
