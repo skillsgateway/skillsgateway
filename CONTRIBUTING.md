@@ -267,7 +267,7 @@ them approve the CLA before you agree to it, or ask the maintainer for an
 entity version for your employer to sign.
 
 **Signing the CLA.** The CLA Assistant check (`license/cla`) asks you to
-sign on your first pull request; it records your agreement under your GitHub
+sign on your first pull request; it then records your agreement under your GitHub
 account. If the check is not running yet, the maintainer will ask you to
 comment on your pull request instead, under the name and email of your
 sign-offs: "I have read CLA.md and agree to it". A pull request from someone
