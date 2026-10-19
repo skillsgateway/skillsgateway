@@ -69,12 +69,13 @@ for the same purpose; it was retired in favour of that single source
 
 Worth knowing before you open a PR:
 
-- **`main` is protected.** A PR needs thirteen required checks green:
+- **`main` is protected.** A PR needs fourteen required checks green:
   `Build & gates`, `Storybook tests`, `Portal e2e`,
   `Traceability & spec gates`, `Documentation (strict)`,
   `Breaking change detection`, `semantic-pr / Validate PR title`,
-  `Apply subsystem labels`, `DCO`, `CodeQL`, `Analyze (actions)`,
-  `Analyze (java-kotlin)` and `Analyze (javascript-typescript)`. All review
+  `Apply subsystem labels`, `DCO`, `license/cla`, `CodeQL`,
+  `Analyze (actions)`, `Analyze (java-kotlin)` and
+  `Analyze (javascript-typescript)`. All review
   threads must be resolved, and a maintainer's approving review is required.
   Direct pushes, force-pushes and branch deletion are blocked.
 - **Tags are permanent.** No tag can be moved or deleted; a wrong release is
@@ -265,10 +266,12 @@ If you contribute as part of your job, your employer may own your work: have
 them approve the CLA before you agree to it, or ask the maintainer for an
 entity version for your employer to sign.
 
-**Signing the CLA.** There is no automated CLA check yet. The maintainer
-will ask you to comment on your pull request, under the name and email of
-your sign-offs: "I have read CLA.md and agree to it". A pull request from
-someone who has not agreed is not merged.
+**Signing the CLA.** The CLA Assistant check (`license/cla`) asks you to
+sign on your first pull request; it records your agreement under your GitHub
+account. If the check is not running yet, the maintainer will ask you to
+comment on your pull request instead, under the name and email of your
+sign-offs: "I have read CLA.md and agree to it". A pull request from someone
+who has not agreed is not merged.
 
 ### Code you did not write
 
