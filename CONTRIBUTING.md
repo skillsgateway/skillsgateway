@@ -295,8 +295,14 @@ never a commit's author, a co-signer or a party to the CLA.
   that review is the one before merge.
 - **AI output is "a tool"** in the sense of [Code you did not write](#code-you-did-not-write):
   check it for reproduced third-party code, and disclose any you find.
-- **Disclosure is welcome.** Mark substantial AI assistance with a trailer;
-  `Assisted-by:` and the tool's default `Co-Authored-By:` are both accepted.
+- **Disclose assistance with `Assisted-by:`**, the trailer the Linux kernel
+  introduced, in the form `Assisted-by: <agent>:<model> [<tool> ...]`, where
+  `<model>` is the model id the agent reports. Give the model when it is
+  known; `Assisted-by: <agent>` alone is accepted.
+- **Never `Co-Authored-By:` for a tool.** That trailer credits a human
+  co-author, and GitHub links it to an account. Remove or replace the one your
+  tool adds by default (Claude Code's `attribution.commit` setting, for
+  example). Other provenance trailers, such as a session link, may stay.
 
 Some tools author commits under their own identity (Claude Code, for example,
 uses `noreply@anthropic.com`, which maps to the `claude` GitHub account). CLA

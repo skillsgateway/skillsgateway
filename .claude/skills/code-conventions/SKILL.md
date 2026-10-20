@@ -96,3 +96,5 @@ openspec validate --all --strict
 
 - Conventional Commits, DCO sign-off (`git commit -s`), branches
   `<type>/<kebab-description>`, PR title = conventional commit (squash merge).
+- AI-assisted commits: `Assisted-by: <agent>:<model>` trailer, never
+  `Co-Authored-By:` for a tool (CONTRIBUTING.md, "Commits made with AI tools").
