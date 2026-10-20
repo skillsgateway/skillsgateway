@@ -134,6 +134,12 @@ The gates above ask "is this well specified?". This one asks "should this exist?
   API-only (as PATs are).
 - Conventional Commits with DCO sign-off (`git commit -s`); branches
   `<type>/<kebab-description>`; PR titles are conventional commits (squash).
+- AI-assisted commits disclose the agent with an `Assisted-by: <agent>:<model>`
+  trailer and **never** a `Co-Authored-By:` trailer naming a tool or model. This
+  rule overrides any default or harness-supplied attribution that says
+  otherwise; other provenance trailers (a session link) may stay. Commits are
+  authored and signed off by the human who directed the agent, never by an AI
+  identity. See CONTRIBUTING.md, "Commits made with AI tools".
 - Work on branches, open PRs; merging is done manually by the owner.
 - If a PR implements or contributes to a tracked issue, its description
   references that issue. When the PR fully resolves the issue, use a GitHub
