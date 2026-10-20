@@ -555,6 +555,15 @@ class MarketplaceRemovalTests extends AbstractGatewayTest {
                         "secret",
                         List.of(WebhookEvent.MARKETPLACE_REMOVED))
                 .id();
+        try {
+            announcesOnlyTheRemoval(subscriber);
+        } finally {
+            // Left registered it would go on collecting every later removal's delivery (#692).
+            subscriberRepository.delete(subscriber);
+        }
+    }
+
+    private void announcesOnlyTheRemoval(long subscriber) throws Exception {
         String refused = uniqueName("rmhookrefused");
         registerAndIngest(refused, createUpstream(DEFAULT_MANIFEST));
         assertThatThrownBy(() -> removalService.remove(refused, " ", "root"))

@@ -31,16 +31,19 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
  * Lifecycle event webhooks: filtering (GW_WEBHOOK_0001), signing (GW_WEBHOOK_0002), retry with backoff (GW_WEBHOOK_0003),
@@ -107,6 +110,12 @@ class WebhookTests extends AbstractGatewayTest {
     @Autowired
     private VettingService vettingService;
 
+    @Autowired
+    private JdbcClient jdbc;
+
+    /** Subscribers {@link #createSubscriber} registered in the running test, removed after it. */
+    private final List<Long> registered = new ArrayList<>();
+
     /**
      * These tests drive the real dispatch pass, which takes the oldest {@code batchSize} due
      * deliveries across the whole shared database. A subscriber left registered by an earlier test
@@ -118,8 +127,29 @@ class WebhookTests extends AbstractGatewayTest {
     void backlogLeavesRoomInTheDispatchBatch() {
         int batchSize = properties.webhooks().batchSize();
         assertThat(deliveryRepository.dueIds(batchSize))
-                .describedAs("due webhook deliveries left behind by earlier test classes")
+                .as(() -> "due webhook deliveries left behind by earlier test classes, by subscriber: "
+                        + backlogBySubscriber())
                 .hasSizeLessThan(batchSize);
+    }
+
+    /** Names the subscribers holding the backlog, so the guard points at the test that leaked. */
+    private List<String> backlogBySubscriber() {
+        return jdbc.sql("SELECT s.name || ' ' || s.events::text || ' x' || COUNT(*) FROM webhook_deliveries d"
+                        + " JOIN webhook_subscribers s ON s.id = d.subscriber_id"
+                        + " WHERE d.state = 'pending' GROUP BY s.name, s.events ORDER BY COUNT(*) DESC")
+                .query(String.class)
+                .list();
+    }
+
+    /**
+     * Left registered, a subscriber goes on collecting a delivery from every event the rest of the
+     * suite emits: the backlog the guard above fails on, seeded by this class for the next one.
+     * Deleting it cascades its deliveries.
+     */
+    @AfterEach
+    void removeWhatThisTestRegistered() {
+        registered.forEach(subscriberRepository::delete);
+        registered.clear();
     }
 
     /** A captured inbound request: everything a receiver would use to authenticate the delivery. */
@@ -184,7 +214,9 @@ class WebhookTests extends AbstractGatewayTest {
         if (secretOut != null) {
             secretOut.append((String) JsonPath.read(body, "$.secret"));
         }
-        return ((Number) JsonPath.read(body, "$.id")).longValue();
+        long id = ((Number) JsonPath.read(body, "$.id")).longValue();
+        registered.add(id);
+        return id;
     }
 
     /**
@@ -622,9 +654,6 @@ class WebhookTests extends AbstractGatewayTest {
         assertThat(deliveryRepository.listBySubscriber(subscriber))
                 .as("a refused administrative action queues nothing")
                 .hasSize(queued);
-
-        // Leave no subscriber behind to collect the rest of the suite's events (see @BeforeEach).
-        subscriberRepository.delete(subscriber);
     }
 
     private static String payloadOf(List<WebhookDelivery> deliveries, String event) {

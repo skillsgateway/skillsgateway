@@ -16,8 +16,10 @@ import dev.skillsgateway.server.persistence.WebhookDelivery;
 import dev.skillsgateway.server.persistence.WebhookDeliveryRepository;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import io.github.reqstool.annotations.SVCs;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -35,6 +37,20 @@ class AuditExportTests extends AbstractGatewayTest {
 
     @Autowired
     private WebhookDeliveryRepository deliveryRepository;
+
+    /** Sinks {@link #createSink} registered in the running test, removed after it. */
+    private final List<Long> sinks = new ArrayList<>();
+
+    /**
+     * A sink left registered keeps receiving a delivery from every later export pass: a due backlog
+     * in the shared dispatch queue, and an extra sink in every other suite's pass. Removing the sink
+     * removes its channel and, by cascade, the channel's deliveries.
+     */
+    @AfterEach
+    void removeWhatThisTestRegistered() {
+        sinks.forEach(exportService::deleteSink);
+        sinks.clear();
+    }
 
     /** One exported page: the lines of the stream and the cursor a consumer resumes from. */
     private record Page(List<String> lines, long cursor) {}
@@ -75,7 +91,9 @@ class AuditExportTests extends AbstractGatewayTest {
                 .getResponse()
                 .getContentAsString();
         assertThat((String) JsonPath.read(body, "$.secret")).startsWith("whsec_");
-        return ((Number) JsonPath.read(body, "$.id")).longValue();
+        long id = ((Number) JsonPath.read(body, "$.id")).longValue();
+        sinks.add(id);
+        return id;
     }
 
     private void appendLedgerEntries(String marketplace, int count) {
