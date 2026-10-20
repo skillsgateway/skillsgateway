@@ -7,6 +7,8 @@ import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.storage.GitStorage;
 import io.github.reqstool.annotations.SVCs;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.regex.Pattern;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RefUpdate;
@@ -31,6 +33,9 @@ import org.springframework.beans.factory.annotation.Autowired;
  * to a reference it wrote itself, so the shared context is not something they can see.
  */
 class RefAdvertisementTests extends AbstractGatewayTest {
+
+    /** One line of {@code git ls-remote} output: an object id, a tab, a ref name. */
+    private static final Pattern ADVERTISED_REF = Pattern.compile("\\p{XDigit}{40,64}\t\\S+");
 
     @Autowired
     private GitStorage storage;
@@ -59,8 +64,17 @@ class RefAdvertisementTests extends AbstractGatewayTest {
         assertThat(fetch.exitCode()).as(fetch.output()).isZero();
 
         // The advertised set is stated, not sampled: anything new appearing here is a decision
-        // someone has to make on purpose.
-        assertThat(lsRemote.output().lines().map(line -> line.split("\\s+")[1]).toList())
+        // someone has to make on purpose. Only "<sha>\t<ref>" lines are the advertisement; the
+        // output also carries git's stderr, where git prints "warning: redirecting to ..." once
+        // libcurl's effective URL (credentials included, after the 401 retry) differs from the URL
+        // it asked for. The facade answers 401 then 200 and issues no redirect (#693).
+        List<String> refs = lsRemote.output()
+                .lines()
+                .filter(line -> ADVERTISED_REF.matcher(line).matches())
+                .map(line -> line.split("\t")[1])
+                .toList();
+        assertThat(refs).as("the advertisement in %s", lsRemote.output()).isNotEmpty();
+        assertThat(refs)
                 .as("the whole advertised surface")
                 .allSatisfy(ref -> assertThat(ref)
                         .satisfiesAnyOf(
