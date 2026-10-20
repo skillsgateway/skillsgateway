@@ -45,6 +45,16 @@
       matchPackageNames: ["org.eclipse.jgit{/,}**"],
     },
     {
+      // The traceability gate runs reqstool 0.12.0, which pins pygit2==1.20.0,
+      // and pygit2 publishes no CPython 3.15 wheel: on 3.15 pip falls back to
+      // building it from source against libgit2, which the runner lacks. Lift
+      // this once a reqstool release installs from wheels on 3.15.
+      description: "Hold Python below 3.15 until reqstool installs on it",
+      matchManagers: ["github-actions"],
+      matchDepNames: ["python"],
+      allowedVersions: "<3.15",
+    },
+    {
       description: "Group Spring Boot and the Boot-aligned Arconia BOM",
       groupName: "spring boot",
       matchPackageNames: [
