@@ -236,7 +236,16 @@ class SweepCoordinationTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_AUDIT_0005"})
     void anExportAdvanceCannotOverwriteACursorItDidNotRead() {
         AuditSink sink = newSink(uniqueName("cas"));
+        try {
+            cursorAdvanceIsComparedAndSet(sink);
+        } finally {
+            // Leave no sink behind for every later export pass to deliver to (#692).
+            sinkRepository.delete(sink.id());
+            subscriberRepository.delete(sink.subscriberId());
+        }
+    }
 
+    private void cursorAdvanceIsComparedAndSet(AuditSink sink) {
         assertThat(sinkRepository.advanceCursor(sink.id(), 100L, sink.cursorPosition()))
                 .as("an advance from where the pass read is taken")
                 .isPresent();

@@ -261,9 +261,17 @@ class OpenApiContractTests extends AbstractGatewayTest {
         // The contract is worthless if the document promises a field the wire omits, so the check
         // runs against a real queued delivery rather than against the record's declaration.
         String name = "contract-" + UUID.randomUUID().toString().substring(0, 8);
-        webhookService.register(name, "https://receiver.example.com/hook", List.of("*"), null, "contract-test");
-        List<WebhookDelivery> queued =
-                webhookService.emit(WebhookEvent.SNAPSHOT_APPROVED, "corp", 42L, "abc123", "approved", "alice");
+        long subscriber = webhookService
+                .register(name, "https://receiver.example.com/hook", List.of("*"), null, "contract-test")
+                .id();
+        List<WebhookDelivery> queued;
+        try {
+            queued = webhookService.emit(WebhookEvent.SNAPSHOT_APPROVED, "corp", 42L, "abc123", "approved", "alice");
+        } finally {
+            // A wildcard subscriber left registered collects a delivery from every event the rest of
+            // the suite emits, until the backlog fills the dispatch batch WebhookTests drives (#692).
+            webhookService.deleteSubscriber(subscriber);
+        }
 
         List<String> promised =
                 parse(servedDocument()).read("$.components.schemas.%s.required".formatted(EVENT_PAYLOAD));
