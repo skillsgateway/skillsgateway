@@ -41,7 +41,7 @@
         <awssdk.version>2.57.3</awssdk.version>
         <spring-cloud-aws.version>4.2.0</spring-cloud-aws.version>
         <cyclonedx-plugin.version>2.9.3</cyclonedx-plugin.version>
-        <springdoc.version>3.1.1</springdoc.version>
+        <springdoc.version>3.2.0</springdoc.version>
         <scalar.version>0.4.4</scalar.version>
         <!-- Skips the UI gate execution (typecheck/lint/vitest/tags) without skipping
              the UI build; used by the container-image workflow, where no browsers exist. -->
