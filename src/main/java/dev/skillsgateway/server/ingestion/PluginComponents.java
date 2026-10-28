@@ -196,7 +196,7 @@ public final class PluginComponents {
     @Requirements({"GW_INGEST_0045"})
     public static Components read(Files files, String root, Manifest manifest, String entryPointer) {
         Reader reader = new Reader(files, root);
-        Manifest plugin = reader.json(join(root, PLUGIN_JSON), true);
+        Manifest plugin = reader.json(join(root, PLUGIN_JSON), "hooks");
         JsonNode entry = manifest == null || entryPointer == null
                 ? null
                 : manifest.root().at(entryPointer);
@@ -213,7 +213,7 @@ public final class PluginComponents {
         declared(reader, plugin, entry, manifest, entryPointer, "commands", "commands", commands);
         declared(reader, plugin, entry, manifest, entryPointer, "agents", "agents", agents);
 
-        Manifest defaultHooks = reader.json(join(root, "hooks/hooks.json"), true);
+        Manifest defaultHooks = reader.json(join(root, "hooks/hooks.json"), "hooks");
         if (defaultHooks != null) {
             reader.hooks(defaultHooks.root(), defaultHooks, "", join(root, "hooks"), hooks);
         }
@@ -224,7 +224,7 @@ public final class PluginComponents {
             reader.hookDeclaration(entry.path("hooks"), manifest, entryPointer + "/hooks", hooks);
         }
 
-        Manifest defaultMcp = reader.json(join(root, ".mcp.json"), false);
+        Manifest defaultMcp = reader.json(join(root, ".mcp.json"), "MCP servers");
         if (defaultMcp != null) {
             reader.mcpFile(defaultMcp, mcp, mcpCommands);
         }
@@ -236,7 +236,7 @@ public final class PluginComponents {
         }
 
         Lsp lsp = new Lsp(new LinkedHashMap<>(), new LinkedHashMap<>());
-        Manifest defaultLsp = reader.json(join(root, ".lsp.json"), false);
+        Manifest defaultLsp = reader.json(join(root, ".lsp.json"), "LSP servers");
         if (defaultLsp != null) {
             reader.lspServers(defaultLsp.root(), defaultLsp, "", lsp);
         }
@@ -314,20 +314,20 @@ public final class PluginComponents {
         }
 
         /**
-         * A JSON file of the tree, or {@code null} when it is absent or unreadable; an unreadable
-         * one is a problem only when {@code hookBearing}, since only a hook declaration is something
-         * the vetter must say it could not read.
+         * A JSON file of the tree, or {@code null} when it is absent or unreadable. An unreadable one
+         * is a problem naming what it {@code declares} (GW_VETTING_0049, GW_VETTING_0066): every file
+         * read here can declare something Claude Code runs.
          */
-        Manifest json(String path, boolean hookBearing) {
+        @Requirements({"GW_VETTING_0049", "GW_VETTING_0066"})
+        Manifest json(String path, String declares) {
             if (!exists(path)) {
                 return null;
             }
             try {
                 byte[] content = files.read(path);
                 if (content == null) {
-                    if (hookBearing) {
-                        problems.add(new Problem(path, "over the scan size limit, so its hooks could not be read"));
-                    }
+                    problems.add(
+                            new Problem(path, "over the scan size limit, so its " + declares + " could not be read"));
                     return null;
                 }
                 Manifest parsed = Manifest.parse(path, content);
@@ -336,9 +336,8 @@ public final class PluginComponents {
                 }
                 return parsed;
             } catch (IOException | RuntimeException e) {
-                if (hookBearing) {
-                    problems.add(new Problem(path, "not valid JSON, so its hooks could not be read: " + firstLine(e)));
-                }
+                problems.add(new Problem(
+                        path, "not valid JSON, so its " + declares + " could not be read: " + firstLine(e)));
                 return null;
             }
         }
@@ -394,7 +393,7 @@ public final class PluginComponents {
         void hookDeclaration(JsonNode value, Manifest doc, String pointer, List<Hook> out) {
             if (value.isTextual()) {
                 String path = resolve(root, value.asText());
-                Manifest file = json(path, true);
+                Manifest file = json(path, "hooks");
                 if (file != null) {
                     hooks(
                             file.root(),
@@ -532,7 +531,7 @@ public final class PluginComponents {
             if (value.isTextual()) {
                 String declared = value.asText();
                 if (declared.endsWith(".json")) {
-                    Manifest file = json(resolve(root, declared), false);
+                    Manifest file = json(resolve(root, declared), "MCP servers");
                     if (file != null) {
                         mcpFile(file, out, commands);
                     }
@@ -573,7 +572,7 @@ public final class PluginComponents {
         /** A plugin.json or marketplace-entry {@code lspServers} value: a path, an inline map, or an array of both. */
         void lspDeclaration(JsonNode value, Manifest doc, String pointer, Lsp out) {
             if (value.isTextual()) {
-                Manifest file = json(resolve(root, value.asText()), false);
+                Manifest file = json(resolve(root, value.asText()), "LSP servers");
                 if (file != null) {
                     lspServers(file.root(), file, "", out);
                 }
@@ -645,8 +644,10 @@ public final class PluginComponents {
         /**
          * Hooks in a skill's or agent's YAML frontmatter. Located at the first line holding the
          * handler's command text, else at the {@code hooks:} key. A malformed frontmatter block is
-         * {@code skill-conformance}'s to report, not a hook problem.
+         * {@code skill-conformance}'s to report, not a hook problem; a file that cannot be read at all
+         * is one (GW_VETTING_0066).
          */
+        @Requirements({"GW_VETTING_0066"})
         void frontmatterHooks(String path, String declaredBy, List<Hook> out) {
             String text;
             try {
@@ -656,6 +657,7 @@ public final class PluginComponents {
                 text = null;
             }
             if (text == null) {
+                problems.add(new Problem(path, "over the scan size limit, so its frontmatter hooks could not be read"));
                 return;
             }
             SkillFrontmatter.Parsed parsed = SkillFrontmatter.parse(text);

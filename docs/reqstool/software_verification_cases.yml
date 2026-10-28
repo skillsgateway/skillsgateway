@@ -1887,6 +1887,16 @@ cases:
       WHEN each is redacted
       THEN each credential is replaced by the marker with its surroundings kept, and the text carrying none is returned unchanged
     revision: "0.1.0"
+  - id: SVC_GW_VETTING_0069
+    requirement_ids: ["GW_VETTING_0066"]
+    title: Unreadable server, skill and agent files are each reported, and readable ones are not
+    verification: automated-test
+    description: |
+      GIVEN a plugin whose .mcp.json, .lsp.json, plugin.json-declared server file, SKILL.md or agent file is over the scan size limit, or whose .mcp.json or .lsp.json is not valid JSON, and a plugin whose such files are readable or absent
+      WHEN the executable-surface vetter runs
+      THEN each unreadable file yields one medium finding naming it and what could not be read, the verdict does not pass, and the readable or absent files yield none
+    revision: "0.1.0"
+
 
   - id: SVC_GW_VETTING_0026
     requirement_ids: ["GW_VETTING_0026"]

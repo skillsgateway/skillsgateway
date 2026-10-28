@@ -304,9 +304,10 @@ class PluginComponentsTests {
         assertThat(components.hooks()).isEmpty();
         assertThat(components.commands()).extracting(Component::name).containsExactly("ok");
         assertThat(components.mcpServers()).isEmpty();
+        // An unreadable server file is a problem too (GW_VETTING_0066): it may declare a server.
         assertThat(components.hookProblems())
-                .singleElement()
-                .satisfies(problem -> assertThat(problem.path()).isEqualTo("p/hooks/hooks.json"));
+                .extracting(PluginComponents.Problem::path)
+                .containsExactly("p/hooks/hooks.json", "p/.mcp.json");
     }
 
     @Test
