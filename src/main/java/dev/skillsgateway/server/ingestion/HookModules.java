@@ -4,6 +4,7 @@ import dev.skillsgateway.server.ingestion.PluginComponents.HookModule;
 import dev.skillsgateway.server.ingestion.PluginComponents.Problem;
 import dev.skillsgateway.server.ingestion.PluginComponents.Site;
 import dev.skillsgateway.server.vetting.InterruptibleText;
+import dev.skillsgateway.server.vetting.LineIndex;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -35,8 +36,10 @@ final class HookModules {
 
     private static final Pattern EVENT = Pattern.compile("(?<![\\w.$])on\\(\\s*(['\"`])([\\w.:-]+)\\1");
     private static final Pattern USE = Pattern.compile("(?<![\\w$])\\$\\.([A-Za-z_]\\w*)");
-    private static final Pattern IMPORT_FROM =
-            Pattern.compile("\\b(?:import|export)\\s[^;'\"]*?\\bfrom\\s*(['\"])([^'\"\\n]+)\\1");
+    // Import discovery anchors on the specifier and looks back for the keyword, so it is linear
+    // (GW_VETTING_0063): a keyword-first pattern rescans to the next ';' or quote from every keyword.
+    private static final Pattern FROM_SPECIFIER = Pattern.compile("\\bfrom\\s*(['\"])([^'\"\\n]+)\\1");
+    private static final Pattern IMPORT_KEYWORD = Pattern.compile("\\b(?:import|export)\\s");
     private static final Pattern IMPORT_BARE = Pattern.compile("\\bimport\\s*(['\"])([^'\"\\n]+)\\1");
 
     private HookModules() {}
@@ -115,21 +118,24 @@ final class HookModules {
     /** First appearance of each name, located in the file it appears in. */
     private static void collect(Pattern pattern, int group, String code, String file, Map<String, Site> out) {
         Matcher matcher = pattern.matcher(InterruptibleText.of(code));
+        LineIndex lines = LineIndex.of(code);
         while (matcher.find()) {
             String name = matcher.group(group);
-            out.putIfAbsent(name, new Site(name, file + ":" + lineAt(code, matcher.start())));
+            if (!out.containsKey(name)) {
+                out.put(name, new Site(name, file + ":" + lines.lineOf(matcher.start())));
+            }
         }
     }
 
     private static List<Import> imports(String... texts) {
         Map<String, Import> found = new LinkedHashMap<>();
         for (String text : texts) {
-            for (Pattern pattern : List.of(IMPORT_FROM, IMPORT_BARE)) {
-                Matcher matcher = pattern.matcher(InterruptibleText.of(text));
-                while (matcher.find()) {
-                    Import imported = new Import(matcher.group(2), lineAt(text, matcher.start(2)));
-                    found.putIfAbsent(imported.specifier() + "\0" + imported.line(), imported);
-                }
+            LineIndex lines = LineIndex.of(text);
+            importsFrom(text, lines, found);
+            Matcher bare = IMPORT_BARE.matcher(InterruptibleText.of(text));
+            while (bare.find()) {
+                Import imported = new Import(bare.group(2), lines.lineOf(bare.start(2)));
+                found.putIfAbsent(imported.specifier() + "\0" + imported.line(), imported);
             }
         }
         List<Import> sorted = new ArrayList<>(found.values());
@@ -258,13 +264,29 @@ final class HookModules {
         return i < 0 || "(,=:[!&|?{};+-*%<>~^".indexOf(before.charAt(i)) >= 0;
     }
 
-    private static int lineAt(String text, int offset) {
-        int line = 1;
-        for (int i = 0; i < offset; i++) {
-            if (text.charAt(i) == '\n') {
-                line++;
+    /**
+     * {@code import … from '…'} and {@code export … from '…'} specifiers, as the keyword-first
+     * pattern matched them: the span before each {@code from} back to the previous ';' or quote must
+     * hold the keyword. Each span ends where its specifier starts, so the spans are disjoint and the
+     * whole pass is linear.
+     */
+    @Requirements({"GW_VETTING_0063"})
+    private static void importsFrom(String text, LineIndex lines, Map<String, Import> found) {
+        Matcher from = FROM_SPECIFIER.matcher(InterruptibleText.of(text));
+        int previousEnd = 0;
+        while (from.find()) {
+            int start = from.start();
+            int boundary = start - 1;
+            while (boundary >= previousEnd && ";'\"".indexOf(text.charAt(boundary)) < 0) {
+                boundary--;
             }
+            Matcher keyword =
+                    IMPORT_KEYWORD.matcher(InterruptibleText.of(text)).region(Math.max(boundary + 1, 0), start);
+            if (keyword.find()) {
+                Import imported = new Import(from.group(2), lines.lineOf(from.start(2)));
+                found.putIfAbsent(imported.specifier() + "\0" + imported.line(), imported);
+            }
+            previousEnd = from.end();
         }
-        return line;
     }
 }

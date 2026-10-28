@@ -1838,6 +1838,16 @@ cases:
       THEN both stop within two seconds of the interruption, and the manifest is read within one second with its real section still found
     revision: "0.1.0"
 
+  - id: SVC_GW_VETTING_0065
+    requirement_ids: ["GW_VETTING_0063"]
+    title: Files dense with matches are located and followed in linear time
+    verification: automated-test
+    description: |
+      GIVEN a hook module of eighty thousand import keywords, a hook module with forty thousand event registrations, an instruction file with thirty thousand injection phrases, and a script with twenty thousand secret-shaped assignments
+      WHEN each is read or vetted
+      THEN each finishes within a few seconds, and the first and last matches are located at their correct lines
+    revision: "0.1.0"
+
   - id: SVC_GW_VETTING_0026
     requirement_ids: ["GW_VETTING_0026"]
     title: External verdicts take the worst of declared and derived, and carry their report link
