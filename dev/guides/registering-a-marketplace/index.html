@@ -2916,7 +2916,9 @@ Review. From a script:</p>
 <p>The gateway clones the upstream default branch into quarantine, pins the tip
 commit as <code>refs/snapshots/{sha}</code>, and creates a snapshot in state <code>held</code>.
 Nothing is served yet. A manifest that breaks policy still captures a snapshot,
-in state <code>rejected</code>. See <a href="../../reference/api/marketplaces/#post-marketplacesnameingest">the endpoints</a>
+in state <code>rejected</code>, and so does a tree holding a symbolic link or a submodule
+entry. The vetters read files by path, while a git client checks a link out as
+a link, so the gateway serves regular and executable files only. See <a href="../../reference/api/marketplaces/#post-marketplacesnameingest">the endpoints</a>
 for every field.</p>
 <p>Ingesting the same upstream commit twice does not create a second snapshot, and
 pressing <strong>Ingest</strong> while an ingest is running follows that one rather than
