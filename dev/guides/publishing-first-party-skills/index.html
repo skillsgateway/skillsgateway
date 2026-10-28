@@ -2729,8 +2729,10 @@ the same reason an upstream URL is fixed once it has a snapshot: changing it
 would swap the supply chain under snapshots that were already ingested.</p>
 </div>
 <h2 id="step-2-mint-a-push-scoped-token">Step 2 — mint a push-scoped token<a class="headerlink" href="#step-2-mint-a-push-scoped-token" title="Permanent link">&para;</a></h2>
-<p>Publication authority is <strong>not</strong> fetch authority. It is a separate scope, and it
-has no "all marketplaces" form:</p>
+<p>Publication authority is <strong>not</strong> fetch authority. It is a separate scope, it
+has no "all marketplaces" form, and only an administrator or an
+<a href="../../reference/api/roles/">approver</a> of the marketplace can mint it. Any other
+caller is refused with <code>403</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/tokens<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name": "platform-skills-ci", "pushScopes": ["platform-skills"]}'</span>

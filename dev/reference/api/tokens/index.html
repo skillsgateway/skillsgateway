@@ -2970,6 +2970,11 @@ issued before publication existed can write anything and none can be granted
 publication to everything by forgetting a field. Entries are validated against
 the registered hosted marketplaces at creation. An out-of-scope push answers
 exactly like a marketplace that does not exist, as an out-of-scope fetch does.</p>
+<p>Only an administrator or an approver of a marketplace may put it in
+<code>pushScopes</code>. A request naming any marketplace the caller neither administers
+nor approves is refused with <code>403</code> and issues no token; one unauthorized name
+refuses the whole request rather than being dropped from it. A request without
+<code>pushScopes</code> needs no role, as before.</p>
 <p><code>sessionDerived</code> on a returned token says the credential came from
 <a href="#post-apitokenssession"><code>POST /api/v1/tokens/session</code></a> rather than from a
 deliberate provisioning.</p>
@@ -2990,6 +2995,10 @@ silently shortened.</p>
 <tr>
 <td>201</td>
 <td>Issued. The <code>token</code> field appears in this response and nowhere else, ever.</td>
+</tr>
+<tr>
+<td>403</td>
+<td>A push scope names a marketplace the caller neither administers nor approves.</td>
 </tr>
 <tr>
 <td>422</td>
