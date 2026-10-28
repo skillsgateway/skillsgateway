@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
+import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -374,8 +375,19 @@ public class IngestionService {
      * otherwise byte-for-byte the path that shipped before: a local-only manifest is served as the
      * upstream commit, with no composite, no fetch and no new reference.
      */
-    @Requirements({"GW_INGEST_0021", "GW_INGEST_0023", "GW_INGEST_0024.1", "GW_INGEST_0027", "GW_INGEST_0030.1"})
+    @Requirements({
+        "GW_INGEST_0021",
+        "GW_INGEST_0023",
+        "GW_INGEST_0024.1",
+        "GW_INGEST_0027",
+        "GW_INGEST_0030.1",
+        "GW_INGEST_0070"
+    })
     private Served serve(Repository repo, ObjectId upstreamSha) throws IOException {
+        String shape = nonRegularEntry(repo, upstreamSha);
+        if (shape != null) {
+            return new Served(upstreamSha, shape);
+        }
         byte[] manifestBytes = manifestBytes(repo, upstreamSha);
         if (manifestBytes == null) {
             return new Served(upstreamSha, "missing " + MANIFEST_PATH);
@@ -402,8 +414,43 @@ public class IngestionService {
             if (rewrite.violation() != null) {
                 return new Served(upstreamSha, rewrite.violation());
             }
+            // A grafted external tree is content too, and is held to the same rule.
+            String graftedShape = nonRegularEntry(repo, rewrite.commit());
+            if (graftedShape != null) {
+                return new Served(upstreamSha, graftedShape);
+            }
             return new Served(rewrite.commit(), null, closure(upstreamSha, resolution.resolved()));
         }
+    }
+
+    /**
+     * The first entry of the commit's tree that is neither a regular nor an executable file, as a
+     * violation, or {@code null} (GW_INGEST_0070). The vetters read blobs by path, while a client
+     * checks a symbolic link out as a link and a submodule as another repository, so neither can be
+     * vetted as what is installed.
+     */
+    @Requirements({"GW_INGEST_0070"})
+    private static String nonRegularEntry(Repository repo, ObjectId commitId) throws IOException {
+        try (RevWalk walk = new RevWalk(repo);
+                TreeWalk tree = new TreeWalk(repo)) {
+            tree.addTree(walk.parseCommit(commitId).getTree());
+            tree.setRecursive(true);
+            while (tree.next()) {
+                FileMode mode = tree.getFileMode(0);
+                if (mode == FileMode.SYMLINK) {
+                    return "the tree holds a symbolic link, which the gateway does not serve: " + tree.getPathString();
+                }
+                if (mode == FileMode.GITLINK) {
+                    return "the tree holds a submodule entry, which the gateway does not serve: "
+                            + tree.getPathString();
+                }
+                if (mode != FileMode.REGULAR_FILE && mode != FileMode.EXECUTABLE_FILE) {
+                    return "the tree holds an entry of mode %s, which the gateway does not serve: %s"
+                            .formatted(mode, tree.getPathString());
+                }
+            }
+        }
+        return null;
     }
 
     /** The closure as a value (GW_INGEST_0030.1): what each source was declared as, and what it became. */

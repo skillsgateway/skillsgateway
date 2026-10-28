@@ -2971,6 +2971,14 @@ requirements:
     categories: ["reliability"]
     revision: 0.5.0
 
+  - id: GW_INGEST_0070
+    title: A snapshot whose tree holds a symbolic link or a submodule entry is rejected
+    significance: shall
+    description: "The system shall record rejected, carrying a violation naming the entry's path and kind, a snapshot whose served tree — the upstream commit, a hosted push, or a composite with grafted external content — holds any entry other than a regular or executable file, including a symbolic link and a submodule entry, and shall hold one whose tree holds only regular and executable files as before."
+    rationale: "Vetting reads each file's bytes at the path it appears under, but a git client checks a symbolic link out as a link to wherever it points and a submodule as another repository, so the content a reviewer was shown and the content a consumer installs could differ. Refusing those entries keeps what was vetted and what is served the same set of bytes."
+    categories: ["security"]
+    revision: 0.5.0
+
   - id: GW_AUTH_0053
     title: A browser session does not depend on which instance answers
     significance: shall
