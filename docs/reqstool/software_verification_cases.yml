@@ -4169,6 +4169,16 @@ cases:
       THEN the approver is refused and the administrator is not, and the report names the first marketplace's fetcher and not the second's
     revision: "0.1.0"
 
+  - id: SVC_GW_AUTH_0057
+    requirement_ids: ["GW_AUTH_0057"]
+    title: A login named like a machine credential cannot list, revoke or rotate it
+    verification: automated-test
+    description: |
+      GIVEN a machine credential and a person whose login is that credential's principal name
+      WHEN the person lists their tokens, rotates the machine credential and revokes it through the personal routes
+      THEN the listing omits it, rotation and revocation answer not found, and the machine credential still authenticates
+    revision: "0.1.0"
+
   - id: SVC_GW_OBSERVABILITY_0005
     requirement_ids: ["GW_OBSERVABILITY_0005"]
     title: A taken and a skipped turn are each counted under their pass

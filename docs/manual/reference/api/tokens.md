@@ -137,6 +137,11 @@ rows.
 | 204 | Revoked. |
 | 404 | No such token **owned by the caller**. Another user's token id is indistinguishable from a nonexistent one. |
 
+These routes reach personal tokens and session credentials only. A machine
+credential is never listed, revoked or rotated here, even when its principal is
+the caller's login name; it is administered under
+[`/api/v1/tokens/machine`](#machine-api-credentials).
+
 ---
 
 ## Another principal's tokens
