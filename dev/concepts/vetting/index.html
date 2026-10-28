@@ -3638,6 +3638,11 @@ served, so its hooks are still read.</p>
 <td>medium: warns</td>
 </tr>
 <tr>
+<td><code>too-many-plugin-roots</code></td>
+<td>The snapshot declares more than 1,000 plugin roots (directories holding a <code>.claude-plugin/plugin.json</code>). Only the first 1,000 are read, so the rest were not examined</td>
+<td>high: blocks</td>
+</tr>
+<tr>
 <td><code>hook-target-unscanned</code></td>
 <td>A hook runs a file that is binary or over the scan size limit, so no rule could read it; or a hook module, or a file it imports, is missing, binary, over the size limit, or a package outside the plugin</td>
 <td>medium: warns</td>
