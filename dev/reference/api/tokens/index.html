@@ -3158,6 +3158,10 @@ rows.</p>
 </tr>
 </tbody>
 </table>
+<p>These routes reach personal tokens and session credentials only. A machine
+credential is never listed, revoked or rotated here, even when its principal is
+the caller's login name; it is administered under
+<a href="#machine-api-credentials"><code>/api/v1/tokens/machine</code></a>.</p>
 <hr />
 <h2 id="another-principals-tokens">Another principal's tokens<a class="headerlink" href="#another-principals-tokens" title="Permanent link">&para;</a></h2>
 <p>An administrator's reach over someone else's personal tokens (GW_AUTH_0055), for
