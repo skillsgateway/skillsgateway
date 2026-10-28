@@ -294,6 +294,16 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.5.0
 
+  - id: GW_FACADE_0036
+    title: A disabled catalog is not served
+    significance: shall
+    description: "The system shall serve the virtual catalog through the facade only while the catalog is enabled, and shall answer a request for it while it is disabled exactly as it answers one for a marketplace that does not exist, whatever its repository still holds."
+    rationale: "Disabling the catalog stops the rebuilds that remove revoked content from it, but the repository is kept, so a catalog still served after being disabled keeps serving whatever its last revision vendored, including content withdrawn everywhere else since."
+    references:
+      requirement_ids: ["GW_FACADE_0004"]
+    categories: ["security"]
+    revision: 0.5.0
+
   - id: GW_RETENTION_0001
     title: Snapshot retention policy evaluation
     significance: shall

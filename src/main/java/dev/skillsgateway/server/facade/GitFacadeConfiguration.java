@@ -94,7 +94,7 @@ public class GitFacadeConfiguration {
     }
 
     /** The facade only ever opens published repositories; quarantine is unreachable from here. */
-    @Requirements({"GW_FACADE_0002", "GW_AUTH_0006", "GW_INGEST_0034", "GW_INGEST_0063"})
+    @Requirements({"GW_FACADE_0002", "GW_AUTH_0006", "GW_INGEST_0034", "GW_INGEST_0063", "GW_FACADE_0036"})
     Repository resolvePublished(HttpServletRequest request, String name)
             throws RepositoryNotFoundException, ServiceMayNotContinueException {
         String marketplace = name.endsWith(".git") ? name.substring(0, name.length() - 4) : name;
@@ -112,8 +112,13 @@ public class GitFacadeConfiguration {
         // holds: removal withdraws through revocation, and this is what keeps "removed" meaning "not
         // served" when an unpublish failed or an approval raced the removal. The virtual catalog is
         // the one served repository that is not a marketplace row.
-        if (!marketplace.equals(properties.catalog().name())
-                && marketplaceRepository.findByName(marketplace).isEmpty()) {
+        boolean catalog = marketplace.equals(properties.catalog().name());
+        if (!catalog && marketplaceRepository.findByName(marketplace).isEmpty()) {
+            throw new RepositoryNotFoundException(name);
+        }
+        // A disabled catalog is no longer rebuilt, so what its repository holds stops tracking
+        // revocations: it is not served at all while disabled (GW_FACADE_0036).
+        if (catalog && !properties.catalog().enabled()) {
             throw new RepositoryNotFoundException(name);
         }
         Optional<Repository> serving;
