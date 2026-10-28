@@ -2918,7 +2918,7 @@ commit as <code>refs/snapshots/{sha}</code>, and creates a snapshot in state <co
 Nothing is served yet. A manifest that breaks policy still captures a snapshot,
 in state <code>rejected</code>, and so does a tree holding a symbolic link or a submodule
 entry, or one with more than 200,000 files and directories, or more than 32
-directories deep. The vetters read files by path, while a git client checks a link out as
+directories deep. So does a manifest declaring more than 1,000 plugins. The vetters read files by path, while a git client checks a link out as
 a link, so the gateway serves regular and executable files only. See <a href="../../reference/api/marketplaces/#post-marketplacesnameingest">the endpoints</a>
 for every field.</p>
 <p>Ingesting the same upstream commit twice does not create a second snapshot, and
