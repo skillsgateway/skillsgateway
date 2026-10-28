@@ -2791,6 +2791,14 @@ requirements:
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.3.0
 
+  - id: GW_APPROVAL_0031
+    title: A decision lands only on the snapshot state it was made about
+    significance: shall
+    description: "The system shall apply an approval or a rejection only if the snapshot is still in the state, and carries the same withdrawal, that the decision was evaluated against; shall otherwise refuse the decision as a conflict, leaving the snapshot and everything it serves as the intervening change left them; and shall refuse an approval of a snapshot that is neither held nor revoked without re-reading its state."
+    rationale: "The gates and the reviewer judge one row. A withdrawal, approval or rejection that lands while the decision is in flight changes what is being decided, and writing the decision over it would erase that change: an administrator's withdrawal undone with no record of its reversal, or a rejection written over an approval that is already served."
+    categories: ["security", "reliability"]
+    revision: 0.5.0
+
   - id: GW_INGEST_0045
     title: The snapshot inventory lists every component a plugin declares
     significance: shall

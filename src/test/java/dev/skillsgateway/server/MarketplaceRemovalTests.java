@@ -274,7 +274,7 @@ class MarketplaceRemovalTests extends AbstractGatewayTest {
         Registered registered = registerAndIngest(uniqueName("rmdecide"), createUpstream(DEFAULT_MANIFEST));
         marketplaceRepository.retire(registered.marketplace().id(), "root", REASON);
 
-        assertThatThrownBy(() -> snapshots.decide(registered.snapshot().id(), Snapshot.APPROVED, "alice"))
+        assertThatThrownBy(() -> snapshots.decide(registered.snapshot(), Snapshot.APPROVED, "alice"))
                 .isInstanceOf(MarketplaceRemovedException.class);
         assertThat(snapshots.findById(registered.snapshot().id()).orElseThrow().state())
                 .isEqualTo(Snapshot.HELD);

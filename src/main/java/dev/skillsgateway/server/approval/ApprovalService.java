@@ -307,9 +307,13 @@ public class ApprovalService {
             // with nothing published; in warn mode it returns what it found for the ledger.
             conflicts = requireFourEyes(current, marketplace, applied, reviewer);
         }
-        Snapshot decided = current.decidable()
-                ? decideGuarded(current, marketplace, reviewer)
-                : snapshotRepository.decide(snapshotId, Snapshot.APPROVED, reviewer);
+        if (!current.decidable()) {
+            // Refused on the row the gates were skipped for (GW_APPROVAL_0031): deciding it would re-read a
+            // state that may have changed since, and the gates above never judged that one.
+            throw new IllegalStateException(
+                    "invalid transition %s -> %s".formatted(current.state(), Snapshot.APPROVED));
+        }
+        Snapshot decided = decideGuarded(current, marketplace, reviewer);
         String sha = decided.sha();
         try {
             // Publication is one seam operation (GW_FACADE_0015): both served references land or neither
@@ -562,7 +566,7 @@ public class ApprovalService {
     private Snapshot decideGuarded(Snapshot current, Marketplace marketplace, String reviewer) {
         try {
             return nameCollisionGate.guarded(
-                    current, () -> snapshotRepository.decide(current.id(), Snapshot.APPROVED, reviewer));
+                    current, () -> snapshotRepository.decide(current, Snapshot.APPROVED, reviewer));
         } catch (NameCollisionException | PluginInventoryUnavailableException refused) {
             recordNameCollisionRefusal(current, marketplace, reviewer, refused);
             throw refused;
@@ -653,8 +657,12 @@ public class ApprovalService {
     }
 
     public Snapshot reject(long snapshotId, String reviewer) {
-        return metrics.observeApproval(
-                "reject", () -> snapshotRepository.decide(snapshotId, Snapshot.REJECTED, reviewer));
+        return metrics.observeApproval("reject", () -> {
+            Snapshot current = snapshotRepository
+                    .findById(snapshotId)
+                    .orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
+            return snapshotRepository.decide(current, Snapshot.REJECTED, reviewer);
+        });
     }
 
     @Requirements({"GW_INGEST_0004", "GW_INGEST_0030.5"})

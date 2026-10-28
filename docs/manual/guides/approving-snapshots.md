@@ -265,7 +265,7 @@ already approved keeps serving.
 | --- | --- |
 | 200 | Decided. |
 | 404 | Unknown snapshot. |
-| 409 | The snapshot is neither `held` nor `revoked`, its effective vetting outcome is blocked (see `uncoveredFindings`), a [policy rule](policy-rules.md) denied it, a plugin name it introduces [looks like one already served](#plugin-names-already-in-use) (see `collisions`), it has not yet cleared the [minimum release age](#waiting-out-the-minimum-release-age), or an enforcing [four-eyes rule](#separation-of-duties) refused it (see `conflicts`). |
+| 409 | The snapshot is neither `held` nor `revoked`, its effective vetting outcome is blocked (see `uncoveredFindings`), a [policy rule](policy-rules.md) denied it, a plugin name it introduces [looks like one already served](#plugin-names-already-in-use) (see `collisions`), it has not yet cleared the [minimum release age](#waiting-out-the-minimum-release-age), an enforcing [four-eyes rule](#separation-of-duties) refused it (see `conflicts`), or the snapshot changed while it was being decided: someone else approved, rejected or withdrew it in the meantime. Reload it and decide again. |
 
 !!! warning "An approved snapshot cannot be re-decided"
 

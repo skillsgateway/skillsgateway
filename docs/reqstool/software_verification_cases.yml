@@ -3829,6 +3829,16 @@ cases:
       THEN the Contents tab opens that file with the line focused and marked, the address carries the line, choosing another file clears it, and in the approval dialog the location stays text
     revision: "0.3.0"
 
+  - id: SVC_GW_APPROVAL_0032
+    requirement_ids: ["GW_APPROVAL_0031"]
+    title: A decision on a snapshot that changed since it was read is refused
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot read before an administrator withdraws it, a held snapshot read before another reviewer approves it, a snapshot read while revoked that is then re-approved and withdrawn again, and a held snapshot read and decided with nothing in between
+      WHEN each is decided on the state that was read
+      THEN the first three are refused as conflicts and keep the withdrawal or approval that intervened, and the fourth is decided
+    revision: "0.1.0"
+
   - id: SVC_GW_INGEST_0045
     requirement_ids: ["GW_INGEST_0045"]
     title: The inventory lists commands, agents, hooks, MCP servers and LSP servers from every declaration source
