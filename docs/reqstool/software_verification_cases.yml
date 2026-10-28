@@ -1868,6 +1868,26 @@ cases:
       THEN the first fails within five seconds with a finding naming too many plugin roots, and the second stops within two seconds of the interruption
     revision: "0.1.0"
 
+  - id: SVC_GW_VETTING_0067
+    requirement_ids: ["GW_VETTING_0065"]
+    title: A session holding no role never reads a token from a held hook
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot with two hook commands carrying a GitHub token, one of them where the finding message is cut short
+      WHEN a session holding no role reads the snapshot's content and vetting
+      THEN neither answer contains any part of the token, and both still show the rest of the command
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0068
+    requirement_ids: ["GW_VETTING_0065"]
+    title: The redactor masks each credential shape and leaves other text as written
+    verification: automated-test
+    description: |
+      GIVEN text carrying a GitHub token, an AWS access key id, a Slack token, a high-entropy assigned value or a private key, and text carrying none
+      WHEN each is redacted
+      THEN each credential is replaced by the marker with its surroundings kept, and the text carrying none is returned unchanged
+    revision: "0.1.0"
+
   - id: SVC_GW_VETTING_0026
     requirement_ids: ["GW_VETTING_0026"]
     title: External verdicts take the worst of declared and derived, and carry their report link

@@ -771,8 +771,9 @@ public class ExecutableSurfaceVetter implements Vetter {
         if (!"plugin".equals(hook.declaredBy())) {
             message.append(" while ").append(hook.declaredBy()).append(" is active");
         }
-        String runs =
-                hook.runs() == null ? "" : hook.runs().replaceAll("\\s+", " ").trim();
+        String runs = hook.runs() == null
+                ? ""
+                : SecretScanVetter.redact(hook.runs()).replaceAll("\\s+", " ").trim();
         if (runs.length() > SHOWN_COMMAND) {
             runs = runs.substring(0, SHOWN_COMMAND) + "…";
         }

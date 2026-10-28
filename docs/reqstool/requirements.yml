@@ -3182,3 +3182,13 @@ requirements:
       requirement_ids: ["GW_VETTING_0062"]
     categories: ["reliability", "security"]
     revision: 0.5.0
+
+  - id: GW_VETTING_0065
+    title: Credential-shaped text in held hook declarations is masked where the gateway shows it
+    significance: shall
+    description: "The system shall replace every value the secret-scan vetter's rules would report with a fixed marker in the text a hook declaration runs wherever the gateway returns or records it — the snapshot content inventory and the automatic-hook finding message — and shall leave the text the vetters read unchanged."
+    rationale: "The snapshot content and vetting reads are open to every portal session and to read-scoped machine credentials, so a held hook's handler text reached readers the approver gate keeps from the snapshot's raw bytes; the secret-scan vetter already withholds the value it reports, and the hook text must not undo that."
+    references:
+      requirement_ids: ["GW_VETTING_0003"]
+    categories: ["security"]
+    revision: 0.5.0

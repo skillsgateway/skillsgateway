@@ -32,6 +32,14 @@ public class SecretScanVetter implements Vetter {
     /** Above this, an assignment-shaped value is random enough to be a real credential. */
     private static final double ENTROPY_THRESHOLD = 4.0;
 
+    /** What {@link #redact} puts in place of a value the rules below would report. */
+    static final String REDACTED = "[redacted]";
+
+    /** A private key from its header to its footer, or to the end of a text that lacks one. */
+    private static final Pattern PRIVATE_KEY =
+            Pattern.compile("-----BEGIN (?:RSA |DSA |EC |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY(?: BLOCK)?-----"
+                    + "(?:(?!-----END)[\\s\\S])*+(?:-----END [A-Z ]*PRIVATE KEY(?: BLOCK)?-----)?");
+
     private static final List<ContentRules.Rule> RULES = List.of(
             new ContentRules.Rule(
                     "aws-access-key-id",
@@ -127,6 +135,32 @@ public class SecretScanVetter implements Vetter {
     private static String summary(int scanned, int oversize, int binary) {
         return "scanned %d text file(s)%s; applied %d secret-shape rules plus high-entropy assignment analysis"
                 .formatted(scanned, ContentRules.skipped(oversize, binary, "binary"), RULES.size());
+    }
+
+    /**
+     * {@code text} with every value these rules would report replaced by {@value #REDACTED}
+     * (GW_VETTING_0065), for held upstream text shown to readers the approver gate does not cover.
+     */
+    @Requirements({"GW_VETTING_0065"})
+    public static String redact(String text) {
+        if (text == null) {
+            return null;
+        }
+        String redacted = PRIVATE_KEY.matcher(text).replaceAll(REDACTED);
+        for (ContentRules.Rule rule : RULES) {
+            redacted = rule.pattern().matcher(redacted).replaceAll(REDACTED);
+        }
+        Matcher matcher = ASSIGNED_SECRET.matcher(redacted);
+        StringBuilder out = new StringBuilder();
+        while (matcher.find()) {
+            String kept = ContentRules.entropy(matcher.group(2)) >= ENTROPY_THRESHOLD
+                    ? redacted.substring(matcher.start(), matcher.start(2))
+                            + REDACTED
+                            + redacted.substring(matcher.end(2), matcher.end())
+                    : matcher.group();
+            matcher.appendReplacement(out, Matcher.quoteReplacement(kept));
+        }
+        return matcher.appendTail(out).toString();
     }
 
     /** Assignment-shaped values that are random enough to be credentials rather than identifiers. */

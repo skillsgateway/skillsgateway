@@ -410,6 +410,11 @@ high enough to be a real credential rather than an identifier.
 
 Findings never echo the matched value — a finding that quoted the secret would
 put it in the ledger and the portal.
+The same rules mask held hook text wherever the gateway shows it (GW_VETTING_0065 —
+Credential-shaped text in held hook declarations is masked where the gateway
+shows it): a value they would report reads `[redacted]` in the `auto-run-hook`
+message and in the hook list of a snapshot's content. The vetters still read the
+text as written.
 
 ### `prompt-injection`
 
@@ -453,7 +458,7 @@ served, so its hooks are still read.
 
 | Rule | What it means | Severity |
 | --- | --- | --- |
-| `auto-run-hook` | A hook runs automatically. The finding names its trigger (the event and the tool matcher) and what it runs, at the `path:line` where it is declared | medium: warns |
+| `auto-run-hook` | A hook runs automatically. The finding names its trigger (the event and the tool matcher) and what it runs, with credentials masked, at the `path:line` where it is declared | medium: warns |
 | `runtime-fetch-exec` | A hook's command, or a file of the snapshot the hook launches, downloads code and executes it. That covers three shapes: a download piped into an interpreter; an interpreter fed a download through `$(…)` or `<(…)`; and a file that both downloads to a file and makes that same file executable | high: blocks |
 | `runtime-package-run` | A hook runs a package runner (`npx`, `uvx`, `pnpm dlx`, `pipx run`, …) or installs packages (`pip install`, `npm install`, …). Either way, it fetches its code from a registry at run time | high: blocks |
 | `hook-config-unreadable` | A hook file, a `plugin.json` or the manifest could not be parsed, so the hooks it declares could not be read; or a hooks object holds a key the reader does not recognise, or a module path that leaves the plugin; or a skill's or agent's frontmatter `hooks` expands, through YAML aliases, past 10,000 values. The finding names the key | medium: warns |
