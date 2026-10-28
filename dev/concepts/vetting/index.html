@@ -3542,7 +3542,12 @@ key ids and secret keys, PEM private-key blocks, GitHub, Slack and Google
 tokens, JSON Web Tokens, and assignment-shaped values whose Shannon entropy is
 high enough to be a real credential rather than an identifier.</p>
 <p>Findings never echo the matched value — a finding that quoted the secret would
-put it in the ledger and the portal.</p>
+put it in the ledger and the portal.
+The same rules mask held hook text wherever the gateway shows it (GW_VETTING_0065 —
+Credential-shaped text in held hook declarations is masked where the gateway
+shows it): a value they would report reads <code>[redacted]</code> in the <code>auto-run-hook</code>
+message and in the hook list of a snapshot's content. The vetters still read the
+text as written.</p>
 <h3 id="prompt-injection"><code>prompt-injection</code><a class="headerlink" href="#prompt-injection" title="Permanent link">&para;</a></h3>
 <p>Pattern heuristics over the snapshot's Markdown instruction content
 (<code>SKILL.md</code>, commands, agents):</p>
@@ -3619,7 +3624,7 @@ served, so its hooks are still read.</p>
 <tbody>
 <tr>
 <td><code>auto-run-hook</code></td>
-<td>A hook runs automatically. The finding names its trigger (the event and the tool matcher) and what it runs, at the <code>path:line</code> where it is declared</td>
+<td>A hook runs automatically. The finding names its trigger (the event and the tool matcher) and what it runs, with credentials masked, at the <code>path:line</code> where it is declared</td>
 <td>medium: warns</td>
 </tr>
 <tr>

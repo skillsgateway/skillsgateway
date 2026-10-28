@@ -4216,7 +4216,11 @@ because reviewing must not require serving.</p>
 <li><strong>Hooks</strong> merge <code>hooks/hooks.json</code> with the hook files and inline hooks
   declared in <code>plugin.json</code> and the marketplace entry, plus hooks in skill and
   agent frontmatter. For those, <code>declaredBy</code> is <code>skill &lt;name&gt;</code> or
-  <code>agent &lt;name&gt;</code>.</li>
+  <code>agent &lt;name&gt;</code>.
+  <code>runs</code> reads <code>[redacted]</code> in place of any value the
+  <a href="../../../concepts/vetting/#secret-scan"><code>secret-scan</code></a> rules would report
+  (GW_VETTING_0065 — Credential-shaped text in held hook declarations is masked
+  where the gateway shows it).</li>
 <li><strong>MCP servers</strong> merge <code>.mcp.json</code> with <code>plugin.json</code>'s <code>mcpServers</code>.</li>
 <li><strong>LSP servers</strong> merge <code>.lsp.json</code> with the <code>lspServers</code> of <code>plugin.json</code>
   and of the marketplace entry. A name declared later replaces an earlier one.</li>
