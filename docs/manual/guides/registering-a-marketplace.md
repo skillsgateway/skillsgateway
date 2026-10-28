@@ -131,7 +131,9 @@ $ curl localhost:8080/api/v1/marketplaces/acme/ingest     # repeat until "runnin
 The gateway clones the upstream default branch into quarantine, pins the tip
 commit as `refs/snapshots/{sha}`, and creates a snapshot in state `held`.
 Nothing is served yet. A manifest that breaks policy still captures a snapshot,
-in state `rejected`. See [the endpoints](../reference/api/marketplaces.md#post-marketplacesnameingest)
+in state `rejected`, and so does a tree holding a symbolic link or a submodule
+entry. The vetters read files by path, while a git client checks a link out as
+a link, so the gateway serves regular and executable files only. See [the endpoints](../reference/api/marketplaces.md#post-marketplacesnameingest)
 for every field.
 
 Ingesting the same upstream commit twice does not create a second snapshot, and

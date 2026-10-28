@@ -3999,6 +3999,16 @@ cases:
       THEN the status reads interrupted, the request starts a new ingest, and the first attempt neither changes nor clears the second attempt's progress
     revision: "0.5.0"
 
+  - id: SVC_GW_INGEST_0070
+    requirement_ids: ["GW_INGEST_0070"]
+    title: A symbolic link or a submodule entry rejects the snapshot
+    verification: automated-test
+    description: |
+      GIVEN an upstream whose plugin hooks file is a symbolic link, an upstream with a submodule entry, and an upstream with an executable script
+      WHEN each is ingested
+      THEN the first two snapshots are rejected with a violation naming the entry's path and kind, and the third is held
+    revision: "0.1.0"
+
   - id: SVC_GW_AUTH_0053
     requirement_ids: ["GW_AUTH_0053"]
     title: A sign-in started on one instance completes on another, and its session is honoured by both
