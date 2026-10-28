@@ -3073,6 +3073,16 @@ requirements:
     categories: ["security"]
     revision: 0.5.0
 
+  - id: GW_INGEST_0076
+    title: Webhook triggers for one marketplace coalesce into at most one queued ingest
+    significance: shall
+    description: "The system shall answer a validly signed webhook trigger for a marketplace whose triggered ingest is queued and not yet started by joining that ingest rather than queuing another, and shall queue exactly one further ingest for a trigger that arrives once the queued one has started."
+    rationale: "The webhook queue is shared by every webhook-mode marketplace and served by one thread; without coalescing, a burst or a repeated delivery for one marketplace queued an ingest per request and held every other marketplace's trigger behind them, though only the first could find anything new."
+    references:
+      requirement_ids: ["GW_INGEST_0012"]
+    categories: ["reliability", "security"]
+    revision: 0.5.0
+
   - id: GW_AUTH_0053
     title: A browser session does not depend on which instance answers
     significance: shall

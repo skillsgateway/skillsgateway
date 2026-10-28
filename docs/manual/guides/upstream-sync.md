@@ -72,7 +72,8 @@ the request body (URLs, refs, commit SHAs) is ever read. The worst a
 forged-but-signed request can cause is a fetch the schedule would have done
 anyway, landing held in quarantine. The endpoint answers `202 Accepted`
 immediately and ingests in the background; the snapshot appears in the portal
-moments later.
+moments later. A burst of deliveries for one marketplace queues at most one
+ingest of it, so it never holds up the other marketplaces' webhooks.
 
 A refused request ingests nothing and gets `404`, whatever the reason: an
 unknown marketplace, one not in `webhook` mode, or a signature that is missing

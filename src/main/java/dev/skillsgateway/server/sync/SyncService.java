@@ -11,8 +11,10 @@ import io.github.reqstool.annotations.Requirements;
 import java.security.SecureRandom;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +45,7 @@ public class SyncService {
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
     private final ExecutorService webhookExecutor;
+    private final Map<Long, CompletableFuture<Snapshot>> queuedWebhookIngests = new ConcurrentHashMap<>();
     private final SecureRandom secureRandom = new SecureRandom();
 
     public SyncService(
@@ -109,10 +112,20 @@ public class SyncService {
      * Queues the ingestion a validly signed webhook request asked for (GW_INGEST_0012). Asynchronous so
      * the forge gets its 202 before the upstream fetch runs, single-threaded so queued triggers
      * are serialized; the returned future exists for tests and is ignored by the controller.
+     *
+     * <p>A trigger for a marketplace whose ingest is queued and not yet started joins that one
+     * (GW_INGEST_0076). The mark clears as the ingest starts, so a push during it queues one more.
      */
-    @Requirements({"GW_INGEST_0012"})
+    @Requirements({"GW_INGEST_0012", "GW_INGEST_0076"})
     public CompletableFuture<Snapshot> queueWebhookIngest(Marketplace marketplace) {
-        return CompletableFuture.supplyAsync(() -> ingest(marketplace, WEBHOOK_ACTOR), webhookExecutor);
+        return queuedWebhookIngests.computeIfAbsent(
+                marketplace.id(),
+                id -> CompletableFuture.supplyAsync(
+                        () -> {
+                            queuedWebhookIngests.remove(id);
+                            return ingest(marketplace, WEBHOOK_ACTOR);
+                        },
+                        webhookExecutor));
     }
 
     /**

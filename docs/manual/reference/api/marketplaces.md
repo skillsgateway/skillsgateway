@@ -350,6 +350,12 @@ ingestion of the **registered** upstream URL's default branch — nothing in the
 body is read. The ingestion is recorded on the ledger with the actor `webhook`
 and lands `held` like any other.
 
+Triggers for one marketplace coalesce. One that arrives while that
+marketplace's ingest is queued and not yet started joins it and still answers
+`202`. One that arrives while the ingest is running queues exactly one more, so
+a push is never lost (GW_INGEST_0076 — Webhook triggers for one marketplace
+coalesce into at most one queued ingest).
+
 | Status | Cause |
 | --- | --- |
 | 202 | Signature valid; ingestion queued. |
