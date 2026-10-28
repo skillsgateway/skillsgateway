@@ -1182,6 +1182,16 @@ cases:
       THEN only the push-scoped token publishes to the marketplace it names, every other token is refused, the second marketplace and the escaping name answer as not found, the second branch, the tag and the deletion are refused, the non-fast-forward is refused under the default policy leaving the tip unchanged and accepted under the permissive one with both tips on the append-only ledger, and the serving endpoint refuses the push outright
     revision: "0.1.0"
 
+  - id: SVC_GW_FACADE_0035
+    requirement_ids: ["GW_FACADE_0007"]
+    title: Only an administrator or the marketplace's approver is given a push scope
+    verification: automated-test
+    description: |
+      GIVEN two hosted marketplaces, a session holding no role, a session approving only the first, an administrator, and a session made administrator by an identity-provider claim
+      WHEN each requests a token whose push scopes name the first marketplace, the approver also requests one naming both, and the session holding no role requests a token with no push scope
+      THEN the session holding no role and the approver naming both are refused and hold no new token and no creation entry on the ledger, the approver's token for the first marketplace publishes to it, both administrators are issued the push scope, and the token with no push scope is issued as before
+    revision: "0.1.0"
+
   - id: SVC_GW_INGEST_0017
     requirement_ids: ["GW_INGEST_0017"]
     title: A push is quarantined, vetted, held, and served only once approved

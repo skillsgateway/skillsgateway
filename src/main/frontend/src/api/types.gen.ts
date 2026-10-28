@@ -1085,7 +1085,7 @@ export interface paths {
         put?: never;
         /**
          * Create a token
-         * @description Issues a personal access token for the git facade. Optionally scoped to named marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned exactly once. Push scopes are separate and grant nothing by default: they name the hosted marketplaces the token may publish to. Creation is audit-logged with the token's name and both kinds of scope.
+         * @description Issues a personal access token for the git facade. Optionally scoped to named marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned exactly once. Push scopes are separate and grant nothing by default: they name the hosted marketplaces the token may publish to, and only an administrator or an approver of every marketplace named may request them. Creation is audit-logged with the token's name and both kinds of scope.
          */
         post: operations["create_1"];
         delete?: never;
@@ -6607,6 +6607,15 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["IssuedToken"];
+                };
+            };
+            /** @description A push scope names a marketplace the caller neither administers nor approves */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Unknown scope, or lifetime beyond the configured cap */
