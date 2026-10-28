@@ -5130,13 +5130,14 @@ it.</p>
 nothing appears in <code>application.yaml</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">catalog</span><span class="p">:</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="c1"># Whether approvals and revocations rebuild the catalog and the /api/v1/catalog</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="c1"># endpoints answer. Turning this off never deletes an existing catalog repo.</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">    </span><span class="c1"># The catalog's facade path (/git/{name}) and its RESERVED name: a</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">    </span><span class="c1"># marketplace cannot be registered under it.</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">catalog</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="c1"># Whether approvals and revocations rebuild the catalog, the /api/v1/catalog</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="c1"># endpoints answer, and /git/{name} serves it. Turning this off stops serving</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="c1"># the catalog but never deletes an existing catalog repo.</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">    </span><span class="c1"># The catalog's facade path (/git/{name}) and its RESERVED name: a</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">    </span><span class="c1"># marketplace cannot be registered under it.</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">catalog</span>
 </code></pre></div>
 <table>
 <thead>
@@ -5152,7 +5153,7 @@ nothing appears in <code>application.yaml</code>.</p>
 <td><code>skills-gateway.catalog.enabled</code></td>
 <td>boolean</td>
 <td><code>true</code></td>
-<td>Gates rebuild triggers and the API endpoints.</td>
+<td>Gates rebuild triggers, the API endpoints, and serving <code>/git/{name}</code>. A disabled catalog answers as not found, since it no longer tracks revocations.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.catalog.name</code></td>
