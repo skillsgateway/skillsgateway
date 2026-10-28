@@ -718,6 +718,16 @@ cases:
       THEN the revoked marketplace's subtree and plugins are gone and its SHA is unreachable from every advertised catalog reference, the newly approved marketplace is present, and with nothing serving at all the catalog still serves a manifest with an empty plugin list
     revision: "0.1.0"
 
+  - id: SVC_GW_FACADE_0037
+    requirement_ids: ["GW_FACADE_0035"]
+    title: A rebuild whose reading went stale recomposes instead of overwriting a newer catalog
+    verification: automated-test
+    description: |
+      GIVEN a catalog serving a marketplace, and a rebuild on a second instance that has read that marketplace as served
+      WHEN the marketplace is withdrawn and the first instance commits a catalog without it before the second instance commits
+      THEN the second instance's rebuild does not restore the marketplace, and the served catalog does not contain it
+    revision: "0.1.0"
+
   - id: SVC_GW_FACADE_0005
     requirement_ids: ["GW_FACADE_0005"]
     title: Catalog constituents, fetch audit, manual rebuild, and the reserved name

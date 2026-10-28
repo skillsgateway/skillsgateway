@@ -47,6 +47,28 @@ public final class RefTransitions {
     }
 
     /**
+     * Points {@code ref} at {@code id} only if it still points at {@code expected} ({@code null}: it
+     * does not exist yet), returning false when something else moved it first (GW_FACADE_0035) and
+     * raising on any other refusal. Forced, because the new value need not descend from the old.
+     */
+    @Requirements({"GW_FACADE_0035"})
+    public static boolean compareAndSet(Repository repository, String ref, ObjectId expected, ObjectId id)
+            throws IOException {
+        RefUpdate update = repository.updateRef(ref);
+        update.setExpectedOldObjectId(expected == null ? ObjectId.zeroId() : expected);
+        update.setNewObjectId(id);
+        update.setForceUpdate(true);
+        RefUpdate.Result result = update.update();
+        if (WRITTEN.contains(result)) {
+            return true;
+        }
+        if (result == RefUpdate.Result.LOCK_FAILURE) {
+            return false;
+        }
+        throw new IOException("could not write %s in %s: %s".formatted(ref, describe(repository), result));
+    }
+
+    /**
      * Removes {@code ref} if it is there, raising when the deletion did not take effect. Force is
      * required because the reference is not being fast-forwarded to anything — the whole point is
      * that nothing replaces it.

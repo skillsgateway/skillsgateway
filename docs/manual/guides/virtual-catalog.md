@@ -40,6 +40,11 @@ Rebuilds happen on their own at the two moments the served estate changes:
 - a **revocation** unpublishes one → the marketplace leaves the catalog, with
   no operator action.
 
+With several instances of the gateway, a rebuild moves the catalog only if no
+other rebuild moved it since this one started reading. One that lost that race
+reads the estate again and recomposes, so a revision composed before a
+revocation can never replace one composed after it.
+
 Each catalog revision is a **parentless commit**: history depth one, so a
 retracted constituent is unreachable from every advertised catalog ref the
 moment the next revision lands — a consumer cannot fetch yesterday's catalog to

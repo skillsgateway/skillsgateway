@@ -284,6 +284,16 @@ requirements:
     implementation: configuration
     revision: 0.1.0
 
+  - id: GW_FACADE_0035
+    title: A catalog rebuild never replaces a newer revision with an older reading
+    significance: shall
+    description: "The system shall move the served catalog to a new revision only if the catalog has not moved since the rebuild began reading the served estate, on any instance of the gateway; shall otherwise compose the revision again from the estate as it is then, a bounded number of times, and report a failure rather than serve a revision composed from an earlier reading."
+    rationale: "A rebuild reads every marketplace's served tip and then commits. When two instances rebuild at once, one that read before a revocation can otherwise commit after one that read after it, and the revoked content is served again through the catalog until the next rebuild happens to run."
+    references:
+      requirement_ids: ["GW_FACADE_0004"]
+    categories: ["security", "reliability"]
+    revision: 0.5.0
+
   - id: GW_RETENTION_0001
     title: Snapshot retention policy evaluation
     significance: shall
