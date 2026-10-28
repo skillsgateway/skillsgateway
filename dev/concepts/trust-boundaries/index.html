@@ -3061,6 +3061,11 @@ the web chain, and it is <strong>stateless</strong>:</p>
 <li>Receive-pack is disabled by construction on this endpoint, so there is no
   write path here to reject at runtime. Publication into a gateway-hosted
   marketplace is a separate boundary — see below.</li>
+<li>The endpoint speaks the smart protocol only. Plain-file ("dumb HTTP") reads
+  of <code>info/refs</code>, <code>HEAD</code> or <code>objects/...</code> are refused, on this endpoint and on
+  <code>/publish/**</code>. Every served-content control hangs off upload-pack: the
+  served-ref filter, the want policy and the fetch ledger. Withdrawal removes
+  refs rather than objects, so a plain-file read would bypass all of them.</li>
 </ul>
 <pre class="mermaid"><code>sequenceDiagram
     participant G as git client
