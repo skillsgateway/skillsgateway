@@ -244,8 +244,8 @@ class ExternalVettingConnectorUnitTests {
     @SVCs({"SVC_GW_VETTING_0024"})
     void aBinaryFileIsShippedUnscannedNotDropped() {
         stub.respond(200, "{\"state\":\"pass\"}");
-        // Invalid UTF-8 makes ContentRules.text return null: present, marked not scanned, not dropped.
-        vetter(stub.url()).vet(snapshotOfBytes("logo.png", new byte[] {(byte) 0xFF, (byte) 0xFE, 'x'}));
+        // A NUL byte makes ContentRules.text return null: present, marked not scanned, not dropped.
+        vetter(stub.url()).vet(snapshotOfBytes("logo.png", new byte[] {(byte) 0xFF, (byte) 0xFE, 0, 'x'}));
         assertThat(stub.lastBody()).contains("\"path\":\"logo.png\"").contains("\"scanned\":false");
     }
 

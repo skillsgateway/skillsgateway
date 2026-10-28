@@ -93,7 +93,7 @@ public class SkillConformanceVetter implements Vetter {
                             content == null
                                     ? "SKILL.md exceeds the configured scan size limit and was not read,"
                                             + " so its conformance could not be checked"
-                                    : "SKILL.md is not valid UTF-8 and was not read, so its conformance"
+                                    : "SKILL.md is binary and was not read, so its conformance"
                                             + " could not be checked"));
                     return;
                 }
@@ -139,7 +139,7 @@ public class SkillConformanceVetter implements Vetter {
                         .formatted(examined, spec.pin())
                 + " specification, vendored in this gateway and not fetched%s; posture: %s"
                         .formatted(
-                                unread == 0 ? "" : " (%d unread as oversize or non-UTF-8)".formatted(unread),
+                                unread == 0 ? "" : " (%d unread as oversize or binary)".formatted(unread),
                                 enforce ? "enforce" : "advisory");
     }
 

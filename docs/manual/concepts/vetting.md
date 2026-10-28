@@ -656,7 +656,7 @@ select it.
 | `skill-frontmatter-malformed` | The block is never closed, is not valid YAML, or is not a mapping | only under enforcement |
 | `skill-field-missing` | A required field — `name`, `description` — is absent | only under enforcement |
 | `skill-field-invalid` | A field is present and breaks its constraint: wrong type, over its length limit, a `name` that is not lowercase or does not match its directory | only under enforcement |
-| `skill-not-scanned` | The `SKILL.md` was over the size limit or not valid UTF-8, so conformance could not be checked | only under enforcement |
+| `skill-not-scanned` | The `SKILL.md` was over the size limit or binary, so conformance could not be checked | only under enforcement |
 | `skill-field-unknown` | A frontmatter field the pinned specification does not define | never |
 
 **Advisory by default.** With
@@ -734,10 +734,12 @@ wire contract and a minimal working example.
 
 ## Coverage gaps are reported, not hidden
 
-A file larger than the configured size limit, or one that is not valid UTF-8, is
+A file larger than the configured size limit, or a binary one (holding a NUL byte), is
 not silently skipped. `secret-scan` and `prompt-injection` record one
 informational `file-not-scanned` finding per reason (over the size limit, or
-binary / not UTF-8). The finding says how many files it covers, names the first
+binary). A file that is merely not valid UTF-8 is not binary: it is read with
+replacement characters and scanned, because the shells, runtimes and agents
+that consume it read it too. The finding says how many files it covers, names the first
 twenty and counts the rest. The vetter's coverage summary also states the gap
 ("scanned 3210 text file(s); 51 file(s) not scanned (22 over the size limit, 29
 binary)"). A verdict whose findings are all informational shows that summary on

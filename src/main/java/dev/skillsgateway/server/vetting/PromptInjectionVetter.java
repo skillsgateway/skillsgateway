@@ -181,7 +181,7 @@ public class PromptInjectionVetter implements Vetter {
         }
         findings.addAll(
                 ContentRules.notScanned(oversize, "of instruction content not scanned: over the scan size limit"));
-        findings.addAll(ContentRules.notScanned(undecodable, "of instruction content not scanned: not valid UTF-8"));
+        findings.addAll(ContentRules.notScanned(undecodable, "of instruction content not scanned: binary"));
         return Verdict.of(findings, summary(scanned[0], oversize.size(), undecodable.size()));
     }
 
@@ -194,7 +194,7 @@ public class PromptInjectionVetter implements Vetter {
                         .formatted(
                                 scanned,
                                 String.join(", ", INSTRUCTION_SUFFIXES),
-                                ContentRules.skipped(oversize, undecodable, "not valid UTF-8"),
+                                ContentRules.skipped(oversize, undecodable, "binary"),
                                 ContentRules.ruleCount(RULES))
                 + " invisible-character analysis";
     }

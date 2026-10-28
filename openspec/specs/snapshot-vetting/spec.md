@@ -240,6 +240,9 @@ The system SHALL implement GW_VETTING_0043.
 #### Scenario: SVC_GW_VETTING_0043
 The system SHALL pass SVC_GW_VETTING_0043.
 
+#### Scenario: SVC_GW_VETTING_0063
+The system SHALL pass SVC_GW_VETTING_0063.
+
 ### Requirement: GW_APPROVAL_0022
 The system SHALL implement GW_APPROVAL_0022.
 

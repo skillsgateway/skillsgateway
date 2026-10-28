@@ -24,7 +24,7 @@ ships it rather than handing your endpoint a URL to pull from.
 
 !!! note "What this contract cannot give you"
 
-    Only *scannable* content is sent: a file that is not valid UTF-8 text
+    Only *scannable* content is sent: a binary file (one holding a NUL byte)
     arrives with `content: null`, whatever the caps are set to. So a vetter that
     needs to run a snapshot — a sandbox detonator — cannot be built on this
     contract, and no cap makes it possible. Why the gateway does not hand out a
@@ -51,7 +51,7 @@ ships it rather than handing your endpoint a URL to pull from.
 }
 ```
 
-A file over the configured per-file cap, or one that is not valid UTF-8 text,
+A file over the configured per-file cap, or a binary one (holding a NUL byte),
 arrives with `scanned: false` and `content: null` rather than being omitted, so
 a coverage gap is visible to your endpoint, not silent.
 

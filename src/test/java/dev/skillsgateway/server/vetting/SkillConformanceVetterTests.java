@@ -226,15 +226,15 @@ class SkillConformanceVetterTests {
             assertThat(finding.message()).contains("scan size limit");
         });
         assertThat(advisory().vet(oversize).state()).isEqualTo(VerdictState.PASS);
-        assertThat(advisory().vet(oversize).summary()).contains("1 unread as oversize or non-UTF-8");
+        assertThat(advisory().vet(oversize).summary()).contains("1 unread as oversize or binary");
 
         // Under enforcement "we could not check" must not read as "it conformed".
         assertThat(enforcing().vet(oversize).state()).isEqualTo(VerdictState.FAIL);
 
-        SnapshotUnderVetting binary = snapshotOfBytes(PATH, new byte[] {(byte) 0xC3, (byte) 0x28});
+        SnapshotUnderVetting binary = snapshotOfBytes(PATH, new byte[] {(byte) 0xC3, (byte) 0x28, 0});
         assertThat(advisory().vet(binary).findings()).singleElement().satisfies(finding -> {
             assertThat(finding.id()).isEqualTo("skill-not-scanned");
-            assertThat(finding.message()).contains("not valid UTF-8");
+            assertThat(finding.message()).contains("binary");
         });
     }
 

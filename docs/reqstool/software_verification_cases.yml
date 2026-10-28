@@ -3729,6 +3729,16 @@ cases:
       THEN each reason yields one informational entry naming the first files and counting the rest, the coverage summary on the passing verdict row and in the ledger states how many files were not scanned and why, and the snapshot with neither carries no entry and no such clause
     revision: "0.1.0"
 
+  - id: SVC_GW_VETTING_0063
+    requirement_ids: ["GW_VETTING_0043"]
+    title: A file that is not valid UTF-8 but holds no NUL byte is scanned as text
+    verification: automated-test
+    description: |
+      GIVEN fixtures that fail vetting — an injection in a skill, a token in a script, a hook script, a hook-module import and a server script that each download and execute
+      WHEN one byte that is not valid UTF-8 is added to a comment line of the offending file
+      THEN each fixture still fails with the same blocking findings, because only content holding a NUL byte is treated as binary
+    revision: "0.1.0"
+
   - id: SVC_GW_VETTING_0044
     requirement_ids: ["GW_VETTING_0044"]
     title: A vendored group is one row with every location and one waive action defaulting to the group

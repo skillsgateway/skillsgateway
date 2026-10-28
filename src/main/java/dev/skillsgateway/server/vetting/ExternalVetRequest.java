@@ -12,7 +12,7 @@ import java.util.List;
  * @param marketplace gateway-local marketplace name
  * @param sha the upstream commit SHA the snapshot is pinned to
  * @param files every file in the snapshot tree; a file over the per-file cap or one that is not
- *     UTF-8 text is present with {@code scanned=false} and null content, so a coverage gap is
+ *     text is present with {@code scanned=false} and null content, so a coverage gap is
  *     visible rather than silent
  */
 public record ExternalVetRequest(long snapshotId, String marketplace, String sha, List<File> files) {
