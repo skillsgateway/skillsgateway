@@ -139,6 +139,41 @@ rows.
 
 ---
 
+## Another principal's tokens
+
+An administrator's reach over someone else's personal tokens (GW_AUTH_0055), for
+offboarding and incident response. The routes above reach only the caller's own
+tokens, so without these nobody but the owner could stop a leaver's tokens.
+Both require the `admin` role and answer `403` to anyone else. No machine
+credential reaches either, as with all of `/api/v1/tokens/**`.
+
+### `GET /api/v1/tokens/principals/{principal}`
+
+Every personal access token and session credential the principal holds, live or
+not, in the same shape as [`GET /tokens`](#get-tokens) and never with a secret.
+An unknown principal lists nothing. Machine credentials are listed under
+[`GET /api/v1/tokens/machine`](#get-apiv1tokensmachine).
+
+### `DELETE /api/v1/tokens/principals/{principal}`
+
+Revokes every live personal access token and session credential of the
+principal, effective on each one's next request. Machine credentials are left
+alone; revoke those one by one under `/api/v1/tokens/machine`.
+
+```json
+{"principal":"alice@example.com","revokedTokenIds":[3,9]}
+```
+
+The revocation is recorded on the ledger as `principal-tokens-revoked`, with
+the ids it revoked, including when there were none.
+
+| Status | Cause |
+| --- | --- |
+| 200 | Revoked; `revokedTokenIds` is empty when nothing was live. |
+| 403 | The caller does not hold the `admin` role. |
+
+---
+
 ## `POST /tokens/{id}/rotate`
 
 Retire a possibly-exposed secret without renegotiating the grant (GW_AUTH_0008).

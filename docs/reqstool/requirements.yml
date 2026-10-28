@@ -2995,6 +2995,14 @@ requirements:
     categories: ["interaction-capability", "maintainability", "security"]
     revision: 0.5.0
 
+  - id: GW_AUTH_0055
+    title: An administrator lists and revokes another principal's personal tokens
+    significance: shall
+    description: "The system shall let an administrator, and no one else, list every personal access token and session credential a named principal holds without exposing any secret, and revoke at once every live one of them, recording the revocation on the append-only ledger with the acting identity and the ids revoked; shall leave that principal's machine credentials untouched; and shall answer any caller without the admin role with a refusal that revokes nothing."
+    rationale: "A personal token outlives the session that minted it and the owner-scoped routes reach only the caller's own tokens, so without this no one but the owner could stop a departed or compromised user's credentials. Machine credentials already have their own administrative routes; keeping them out of this one leaves each kind of credential with one place it is administered."
+    categories: ["security"]
+    revision: 0.5.0
+
   - id: GW_OBSERVABILITY_0005
     title: Each instance reports the background-pass turns it took and skipped
     significance: shall

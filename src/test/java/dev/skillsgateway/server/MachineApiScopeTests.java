@@ -58,7 +58,10 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
      * authorization decision rather than a binding failure.
      */
     private static MockHttpServletRequestBuilder request(Route route, String secret) {
-        String path = route.pattern().replace("{id}", "999999").replace("{name}", "no-such-marketplace");
+        String path = route.pattern()
+                .replace("{id}", "999999")
+                .replace("{name}", "no-such-marketplace")
+                .replace("{principal}", "no-such-principal");
         MockHttpServletRequestBuilder builder = switch (route.method()) {
             case "GET" -> get(path);
             case "POST" -> post(path);

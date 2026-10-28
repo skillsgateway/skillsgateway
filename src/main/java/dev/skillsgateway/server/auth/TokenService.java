@@ -313,6 +313,18 @@ public class TokenService {
         return tokenRepository.listByPrincipal(principal);
     }
 
+    /** Any principal's personal tokens, for an administrator (GW_AUTH_0055). */
+    @Requirements({"GW_AUTH_0055"})
+    public List<AccessToken> listPersonalTokensOf(String principal) {
+        return tokenRepository.listPersonalByPrincipal(principal);
+    }
+
+    /** Revokes every live personal token a principal holds (GW_AUTH_0055); takes effect at the next lookup. */
+    @Requirements({"GW_AUTH_0055"})
+    public List<Long> revokePersonalTokensOf(String principal) {
+        return tokenRepository.revokePersonalByPrincipal(principal);
+    }
+
     @Requirements({"GW_AUTH_0007"})
     public Optional<AccessToken> authenticate(String presentedToken) {
         return tokenRepository.findActiveByHash(sha256Hex(presentedToken));

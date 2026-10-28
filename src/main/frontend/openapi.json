@@ -3119,6 +3119,24 @@
         },
         "type": "object"
       },
+      "RevokedTokens": {
+        "description": "The personal tokens an administrative revocation revoked",
+        "properties": {
+          "principal": {
+            "description": "The principal whose tokens were revoked",
+            "type": "string"
+          },
+          "revokedTokenIds": {
+            "description": "Ids of the tokens that were live and are now revoked; empty when none were",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "RoleGrant": {
         "description": "A role grant",
         "properties": {
@@ -5533,7 +5551,7 @@
     "/api/v1/marketplaces/{name}/waivers": {
       "get": {
         "description": "Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.",
-        "operationId": "list_5",
+        "operationId": "list_6",
         "parameters": [
           {
             "in": "path",
@@ -7512,6 +7530,91 @@
           }
         },
         "summary": "Rotate a machine API credential",
+        "tags": [
+          "Tokens"
+        ]
+      }
+    },
+    "/api/v1/tokens/principals/{principal}": {
+      "delete": {
+        "description": "Revokes every live personal access token and session credential the principal holds, effective on each one's next request. Machine credentials are left alone. The revocation is audit-logged with the ids it revoked, including when there were none.",
+        "operationId": "revokeAll",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "principal",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokedTokens"
+                }
+              }
+            },
+            "description": "Revoked; the ids revoked, empty when none were live"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "The caller does not hold the admin role"
+          }
+        },
+        "summary": "Revoke all of a principal's personal tokens",
+        "tags": [
+          "Tokens"
+        ]
+      },
+      "get": {
+        "description": "Every personal access token and session credential the principal holds, live or not, never any secret. Machine credentials are listed under `/api/v1/tokens/machine`.",
+        "operationId": "list_5",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "principal",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TokenView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The principal's personal tokens; empty for an unknown principal"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "The caller does not hold the admin role"
+          }
+        },
+        "summary": "List a principal's personal tokens",
         "tags": [
           "Tokens"
         ]
