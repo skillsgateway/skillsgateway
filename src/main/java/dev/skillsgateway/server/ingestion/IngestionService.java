@@ -429,25 +429,25 @@ public class IngestionService {
      * checks a symbolic link out as a link and a submodule as another repository, so neither can be
      * vetted as what is installed.
      */
-    @Requirements({"GW_INGEST_0070"})
+    @Requirements({"GW_INGEST_0070", "GW_INGEST_0072"})
     private static String nonRegularEntry(Repository repo, ObjectId commitId) throws IOException {
-        try (RevWalk walk = new RevWalk(repo);
-                TreeWalk tree = new TreeWalk(repo)) {
-            tree.addTree(walk.parseCommit(commitId).getTree());
-            tree.setRecursive(true);
-            while (tree.next()) {
-                FileMode mode = tree.getFileMode(0);
-                if (mode == FileMode.SYMLINK) {
-                    return "the tree holds a symbolic link, which the gateway does not serve: " + tree.getPathString();
-                }
-                if (mode == FileMode.GITLINK) {
-                    return "the tree holds a submodule entry, which the gateway does not serve: "
-                            + tree.getPathString();
-                }
-                if (mode != FileMode.REGULAR_FILE && mode != FileMode.EXECUTABLE_FILE) {
-                    return "the tree holds an entry of mode %s, which the gateway does not serve: %s"
-                            .formatted(mode, tree.getPathString());
-                }
+        List<BoundedTree.Entry> files;
+        try (RevWalk walk = new RevWalk(repo)) {
+            files = BoundedTree.files(repo, walk.parseCommit(commitId).getTree());
+        } catch (BoundedTree.TooLarge tooLarge) {
+            return tooLarge.getMessage();
+        }
+        for (BoundedTree.Entry file : files) {
+            FileMode mode = file.mode();
+            if (mode == FileMode.SYMLINK) {
+                return "the tree holds a symbolic link, which the gateway does not serve: " + file.path();
+            }
+            if (mode == FileMode.GITLINK) {
+                return "the tree holds a submodule entry, which the gateway does not serve: " + file.path();
+            }
+            if (mode != FileMode.REGULAR_FILE && mode != FileMode.EXECUTABLE_FILE) {
+                return "the tree holds an entry of mode %s, which the gateway does not serve: %s"
+                        .formatted(mode, file.path());
             }
         }
         return null;
