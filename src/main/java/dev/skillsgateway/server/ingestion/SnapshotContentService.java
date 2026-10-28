@@ -273,13 +273,19 @@ public class SnapshotContentService {
         TreeFiles files = withComponents ? TreeFiles.of(repo, commit) : null;
         List<PluginContent> plugins = new ArrayList<>();
         JsonNode entries = manifest.root().path("plugins");
-        for (int i = 0; i < entries.size(); i++) {
+        // One walk for every plugin's skills, and each source root listed once (GW_INGEST_0074): a
+        // manifest repeating one source would otherwise list its skills once per entry.
+        List<String> skillFiles = skillFiles(repo, commit);
+        java.util.Set<String> listedRoots = new java.util.HashSet<>();
+        int readable = Math.min(entries.size(), ManifestPolicy.MAX_PLUGINS);
+        for (int i = 0; i < readable; i++) {
             JsonNode plugin = entries.get(i);
             String name = plugin.path("name").asText(null);
             String description = plugin.path("description").asText(null);
             String source =
                     plugin.path("source").isTextual() ? plugin.get("source").asText() : null;
-            List<SkillInfo> skills = source == null ? List.of() : skills(repo, commit, source);
+            List<SkillInfo> skills =
+                    source == null || !listedRoots.add(normalize(source)) ? List.of() : skills(skillFiles, source);
             String root = PluginComponents.normalizeRoot(source);
             if (files == null || root == null) {
                 plugins.add(new PluginContent(name, description, source, skills));
@@ -536,21 +542,28 @@ public class SnapshotContentService {
     }
 
     /** Skills are directories under {@code <source>/skills/} containing a SKILL.md. */
-    private static List<SkillInfo> skills(Repository repo, RevCommit commit, String source) throws IOException {
+    /** Every {@code SKILL.md} path of the commit, from one bounded walk (GW_INGEST_0072, GW_INGEST_0074). */
+    @Requirements({"GW_INGEST_0074"})
+    private static List<String> skillFiles(Repository repo, RevCommit commit) throws IOException {
+        List<String> paths = new ArrayList<>();
+        for (BoundedTree.Entry file : BoundedTree.files(repo, commit.getTree())) {
+            if (file.path().endsWith("/SKILL.md")) {
+                paths.add(file.path());
+            }
+        }
+        return paths;
+    }
+
+    private static List<SkillInfo> skills(List<String> skillFiles, String source) {
         String prefix = normalize(source);
         String skillsRoot = prefix.isEmpty() ? "skills" : prefix + "/skills";
         List<SkillInfo> skills = new ArrayList<>();
-        try (TreeWalk tree = new TreeWalk(repo)) {
-            tree.addTree(commit.getTree());
-            tree.setRecursive(true);
-            while (tree.next()) {
-                String path = tree.getPathString();
-                if (path.startsWith(skillsRoot + "/") && path.endsWith("/SKILL.md")) {
-                    String rest = path.substring(skillsRoot.length() + 1);
-                    int slash = rest.indexOf('/');
-                    if (slash > 0 && rest.substring(slash).equals("/SKILL.md")) {
-                        skills.add(new SkillInfo(rest.substring(0, slash), path));
-                    }
+        for (String path : skillFiles) {
+            if (path.startsWith(skillsRoot + "/")) {
+                String rest = path.substring(skillsRoot.length() + 1);
+                int slash = rest.indexOf('/');
+                if (slash > 0 && rest.substring(slash).equals("/SKILL.md")) {
+                    skills.add(new SkillInfo(rest.substring(0, slash), path));
                 }
             }
         }

@@ -3043,6 +3043,16 @@ requirements:
     categories: ["reliability", "security"]
     revision: 0.5.0
 
+  - id: GW_INGEST_0074
+    title: A manifest's plugins are bounded in number and list each source once
+    significance: shall
+    description: "The system shall record rejected a snapshot whose manifest declares more than a fixed number of plugins, or two plugins whose local sources name the same directory; and shall list a snapshot's skills from one walk of its tree, listing each source directory's skills once, under the first plugin that declares it, and reading no more than that fixed number of plugins."
+    rationale: "Git shares a skill directory's tree however often it is referenced, and a manifest can repeat one source thousands of times, so an inventory that re-walks the tree once per plugin entry returns plugins times skills: a million entries from a few kilobytes, on a read any signed-in user may make. No client needs two names for one directory."
+    references:
+      requirement_ids: ["GW_INGEST_0072"]
+    categories: ["reliability", "security"]
+    revision: 0.5.0
+
   - id: GW_AUTH_0053
     title: A browser session does not depend on which instance answers
     significance: shall

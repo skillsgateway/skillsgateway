@@ -110,11 +110,25 @@ public final class ManifestPolicy {
         if (plugins == null || !plugins.isArray()) {
             return rejected(MANIFEST + " has no \"plugins\" array");
         }
+        if (plugins.size() > MAX_PLUGINS) {
+            // Each entry is read in full wherever the snapshot is listed or vetted (GW_INGEST_0074).
+            return rejected(
+                    "%s declares %d plugins; at most %d are accepted".formatted(MANIFEST, plugins.size(), MAX_PLUGINS));
+        }
         List<Admitted> admitted = new ArrayList<>();
+        java.util.Set<String> localRoots = new java.util.HashSet<>();
         int index = 0;
         for (JsonNode plugin : plugins) {
             if (!plugin.isObject()) {
                 return rejected("plugin entry is not a JSON object");
+            }
+            JsonNode declared = plugin.get("source");
+            String sourceRoot =
+                    declared != null && declared.isTextual() ? PluginComponents.normalizeRoot(declared.asText()) : null;
+            if (sourceRoot != null && !localRoots.add(sourceRoot)) {
+                // Two entries naming one directory list its content twice, and a manifest of many
+                // such entries multiplies it (GW_INGEST_0074); no client needs two names for one plugin.
+                return rejected("two plugins declare the same source '%s'".formatted(declared.asText()));
             }
             String name = plugin.path("name").isTextual() ? plugin.get("name").asText() : "<unnamed>";
             switch (admission.decide(PluginSource.parse(plugin.get("source")), name, admitted.size())) {
@@ -131,6 +145,9 @@ public final class ManifestPolicy {
         }
         return new Evaluation(null, (ObjectNode) root, List.copyOf(admitted));
     }
+
+    /** Far more plugins than a marketplace ships, and few enough to read each (GW_INGEST_0074). */
+    static final int MAX_PLUGINS = 1_000;
 
     /** The violation for a source this gateway admitted and has not turned into content it serves. */
     static String unresolved(String pluginName, String cloneUrl) {
