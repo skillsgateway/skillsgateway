@@ -2726,8 +2726,10 @@ commit the snapshot identifies:</p>
 </tbody>
 </table>
 <p><code>skills[].tools</code> is parsed from the SKILL.md YAML frontmatter key
-<code>allowed-tools</code>, accepting both the YAML-list and the comma-separated-string
-form (<code>Bash(git add:*, git commit:*), Read</code> splits on top-level commas only).
+<code>allowed-tools</code>, accepting the YAML-list form and a string separated by
+spaces, commas or both. Separators count only outside parentheses:
+<code>Read Bash(git add:*, git commit:*)</code> gives <code>Read</code> and
+<code>Bash(git add:*, git commit:*)</code>.
 No frontmatter, or frontmatter without <code>allowed-tools</code>, is honestly an empty
 list. <strong>Malformed</strong> frontmatter is not: tools that cannot be read must never
 read as "no tools", so it fails the facts and denies the approval (see
