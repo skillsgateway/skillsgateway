@@ -183,4 +183,41 @@ class PreviewTests extends AbstractGatewayTest {
                     .call();
         }
     }
+
+    @Test
+    @SVCs({"SVC_GW_INGEST_0073"})
+    void a_diff_of_files_built_to_defeat_the_diff_heuristic_answers_quickly() throws Exception {
+        // Two random sequences over two lines: most lines repeat on both sides, which is what sends
+        // a histogram diff into its quadratic fallback.
+        Path upstream = createUpstream(DEFAULT_MANIFEST, Map.of("docs/data.txt", randomLines(1)));
+        Registered fixture = registerAndIngest(uniqueName("diffbound"), upstream);
+        approve(fixture.snapshot().id());
+        try (org.eclipse.jgit.api.Git git = org.eclipse.jgit.api.Git.open(upstream.toFile())) {
+            java.nio.file.Files.writeString(upstream.resolve("docs/data.txt"), randomLines(2));
+            git.add().addFilepattern(".").call();
+            git.commit().setMessage("every line changed").setSign(false).call();
+        }
+        long heldId = ingestionService
+                .ingest(
+                        marketplaceRepository
+                                .findById(fixture.marketplace().id())
+                                .orElseThrow(),
+                        null)
+                .id();
+
+        org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
+                java.time.Duration.ofSeconds(5),
+                () -> mockMvc.perform(get("/api/v1/snapshots/{id}/diff", heldId).with(alice))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.entries[0].path").value("docs/data.txt")));
+    }
+
+    private static String randomLines(long seed) {
+        java.util.Random random = new java.util.Random(seed);
+        StringBuilder lines = new StringBuilder();
+        for (int i = 0; i < 64_000; i++) {
+            lines.append(random.nextBoolean() ? "x\n" : "y\n");
+        }
+        return lines.toString();
+    }
 }

@@ -3033,6 +3033,16 @@ requirements:
     categories: ["reliability", "security"]
     revision: 0.5.0
 
+  - id: GW_INGEST_0073
+    title: A snapshot diff's work is bounded, not only its output
+    significance: shall
+    description: "The system shall compare a snapshot's files against the served baseline with an algorithm whose work does not grow quadratically with the number of repeated lines, reporting a region it cannot align line by line as one replacement."
+    rationale: "Upstream content chooses the files a reviewer diffs. A file of a hundred kilobytes whose lines mostly repeat drives a longest-common-subsequence fallback to tens of seconds of processor time on every view, which bounding the size of the output does not prevent."
+    references:
+      requirement_ids: ["GW_INGEST_0016"]
+    categories: ["reliability", "security"]
+    revision: 0.5.0
+
   - id: GW_AUTH_0053
     title: A browser session does not depend on which instance answers
     significance: shall

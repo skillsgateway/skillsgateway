@@ -21,9 +21,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import org.eclipse.jgit.diff.DiffAlgorithm;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.Edit;
+import org.eclipse.jgit.diff.HistogramDiff;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
@@ -473,6 +475,18 @@ public class SnapshotPreviewService {
     }
 
     /**
+     * A histogram diff with no fallback (GW_INGEST_0073). Upstream content can make every line repeat,
+     * which sends the default's Myers fallback quadratic; without it such a region becomes one
+     * replacement, which is also the honest description of it.
+     */
+    @Requirements({"GW_INGEST_0073"})
+    private static DiffAlgorithm boundedDiff() {
+        HistogramDiff histogram = new HistogramDiff();
+        histogram.setFallbackAlgorithm(null);
+        return histogram;
+    }
+
+    /**
      * The delta a reviewer decides: pinned commit vs the marketplace's currently served commit,
      * a page at a time, with counts over the whole of it. The baseline SHA is resolved from the
      * published repository's served tip — the same read the facade serves from — and the diff
@@ -504,6 +518,7 @@ public class SnapshotPreviewService {
             List<DiffEntryView> entries = new ArrayList<>();
             try (DiffFormatter formatter = new DiffFormatter(out)) {
                 formatter.setRepository(repo);
+                formatter.setDiffAlgorithm(boundedDiff());
                 if (!narrowed.isEmpty()) {
                     formatter.setPathFilter(PathFilter.create(narrowed));
                 }

@@ -4089,6 +4089,16 @@ cases:
       THEN the snapshot is rejected naming the entry bound within thirty seconds, the fan-out is refused naming the entry bound within ten seconds, and the deep tree is refused naming the depth bound
     revision: "0.1.0"
 
+  - id: SVC_GW_INGEST_0073
+    requirement_ids: ["GW_INGEST_0073"]
+    title: A diff of files built to defeat the diff heuristic answers quickly
+    verification: automated-test
+    description: |
+      GIVEN a served snapshot and a held successor whose one file is sixty-four thousand lines, each one of two values, drawn from different random sequences on each side
+      WHEN an approver requests the successor's diff
+      THEN it answers within five seconds and lists the file as changed
+    revision: "0.1.0"
+
   - id: SVC_GW_AUTH_0053
     requirement_ids: ["GW_AUTH_0053"]
     title: A sign-in started on one instance completes on another, and its session is honoured by both
