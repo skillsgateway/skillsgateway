@@ -2,14 +2,14 @@
 
 ## 1. Requirements (reqstool)
 
-- [ ] 1.1 Revise GW_FACADE_0007 (revision 0.2.0) to say a push scope is granted
+- [x] 1.1 Revise GW_FACADE_0007 (revision 0.2.0) to say a push scope is granted
   only to an administrator or an approver of that marketplace, and add
   SVC_GW_FACADE_0035 under it in `docs/reqstool/`. Verify with
   `openspec validate push-scope-requires-approver --strict`.
 
 ## 2. Mint-time authorization (SVC_GW_FACADE_0035)
 
-- [ ] 2.1 `PushScopeMintingTests` (shared context, `@SVCs SVC_GW_FACADE_0035`),
+- [x] 2.1 `PushScopeMintingTests` (shared context, `@SVCs SVC_GW_FACADE_0035`),
   through `POST /api/v1/tokens` with `oidcLogin()`:
   - a no-role session asking for a push scope on a hosted marketplace gets
     `403`, and holds no token and no `token-created` ledger row afterwards;
@@ -19,11 +19,11 @@
   - an administrator asking for B gets `201`;
   - a no-role session asking for no push scope still gets `201`.
   Watch every refusal case fail first, against unchanged code.
-- [ ] 2.2 `TokenController.create` calls `roleService.requireApprover` for each
+- [x] 2.2 `TokenController.create` calls `roleService.requireApprover` for each
   distinct push scope before issuing, with `@Requirements GW_FACADE_0007`, and
   adds `@ApiResponse 403`. Make 2.1 green without editing it. The existing
   `HostedPushTests` and `RoleEnforcementTests` must stay green unchanged.
-- [ ] 2.3 A claim-derived administrator (`gw-admins`, in an
+- [x] 2.3 A claim-derived administrator (`gw-admins`, in an
   `AbstractClaimMappingTest` subclass, `@SVCs SVC_GW_FACADE_0035`) mints a push
   scope with `201`. This proves the check honours claim roles. Verify that
   `ContextBudgetTests` and `ConfigSurfaceBudgetTests` are unchanged.
