@@ -3540,6 +3540,12 @@ answer is safe to assume:</p>
 refused <strong>before anything is withdrawn</strong>, so a request that cannot be honoured
 changes nothing rather than quietly leaving you with the other outcome. A
 return is recorded on the ledger as a publication in its own right.</p>
+<p>A withdrawal and every other change to what a marketplace serves happen one at
+a time per marketplace, each holding the marketplace's publication lock. So an
+approval that is still publishing finishes before a withdrawal acts on it, and
+a predecessor that another administrator withdrew while yours waited is not put
+back. The marketplace then serves nothing, and the ledger records
+<code>snapshot-rollback-unavailable</code>.</p>
 <div class="admonition warning">
 <p class="admonition-title">This stops the gateway serving it; it does not delete what clients hold</p>
 <p>Anyone who already cloned the content still has it on disk. <code>GET
@@ -3611,10 +3617,11 @@ cause. An <code>approved</code> snapshot cannot be decided again, so the repair 
 startup reconciliation described below, not a second approval.</p>
 </div>
 <h3 id="when-the-repair-fails-too">When the repair fails too<a class="headerlink" href="#when-the-repair-fails-too" title="Permanent link">&para;</a></h3>
-<p>Failing the approval means putting the recorded decision back, and that write
-can fail in its turn. The double failure is reported — at <code>ERROR</code>, and on the
-exception the approval raises — but what it leaves behind is a row saying
-<code>approved</code> while nothing is served.</p>
+<p>A refused publication rolls the decision back with it: the decision and the
+reference transition share one transaction, under the marketplace's
+publication lock. A row can still end up saying <code>approved</code> while nothing is
+served, for example when storage is restored from a backup older than the
+database, or when a return to the previous snapshot fails to publish.</p>
 <p>The next start reconciles that. After the schema is migrated and before the web
 surface serves its first request, the gateway compares, per marketplace, what
 the database records as approved against what storage is actually serving, and

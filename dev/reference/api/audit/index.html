@@ -3046,6 +3046,11 @@ records <code>revet-policy</code> as the principal; an on-demand run records the
 <td>A revoked snapshot's refs could not be removed.</td>
 <td>The failure. <strong>Needs a person</strong>: the record and the wire disagree.</td>
 </tr>
+<tr>
+<td><code>snapshot-rollback-unavailable</code></td>
+<td>A withdrawal asked to return to the previous approved snapshot, but that snapshot was withdrawn first, so the marketplace serves nothing.</td>
+<td>Why it was not returned.</td>
+</tr>
 </tbody>
 </table>
 <p><strong>From publication reconciliation</strong> — at startup, before the web surface serves
