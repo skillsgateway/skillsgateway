@@ -3342,7 +3342,7 @@ already approved keeps serving.</p>
 </tr>
 <tr>
 <td>409</td>
-<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, its effective vetting outcome is blocked (see <code>uncoveredFindings</code>), a <a href="../policy-rules/">policy rule</a> denied it, a plugin name it introduces <a href="#plugin-names-already-in-use">looks like one already served</a> (see <code>collisions</code>), it has not yet cleared the <a href="#waiting-out-the-minimum-release-age">minimum release age</a>, or an enforcing <a href="#separation-of-duties">four-eyes rule</a> refused it (see <code>conflicts</code>).</td>
+<td>The snapshot is neither <code>held</code> nor <code>revoked</code>, its effective vetting outcome is blocked (see <code>uncoveredFindings</code>), a <a href="../policy-rules/">policy rule</a> denied it, a plugin name it introduces <a href="#plugin-names-already-in-use">looks like one already served</a> (see <code>collisions</code>), it has not yet cleared the <a href="#waiting-out-the-minimum-release-age">minimum release age</a>, an enforcing <a href="#separation-of-duties">four-eyes rule</a> refused it (see <code>conflicts</code>), or the snapshot changed while it was being decided: someone else approved, rejected or withdrew it in the meantime. Reload it and decide again.</td>
 </tr>
 </tbody>
 </table>
