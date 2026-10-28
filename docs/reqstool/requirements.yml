@@ -3077,6 +3077,16 @@ requirements:
     categories: ["security"]
     revision: 0.5.0
 
+  - id: GW_AUTH_0056
+    title: An approver's reach is the live marketplace, not its name's history
+    significance: shall
+    description: "The system shall let a non-administrator reach a snapshot or a waiver by its id only when the marketplace that owns it is the live marketplace of that name and the caller approves it, so that a grant on a re-registered name does not reach a removed predecessor's snapshots or waivers; and shall report a snapshot's fetchers only from fetches through that snapshot's own marketplace."
+    rationale: "A grant names a marketplace, and a removed marketplace's name can be registered again, so matching by name hands the successor's approver the predecessor's held content and waivers. One commit served by two marketplaces reached two audiences, and an approver of one must not read who fetched it through the other."
+    references:
+      requirement_ids: ["GW_AUTH_0011", "GW_INGEST_0035"]
+    categories: ["security"]
+    revision: 0.5.0
+
   - id: GW_OBSERVABILITY_0005
     title: Each instance reports the background-pass turns it took and skipped
     significance: shall

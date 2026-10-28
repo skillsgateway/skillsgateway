@@ -4149,6 +4149,16 @@ cases:
       THEN the listing shows the personal tokens without secrets, the revoked tokens no longer authenticate while the machine credential still does, the ledger records the revocation with the acting administrator and the principal, a second revocation reports none, and the session holding no role is refused with every token still live
     revision: "0.1.0"
 
+  - id: SVC_GW_AUTH_0056
+    requirement_ids: ["GW_AUTH_0056"]
+    title: A re-registered name's approver is refused the predecessor, and fetchers are reported per marketplace
+    verification: automated-test
+    description: |
+      GIVEN a removed marketplace's snapshot, a new marketplace registered under the same name with its own approver, and one commit served by two marketplaces each cloned by a different token
+      WHEN the new approver opens the removed marketplace's snapshot, an administrator does the same, and the first marketplace's fetchers are reported
+      THEN the approver is refused and the administrator is not, and the report names the first marketplace's fetcher and not the second's
+    revision: "0.1.0"
+
   - id: SVC_GW_OBSERVABILITY_0005
     requirement_ids: ["GW_OBSERVABILITY_0005"]
     title: A taken and a skipped turn are each counted under their pass

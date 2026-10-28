@@ -648,4 +648,33 @@ class MarketplaceRemovalTests extends AbstractGatewayTest {
         assertThat(answers).hasSize(1);
         return answers.getFirst();
     }
+
+    @Test
+    @SVCs({"SVC_GW_AUTH_0056"})
+    void the_approver_of_a_reused_name_is_refused_the_predecessors_snapshot_and_an_admin_is_not() throws Exception {
+        String name = uniqueName("rmscope");
+        String approver = uniqueName("frank");
+        Path upstream = createUpstream(DEFAULT_MANIFEST);
+        Registered predecessor = registerAndIngest(name, upstream);
+        removalService.remove(name, REASON, "root");
+        registrationService.register(name, upstream.toUri().toString(), "root");
+        roleService.grant(approver, RoleGrant.APPROVER, name, "root");
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(
+                                "/api/v1/snapshots/{id}/files",
+                                predecessor.snapshot().id())
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                                .oidcLogin()
+                                .idToken(token -> token.subject(approver))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status()
+                        .isForbidden());
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(
+                                "/api/v1/snapshots/{id}/files",
+                                predecessor.snapshot().id())
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                                .oidcLogin()
+                                .idToken(token -> token.subject("root"))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status()
+                        .is(org.hamcrest.Matchers.not(403)));
+    }
 }

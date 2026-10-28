@@ -240,10 +240,14 @@ public class FetchLogRepository {
      * principal to a team is the identity provider's knowledge, not the ledger's. Direct
      * per-team notification is a follow-on; what exists today is the list an operator acts on.
      */
-    public List<Fetcher> fetchersOf(String sha) {
+    @Requirements({"GW_AUTH_0056"})
+    public List<Fetcher> fetchersOf(long marketplaceId, String sha) {
+        // Bound to the marketplace (GW_AUTH_0056): one commit served by two marketplaces reached two
+        // audiences, and this report is read by one marketplace's approver.
         return jdbc.sql("SELECT principal, COUNT(*) AS fetches, MAX(ts) AS last_fetch FROM fetch_log"
-                        + " WHERE sha = :sha AND event = 'upload-pack' AND principal IS NOT NULL"
-                        + " GROUP BY principal ORDER BY MAX(ts) DESC")
+                        + " WHERE marketplace_id = :marketplaceId AND sha = :sha AND event = 'upload-pack'"
+                        + " AND principal IS NOT NULL GROUP BY principal ORDER BY MAX(ts) DESC")
+                .param("marketplaceId", marketplaceId)
                 .param("sha", sha)
                 .query((rs, rowNum) -> new Fetcher(
                         rs.getString("principal"), rs.getLong("fetches"), Timestamps.instant(rs, "last_fetch")))
@@ -265,7 +269,7 @@ public class FetchLogRepository {
     /**
      * The adoption report's per-snapshot rows (GW_OBSERVABILITY_0001): content-transferring fetches since the
      * window start, grouped by (marketplace, sha). Only {@code upload-pack} entries count, for the
-     * same reason {@link #fetchersOf(String)} gives: a ref advertisement is not a delivery.
+     * same reason {@link #fetchersOf(long, String)} gives: a ref advertisement is not a delivery.
      */
     public List<ShaAdoption> adoptionSince(Instant since) {
         return jdbc.sql("SELECT marketplace, sha, COUNT(*) AS fetches, COUNT(DISTINCT principal) AS identities,"
