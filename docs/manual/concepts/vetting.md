@@ -729,6 +729,11 @@ it. A slow reviewer — an LLM given minutes — is therefore configured on its
 connector alone, without loosening the limit that guards the built-ins against
 a hang. A connector that sets no `read-timeout` takes the chain-wide value.
 
+When a built-in vetter outruns its limit, the chain records the `ERROR` and
+also stops the vetter's work: its pattern matching ends at the next character it
+reads. A snapshot crafted to make a pattern backtrack therefore costs one time
+limit of CPU, not a core held until the gateway restarts.
+
 See [Adding an external vetter](../guides/adding-an-external-vetter.md) for the
 wire contract and a minimal working example.
 

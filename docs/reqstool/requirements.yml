@@ -3044,3 +3044,11 @@ requirements:
     rationale: "A reviewer clearing a snapshot with findings from several rules repeated the same form, justification and expiry per rule. Selecting groups keeps each acceptance as narrow as a single group waiver while writing the reason once; a wider bulk scope would accept content nobody selected. Each waiver stands on its own, so a refusal of one is reported rather than undoing the others."
     categories: ["security", "interaction-capability"]
     revision: 0.5.0
+
+  - id: GW_VETTING_0062
+    title: A built-in vetter that outruns its time limit stops working
+    significance: shall
+    description: "The system shall, when a built-in vetter exceeds its time limit, not only record the timeout as an error verdict but also stop that vetter's pattern matching over snapshot content, so that no work for the abandoned run continues after the timeout is recorded; and shall read a dependency manifest's section headers in time linear in the line's length."
+    rationale: "Recording a timeout while the abandoned match keeps running turns every snapshot crafted to make a pattern backtrack into a processor core held until restart, and enough of them stop vetting for every marketplace. The regular-expression engine does not observe interruption on its own, so stopping the work has to be something the matching itself checks."
+    categories: ["reliability", "security"]
+    revision: 0.5.0

@@ -132,7 +132,7 @@ public class SecretScanVetter implements Vetter {
     /** Assignment-shaped values that are random enough to be credentials rather than identifiers. */
     private static List<Finding> highEntropyAssignments(String path, String text) {
         List<Finding> findings = new ArrayList<>();
-        Matcher matcher = ASSIGNED_SECRET.matcher(text);
+        Matcher matcher = ASSIGNED_SECRET.matcher(InterruptibleText.of(text));
         while (matcher.find()) {
             String value = matcher.group(2);
             if (ContentRules.entropy(value) >= ENTROPY_THRESHOLD) {

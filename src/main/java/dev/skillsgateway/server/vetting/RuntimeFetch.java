@@ -119,29 +119,31 @@ final class RuntimeFetch {
         List<Download> downloads = new ArrayList<>();
         Executable executable = new Executable();
         for (LogicalLine line : logicalLines(text)) {
-            if (file && COMMENT.matcher(line.text()).find()) {
+            if (file && COMMENT.matcher(InterruptibleText.of(line.text())).find()) {
                 continue;
             }
             String normal = normalize(line.text());
-            if (PIPE.matcher(normal).find()) {
+            // One interruptible view for every pattern below (GW_VETTING_0062).
+            CharSequence guarded = InterruptibleText.of(normal);
+            if (PIPE.matcher(guarded).find()) {
                 add(matches, FETCH_EXEC, line.number(), "downloads code and pipes it into an interpreter");
             }
-            if (SUBSTITUTION.matcher(normal).find()
-                    || POWERSHELL_EVAL.matcher(normal).find()
-                    || INLINE_EVAL.matcher(normal).find()) {
+            if (SUBSTITUTION.matcher(guarded).find()
+                    || POWERSHELL_EVAL.matcher(guarded).find()
+                    || INLINE_EVAL.matcher(guarded).find()) {
                 add(matches, FETCH_EXEC, line.number(), "downloads code and evaluates it in place");
             }
-            if (DOWNLOAD_THEN_RUN.matcher(normal).find()) {
+            if (DOWNLOAD_THEN_RUN.matcher(guarded).find()) {
                 add(matches, FETCH_EXEC, line.number(), "downloads a file and runs it with an interpreter");
             }
-            if (DOWNLOAD_TO_FILE.matcher(normal).find()) {
+            if (DOWNLOAD_TO_FILE.matcher(guarded).find()) {
                 downloads.add(new Download(line.number(), target(normal)));
             }
             executable.scan(normal);
-            if (PACKAGE_INSTALL.matcher(normal).find()) {
+            if (PACKAGE_INSTALL.matcher(guarded).find()) {
                 add(matches, PACKAGE_RUN, line.number(), "installs packages from a registry at run time");
             }
-            Matcher runner = PACKAGE_RUNNER.matcher(normal);
+            Matcher runner = PACKAGE_RUNNER.matcher(guarded);
             if (runner.find()) {
                 add(
                         matches,
@@ -177,14 +179,14 @@ final class RuntimeFetch {
         private boolean unnamed;
 
         void scan(String line) {
-            Matcher matcher = MAKE_EXECUTABLE.matcher(line);
+            Matcher matcher = MAKE_EXECUTABLE.matcher(InterruptibleText.of(line));
             while (matcher.find()) {
                 String mode = matcher.group("mode");
                 if (mode == null) {
                     unnamed = true;
                 } else if (executableMode(mode)) {
                     String rest = line.substring(matcher.end()).trim();
-                    Matcher operand = OPERAND.matcher(rest);
+                    Matcher operand = OPERAND.matcher(InterruptibleText.of(rest));
                     // A chmod with no operand changes nothing: it is prose, such as a help message.
                     if (operand.lookingAt()) {
                         targets.add(unquote(operand.group()));
@@ -208,11 +210,12 @@ final class RuntimeFetch {
 
     /** The file a download writes, when the command names it: {@code -o}, {@code -O}, {@code -OutFile}, {@code >}. */
     private static String target(String line) {
-        Matcher named = (WGET.matcher(line).find() ? WGET_TARGET : CURL_TARGET).matcher(line);
+        Matcher named = (WGET.matcher(InterruptibleText.of(line)).find() ? WGET_TARGET : CURL_TARGET)
+                .matcher(InterruptibleText.of(line));
         if (named.find()) {
             return unquote(named.group("target"));
         }
-        named = OTHER_TARGET.matcher(line);
+        named = OTHER_TARGET.matcher(InterruptibleText.of(line));
         return named.find() ? unquote(named.group("target")) : null;
     }
 
@@ -234,9 +237,9 @@ final class RuntimeFetch {
     /** Quoting and escaping inserted into a command name removed, and tool probes blanked. */
     static String normalize(String line) {
         String normal = line.replace("''", "").replace("\"\"", "");
-        normal = WORD_QUOTE.matcher(normal).replaceAll("");
-        normal = ESCAPE.matcher(normal).replaceAll("");
-        return PROBE.matcher(normal).replaceAll(" ");
+        normal = WORD_QUOTE.matcher(InterruptibleText.of(normal)).replaceAll("");
+        normal = ESCAPE.matcher(InterruptibleText.of(normal)).replaceAll("");
+        return PROBE.matcher(InterruptibleText.of(normal)).replaceAll(" ");
     }
 
     /** A line as a shell reads it: physical lines ending in a backslash joined to the next. */

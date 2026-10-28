@@ -461,7 +461,7 @@ public class ExecutableSurfaceVetter implements Vetter {
                         collect(lines, messages, block.firstLine() + match.line() - 1, match);
                     }
                 }
-            } else if (SCRIPT.matcher(path).matches() || text.startsWith("#!")) {
+            } else if (SCRIPT.matcher(InterruptibleText.of(path)).matches() || text.startsWith("#!")) {
                 what = "a skill script";
                 for (RuntimeFetch.Match match : RuntimeFetch.scan(text, true)) {
                     collect(lines, messages, match.line(), match);
@@ -582,16 +582,16 @@ public class ExecutableSurfaceVetter implements Vetter {
          */
         private List<String> references(String text, String root, String base) {
             Set<String> found = new LinkedHashSet<>();
-            Matcher tokens = TOKEN.matcher(text);
+            Matcher tokens = TOKEN.matcher(InterruptibleText.of(text));
             while (tokens.find()) {
                 String token = tokens.group();
                 List<String> bases = List.of(base, root);
-                Matcher pluginRoot = PLUGIN_ROOT.matcher(token);
+                Matcher pluginRoot = PLUGIN_ROOT.matcher(InterruptibleText.of(token));
                 if (pluginRoot.find()) {
                     token = token.substring(pluginRoot.end());
                     bases = List.of(root);
                 } else {
-                    Matcher variable = VARIABLE_PREFIX.matcher(token);
+                    Matcher variable = VARIABLE_PREFIX.matcher(InterruptibleText.of(token));
                     if (variable.find()) {
                         token = token.substring(variable.end());
                     }
@@ -599,8 +599,9 @@ public class ExecutableSurfaceVetter implements Vetter {
                 while (token.startsWith("/")) {
                     token = token.substring(1);
                 }
-                if (!PATH.matcher(token).matches()
-                        || (!token.contains("/") && !SCRIPT.matcher(token).matches())) {
+                if (!PATH.matcher(InterruptibleText.of(token)).matches()
+                        || (!token.contains("/")
+                                && !SCRIPT.matcher(InterruptibleText.of(token)).matches())) {
                     continue;
                 }
                 for (String from : bases) {
@@ -618,7 +619,9 @@ public class ExecutableSurfaceVetter implements Vetter {
     private record Launched(String path, int depth) {}
 
     private static String withDefaults(String word) {
-        return VARIABLE_DEFAULT.matcher(word).replaceAll(match -> Matcher.quoteReplacement(match.group(1)));
+        return VARIABLE_DEFAULT
+                .matcher(InterruptibleText.of(word))
+                .replaceAll(match -> Matcher.quoteReplacement(match.group(1)));
     }
 
     /** {@code env} launches the program after its assignments and options; it is not the program. */
@@ -674,7 +677,7 @@ public class ExecutableSurfaceVetter implements Vetter {
             return false;
         }
         String target = words.get(operand);
-        Matcher pluginRoot = PLUGIN_ROOT.matcher(target);
+        Matcher pluginRoot = PLUGIN_ROOT.matcher(InterruptibleText.of(target));
         if (pluginRoot.find()) {
             return PluginComponents.resolve(root, target.substring(pluginRoot.end())) != null;
         }
