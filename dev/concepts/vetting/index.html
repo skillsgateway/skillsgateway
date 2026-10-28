@@ -3639,7 +3639,7 @@ served, so its hooks are still read.</p>
 </tr>
 <tr>
 <td><code>hook-config-unreadable</code></td>
-<td>A hook file, a <code>plugin.json</code> or the manifest could not be parsed, so the hooks it declares could not be read; or a hooks object holds a key the reader does not recognise, or a module path that leaves the plugin; or a skill's or agent's frontmatter <code>hooks</code> expands, through YAML aliases, past 10,000 values. The finding names the key</td>
+<td>A hook file, a <code>plugin.json</code> or the manifest could not be parsed, so the hooks it declares could not be read; an MCP or LSP server file is over the scan size limit or not valid JSON, or a skill or agent file is over the limit, so the servers or frontmatter hooks it declares could not be read (GW_VETTING_0066 — MCP and LSP server files and skill or agent files the vetter cannot read are reported); or a hooks object holds a key the reader does not recognise, or a module path that leaves the plugin; or a skill's or agent's frontmatter <code>hooks</code> expands, through YAML aliases, past 10,000 values. The finding names the key</td>
 <td>medium: warns</td>
 </tr>
 <tr>
