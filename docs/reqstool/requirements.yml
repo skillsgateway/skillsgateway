@@ -3023,6 +3023,16 @@ requirements:
     categories: ["reliability", "security"]
     revision: 0.5.0
 
+  - id: GW_INGEST_0072
+    title: A snapshot's tree is walked only within a bound on its entries and depth
+    significance: shall
+    description: "The system shall walk a snapshot's tree, wherever it walks it to ingest or vet the snapshot, by entering each subtree occurrence and counting every entry, subtrees included; shall record rejected, with a violation naming the bound, a snapshot whose tree holds more than a fixed number of entries or is deeper than a fixed number of directories; and shall refuse to index such a tree for vetting rather than expanding it."
+    rationale: "Git stores a subtree once however often it is referenced, so a commit of ten objects can describe a hundred million paths, and walking it recursively, or keeping an entry per path, exhausts the gateway's memory. Counting subtrees as well as files is what bounds a tree of repeated empty directories, which yields no file at all."
+    references:
+      requirement_ids: ["GW_INGEST_0070"]
+    categories: ["reliability", "security"]
+    revision: 0.5.0
+
   - id: GW_AUTH_0053
     title: A browser session does not depend on which instance answers
     significance: shall

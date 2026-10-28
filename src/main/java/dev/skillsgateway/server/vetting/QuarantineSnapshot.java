@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
+import dev.skillsgateway.server.ingestion.BoundedTree;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,7 +15,6 @@ import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.treewalk.TreeWalk;
 
 /**
  * {@link SnapshotUnderVetting} backed by the marketplace's quarantine repository, pinned to the
@@ -123,15 +123,16 @@ final class QuarantineSnapshot implements SnapshotUnderVetting, AutoCloseable {
         repository.close();
     }
 
-    /** The pinned tree's files, in tree order. Reads tree objects only — no blob is opened. */
+    /**
+     * The pinned tree's files, in tree order. Reads tree objects only — no blob is opened. Within the
+     * same bound ingestion applies (GW_INGEST_0072), failing closed past it: the vetting run then records
+     * a blocking error instead of expanding the tree.
+     */
+    @Requirements({"GW_INGEST_0072"})
     private static List<Entry> index(Repository repository, RevCommit commit) throws IOException {
         List<Entry> entries = new ArrayList<>();
-        try (TreeWalk tree = new TreeWalk(repository)) {
-            tree.addTree(commit.getTree());
-            tree.setRecursive(true);
-            while (tree.next()) {
-                entries.add(new Entry(tree.getPathString(), tree.getObjectId(0).copy()));
-            }
+        for (BoundedTree.Entry file : BoundedTree.files(repository, commit.getTree())) {
+            entries.add(new Entry(file.path(), file.id()));
         }
         return List.copyOf(entries);
     }

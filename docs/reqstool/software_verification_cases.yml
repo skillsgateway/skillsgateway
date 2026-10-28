@@ -4079,6 +4079,16 @@ cases:
       THEN no hook is read from it, a problem names the file as too large to read, and the read finishes within two seconds
     revision: "0.1.0"
 
+  - id: SVC_GW_INGEST_0072
+    requirement_ids: ["GW_INGEST_0072"]
+    title: A tree with too many paths or too much depth is refused quickly
+    verification: automated-test
+    description: |
+      GIVEN an upstream whose tree fans out ten ways over eight levels, a commit whose tree does the same over empty directories, and a commit forty directories deep
+      WHEN the first is ingested and the others are indexed for vetting
+      THEN the snapshot is rejected naming the entry bound within thirty seconds, the fan-out is refused naming the entry bound within ten seconds, and the deep tree is refused naming the depth bound
+    revision: "0.1.0"
+
   - id: SVC_GW_AUTH_0053
     requirement_ids: ["GW_AUTH_0053"]
     title: A sign-in started on one instance completes on another, and its session is honoured by both
