@@ -88,6 +88,13 @@ final class QuarantineSnapshot implements SnapshotUnderVetting, AutoCloseable {
     }
 
     @Override
+    @Requirements({"GW_VETTING_0064"})
+    public byte[] read(String path) throws IOException {
+        ObjectId blob = blobs.get(path);
+        return blob == null ? null : content(blob);
+    }
+
+    @Override
     @Requirements({"GW_VETTING_0030"})
     public void walk(Predicate<String> wanted, FileVisitor visitor) throws IOException {
         for (Entry entry : entries) {

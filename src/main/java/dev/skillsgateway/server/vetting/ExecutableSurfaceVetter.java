@@ -198,7 +198,24 @@ public class ExecutableSurfaceVetter implements Vetter {
             }
             Set<String> skillDirectories = new LinkedHashSet<>();
             Set<String> instructions = new LinkedHashSet<>();
+            if (roots.size() > MAX_PLUGIN_ROOTS) {
+                // Every root is read in full, so the count is the cost (GW_VETTING_0064). Past the bound
+                // the run fails closed and reads only the first roots.
+                add(new Finding(
+                        "too-many-plugin-roots",
+                        Severity.HIGH,
+                        null,
+                        "the snapshot declares %d plugin roots; only the first %d were read"
+                                .formatted(roots.size(), MAX_PLUGIN_ROOTS)));
+            }
+            int read = 0;
             for (Map.Entry<String, String> root : roots.entrySet()) {
+                if (++read > MAX_PLUGIN_ROOTS) {
+                    break;
+                }
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new java.util.concurrent.CancellationException("vetting was cancelled");
+                }
                 PluginComponents.Components components = PluginComponents.read(
                         files, root.getKey(), root.getValue() == null ? null : manifest, root.getValue());
                 components
@@ -771,6 +788,9 @@ public class ExecutableSurfaceVetter implements Vetter {
      * {@link PluginComponents.Files} over the vetting SPI: the tree's paths are collected with a
      * selection that opens no blob, and each read opens exactly the one it names (GW_VETTING_0030).
      */
+    /** Far more plugins than any marketplace ships, and few enough to read each in full (GW_VETTING_0064). */
+    static final int MAX_PLUGIN_ROOTS = 1_000;
+
     private record SnapshotFiles(SnapshotUnderVetting snapshot, Collection<String> paths)
             implements PluginComponents.Files {
 
@@ -787,9 +807,7 @@ public class ExecutableSurfaceVetter implements Vetter {
 
         @Override
         public byte[] read(String path) throws IOException {
-            byte[][] content = new byte[1][];
-            snapshot.walk(path::equals, (visited, bytes) -> content[0] = bytes);
-            return content[0];
+            return snapshot.read(path);
         }
 
         /** Every file in {@code wanted}, read in one walk; a file over the size limit maps to {@code null}. */

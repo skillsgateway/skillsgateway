@@ -3132,3 +3132,13 @@ requirements:
     rationale: "Recomputing a line number by rescanning from the start of the file for every match, and starting a fresh scan from every import keyword, makes the cost the product of the file's length and the number of matches. A file of a megabyte dense with matches then holds a vetter, or a request that lists a snapshot's content, for longer than its time limit, though the file is far below the size limit."
     categories: ["reliability", "security"]
     revision: 0.5.0
+
+  - id: GW_VETTING_0064
+    title: The executable-surface vetter's work is bounded in plugin roots and stops when cancelled
+    significance: shall
+    description: "The system shall read each file the executable-surface vetter needs by direct lookup rather than by walking the snapshot; shall read at most a fixed number of plugin roots, raising a high-severity finding that names the count when a snapshot declares more; and shall stop the vetter's per-root work when its run is cancelled."
+    rationale: "Every plugin root was read in full, and every single-file read walked every path, so the cost grew as the number of roots times the number of entries, and a snapshot of tens of thousands of tiny plugin directories held a vetting thread long after its time limit. A fixed bound far above any real marketplace fails such a snapshot closed instead."
+    references:
+      requirement_ids: ["GW_VETTING_0062"]
+    categories: ["reliability", "security"]
+    revision: 0.5.0

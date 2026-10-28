@@ -35,6 +35,16 @@ public interface SnapshotUnderVetting {
     void walk(Predicate<String> wanted, FileVisitor visitor) throws IOException;
 
     /** {@link #walk(Predicate, FileVisitor)} over the whole tree. */
+    /**
+     * One file's content, or {@code null} when absent or over the size limit. A lookup where the
+     * snapshot can answer one directly (GW_VETTING_0064), not a walk of every path.
+     */
+    default byte[] read(String path) throws IOException {
+        byte[][] content = new byte[1][];
+        walk(path::equals, (visited, bytes) -> content[0] = bytes);
+        return content[0];
+    }
+
     default void walk(FileVisitor visitor) throws IOException {
         walk(path -> true, visitor);
     }

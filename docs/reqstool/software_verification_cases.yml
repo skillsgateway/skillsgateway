@@ -1848,6 +1848,16 @@ cases:
       THEN each finishes within a few seconds, and the first and last matches are located at their correct lines
     revision: "0.1.0"
 
+  - id: SVC_GW_VETTING_0066
+    requirement_ids: ["GW_VETTING_0064"]
+    title: Too many plugin roots fail closed quickly, and an interrupted run over many roots stops
+    verification: automated-test
+    description: |
+      GIVEN a snapshot with three thousand plugin roots, and a snapshot with nine hundred and ninety-nine plugin roots among two hundred thousand other files
+      WHEN the first is vetted and a vetting run over the second is interrupted
+      THEN the first fails within five seconds with a finding naming too many plugin roots, and the second stops within two seconds of the interruption
+    revision: "0.1.0"
+
   - id: SVC_GW_VETTING_0026
     requirement_ids: ["GW_VETTING_0026"]
     title: External verdicts take the worst of declared and derived, and carry their report link
