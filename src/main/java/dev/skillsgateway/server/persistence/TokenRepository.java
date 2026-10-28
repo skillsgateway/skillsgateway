@@ -135,15 +135,6 @@ public class TokenRepository {
                 .list();
     }
 
-    /** A principal's personal tokens, machine credentials excluded, for the administrative listing. */
-    @Requirements({"GW_AUTH_0055"})
-    public List<AccessToken> listPersonalByPrincipal(String principal) {
-        return jdbc.sql("SELECT * FROM access_tokens WHERE principal = :principal AND api_scopes IS NULL ORDER BY id")
-                .param("principal", principal)
-                .query(TokenRepository::map)
-                .list();
-    }
-
     /** Revokes every live personal token of a principal, returning the ids it revoked. */
     @Requirements({"GW_AUTH_0055"})
     public List<Long> revokePersonalByPrincipal(String principal) {

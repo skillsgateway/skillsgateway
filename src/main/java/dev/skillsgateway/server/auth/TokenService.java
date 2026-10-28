@@ -316,7 +316,7 @@ public class TokenService {
     /** Any principal's personal tokens, for an administrator (GW_AUTH_0055). */
     @Requirements({"GW_AUTH_0055"})
     public List<AccessToken> listPersonalTokensOf(String principal) {
-        return tokenRepository.listPersonalByPrincipal(principal);
+        return tokenRepository.listByPrincipal(principal);
     }
 
     /** Revokes every live personal token a principal holds (GW_AUTH_0055); takes effect at the next lookup. */
