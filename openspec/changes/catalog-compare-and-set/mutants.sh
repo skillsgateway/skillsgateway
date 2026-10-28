@@ -14,7 +14,7 @@ trap 'git checkout -- src/main' EXIT
 
 CS=src/main/java/dev/skillsgateway/server/catalog/CatalogService.java
 RT=src/main/java/dev/skillsgateway/server/storage/RefTransitions.java
-known='^M[1-3]-'
+known='^M[1-4]-'
 
 mutate() { # file old new: replace exactly one occurrence, or fail
   python3 - "$1" "$2" "$3" <<'PY'
@@ -73,6 +73,9 @@ run M3-lost-race-is-success $T a_rebuild_whose_reads_went_stale_recomposes_inste
   '        if (result == RefUpdate.Result.LOCK_FAILURE) {
             return false;' '        if (result == RefUpdate.Result.LOCK_FAILURE) {
             return true;'
+
+run M4-no-recompose $T a_rebuild_whose_reads_went_stale_recomposes_instead_of_overwriting_a_newer_catalog "$CS" \
+  '                    if (attempt >= MAX_REBUILD_ATTEMPTS) {' '                    if (attempt >= 1) {'
 
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi

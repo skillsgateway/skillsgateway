@@ -316,9 +316,12 @@ class CatalogTests extends AbstractGatewayTest {
                     }
                 };
 
-        otherInstance.rebuild();
+        CatalogService.CatalogInfo rebuilt = otherInstance.rebuild();
 
         assertThat(interleaved).as("the interleaving ran").isTrue();
+        assertThat(rebuilt.sha())
+                .as("the rebuild reports the revision that is served")
+                .isEqualTo(catalogService.served().orElseThrow().sha());
         assertThat(catalogService.served().orElseThrow().constituents())
                 .extracting(CatalogService.Constituent::marketplace)
                 .as("the withdrawn marketplace is back in the catalog")
