@@ -18,6 +18,9 @@ The system SHALL implement GW_FACADE_0002.
 #### Scenario: SVC_GW_FACADE_0002
 The system SHALL pass SVC_GW_FACADE_0002.
 
+#### Scenario: SVC_GW_FACADE_0036
+The system SHALL pass SVC_GW_FACADE_0036.
+
 ### Requirement: GW_AUDIT_0001
 The system SHALL implement GW_AUDIT_0001.
 
