@@ -3915,7 +3915,7 @@ select it.</p>
 </tr>
 <tr>
 <td><code>skill-not-scanned</code></td>
-<td>The <code>SKILL.md</code> was over the size limit or not valid UTF-8, so conformance could not be checked</td>
+<td>The <code>SKILL.md</code> was over the size limit or binary, so conformance could not be checked</td>
 <td>only under enforcement</td>
 </tr>
 <tr>
@@ -3990,10 +3990,12 @@ a hang. A connector that sets no <code>read-timeout</code> takes the chain-wide 
 <p>See <a href="../../guides/adding-an-external-vetter/">Adding an external vetter</a> for the
 wire contract and a minimal working example.</p>
 <h2 id="coverage-gaps-are-reported-not-hidden">Coverage gaps are reported, not hidden<a class="headerlink" href="#coverage-gaps-are-reported-not-hidden" title="Permanent link">&para;</a></h2>
-<p>A file larger than the configured size limit, or one that is not valid UTF-8, is
+<p>A file larger than the configured size limit, or a binary one (holding a NUL byte), is
 not silently skipped. <code>secret-scan</code> and <code>prompt-injection</code> record one
 informational <code>file-not-scanned</code> finding per reason (over the size limit, or
-binary / not UTF-8). The finding says how many files it covers, names the first
+binary). A file that is merely not valid UTF-8 is not binary: it is read with
+replacement characters and scanned, because the shells, runtimes and agents
+that consume it read it too. The finding says how many files it covers, names the first
 twenty and counts the rest. The vetter's coverage summary also states the gap
 ("scanned 3210 text file(s); 51 file(s) not scanned (22 over the size limit, 29
 binary)"). A verdict whose findings are all informational shows that summary on

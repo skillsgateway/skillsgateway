@@ -2686,7 +2686,7 @@ Quarantined content is never fetchable through the facade, so the gateway
 ships it rather than handing your endpoint a URL to pull from.</p>
 <div class="admonition note">
 <p class="admonition-title">What this contract cannot give you</p>
-<p>Only <em>scannable</em> content is sent: a file that is not valid UTF-8 text
+<p>Only <em>scannable</em> content is sent: a binary file (one holding a NUL byte)
 arrives with <code>content: null</code>, whatever the caps are set to. So a vetter that
 needs to run a snapshot — a sandbox detonator — cannot be built on this
 contract, and no cap makes it possible. Why the gateway does not hand out a
@@ -2711,7 +2711,7 @@ signed fetch URL instead, and what would change that, is recorded in
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">  </span><span class="p">]</span>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">}</span>
 </code></pre></div>
-<p>A file over the configured per-file cap, or one that is not valid UTF-8 text,
+<p>A file over the configured per-file cap, or a binary one (holding a NUL byte),
 arrives with <code>scanned: false</code> and <code>content: null</code> rather than being omitted, so
 a coverage gap is visible to your endpoint, not silent.</p>
 <p>Your endpoint answers with a normalized verdict:</p>
