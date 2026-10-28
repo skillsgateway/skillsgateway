@@ -460,6 +460,13 @@ refused **before anything is withdrawn**, so a request that cannot be honoured
 changes nothing rather than quietly leaving you with the other outcome. A
 return is recorded on the ledger as a publication in its own right.
 
+A withdrawal and every other change to what a marketplace serves happen one at
+a time per marketplace, each holding the marketplace's publication lock. So an
+approval that is still publishing finishes before a withdrawal acts on it, and
+a predecessor that another administrator withdrew while yours waited is not put
+back. The marketplace then serves nothing, and the ledger records
+`snapshot-rollback-unavailable`.
+
 !!! warning "This stops the gateway serving it; it does not delete what clients hold"
 
     Anyone who already cloned the content still has it on disk. `GET

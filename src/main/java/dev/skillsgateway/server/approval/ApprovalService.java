@@ -52,6 +52,7 @@ public class ApprovalService {
     private final SnapshotClosureRepository closureRepository;
     private final ApplicationEventPublisher events;
     private final NameCollisionGate nameCollisionGate;
+    private final PublicationLock publicationLock;
 
     public ApprovalService(
             GitStorage storage,
@@ -70,7 +71,8 @@ public class ApprovalService {
             ClosureCompletenessGate closureGate,
             SnapshotClosureRepository closureRepository,
             ApplicationEventPublisher events,
-            NameCollisionGate nameCollisionGate) {
+            NameCollisionGate nameCollisionGate,
+            PublicationLock publicationLock) {
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
@@ -88,6 +90,7 @@ public class ApprovalService {
         this.closureRepository = closureRepository;
         this.events = events;
         this.nameCollisionGate = nameCollisionGate;
+        this.publicationLock = publicationLock;
     }
 
     /** Ledger event for an approval refused because an administrator had withdrawn the commit. */
@@ -313,20 +316,35 @@ public class ApprovalService {
             throw new IllegalStateException(
                     "invalid transition %s -> %s".formatted(current.state(), Snapshot.APPROVED));
         }
-        Snapshot decided = decideGuarded(current, marketplace, reviewer);
-        String sha = decided.sha();
         try {
-            // Publication is one seam operation (GW_FACADE_0015): both served references land or neither
-            // does, and a transition that did not take effect is raised rather than returned. What
-            // used to be here -- a fetch built from the quarantine's filesystem path, then a
-            // RefUpdate whose Result was discarded -- could not work on a backend whose
-            // repositories have no path, and reported success when the served reference refused to
-            // move.
-            storage.publish(marketplace.name(), sha);
-        } catch (IOException | RuntimeException publishFailed) {
-            repair(current, publishFailed);
-            throw new ApprovalException("publish failed for snapshot %d".formatted(snapshotId), publishFailed);
+            // The object copy first, unlocked: it is the slow part and serves nothing.
+            storage.stage(marketplace.name(), current.sha());
+        } catch (IOException | RuntimeException stageFailed) {
+            throw new ApprovalException("publish failed for snapshot %d".formatted(snapshotId), stageFailed);
         }
+        Snapshot decided;
+        try {
+            // Then the decision and the served references together, under the marketplace's
+            // publication lock (GW_APPROVAL_0032): a withdrawal waits for both, or this waits for it and
+            // the compare-and-set decision refuses. Publication is one seam operation
+            // (GW_FACADE_0015), and a refusal rolls the decision back with it (GW_APPROVAL_0012).
+            decided = publicationLock.holding(marketplace.id(), () -> {
+                Snapshot transitioned = nameCollisionGate.guarded(
+                        current, () -> snapshotRepository.decide(current, Snapshot.APPROVED, reviewer));
+                try {
+                    storage.commitPublication(marketplace.name(), transitioned.sha());
+                } catch (IOException | RuntimeException publishFailed) {
+                    throw new PublicationRefused(publishFailed);
+                }
+                return transitioned;
+            });
+        } catch (NameCollisionException | PluginInventoryUnavailableException refused) {
+            recordNameCollisionRefusal(current, marketplace, reviewer, refused);
+            throw refused;
+        } catch (PublicationRefused refused) {
+            throw new ApprovalException("publish failed for snapshot %d".formatted(snapshotId), refused.getCause());
+        }
+        String sha = decided.sha();
         // The override marker is written only once the publication has actually landed (GW_VETTING_0028):
         // the snapshot is now served over a vetting failure, so the standing marker that says so
         // must not exist for a snapshot that was never published. The ledger event is written by
@@ -394,40 +412,6 @@ public class ApprovalService {
     @Requirements({"GW_VETTING_0028"})
     public Optional<VettingOverrideRecord> vettingOverride(long snapshotId) {
         return vettingOverrideRepository.findBySnapshot(snapshotId);
-    }
-
-    /**
-     * Puts the row back after a publication that did not happen (GW_APPROVAL_0012).
-     *
-     * <p>{@code decide} has already committed by this point, so the row says {@code approved} while
-     * nothing is served. The caller writes the ledger entry and emits the event only once
-     * {@code approve} returns, so failing before returning is what keeps those honest; the row is
-     * the one thing that needs undoing.
-     *
-     * <p>A repair that itself fails is not swallowed. It is attached to the failure that caused it,
-     * because at that point the estate is genuinely inconsistent — a row claiming a publication that
-     * did not happen. {@link PublicationReconciler} is what catches that case afterwards: until it
-     * existed this sentence named a startup check that had never been built, which is worse than no
-     * sentence, because it retires the concern in the reader's mind. Still logged at error: the
-     * repair runs on the next start, not on this request.
-     */
-    private void repair(Snapshot before, Throwable publishFailed) {
-        try {
-            if (snapshotRepository.undecide(before).isEmpty()) {
-                log.warn(
-                        "publication of snapshot {} failed and its row was no longer approved, so it was left"
-                                + " alone: something else decided it in the meantime",
-                        before.id());
-            }
-        } catch (RuntimeException repairFailed) {
-            log.error(
-                    "publication of snapshot {} failed and the row could not be returned to {}: the database"
-                            + " records an approval that was never served",
-                    before.id(),
-                    before.state(),
-                    repairFailed);
-            publishFailed.addSuppressed(repairFailed);
-        }
     }
 
     /**
@@ -563,13 +547,10 @@ public class ApprovalService {
      * entry is not rolled back with it.
      */
     @Requirements({"GW_APPROVAL_0019.3", "GW_APPROVAL_0021"})
-    private Snapshot decideGuarded(Snapshot current, Marketplace marketplace, String reviewer) {
-        try {
-            return nameCollisionGate.guarded(
-                    current, () -> snapshotRepository.decide(current, Snapshot.APPROVED, reviewer));
-        } catch (NameCollisionException | PluginInventoryUnavailableException refused) {
-            recordNameCollisionRefusal(current, marketplace, reviewer, refused);
-            throw refused;
+    /** A publication that did not take effect inside the lock; unwrapped by the caller. */
+    private static final class PublicationRefused extends RuntimeException {
+        PublicationRefused(Throwable cause) {
+            super(cause);
         }
     }
 

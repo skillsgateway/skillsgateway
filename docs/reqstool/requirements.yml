@@ -2799,6 +2799,14 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.5.0
 
+  - id: GW_APPROVAL_0032
+    title: Changes to what a marketplace serves happen one at a time
+    significance: shall
+    description: "The system shall serialise, per marketplace and across every instance, each change to what that marketplace serves — an approval's decision together with its publication, a withdrawal together with its removal from service and any return to an earlier snapshot, a re-vetting withdrawal, and a repair of a missing publication; shall re-read inside that serialisation the record each change acts on; and shall neither return to service nor republish a snapshot that is no longer approved when the change acts, serving nothing instead and recording why."
+    rationale: "Each of these changes is a record transition followed by a reference write. Without one lock spanning both, a withdrawal can land between an approval's decision and its publication and be overwritten, and a return to the previous snapshot or a startup repair can republish content another administrator has just withdrawn. Copying objects is the slow part and serves nothing, so it stays outside the lock."
+    categories: ["security", "reliability"]
+    revision: 0.5.0
+
   - id: GW_INGEST_0045
     title: The snapshot inventory lists every component a plugin declares
     significance: shall
