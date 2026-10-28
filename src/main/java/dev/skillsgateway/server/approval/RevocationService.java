@@ -176,9 +176,23 @@ public class RevocationService {
                     .orElseThrow(() -> new NotApprovedException(snapshotId, Snapshot.REVOKED));
             auditLogger.record(administrator, marketplace, EVENT_REVOKED, revoked.sha(), reason);
             boolean stoppedServing = unpublish(marketplace, revoked, administrator);
-            Optional<Snapshot> served = target.isPresent()
-                    ? republish(marketplace, target.get(), revoked, administrator)
+            // Re-read inside the lock (GW_APPROVAL_0032): the target was chosen before it, and another
+            // administrator may have withdrawn it since.
+            Optional<Snapshot> returnable = target.flatMap(chosen -> snapshotRepository
+                    .findById(chosen.id())
+                    .filter(reread -> Snapshot.APPROVED.equals(reread.state()) && !reread.deleted()));
+            if (target.isPresent() && returnable.isEmpty()) {
+                rollbackUnavailable(marketplace, target.get(), revoked, administrator);
+            }
+            Optional<Snapshot> served = returnable.isPresent()
+                    ? republish(marketplace, returnable.get(), revoked, administrator)
                     : Optional.empty();
+            // Serving nothing by choice, or because nothing approved was left to return to, is a
+            // decision the startup reconciler must not undo (GW_APPROVAL_0033). A rollback whose
+            // publication failed is not: the predecessor is still meant to be served.
+            if (stoppedServing && returnable.isEmpty()) {
+                marketplaceRepository.suspendServing(marketplace.id());
+            }
             return new Withdrawal(revoked, stoppedServing, served);
         });
         Snapshot revoked = withdrawal.revoked();
@@ -244,27 +258,6 @@ public class RevocationService {
     @Requirements({"GW_APPROVAL_0016"})
     private Optional<Snapshot> republish(
             Marketplace marketplace, Snapshot target, Snapshot revoked, String administrator) {
-        // Re-read inside the lock (GW_APPROVAL_0032): the target was chosen before it, and another
-        // administrator may have withdrawn it since. Then the marketplace serves nothing, as it would
-        // for a request that chose to serve nothing.
-        Optional<Snapshot> stillApproved = snapshotRepository
-                .findById(target.id())
-                .filter(current -> Snapshot.APPROVED.equals(current.state()) && !current.deleted());
-        if (stillApproved.isEmpty()) {
-            log.warn(
-                    "snapshot {} ({}) was revoked, but its predecessor {} was withdrawn meanwhile;"
-                            + " the marketplace now serves nothing",
-                    revoked.id(),
-                    marketplace.name(),
-                    target.sha());
-            auditLogger.record(
-                    administrator,
-                    marketplace,
-                    EVENT_ROLLBACK_UNAVAILABLE,
-                    target.sha(),
-                    "the previous approved snapshot was withdrawn before it could be returned to service");
-            return Optional.empty();
-        }
         try {
             storage.publish(marketplace.name(), target.sha());
             auditLogger.record(
@@ -289,5 +282,21 @@ public class RevocationService {
                     publishFailed);
             return Optional.empty();
         }
+    }
+
+    /** The rollback target was withdrawn while this waited: say so, and serve nothing. */
+    private void rollbackUnavailable(Marketplace marketplace, Snapshot target, Snapshot revoked, String administrator) {
+        log.warn(
+                "snapshot {} ({}) was revoked, but its predecessor {} was withdrawn meanwhile;"
+                        + " the marketplace now serves nothing",
+                revoked.id(),
+                marketplace.name(),
+                target.sha());
+        auditLogger.record(
+                administrator,
+                marketplace,
+                EVENT_ROLLBACK_UNAVAILABLE,
+                target.sha(),
+                "the previous approved snapshot was withdrawn before it could be returned to service");
     }
 }

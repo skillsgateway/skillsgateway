@@ -353,4 +353,32 @@ public class MarketplaceRepository {
                 .optional()
                 .orElse(false);
     }
+
+    /** Records that a withdrawal left this marketplace serving nothing on purpose (GW_APPROVAL_0033). */
+    @Requirements({"GW_APPROVAL_0033"})
+    public void suspendServing(long id) {
+        jdbc.sql("UPDATE marketplaces SET serving_suspended_at = :now WHERE id = :id")
+                .param("now", OffsetDateTime.now())
+                .param("id", id)
+                .update();
+    }
+
+    /** Clears the suspension once an approval publishes again (GW_APPROVAL_0033). */
+    @Requirements({"GW_APPROVAL_0033"})
+    public void resumeServing(long id) {
+        jdbc.sql(
+                        "UPDATE marketplaces SET serving_suspended_at = NULL WHERE id = :id AND serving_suspended_at IS NOT NULL")
+                .param("id", id)
+                .update();
+    }
+
+    /** Whether a withdrawal left this marketplace serving nothing on purpose (GW_APPROVAL_0033). */
+    @Requirements({"GW_APPROVAL_0033"})
+    public boolean servingSuspended(long id) {
+        return jdbc.sql("SELECT serving_suspended_at IS NOT NULL FROM marketplaces WHERE id = :id")
+                .param("id", id)
+                .query(Boolean.class)
+                .optional()
+                .orElse(false);
+    }
 }

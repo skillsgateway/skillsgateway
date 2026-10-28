@@ -99,6 +99,10 @@ CREATE TABLE marketplaces (
     ingest_stage marketplace_ingest_stage,
     ingest_started_at TIMESTAMPTZ,
     ingest_heartbeat_at TIMESTAMPTZ,
+    -- Set when an administrator's withdrawal left the marketplace serving nothing (GW_APPROVAL_0033), so
+    -- the startup reconciler does not read that choice as a lost publication; cleared by the next
+    -- approval that publishes.
+    serving_suspended_at TIMESTAMPTZ,
     -- Removal (GW_INGEST_0034) retires the row rather than deleting it: snapshots restrict deletion
     -- because they are the approval history, and the ledger keeps this row's id as its referent.
     deleted_at TIMESTAMPTZ,

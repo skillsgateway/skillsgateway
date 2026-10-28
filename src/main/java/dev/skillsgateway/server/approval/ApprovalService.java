@@ -336,6 +336,8 @@ public class ApprovalService {
                 } catch (IOException | RuntimeException publishFailed) {
                     throw new PublicationRefused(publishFailed);
                 }
+                // Serving again is what lifts a withdrawal's serve-nothing choice (GW_APPROVAL_0033).
+                marketplaceRepository.resumeServing(marketplace.id());
                 return transitioned;
             });
         } catch (NameCollisionException | PluginInventoryUnavailableException refused) {

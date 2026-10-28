@@ -2807,6 +2807,16 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.5.0
 
+  - id: GW_APPROVAL_0033
+    title: A withdrawal's choice to serve nothing outlives a restart
+    significance: shall
+    description: "The system shall record, with a withdrawal that leaves a marketplace serving nothing because the administrator chose to serve nothing or because no approved snapshot remained to return to, that the marketplace is deliberately unserved; shall not republish any of that marketplace's approved snapshots when reconciling publication while the record stands; and shall clear the record when an approval of the marketplace publishes."
+    rationale: "Reconciliation repairs approved snapshots that storage does not serve, which is what a lost publication looks like and also exactly what a withdrawal that chose to serve nothing looks like. Without a record of the choice, the next start republishes the predecessor the administrator decided not to trust."
+    references:
+      requirement_ids: ["GW_APPROVAL_0014", "GW_APPROVAL_0016"]
+    categories: ["security", "reliability"]
+    revision: 0.5.0
+
   - id: GW_INGEST_0045
     title: The snapshot inventory lists every component a plugin declares
     significance: shall
