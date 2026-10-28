@@ -173,10 +173,11 @@ public class SnapshotRepository {
      * stamps are cleared by the transition, so a re-published snapshot never carries a revocation
      * marker that no longer holds; what it was revoked for stays in the ledger.
      */
-    @Requirements({"GW_FACADE_0009", "GW_INGEST_0034"})
+    @Requirements({"GW_FACADE_0009", "GW_INGEST_0034", "GW_APPROVAL_0031"})
     @Transactional
-    public Snapshot decide(long id, String newState, String reviewer) {
-        Snapshot snapshot = findById(id).orElseThrow(() -> new SnapshotNotFoundException(id));
+    public Snapshot decide(Snapshot expected, String newState, String reviewer) {
+        long id = expected.id();
+        Snapshot snapshot = expected;
         // Shares the marketplace row with a concurrent removal (GW_INGEST_0034), which takes it
         // exclusively: a decision either commits before the removal stamps the row, and is withdrawn
         // by it, or waits for the stamp and is refused here. Without the lock the two are write skew.
@@ -193,16 +194,29 @@ public class SnapshotRepository {
         if (!Snapshot.APPROVED.equals(newState) && !Snapshot.REJECTED.equals(newState)) {
             throw new IllegalStateException("invalid target state " + newState);
         }
+        // Compare-and-set on the row the caller judged (GW_APPROVAL_0031): a withdrawal, approval or
+        // rejection that landed since then is never written over, and the caller is told instead.
+        // Every revocation stamps a fresh revoked_at, so it tells one revoked row from another.
         return jdbc.sql(
                         "UPDATE snapshots SET state = :state::snapshot_state, decided_by = :reviewer, decided_at = :now,"
                                 + " revoked_at = NULL, revoked_by = NULL, revoked_kind = NULL, violation = NULL"
-                                + " WHERE id = :id RETURNING *")
+                                + " WHERE id = :id AND state = :expected::snapshot_state"
+                                + " AND revoked_at IS NOT DISTINCT FROM CAST(:revokedAt AS timestamptz)"
+                                + " RETURNING *")
                 .param("state", newState)
                 .param("reviewer", reviewer)
                 .param("now", OffsetDateTime.now())
                 .param("id", id)
+                .param("expected", expected.state())
+                .param(
+                        "revokedAt",
+                        expected.revokedAt() == null
+                                ? null
+                                : expected.revokedAt().atOffset(ZoneOffset.UTC))
                 .query(Snapshot.class)
-                .single();
+                .optional()
+                .orElseThrow(() -> new IllegalStateException(
+                        "snapshot %d changed while it was being decided; reload it and decide again".formatted(id)));
     }
 
     /**

@@ -203,7 +203,7 @@ class MarketplaceUrlChangeTests extends AbstractGatewayTest {
     void a_marketplace_with_a_snapshot_keeps_its_url_and_the_new_upstream_is_never_contacted() throws Exception {
         String name = uniqueName("urlsnap");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST), "alice", null);
-        snapshotRepository.decide(registered.snapshot().id(), Snapshot.REJECTED, "root");
+        snapshotRepository.decide(registered.snapshot(), Snapshot.REJECTED, "root");
 
         change(name, forge.baseUrl() + "/acme/after-snapshot.git", root).andExpect(status().isConflict());
 
