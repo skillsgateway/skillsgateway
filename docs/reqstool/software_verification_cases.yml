@@ -4169,6 +4169,16 @@ cases:
       THEN the first two fail and the other origin receives no request, and the third's redirect is followed to the new path
     revision: "0.1.0"
 
+  - id: SVC_GW_INGEST_0076
+    requirement_ids: ["GW_INGEST_0076"]
+    title: Queued triggers for one marketplace ingest once, others still run, and a later trigger queues anew
+    verification: automated-test
+    description: |
+      GIVEN two marketplaces and a webhook queue that is busy
+      WHEN fifty triggers arrive for the first and one for the second, the queue is released, and one more trigger for the first arrives after its ingest started
+      THEN the fifty are answered by one ingest of the first, the second's ingest runs, and the later trigger queues and runs a new ingest
+    revision: "0.1.0"
+
   - id: SVC_GW_AUTH_0053
     requirement_ids: ["GW_AUTH_0053"]
     title: A sign-in started on one instance completes on another, and its session is honoured by both
