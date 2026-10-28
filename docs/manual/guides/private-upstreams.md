@@ -67,9 +67,14 @@ The full contract, with the validation rules, is in
 - **Only to its own prefix.** The credential is chosen once, from the
   marketplace's clone URL. The gateway attaches it to each HTTP request itself,
   and only when that request's URL is under the chosen prefix. A redirect to
-  another host, port, scheme or path gets no credential. So does a redirect
-  into a prefix that has a credential of its own: a server's answer never
-  decides which token is sent.
+  another path of the same origin gets no credential. So does a redirect into
+  a prefix that has a credential of its own: a server's answer never decides
+  which token is sent.
+- **Never to another origin.** Every request of a listing or fetch stays on
+  the scheme, host and port of the registered URL, with or without a
+  credential. A redirect elsewhere is refused before anything connects there,
+  and the registration or ingest fails with that reason (GW_INGEST_0075 —
+  An upstream listing or fetch never leaves the registered URL's origin).
 - **Only over HTTPS.** A prefix must be `https`. Plain `http` is accepted only
   to a loopback host (`localhost`, `127.0.0.0/8`, `::1`), where no network
   carries the token.

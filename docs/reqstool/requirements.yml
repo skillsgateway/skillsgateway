@@ -3063,6 +3063,16 @@ requirements:
     categories: ["reliability", "security"]
     revision: 0.5.0
 
+  - id: GW_INGEST_0075
+    title: An upstream listing or fetch never leaves the registered URL's origin
+    significance: shall
+    description: "The system shall send every HTTP request of a marketplace upstream listing or fetch, with or without a credential, only to the scheme, host and port of the registered upstream URL, and shall refuse a redirect to any other before connecting to it, failing the registration or ingest with that reason."
+    rationale: "Where the gateway connects is the administrator's choice at registration, not the upstream server's: a redirect followed to another origin would make the gateway's network position available to whoever answers the registered URL."
+    references:
+      requirement_ids: ["GW_INGEST_0051"]
+    categories: ["security"]
+    revision: 0.5.0
+
   - id: GW_AUTH_0053
     title: A browser session does not depend on which instance answers
     significance: shall
