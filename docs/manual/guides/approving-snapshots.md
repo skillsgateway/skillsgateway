@@ -27,7 +27,9 @@ folder at a time and states the snapshot's true totals, and a search over every
 path finds a file anywhere in a snapshot of any size. The part that usually
 decides a successor snapshot is the **vs served** view of the file you are reading: exactly what it adds, changes
 or removes against the commit consumers are currently receiving. Paths the
-snapshot removes are in the tree too, marked. A snapshot of a marketplace
+snapshot removes are in the tree too, marked. A stretch where nearly every line
+repeats on both sides is shown as one replacement rather than searched line by
+line, so a file built to make the comparison slow cannot stall the review. A snapshot of a marketplace
 serving nothing shows every path as new: approving it serves all of it.
 
 **Send the second approver a link, not directions.** The address carries the
