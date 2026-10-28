@@ -7,6 +7,7 @@ import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotNotFoundException;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.storage.GitStorage;
+import dev.skillsgateway.server.vetting.SecretScanVetter;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.IOException;
@@ -299,12 +300,26 @@ public class SnapshotContentService {
                     skills,
                     components.commands(),
                     components.agents(),
-                    components.hooks(),
+                    components.hooks().stream()
+                            .map(SnapshotContentService::redacted)
+                            .toList(),
                     components.hookModules(),
                     components.mcpServers(),
                     components.lspServers()));
         }
         return List.copyOf(plugins);
+    }
+
+    /** A hook with credentials masked in what it runs (GW_VETTING_0065): this read is open to every session. */
+    @Requirements({"GW_VETTING_0065"})
+    private static PluginComponents.Hook redacted(PluginComponents.Hook hook) {
+        return new PluginComponents.Hook(
+                hook.event(),
+                hook.matcher(),
+                hook.type(),
+                SecretScanVetter.redact(hook.runs()),
+                hook.location(),
+                hook.declaredBy());
     }
 
     /** {@link PluginComponents.Files} over one commit's tree, indexed once and read on demand. */

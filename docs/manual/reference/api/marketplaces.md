@@ -420,6 +420,10 @@ Every list is present and empty when the plugin has none.
   declared in `plugin.json` and the marketplace entry, plus hooks in skill and
   agent frontmatter. For those, `declaredBy` is `skill <name>` or
   `agent <name>`.
+  `runs` reads `[redacted]` in place of any value the
+  [`secret-scan`](../../concepts/vetting.md#secret-scan) rules would report
+  (GW_VETTING_0065 — Credential-shaped text in held hook declarations is masked
+  where the gateway shows it).
 - **MCP servers** merge `.mcp.json` with `plugin.json`'s `mcpServers`.
 - **LSP servers** merge `.lsp.json` with the `lspServers` of `plugin.json`
   and of the marketplace entry. A name declared later replaces an earlier one.
