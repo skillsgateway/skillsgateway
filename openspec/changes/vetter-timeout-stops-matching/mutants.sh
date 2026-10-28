@@ -67,8 +67,8 @@ run() { # id test-class expected-method file old new
 T=vetting.VetterCancellationTests
 run M1-never-interrupts $T an_interrupted_scan_of_a_pathological_line_stops "$I" \
   'if (Thread.currentThread().isInterrupted()) {' 'if (false) {'
-run M2-download-then-run-unwrapped $T an_interrupted_scan_of_a_pathological_line_stops "$RF" \
-  'DOWNLOAD_THEN_RUN.matcher(InterruptibleText.of(normal))' 'DOWNLOAD_THEN_RUN.matcher(normal)'
+run M2-scan-line-unguarded $T an_interrupted_scan_of_a_pathological_line_stops "$RF" \
+  'CharSequence guarded = InterruptibleText.of(normal);' 'CharSequence guarded = normal;'
 run M3-section-backtracks $T a_section_header_with_no_closing_bracket_is_read_in_linear_time "$D" \
   '"^\\[\\[?+\\s*+([^\\]]++)\\]\\]?\\s*+(?:#.*)?$"' '"^\\[\\[?\\s*([^\\]]+?)\\s*\\]\\]?\\s*(?:#.*)?$"'
 

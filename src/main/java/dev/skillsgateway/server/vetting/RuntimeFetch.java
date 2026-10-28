@@ -123,25 +123,27 @@ final class RuntimeFetch {
                 continue;
             }
             String normal = normalize(line.text());
-            if (PIPE.matcher(InterruptibleText.of(normal)).find()) {
+            // One interruptible view for every pattern below (GW_VETTING_0062).
+            CharSequence guarded = InterruptibleText.of(normal);
+            if (PIPE.matcher(guarded).find()) {
                 add(matches, FETCH_EXEC, line.number(), "downloads code and pipes it into an interpreter");
             }
-            if (SUBSTITUTION.matcher(InterruptibleText.of(normal)).find()
-                    || POWERSHELL_EVAL.matcher(InterruptibleText.of(normal)).find()
-                    || INLINE_EVAL.matcher(InterruptibleText.of(normal)).find()) {
+            if (SUBSTITUTION.matcher(guarded).find()
+                    || POWERSHELL_EVAL.matcher(guarded).find()
+                    || INLINE_EVAL.matcher(guarded).find()) {
                 add(matches, FETCH_EXEC, line.number(), "downloads code and evaluates it in place");
             }
-            if (DOWNLOAD_THEN_RUN.matcher(InterruptibleText.of(normal)).find()) {
+            if (DOWNLOAD_THEN_RUN.matcher(guarded).find()) {
                 add(matches, FETCH_EXEC, line.number(), "downloads a file and runs it with an interpreter");
             }
-            if (DOWNLOAD_TO_FILE.matcher(InterruptibleText.of(normal)).find()) {
+            if (DOWNLOAD_TO_FILE.matcher(guarded).find()) {
                 downloads.add(new Download(line.number(), target(normal)));
             }
             executable.scan(normal);
-            if (PACKAGE_INSTALL.matcher(InterruptibleText.of(normal)).find()) {
+            if (PACKAGE_INSTALL.matcher(guarded).find()) {
                 add(matches, PACKAGE_RUN, line.number(), "installs packages from a registry at run time");
             }
-            Matcher runner = PACKAGE_RUNNER.matcher(InterruptibleText.of(normal));
+            Matcher runner = PACKAGE_RUNNER.matcher(guarded);
             if (runner.find()) {
                 add(
                         matches,
