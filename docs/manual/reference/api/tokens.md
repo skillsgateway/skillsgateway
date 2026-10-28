@@ -54,6 +54,12 @@ publication to everything by forgetting a field. Entries are validated against
 the registered hosted marketplaces at creation. An out-of-scope push answers
 exactly like a marketplace that does not exist, as an out-of-scope fetch does.
 
+Only an administrator or an approver of a marketplace may put it in
+`pushScopes`. A request naming any marketplace the caller neither administers
+nor approves is refused with `403` and issues no token; one unauthorized name
+refuses the whole request rather than being dropped from it. A request without
+`pushScopes` needs no role, as before.
+
 `sessionDerived` on a returned token says the credential came from
 [`POST /api/v1/tokens/session`](#post-apitokenssession) rather than from a
 deliberate provisioning.
@@ -68,6 +74,7 @@ silently shortened.
 | Status | Cause |
 | --- | --- |
 | 201 | Issued. The `token` field appears in this response and nowhere else, ever. |
+| 403 | A push scope names a marketplace the caller neither administers nor approves. |
 | 422 | Unknown scope, or lifetime beyond the configured cap. |
 
 ---

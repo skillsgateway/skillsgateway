@@ -7273,7 +7273,7 @@
         ]
       },
       "post": {
-        "description": "Issues a personal access token for the git facade. Optionally scoped to named marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned exactly once. Push scopes are separate and grant nothing by default: they name the hosted marketplaces the token may publish to. Creation is audit-logged with the token's name and both kinds of scope.",
+        "description": "Issues a personal access token for the git facade. Optionally scoped to named marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned exactly once. Push scopes are separate and grant nothing by default: they name the hosted marketplaces the token may publish to, and only an administrator or an approver of every marketplace named may request them. Creation is audit-logged with the token's name and both kinds of scope.",
         "operationId": "create_1",
         "requestBody": {
           "content": {
@@ -7295,6 +7295,16 @@
               }
             },
             "description": "Token issued; the only response carrying the cleartext"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "A push scope names a marketplace the caller neither administers nor approves"
           },
           "422": {
             "content": {

@@ -496,9 +496,11 @@ stays out of any external credential's reach.
 separate from fetch scopes, and where an absent *fetch* scope means every
 marketplace (the compatibility rule for tokens predating scoping), an absent
 *push* scope means none. No token issued before this existed can publish, and
-no token can be granted publication to everything by omission. A push for a
-marketplace outside the scope answers exactly as one for a marketplace that
-does not exist.
+no token can be granted publication to everything by omission. Only someone
+with authority over the marketplace, an administrator or its approver, can mint
+the scope; any other session asking for it is refused and gets no token. A push
+for a marketplace outside the scope answers exactly as one for a marketplace
+that does not exist.
 
 **A publisher may move one lineage, forward.** Only `refs/heads/main` may be
 updated; no ref may be deleted; history may not be rewritten unless the
@@ -520,11 +522,11 @@ top of every privileged endpoint:
 | Role | Scope | Authority |
 | --- | --- | --- |
 | `admin` | global | Every operation, including managing grants. |
-| `approver` | one marketplace | Ingest, approve, reject, re-vet, waive — for that marketplace only. The owning marketplace is resolved from the addressed snapshot or waiver on the server side, so a bare id cannot reach another marketplace's content. |
+| `approver` | one marketplace | Ingest, approve, reject, re-vet, waive, mint a push scope — for that marketplace only. The owning marketplace is resolved from the addressed snapshot or waiver on the server side, so a bare id cannot reach another marketplace's content. |
 | `auditor` | global | Read the ledger, its export, the operational listings. No mutations. |
 
 Enforcement is **deny-by-default and unconditional**: a session with no role
-keeps the browsing surface and its own tokens, and is refused everything else.
+keeps the browsing surface and its own fetch tokens, and is refused everything else.
 There is no configuration that turns it off. A deployment that locks itself out
 is prevented at the other end instead — the gateway refuses to start unless its
 configuration grants the admin role to somebody, and principals in

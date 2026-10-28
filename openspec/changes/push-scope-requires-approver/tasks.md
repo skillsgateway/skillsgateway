@@ -27,21 +27,22 @@
   `AbstractClaimMappingTest` subclass, `@SVCs SVC_GW_FACADE_0035`) mints a push
   scope with `201`. This proves the check honours claim roles. Verify that
   `ContextBudgetTests` and `ConfigSurfaceBudgetTests` are unchanged.
-- [ ] 2.4 Regenerate `src/main/frontend/openapi.json` and `src/api/types.gen.ts`
+- [x] 2.4 Regenerate `src/main/frontend/openapi.json` and `src/api/types.gen.ts`
   (`OpenApiContractTests` green).
 
 ## 3. Documentation
 
-- [ ] 3.1 `reference/api/tokens.md` (who may request `pushScopes`, the `403`),
+- [x] 3.1 `reference/api/tokens.md` (who may request `pushScopes`, the `403`),
   `guides/publishing-first-party-skills.md` (Step 2 needs approver or admin
   standing), and `concepts/trust-boundaries.md` ("The credential is one nobody
   holds" names who can be given it). Verify with `mkdocs build --strict`.
 
 ## 4. Gates and evidence
 
-- [ ] 4.1 Manual mutation: remove the check, swap `requireApprover` for a
-  no-op, and check only the first scope. 2.1 must fail for each mutant.
-  Restore and confirm with `git diff`.
+- [x] 4.1 Manual mutation (`mutants.sh`): remove the check, check only the
+  first scope, require admin instead of approver, and honour stored roles only
+  (not claims). The named test must fail for each mutant. Restore and confirm
+  with `git diff`.
 - [ ] 4.2 Run every AGENTS.md gate fresh after the last code edit, and record
   the commands, result tails, the mutation results and the commit SHA in
   `evidence.md`.

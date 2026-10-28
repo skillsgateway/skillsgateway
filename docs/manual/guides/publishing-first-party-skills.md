@@ -40,8 +40,10 @@ created here, so you can push the moment this returns.
 
 ## Step 2 — mint a push-scoped token
 
-Publication authority is **not** fetch authority. It is a separate scope, and it
-has no "all marketplaces" form:
+Publication authority is **not** fetch authority. It is a separate scope, it
+has no "all marketplaces" form, and only an administrator or an
+[approver](../reference/api/roles.md) of the marketplace can mint it. Any other
+caller is refused with `403`:
 
 ```console
 $ curl -X POST localhost:8080/api/v1/tokens \
