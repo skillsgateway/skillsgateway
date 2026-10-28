@@ -290,7 +290,7 @@ public class RevetService {
         List<FetchLogRepository.Fetcher> affected = List.of();
         boolean revoked = false;
         if (classification == RevetVerdict.Classification.VIOLATION) {
-            affected = fetchLogRepository.fetchersOf(snapshot.sha());
+            affected = fetchLogRepository.fetchersOf(snapshot.marketplaceId(), snapshot.sha());
             recordViolation(snapshot, marketplace, trigger, effect, affected, actor);
             if (properties.enforcing()) {
                 revoked = quarantine(snapshot, marketplace, effect, actor);
@@ -452,7 +452,7 @@ public class RevetService {
     public List<FetchLogRepository.Fetcher> affected(long snapshotId) {
         Snapshot snapshot =
                 snapshotRepository.findById(snapshotId).orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
-        return fetchLogRepository.fetchersOf(snapshot.sha());
+        return fetchLogRepository.fetchersOf(snapshot.marketplaceId(), snapshot.sha());
     }
 
     private static PassResult summarize(List<RevetResult> results) {

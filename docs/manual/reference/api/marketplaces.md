@@ -1113,8 +1113,10 @@ and the individual `results`.
 ### `GET /snapshots/{id}/fetchers`
 
 Every authenticated identity this snapshot's content was **sent** to through
-the git facade, with how often and when it last was — the blast radius of a
-retroactive violation, read from the fetch ledger.
+the git facade **from this snapshot's marketplace**, with how often and when it
+last was — the blast radius of a retroactive violation, read from the fetch
+ledger. The same commit served by another marketplace reached another audience,
+and is not reported here.
 
 ```json
 [{"principal":"team-payments","fetches":12,"lastFetch":"2026-08-14T22:10:00Z"}]

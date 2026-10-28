@@ -206,16 +206,32 @@ public class RoleService {
     public void requireApproverOfSnapshot(Authentication authentication, long snapshotId) {
         requireApproverOf(
                 authentication,
-                snapshotRepository
-                        .findById(snapshotId)
-                        .flatMap(snapshot -> marketplaceRepository.findById(snapshot.marketplaceId()))
-                        .map(marketplace -> marketplace.name()));
+                snapshotRepository.findById(snapshotId).flatMap(snapshot -> liveName(snapshot.marketplaceId())));
     }
 
     /** Waiver-id routes: as {@link #requireApproverOfSnapshot}, resolved through the waiver. */
     @Requirements({"GW_AUTH_0011"})
     public void requireApproverOfWaiver(Authentication authentication, long waiverId) {
-        requireApproverOf(authentication, waiverRepository.findById(waiverId).map(waiver -> waiver.marketplace()));
+        requireApproverOf(
+                authentication,
+                waiverRepository.findById(waiverId).flatMap(waiver -> liveName(waiver.marketplaceId())));
+    }
+
+    /**
+     * The marketplace's name only while that id is the live holder of it (GW_AUTH_0056). A grant is to a
+     * name, and a removed predecessor's name now belongs to its successor, so a predecessor's
+     * snapshot or waiver resolves to no name at all and only an administrator reaches it.
+     */
+    @Requirements({"GW_AUTH_0056"})
+    private Optional<String> liveName(long marketplaceId) {
+        return marketplaceRepository
+                .findById(marketplaceId)
+                .map(Marketplace::name)
+                .filter(name -> marketplaceRepository
+                        .findByName(name)
+                        .map(Marketplace::id)
+                        .filter(id -> id == marketplaceId)
+                        .isPresent());
     }
 
     private void requireApproverOf(Authentication authentication, Optional<String> marketplaceName) {

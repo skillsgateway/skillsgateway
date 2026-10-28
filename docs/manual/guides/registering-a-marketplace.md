@@ -259,7 +259,9 @@ carry over.
     - **Publication grants do not.** Removal takes `acme` out of every token's
       push scope, and the ledger names the tokens. A publisher of the new `acme`
       needs a token granted on it.
-    - **Approver grants do not.** Grant again on the new marketplace.
+    - **Approver grants do not, in either direction.** Grant again on the new
+      marketplace. A grant on the new one does not reach the removed
+      marketplace's snapshots or waivers, which only an administrator can open.
     - **The declarative estate does, unless you change it.** A marketplace still
       declared in `skills-gateway.estate.marketplaces` is registered again, as a
       new marketplace, on the next reconciliation. Remove the declaration first;
