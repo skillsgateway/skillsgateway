@@ -116,16 +116,20 @@ public class TokenRepository {
                 .optional();
     }
 
+    /** A personal token of the principal (GW_AUTH_0057): machine credentials are reached only as such. */
+    @Requirements({"GW_AUTH_0057"})
     public Optional<AccessToken> findByIdAndPrincipal(long id, String principal) {
-        return jdbc.sql("SELECT * FROM access_tokens WHERE id = :id AND principal = :principal")
+        return jdbc.sql("SELECT * FROM access_tokens WHERE id = :id AND principal = :principal AND api_scopes IS NULL")
                 .param("id", id)
                 .param("principal", principal)
                 .query(TokenRepository::map)
                 .optional();
     }
 
+    /** The principal's personal tokens (GW_AUTH_0057); a machine credential sharing the name is not one. */
+    @Requirements({"GW_AUTH_0057"})
     public List<AccessToken> listByPrincipal(String principal) {
-        return jdbc.sql("SELECT * FROM access_tokens WHERE principal = :principal ORDER BY id")
+        return jdbc.sql("SELECT * FROM access_tokens WHERE principal = :principal AND api_scopes IS NULL ORDER BY id")
                 .param("principal", principal)
                 .query(TokenRepository::map)
                 .list();
@@ -229,9 +233,11 @@ public class TokenRepository {
                 .update();
     }
 
+    @Requirements({"GW_AUTH_0057"})
     public boolean revoke(long id, String principal) {
         return jdbc.sql("UPDATE access_tokens SET revoked_at = :now"
-                                + " WHERE id = :id AND principal = :principal AND revoked_at IS NULL")
+                                + " WHERE id = :id AND principal = :principal AND api_scopes IS NULL"
+                                + " AND revoked_at IS NULL")
                         .param("now", OffsetDateTime.now())
                         .param("id", id)
                         .param("principal", principal)

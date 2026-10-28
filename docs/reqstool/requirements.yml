@@ -3097,6 +3097,16 @@ requirements:
     categories: ["security"]
     revision: 0.5.0
 
+  - id: GW_AUTH_0057
+    title: The personal-token routes reach personal tokens only
+    significance: shall
+    description: "The system shall list, revoke and rotate through the owner-scoped token routes only the caller's personal access tokens and session credentials, never a machine credential, whatever principal name the machine credential carries."
+    rationale: "A machine credential's principal is a free-form name chosen when it is provisioned, so a person whose login is that name could otherwise list, revoke or rotate it, and rotation rebuilt it as a personal token whose empty fetch scope means every marketplace."
+    references:
+      requirement_ids: ["GW_AUTH_0024"]
+    categories: ["security"]
+    revision: 0.5.0
+
   - id: GW_OBSERVABILITY_0005
     title: Each instance reports the background-pass turns it took and skipped
     significance: shall
