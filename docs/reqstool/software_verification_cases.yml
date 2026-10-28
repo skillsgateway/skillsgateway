@@ -3939,6 +3939,16 @@ cases:
       THEN the first three are refused and stay held, the first two naming the restore, and the fourth is approved
     revision: "0.1.0"
 
+  - id: SVC_GW_APPROVAL_0036
+    requirement_ids: ["GW_APPROVAL_0035"]
+    title: An administratively withdrawn snapshot is not rejected, and one revoked by re-vetting is
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot an administrator withdrew, and an approved snapshot revoked by re-vetting
+      WHEN an approver rejects each
+      THEN the first is refused naming the administrator's withdrawal and still stands withdrawn against its commit, and the second is rejected
+    revision: "0.1.0"
+
   - id: SVC_GW_INGEST_0045
     requirement_ids: ["GW_INGEST_0045"]
     title: The inventory lists commands, agents, hooks, MCP servers and LSP servers from every declaration source

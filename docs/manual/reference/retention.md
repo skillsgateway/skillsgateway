@@ -38,6 +38,11 @@ failure than the one the approval gate closes.
 Keeping the row is cheap. The bytes are the part worth reclaiming and the part
 nobody wants to keep; the row is small, and it is the only thing that remembers.
 
+For the same reason the row cannot be rejected: a reject would replace the
+withdrawal with an ordinary rejected state that retention may purge. It answers
+409 instead (GW_APPROVAL_0035 — An administrative withdrawal is not replaced by
+an ordinary reject).
+
 This applies to **administrative** withdrawals only. A snapshot revoked by
 [re-vetting](../guides/re-vetting.md) purges as before: that is a machine
 verdict a later run can reach again from the content itself, so nothing is lost
