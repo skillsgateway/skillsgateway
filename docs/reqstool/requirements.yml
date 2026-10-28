@@ -3015,6 +3015,14 @@ requirements:
     categories: ["security"]
     revision: 0.5.0
 
+  - id: GW_INGEST_0071
+    title: Frontmatter hooks are read only within a bounded size
+    significance: shall
+    description: "The system shall count, before building any structure from them, the values a skill's or agent's frontmatter hooks expand to through YAML aliases; shall read them as hooks only when they expand to no more than a fixed bound; and shall otherwise report the file's hooks as unreadable, naming the bound, instead of building the expansion."
+    rationale: "YAML aliases let a frontmatter block a few hundred bytes long describe a graph with millions of paths, and turning it into a tree visits every one, which exhausts the gateway's memory while a snapshot is ingested or its content listed. A bound far above any real hooks block costs nothing for honest content, and a report keeps the refusal visible to a reviewer."
+    categories: ["reliability", "security"]
+    revision: 0.5.0
+
   - id: GW_AUTH_0053
     title: A browser session does not depend on which instance answers
     significance: shall

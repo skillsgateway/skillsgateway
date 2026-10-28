@@ -4059,6 +4059,16 @@ cases:
       THEN the first two snapshots are rejected with a violation naming the entry's path and kind, and the third is held
     revision: "0.1.0"
 
+  - id: SVC_GW_INGEST_0071
+    requirement_ids: ["GW_INGEST_0071"]
+    title: Frontmatter hooks that alias themselves into a huge tree are refused quickly
+    verification: automated-test
+    description: |
+      GIVEN a skill whose frontmatter hooks nest three aliases per level over twelve levels
+      WHEN its plugin components are read
+      THEN no hook is read from it, a problem names the file as too large to read, and the read finishes within two seconds
+    revision: "0.1.0"
+
   - id: SVC_GW_AUTH_0053
     requirement_ids: ["GW_AUTH_0053"]
     title: A sign-in started on one instance completes on another, and its session is honoured by both

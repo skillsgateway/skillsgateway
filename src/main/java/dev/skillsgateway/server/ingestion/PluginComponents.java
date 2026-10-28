@@ -662,7 +662,17 @@ public final class PluginComponents {
             if (parsed.fields() == null || !(parsed.fields().get("hooks") instanceof Map<?, ?>)) {
                 return;
             }
-            JsonNode events = MAPPER.valueToTree(parsed.fields().get("hooks"));
+            Object declared = parsed.fields().get("hooks");
+            // YAML aliases let a few hundred bytes describe a graph with millions of paths through it,
+            // and building the tree visits every one (GW_INGEST_0071): count first, within a budget.
+            if (!withinBudget(declared, new int[] {MAX_FRONTMATTER_HOOK_VALUES})) {
+                problems.add(new Problem(
+                        path,
+                        "its hooks frontmatter is too large to read: it expands past %d values"
+                                .formatted(MAX_FRONTMATTER_HOOK_VALUES)));
+                return;
+            }
+            JsonNode events = MAPPER.valueToTree(declared);
             String[] lines = text.split("\n", -1);
             int hooksKey = lineOf(lines, n -> lines[n].startsWith("hooks:") ? n : -1);
             List<Hook> found = new ArrayList<>();
@@ -687,6 +697,34 @@ public final class PluginComponents {
                         declaredBy));
             }
         }
+    }
+
+    /** More values than any real hooks block holds, and few enough to count in a moment (GW_INGEST_0071). */
+    private static final int MAX_FRONTMATTER_HOOK_VALUES = 10_000;
+
+    /**
+     * Whether {@code value} holds at most {@code budget[0]} values counted through every path, as
+     * building a tree from it would visit them. Stops at the first value past the budget.
+     */
+    @Requirements({"GW_INGEST_0071"})
+    private static boolean withinBudget(Object value, int[] budget) {
+        if (--budget[0] < 0) {
+            return false;
+        }
+        if (value instanceof Map<?, ?> map) {
+            for (Object child : map.values()) {
+                if (!withinBudget(child, budget)) {
+                    return false;
+                }
+            }
+        } else if (value instanceof java.util.Collection<?> list) {
+            for (Object child : list) {
+                if (!withinBudget(child, budget)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /** The first 1-based line for which {@code test} answers its own index, or -1. */
