@@ -43,6 +43,6 @@
   first scope, require admin instead of approver, and honour stored roles only
   (not claims). The named test must fail for each mutant. Restore and confirm
   with `git diff`.
-- [ ] 4.2 Run every AGENTS.md gate fresh after the last code edit, and record
+- [x] 4.2 Run every AGENTS.md gate fresh after the last code edit, and record
   the commands, result tails, the mutation results and the commit SHA in
   `evidence.md`.
