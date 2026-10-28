@@ -25,6 +25,11 @@ record InMemorySnapshot(Map<String, byte[]> files) implements SnapshotUnderVetti
     }
 
     @Override
+    public byte[] read(String path) {
+        return files.get(path);
+    }
+
+    @Override
     public void walk(Predicate<String> wanted, FileVisitor visitor) {
         files.forEach((path, content) -> {
             if (wanted.test(path)) {
