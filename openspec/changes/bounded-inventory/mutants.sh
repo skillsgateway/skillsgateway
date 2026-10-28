@@ -68,7 +68,7 @@ run M1-no-plugin-cap ingestion.ManifestPolicyTests a_manifest_with_more_plugins_
 run M2-repeats-allowed ingestion.ManifestPolicyTests two_plugins_declaring_the_same_local_source_are_refused "$MP" \
   'if (sourceRoot != null && !localRoots.add(sourceRoot)) {' 'if (false) {'
 run M3-inventory-repeats InventoryBoundTests a_manifest_repeating_one_source_lists_its_skills_once_quickly "$SC" \
-  'List<SkillInfo> skills = source == null || !listedRoots.add(normalize(source))' 'List<SkillInfo> skills = source == null'
+  'source == null || !listedRoots.add(normalize(source)) ? List.of()' 'source == null ? List.of()'
 
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi
