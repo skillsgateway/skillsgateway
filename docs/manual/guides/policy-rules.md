@@ -41,8 +41,10 @@ commit the snapshot identifies:
 | `skills` | list of maps | Every skill (a `SKILL.md` under a plugin's `skills/` tree): `name`, `path`, `plugin` (strings), `tools` (list of strings). |
 
 `skills[].tools` is parsed from the SKILL.md YAML frontmatter key
-`allowed-tools`, accepting both the YAML-list and the comma-separated-string
-form (`Bash(git add:*, git commit:*), Read` splits on top-level commas only).
+`allowed-tools`, accepting the YAML-list form and a string separated by
+spaces, commas or both. Separators count only outside parentheses:
+`Read Bash(git add:*, git commit:*)` gives `Read` and
+`Bash(git add:*, git commit:*)`.
 No frontmatter, or frontmatter without `allowed-tools`, is honestly an empty
 list. **Malformed** frontmatter is not: tools that cannot be read must never
 read as "no tools", so it fails the facts and denies the approval (see

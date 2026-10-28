@@ -90,6 +90,37 @@ class PolicyEnforcementTests extends AbstractGatewayTest {
     }
 
     @Test
+    @SVCs({"SVC_GW_APPROVAL_0031"})
+    void a_shell_tool_declared_in_the_space_separated_form_is_denied() throws Exception {
+        String name = uniqueName("policys");
+        String rule = uniqueName("no-shell-space");
+        // The Agent Skills specification's own form, with the shell tool not first.
+        String spaceForm = """
+                ---
+                name: spacey
+                description: a skill that declares its tools space-separated
+                allowed-tools: Read Bash(curl:*)
+                ---
+                # Spacey
+                """;
+        Registered registered = registerAndIngest(
+                name, createUpstream(DEFAULT_MANIFEST, Map.of("plugins/hello/skills/spacey/SKILL.md", spaceForm)));
+        createRule(rule, scoped(name, "skills.exists(s, s.tools.exists(t, t.startsWith(\"Bash\")))"), true);
+        try {
+            mockMvc.perform(post(
+                                    "/api/v1/snapshots/{id}/approve",
+                                    registered.snapshot().id())
+                            .with(oidcLogin().idToken(token -> token.subject("alice"))))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.denials[0].rule").value(rule))
+                    .andExpect(jsonPath("$.denials[0].outcome").value("matched"));
+            assertThat(storage.publishedIfServing(name)).isEmpty();
+        } finally {
+            deleteRule(rule);
+        }
+    }
+
+    @Test
     @SVCs({"SVC_GW_APPROVAL_0007"})
     void disabled_and_non_matching_rules_do_not_deny() throws Exception {
         String name = uniqueName("policyn");
