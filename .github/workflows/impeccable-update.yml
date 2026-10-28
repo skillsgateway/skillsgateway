@@ -6,6 +6,10 @@
 # It does not open the PR itself: a PR or push made with GITHUB_TOKEN starts no
 # workflow, so CI would never report on it. A PR opened by a person runs CI as
 # usual.
+#
+# The updater is third-party code, so it runs in a job with a read-only token and
+# hands over only a patch. The job holding the write token never runs it, checks
+# out afresh, and applies the patch with git hooks and fsmonitor disabled.
 
 name: Impeccable update
 
@@ -30,46 +34,95 @@ jobs:
   update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # push the update branch
-      issues: write # the one tracking issue
+      contents: read
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # The updater is third-party code: it must not find the write token in .git/config.
           persist-credentials: false
 
       - name: Run the updater
         # stdin closed: the updater's one confirmation prompt then takes its default (yes).
         run: npx --yes impeccable@latest update < /dev/null
 
-      - name: Push the update branch
+      - name: Export the change as a patch
+        id: diff
+        run: |
+          # The engine binary is fetched per machine by the launcher, never committed.
+          paths=(.claude/skills/impeccable .claude/agents ':!.claude/skills/impeccable/scripts/bin')
+          git add -A -- "${paths[@]}"
+          if git diff --cached --quiet -- "${paths[@]}"; then
+            echo "Impeccable is up to date."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/patch"
+          git diff --cached --binary -- "${paths[@]}" > "$RUNNER_TEMP/patch/update.patch"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - if: steps.diff.outputs.changed == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: impeccable-update
+          path: ${{ runner.temp }}/patch/update.patch
+          retention-days: 1
+
+  publish:
+    needs: update
+    if: needs.update.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the update branch
+      issues: write # the one tracking issue
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: impeccable-update
+          path: ${{ runner.temp }}/patch
+
+      - name: Apply the patch and push the update branch
         id: push
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
-          # The engine binary is fetched per machine by the launcher, never committed.
-          paths=(.claude/skills/impeccable .claude/agents ':!.claude/skills/impeccable/scripts/bin')
-          if [ -z "$(git status --porcelain -- "${paths[@]}")" ]; then
-            echo "Impeccable is up to date."
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            exit 0
+          patch="$RUNNER_TEMP/patch/update.patch"
+          # The patch came from a job that ran third-party code: accept regular files under the
+          # skill's own paths and nothing else.
+          git -c core.hooksPath=/dev/null -c core.fsmonitor=false apply --numstat -z "$patch" \
+            | tr '\0' '\n' | awk -F'\t' 'NF == 3 && $3 != "" { print $3 } NF == 1 && $1 != "" { print $1 }' > "$RUNNER_TEMP/paths"
+          while IFS= read -r path; do
+            case "$path" in
+              .claude/skills/impeccable/scripts/bin/*) echo "refused: $path"; exit 1 ;;
+              .claude/skills/impeccable/* | .claude/agents/*) ;;
+              *) echo "refused: $path"; exit 1 ;;
+            esac
+          done < "$RUNNER_TEMP/paths"
+          if git apply --summary "$patch" | grep -E 'mode 1(2|6)0000'; then
+            echo "refused: the patch adds a symlink or a submodule"
+            exit 1
           fi
+          git -c core.hooksPath=/dev/null -c core.fsmonitor=false apply --index "$patch"
           version=$(sed -n 's/^version: *//p' .claude/skills/impeccable/SKILL.md | head -n 1)
+          if ! [[ "$version" =~ ^[0-9A-Za-z.+-]{1,40}$ ]]; then
+            echo "refused: unexpected version string"
+            exit 1
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -C "$BRANCH"
-          git add -A -- "${paths[@]}"
-          git commit -s -m "chore(skills): update Impeccable to ${version}" \
+          git -c core.hooksPath=/dev/null -c core.fsmonitor=false commit -s \
+            -m "chore(skills): update Impeccable to ${version}" \
             -m "Produced by .github/workflows/impeccable-update.yml (npx impeccable update)."
-          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "$BRANCH"
-          {
-            echo "changed=true"
-            echo "version=${version}"
-          } >> "$GITHUB_OUTPUT"
+          git -c core.hooksPath=/dev/null push --force "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "$BRANCH"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Open or update the tracking issue
-        if: steps.push.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.push.outputs.version }}
