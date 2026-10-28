@@ -73,6 +73,9 @@ public class CatalogService {
     private final GatewayMetrics metrics;
     private final Object rebuildLock = new Object();
 
+    /** How many times a rebuild recomposes after losing the race to commit before it gives up. */
+    private static final int MAX_REBUILD_ATTEMPTS = 5;
+
     public CatalogService(
             GitStorage storage,
             MarketplaceRepository marketplaceRepository,
@@ -144,51 +147,77 @@ public class CatalogService {
 
     /**
      * Synthesizes one parentless catalog commit from what every marketplace is serving right now
-     * and force-updates the catalog's {@code main} to it (GW_FACADE_0003). Serialized: concurrent
-     * approvals rebuild one after the other, and last-writer-wins is correct because every rebuild
-     * reads the current served state in full.
+     * and moves the catalog's {@code main} to it (GW_FACADE_0003). Serialized on this instance. Across
+     * instances the move is conditional on the revision the rebuild started from (GW_FACADE_0035), and a
+     * rebuild that lost the race recomposes from the state as it is now, so the last writer is always
+     * one that read the current served state.
      */
-    @Requirements({"GW_FACADE_0003", "GW_FACADE_0004"})
+    @Requirements({"GW_FACADE_0003", "GW_FACADE_0004", "GW_FACADE_0035"})
     public CatalogInfo rebuild() throws IOException {
         synchronized (rebuildLock) {
             try (Repository catalog = storage.published(properties.name())) {
-                List<Constituent> constituents = new ArrayList<>();
-                Map<String, ObjectId> subtrees = new LinkedHashMap<>();
-                ObjectNode manifest = MAPPER.createObjectNode();
-                manifest.put("name", properties.name());
-                manifest.set("owner", MAPPER.createObjectNode().put("name", "skills-gateway"));
-                ArrayNode plugins = manifest.putArray("plugins");
-                // Every claim on every name, gathered before any of them is published: a first-wins
-                // rule cannot retract the winner when the second claimant arrives, and retracting is
-                // the whole of the fix (GW_FACADE_0029).
-                Map<String, List<Claim>> claims = new LinkedHashMap<>();
+                for (int attempt = 1; ; attempt++) {
+                    // Read before any constituent (GW_FACADE_0035): the commit below lands only if no other
+                    // rebuild, on this instance or another, moved the catalog since, so a composition
+                    // read before a withdrawal can never be committed over one made after it.
+                    Ref startedFrom = catalog.exactRef(MAIN);
+                    List<Constituent> constituents = new ArrayList<>();
+                    Map<String, ObjectId> subtrees = new LinkedHashMap<>();
+                    ObjectNode manifest = MAPPER.createObjectNode();
+                    manifest.put("name", properties.name());
+                    manifest.set("owner", MAPPER.createObjectNode().put("name", "skills-gateway"));
+                    ArrayNode plugins = manifest.putArray("plugins");
+                    // Every claim on every name, gathered before any of them is published: a first-wins
+                    // rule cannot retract the winner when the second claimant arrives, and retracting is
+                    // the whole of the fix (GW_FACADE_0029).
+                    Map<String, List<Claim>> claims = new LinkedHashMap<>();
 
-                List<Marketplace> marketplaces = marketplaceRepository.list().stream()
-                        .sorted(Comparator.comparing(Marketplace::name))
-                        .toList();
-                for (Marketplace marketplace : marketplaces) {
-                    Optional<Repository> serving = storage.publishedIfServing(marketplace.name());
-                    if (serving.isEmpty()) {
-                        continue;
-                    }
-                    try (Repository published = serving.get()) {
-                        ObjectId tip = published.resolve(MAIN);
-                        if (tip == null) {
+                    List<Marketplace> marketplaces = marketplaceRepository.list().stream()
+                            .sorted(Comparator.comparing(Marketplace::name))
+                            .toList();
+                    for (Marketplace marketplace : marketplaces) {
+                        Optional<Repository> serving = storage.publishedIfServing(marketplace.name());
+                        if (serving.isEmpty()) {
                             continue;
                         }
-                        vendor(catalog, published, marketplace.name(), tip, subtrees, claims);
-                        constituents.add(new Constituent(marketplace.name(), tip.name()));
+                        try (Repository published = serving.get()) {
+                            ObjectId tip = published.resolve(MAIN);
+                            if (tip == null) {
+                                continue;
+                            }
+                            vendor(catalog, published, marketplace.name(), tip, subtrees, claims);
+                            constituents.add(new Constituent(marketplace.name(), tip.name()));
+                        }
+                    }
+
+                    List<Collision> collisions = publishUncontested(claims, plugins);
+                    beforeCommit();
+                    Optional<ObjectId> commit = commitCatalog(
+                            catalog,
+                            subtrees,
+                            manifest,
+                            constituents,
+                            collisions,
+                            startedFrom == null ? null : startedFrom.getObjectId());
+                    if (commit.isPresent()) {
+                        pruneInternalRefs(catalog);
+                        announce(collisions);
+                        return new CatalogInfo(commit.get().name(), Instant.now(), constituents, collisions);
+                    }
+                    if (attempt >= MAX_REBUILD_ATTEMPTS) {
+                        throw new IOException(
+                                "the catalog moved under each of %d rebuild attempts".formatted(MAX_REBUILD_ATTEMPTS));
                     }
                 }
-
-                List<Collision> collisions = publishUncontested(claims, plugins);
-                ObjectId commit = commitCatalog(catalog, subtrees, manifest, constituents, collisions);
-                pruneInternalRefs(catalog);
-                announce(collisions);
-                return new CatalogInfo(commit.name(), Instant.now(), constituents, collisions);
             }
         }
     }
+
+    /**
+     * Between composing a revision and committing it: a seam for the test that another instance's
+     * rebuild lands here, and nothing in production.
+     */
+    protected void beforeCommit() {}
 
     /** The revision the facade is serving, parsed back out of the catalog commit (GW_FACADE_0005). */
     @Requirements({"GW_FACADE_0005"})
@@ -330,12 +359,13 @@ public class CatalogService {
     }
 
     /** One parentless commit (GW_FACADE_0004): history depth 1, so old compositions are unreachable. */
-    private ObjectId commitCatalog(
+    private Optional<ObjectId> commitCatalog(
             Repository catalog,
             Map<String, ObjectId> subtrees,
             ObjectNode manifest,
             List<Constituent> constituents,
-            List<Collision> collisions)
+            List<Collision> collisions,
+            ObjectId startedFrom)
             throws IOException {
         try (ObjectInserter inserter = catalog.newObjectInserter()) {
             byte[] manifestBytes = MAPPER.writerWithDefaultPrettyPrinter()
@@ -386,9 +416,11 @@ public class CatalogService {
             inserter.flush();
 
             // Checked (GW_FACADE_0017): a refused move would have this method return a commit the facade
-            // does not serve, and the rebuild endpoint report a sha nobody can fetch.
-            RefTransitions.write(catalog, MAIN, commitId);
-            return commitId;
+            // does not serve, and the rebuild endpoint report a sha nobody can fetch. Conditional on the
+            // revision the composition started from (GW_FACADE_0035): empty when another rebuild moved it.
+            return RefTransitions.compareAndSet(catalog, MAIN, startedFrom, commitId)
+                    ? Optional.of(commitId)
+                    : Optional.empty();
         }
     }
 

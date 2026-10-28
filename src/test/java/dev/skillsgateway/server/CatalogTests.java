@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skillsgateway.server.approval.RevocationService;
 import dev.skillsgateway.server.catalog.CatalogService;
 import dev.skillsgateway.server.vetting.RevetService;
 import dev.skillsgateway.server.vetting.WaiverScope;
@@ -61,6 +62,21 @@ class CatalogTests extends AbstractGatewayTest {
 
     @Autowired
     private CatalogService catalogService;
+
+    @Autowired
+    private dev.skillsgateway.server.storage.GitStorage storage;
+
+    @Autowired
+    private dev.skillsgateway.server.config.SkillsGatewayProperties properties;
+
+    @Autowired
+    private dev.skillsgateway.server.admin.AdminAuditLogger auditLogger;
+
+    @Autowired
+    private dev.skillsgateway.server.observability.GatewayMetrics metrics;
+
+    @Autowired
+    private RevocationService revocationService;
 
     @Autowired
     private RevetService revetService;
@@ -269,5 +285,43 @@ class CatalogTests extends AbstractGatewayTest {
 
     private static JsonNode manifestOf(Path clone) throws Exception {
         return MAPPER.readTree(Files.readString(clone.resolve(".claude-plugin/marketplace.json")));
+    }
+
+    @Test
+    @Order(6)
+    @SVCs({"SVC_GW_FACADE_0037"})
+    void a_rebuild_whose_reads_went_stale_recomposes_instead_of_overwriting_a_newer_catalog() throws Exception {
+        String name = uniqueName("catstale");
+        Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
+        approve(registered.snapshot().id());
+        assertThat(catalogService.served().orElseThrow().constituents())
+                .extracting(CatalogService.Constituent::marketplace)
+                .contains(name);
+
+        // Another instance of the gateway, part-way through a rebuild that has already read the
+        // marketplace as served, when an administrator withdraws it here and this instance's own
+        // rebuild commits the catalog without it.
+        java.util.concurrent.atomic.AtomicBoolean interleaved = new java.util.concurrent.atomic.AtomicBoolean();
+        CatalogService otherInstance =
+                new CatalogService(storage, marketplaceRepository, properties, auditLogger, metrics) {
+                    @Override
+                    protected void beforeCommit() {
+                        if (interleaved.compareAndSet(false, true)) {
+                            revocationService.revoke(
+                                    registered.snapshot().id(),
+                                    "withdrawn",
+                                    RevocationService.ServeAfter.NOTHING,
+                                    "root");
+                        }
+                    }
+                };
+
+        otherInstance.rebuild();
+
+        assertThat(interleaved).as("the interleaving ran").isTrue();
+        assertThat(catalogService.served().orElseThrow().constituents())
+                .extracting(CatalogService.Constituent::marketplace)
+                .as("the withdrawn marketplace is back in the catalog")
+                .doesNotContain(name);
     }
 }
