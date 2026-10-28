@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.http.server.GitServlet;
+import org.eclipse.jgit.http.server.resolver.AsIsFileService;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
@@ -80,9 +81,12 @@ public class GitFacadeConfiguration {
 
     /** Read-only by construction: receive-pack is disabled, so pushes are impossible. */
     @Bean
-    @Requirements({"GW_FACADE_0001"})
+    @Requirements({"GW_FACADE_0001", "GW_FACADE_0002"})
     public ServletRegistrationBean<GitServlet> gitServlet() {
         GitServlet servlet = new GitServlet();
+        // Smart HTTP only: a plain-file GET would bypass the served-ref filter, the want policy and
+        // the fetch ledger, all of which hang off upload-pack.
+        servlet.setAsIsFileService(AsIsFileService.DISABLED);
         servlet.setRepositoryResolver(this::resolvePublished);
         servlet.setUploadPackFactory(this::createUploadPack);
         servlet.setReceivePackFactory(null);
