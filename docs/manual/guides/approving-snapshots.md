@@ -453,7 +453,7 @@ answer is safe to assume:
 | `serveAfter` | What happens | When it is right |
 | --- | --- | --- |
 | `PREVIOUS_APPROVED` | The marketplace returns to its previous approved snapshot | The predecessor is known-good |
-| `NOTHING` | The marketplace serves nothing | The compromise may be in the predecessor too — a poisoned transitive dependency usually is |
+| `NOTHING` | The marketplace serves nothing until a snapshot is approved again, across restarts too | The compromise may be in the predecessor too — a poisoned transitive dependency usually is |
 
 Asking to return when the marketplace has no earlier approved snapshot is
 refused **before anything is withdrawn**, so a request that cannot be honoured
@@ -567,7 +567,10 @@ The next start reconciles that. After the schema is migrated and before the web
 surface serves its first request, the gateway compares, per marketplace, what
 the database records as approved against what storage is actually serving, and
 republishes what is missing; each repair lands on the ledger as
-`publication-repaired`. Publication is idempotent by SHA, so the repair only
+`publication-repaired`. A marketplace that a withdrawal left serving nothing,
+because the administrator chose `NOTHING` or the predecessor was gone, is left
+alone: that is a decision, not a lost publication, and the next approval lifts
+it. Publication is idempotent by SHA, so the repair only
 ever adds. A marketplace serving nothing is repaired like any other — that is
 exactly what a double failure on a first publication leaves — while one whose
 storage could not be *read* is skipped, because "I could not look" must never be

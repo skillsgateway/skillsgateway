@@ -98,6 +98,11 @@ public class PublicationReconciler implements SmartInitializingSingleton {
         List<Marketplace> marketplaces = marketplaceRepository.list();
 
         for (Marketplace marketplace : marketplaces) {
+            if (marketplaceRepository.servingSuspended(marketplace.id())) {
+                // An administrator withdrew it and chose to serve nothing (GW_APPROVAL_0033): approved and
+                // unserved is the intended state here, not a lost publication.
+                continue;
+            }
             List<Snapshot> approved = snapshotRepository.approvedByMarketplace(marketplace.id());
             Optional<Set<String>> served = servedShas(marketplace.name());
             if (served.isEmpty()) {

@@ -3849,6 +3849,16 @@ cases:
       THEN each waits for the lock; the approval then publishes; the withdrawal returns to nothing and the marketplace serves nothing; and the repair republishes nothing
     revision: "0.1.0"
 
+  - id: SVC_GW_APPROVAL_0034
+    requirement_ids: ["GW_APPROVAL_0033"]
+    title: Reconciliation leaves a marketplace a withdrawal chose to unserve, until the next approval
+    verification: automated-test
+    description: |
+      GIVEN a marketplace with two approved snapshots whose newer one is withdrawn choosing to serve nothing, a marketplace whose only snapshot is withdrawn choosing to serve nothing and which then has a new approval whose publication is lost, and a marketplace whose newer snapshot is withdrawn returning to the predecessor whose publication is then lost
+      WHEN publication is reconciled
+      THEN the first marketplace still serves nothing, and the second and third have the snapshot they should serve republished
+    revision: "0.1.0"
+
   - id: SVC_GW_INGEST_0045
     requirement_ids: ["GW_INGEST_0045"]
     title: The inventory lists commands, agents, hooks, MCP servers and LSP servers from every declaration source
