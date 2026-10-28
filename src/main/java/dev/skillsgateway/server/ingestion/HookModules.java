@@ -5,9 +5,6 @@ import dev.skillsgateway.server.ingestion.PluginComponents.Problem;
 import dev.skillsgateway.server.ingestion.PluginComponents.Site;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -103,17 +100,15 @@ final class HookModules {
             unscanned.add(new Problem(file, "over the scan size limit, so no rule read it"));
             return null;
         }
-        try {
-            return StandardCharsets.UTF_8
-                    .newDecoder()
-                    .onMalformedInput(CodingErrorAction.REPORT)
-                    .onUnmappableCharacter(CodingErrorAction.REPORT)
-                    .decode(ByteBuffer.wrap(content))
-                    .toString();
-        } catch (CharacterCodingException e) {
-            unscanned.add(new Problem(file, "binary, so no rule can read it"));
-            return null;
+        // Binary means a NUL byte, as for the vetters' own reads (GW_VETTING_0043): Node still loads a
+        // module that is not valid UTF-8, so such a module is read with replacement characters.
+        for (byte b : content) {
+            if (b == 0) {
+                unscanned.add(new Problem(file, "binary, so no rule can read it"));
+                return null;
+            }
         }
+        return new String(content, StandardCharsets.UTF_8);
     }
 
     /** First appearance of each name, located in the file it appears in. */

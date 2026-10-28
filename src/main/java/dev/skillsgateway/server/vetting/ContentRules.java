@@ -1,8 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
 import io.github.reqstool.annotations.Requirements;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,8 +10,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Shared machinery for the pattern-matching built-in vetters: strict UTF-8 decoding (which
- * doubles as the binary filter), line-accurate locations, and a rule type.
+ * Shared machinery for the pattern-matching built-in vetters: UTF-8 decoding with the binary
+ * filter, line-accurate locations, and a rule type.
  */
 final class ContentRules {
 
@@ -28,24 +26,28 @@ final class ContentRules {
     }
 
     /**
-     * Decodes a blob as UTF-8, returning {@code null} when it is not valid UTF-8 — which is the
-     * binary test these vetters use. A binary blob is not silently ignored: callers report it,
-     * because "the scanner could not read this file" is information a reviewer needs.
+     * Decodes a blob as UTF-8, returning {@code null} only when it is binary, meaning it holds a NUL
+     * byte (GW_VETTING_0043). Invalid sequences decode to replacement characters instead: a shell, Node
+     * and an agent's Markdown loader all still read such a file, so it must be scanned. A binary blob
+     * is not silently ignored: callers report it, because "the scanner could not read this file" is
+     * information a reviewer needs.
      */
+    @Requirements({"GW_VETTING_0043"})
     static String text(byte[] content) {
+        return isBinary(content) ? null : new String(content, StandardCharsets.UTF_8);
+    }
+
+    /** Whether {@code content} is binary for scanning purposes: absent, or holding a NUL byte. */
+    private static boolean isBinary(byte[] content) {
         if (content == null) {
-            return null;
+            return true;
         }
-        try {
-            return StandardCharsets.UTF_8
-                    .newDecoder()
-                    .onMalformedInput(CodingErrorAction.REPORT)
-                    .onUnmappableCharacter(CodingErrorAction.REPORT)
-                    .decode(java.nio.ByteBuffer.wrap(content))
-                    .toString();
-        } catch (CharacterCodingException e) {
-            return null;
+        for (byte b : content) {
+            if (b == 0) {
+                return true;
+            }
         }
+        return false;
     }
 
     /**
