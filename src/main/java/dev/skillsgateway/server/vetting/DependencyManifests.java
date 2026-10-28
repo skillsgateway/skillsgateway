@@ -33,7 +33,7 @@ final class DependencyManifests {
 
     private static final Pattern REQUIREMENTS = Pattern.compile("requirements[\\w.-]*\\.txt");
     private static final Pattern INCLUDE = Pattern.compile("^(?:-[rce]|--(?:requirement|constraint|editable))\\b.*");
-    private static final Pattern SECTION = Pattern.compile("^\\[\\[?\\s*([^\\]]+?)\\s*\\]\\]?\\s*(?:#.*)?$");
+    private static final Pattern SECTION = Pattern.compile("^\\[\\[?+\\s*+([^\\]]++)\\]\\]?\\s*+(?:#.*)?$");
     private static final Pattern KEY = Pattern.compile("^(\"[^\"]+\"|'[^']+'|[\\w.-]+)\\s*=.*");
     private static final Pattern ARRAY = Pattern.compile("^([\\w.-]+)\\s*=\\s*\\[(.*)$");
     private static final Pattern POETRY = Pattern.compile("^tool\\.poetry(?:\\.group\\.[^.]+)?\\.dependencies$");
@@ -47,7 +47,7 @@ final class DependencyManifests {
         return name.equals("package.json")
                 || name.equals("pyproject.toml")
                 || name.equals("Cargo.toml")
-                || REQUIREMENTS.matcher(name).matches();
+                || REQUIREMENTS.matcher(InterruptibleText.of(name)).matches();
     }
 
     /** The first dependency the manifest declares, or {@code null} when it declares none or cannot be read. */
@@ -98,7 +98,8 @@ final class DependencyManifests {
             if (line.isEmpty() || line.startsWith("#")) {
                 continue;
             }
-            if (!line.startsWith("-") || INCLUDE.matcher(line).matches()) {
+            if (!line.startsWith("-")
+                    || INCLUDE.matcher(InterruptibleText.of(line)).matches()) {
                 return new Declaration(i + 1, "Python");
             }
         }
@@ -110,16 +111,16 @@ final class DependencyManifests {
         int sectionLine = 0;
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].strip();
-            Matcher header = SECTION.matcher(line);
+            Matcher header = SECTION.matcher(InterruptibleText.of(line));
             if (header.matches()) {
-                section = header.group(1);
+                section = header.group(1).strip();
                 sectionLine = i + 1;
                 continue;
             }
             if (section == null || line.isEmpty() || line.startsWith("#")) {
                 continue;
             }
-            Matcher array = ARRAY.matcher(line);
+            Matcher array = ARRAY.matcher(InterruptibleText.of(line));
             boolean projectDependencies = section.equals("project")
                     && array.matches()
                     && array.group(1).equals("dependencies");
@@ -127,8 +128,8 @@ final class DependencyManifests {
             if ((projectDependencies || group) && nonEmptyArray(array.group(2), lines, i)) {
                 return new Declaration(i + 1, "Python");
             }
-            Matcher key = KEY.matcher(line);
-            if (POETRY.matcher(section).matches()
+            Matcher key = KEY.matcher(InterruptibleText.of(line));
+            if (POETRY.matcher(InterruptibleText.of(section)).matches()
                     && key.matches()
                     && !unquote(key.group(1)).equals("python")) {
                 return new Declaration(sectionLine, "Python");
@@ -142,18 +143,18 @@ final class DependencyManifests {
         int sectionLine = 0;
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].strip();
-            Matcher header = SECTION.matcher(line);
+            Matcher header = SECTION.matcher(InterruptibleText.of(line));
             if (header.matches()) {
-                section = header.group(1);
+                section = header.group(1).strip();
                 sectionLine = i + 1;
-                if (CARGO_ONE.matcher(section).matches()) {
+                if (CARGO_ONE.matcher(InterruptibleText.of(section)).matches()) {
                     return new Declaration(sectionLine, "Cargo");
                 }
                 continue;
             }
             if (section != null
-                    && CARGO_TABLE.matcher(section).matches()
-                    && KEY.matcher(line).matches()) {
+                    && CARGO_TABLE.matcher(InterruptibleText.of(section)).matches()
+                    && KEY.matcher(InterruptibleText.of(line)).matches()) {
                 return new Declaration(sectionLine, "Cargo");
             }
         }

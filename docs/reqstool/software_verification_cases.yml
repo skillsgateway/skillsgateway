@@ -1818,6 +1818,16 @@ cases:
       as its read timeout and records an error verdict from its own read timeout
     revision: "0.5.0"
 
+  - id: SVC_GW_VETTING_0064
+    requirement_ids: ["GW_VETTING_0062"]
+    title: An interrupted vetter stops matching, and a section header is read in linear time
+    verification: automated-test
+    description: |
+      GIVEN a line on which a download pattern backtracks without bound, a hook script holding that line, and a dependency manifest whose section header never closes
+      WHEN a scan of the line and a vetter run over the script are interrupted, and the manifest is read
+      THEN both stop within two seconds of the interruption, and the manifest is read within one second with its real section still found
+    revision: "0.1.0"
+
   - id: SVC_GW_VETTING_0026
     requirement_ids: ["GW_VETTING_0026"]
     title: External verdicts take the worst of declared and derived, and carry their report link

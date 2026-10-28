@@ -3,6 +3,7 @@ package dev.skillsgateway.server.ingestion;
 import dev.skillsgateway.server.ingestion.PluginComponents.HookModule;
 import dev.skillsgateway.server.ingestion.PluginComponents.Problem;
 import dev.skillsgateway.server.ingestion.PluginComponents.Site;
+import dev.skillsgateway.server.vetting.InterruptibleText;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -113,7 +114,7 @@ final class HookModules {
 
     /** First appearance of each name, located in the file it appears in. */
     private static void collect(Pattern pattern, int group, String code, String file, Map<String, Site> out) {
-        Matcher matcher = pattern.matcher(code);
+        Matcher matcher = pattern.matcher(InterruptibleText.of(code));
         while (matcher.find()) {
             String name = matcher.group(group);
             out.putIfAbsent(name, new Site(name, file + ":" + lineAt(code, matcher.start())));
@@ -124,7 +125,7 @@ final class HookModules {
         Map<String, Import> found = new LinkedHashMap<>();
         for (String text : texts) {
             for (Pattern pattern : List.of(IMPORT_FROM, IMPORT_BARE)) {
-                Matcher matcher = pattern.matcher(text);
+                Matcher matcher = pattern.matcher(InterruptibleText.of(text));
                 while (matcher.find()) {
                     Import imported = new Import(matcher.group(2), lineAt(text, matcher.start(2)));
                     found.putIfAbsent(imported.specifier() + "\0" + imported.line(), imported);

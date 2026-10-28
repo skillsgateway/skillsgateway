@@ -27,7 +27,7 @@ final class MarkdownFences {
         List<Block> blocks = new ArrayList<>();
         int i = 0;
         while (i < lines.length) {
-            Matcher open = OPEN.matcher(lines[i]);
+            Matcher open = OPEN.matcher(InterruptibleText.of(lines[i]));
             if (!open.matches()
                     || (open.group(1).charAt(0) == '`' && open.group(2).contains("`"))) {
                 i++;
@@ -39,7 +39,8 @@ final class MarkdownFences {
             int first = i + 1;
             StringBuilder text = new StringBuilder();
             i++;
-            while (i < lines.length && !close.matcher(lines[i]).matches()) {
+            while (i < lines.length
+                    && !close.matcher(InterruptibleText.of(lines[i])).matches()) {
                 text.append(lines[i]).append('\n');
                 i++;
             }

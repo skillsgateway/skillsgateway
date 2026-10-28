@@ -96,7 +96,8 @@ final class LicenseDetector {
      * of it, for the sake of two file kinds — is never inflated (GW_VETTING_0030).
      */
     private static boolean declaresLicense(String path) {
-        return MANIFEST_PATH.equals(path) || LICENSE_FILE.matcher(path).find();
+        return MANIFEST_PATH.equals(path)
+                || LICENSE_FILE.matcher(InterruptibleText.of(path)).find();
     }
 
     /** Every license detection in the snapshot, in tree order; empty means no license information. */
@@ -124,7 +125,7 @@ final class LicenseDetector {
         if (text == null || text.isBlank()) {
             return new Detection(Source.FILE, path, null, null);
         }
-        Matcher tag = SPDX_TAG.matcher(text);
+        Matcher tag = SPDX_TAG.matcher(InterruptibleText.of(text));
         if (tag.find()) {
             String declared = tag.group(1);
             return new Detection(Source.FILE, path, KNOWN_IDS.get(declared.toLowerCase(Locale.ROOT)), declared);
