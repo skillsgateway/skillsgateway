@@ -118,7 +118,9 @@ class RoleEnforcementTests extends AbstractGatewayTest {
     private static final Set<String> ALWAYS_ADMIN_MUTATIONS = Set.of(
             "POST /api/v1/tokens/machine",
             "POST /api/v1/tokens/machine/{id}/rotate",
-            "DELETE /api/v1/tokens/machine/{id}");
+            "DELETE /api/v1/tokens/machine/{id}",
+            // Revoking another principal's personal tokens (GW_AUTH_0055), admin-only like the above.
+            "DELETE /api/v1/tokens/principals/{principal}");
 
     /** The ledger and the operational listings: auditor-or-admin reads (GW_AUTH_0012). */
     private static final Set<String> PRIVILEGED_READS = Set.of(
@@ -126,6 +128,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // is admin-only whether or not enforcement is enabled (GW_AUTH_0023). The auditor walk
             // below skips it for the same reason it skips grant administration.
             "GET /api/v1/tokens/machine",
+            // Another principal's personal tokens (GW_AUTH_0055): admin-only, skipped by the auditor walk.
+            "GET /api/v1/tokens/principals/{principal}",
             "GET /api/v1/audit",
             "GET /api/v1/audit/export",
             "GET /api/v1/audit/sinks",
@@ -355,6 +359,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         for (String route : PRIVILEGED_READS) {
             if (route.equals("GET /api/v1/roles")
                     || route.equals("GET /api/v1/tokens/machine")
+                    || route.equals("GET /api/v1/tokens/principals/{principal}")
                     || route.equals("GET /api/v1/vetting/vetter-toggles")
                     || route.equals("GET /api/v1/vetting/chain-settings")
                     || route.equals("GET /api/v1/marketplaces/{name}/vetting-chain")
@@ -379,6 +384,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             mockMvc.perform(request(route).with(carol)).andExpect(status().isForbidden());
         }
         mockMvc.perform(get("/api/v1/tokens/machine").with(carol)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/tokens/principals/{principal}", carolName).with(carol))
+                .andExpect(status().isForbidden());
         for (String route : union(ROLE_GATED_MUTATIONS, ALWAYS_ADMIN_MUTATIONS)) {
             mockMvc.perform(request(route).with(carol)).andExpect(status().isForbidden());
         }
@@ -622,7 +629,9 @@ class RoleEnforcementTests extends AbstractGatewayTest {
      */
     private static MockHttpServletRequestBuilder request(String route, String snapshotId, String marketplace) {
         String[] parts = route.split(" ", 2);
-        String path = parts[1].replace("{id}", snapshotId).replace("{name}", marketplace);
+        String path = parts[1].replace("{id}", snapshotId)
+                .replace("{name}", marketplace)
+                .replace("{principal}", "no-such-principal");
         MockHttpServletRequestBuilder builder = switch (parts[0]) {
             case "POST" -> post(path);
             case "PUT" -> put(path);

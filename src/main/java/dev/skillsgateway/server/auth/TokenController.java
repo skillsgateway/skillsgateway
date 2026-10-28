@@ -255,7 +255,7 @@ public class TokenController {
         auditLogger.record(authentication.getName(), NO_MARKETPLACE, event, null, detail);
     }
 
-    private static TokenView view(AccessToken token) {
+    static TokenView view(AccessToken token) {
         return new TokenView(
                 token.id(),
                 token.name(),

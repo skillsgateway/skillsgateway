@@ -4039,6 +4039,16 @@ cases:
       THEN each is logged at warning level with the registration and the error code, and answered with a page naming its reason class, its code and a way to start again
     revision: "0.5.0"
 
+  - id: SVC_GW_AUTH_0055
+    requirement_ids: ["GW_AUTH_0055"]
+    title: An administrator lists and revokes a principal's personal tokens, and no one else can
+    verification: automated-test
+    description: |
+      GIVEN a principal holding a personal access token and a session credential, a second principal holding a personal token and a machine credential under the same name, and a session holding no role
+      WHEN an administrator lists and then revokes each principal's tokens, revokes again when nothing is live, and the session holding no role attempts both
+      THEN the listing shows the personal tokens without secrets, the revoked tokens no longer authenticate while the machine credential still does, the ledger records the revocation with the acting administrator and the principal, a second revocation reports none, and the session holding no role is refused with every token still live
+    revision: "0.1.0"
+
   - id: SVC_GW_OBSERVABILITY_0005
     requirement_ids: ["GW_OBSERVABILITY_0005"]
     title: A taken and a skipped turn are each counted under their pass

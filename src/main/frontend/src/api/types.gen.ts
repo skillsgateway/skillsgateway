@@ -427,7 +427,7 @@ export interface paths {
          * A marketplace's vetting waivers
          * @description Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.
          */
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1153,6 +1153,30 @@ export interface paths {
          */
         post: operations["rotate_1"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tokens/principals/{principal}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a principal's personal tokens
+         * @description Every personal access token and session credential the principal holds, live or not, never any secret. Machine credentials are listed under `/api/v1/tokens/machine`.
+         */
+        get: operations["list_5"];
+        put?: never;
+        post?: never;
+        /**
+         * Revoke all of a principal's personal tokens
+         * @description Revokes every live personal access token and session credential the principal holds, effective on each one's next request. Machine credentials are left alone. The revocation is audit-logged with the ids it revoked, including when there were none.
+         */
+        delete: operations["revokeAll"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3645,6 +3669,13 @@ export interface components {
             /** @description The withdrawn snapshot */
             snapshot?: components["schemas"]["Snapshot"];
         };
+        /** @description The personal tokens an administrative revocation revoked */
+        RevokedTokens: {
+            /** @description The principal whose tokens were revoked */
+            principal?: string;
+            /** @description Ids of the tokens that were live and are now revoked; empty when none were */
+            revokedTokenIds?: number[];
+        };
         /** @description A role grant */
         RoleGrant: {
             /**
@@ -5297,7 +5328,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -6778,6 +6809,68 @@ export interface operations {
             };
             /** @description The credential is revoked or expired; provision a new one */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    list_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                principal: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The principal's personal tokens; empty for an unknown principal */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TokenView"][];
+                };
+            };
+            /** @description The caller does not hold the admin role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    revokeAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                principal: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked; the ids revoked, empty when none were live */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevokedTokens"];
+                };
+            };
+            /** @description The caller does not hold the admin role */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -182,6 +182,10 @@ public final class MachineApiRegistry {
             get("/api/v1/tokens/machine"),
             post("/api/v1/tokens/machine/{id}/rotate"),
             delete("/api/v1/tokens/machine/{id}"),
+            // Another principal's personal tokens (GW_AUTH_0055): revoking them is the offboarding act,
+            // and a credential able to do it could revoke the people who would revoke it.
+            get("/api/v1/tokens/principals/{principal}"),
+            delete("/api/v1/tokens/principals/{principal}"),
             // A session identity page; a machine has no session.
             get("/api/v1/me"),
             // The forge mirror's drift report (GW_FACADE_0023): it names an outbound integration target
