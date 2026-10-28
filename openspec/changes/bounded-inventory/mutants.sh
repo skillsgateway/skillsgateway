@@ -14,7 +14,7 @@ trap 'git checkout -- src/main' EXIT
 
 MP=src/main/java/dev/skillsgateway/server/ingestion/ManifestPolicy.java
 SC=src/main/java/dev/skillsgateway/server/ingestion/SnapshotContentService.java
-known='^M[1-3]-'
+known='^M[1-2]-'
 
 mutate() { # file old new: replace exactly one occurrence, or fail
   python3 - "$1" "$2" "$3" <<'PY'
@@ -65,9 +65,7 @@ run() { # id test-class expected-method file old new
 
 run M1-no-plugin-cap ingestion.ManifestPolicyTests a_manifest_with_more_plugins_than_the_bound_is_refused "$MP" \
   'if (plugins.size() > MAX_PLUGINS) {' 'if (false) {'
-run M2-repeats-allowed ingestion.ManifestPolicyTests two_plugins_declaring_the_same_local_source_are_refused "$MP" \
-  'if (sourceRoot != null && !localRoots.add(sourceRoot)) {' 'if (false) {'
-run M3-inventory-repeats InventoryBoundTests a_manifest_repeating_one_source_lists_its_skills_once_quickly "$SC" \
+run M2-inventory-repeats InventoryBoundTests a_manifest_repeating_one_source_lists_its_skills_once_quickly "$SC" \
   'source == null || !listedRoots.add(normalize(source)) ? List.of()' 'source == null ? List.of()'
 
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }

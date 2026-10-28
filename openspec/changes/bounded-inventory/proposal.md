@@ -11,8 +11,7 @@ make that request.
 
 ## What Changes
 
-- Ingest records `rejected` a manifest with more than 1,000 plugins, or with
-  two plugins whose local sources name the same directory.
+- Ingest records `rejected` a manifest with more than 1,000 plugins.
 - The inventory collects every `SKILL.md` in one walk (the bounded walk of
   `GW_INGEST_0072`), and lists each source directory's skills once, under the
   first plugin that declares it. It reads at most 1,000 plugins, which also
@@ -20,8 +19,8 @@ make that request.
 - New `GW_INGEST_0074 — A manifest's plugins are bounded in number and list
   each source once`, verified by `SVC_GW_INGEST_0074`.
 - Docs: `guides/registering-a-marketplace.md`.
-- Not **BREAKING** for any manifest a client can use. A manifest naming one
-  directory under two plugin names now lands rejected.
+- Not **BREAKING**: several plugin names over one directory stay accepted, and
+  are listed once.
 
 ## Capabilities
 

@@ -7,12 +7,11 @@
 ## 2. Bounded inventory (SVC_GW_INGEST_0074)
 
 - [x] 2.1 Two test classes:
-  - `ManifestPolicyTests`: 1,001 plugins are refused; one directory named
-    two ways is refused; two distinct sources pass;
+  - `ManifestPolicyTests`: 1,001 plugins are refused;
   - `InventoryBoundTests`: a 2,000-entry repeated-source manifest over 500
     skills lists at most 500 skills within 10 s.
 
-  Watch all three fail first.
+  Watch both fail first.
 - [x] 2.2 The bounds in `ManifestPolicy`, and the single walk with per-root
   listing in `SnapshotContentService` (`@Requirements GW_INGEST_0074`), with the
   content, browsing and ingestion suites unchanged.

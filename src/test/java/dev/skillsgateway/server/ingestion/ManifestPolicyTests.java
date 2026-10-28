@@ -96,22 +96,4 @@ class ManifestPolicyTests {
 
         assertThat(validate(policy(true, 20), manifest(entries))).isNotNull().contains("1000");
     }
-
-    @Test
-    @SVCs({"SVC_GW_INGEST_0074"})
-    void two_plugins_declaring_the_same_local_source_are_refused() {
-        assertThat(validate(
-                        policy(true, 20),
-                        manifest(
-                                "{\"name\":\"a\",\"source\":\"./plugins/shared\"}",
-                                "{\"name\":\"b\",\"source\":\"plugins/shared/\"}")))
-                .isNotNull()
-                .contains("same source");
-        assertThat(validate(
-                        policy(true, 20),
-                        manifest(
-                                "{\"name\":\"a\",\"source\":\"./plugins/a\"}",
-                                "{\"name\":\"b\",\"source\":\"./plugins/b\"}")))
-                .isNull();
-    }
 }

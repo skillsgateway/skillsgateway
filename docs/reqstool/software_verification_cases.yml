@@ -4111,12 +4111,12 @@ cases:
 
   - id: SVC_GW_INGEST_0074
     requirement_ids: ["GW_INGEST_0074"]
-    title: Too many plugins or a repeated source is refused, and the inventory lists each skill once
+    title: Too many plugins are refused, and the inventory lists each skill once
     verification: automated-test
     description: |
-      GIVEN a manifest of a thousand and one plugins, a manifest whose two plugins name one directory differently, a manifest of two distinct sources, and a snapshot whose manifest repeats one source two thousand times over five hundred skills
-      WHEN the manifests are evaluated and the snapshot's content is listed
-      THEN the first two are refused and the third admitted, and the listing answers within ten seconds with at most five hundred skills across all plugins
+      GIVEN a manifest of a thousand and one plugins, and a snapshot whose manifest repeats one source two thousand times over five hundred skills
+      WHEN the manifest is evaluated and the snapshot's content is listed
+      THEN the manifest is refused, and the listing answers within ten seconds with at most five hundred skills across all plugins
     revision: "0.1.0"
 
   - id: SVC_GW_AUTH_0053

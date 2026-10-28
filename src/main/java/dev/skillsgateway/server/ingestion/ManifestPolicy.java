@@ -116,19 +116,10 @@ public final class ManifestPolicy {
                     "%s declares %d plugins; at most %d are accepted".formatted(MANIFEST, plugins.size(), MAX_PLUGINS));
         }
         List<Admitted> admitted = new ArrayList<>();
-        java.util.Set<String> localRoots = new java.util.HashSet<>();
         int index = 0;
         for (JsonNode plugin : plugins) {
             if (!plugin.isObject()) {
                 return rejected("plugin entry is not a JSON object");
-            }
-            JsonNode declared = plugin.get("source");
-            String sourceRoot =
-                    declared != null && declared.isTextual() ? PluginComponents.normalizeRoot(declared.asText()) : null;
-            if (sourceRoot != null && !localRoots.add(sourceRoot)) {
-                // Two entries naming one directory list its content twice, and a manifest of many
-                // such entries multiplies it (GW_INGEST_0074); no client needs two names for one plugin.
-                return rejected("two plugins declare the same source '%s'".formatted(declared.asText()));
             }
             String name = plugin.path("name").isTextual() ? plugin.get("name").asText() : "<unnamed>";
             switch (admission.decide(PluginSource.parse(plugin.get("source")), name, admitted.size())) {
