@@ -557,10 +557,11 @@ approval; there is nothing to clean up first.
 
 ### When the repair fails too
 
-Failing the approval means putting the recorded decision back, and that write
-can fail in its turn. The double failure is reported — at `ERROR`, and on the
-exception the approval raises — but what it leaves behind is a row saying
-`approved` while nothing is served.
+A refused publication rolls the decision back with it: the decision and the
+reference transition share one transaction, under the marketplace's
+publication lock. A row can still end up saying `approved` while nothing is
+served, for example when storage is restored from a backup older than the
+database, or when a return to the previous snapshot fails to publish.
 
 The next start reconciles that. After the schema is migrated and before the web
 surface serves its first request, the gateway compares, per marketplace, what
