@@ -1136,8 +1136,9 @@ nothing appears in `application.yaml`.
 ```yaml
 skills-gateway:
   catalog:
-    # Whether approvals and revocations rebuild the catalog and the /api/v1/catalog
-    # endpoints answer. Turning this off never deletes an existing catalog repo.
+    # Whether approvals and revocations rebuild the catalog, the /api/v1/catalog
+    # endpoints answer, and /git/{name} serves it. Turning this off stops serving
+    # the catalog but never deletes an existing catalog repo.
     enabled: true
 
     # The catalog's facade path (/git/{name}) and its RESERVED name: a
@@ -1147,7 +1148,7 @@ skills-gateway:
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `skills-gateway.catalog.enabled` | boolean | `true` | Gates rebuild triggers and the API endpoints. |
+| `skills-gateway.catalog.enabled` | boolean | `true` | Gates rebuild triggers, the API endpoints, and serving `/git/{name}`. A disabled catalog answers as not found, since it no longer tracks revocations. |
 | `skills-gateway.catalog.name` | string | `catalog` | Facade path segment; reserved at registration. |
 
 Composition, freshness, and provenance are described in

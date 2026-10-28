@@ -728,6 +728,16 @@ cases:
       THEN the second instance's rebuild does not restore the marketplace, and the served catalog does not contain it
     revision: "0.1.0"
 
+  - id: SVC_GW_FACADE_0038
+    requirement_ids: ["GW_FACADE_0036"]
+    title: A disabled catalog answers as not found, and an enabled one is served
+    verification: automated-test
+    description: |
+      GIVEN a catalog repository that storage still holds
+      WHEN the facade resolves it with the catalog disabled, and again with it enabled
+      THEN the first answers not found and the second returns the repository
+    revision: "0.1.0"
+
   - id: SVC_GW_FACADE_0005
     requirement_ids: ["GW_FACADE_0005"]
     title: Catalog constituents, fetch audit, manual rebuild, and the reserved name
