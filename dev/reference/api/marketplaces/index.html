@@ -5316,8 +5316,10 @@ and the individual <code>results</code>.</p>
 </table>
 <h3 id="get-snapshotsidfetchers"><code>GET /snapshots/{id}/fetchers</code><a class="headerlink" href="#get-snapshotsidfetchers" title="Permanent link">&para;</a></h3>
 <p>Every authenticated identity this snapshot's content was <strong>sent</strong> to through
-the git facade, with how often and when it last was — the blast radius of a
-retroactive violation, read from the fetch ledger.</p>
+the git facade <strong>from this snapshot's marketplace</strong>, with how often and when it
+last was — the blast radius of a retroactive violation, read from the fetch
+ledger. The same commit served by another marketplace reached another audience,
+and is not reported here.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="p">[{</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"team-payments"</span><span class="p">,</span><span class="nt">"fetches"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"lastFetch"</span><span class="p">:</span><span class="s2">"2026-08-14T22:10:00Z"</span><span class="p">}]</span>
 </code></pre></div>
 <p>Only pack transfers count. A ref advertisement means a client asked, not that it
