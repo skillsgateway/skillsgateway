@@ -3104,3 +3104,11 @@ requirements:
     rationale: "Recording a timeout while the abandoned match keeps running turns every snapshot crafted to make a pattern backtrack into a processor core held until restart, and enough of them stop vetting for every marketplace. The regular-expression engine does not observe interruption on its own, so stopping the work has to be something the matching itself checks."
     categories: ["reliability", "security"]
     revision: 0.5.0
+
+  - id: GW_VETTING_0063
+    title: Locating findings and following imports take time linear in the file
+    significance: shall
+    description: "The system shall locate every finding and every hook-module event, use and import at its line in time linear in the length of the file, whatever the number of matches, and shall discover a hook module's import and export specifiers in one pass that does not rescan the file from each keyword."
+    rationale: "Recomputing a line number by rescanning from the start of the file for every match, and starting a fresh scan from every import keyword, makes the cost the product of the file's length and the number of matches. A file of a megabyte dense with matches then holds a vetter, or a request that lists a snapshot's content, for longer than its time limit, though the file is far below the size limit."
+    categories: ["reliability", "security"]
+    revision: 0.5.0

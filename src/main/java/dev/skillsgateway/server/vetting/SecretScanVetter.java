@@ -133,13 +133,14 @@ public class SecretScanVetter implements Vetter {
     private static List<Finding> highEntropyAssignments(String path, String text) {
         List<Finding> findings = new ArrayList<>();
         Matcher matcher = ASSIGNED_SECRET.matcher(InterruptibleText.of(text));
+        LineIndex lines = LineIndex.of(text);
         while (matcher.find()) {
             String value = matcher.group(2);
             if (ContentRules.entropy(value) >= ENTROPY_THRESHOLD) {
                 findings.add(new Finding(
                         "high-entropy-assignment",
                         Severity.HIGH,
-                        "%s:%d".formatted(path, ContentRules.lineOf(text, matcher.start())),
+                        "%s:%d".formatted(path, lines.lineOf(matcher.start())),
                         "a high-entropy value is assigned to '%s' in this file".formatted(matcher.group(1))));
             }
         }

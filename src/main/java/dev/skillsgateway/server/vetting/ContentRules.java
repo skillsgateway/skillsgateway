@@ -57,10 +57,11 @@ final class ContentRules {
     static List<Finding> apply(List<Rule> rules, String path, String text) {
         List<Finding> findings = new ArrayList<>();
         Set<String> seen = new HashSet<>();
+        LineIndex lines = LineIndex.of(text);
         for (Rule rule : rules) {
             Matcher matcher = rule.pattern().matcher(InterruptibleText.of(text));
             while (matcher.find()) {
-                int line = lineOf(text, matcher.start());
+                int line = lines.lineOf(matcher.start());
                 if (seen.add(rule.id() + ":" + line)) {
                     findings.add(
                             new Finding(rule.id(), rule.severity(), "%s:%d".formatted(path, line), rule.message()));

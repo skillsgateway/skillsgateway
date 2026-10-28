@@ -283,4 +283,34 @@ class HookModulesTests {
                 .singleElement()
                 .satisfies(problem -> assertThat(problem.message()).contains("\"mods\""));
     }
+
+    @Test
+    @SVCs({"SVC_GW_VETTING_0065"})
+    void a_module_dense_with_import_keywords_is_read_in_linear_time() {
+        String dense = "import ".repeat(80_000);
+
+        Components components = org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
+                java.time.Duration.ofSeconds(2),
+                () -> read(files("p/hooks/hooks.json", MODULES_JSON, "p/hooks/register.tsx", dense)));
+
+        assertThat(components.hookModules()).hasSize(1);
+    }
+
+    @Test
+    @SVCs({"SVC_GW_VETTING_0065"})
+    void a_module_with_many_events_is_located_in_linear_time() {
+        String events =
+                "import { a } from './a'\n" + "on('tool.call', () => {})\n".repeat(40_000) + "on('late.event')\n";
+
+        Components components = org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
+                java.time.Duration.ofSeconds(2),
+                () -> read(
+                        files("p/hooks/hooks.json", MODULES_JSON, "p/hooks/register.tsx", events, "p/hooks/a.ts", "")));
+
+        assertThat(components.hookModules().getFirst().events())
+                .extracting(PluginComponents.Site::name, PluginComponents.Site::location)
+                .contains(
+                        org.assertj.core.groups.Tuple.tuple("tool.call", "p/hooks/register.tsx:2"),
+                        org.assertj.core.groups.Tuple.tuple("late.event", "p/hooks/register.tsx:40002"));
+    }
 }
