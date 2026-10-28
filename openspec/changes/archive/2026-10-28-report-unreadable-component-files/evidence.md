@@ -1,7 +1,9 @@
 # Evidence: report-unreadable-component-files
 
-Source state: `fee859a8` (tree `c624eb18`), on `main` at `ae1b53d6`. Every
-result below is from one fresh run after the last code edit, on 2026-10-28.
+Source state: `397301b3` (tree `10220b8b`), on `main` at `7d03970b`. Every
+result below is from one fresh run after the last code edit and the rebase, on
+2026-10-28. The gates were also green before the rebase, on `main` at
+`ae1b53d6`. The rerun is because the rebase brought in #750's code.
 
 Tier 2 (fail-closed vetting). Spec approval: the owner said to proceed without
 stopping, to keep exposure short. Independent verification: not performed.
@@ -26,13 +28,13 @@ change reverses. It now expects both problems, the hook file's and
 
 | Layer | Command | Result |
 |---|---|---|
-| Java suite, Spotless, Checkstyle, SBOM, jar | `./mvnw clean verify -Dskip.ui.verify=true` | `Tests run: 1159, Failures: 0, Errors: 0, Skipped: 9` · `BUILD SUCCESS` · `Total time: 06:59 min` |
+| Java suite, Spotless, Checkstyle, SBOM, jar | `./mvnw clean verify -Dskip.ui.verify=true` | `Tests run: 1162, Failures: 0, Errors: 0, Skipped: 9` · `BUILD SUCCESS` · `Total time: 06:57 min` |
 | UI gate | `(cd src/main/frontend && pnpm verify)` | `Test Files 31 passed (31)` · `Tests 234 passed (234)` |
-| Storybook story tests | `(cd src/main/frontend && pnpm test:stories)` | `Test Files 21 passed (21)` · `Tests 111 passed (111)`. Two earlier runs hit the known harness flake (`iframe … did not become ready within 60000ms`). This passing run followed deleting `node_modules/.cache/storybook` and `.vite`; no frontend file changed. |
+| Storybook story tests | `(cd src/main/frontend && pnpm test:stories)` | `Test Files 21 passed (21)` · `Tests 111 passed (111)` on the second run; the first hit the known harness flake (`iframe … did not become ready within 60000ms`). No frontend file changed. |
 | e2e | `(cd src/main/frontend && pnpm e2e)` | `27 passed (1.8m)` |
-| Requirements traceability | `reqstool status local -p docs/reqstool` | `360/360 complete · 0 incomplete · PASS` |
-| OpenSpec | `openspec validate --all --strict` | `Totals: 30 passed, 0 failed (30 items)` |
-| Docs | `mkdocs build --strict` | `Documentation built in 1.58 seconds` |
+| Requirements traceability | `reqstool status local -p docs/reqstool` | `361/361 complete · 0 incomplete · PASS` |
+| OpenSpec | `openspec validate --all --strict` | `Totals: 30 passed, 0 failed (30 items)` (before archiving; 29 after) |
+| Docs | `mkdocs build --strict` | `Documentation built in 1.50 seconds` |
 | Mutation | `openspec/changes/archive/2026-10-28-report-unreadable-component-files/mutants.sh` | `5 mutants run, all killed` |
 | Mutation runner negative control | `ONLY=M99 mutants.sh` | `no mutant selected`, exit 5 |
 | Supply chain | no dependency added or changed | — |
