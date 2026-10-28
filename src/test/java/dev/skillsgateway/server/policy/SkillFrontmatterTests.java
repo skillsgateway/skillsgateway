@@ -3,6 +3,7 @@ package dev.skillsgateway.server.policy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.github.reqstool.annotations.SVCs;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -32,6 +33,17 @@ class SkillFrontmatterTests {
     void tools_from_a_comma_separated_string_respecting_parentheses() {
         String md = "---\nallowed-tools: Bash(git add:*, git commit:*), Read, Write\n---\n";
         assertThat(SkillFrontmatter.tools(md)).containsExactly("Bash(git add:*, git commit:*)", "Read", "Write");
+    }
+
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0031"})
+    void tools_from_the_space_separated_form_and_mixed_forms_split_per_tool() {
+        assertThat(SkillFrontmatter.tools("---\nallowed-tools: Read Bash(git add:*)\n---\n"))
+                .containsExactly("Read", "Bash(git add:*)");
+        assertThat(SkillFrontmatter.tools("---\nallowed-tools: Read, Write  Bash(curl:*)\n---\n"))
+                .containsExactly("Read", "Write", "Bash(curl:*)");
+        assertThat(SkillFrontmatter.tools("---\nallowed-tools:\n  - Read Bash(curl:*)\n---\n"))
+                .containsExactly("Read", "Bash(curl:*)");
     }
 
     @Test

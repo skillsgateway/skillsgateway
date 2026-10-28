@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.policy;
 
+import io.github.reqstool.annotations.Requirements;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -119,14 +120,14 @@ public final class SkillFrontmatter {
                 if (!(item instanceof String || item instanceof Number || item instanceof Boolean)) {
                     throw new PolicyEvaluationException("%s entries must be scalars".formatted(TOOLS_KEY));
                 }
-                tools.add(item.toString().trim());
+                tools.addAll(splitOutsideParentheses(item.toString()));
             }
             return List.copyOf(tools);
         }
-        if (declared instanceof String commaSeparated) {
-            return splitOutsideParentheses(commaSeparated);
+        if (declared instanceof String separated) {
+            return splitOutsideParentheses(separated);
         }
-        throw new PolicyEvaluationException("%s must be a list or a comma-separated string".formatted(TOOLS_KEY));
+        throw new PolicyEvaluationException("%s must be a list or a separated string".formatted(TOOLS_KEY));
     }
 
     private static LoaderOptions loaderOptions() {
@@ -160,9 +161,11 @@ public final class SkillFrontmatter {
     }
 
     /**
-     * Splits a comma-separated tools declaration at top level only: a comma inside parentheses —
+     * Splits a tools declaration on commas and whitespace at top level only (GW_APPROVAL_0007): the
+     * Agent Skills form is space-separated, and a separator inside parentheses —
      * {@code Bash(git add:*, git commit:*)} — belongs to the tool, not the list.
      */
+    @Requirements({"GW_APPROVAL_0007"})
     private static List<String> splitOutsideParentheses(String declaration) {
         List<String> tools = new ArrayList<>();
         StringBuilder current = new StringBuilder();
@@ -174,7 +177,7 @@ public final class SkillFrontmatter {
             } else if (c == ')') {
                 depth = Math.max(0, depth - 1);
             }
-            if (c == ',' && depth == 0) {
+            if ((c == ',' || Character.isWhitespace(c)) && depth == 0) {
                 append(tools, current);
                 current.setLength(0);
             } else {

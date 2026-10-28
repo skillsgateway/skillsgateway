@@ -1094,6 +1094,16 @@ cases:
       THEN each conflicted attempt is refused with a conflict response naming the conflicting acts, every refused snapshot remains undecided with no reviewer recorded and nothing served by the facade, the independent reviewer's approval succeeds and is served, and the automated-trigger and unrecorded-actor snapshots are approved by anyone the role model allows
     revision: "0.1.0"
 
+  - id: SVC_GW_APPROVAL_0031
+    requirement_ids: ["GW_APPROVAL_0007"]
+    title: Declared tools in the space-separated form are separate facts
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot whose skill declares its tools as a space-separated string with a shell tool after another tool, and an enabled rule denying any skill whose tools include a shell tool
+      WHEN approval is requested
+      THEN the approval is refused naming the rule, and the frontmatter's space-separated, mixed and list forms each yield one tool per declared tool with spaces inside parentheses kept
+    revision: "0.1.0"
+
   - id: SVC_GW_APPROVAL_0011
     requirement_ids: ["GW_APPROVAL_0011"]
     title: The recording mode is the default, publishes the approval, and puts the conflict on the ledger
