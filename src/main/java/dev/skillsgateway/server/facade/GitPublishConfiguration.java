@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.Optional;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.http.server.GitServlet;
+import org.eclipse.jgit.http.server.resolver.AsIsFileService;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.ServiceMayNotContinueException;
@@ -58,6 +59,8 @@ public class GitPublishConfiguration {
     @Requirements({"GW_FACADE_0007"})
     public ServletRegistrationBean<GitServlet> publishServlet() {
         GitServlet servlet = new GitServlet();
+        // Smart HTTP only, as on /git/**: every read goes through the upload-pack factory below.
+        servlet.setAsIsFileService(AsIsFileService.DISABLED);
         servlet.setRepositoryResolver(this::resolveOrigin);
         servlet.setReceivePackFactory(this::createReceivePack);
         // Upload-pack too, gated by the same push scope: a publisher clones their own source of

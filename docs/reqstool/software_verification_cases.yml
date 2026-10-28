@@ -71,6 +71,16 @@ cases:
       THEN only the approved refs are advertised and held objects cannot be fetched
     revision: "0.1.0"
 
+  - id: SVC_GW_FACADE_0036
+    requirement_ids: ["GW_FACADE_0002"]
+    title: The git endpoints serve no repository file outside the smart protocol
+    verification: automated-test
+    description: |
+      GIVEN an approved snapshot served by the facade, a hosted marketplace with a pushed commit, and a credential valid for each
+      WHEN a client requests the plain-file routes of each repository — the reference list without a service, the head reference, the pack index and a commit's object path
+      THEN every such request is refused, and the smart protocol's reference advertisement on the same repository still answers
+    revision: "0.1.0"
+
   - id: SVC_GW_AUDIT_0001
     requirement_ids: ["GW_AUDIT_0001"]
     title: Every facade fetch is audit-logged
