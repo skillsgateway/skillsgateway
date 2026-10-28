@@ -2921,6 +2921,11 @@ the acting OIDC principal.</p>
 <td><code>credential {id} '{name}' principal=…</code>.</td>
 </tr>
 <tr>
+<td><code>principal-tokens-revoked</code></td>
+<td>An administrator revoked every live personal token of a principal.</td>
+<td><code>principal=… tokens=[{id}, …]</code>.</td>
+</tr>
+<tr>
 <td><code>ingest-failed</code></td>
 <td>An ingest attempt failed, whatever triggered it. The principal is whoever or whatever triggered it: a person, <code>scheduler</code>, <code>webhook</code>, or the pushing principal.</td>
 <td>The reason, root cause and next step, in one line.</td>

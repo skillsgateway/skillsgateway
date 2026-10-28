@@ -1864,6 +1864,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#another-principals-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Another principal's tokens
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Another principal&#39;s tokens">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-apiv1tokensprincipalsprincipal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/v1/tokens/principals/{principal}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-apiv1tokensprincipalsprincipal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DELETE /api/v1/tokens/principals/{principal}
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#post-tokensidrotate" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2757,6 +2796,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#another-principals-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Another principal's tokens
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Another principal&#39;s tokens">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-apiv1tokensprincipalsprincipal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/v1/tokens/principals/{principal}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-apiv1tokensprincipalsprincipal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DELETE /api/v1/tokens/principals/{principal}
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#post-tokensidrotate" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3081,6 +3159,44 @@ rows.</p>
 </tbody>
 </table>
 <hr />
+<h2 id="another-principals-tokens">Another principal's tokens<a class="headerlink" href="#another-principals-tokens" title="Permanent link">&para;</a></h2>
+<p>An administrator's reach over someone else's personal tokens (GW_AUTH_0055), for
+offboarding and incident response. The routes above reach only the caller's own
+tokens, so without these nobody but the owner could stop a leaver's tokens.
+Both require the <code>admin</code> role and answer <code>403</code> to anyone else. No machine
+credential reaches either, as with all of <code>/api/v1/tokens/**</code>.</p>
+<h3 id="get-apiv1tokensprincipalsprincipal"><code>GET /api/v1/tokens/principals/{principal}</code><a class="headerlink" href="#get-apiv1tokensprincipalsprincipal" title="Permanent link">&para;</a></h3>
+<p>Every personal access token and session credential the principal holds, live or
+not, in the same shape as <a href="#get-tokens"><code>GET /tokens</code></a> and never with a secret.
+An unknown principal lists nothing. Machine credentials are listed under
+<a href="#get-apiv1tokensmachine"><code>GET /api/v1/tokens/machine</code></a>.</p>
+<h3 id="delete-apiv1tokensprincipalsprincipal"><code>DELETE /api/v1/tokens/principals/{principal}</code><a class="headerlink" href="#delete-apiv1tokensprincipalsprincipal" title="Permanent link">&para;</a></h3>
+<p>Revokes every live personal access token and session credential of the
+principal, effective on each one's next request. Machine credentials are left
+alone; revoke those one by one under <code>/api/v1/tokens/machine</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"revokedTokenIds"</span><span class="p">:[</span><span class="mi">3</span><span class="p">,</span><span class="mi">9</span><span class="p">]}</span>
+</code></pre></div>
+<p>The revocation is recorded on the ledger as <code>principal-tokens-revoked</code>, with
+the ids it revoked, including when there were none.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>Revoked; <code>revokedTokenIds</code> is empty when nothing was live.</td>
+</tr>
+<tr>
+<td>403</td>
+<td>The caller does not hold the <code>admin</code> role.</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="post-tokensidrotate"><code>POST /tokens/{id}/rotate</code><a class="headerlink" href="#post-tokensidrotate" title="Permanent link">&para;</a></h2>
 <p>Retire a possibly-exposed secret without renegotiating the grant (GW_AUTH_0008).
 Issues a fresh secret with the <strong>identical</strong> grant — name, scopes (fetch and
@@ -3088,8 +3204,8 @@ push alike), and the same
 expiry deadline — records which token it replaced (<code>rotatedFrom</code>), and revokes
 the old token <em>before</em> the new one is issued: a failure between the two steps
 leaves no live secret, never two.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"ci-runner"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-12-31T00:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"ci-runner"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-12-31T00:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3116,7 +3232,7 @@ leaves no live secret, never two.</p>
 <hr />
 <h2 id="using-a-token">Using a token<a class="headerlink" href="#using-a-token" title="Permanent link">&para;</a></h2>
 <p>The facade reads only the password field of HTTP Basic; the username is ignored.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>git<span class="w"> </span>ls-remote<span class="w"> </span>https://token:sgw_...@skills.corp.example/git/acme
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>git<span class="w"> </span>ls-remote<span class="w"> </span>https://token:sgw_...@skills.corp.example/git/acme
 </code></pre></div>
 <p>See <a href="../../../guides/consuming-skills/">Consuming approved skills</a> for credential
 helper setup.</p>
@@ -3137,12 +3253,12 @@ not have to create a second, standing credential in order to fetch.</p>
 (8 hours by default) and a caller who sends <code>expiresAt</code> anyway does not get it —
 a credential whose life the holder chooses is a personal access token reached
 through another URL.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/tokens/session<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"name":"my-laptop"}'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/tokens/session<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"name":"my-laptop"}'</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-23T09:00:00Z"</span><span class="p">,</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-08-23T17:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w"> </span><span class="nt">"pushScopes"</span><span class="p">:[],</span><span class="nt">"sessionDerived"</span><span class="p">:</span><span class="kc">true</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-23T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-08-23T17:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w"> </span><span class="nt">"pushScopes"</span><span class="p">:[],</span><span class="nt">"sessionDerived"</span><span class="p">:</span><span class="kc">true</span><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3417,12 +3533,12 @@ none.</p>
 session that created it, and without that requirement any user who completed a
 login could mint one that keeps working after their own account is
 deprovisioned.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">"principal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"terraform-ci"</span><span class="p">,</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"platform-pipeline"</span><span class="p">,</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="nt">"apiScopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"marketplaces:register"</span><span class="p">,</span><span class="w"> </span><span class="s2">"estate:read"</span><span class="p">],</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-11-01T00:00:00Z"</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">"principal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"terraform-ci"</span><span class="p">,</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"platform-pipeline"</span><span class="p">,</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nt">"apiScopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"marketplaces:register"</span><span class="p">,</span><span class="w"> </span><span class="s2">"estate:read"</span><span class="p">],</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-11-01T00:00:00Z"</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="p">}</span>
 </code></pre></div>
 <p><code>principal</code> is not a person. It is what the ledger attributes this credential's
 actions to and what a role grant names.</p>
@@ -3480,8 +3596,8 @@ new one is issued, so no moment has two live secrets.</p>
 <p>Revokes it. Checked at authentication time rather than swept, so it takes effect
 on the credential's very next request.</p>
 <h3 id="using-one">Using one<a class="headerlink" href="#using-one" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$SKILLS_GATEWAY_TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">     </span>https://gateway.example.com/api/v1/estate
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$SKILLS_GATEWAY_TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">     </span>https://gateway.example.com/api/v1/estate
 </code></pre></div>
 <p>Send no cookie. See <a href="../">REST API</a> for why a request carrying both is
 refused.</p>
