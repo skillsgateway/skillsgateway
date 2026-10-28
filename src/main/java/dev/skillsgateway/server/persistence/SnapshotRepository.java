@@ -173,7 +173,7 @@ public class SnapshotRepository {
      * stamps are cleared by the transition, so a re-published snapshot never carries a revocation
      * marker that no longer holds; what it was revoked for stays in the ledger.
      */
-    @Requirements({"GW_FACADE_0009", "GW_INGEST_0034", "GW_APPROVAL_0031"})
+    @Requirements({"GW_FACADE_0009", "GW_INGEST_0034", "GW_APPROVAL_0031", "GW_APPROVAL_0034"})
     @Transactional
     public Snapshot decide(Snapshot expected, String newState, String reviewer) {
         long id = expected.id();
@@ -194,6 +194,11 @@ public class SnapshotRepository {
         if (!Snapshot.APPROVED.equals(newState) && !Snapshot.REJECTED.equals(newState)) {
             throw new IllegalStateException("invalid target state " + newState);
         }
+        // A deleted snapshot is outside re-vetting, withdrawal and the name-collision estate, so it is
+        // restored before it is decided (GW_APPROVAL_0034); the statement checks again for a concurrent delete.
+        if (snapshot.deleted()) {
+            throw new IllegalStateException("snapshot %d is deleted; restore it before deciding it".formatted(id));
+        }
         // Compare-and-set on the row the caller judged (GW_APPROVAL_0031): a withdrawal, approval or
         // rejection that landed since then is never written over, and the caller is told instead.
         // Every revocation stamps a fresh revoked_at, so it tells one revoked row from another.
@@ -202,7 +207,7 @@ public class SnapshotRepository {
                                 + " revoked_at = NULL, revoked_by = NULL, revoked_kind = NULL, violation = NULL"
                                 + " WHERE id = :id AND state = :expected::snapshot_state"
                                 + " AND revoked_at IS NOT DISTINCT FROM CAST(:revokedAt AS timestamptz)"
-                                + " RETURNING *")
+                                + " AND deleted_at IS NULL RETURNING *")
                 .param("state", newState)
                 .param("reviewer", reviewer)
                 .param("now", OffsetDateTime.now())
