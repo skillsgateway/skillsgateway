@@ -204,11 +204,11 @@ class UpstreamGitHubAppIntegrationTests extends AbstractExternalSourceTest {
         FORGE.redirectTo(elsewhere.baseUrl() + "/acme/skills.git/info/refs?service=git-upload-pack", 1);
 
         register(uniqueName("port"), FORGE.baseUrl() + "/pinned/" + repo + ".git")
-                .andExpect(status().isCreated());
+                .andExpect(status().isBadGateway());
 
-        assertThat(elsewhere.authorizations())
-                .isNotEmpty()
-                .allSatisfy(request -> assertThat(request[1]).isEmpty());
+        // Another port is another origin, which an upstream request never reaches (GW_INGEST_0075):
+        // nothing arrives there, so neither does the token.
+        assertThat(elsewhere.authorizations()).isEmpty();
     }
 
     @Test

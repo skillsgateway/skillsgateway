@@ -57,7 +57,7 @@ public class UpstreamGit {
         try (Git git = new Git(repo)) {
             read(url, access -> {
                 try {
-                    connect(git.fetch().setRemote(url).setRefSpecs(new RefSpec("+HEAD:" + targetRef)), access)
+                    connect(git.fetch().setRemote(url).setRefSpecs(new RefSpec("+HEAD:" + targetRef)), url, access)
                             .call();
                 } catch (GitAPIException | RuntimeException first) {
                     try {
@@ -66,6 +66,7 @@ public class UpstreamGit {
                                         git.fetch()
                                                 .setRemote(url)
                                                 .setRefSpecs(new RefSpec("+" + branch + ":" + targetRef)),
+                                        url,
                                         access)
                                 .call();
                     } catch (GitAPIException | RuntimeException second) {
@@ -142,25 +143,25 @@ public class UpstreamGit {
     }
 
     private Map<String, Ref> listRefs(String url, Access access) throws GitAPIException {
-        return connect(Git.lsRemoteRepository().setRemote(url), access).callAsMap();
+        return connect(Git.lsRemoteRepository().setRemote(url), url, access).callAsMap();
     }
 
     /**
      * Where every upstream command is configured before it runs, so registration's listing and
      * ingestion's fetch get the same credential (GW_INGEST_0050). The credential is chosen once, from
-     * the marketplace URL, and rides only on requests under its own prefix (GW_INGEST_0051). An
-     * upstream under no prefix gets no factory at all: JGit's own transport, anonymous.
+     * the marketplace URL, and rides only on requests under its own prefix (GW_INGEST_0051). Every
+     * request, credentialed or anonymous, stays on the registered URL's origin (GW_INGEST_0075).
      */
-    @Requirements({"GW_INGEST_0050", "GW_INGEST_0051"})
-    private static <C extends TransportCommand<C, ?>> C connect(C command, Access access) {
+    @Requirements({"GW_INGEST_0050", "GW_INGEST_0051", "GW_INGEST_0075"})
+    private static <C extends TransportCommand<C, ?>> C connect(C command, String url, Access access) {
         command.setTimeout(TIMEOUT_SECONDS);
-        if (access.selected() != null) {
-            command.setTransportConfigCallback(transport -> {
-                if (transport instanceof TransportHttp http) {
-                    http.setHttpConnectionFactory(access.selected().connectionFactory(access.header()));
-                }
-            });
-        }
+        command.setTransportConfigCallback(transport -> {
+            if (transport instanceof TransportHttp http) {
+                http.setHttpConnectionFactory(new UpstreamOriginFactory(
+                        url,
+                        access.selected() == null ? null : access.selected().connectionFactory(access.header())));
+            }
+        });
         return command;
     }
 

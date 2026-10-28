@@ -475,7 +475,9 @@ skills-gateway:
   `https://<host>/<owner>/<repository>[.git]`.
 - **Sent per request.** The credential that the marketplace URL selects rides
   only on requests under its own prefix, so a redirect elsewhere carries
-  nothing. The forge metadata lookup and external plugin sources are always
+  nothing, and a redirect off the registered URL's origin is refused whether
+  or not a credential applies (GW_INGEST_0075 — An upstream listing or fetch
+  never leaves the registered URL's origin). The forge metadata lookup and external plugin sources are always
   anonymous.
 - **Rotation is a restart.** The list is read once, at startup. A GitHub App's
   installation tokens renew by themselves; its key is changed by a restart.

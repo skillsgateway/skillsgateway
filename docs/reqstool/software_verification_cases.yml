@@ -4159,6 +4159,16 @@ cases:
       THEN the manifest is refused, and the listing answers within ten seconds with at most five hundred skills across all plugins
     revision: "0.1.0"
 
+  - id: SVC_GW_INGEST_0075
+    requirement_ids: ["GW_INGEST_0075"]
+    title: A redirect to another origin is refused before it is followed, and one within the origin is followed
+    verification: automated-test
+    description: |
+      GIVEN an upstream that redirects to another origin, the same upstream with a credential configured for it, and an upstream that redirects to another path of its own origin
+      WHEN each is listed, and the first is fetched
+      THEN the first two fail and the other origin receives no request, and the third's redirect is followed to the new path
+    revision: "0.1.0"
+
   - id: SVC_GW_AUTH_0053
     requirement_ids: ["GW_AUTH_0053"]
     title: A sign-in started on one instance completes on another, and its session is honoured by both
