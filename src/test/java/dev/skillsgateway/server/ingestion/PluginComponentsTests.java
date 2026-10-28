@@ -451,4 +451,25 @@ class PluginComponentsTests {
         assertThat(components.lspCommands()).isEmpty();
         assertThat(components.hooks()).isNotEmpty();
     }
+
+    @Test
+    @SVCs({"SVC_GW_INGEST_0071"})
+    void frontmatter_hooks_that_alias_themselves_into_a_huge_tree_are_refused_quickly() {
+        StringBuilder skill = new StringBuilder("---\nname: s\nl0: &l0 [{type: command, command: echo}]\n");
+        for (int level = 1; level <= 12; level++) {
+            skill.append("l%d: &l%d [*l%d, *l%d, *l%d]\n".formatted(level, level, level - 1, level - 1, level - 1));
+        }
+        skill.append("hooks:\n  Stop:\n    - hooks: *l12\n---\nbody\n");
+
+        Components components = org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
+                java.time.Duration.ofSeconds(2), () -> read(files("p/skills/s/SKILL.md", skill.toString()), "p"));
+
+        assertThat(components.hooks()).as("hooks read from the expanded tree").isEmpty();
+        assertThat(components.hookProblems())
+                .extracting(PluginComponents.Problem::path, PluginComponents.Problem::message)
+                .anySatisfy(problem -> {
+                    assertThat(problem.toList().get(0)).isEqualTo("p/skills/s/SKILL.md");
+                    assertThat((String) problem.toList().get(1)).contains("too large");
+                });
+    }
 }
