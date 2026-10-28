@@ -110,6 +110,11 @@ public final class ManifestPolicy {
         if (plugins == null || !plugins.isArray()) {
             return rejected(MANIFEST + " has no \"plugins\" array");
         }
+        if (plugins.size() > MAX_PLUGINS) {
+            // Each entry is read in full wherever the snapshot is listed or vetted (GW_INGEST_0074).
+            return rejected(
+                    "%s declares %d plugins; at most %d are accepted".formatted(MANIFEST, plugins.size(), MAX_PLUGINS));
+        }
         List<Admitted> admitted = new ArrayList<>();
         int index = 0;
         for (JsonNode plugin : plugins) {
@@ -131,6 +136,9 @@ public final class ManifestPolicy {
         }
         return new Evaluation(null, (ObjectNode) root, List.copyOf(admitted));
     }
+
+    /** Far more plugins than a marketplace ships, and few enough to read each (GW_INGEST_0074). */
+    static final int MAX_PLUGINS = 1_000;
 
     /** The violation for a source this gateway admitted and has not turned into content it serves. */
     static String unresolved(String pluginName, String cloneUrl) {

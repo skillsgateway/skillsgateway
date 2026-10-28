@@ -85,4 +85,15 @@ class ManifestPolicyTests {
                     .isNotNull();
         }
     }
+
+    @Test
+    @SVCs({"SVC_GW_INGEST_0074"})
+    void a_manifest_with_more_plugins_than_the_bound_is_refused() {
+        String[] entries = new String[1_001];
+        for (int i = 0; i < entries.length; i++) {
+            entries[i] = "{\"name\":\"p%d\",\"source\":\"./plugins/p%d\"}".formatted(i, i);
+        }
+
+        assertThat(validate(policy(true, 20), manifest(entries))).isNotNull().contains("1000");
+    }
 }

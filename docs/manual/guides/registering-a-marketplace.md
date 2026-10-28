@@ -133,7 +133,7 @@ commit as `refs/snapshots/{sha}`, and creates a snapshot in state `held`.
 Nothing is served yet. A manifest that breaks policy still captures a snapshot,
 in state `rejected`, and so does a tree holding a symbolic link or a submodule
 entry, or one with more than 200,000 files and directories, or more than 32
-directories deep. The vetters read files by path, while a git client checks a link out as
+directories deep. So does a manifest declaring more than 1,000 plugins. The vetters read files by path, while a git client checks a link out as
 a link, so the gateway serves regular and executable files only. See [the endpoints](../reference/api/marketplaces.md#post-marketplacesnameingest)
 for every field.
 

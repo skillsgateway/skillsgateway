@@ -4109,6 +4109,16 @@ cases:
       THEN it answers within five seconds and lists the file as changed
     revision: "0.1.0"
 
+  - id: SVC_GW_INGEST_0074
+    requirement_ids: ["GW_INGEST_0074"]
+    title: Too many plugins are refused, and the inventory lists each skill once
+    verification: automated-test
+    description: |
+      GIVEN a manifest of a thousand and one plugins, and a snapshot whose manifest repeats one source two thousand times over five hundred skills
+      WHEN the manifest is evaluated and the snapshot's content is listed
+      THEN the manifest is refused, and the listing answers within ten seconds with at most five hundred skills across all plugins
+    revision: "0.1.0"
+
   - id: SVC_GW_AUTH_0053
     requirement_ids: ["GW_AUTH_0053"]
     title: A sign-in started on one instance completes on another, and its session is honoured by both
