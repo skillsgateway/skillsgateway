@@ -3839,6 +3839,16 @@ cases:
       THEN the first three are refused as conflicts and keep the withdrawal or approval that intervened, and the fourth is decided
     revision: "0.1.0"
 
+  - id: SVC_GW_APPROVAL_0033
+    requirement_ids: ["GW_APPROVAL_0032"]
+    title: Approval, rollback and repair wait for the marketplace's publication lock
+    verification: automated-test
+    description: |
+      GIVEN a marketplace whose publication lock another transition holds
+      WHEN an approval is requested, a withdrawal asks to return to a predecessor that the holder withdraws before releasing, and a repair is attempted for an approved snapshot that the holder withdraws before releasing
+      THEN each waits for the lock; the approval then publishes; the withdrawal returns to nothing and the marketplace serves nothing; and the repair republishes nothing
+    revision: "0.1.0"
+
   - id: SVC_GW_INGEST_0045
     requirement_ids: ["GW_INGEST_0045"]
     title: The inventory lists commands, agents, hooks, MCP servers and LSP servers from every declaration source

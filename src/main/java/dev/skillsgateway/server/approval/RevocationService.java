@@ -62,7 +62,11 @@ public class RevocationService {
      */
     public static final String EVENT_ROLLED_BACK = "snapshot-rolled-back";
 
+    /** A rollback target that was withdrawn before it could be returned to service (GW_APPROVAL_0032). */
+    public static final String EVENT_ROLLBACK_UNAVAILABLE = "snapshot-rollback-unavailable";
+
     private final GitStorage storage;
+    private final PublicationLock publicationLock;
     private final SnapshotRepository snapshotRepository;
     private final MarketplaceRepository marketplaceRepository;
     private final CatalogService catalogService;
@@ -77,8 +81,10 @@ public class RevocationService {
             CatalogService catalogService,
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
-            ApplicationEventPublisher events) {
+            ApplicationEventPublisher events,
+            PublicationLock publicationLock) {
         this.storage = storage;
+        this.publicationLock = publicationLock;
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
         this.catalogService = catalogService;
@@ -158,13 +164,41 @@ public class RevocationService {
             throw new RollbackUnavailableException(snapshotId, marketplace.name());
         }
 
-        // The predicate lives in the statement, so a concurrent revocation or re-vetting pass cannot
-        // revoke the same snapshot twice, and only the caller that won the transition touches git.
-        Snapshot revoked = snapshotRepository
-                .revoke(snapshotId, administrator, reason, Snapshot.REVOKED_ADMINISTRATIVELY)
-                .orElseThrow(() -> new NotApprovedException(snapshotId, Snapshot.REVOKED));
-        auditLogger.record(administrator, marketplace, EVENT_REVOKED, revoked.sha(), reason);
+        // The transition, the withdrawal from the wire and any rollback hold the marketplace's
+        // publication lock together (GW_APPROVAL_0032), so an approval that is still publishing finishes
+        // first, and a rollback target withdrawn meanwhile is seen as withdrawn.
+        Withdrawal withdrawal = publicationLock.holding(marketplace.id(), () -> {
+            // The predicate lives in the statement, so a concurrent revocation or re-vetting pass
+            // cannot revoke the same snapshot twice, and only the caller that won the transition
+            // touches git.
+            Snapshot revoked = snapshotRepository
+                    .revoke(snapshotId, administrator, reason, Snapshot.REVOKED_ADMINISTRATIVELY)
+                    .orElseThrow(() -> new NotApprovedException(snapshotId, Snapshot.REVOKED));
+            auditLogger.record(administrator, marketplace, EVENT_REVOKED, revoked.sha(), reason);
+            boolean stoppedServing = unpublish(marketplace, revoked, administrator);
+            Optional<Snapshot> served = target.isPresent()
+                    ? republish(marketplace, target.get(), revoked, administrator)
+                    : Optional.empty();
+            return new Withdrawal(revoked, stoppedServing, served);
+        });
+        Snapshot revoked = withdrawal.revoked();
+        boolean stoppedServing = withdrawal.stoppedServing();
+        Optional<Snapshot> served = withdrawal.served();
 
+        catalogService.rebuildQuietly();
+        events.publishEvent(new ServedContentChangedEvent(marketplace.name(), EVENT_REVOKED));
+        webhookService.emit(
+                WebhookEvent.SNAPSHOT_REVOKED,
+                marketplace.name(),
+                revoked.id(),
+                revoked.sha(),
+                Snapshot.REVOKED,
+                administrator);
+        return new Revoked(revoked, stoppedServing, served);
+    }
+
+    /** Takes the revoked snapshot off the wire, reporting a failure rather than raising it. */
+    private boolean unpublish(Marketplace marketplace, Snapshot revoked, String administrator) {
         boolean stoppedServing = false;
         try {
             stoppedServing = storage.unpublish(marketplace.name(), revoked.sha());
@@ -184,28 +218,16 @@ public class RevocationService {
             // mirror reconciles against what is served now and will repair what this failure left.
             log.error(
                     "snapshot {} ({} {}) was revoked but could not be unpublished; its refs may still be served",
-                    snapshotId,
+                    revoked.id(),
                     marketplace.name(),
                     revoked.sha(),
                     unpublishFailed);
         }
-
-        Optional<Snapshot> served = Optional.empty();
-        if (target.isPresent()) {
-            served = republish(marketplace, target.get(), revoked, administrator);
-        }
-
-        catalogService.rebuildQuietly();
-        events.publishEvent(new ServedContentChangedEvent(marketplace.name(), EVENT_REVOKED));
-        webhookService.emit(
-                WebhookEvent.SNAPSHOT_REVOKED,
-                marketplace.name(),
-                revoked.id(),
-                revoked.sha(),
-                Snapshot.REVOKED,
-                administrator);
-        return new Revoked(revoked, stoppedServing, served);
+        return stoppedServing;
     }
+
+    /** What one withdrawal did, as decided inside the publication lock. */
+    private record Withdrawal(Snapshot revoked, boolean stoppedServing, Optional<Snapshot> served) {}
 
     /**
      * Return the marketplace to an earlier approved snapshot, after the withdrawal has landed.
@@ -222,6 +244,27 @@ public class RevocationService {
     @Requirements({"GW_APPROVAL_0016"})
     private Optional<Snapshot> republish(
             Marketplace marketplace, Snapshot target, Snapshot revoked, String administrator) {
+        // Re-read inside the lock (GW_APPROVAL_0032): the target was chosen before it, and another
+        // administrator may have withdrawn it since. Then the marketplace serves nothing, as it would
+        // for a request that chose to serve nothing.
+        Optional<Snapshot> stillApproved = snapshotRepository
+                .findById(target.id())
+                .filter(current -> Snapshot.APPROVED.equals(current.state()) && !current.deleted());
+        if (stillApproved.isEmpty()) {
+            log.warn(
+                    "snapshot {} ({}) was revoked, but its predecessor {} was withdrawn meanwhile;"
+                            + " the marketplace now serves nothing",
+                    revoked.id(),
+                    marketplace.name(),
+                    target.sha());
+            auditLogger.record(
+                    administrator,
+                    marketplace,
+                    EVENT_ROLLBACK_UNAVAILABLE,
+                    target.sha(),
+                    "the previous approved snapshot was withdrawn before it could be returned to service");
+            return Optional.empty();
+        }
         try {
             storage.publish(marketplace.name(), target.sha());
             auditLogger.record(

@@ -9,6 +9,7 @@ import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.storage.GitStorage;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -55,6 +56,7 @@ public class PublicationReconciler implements SmartInitializingSingleton {
     private static final Logger log = LoggerFactory.getLogger(PublicationReconciler.class);
 
     private final GitStorage storage;
+    private final PublicationLock publicationLock;
     private final MarketplaceRepository marketplaceRepository;
     private final SnapshotRepository snapshotRepository;
     private final AdminAuditLogger auditLogger;
@@ -63,8 +65,10 @@ public class PublicationReconciler implements SmartInitializingSingleton {
             GitStorage storage,
             MarketplaceRepository marketplaceRepository,
             SnapshotRepository snapshotRepository,
-            AdminAuditLogger auditLogger) {
+            AdminAuditLogger auditLogger,
+            PublicationLock publicationLock) {
         this.storage = storage;
+        this.publicationLock = publicationLock;
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
         this.auditLogger = auditLogger;
@@ -174,10 +178,25 @@ public class PublicationReconciler implements SmartInitializingSingleton {
 
     private boolean republish(String marketplace, Snapshot snapshot) {
         try {
-            storage.publish(marketplace, snapshot.sha());
-            report(marketplace, "publication-repaired", snapshot.sha());
-            return true;
-        } catch (IOException | RuntimeException e) {
+            // Re-read under the marketplace's publication lock (GW_APPROVAL_0032): the list was read
+            // before it, and a withdrawal that landed since must not be undone by a repair.
+            return publicationLock.holding(snapshot.marketplaceId(), () -> {
+                boolean stillApproved = snapshotRepository
+                        .findById(snapshot.id())
+                        .filter(current -> Snapshot.APPROVED.equals(current.state()) && !current.deleted())
+                        .isPresent();
+                if (!stillApproved) {
+                    return false;
+                }
+                try {
+                    storage.publish(marketplace, snapshot.sha());
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+                report(marketplace, "publication-repaired", snapshot.sha());
+                return true;
+            });
+        } catch (RuntimeException e) {
             log.error(
                     "publication reconciliation could not republish snapshot {} of '{}': it is recorded as approved"
                             + " and is still not served",

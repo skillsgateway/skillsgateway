@@ -147,13 +147,23 @@ public interface GitStorage {
      *     {@code unpublish}'s return, so the caller can say so on the ledger without re-deriving it
      */
     default boolean publish(String marketplace, String sha) throws IOException {
+        stage(marketplace, sha);
+        return commitPublication(marketplace, sha);
+    }
+
+    /**
+     * The first half of {@link #publish}: copies the snapshot's objects into the published
+     * repository under an unadvertised staging reference, and serves nothing. Split out so a caller
+     * can do the long copy before it takes the publication lock and only the reference transition
+     * inside it.
+     */
+    default void stage(String marketplace, String sha) throws IOException {
         ObjectId tip = ObjectId.fromString(sha);
         try (Repository quarantine = quarantine(marketplace);
                 Repository published = published(marketplace)) {
             GitObjectTransfer.copy(quarantine, published, tip);
             RefTransitions.write(published, STAGING_REF_PREFIX + sha, tip);
         }
-        return commitPublication(marketplace, sha);
     }
 
     /**

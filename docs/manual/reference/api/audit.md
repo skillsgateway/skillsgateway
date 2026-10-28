@@ -211,6 +211,7 @@ records `revet-policy` as the principal; an on-demand run records the operator.
 | `snapshot-revoked` | The state transition out of `approved`. | The violation that caused it. |
 | `snapshot-unpublished` | The published refs were removed. | Whether the marketplace still serves anything. |
 | `snapshot-unpublish-failed` | A revoked snapshot's refs could not be removed. | The failure. **Needs a person**: the record and the wire disagree. |
+| `snapshot-rollback-unavailable` | A withdrawal asked to return to the previous approved snapshot, but that snapshot was withdrawn first, so the marketplace serves nothing. | Why it was not returned. |
 
 **From publication reconciliation** — at startup, before the web surface serves
 its first request, recorded with `publication-reconciler` as the principal and

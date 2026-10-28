@@ -460,6 +460,13 @@ refused **before anything is withdrawn**, so a request that cannot be honoured
 changes nothing rather than quietly leaving you with the other outcome. A
 return is recorded on the ledger as a publication in its own right.
 
+A withdrawal and every other change to what a marketplace serves happen one at
+a time per marketplace, each holding the marketplace's publication lock. So an
+approval that is still publishing finishes before a withdrawal acts on it, and
+a predecessor that another administrator withdrew while yours waited is not put
+back. The marketplace then serves nothing, and the ledger records
+`snapshot-rollback-unavailable`.
+
 !!! warning "This stops the gateway serving it; it does not delete what clients hold"
 
     Anyone who already cloned the content still has it on disk. `GET
@@ -550,10 +557,11 @@ approval; there is nothing to clean up first.
 
 ### When the repair fails too
 
-Failing the approval means putting the recorded decision back, and that write
-can fail in its turn. The double failure is reported — at `ERROR`, and on the
-exception the approval raises — but what it leaves behind is a row saying
-`approved` while nothing is served.
+A refused publication rolls the decision back with it: the decision and the
+reference transition share one transaction, under the marketplace's
+publication lock. A row can still end up saying `approved` while nothing is
+served, for example when storage is restored from a backup older than the
+database, or when a return to the previous snapshot fails to publish.
 
 The next start reconciles that. After the schema is migrated and before the web
 surface serves its first request, the gateway compares, per marketplace, what

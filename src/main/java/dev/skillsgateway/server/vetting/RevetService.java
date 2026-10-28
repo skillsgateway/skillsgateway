@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.vetting;
 
 import dev.skillsgateway.server.admin.AdminAuditLogger;
+import dev.skillsgateway.server.approval.PublicationLock;
 import dev.skillsgateway.server.catalog.CatalogService;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.FetchLogRepository;
@@ -79,6 +80,7 @@ public class RevetService {
     private final MarketplaceRepository marketplaceRepository;
     private final FetchLogRepository fetchLogRepository;
     private final GitStorage storage;
+    private final PublicationLock publicationLock;
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
     private final CatalogService catalogService;
@@ -92,6 +94,7 @@ public class RevetService {
             MarketplaceRepository marketplaceRepository,
             FetchLogRepository fetchLogRepository,
             GitStorage storage,
+            PublicationLock publicationLock,
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
             CatalogService catalogService,
@@ -103,6 +106,7 @@ public class RevetService {
         this.marketplaceRepository = marketplaceRepository;
         this.fetchLogRepository = fetchLogRepository;
         this.storage = storage;
+        this.publicationLock = publicationLock;
         this.auditLogger = auditLogger;
         this.webhookService = webhookService;
         this.catalogService = catalogService;
@@ -387,40 +391,48 @@ public class RevetService {
     @Requirements({"GW_VETTING_0013", "GW_VETTING_0017"})
     private boolean quarantine(Snapshot snapshot, String marketplace, WaiverEvaluation.Effect effect, String actor) {
         String violation = "re-vetting violation: %s".formatted(effect.blockingVetters());
-        Optional<Snapshot> revoked =
-                snapshotRepository.revoke(snapshot.id(), actor, violation, Snapshot.REVOKED_BY_REVET);
-        if (revoked.isEmpty()) {
-            log.info("snapshot {} was no longer approved when re-vetting tried to revoke it", snapshot.id());
+        // The transition and the withdrawal from the wire hold the marketplace's publication lock
+        // (GW_APPROVAL_0032), so an approval that is still publishing this snapshot finishes first.
+        boolean withdrawn = publicationLock.holding(snapshot.marketplaceId(), () -> {
+            Optional<Snapshot> revoked =
+                    snapshotRepository.revoke(snapshot.id(), actor, violation, Snapshot.REVOKED_BY_REVET);
+            if (revoked.isEmpty()) {
+                log.info("snapshot {} was no longer approved when re-vetting tried to revoke it", snapshot.id());
+                return false;
+            }
+            auditLogger.record(actor, marketplace, EVENT_REVOKED, snapshot.sha(), violation);
+            try {
+                boolean stoppedServing = storage.unpublish(marketplace, snapshot.sha());
+                auditLogger.record(
+                        actor,
+                        marketplace,
+                        EVENT_UNPUBLISHED,
+                        snapshot.sha(),
+                        stoppedServing
+                                ? "refs/heads/main and refs/snapshots/<sha> removed; the marketplace serves nothing"
+                                : "refs/snapshots/<sha> removed; a later approved snapshot still serves this marketplace");
+            } catch (IOException e) {
+                // The snapshot is revoked in the record but its refs may still be advertised: the
+                // loudest possible failure, because it is the one case where the state and the wire
+                // disagree. The next pass will not retry (the snapshot is no longer approved), so this
+                // needs a person.
+                log.error(
+                        "snapshot {} ({} {}) was revoked but could not be unpublished; its refs may still be served",
+                        snapshot.id(),
+                        marketplace,
+                        snapshot.sha(),
+                        e);
+                auditLogger.record(
+                        actor,
+                        marketplace,
+                        "snapshot-unpublish-failed",
+                        snapshot.sha(),
+                        "revoked but still published: " + e.getMessage());
+            }
+            return true;
+        });
+        if (!withdrawn) {
             return false;
-        }
-        auditLogger.record(actor, marketplace, EVENT_REVOKED, snapshot.sha(), violation);
-        try {
-            boolean stoppedServing = storage.unpublish(marketplace, snapshot.sha());
-            auditLogger.record(
-                    actor,
-                    marketplace,
-                    EVENT_UNPUBLISHED,
-                    snapshot.sha(),
-                    stoppedServing
-                            ? "refs/heads/main and refs/snapshots/<sha> removed; the marketplace serves nothing"
-                            : "refs/snapshots/<sha> removed; a later approved snapshot still serves this marketplace");
-        } catch (IOException e) {
-            // The snapshot is revoked in the record but its refs may still be advertised: the
-            // loudest possible failure, because it is the one case where the state and the wire
-            // disagree. The next pass will not retry (the snapshot is no longer approved), so this
-            // needs a person.
-            log.error(
-                    "snapshot {} ({} {}) was revoked but could not be unpublished; its refs may still be served",
-                    snapshot.id(),
-                    marketplace,
-                    snapshot.sha(),
-                    e);
-            auditLogger.record(
-                    actor,
-                    marketplace,
-                    "snapshot-unpublish-failed",
-                    snapshot.sha(),
-                    "revoked but still published: " + e.getMessage());
         }
         // The published set just shrank; the catalog re-derives so the retracted content leaves it
         // too (GW_FACADE_0004). Never fails the revocation that triggered it.
