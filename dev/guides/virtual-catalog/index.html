@@ -2651,6 +2651,10 @@ catalog adds a view, never a way in.</p>
 <li>a <strong>revocation</strong> unpublishes one → the marketplace leaves the catalog, with
   no operator action.</li>
 </ul>
+<p>With several instances of the gateway, a rebuild moves the catalog only if no
+other rebuild moved it since this one started reading. One that lost that race
+reads the estate again and recomposes, so a revision composed before a
+revocation can never replace one composed after it.</p>
 <p>Each catalog revision is a <strong>parentless commit</strong>: history depth one, so a
 retracted constituent is unreachable from every advertised catalog ref the
 moment the next revision lands — a consumer cannot fetch yesterday's catalog to
