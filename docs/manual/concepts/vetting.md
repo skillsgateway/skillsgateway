@@ -203,7 +203,13 @@ Everything else is **blocked**:
 
 That last case is the one that matters most. A snapshot ingested before the
 chain existed, or one whose run died halfway, is blocked — absence of evidence
-is not evidence of safety.
+is not evidence of safety. The same holds for a run that has not finished,
+whether it is still running or stopped before recording every verdict
+(GW_VETTING_0067 — A vetting run that has not finished blocks approval).
+Upstream text the vetters quote is recorded with any NUL character replaced
+by U+FFFD, so a NUL cannot stop the record of the run that read it
+(GW_VETTING_0068 — Upstream text with a NUL character is recorded in vetting
+results).
 
 - **and a run that stopped early**, however its verdicts aggregate and whatever
   waivers are active: the vetters it did not reach have said nothing either way,
@@ -352,9 +358,9 @@ on every read from that run plus the waivers active *at that instant*:
 
 | Effective states | A waiver suppressed something | Outcome |
 | --- | --- | --- |
-| all clearing, run non-empty | no | `CLEAR` |
-| all clearing, run non-empty | yes | `CLEAR_WITH_WAIVERS` |
-| anything else, or no run at all | — | `BLOCKED` |
+| all clearing, run non-empty and finished | no | `CLEAR` |
+| all clearing, run non-empty and finished | yes | `CLEAR_WITH_WAIVERS` |
+| anything else, an unfinished run, or no run at all | — | `BLOCKED` |
 
 `CLEAR_WITH_WAIVERS` is a different word from `CLEAR` on purpose. A reviewer or
 an auditor glancing at a badge must never read an accepted risk as a clean

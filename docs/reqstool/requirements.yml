@@ -3242,3 +3242,23 @@ requirements:
       requirement_ids: ["GW_VETTING_0049"]
     categories: ["security"]
     revision: 0.5.0
+
+  - id: GW_VETTING_0067
+    title: A vetting run that has not finished blocks approval
+    significance: shall
+    description: "The system shall treat a snapshot whose latest vetting run has not finished — still running, or stopped before recording every verdict — as blocked at the approval gate, whatever its recorded verdicts and the active waivers say."
+    rationale: "A run records its verdicts one by one and finishes last; if it stops in between, the verdicts it recorded are the ones before the failure, and the one that would have objected may be exactly the one whose record failed."
+    references:
+      requirement_ids: ["GW_VETTING_0002"]
+    categories: ["security"]
+    revision: 0.5.0
+
+  - id: GW_VETTING_0068
+    title: Upstream text with a NUL character is recorded in vetting results
+    significance: shall
+    description: "The system shall record a verdict's detail and report link and a finding's id, location and message with every NUL character replaced by U+FFFD."
+    rationale: "Findings quote upstream text, and PostgreSQL text cannot hold a NUL; one that reached the record made the insert fail and stopped the run before its own verdict was stored."
+    references:
+      requirement_ids: ["GW_VETTING_0067"]
+    categories: ["security", "reliability"]
+    revision: 0.5.0

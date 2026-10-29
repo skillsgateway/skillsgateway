@@ -155,7 +155,7 @@ public final class WaiverEvaluation {
      * @param sha the commit SHA the snapshot is pinned to, matched by snapshot-scoped waivers
      * @param now the instant expiry is decided against
      */
-    @Requirements({"GW_VETTING_0008", "GW_VETTING_0009", "GW_VETTING_0032.3", "GW_APPROVAL_0022"})
+    @Requirements({"GW_VETTING_0008", "GW_VETTING_0009", "GW_VETTING_0032.3", "GW_APPROVAL_0022", "GW_VETTING_0067"})
     public static Effect evaluate(VettingRepository.Run run, List<Waiver> waivers, String sha, Instant now) {
         if (run == null) {
             return noRun();
@@ -221,6 +221,11 @@ public final class WaiverEvaluation {
         // vetters are already in blockingVetters, since NOT_REACHED does not clear, so the reviewer
         // reads "this needs another run" rather than "this needs another waiver".
         if (effectiveStates.contains(VerdictState.NOT_REACHED)) {
+            effective = VettingChain.Outcome.BLOCKED;
+        }
+        // A run still in progress, or one that stopped before recording every verdict, is blocked
+        // (GW_VETTING_0067): the verdicts it has not recorded are the ones that could object.
+        if (run.finishedAt() == null) {
             effective = VettingChain.Outcome.BLOCKED;
         }
         return new Effect(effective, recorded, suppressions, uncovered, blockingVetters);
