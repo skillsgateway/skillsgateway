@@ -26,4 +26,4 @@
 
 ## 5. Gates and evidence
 
-- [ ] 5.1 `mutants.sh`, then every AGENTS.md gate fresh, recorded in `evidence.md`.
+- [x] 5.1 `mutants.sh`, then every AGENTS.md gate fresh, recorded in `evidence.md`.
