@@ -64,8 +64,11 @@ public class VettingRepository {
                 .single();
     }
 
-    /** Records one vetter's verdict and its findings. */
-    @Requirements({"GW_FACADE_0009"})
+    /**
+     * Records one vetter's verdict and its findings. Their text can carry upstream content, so a NUL,
+     * which PostgreSQL text cannot hold, is stored as U+FFFD (GW_VETTING_0068).
+     */
+    @Requirements({"GW_FACADE_0009", "GW_VETTING_0068"})
     @Transactional
     public void recordVerdict(long runId, String vetter, int position, Verdict verdict) {
         long verdictId = jdbc.sql("INSERT INTO vetting_verdicts (run_id, vetter, position, state, detail, report_url,"
@@ -75,8 +78,8 @@ public class VettingRepository {
                 .param("vetter", vetter)
                 .param("position", position)
                 .param("state", verdict.state().stored())
-                .param("detail", detailOf(verdict))
-                .param("reportUrl", verdict.reportUrl())
+                .param("detail", storable(detailOf(verdict)))
+                .param("reportUrl", storable(verdict.reportUrl()))
                 .param("now", OffsetDateTime.now())
                 .query(Long.class)
                 .single();
@@ -85,10 +88,10 @@ public class VettingRepository {
                             + " VALUES (:verdictId, :findingId, :severity::vetting_finding_severity, :location,"
                             + " :message, :content)")
                     .param("verdictId", verdictId)
-                    .param("findingId", finding.id())
+                    .param("findingId", storable(finding.id()))
                     .param("severity", finding.severity().stored())
-                    .param("location", finding.location())
-                    .param("message", finding.message())
+                    .param("location", storable(finding.location()))
+                    .param("message", storable(finding.message()))
                     .param("content", finding.content())
                     .update();
         }
@@ -101,6 +104,10 @@ public class VettingRepository {
      * substance rather than a null that reads the same as "the vetter never ran". A verdict whose
      * findings are all informational reads the same way, so a pass that skipped files says so.
      */
+    private static String storable(String text) {
+        return text == null ? null : text.replace('\u0000', '\uFFFD');
+    }
+
     private static String detailOf(Verdict verdict) {
         // A vetter the chain did not reach carries one purely bookkeeping finding, so the finding
         // count would say nothing; what a reader wants on the row is which vetter stopped the chain

@@ -1897,6 +1897,26 @@ cases:
       THEN each unreadable file yields one medium finding naming it and what could not be read, the verdict does not pass, and the readable or absent files yield none
     revision: "0.1.0"
 
+  - id: SVC_GW_VETTING_0070
+    requirement_ids: ["GW_VETTING_0067"]
+    title: An unfinished run with only passing verdicts is blocked, and the same run finished is clear
+    verification: automated-test
+    description: |
+      GIVEN a vetting run whose only recorded verdict passes, once unfinished and once finished
+      WHEN the approval gate evaluates each
+      THEN the unfinished run is blocked and the finished one is clear
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0071
+    requirement_ids: ["GW_VETTING_0068"]
+    title: A NUL in a hook command is recorded and the snapshot stays blocked
+    verification: automated-test
+    description: |
+      GIVEN a held snapshot whose hook command downloads and runs code and carries a NUL character
+      WHEN it is vetted, its vetting is read, and it is approved
+      THEN the vetting reads blocked with the download-and-run finding and the NUL shown as U+FFFD, and the approval is refused
+    revision: "0.1.0"
+
 
   - id: SVC_GW_VETTING_0026
     requirement_ids: ["GW_VETTING_0026"]
