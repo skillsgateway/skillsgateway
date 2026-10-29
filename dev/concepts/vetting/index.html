@@ -3329,7 +3329,13 @@ Everything else is <strong>blocked</strong>:</p>
 </ul>
 <p>That last case is the one that matters most. A snapshot ingested before the
 chain existed, or one whose run died halfway, is blocked — absence of evidence
-is not evidence of safety.</p>
+is not evidence of safety. The same holds for a run that has not finished,
+whether it is still running or stopped before recording every verdict
+(GW_VETTING_0067 — A vetting run that has not finished blocks approval).
+Upstream text the vetters quote is recorded with any NUL character replaced
+by U+FFFD, so a NUL cannot stop the record of the run that read it
+(GW_VETTING_0068 — Upstream text with a NUL character is recorded in vetting
+results).</p>
 <ul>
 <li><strong>and a run that stopped early</strong>, however its verdicts aggregate and whatever
   waivers are active: the vetters it did not reach have said nothing either way,
@@ -3482,17 +3488,17 @@ on every read from that run plus the waivers active <em>at that instant</em>:</p
 </thead>
 <tbody>
 <tr>
-<td>all clearing, run non-empty</td>
+<td>all clearing, run non-empty and finished</td>
 <td>no</td>
 <td><code>CLEAR</code></td>
 </tr>
 <tr>
-<td>all clearing, run non-empty</td>
+<td>all clearing, run non-empty and finished</td>
 <td>yes</td>
 <td><code>CLEAR_WITH_WAIVERS</code></td>
 </tr>
 <tr>
-<td>anything else, or no run at all</td>
+<td>anything else, an unfinished run, or no run at all</td>
 <td>—</td>
 <td><code>BLOCKED</code></td>
 </tr>
