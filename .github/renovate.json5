@@ -21,7 +21,25 @@
     enabled: true,
   },
 
+  // The Node that frontend-maven-plugin downloads has no manager of its own.
+  customManagers: [
+    {
+      customType: "regex",
+      managerFilePatterns: ["/^pom\\.xml$/"],
+      matchStrings: ["<node\\.version>v(?<currentValue>[^<]+)</node\\.version>"],
+      depNameTemplate: "node",
+      datasourceTemplate: "node-version",
+    },
+  ],
+
   packageRules: [
+    {
+      // @types/node describes the Node the build runs, so the two move in one
+      // PR; a lone @types/node major (#727) would type a runtime we do not use.
+      description: "Node runtime and @types/node together",
+      groupName: "node",
+      matchDepNames: ["node", "@types/node"],
+    },
     {
       // The image's base layers and the CI service containers by digest, so
       // a release builds from exactly what CI tested. Renovate keeps the
