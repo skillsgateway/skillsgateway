@@ -39,8 +39,6 @@
       description: "Node runtime and @types/node together",
       groupName: "node",
       matchDepNames: ["node", "@types/node"],
-      // The runtime every build and test runs on; merged by hand.
-      automerge: false,
     },
     {
       // The image's base layers and the CI service containers by digest, so
