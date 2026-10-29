@@ -2847,6 +2847,16 @@ requirements:
     categories: ["security"]
     revision: 0.5.0
 
+  - id: GW_APPROVAL_0035
+    title: An administrative withdrawal is not replaced by an ordinary reject
+    significance: shall
+    description: "The system shall refuse to reject a snapshot an administrator revoked, leaving its state, revocation kind, acting identity and time unchanged, and shall still reject a snapshot revoked by re-vetting."
+    rationale: "The administrative withdrawal is what refuses an ordinary re-approval of the same commit and what retention keeps; a reject would turn it into a rejected row that holds neither, after which retention may purge it and the commit, ingested again, would be approved with no second administrator."
+    references:
+      requirement_ids: ["GW_APPROVAL_0017"]
+    categories: ["security"]
+    revision: 0.5.0
+
   - id: GW_INGEST_0045
     title: The snapshot inventory lists every component a plugin declares
     significance: shall

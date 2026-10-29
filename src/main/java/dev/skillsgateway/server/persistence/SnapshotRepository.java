@@ -173,7 +173,7 @@ public class SnapshotRepository {
      * stamps are cleared by the transition, so a re-published snapshot never carries a revocation
      * marker that no longer holds; what it was revoked for stays in the ledger.
      */
-    @Requirements({"GW_FACADE_0009", "GW_INGEST_0034", "GW_APPROVAL_0031", "GW_APPROVAL_0034"})
+    @Requirements({"GW_FACADE_0009", "GW_INGEST_0034", "GW_APPROVAL_0031", "GW_APPROVAL_0034", "GW_APPROVAL_0035"})
     @Transactional
     public Snapshot decide(Snapshot expected, String newState, String reviewer) {
         long id = expected.id();
@@ -198,6 +198,13 @@ public class SnapshotRepository {
         // restored before it is decided (GW_APPROVAL_0034); the statement checks again for a concurrent delete.
         if (snapshot.deleted()) {
             throw new IllegalStateException("snapshot %d is deleted; restore it before deciding it".formatted(id));
+        }
+        // The withdrawal is what refuses re-approval of the commit and what retention keeps
+        // (GW_APPROVAL_0035); rejecting would erase it, and only a reversal lifts it.
+        if (Snapshot.REJECTED.equals(newState) && Snapshot.REVOKED_ADMINISTRATIVELY.equals(snapshot.revokedKind())) {
+            throw new IllegalStateException(
+                    "snapshot %d was withdrawn by an administrator and stays withdrawn until one reverses it"
+                            .formatted(id));
         }
         // Compare-and-set on the row the caller judged (GW_APPROVAL_0031): a withdrawal, approval or
         // rejection that landed since then is never written over, and the caller is told instead.

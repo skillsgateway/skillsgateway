@@ -1309,6 +1309,7 @@ the request is refused `409` with a body naming `revokedBy`, `revokedAt` and
 | Refusal | Status | Cause |
 | --- | --- | --- |
 | An ordinary approval of a withdrawn commit | 409 | Names the withdrawal; use the body above |
+| A reject of the withdrawn snapshot | 409 | It is already withdrawn, and only a reversal lifts that (GW_APPROVAL_0035 — An administrative withdrawal is not replaced by an ordinary reject) |
 | The administrator who withdrew it | 409 | Reversing takes a second identity, unconditionally |
 | No reason, or an empty one | 422 | The reason is the record |
 | Nothing was withdrawn | 409 | A reversal that did nothing would make the marker's absence ambiguous |
