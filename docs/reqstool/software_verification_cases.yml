@@ -3929,6 +3929,16 @@ cases:
       THEN the first marketplace still serves nothing, and the second and third have the snapshot they should serve republished
     revision: "0.1.0"
 
+  - id: SVC_GW_APPROVAL_0035
+    requirement_ids: ["GW_APPROVAL_0034"]
+    title: A deleted snapshot is neither approved nor rejected, and a restored one is decided as before
+    verification: automated-test
+    description: |
+      GIVEN two held snapshots that are soft-deleted, a third read before it is soft-deleted, and a fourth soft-deleted and then restored
+      WHEN the first is approved, the second rejected, the third decided from the row read before its deletion, and the fourth approved
+      THEN the first three are refused and stay held, the first two naming the restore, and the fourth is approved
+    revision: "0.1.0"
+
   - id: SVC_GW_INGEST_0045
     requirement_ids: ["GW_INGEST_0045"]
     title: The inventory lists commands, agents, hooks, MCP servers and LSP servers from every declaration source

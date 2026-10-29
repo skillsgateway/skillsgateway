@@ -2837,6 +2837,16 @@ requirements:
     categories: ["security", "reliability"]
     revision: 0.5.0
 
+  - id: GW_APPROVAL_0034
+    title: A deleted snapshot is not decided until it is restored
+    significance: shall
+    description: "The system shall refuse to approve or reject a soft-deleted snapshot, including one deleted while the decision is being made, leaving its state and deletion marks unchanged until it is restored."
+    rationale: "Deletion takes a snapshot out of continuous re-vetting, removal withdrawal and the name-collision estate, so an approval of a deleted snapshot would publish content none of those see, and a rejection would erase what retention recorded about it."
+    references:
+      requirement_ids: ["GW_APPROVAL_0031"]
+    categories: ["security"]
+    revision: 0.5.0
+
   - id: GW_INGEST_0045
     title: The snapshot inventory lists every component a plugin declares
     significance: shall

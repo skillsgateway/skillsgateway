@@ -156,6 +156,9 @@ stateDiagram-v2
 it sets `deleted_at`, `deleted_reason` and `purge_after = now + restore-window`.
 The vetting `state` is untouched — a deleted snapshot was still *held* or
 *rejected*, and provenance and the ledger must keep saying so.
+A deleted snapshot cannot be approved or rejected: the decision answers **409**
+until the snapshot is restored (GW_APPROVAL_0034 — A deleted snapshot is not
+decided until it is restored).
 
 **Compact** (`compaction-interval`, default six-hourly) removes: for each
 snapshot whose `purge_after` has elapsed it deletes `refs/snapshots/<sha>` with

@@ -257,3 +257,9 @@ The system SHALL implement GW_APPROVAL_0033.
 
 #### Scenario: SVC_GW_APPROVAL_0034
 The system SHALL pass SVC_GW_APPROVAL_0034.
+
+### Requirement: GW_APPROVAL_0034
+The system SHALL implement GW_APPROVAL_0034.
+
+#### Scenario: SVC_GW_APPROVAL_0035
+The system SHALL pass SVC_GW_APPROVAL_0035.
