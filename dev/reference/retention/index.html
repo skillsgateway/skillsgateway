@@ -2945,7 +2945,10 @@ passes so that a wrong criterion costs a mark rather than content.</p>
 <p><strong>Evaluate</strong> (<code>skills-gateway.retention.poll-interval</code>, default hourly) marks:
 it sets <code>deleted_at</code>, <code>deleted_reason</code> and <code>purge_after = now + restore-window</code>.
 The vetting <code>state</code> is untouched — a deleted snapshot was still <em>held</em> or
-<em>rejected</em>, and provenance and the ledger must keep saying so.</p>
+<em>rejected</em>, and provenance and the ledger must keep saying so.
+A deleted snapshot cannot be approved or rejected: the decision answers <strong>409</strong>
+until the snapshot is restored (GW_APPROVAL_0034 — A deleted snapshot is not
+decided until it is restored).</p>
 <p><strong>Compact</strong> (<code>compaction-interval</code>, default six-hourly) removes: for each
 snapshot whose <code>purge_after</code> has elapsed it deletes <code>refs/snapshots/&lt;sha&gt;</code> with
 JGit, clears <code>refs/quarantine/incoming</code> when it still points at that commit,
