@@ -2848,6 +2848,10 @@ good faith. Nothing refuses, and nothing is recorded — which makes it a quiete
 failure than the one the approval gate closes.</p>
 <p>Keeping the row is cheap. The bytes are the part worth reclaiming and the part
 nobody wants to keep; the row is small, and it is the only thing that remembers.</p>
+<p>For the same reason the row cannot be rejected: a reject would replace the
+withdrawal with an ordinary rejected state that retention may purge. It answers
+409 instead (GW_APPROVAL_0035 — An administrative withdrawal is not replaced by
+an ordinary reject).</p>
 <p>This applies to <strong>administrative</strong> withdrawals only. A snapshot revoked by
 <a href="../../guides/re-vetting/">re-vetting</a> purges as before: that is a machine
 verdict a later run can reach again from the content itself, so nothing is lost

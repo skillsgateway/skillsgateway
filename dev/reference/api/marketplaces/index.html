@@ -5520,6 +5520,11 @@ the request is refused <code>409</code> with a body naming <code>revokedBy</code
 <td>Names the withdrawal; use the body above</td>
 </tr>
 <tr>
+<td>A reject of the withdrawn snapshot</td>
+<td>409</td>
+<td>It is already withdrawn, and only a reversal lifts that (GW_APPROVAL_0035 — An administrative withdrawal is not replaced by an ordinary reject)</td>
+</tr>
+<tr>
 <td>The administrator who withdrew it</td>
 <td>409</td>
 <td>Reversing takes a second identity, unconditionally</td>
