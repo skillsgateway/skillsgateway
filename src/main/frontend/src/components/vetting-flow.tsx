@@ -407,7 +407,9 @@ export function VettingFlow({
                     className={`flex items-center gap-1.5 text-sm ${terminal ? "font-semibold" : "font-medium"}`}
                   >
                     <NodeIcon node={node} />
-                    <span className="whitespace-nowrap">{node.label}</span>
+                    <span className="whitespace-nowrap" title={node.label}>
+                      {node.label}
+                    </span>
                   </span>
                   {" "}
                   <span className={`text-xs ${toneText[node.tone]}`}>{node.state}</span>

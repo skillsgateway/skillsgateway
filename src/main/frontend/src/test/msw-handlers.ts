@@ -128,14 +128,15 @@ export const issuedToken: Schemas["IssuedToken"] = {
 
 /**
  * Two tokens, because the Last used column has exactly two shapes worth seeing: one a client
- * authenticated with recently, and one that has never authenticated at all. The Expires column's
- * two live shapes ride along the other way round: the first never expires, the second does.
+ * authenticated with recently, and one that has never authenticated at all. Both expire, so the
+ * one "never" on the page is the Last used column's.
  */
 export const tokenViews: Schemas["TokenView"][] = [
   {
     id: 7,
     name: "ci-runner",
     createdAt: "2026-08-14T10:00:00Z",
+    expiresAt: "2099-09-13T10:00:00Z",
     scopes: [],
     pushScopes: [],
     sessionDerived: false,
