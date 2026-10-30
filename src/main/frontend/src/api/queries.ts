@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
 import type { components } from "./types.gen";
+import { accessOf, type Access } from "@/lib/access";
 import { isDecidable, newestFirst } from "@/lib/snapshot-roles";
 
 export type MarketplaceView = components["schemas"]["MarketplaceView"];
@@ -282,13 +283,20 @@ export function useSnapshotVetting(snapshotId: number | null) {
 }
 
 /**
- * Whether this session holds the administrative role. A hint only: it decides whether an
- * administrator-only surface is worth rendering, never whether the request behind it is allowed —
- * the server checks every one of them independently.
+ * The session's access, read from `GET /api/v1/me`. A hint for what to render, never whether the
+ * request behind it is allowed — the server checks every one of them independently. While the
+ * session is being read nothing is granted.
+ *
+ * @Requirements GW_AUTH_0064
  */
-export function useIsAdmin() {
+export function useAccess(): Access & { isLoading: boolean; isError: boolean } {
   const me = useMe();
-  return (me.data?.roles ?? []).some((role) => role.role === "admin");
+  return { ...accessOf(me.data?.roles), isLoading: me.isLoading, isError: me.isError };
+}
+
+/** Whether this session holds the administrative role; see {@link useAccess}. */
+export function useIsAdmin() {
+  return useAccess().isAdmin;
 }
 
 /**
@@ -798,9 +806,10 @@ export function auditRows(pages: AuditPage[] | undefined): Record<string, unknow
  * How many entries the ledger holds, and whether that is the database's estimate — read from a
  * one-entry page, so a count costs no page of rows.
  */
-export function useLedgerTotal() {
+export function useLedgerTotal(enabled = true) {
   return useQuery({
     queryKey: ["audit", "total"],
+    enabled,
     queryFn: async () => {
       const page = await api<AuditPage>("/api/v1/audit?limit=1");
       return { total: page.total ?? 0, estimate: page.totalIsEstimate ?? false };

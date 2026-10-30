@@ -3431,4 +3431,33 @@ requirements:
     references:
       requirement_ids: ["GW_AUTH_0014"]
     categories: ["interaction-capability", "security"]
+
+  - id: GW_AUTH_0064
+    title: The portal offers only the controls the session's roles permit
+    significance: shall
+    description: "The portal shall present a control that ingests, approves, rejects, waives, revokes a waiver, re-vets, deletes or restores a snapshot, or registers a marketplace only where the session's effective roles, as the session identity endpoint reports them, hold the role the server requires for that action on that marketplace; shall state, where a snapshot awaits a decision the session cannot make, which role deciding it needs; and shall decide this from the same role rule the server applies, the server remaining the authority on every request."
+    rationale: "A control the server will refuse is an invitation to press it and read a refusal, and in this portal that was every decision control shown to every session: a user with no role saw ingest, reject, waive and delete, and an approver of one marketplace saw ingest on another. The roles are already on the session read the portal makes once per load, so showing only what the session can do costs no request. The one place an absent control would mislead is the decision on a held snapshot, which is what the reader came to see, so there the portal says which role the decision needs rather than leaving the reader to wonder where it went."
+    references:
+      requirement_ids: ["GW_AUTH_0010", "GW_AUTH_0011", "GW_AUTH_0028"]
+    categories: ["interaction-capability", "security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0065
+    title: A page the session's roles cannot read states the role it needs
+    significance: shall
+    description: "The portal shall present a page or section whose reads require a role the session does not hold as one shared statement naming the role it needs, without making the refused reads and without presenting the server's refusal text, an empty-result message, a link to a refused download or a count that cannot resolve; shall leave such pages out of the estate-wide navigation and out of a marketplace's sections while keeping their addresses resolvable to that statement; and shall direct a reader only to surfaces their roles can read."
+    rationale: "A refused read rendered as an ordinary failure reads as a fault, an empty ledger rendered as 'nothing recorded yet' is false for a user whose own fetches are in it, and a count that waits forever on a refused read never says why. One statement of the missing role, in the same form on every page, says what is wrong and what would fix it. Navigation already left out the administrator-only chain page; doing the same for the ledger, adoption and integrations keeps the rule uniform, and keeping the addresses resolvable means a shared link still explains itself."
+    references:
+      requirement_ids: ["GW_AUTH_0010", "GW_AUTH_0012", "GW_AUTH_0048"]
+    categories: ["interaction-capability"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0066
+    title: The portal re-reads the session's roles when the server refuses
+    significance: shall
+    description: "The portal shall re-read the session's effective roles whenever the server refuses one of its requests for lack of a role, and shall update the controls and pages it presents to the roles that read reports, without the page being reloaded."
+    rationale: "Roles change while a page is open: a grant is revoked, a group membership lapses. The server refuses at once, but a portal that read the roles once per load keeps offering the revoked controls until someone reloads. A refusal is exactly the moment the portal's picture is known to be stale, so it is when the roles are read again."
+    references:
+      requirement_ids: ["GW_AUTH_0028"]
+    categories: ["interaction-capability", "security"]
     revision: 0.5.0

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowDown, ArrowUp, ShieldAlert } from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
 import {
   useBulkChainSettings,
@@ -15,6 +15,7 @@ import {
   type BulkChainResult,
   type ChainMode,
 } from "@/api/queries";
+import { RoleRequired } from "@/components/role-required";
 import { SegmentedGroup } from "@/components/segmented-group";
 import { VettingFlow } from "@/components/vetting-flow";
 import {
@@ -75,46 +76,35 @@ export function VettingPage() {
 /**
  * What a session without the administrative role sees if it reaches the address anyway. It says
  * what is behind the page and what is missing, because a refusal that explains nothing is one the
- * reader can only interpret as a fault.
+ * reader can only interpret as a fault — and it points only at what the reader can read: a
+ * marketplace's own chain is administrator-only too, a snapshot's vetting report is not.
+ *
+ * @Requirements GW_AUTH_0065
  */
 export function VettingRefusal() {
   return (
-    <div className="space-y-4">
-      <PageHeading />
-      <Card>
-        <CardContent className="flex items-start gap-3 py-6">
-          <ShieldAlert className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
-          <div className="space-y-1">
-            <p role="alert" className="text-sm font-medium">
-              This page needs the administrative role.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              The settings here decide how much evidence stands behind every approval in every
-              marketplace, so neither they nor their current values are shown to marketplace-scoped
-              approvers or to auditors. Ask an administrator for the role, or read the chain of a
-              marketplace you can already reach from{" "}
-              <Link
-                to="/marketplaces"
-                className="font-medium text-primary underline-offset-4 hover:underline"
-              >
-                Marketplaces
-              </Link>
-              .
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <RoleRequired role="admin" title={TITLE} description={DESCRIPTION}>
+      The settings here decide how much evidence stands behind every approval in every
+      marketplace, so neither they nor their current values are shown to marketplace-scoped
+      approvers or to auditors. Ask an administrator for the role. The vetters that ran on a
+      snapshot, and what each found, are on that snapshot's Vetting tab in{" "}
+      <Link to="/marketplaces" className="font-medium text-primary underline-offset-4 hover:underline">
+        Marketplaces
+      </Link>
+      .
+    </RoleRequired>
   );
 }
+
+const TITLE = "Vetting chain";
+const DESCRIPTION =
+  "The chain every marketplace runs unless it says otherwise, and the ones that say otherwise.";
 
 function PageHeading() {
   return (
     <div className="space-y-1">
-      <h1 className="text-2xl font-semibold">Vetting chain</h1>
-      <p className="text-sm text-muted-foreground">
-        The chain every marketplace runs unless it says otherwise, and the ones that say otherwise.
-      </p>
+      <h1 className="text-2xl font-semibold">{TITLE}</h1>
+      <p className="text-sm text-muted-foreground">{DESCRIPTION}</p>
     </div>
   );
 }

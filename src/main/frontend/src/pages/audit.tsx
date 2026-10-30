@@ -39,6 +39,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { RoleGate } from "@/components/role-required";
 
 function cell(value: unknown): string {
   if (value === null || value === undefined) {
@@ -388,7 +389,7 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
  *
  * @Requirements GW_INGEST_0007, GW_AUDIT_0006
  */
-export function AuditPage() {
+function AuditLedger() {
   const audit = useAuditPages();
   const sinks = useAuditSinks();
   const rows = useMemo(() => auditRows(audit.data?.pages), [audit.data]);
@@ -446,7 +447,7 @@ export function AuditPage() {
             {audit.error.message}
           </p>
         ) : null}
-        {rows.length === 0 && !audit.isLoading ? (
+        {rows.length === 0 && audit.isSuccess ? (
           <p className="text-sm text-muted-foreground">No fetches recorded yet.</p>
         ) : null}
         {rows.length > 0 ? (
@@ -462,5 +463,23 @@ export function AuditPage() {
         ) : null}
       </section>
     </div>
+  );
+}
+
+/**
+ * The audit log, for a session that may read the ledger; the server refuses it, and its export, to anyone else.
+ *
+ * @Requirements GW_AUTH_0065
+ */
+export function AuditPage() {
+  return (
+    <RoleGate
+      role="auditor"
+      title="Audit log"
+      description="Append-only ledger of every facade fetch and administrative action, exportable to an external compliance system."
+      explanation="The ledger names who fetched and who changed what, so it is shown to auditors and administrators. Ask an administrator for the role."
+    >
+      <AuditLedger />
+    </RoleGate>
   );
 }

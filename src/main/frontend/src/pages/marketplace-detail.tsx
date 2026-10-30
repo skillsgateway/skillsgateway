@@ -14,6 +14,7 @@ import {
   ingestLive,
   useAuditPages,
   useIngest,
+  useAccess,
   useIngestStatus,
   useIsAdmin,
   useMarketplaces,
@@ -39,7 +40,9 @@ import { MarketplaceVettingChain } from "@/components/marketplace-vetting-chain"
 import { EditMarketplaceUrl } from "@/components/edit-marketplace-url";
 import { RemoveMarketplace } from "@/components/remove-marketplace";
 import { SetupWizard } from "@/components/setup-wizard";
+import { RoleGate } from "@/components/role-required";
 import { SnapshotCard, SnapshotLine } from "@/components/snapshot-card";
+import { MarketplaceRightsContext, useMarketplaceRights } from "@/lib/marketplace-rights";
 import { parseLineParam } from "@/lib/file-findings";
 import {
   isDecidable,
@@ -91,7 +94,7 @@ function MarketplaceAudit({ name }: { name: string }) {
           {audit.error.message}
         </p>
       ) : null}
-      {!audit.isLoading && rows.length === 0 ? (
+      {audit.isSuccess && rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Nothing recorded against this marketplace yet.
         </p>
@@ -251,6 +254,7 @@ function SnapshotItem({
  */
 export function MarketplaceReviewPage() {
   const { marketplace, snapshots, awaiting } = useMarketplaceContext();
+  const { decide } = useMarketplaceRights();
   const address = useSnapshotAddress();
   const addressed = snapshots.find((s) => s.id === address.addressedId);
   const elsewhere = addressed && !awaiting.includes(addressed) ? addressed : undefined;
@@ -283,7 +287,9 @@ export function MarketplaceReviewPage() {
           <p className="text-sm text-muted-foreground">
             Nothing awaits a decision.{" "}
             {snapshots.length === 0
-              ? "Ingest to fetch the upstream default branch."
+              ? decide
+                ? "Ingest to fetch the upstream default branch."
+                : "Nothing has been ingested yet."
               : <Link to={`${base}/snapshots`} className="text-primary hover:underline">See every snapshot</Link>}
           </p>
         ) : (
@@ -387,10 +393,21 @@ export function MarketplaceSnapshotsPage() {
   );
 }
 
-/** Activity: this marketplace's slice of the ledger. */
+/**
+ * Activity: this marketplace's slice of the ledger, read under the same role as the whole of it.
+ *
+ * @Requirements GW_AUTH_0065
+ */
 export function MarketplaceActivityPage() {
   const { marketplace } = useMarketplaceContext();
-  return <MarketplaceAudit name={marketplace.name ?? ""} />;
+  return (
+    <RoleGate
+      role="auditor"
+      explanation="A marketplace's activity is its slice of the audit ledger, shown to auditors and administrators. Ask an administrator for the role."
+    >
+      <MarketplaceAudit name={marketplace.name ?? ""} />
+    </RoleGate>
+  );
 }
 
 /**
@@ -476,11 +493,16 @@ export function MarketplaceSettingsPage() {
  * The ingest runs as a job the header follows (GW_INGEST_0068): its stages while it runs, whatever
  * started it, and what arrived once it ends — opened on Review when it was started from here.
  *
- * @Requirements GW_INGEST_0007, GW_AUTH_0043, GW_INGEST_0033, GW_INGEST_0039, GW_INGEST_0068
+ * Ingest, and every decision control of the snapshots beneath, are offered only where the session
+ * may use them (GW_AUTH_0064): the page hands its rights down rather than each control re-deriving
+ * them.
+ *
+ * @Requirements GW_INGEST_0007, GW_AUTH_0043, GW_INGEST_0033, GW_INGEST_0039, GW_INGEST_0068, GW_AUTH_0064
  */
 export function MarketplaceLayout() {
   const { name } = useParams<{ name: string }>();
   const marketplaces = useMarketplaces();
+  const access = useAccess();
   const ingest = useIngest();
   const ingestStatus = useIngestStatus(name ?? "");
   const queryClient = useQueryClient();
@@ -547,8 +569,14 @@ export function MarketplaceLayout() {
   };
   const running = ingestStatus.data?.running;
   const busy = ingest.isPending || live;
+  const rights = {
+    marketplace: marketplace.name ?? "",
+    decide: access.approves(marketplace.name ?? ""),
+    administer: access.isAdmin,
+  };
 
   return (
+    <MarketplaceRightsContext.Provider value={rights}>
     <div className="space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
         <div className="min-w-0 space-y-1">
@@ -584,14 +612,16 @@ export function MarketplaceLayout() {
           {running ? <IngestProgress running={running} /> : null}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            onClick={runIngest}
-            disabled={busy}
-            aria-label={`Ingest ${marketplace.name}`}
-          >
-            {busy ? "Ingesting…" : "Ingest"}
-          </Button>
+          {rights.decide ? (
+            <Button
+              variant="outline"
+              onClick={runIngest}
+              disabled={busy}
+              aria-label={`Ingest ${marketplace.name}`}
+            >
+              {busy ? "Ingesting…" : "Ingest"}
+            </Button>
+          ) : null}
           <Button variant="outline" onClick={() => setWizardOpen(true)} aria-expanded={wizardOpen}>
             Connect a client
           </Button>
@@ -607,5 +637,6 @@ export function MarketplaceLayout() {
       ) : null}
       <Outlet context={context} />
     </div>
+    </MarketplaceRightsContext.Provider>
   );
 }

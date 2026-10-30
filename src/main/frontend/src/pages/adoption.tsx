@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { RoleGate } from "@/components/role-required";
 import { VisibleText } from "@/components/visible-text";
 
 const WINDOWS: readonly SegmentedOption<number>[] = [
@@ -249,7 +250,7 @@ export function PresenceTable({ report }: { report: PresenceReport }) {
  *
  * @Requirements GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002, GW_OBSERVABILITY_0004, GW_OBSERVABILITY_0006
  */
-export function AdoptionPage() {
+function AdoptionReport() {
   const [days, setDays] = useState<number>(30);
   const adoption = useAdoption(days);
   const staleness = useStaleness();
@@ -342,5 +343,23 @@ export function AdoptionPage() {
         ) : null}
       </section>
     </div>
+  );
+}
+
+/**
+ * Adoption, for a session that may read the ledger it is aggregated from.
+ *
+ * @Requirements GW_AUTH_0065
+ */
+export function AdoptionPage() {
+  return (
+    <RoleGate
+      role="auditor"
+      title="Adoption"
+      description="Who fetches what through the facade, aggregated from the append-only ledger, and which identities are not on the served tip."
+      explanation="Adoption is read from the ledger and names who fetched what, so it is shown to auditors and administrators. Ask an administrator for the role."
+    >
+      <AdoptionReport />
+    </RoleGate>
   );
 }

@@ -35,7 +35,7 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/api/client";
-import { useAwaitingDecision, useIsAdmin, useMe, type EffectiveRole, type MeView } from "@/api/queries";
+import { useAccess, useAwaitingDecision, useMe, type EffectiveRole, type MeView } from "@/api/queries";
 import { isDecidable } from "@/lib/snapshot-roles";
 import { decodeSegment, pageTitle, useDocumentTitle, useStripSignInMarker } from "@/lib/page-address";
 
@@ -45,8 +45,8 @@ type NavItem = {
   icon: typeof Home;
   /** Matched exactly rather than by prefix — only the overview needs it. */
   end?: boolean;
-  /** Offered only to a session holding the administrative role. */
-  adminOnly?: boolean;
+  /** Offered only to a session holding this role: the server refuses every read behind it to anyone else. */
+  needs?: "admin" | "auditor";
   /** Carries the count of snapshots awaiting a decision across marketplaces. */
   awaiting?: boolean;
   /** Fixed sections, always listed beneath the entry; the entry itself then names them, not a page. */
@@ -67,8 +67,8 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "Oversight",
     items: [
-      { to: "/audit", label: "Audit log", icon: ScrollText },
-      { to: "/adoption", label: "Adoption", icon: TrendingUp },
+      { to: "/audit", label: "Audit log", icon: ScrollText, needs: "auditor" },
+      { to: "/adoption", label: "Adoption", icon: TrendingUp, needs: "auditor" },
     ],
   },
   {
@@ -77,11 +77,12 @@ const groups: { label: string; items: NavItem[] }[] = [
       // Admin-only: the chain settings decide how much evidence stands behind every approval, so
       // neither they nor their values are shown to approvers or auditors. Hiding the entry is a
       // courtesy — the server refuses every read behind it independently.
-      { to: "/vetting", label: "Vetting chain", icon: ShieldCheck, adminOnly: true },
+      { to: "/vetting", label: "Vetting chain", icon: ShieldCheck, needs: "admin" },
       {
         to: "/integrations",
         label: "Integrations",
         icon: Webhook,
+        needs: "auditor",
         sections: [
           { to: "/integrations/webhooks", label: "Webhooks" },
           { to: "/integrations/sinks", label: "Audit sinks" },
@@ -149,12 +150,21 @@ function NavCount({ count, label }: { count: number; label: string }) {
  * The open marketplace's sections, nested beneath Marketplaces while the address is inside one.
  * Derived from the route, never stored: leaving the marketplace is what closes it.
  */
-export function MarketplaceSections({ name, awaiting }: { name: string; awaiting: number }) {
+export function MarketplaceSections({
+  name,
+  awaiting,
+  activity = true,
+}: {
+  name: string;
+  awaiting: number;
+  /** Activity is the marketplace's slice of the ledger, listed only to a session that may read it. */
+  activity?: boolean;
+}) {
   const base = `/marketplaces/${encodeURIComponent(name)}`;
   const sections = [
     { to: base, label: "Review", end: true },
     { to: `${base}/snapshots`, label: "Snapshots" },
-    { to: `${base}/activity`, label: "Activity" },
+    ...(activity ? [{ to: `${base}/activity`, label: "Activity" }] : []),
     { to: `${base}/settings`, label: "Settings" },
   ];
   return (
@@ -325,7 +335,8 @@ function RolesSection({ me }: { me: MeView }) {
       <DropdownMenuLabel>Roles</DropdownMenuLabel>
       {roles.length === 0 ? (
         <p className="px-1.5 pb-1 text-xs text-muted-foreground">
-          No role. You can read the portal and manage your own access tokens.
+          No role. You can browse the marketplaces and their snapshots' vetting, and manage your
+          own access tokens. Anything else needs a role an administrator grants.
         </p>
       ) : (
         // A list element would be a child `menu` does not allow (axe: aria-required-children),
@@ -481,7 +492,7 @@ function GatewayVersion() {
  * Portal shell: grouped sidebar navigation, breadcrumb top bar, and the signed-in user's
  * menu — identity, roles, theme, personal tokens and sign out.
  *
- * @Requirements GW_INGEST_0007, GW_AUTH_0044, GW_AUTH_0048, GW_AUTH_0069
+ * @Requirements GW_INGEST_0007, GW_AUTH_0044, GW_AUTH_0048, GW_AUTH_0065, GW_AUTH_0069
  */
 export function AppLayout() {
   const location = useLocation();
@@ -505,9 +516,15 @@ export function AppLayout() {
   // "full": the page scrolls like any other but uses the width — the review surfaces, where a
   // diff or a file needs it. Capped so an ultrawide monitor does not pull a table's columns apart.
   const full = !wide && layouts.includes("full");
-  // A hint only: the administrator-only pages are protected by the server refusing their reads,
-  // not by the sidebar declining to mention them.
-  const isAdmin = useIsAdmin();
+  // A hint only: the role-gated pages are protected by the server refusing their reads, not by the
+  // sidebar declining to mention them. Their addresses still open, on the role they need.
+  const access = useAccess();
+  const offered = (item: NavItem) =>
+    item.needs === undefined || (item.needs === "admin" ? access.isAdmin : access.isAuditor);
+  // A group left with nothing the session can read is not drawn at all.
+  const offeredGroups = groups
+    .map((group) => ({ ...group, items: group.items.filter(offered) }))
+    .filter((group) => group.items.length > 0);
   const queue = useAwaitingDecision();
   const awaitingTotal = queue.rows.length;
   const marketplaceMatch = useMatch("/marketplaces/:name/*");
@@ -532,15 +549,13 @@ export function AppLayout() {
           Skills Gateway
         </div>
         <nav aria-label="Main" className="flex-1 space-y-5 px-3 py-2">
-          {groups.map((group) => (
+          {offeredGroups.map((group) => (
             <div key={group.label}>
               <div className="px-2 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                 {group.label}
               </div>
               <ul className="space-y-0.5">
-                {group.items
-                  .filter((item) => item.adminOnly !== true || isAdmin)
-                  .map(({ to, label, icon: Icon, end, awaiting, sections }) => (
+                {group.items.map(({ to, label, icon: Icon, end, awaiting, sections }) => (
                   <li key={to}>
                     {sections ? (
                       <NavSections label={label} icon={Icon} sections={sections} />
@@ -559,6 +574,7 @@ export function AppLayout() {
                     {to === "/marketplaces" && openMarketplace ? (
                       <MarketplaceSections
                         name={openMarketplace}
+                        activity={access.isAuditor}
                         awaiting={
                           (queue.data?.find((m) => m.name === openMarketplace)?.snapshots ?? []).filter(
                             isDecidable,

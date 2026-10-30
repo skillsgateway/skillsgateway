@@ -28,7 +28,10 @@ to an `admin` and to nobody else. They decide how much evidence stands behind
 every approval, and a marketplace-scoped approver is frequently the owner of the
 content the chain governs.
 
-Enforcement lives at the REST API, which is what the portal speaks. The
+Enforcement lives at the REST API, which is what the portal speaks. The portal
+reads the same roles from `GET /api/v1/me` and offers each session only the
+controls and pages they permit, reading them again whenever the server refuses a
+request — see [Authorization](../reference/portal.md#authorization). The
 [git facade](../reference/git-facade.md) is untouched: its authorization is
 token scopes, a different credential for a different surface.
 

@@ -36,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { RoleGate } from "@/components/role-required";
 
 export function SubscriberSecretDialog({
   created,
@@ -200,7 +201,7 @@ function StoredFilter({ filter, registry }: { filter: string[] | undefined; regi
  *
  * @Requirements GW_WEBHOOK_0004, GW_AUTH_0048, GW_WEBHOOK_0011
  */
-export function WebhooksPage() {
+function Webhooks() {
   const subscribers = useWebhookSubscribers();
   const deliveries = useWebhookDeliveries();
   const create = useCreateWebhookSubscriber();
@@ -423,5 +424,23 @@ export function WebhooksPage() {
 
       {created ? <SubscriberSecretDialog created={created} onClose={() => setCreated(null)} /> : null}
     </IntegrationSection>
+  );
+}
+
+/**
+ * Webhooks, for a session that may read the operational listings; adding and removing stays administrator-only.
+ *
+ * @Requirements GW_AUTH_0065
+ */
+export function WebhooksPage() {
+  return (
+    <RoleGate
+      role="auditor"
+      title="Webhooks"
+      description="Snapshot lifecycle events are POSTed to each subscriber that filters for them, signed with HMAC-SHA256 and retried with backoff until delivered."
+      explanation="Subscribers and their deliveries are operational listings, shown to auditors and administrators. Ask an administrator for the role."
+    >
+      <Webhooks />
+    </RoleGate>
   );
 }

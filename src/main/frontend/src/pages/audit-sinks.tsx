@@ -31,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { RoleGate } from "@/components/role-required";
 
 export function SinkSecretDialog({
   created,
@@ -89,7 +90,7 @@ export function SinkSecretDialog({
  *
  * @Requirements GW_AUDIT_0006, GW_AUTH_0048
  */
-export function AuditSinksPage() {
+function AuditSinks() {
   const sinks = useAuditSinks();
   const create = useCreateAuditSink();
   const remove = useDeleteAuditSink();
@@ -254,5 +255,23 @@ export function AuditSinksPage() {
       </section>
       {created ? <SinkSecretDialog created={created} onClose={() => setCreated(null)} /> : null}
     </IntegrationSection>
+  );
+}
+
+/**
+ * Audit sinks, for a session that may read the operational listings; adding, replaying and removing stays administrator-only.
+ *
+ * @Requirements GW_AUTH_0065
+ */
+export function AuditSinksPage() {
+  return (
+    <RoleGate
+      role="auditor"
+      title="Audit sinks"
+      description="The audit ledger pushed to an external compliance system as signed NDJSON batches, each sink resuming from its own position in the ledger."
+      explanation="Sinks and their positions in the ledger are operational listings, shown to auditors and administrators. Ask an administrator for the role."
+    >
+      <AuditSinks />
+    </RoleGate>
   );
 }

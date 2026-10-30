@@ -1,8 +1,9 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import { createQueryClient } from "@/api/query-client";
 import { AppLayout } from "@/components/app-layout";
 import { AdoptionPage } from "@/pages/adoption";
 import { AuditPage } from "@/pages/audit";
@@ -24,9 +25,9 @@ import { VettingPage } from "@/pages/vetting";
 import { WebhooksPage } from "@/pages/webhooks";
 import "./index.css";
 
-const queryClient = new QueryClient({
+const queryClient = createQueryClient({
   defaultOptions: {
-    queries: { retry: 1, refetchOnWindowFocus: false },
+    queries: { refetchOnWindowFocus: false },
   },
 });
 
