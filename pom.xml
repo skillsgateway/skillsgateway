@@ -47,7 +47,7 @@
              the UI build; used by the container-image workflow, where no browsers exist. -->
         <skip.ui.verify>false</skip.ui.verify>
         <frontend-plugin.version>2.0.2</frontend-plugin.version>
-        <node.version>v24.14.1</node.version>
+        <node.version>v26.13.0</node.version>
         <pnpm.version>11.22.0</pnpm.version>
     </properties>
 
