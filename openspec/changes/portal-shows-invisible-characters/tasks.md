@@ -26,4 +26,4 @@
 
 ## 6. Gates and evidence
 
-- [ ] 6.1 Every AGENTS.md gate fresh after the last code edit, recorded in `evidence.md`; screenshots captured locally.
+- [x] 6.1 Every AGENTS.md gate fresh after the last code edit, recorded in `evidence.md`; screenshots captured locally.
