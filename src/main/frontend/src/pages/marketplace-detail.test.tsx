@@ -433,6 +433,15 @@ test("a_snapshot_the_marketplace_does_not_hold_is_stated_as_not_found", async ()
   expect(screen.queryByText(/was not found in/)).not.toBeInTheDocument();
 });
 
+/** An empty `snapshot` parameter names no snapshot, so it is not reported as a missing one. */
+test("an_empty_snapshot_parameter_is_not_reported_missing", async () => {
+  renderPage("?snapshot=");
+  await screen.findAllByTestId("snapshot-card");
+  // The statement waits for the marketplace list to settle, so absence is only meaningful after that.
+  const alert = await screen.findByRole("alert", {}, { timeout: 1000 }).catch(() => null);
+  expect(alert).toBeNull();
+});
+
 /**
  * The header is on every section, and carries the marketplace's actions — ingestion and the
  * client wizard — with the served state stated beside them.

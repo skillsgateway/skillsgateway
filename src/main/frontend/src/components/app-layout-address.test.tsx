@@ -67,6 +67,13 @@ test("an_unknown_address_is_page_not_found_inside_the_shell", async () => {
   await waitFor(() => expect(document.title).toBe("Page not found · Skills Gateway"));
 });
 
+/** An address whose escapes do not decode still gets a title rather than taking the shell down. */
+test("an_address_that_does_not_decode_still_names_its_tab", async () => {
+  renderShell("/marketplaces/%E0%A4%A/snapshots");
+  expect(await screen.findByText("snapshots")).toBeInTheDocument();
+  await waitFor(() => expect(document.title).toBe("Snapshots · %E0%A4%A · Skills Gateway"));
+});
+
 /** The first Tab stop skips the navigation and lands on the page itself. */
 test("the_first_tab_stop_skips_to_the_main_content", async () => {
   const user = userEvent.setup();

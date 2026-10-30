@@ -144,3 +144,43 @@ test("the_queue_shows_waiting_and_findings_and_orders_by_either_column", async (
   await user.click(screen.getByRole("button", { name: "Marketplace" }));
   expect(names()).toEqual(["zeta", "alpha"]);
 });
+
+/** Grouped by marketplace in either direction, each marketplace's snapshots stay newest first. */
+test("ordering_by_marketplace_keeps_each_marketplace_newest_first_both_ways", async () => {
+  const held = (id: number, marketplaceId: number, createdAt: string) => ({
+    ...heldSnapshot,
+    id,
+    marketplaceId,
+    sha: String(id % 10).repeat(40),
+    createdAt,
+  });
+  server.use(
+    http.get("/api/v1/marketplaces", () =>
+      HttpResponse.json([
+        {
+          id: 1,
+          name: "alpha",
+          url: "https://example.com/alpha.git",
+          // Same second, one with a fraction: compared as instants, not as strings.
+          snapshots: [held(11, 1, "2026-09-01T00:00:00Z"), held(12, 1, "2026-09-01T00:00:00.500Z")],
+        },
+        { id: 2, name: "zeta", url: "https://example.com/zeta.git", snapshots: [held(21, 2, "2026-09-02T00:00:00Z")] },
+      ]),
+    ),
+  );
+  const user = userEvent.setup();
+  renderPage();
+  const table = await screen.findByRole("table");
+  const ids = () =>
+    within(table)
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => within(row).getByRole("link", { name: /^Review snapshot/ }).getAttribute("href"));
+  const at = (id: number, name: string) => `/marketplaces/${name}?snapshot=${id}`;
+
+  expect(ids()).toEqual([at(21, "zeta"), at(12, "alpha"), at(11, "alpha")]);
+  await user.click(screen.getByRole("button", { name: "Marketplace" }));
+  expect(ids()).toEqual([at(12, "alpha"), at(11, "alpha"), at(21, "zeta")]);
+  await user.click(screen.getByRole("button", { name: "Marketplace" }));
+  expect(ids()).toEqual([at(21, "zeta"), at(12, "alpha"), at(11, "alpha")]);
+});

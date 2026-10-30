@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.util.UrlPathHelper;
 
 /**
  * An address nothing serves (GW_AUTH_0067): a browser asking for a page gets the portal, answered 404,
@@ -54,7 +55,8 @@ public class BrowserNotFoundAdvice {
         if (!"GET".equals(method) && !"HEAD".equals(method)) {
             return false;
         }
-        String path = request.getRequestURI().substring(request.getContextPath().length());
+        // Decoded, as the handlers match it, so an escaped prefix is still that surface.
+        String path = UrlPathHelper.defaultInstance.getPathWithinApplication(request);
         if (MACHINE_PREFIXES.stream().anyMatch(prefix -> path.startsWith(prefix) || (path + "/").equals(prefix))) {
             return false;
         }

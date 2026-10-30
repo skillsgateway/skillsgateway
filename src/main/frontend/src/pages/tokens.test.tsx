@@ -133,3 +133,22 @@ test("tokens_are_created_with_a_chosen_lifetime_and_listed_with_their_expiry", a
   expect(ahead).toBeGreaterThan(7 * 86_400_000 - 60_000);
   expect(ahead).toBeLessThan(7 * 86_400_000 + 60_000);
 });
+
+/** A refused lifetime is stated beside the choice, and choosing another clears it. */
+test("a_refused_lifetime_is_stated_beside_the_choice_until_another_is_chosen", async () => {
+  server.use(
+    http.post("/api/v1/tokens", () =>
+      HttpResponse.json({ detail: "expiresAt exceeds the maximum token lifetime" }, { status: 422 }),
+    ),
+  );
+  const user = userEvent.setup();
+  renderPage();
+  await user.click(screen.getByRole("button", { name: "90 days" }));
+  await user.type(screen.getByLabelText("Token name"), "ci-runner");
+  await user.click(screen.getByRole("button", { name: "Create token" }));
+  const refusal = await screen.findByRole("alert");
+  expect(refusal).toHaveTextContent("maximum token lifetime");
+
+  await user.click(screen.getByRole("button", { name: "30 days" }));
+  expect(screen.queryByText(/maximum token lifetime/)).not.toBeInTheDocument();
+});

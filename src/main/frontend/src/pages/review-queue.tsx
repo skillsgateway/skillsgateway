@@ -79,14 +79,14 @@ export function ReviewQueuePage() {
         ? { key, dir: current.dir === "asc" ? "desc" : "asc" }
         : { key, dir: key === "ingested" ? "desc" : "asc" },
     );
-  const rows = [...queue.rows].sort((a, b) => {
-    const order =
-      sort.key === "marketplace"
-        ? a.marketplace.localeCompare(b.marketplace) ||
-          (b.snapshot.createdAt ?? "").localeCompare(a.snapshot.createdAt ?? "")
-        : (a.snapshot.createdAt ?? "").localeCompare(b.snapshot.createdAt ?? "");
-    return sort.dir === "asc" ? order : -order;
-  });
+  const sign = sort.dir === "asc" ? 1 : -1;
+  const ingested = (row: (typeof queue.rows)[number]) => Date.parse(row.snapshot.createdAt ?? "") || 0;
+  // Within one marketplace the newest stays first, whichever way the marketplaces run.
+  const rows = [...queue.rows].sort((a, b) =>
+    sort.key === "marketplace"
+      ? sign * a.marketplace.localeCompare(b.marketplace) || ingested(b) - ingested(a)
+      : sign * (ingested(a) - ingested(b)),
+  );
   return (
     <div className="space-y-6">
       <div>

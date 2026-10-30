@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -67,6 +68,7 @@ class BrowserPagesTests extends AbstractGatewayTest {
         // A browser under a machine surface still reads that surface's own refusal.
         for (String path : List.of(
                 "/api/v1/no-such-thing",
+                "/git/no-such-thing",
                 "/publish/no-such-thing",
                 "/status/no-such-thing",
                 "/hooks/no-such-thing",
@@ -78,9 +80,12 @@ class BrowserPagesTests extends AbstractGatewayTest {
                     .getContentAsString(StandardCharsets.UTF_8);
             assertThat(body).as(path).doesNotContain("<div id=\"root\">");
         }
-        mockMvc.perform(signedIn(get("/api/v1/no-such-thing").header("Accept", BROWSER_ACCEPT)))
-                .andExpect(status().isNotFound())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
+        // Matched on the decoded path, as the handlers are: an escaped prefix is still that surface.
+        for (String path : List.of("/api/v1/no-such-thing", "/%61pi/v1/no-such-thing")) {
+            mockMvc.perform(signedIn(get(URI.create(path)).header("Accept", BROWSER_ACCEPT)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
+        }
     }
 
     @Test

@@ -862,11 +862,8 @@ export type CreateToken = { name: string; expiresAt?: string };
 export function useCreateToken() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (request: CreateToken | string) =>
-      api<IssuedToken>("/api/v1/tokens", {
-        method: "POST",
-        body: JSON.stringify(typeof request === "string" ? { name: request } : request),
-      }),
+    mutationFn: (request: CreateToken) =>
+      api<IssuedToken>("/api/v1/tokens", { method: "POST", body: JSON.stringify(request) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tokens"] }),
   });
 }

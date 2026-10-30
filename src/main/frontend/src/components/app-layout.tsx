@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils";
 import { signOut } from "@/api/client";
 import { useAwaitingDecision, useIsAdmin, useMe, type EffectiveRole, type MeView } from "@/api/queries";
 import { isDecidable } from "@/lib/snapshot-roles";
-import { pageTitle, useDocumentTitle, useStripSignInMarker } from "@/lib/page-address";
+import { decodeSegment, pageTitle, useDocumentTitle, useStripSignInMarker } from "@/lib/page-address";
 
 type NavItem = {
   to: string;
@@ -211,7 +211,7 @@ function breadcrumb(pathname: string): string {
   if (pathname === "/") return "Overview";
   if (/^\/marketplaces\/[^/]+\/snapshots\//.test(pathname)) return "Snapshot contents";
   const section = /^\/marketplaces\/([^/]+)(?:\/([^/]+))?/.exec(pathname);
-  if (section) return `${decodeURIComponent(section[1]!)} · ${SECTION_LABEL[section[2] ?? ""] ?? "Review"}`;
+  if (section) return `${decodeSegment(section[1]!)} · ${SECTION_LABEL[section[2] ?? ""] ?? "Review"}`;
   if (pathname.startsWith("/review")) return "Review queue";
   if (pathname.startsWith("/marketplaces")) return "Marketplaces";
   if (pathname.startsWith("/audit")) return "Audit log";

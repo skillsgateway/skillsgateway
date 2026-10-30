@@ -11,6 +11,15 @@ const MARKETPLACE_SECTION: Record<string, string> = {
   settings: "Settings",
 };
 
+/** A path segment as written, when its escapes do not decode. */
+export function decodeSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
 /**
  * The tab title for a portal address: the page, then its marketplace where it has one, then the
  * product, so several open tabs can be told apart by their first words. `fallback` names an
@@ -20,9 +29,9 @@ export function pageTitle(pathname: string, fallback: string): string {
   const files = /^\/marketplaces\/([^/]+)\/snapshots\/[^/]+\/files$/.exec(pathname);
   const section = /^\/marketplaces\/([^/]+)(?:\/([^/]+))?\/?$/.exec(pathname);
   let page = fallback;
-  if (files) page = `Snapshot contents · ${decodeURIComponent(files[1]!)}`;
+  if (files) page = `Snapshot contents · ${decodeSegment(files[1]!)}`;
   else if (section && MARKETPLACE_SECTION[section[2] ?? ""] !== undefined) {
-    page = `${MARKETPLACE_SECTION[section[2] ?? ""]} · ${decodeURIComponent(section[1]!)}`;
+    page = `${MARKETPLACE_SECTION[section[2] ?? ""]} · ${decodeSegment(section[1]!)}`;
   }
   return page ? `${page} · ${PRODUCT}` : PRODUCT;
 }

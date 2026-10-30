@@ -196,7 +196,7 @@ function MissingSnapshot({
   address: ReturnType<typeof useSnapshotAddress>;
 }) {
   const refreshing = useMarketplaces().isFetching;
-  if (address.addressedParam === null || refreshing) return null;
+  if (!address.addressedParam || refreshing) return null;
   if (snapshots.some((s) => s.id === address.addressedId)) return null;
   return (
     <p role="alert" className="text-sm wrap-anywhere text-destructive">

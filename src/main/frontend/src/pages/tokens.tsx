@@ -196,7 +196,6 @@ export function TokensPage() {
         setIssued(token);
         setName("");
       },
-      onError: (error) => toast.error(error.message),
     });
   };
 
@@ -226,7 +225,10 @@ export function TokensPage() {
             label="Expires"
             value={lifetime}
             options={LIFETIMES}
-            onChange={setLifetime}
+            onChange={(next) => {
+              setLifetime(next);
+              create.reset();
+            }}
             describedBy="token-name-hint"
           />
           <Button type="submit" disabled={!canCreate}>
@@ -239,7 +241,7 @@ export function TokensPage() {
         </p>
         {create.isError ? (
           // The server's lifetime cap is the one rule this form cannot mirror, so its refusal stays
-          // beside the choice rather than only in a toast.
+          // beside the choice until another is made.
           <p role="alert" className="text-xs text-destructive">
             {create.error.message}
           </p>
