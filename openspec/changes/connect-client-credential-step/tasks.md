@@ -29,4 +29,4 @@
 
 - [x] 4.1 Manual run of the exact commands against a running gateway with an
   empty `HOME`, recorded in `evidence.md`.
-- [ ] 4.2 Every AGENTS.md gate fresh, recorded in `evidence.md`.
+- [x] 4.2 Every AGENTS.md gate fresh, recorded in `evidence.md`.
