@@ -79,11 +79,12 @@ Three properties of the matching are worth knowing before you write mappings:
   app registration shared with other services the group ids and app-role values
   belong to the organisation, so there is no convention to lean on — you state
   the mapping.
-- **The match is exact**, after trimming surrounding whitespace. No prefixes,
-  no globs, no case folding: a looser match could only ever widen who is
-  privileged.
-- **A malformed mapping refuses startup.** An unknown role, a blank value, an
-  `approver` with no marketplace or an `admin`/`auditor` with one — the
+- **The match is exact**, on the value as the provider delivers it. No
+  trimming, no prefixes, no globs, no case folding: a looser match could only
+  ever widen who is privileged.
+- **A malformed mapping refuses startup.** An unknown role, a blank value, a
+  value with surrounding whitespace or an invisible character inside quotes,
+  an `approver` with no marketplace or an `admin`/`auditor` with one — the
   application does not come up. A typo that quietly grants nothing is exactly
   the failure this avoids. Naming a marketplace that does not exist *yet* is
   fine: the mapping matches nothing until it is registered.
@@ -118,9 +119,11 @@ skills-gateway:
     claim: realm_access.roles
 ```
 
-The claim may be a list of strings or a single string. A delimited string is
-treated as **one** value and is never split — inventing a delimiter would be
-guessing at what the provider meant.
+The claim may be a list of strings or a single string; some providers emit a
+single-valued claim as a plain string. A delimited string is treated as **one**
+value and is never split — inventing a delimiter would be guessing at what the
+provider meant. A claim of any other type (a number, an object) carries no value
+and confers nothing.
 
 ### When the group claim goes missing
 

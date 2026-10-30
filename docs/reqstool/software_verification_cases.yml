@@ -4338,3 +4338,53 @@ cases:
       WHEN every POST, PUT and PATCH route is enumerated and the OpenTelemetry receiver paths are posted to
       THEN every write route sits on a known operator, publisher or machine surface and none is named for telemetry intake, no servlet beyond the facade and publish paths is mounted, no receiver path accepts the post, and the adoption reports depend only on the ledger, the served tips and the stored commit trees
     revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0063
+    requirement_ids: ["GW_AUTH_0060"]
+    title: The grants API refuses a malformed principal without storing, recording or repeating it
+    verification: automated-test
+    description: |
+      GIVEN an administrator and grant requests whose principal has surrounding whitespace, a bidi control, a zero-width character, a control character, a line separator, an unpaired surrogate, or 256 code points, and requests whose principal is an e-mail address, an opaque subject, a non-ASCII name, a name with a supplementary-plane character, or exactly 255 code points
+      WHEN each request is posted to the grants API
+      THEN each malformed principal is refused as invalid content with no grant row, no ledger entry and a refusal that does not contain it, and each well-formed principal is granted exactly as sent
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0064
+    requirement_ids: ["GW_AUTH_0060"]
+    title: A declared grant with a malformed principal fails as an isolated entry, even over a stored row
+    verification: automated-test
+    description: |
+      GIVEN an estate declaring a grant with a padded principal, one with a bidi control, and one well-formed grant, and a stored grant row that already carries the padded principal
+      WHEN reconciliation runs
+      THEN both malformed grants are reported failed with their control and format characters escaped in the entry and on the ledger, nothing is granted for them, and the well-formed grant is created
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0065
+    requirement_ids: ["GW_AUTH_0060", "GW_AUTH_0061"]
+    title: The principal rule accepts exactly the well-formed values
+    verification: automated-test
+    description: |
+      GIVEN named well-formed and malformed values and a seeded randomized sweep of strings mixing letters, spaces, no-break spaces, control, format, separator, surrogate and supplementary-plane code points at varied lengths
+      WHEN the rule judges each value
+      THEN it refuses exactly the values an independent code-point-by-code-point computation calls malformed, and never throws
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0066
+    requirement_ids: ["GW_AUTH_0061"]
+    title: A padded or altered claim value confers no role, a lone exact string does
+    verification: automated-test
+    description: |
+      GIVEN claim mappings and sessions whose claim carries a mapped value padded with spaces, tabs or a no-break space, or with a zero-width or bidi character added, a lone string equal to a mapped value, a lone padded string, and values of number, boolean and object type
+      WHEN their roles are derived, in the mapper and through the API
+      THEN only the exact values, in a list or as a lone string, confer their mapped role, and a randomized sweep agrees with an exact, untrimmed match over the same table
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0067
+    requirement_ids: ["GW_AUTH_0061"]
+    title: A configured claim value that is padded or carries invisible characters refuses startup
+    verification: automated-test
+    description: |
+      GIVEN mapping tables whose claim value has a leading space, a trailing tab, a zero-width character or a bidi control
+      WHEN a mapper is constructed from each
+      THEN each refuses construction naming the offending mapping
+    revision: "0.5.0"

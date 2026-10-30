@@ -3272,3 +3272,23 @@ requirements:
       requirement_ids: ["GW_VETTING_0040"]
     categories: ["security", "functional-suitability"]
     revision: 0.5.0
+
+  - id: GW_AUTH_0060
+    title: A role grant names its principal exactly as a session presents it
+    significance: shall
+    description: "The system shall refuse a role grant, whether requested through the API or declared in the estate, whose principal is blank, begins or ends with whitespace, contains a control, invisible format, line separator, paragraph separator or unpaired surrogate code point, or is longer than 255 code points; shall refuse it rather than alter it; shall store, grant and record on the ledger nothing for it; shall not repeat the refused value in the API refusal; and shall report a refused declared grant as a failed entry even when a stored grant already carries that principal."
+    rationale: "A grant is matched against the session's principal by exact equality, so a grant whose principal no session will ever present confers nothing while reading as if it did, and a principal carrying invisible or direction-changing characters reads as a different identity from the one it is. Trimming instead of refusing would store a different string from the one the administrator typed without saying so. The bound follows the identifiers a session can present: an OpenID Connect subject is at most 255 characters and an e-mail address shorter."
+    references:
+      requirement_ids: ["GW_AUTH_0013", "GW_ESTATE_0003"]
+    categories: ["security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0061
+    title: Claim values are matched as the identity provider delivers them
+    significance: shall
+    description: "The system shall compare each value of the configured identity-provider claim with the configured mapping values without trimming or otherwise normalising it, shall treat a claim delivered as a single string as one value and a claim of any other non-list type as carrying none, and shall refuse to start when a configured mapping claim value begins or ends with whitespace or contains a control, invisible format, line separator, paragraph separator or unpaired surrogate code point."
+    rationale: "Exact matching is the guarantee a claim mapping rests on; a value normalised before comparison is matched by resemblance, and a provider's padded value then confers a role a mapping never named. Some providers deliver a single-valued claim as a string, so a lone string stays one value. A configured value that could only match after normalisation is a mistake the operator should learn about at startup rather than a value to correct silently."
+    references:
+      requirement_ids: ["GW_AUTH_0015.1", "GW_AUTH_0015.2"]
+    categories: ["security"]
+    revision: 0.5.0

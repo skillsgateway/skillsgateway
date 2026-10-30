@@ -50,7 +50,9 @@ $ curl -X POST localhost:8080/api/v1/roles \
 ```
 
 An approver grant must name a marketplace that exists; admin and auditor grants
-must not name one. See the [roles API reference](../reference/api/roles.md) for
+must not name one. The principal is matched exactly, so a principal with
+surrounding whitespace, an invisible character or more than 255 characters is
+refused rather than trimmed. See the [roles API reference](../reference/api/roles.md) for
 the full contract.
 
 ## Step 2 — name at least one bootstrap admin

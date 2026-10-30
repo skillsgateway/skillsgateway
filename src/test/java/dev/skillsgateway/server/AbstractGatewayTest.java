@@ -125,6 +125,12 @@ abstract class AbstractGatewayTest {
         return prefix + Long.toString(System.nanoTime(), 36) + COUNTER.incrementAndGet();
     }
 
+    protected long ledgerCount(String event) {
+        return fetchLogRepository.list().stream()
+                .filter(entry -> event.equals(entry.get("event")))
+                .count();
+    }
+
     /**
      * Creates an upstream marketplace repository on disk with JGit (never the git binary: the host
      * git config enforces GPG signing, which JGit ignores). Returns the work tree; its absolute

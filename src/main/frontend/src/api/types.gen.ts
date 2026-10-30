@@ -2800,7 +2800,7 @@ export interface components {
         GrantRequest: {
             /** @description Marketplace to scope an approver grant to; required for approver, forbidden for admin and auditor */
             marketplace?: string;
-            /** @description Principal to grant the role to */
+            /** @description Principal to grant the role to, exactly as the session reports it: at most 255 characters, no leading or trailing whitespace, and no control, format or separator characters. A principal that breaks this is refused, never trimmed. */
             principal: string;
             /**
              * @description The role
@@ -5753,7 +5753,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
-            /** @description Missing principal, unknown role, approver grant without a marketplace, or a global grant with one */
+            /** @description Missing or malformed principal, unknown role, approver grant without a marketplace, or a global grant with one */
             422: {
                 headers: {
                     [name: string]: unknown;

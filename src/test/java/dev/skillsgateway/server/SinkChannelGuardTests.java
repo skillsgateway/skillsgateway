@@ -243,12 +243,6 @@ class SinkChannelGuardTests extends AbstractGatewayTest {
         return id;
     }
 
-    private long ledgerCount(String event) {
-        return fetchLogRepository.list().stream()
-                .filter(entry -> event.equals(entry.get("event")))
-                .count();
-    }
-
     private static EstateReconciliation.Entry entry(EstateReconciliation report, String name) {
         return report.entries().stream()
                 .filter(entry -> "webhook".equals(entry.kind()) && name.equals(entry.name()))

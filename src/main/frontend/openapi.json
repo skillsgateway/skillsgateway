@@ -1558,7 +1558,7 @@
             "type": "string"
           },
           "principal": {
-            "description": "Principal to grant the role to",
+            "description": "Principal to grant the role to, exactly as the session reports it: at most 255 characters, no leading or trailing whitespace, and no control, format or separator characters. A principal that breaks this is refused, never trimmed.",
             "type": "string"
           },
           "role": {
@@ -6088,7 +6088,7 @@
                 }
               }
             },
-            "description": "Missing principal, unknown role, approver grant without a marketplace, or a global grant with one"
+            "description": "Missing or malformed principal, unknown role, approver grant without a marketplace, or a global grant with one"
           }
         },
         "summary": "Grant a role",

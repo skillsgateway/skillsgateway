@@ -42,7 +42,11 @@ public class RoleController {
 
     @Schema(description = "Role grant request")
     public record GrantRequest(
-            @Schema(description = "Principal to grant the role to", requiredMode = Schema.RequiredMode.REQUIRED)
+            @Schema(
+                    description = "Principal to grant the role to, exactly as the session reports it: at most"
+                            + " 255 characters, no leading or trailing whitespace, and no control, format or"
+                            + " separator characters. A principal that breaks this is refused, never trimmed.",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
             String principal,
 
             @Schema(
@@ -80,7 +84,7 @@ public class RoleController {
     }
 
     @PostMapping("/roles")
-    @Requirements({"GW_AUTH_0013"})
+    @Requirements({"GW_AUTH_0013", "GW_AUTH_0060"})
     @Tag(name = "Roles")
     @Operation(
             summary = "Grant a role",
@@ -92,8 +96,8 @@ public class RoleController {
     @ApiResponse(responseCode = "409", description = "The identical grant already exists")
     @ApiResponse(
             responseCode = "422",
-            description = "Missing principal, unknown role, approver grant without a marketplace, or a"
-                    + " global grant with one")
+            description = "Missing or malformed principal, unknown role, approver grant without a marketplace,"
+                    + " or a global grant with one")
     public ResponseEntity<RoleGrant> grant(@RequestBody GrantRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
         RoleGrant grant =

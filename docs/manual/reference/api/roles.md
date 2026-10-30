@@ -63,7 +63,7 @@ $ curl -X POST localhost:8080/api/v1/roles \
 
 | Field | Required | Notes |
 | --- | --- | --- |
-| `principal` | yes | The identity as the OIDC session reports it. |
+| `principal` | yes | The identity exactly as the OIDC session reports it. See below. |
 | `role` | yes | `admin`, `approver`, or `auditor`. |
 | `marketplace` | for `approver` | Must exist at grant time. Forbidden for `admin` and `auditor`. |
 
@@ -73,7 +73,22 @@ $ curl -X POST localhost:8080/api/v1/roles \
 | 403 | The caller is not an admin. |
 | 404 | An approver grant named a marketplace that does not exist. |
 | 409 | The identical grant already exists. |
-| 422 | Missing principal, unknown role, approver without a marketplace, or a global role with one. |
+| 422 | Missing or malformed principal, unknown role, approver without a marketplace, or a global role with one. |
+
+A grant is matched against the session's principal name exactly, so the
+principal must be one a session can present. It is **refused, never trimmed**,
+when it:
+
+- is blank, or begins or ends with whitespace (including a no-break space);
+- contains a control, invisible format (bidirectional controls, zero-width
+  characters, a byte-order mark), line separator, paragraph separator or
+  unpaired surrogate character;
+- is longer than **255** characters, counted as Unicode code points. That is the
+  OpenID Connect limit for `sub`; an e-mail address is shorter.
+
+The refusal says which rule was broken and does not repeat the value. Grants
+declared in [`estate.grants`](../../guides/declarative-estate.md) pass the same
+rule.
 
 ---
 

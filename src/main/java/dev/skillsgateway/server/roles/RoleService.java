@@ -110,11 +110,9 @@ public class RoleService {
      * the acting identity — whether the caller is the grants API or the estate reconciler. Statuses
      * match the API contract; a non-HTTP caller reports the reason instead.
      */
-    @Requirements({"GW_AUTH_0013"})
+    @Requirements({"GW_AUTH_0013", "GW_AUTH_0060"})
     public RoleGrant grant(String principal, String role, String marketplace, String actor) {
-        if (principal == null || principal.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "a principal is required");
-        }
+        RolePrincipals.requireGrantable(principal);
         if (role == null || !ROLES.contains(role)) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_CONTENT, "role must be one of %s".formatted(ROLES));

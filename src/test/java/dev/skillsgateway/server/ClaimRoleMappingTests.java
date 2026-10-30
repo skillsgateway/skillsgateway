@@ -132,7 +132,7 @@ class ClaimRoleMappingTests extends AbstractClaimMappingTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_AUTH_0015.1"})
+    @SVCs({"SVC_GW_AUTH_0015.1", "SVC_GW_AUTH_0066"})
     void claim_values_that_only_resemble_a_mapping_grant_nothing() throws Exception {
         List<String> nearMisses =
                 List.of("gw-admin", "gw-admins-extra", "xgw-admins", "GW-ADMINS", "Gw-Admins", "gw admins", "");
@@ -144,8 +144,15 @@ class ClaimRoleMappingTests extends AbstractClaimMappingTest {
                     .andExpect(jsonPath("$.roles").isEmpty());
         }
 
-        // Surrounding whitespace is the one thing YAML hides, so it is trimmed rather than kept.
-        mockMvc.perform(get("/api/v1/roles").with(session("claim-padded", List.of("  gw-admins  "))))
+        // Matched as delivered (GW_AUTH_0061): padding is not trimmed away, in a list or a lone string.
+        for (Object padded : List.of(List.of("  gw-admins  "), List.of("gw-admins\u00a0"), " gw-admins")) {
+            var session = session("claim-padded-" + Integer.toHexString(padded.hashCode()), padded);
+            mockMvc.perform(get("/api/v1/roles").with(session)).andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/v1/me").with(session))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.roles").isEmpty());
+        }
+        mockMvc.perform(get("/api/v1/roles").with(session("claim-lone", "gw-admins")))
                 .andExpect(status().isOk());
     }
 

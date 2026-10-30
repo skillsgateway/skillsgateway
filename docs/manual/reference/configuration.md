@@ -1286,11 +1286,14 @@ The third source, a row in the grants API, is described in
 [Delegated administration](../guides/delegated-administration.md); a session's
 effective roles are the union of all three.
 
-Claim values are matched **exactly**, after trimming surrounding whitespace: no
-prefix, glob or case-insensitive matching, because a looser match can only ever
-widen who is privileged. The claim may be a list of strings or a single string;
-a delimited string is one value and is never split. A malformed mapping — an
-unknown role, a blank value, an unscoped `approver`, a scoped global role —
+Claim values are matched **exactly as the provider delivers them**: no
+trimming, no prefix, glob or case-insensitive matching, because a looser match
+can only ever widen who is privileged. A value the provider pads with
+whitespace does not match. The claim may be a list of strings or a single
+string; a delimited string is one value and is never split, and a claim of any
+other type carries no value. A malformed mapping — an unknown role, a blank
+value, a value that begins or ends with whitespace or contains a control or
+invisible format character, an unscoped `approver`, a scoped global role —
 refuses startup rather than silently granting nothing. A mapping may name a
 marketplace that is not registered yet; until it is, the mapping matches
 nothing.
