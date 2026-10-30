@@ -3,9 +3,9 @@ package dev.skillsgateway.server.vetting;
 import io.github.reqstool.annotations.Requirements;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,13 +17,34 @@ final class ContentRules {
 
     private ContentRules() {}
 
-    /** One pattern rule: a stable id, what it means, and how much it matters. */
-    record Rule(String id, Severity severity, Pattern pattern, String message) {
+    /**
+     * One pattern rule: a stable id, what it means, and how much it matters. A {@code mentionable}
+     * rule's match that reads as a mention is reported at {@link Severity#MEDIUM} (GW_VETTING_0069).
+     */
+    record Rule(String id, Severity severity, Pattern pattern, String message, boolean mentionable) {
 
         Rule(String id, Severity severity, String regex, String message) {
-            this(id, severity, Pattern.compile(regex), message);
+            this(id, severity, Pattern.compile(regex), message, false);
+        }
+
+        /** This rule, downgraded where a match reads as a mention rather than an instruction. */
+        Rule whenMentionedWarn() {
+            return new Rule(id, severity, pattern, message, true);
         }
     }
+
+    /** How far back the clause before a match is read for a mention marker. */
+    private static final int CLAUSE_WINDOW = 240;
+
+    private static final Pattern PROHIBITION =
+            Pattern.compile("(?i)(?<![-\\w])(?:never|do not|don'?t|must not|should not|avoid|refuse)(?![-\\w])");
+
+    private static final Pattern EXAMPLE =
+            Pattern.compile("(?i)(?<![-\\w])(?:like|such as|e\\.g\\.|for example|for instance)(?![-\\w])");
+
+    private static final String MENTION_NOTE =
+            " (quoted or prohibited in its own clause, so it reads as a mention: check it is a warning, not an"
+                    + " instruction)";
 
     /**
      * Decodes a blob as UTF-8, returning {@code null} only when it is binary, meaning it holds a NUL
@@ -54,21 +75,71 @@ final class ContentRules {
      * Every match of every rule in one file, located at {@code path:line}, at most one finding per
      * rule id and line — several patterns may share an id, and one line is one thing to judge.
      */
+    @Requirements({"GW_VETTING_0069"})
     static List<Finding> apply(List<Rule> rules, String path, String text) {
-        List<Finding> findings = new ArrayList<>();
-        Set<String> seen = new HashSet<>();
+        Map<String, Finding> findings = new LinkedHashMap<>();
         LineIndex lines = LineIndex.of(text);
         for (Rule rule : rules) {
             Matcher matcher = rule.pattern().matcher(InterruptibleText.of(text));
             while (matcher.find()) {
                 int line = lines.lineOf(matcher.start());
-                if (seen.add(rule.id() + ":" + line)) {
-                    findings.add(
-                            new Finding(rule.id(), rule.severity(), "%s:%d".formatted(path, line), rule.message()));
-                }
+                boolean mention = rule.mentionable() && mention(text, matcher.start());
+                Finding finding = new Finding(
+                        rule.id(),
+                        mention ? Severity.MEDIUM : rule.severity(),
+                        "%s:%d".formatted(path, line),
+                        mention ? rule.message() + MENTION_NOTE : rule.message());
+                // One finding per rule and line; a plain match outranks a mention on the same line.
+                findings.merge(
+                        rule.id() + ":" + line,
+                        finding,
+                        (kept, next) -> next.severity().atLeast(kept.severity()) ? next : kept);
             }
         }
-        return findings;
+        return new ArrayList<>(findings.values());
+    }
+
+    /**
+     * Whether the match at {@code start} reads as a mention (GW_VETTING_0069): its clause holds a
+     * prohibition before it, or it sits inside double quotes in a clause that introduces an example.
+     * Backticks are not a marker, because a real instruction puts its command in backticks.
+     */
+    static boolean mention(String text, int start) {
+        String clause = clauseBefore(text, start);
+        if (PROHIBITION.matcher(clause).find()) {
+            return true;
+        }
+        boolean quoted = clause.chars().filter(c -> c == '"').count() % 2 == 1
+                || clause.lastIndexOf('\u201c') > clause.lastIndexOf('\u201d');
+        return quoted && EXAMPLE.matcher(clause).find();
+    }
+
+    /**
+     * The text before {@code start} back to the previous sentence or clause break or blank line, at
+     * most {@value #CLAUSE_WINDOW} characters. Single newlines are crossed, because prose is wrapped;
+     * the period of "e.g." and "i.e." is not a break.
+     */
+    private static String clauseBefore(String text, int start) {
+        int floor = Math.max(0, start - CLAUSE_WINDOW);
+        for (int i = start - 1; i > floor; i--) {
+            char c = text.charAt(i - 1);
+            char next = text.charAt(i);
+            if (c == '\n' && next == '\n') {
+                return text.substring(i, start);
+            }
+            if (".!?;:".indexOf(c) >= 0 && Character.isWhitespace(next) && !abbreviation(text, i - 1)) {
+                return text.substring(i, start);
+            }
+        }
+        return text.substring(floor, start);
+    }
+
+    private static boolean abbreviation(String text, int period) {
+        return period >= 3
+                && text.charAt(period) == '.'
+                && text.charAt(period - 2) == '.'
+                && ("eg".equalsIgnoreCase("" + text.charAt(period - 3) + text.charAt(period - 1))
+                        || "ie".equalsIgnoreCase("" + text.charAt(period - 3) + text.charAt(period - 1)));
     }
 
     /** How many distinct rule ids a rule list carries. */

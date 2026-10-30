@@ -49,28 +49,49 @@ public class PromptInjectionVetter implements Vetter {
 
     private static final String PERSON = word("user|reviewer|human|operator|security|anyone");
 
+    /**
+     * The words a disclosure request may put between its verb and the prompt it asks for, as in
+     * "print out the full system prompt" (GW_VETTING_0069). Anything else — "output tokens … the
+     * system prompt" — is vocabulary, not a request.
+     */
+    private static final String DISCLOSURE_FILLER =
+            word("me|us|out|back|all|the|full|entire|complete|exact|whole|everything|in|of|from|verbatim|contents"
+                    + "|text");
+
+    /**
+     * The gap between a verb of telling and the person: within the clause, and not a condition —
+     * "mention it only when the user asks" permits rather than conceals (GW_VETTING_0069).
+     */
+    private static final String UNCONDITIONAL_GAP = "(?:(?![.!?;:]\\s)(?!" + word("only|unless|if") + ")[^\\n]){0,30}";
+
     private static final String CONCEALMENT_MESSAGE =
             "the instructions tell the agent to conceal its actions from the user or reviewer";
 
     private static final List<ContentRules.Rule> RULES = List.of(
             new ContentRules.Rule(
-                    "instruction-override",
-                    Severity.HIGH,
-                    "(?i)" + word("ignore|disregard|forget") + "[^\\n]{0,40}" + word("previous|prior|above|earlier|all")
-                            + "[^\\n]{0,40}" + word("instruction|instructions|prompt|prompts|rule|rules|guidance"),
-                    "instruction-override phrasing: the text tells the agent to discard its prior instructions"),
+                            "instruction-override",
+                            Severity.HIGH,
+                            "(?i)" + word("ignore|disregard|forget") + sameClause(40)
+                                    + word("previous|prior|above|earlier|all") + sameClause(40)
+                                    + word("instruction|instructions|prompt|prompts|rule|rules|guidance"),
+                            "instruction-override phrasing: the text tells the agent to discard its prior instructions")
+                    .whenMentionedWarn(),
             new ContentRules.Rule(
-                    "system-prompt-disclosure",
-                    Severity.HIGH,
-                    "(?i)\\b(?:reveal|repeat|print|output|disclose|show|dump)\\b[^\\n]{0,40}"
-                            + "\\b(?:system prompt|your instructions|initial prompt|your prompt|these instructions)\\b",
-                    "the text asks the agent to disclose its system prompt or instructions"),
+                            "system-prompt-disclosure",
+                            Severity.HIGH,
+                            "(?i)" + word("reveal|repeat|print|output|disclose|show|dump") + "(?:\\s+"
+                                    + DISCLOSURE_FILLER
+                                    + "){0,4}\\s+(?:(?:(?:your|the)\\s+)?(?:system|initial)\\s+prompt|your\\s+(?:instructions|prompt)"
+                                    + "|these\\s+instructions)\\b",
+                            "the text asks the agent to disclose its system prompt or instructions")
+                    .whenMentionedWarn(),
             new ContentRules.Rule(
-                    "credential-path-reference",
-                    Severity.HIGH,
-                    "(?:~/\\.aws|\\.aws/credentials|~/\\.ssh|\\bid_rsa\\b|~/\\.config/gh|/etc/passwd|"
-                            + "\\.npmrc\\b|\\.netrc\\b|~/\\.kube/config|\\.git-credentials)",
-                    "the instructions reference a credential file location"),
+                            "credential-path-reference",
+                            Severity.HIGH,
+                            "(?:~/\\.aws|\\.aws/credentials|~/\\.ssh|\\bid_rsa\\b|~/\\.config/gh|(?<!\\.\\.)/etc/passwd|"
+                                    + "\\.npmrc\\b|\\.netrc\\b|~/\\.kube/config|\\.git-credentials)",
+                            "the instructions reference a credential file location")
+                    .whenMentionedWarn(),
             // Concealment (GW_VETTING_0040): a verb of telling, not of displaying. "Do not show the user the
             // raw JSON" is a formatting instruction and is by far the commoner use of "show" in skill
             // prose; hiding an action is covered by the explicit hide/without-telling/let-know forms.
@@ -78,7 +99,9 @@ public class PromptInjectionVetter implements Vetter {
                     "concealment-instruction",
                     Severity.HIGH,
                     "(?i)" + word("do not|don'?t|never|must not") + sameClause(30)
-                            + word("tell|inform|mention|report|reveal|disclose|notify|alert") + sameClause(30) + PERSON,
+                            + word("tell|inform|mention|report|reveal|disclose|notify|alert") + UNCONDITIONAL_GAP
+                            + PERSON
+                            + "(?!\\s+(?:they|to)\\b)",
                     CONCEALMENT_MESSAGE),
             new ContentRules.Rule(
                     "concealment-instruction",
@@ -98,17 +121,19 @@ public class PromptInjectionVetter implements Vetter {
                             + word("know|see|notice|find out"),
                     CONCEALMENT_MESSAGE),
             new ContentRules.Rule(
-                    "pipe-to-shell",
-                    Severity.HIGH,
-                    "(?i)\\b(?:curl|wget)\\b[^\\n]{0,120}\\|\\s*(?:sudo\\s+)?(?:ba|z|k|)sh\\b",
-                    "the instructions pipe downloaded content straight into a shell"),
+                            "pipe-to-shell",
+                            Severity.HIGH,
+                            "(?i)\\b(?:curl|wget)\\b[^\\n]{0,120}\\|\\s*(?:sudo\\s+)?(?:ba|z|k|)sh\\b",
+                            "the instructions pipe downloaded content straight into a shell")
+                    .whenMentionedWarn(),
             new ContentRules.Rule(
-                    "exfiltration-instruction",
-                    Severity.HIGH,
-                    "(?i)\\b(?:send|post|upload|exfiltrate|transmit|forward)\\b[^\\n]{0,60}"
-                            + "\\b(?:credential|credentials|api key|token|secret|password|env|environment variable)\\b"
-                            + "[^\\n]{0,60}\\b(?:to|at)\\b\\s*(?:https?://|[\\w.-]+\\.[a-z]{2,})",
-                    "the instructions tell the agent to send credentials or environment values somewhere"),
+                            "exfiltration-instruction",
+                            Severity.HIGH,
+                            "(?i)\\b(?:send|post|upload|exfiltrate|transmit|forward)\\b[^\\n]{0,60}"
+                                    + "\\b(?:credential|credentials|api key|token|secret|password|env|environment variable)\\b"
+                                    + "[^\\n]{0,60}\\b(?:to|at)\\b\\s*(?:https?://|[\\w.-]+\\.[a-z]{2,})",
+                            "the instructions tell the agent to send credentials or environment values somewhere")
+                    .whenMentionedWarn(),
             new ContentRules.Rule(
                     "hidden-html-instruction",
                     Severity.MEDIUM,
@@ -130,6 +155,26 @@ public class PromptInjectionVetter implements Vetter {
                 || (codePoint >= 0xE0000 && codePoint <= 0xE007F);
     }
 
+    /**
+     * A zero-width joiner between two pictographs is part of one emoji (👨‍💻, ❤‍🔥), not hidden text
+     * (GW_VETTING_0069). A variation selector or skin-tone modifier may sit between the first and it.
+     */
+    private static boolean emojiJoiner(String text, int index) {
+        if (text.charAt(index) != '\u200d' || index == 0 || index + 1 >= text.length()) {
+            return false;
+        }
+        int before = text.codePointBefore(index);
+        int at = index - Character.charCount(before);
+        if ((before == 0xFE0F || (before >= 0x1F3FB && before <= 0x1F3FF)) && at > 0) {
+            before = text.codePointBefore(at);
+        }
+        return pictographic(before) && pictographic(text.codePointAt(index + 1));
+    }
+
+    private static boolean pictographic(int codePoint) {
+        return (codePoint >= 0x2190 && codePoint <= 0x2BFF) || codePoint >= 0x1F000 && codePoint < 0xE0000;
+    }
+
     @Override
     public String name() {
         return "prompt-injection";
@@ -140,10 +185,13 @@ public class PromptInjectionVetter implements Vetter {
         return 200;
     }
 
-    /** 2: the concealment and instruction-override rules were narrowed (GW_VETTING_0040). */
+    /**
+     * 3: a quoted or prohibited marker warns, and disclosure, concealment, credential paths and emoji
+     * joiners were narrowed (GW_VETTING_0069).
+     */
     @Override
     public String version() {
-        return "2";
+        return "3";
     }
 
     @Override
@@ -155,7 +203,7 @@ public class PromptInjectionVetter implements Vetter {
     }
 
     @Override
-    @Requirements({"GW_VETTING_0004", "GW_VETTING_0023", "GW_VETTING_0040", "GW_VETTING_0043"})
+    @Requirements({"GW_VETTING_0004", "GW_VETTING_0023", "GW_VETTING_0040", "GW_VETTING_0043", "GW_VETTING_0069"})
     public Verdict vet(SnapshotUnderVetting snapshot) {
         List<Finding> findings = new ArrayList<>();
         List<String> oversize = new ArrayList<>();
@@ -209,7 +257,7 @@ public class PromptInjectionVetter implements Vetter {
         int index = 0;
         while (index < text.length()) {
             int codePoint = text.codePointAt(index);
-            if (invisible(codePoint)) {
+            if (invisible(codePoint) && !emojiJoiner(text, index)) {
                 return List.of(new Finding(
                         "invisible-characters",
                         Severity.HIGH,
