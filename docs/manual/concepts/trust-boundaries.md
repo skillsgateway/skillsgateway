@@ -352,9 +352,11 @@ unauthenticated path.
 
 Requests to `/api/**` that lack a session get a clean **401** rather than a 302
 to the identity provider, so an expired session surfaces in the SPA as an error
-instead of an HTML login page rendered into a `fetch()`. A refused request
-leaves no session behind, here or on any other chain: the only anonymous
-request that creates one is the start of a sign-in, whose session holds the
+instead of an HTML login page rendered into a `fetch()`. Any other request that
+does not ask for an HTML page is answered **401** too. A refused request leaves
+no session behind, here or on any other chain: the only anonymous requests that
+create one start a sign-in. A page navigation is redirected to the sign-in and its session
+keeps the page to return to; the sign-in request's session holds the
 authorization request across the round trip to the identity provider
 (GW_AUTH_0059 — An unauthenticated request leaves no session behind).
 

@@ -36,8 +36,8 @@ read instead of being refused until its session ends.
 `csrf.spa()` pairs the cookie repository with a private handler: the
 `X-XSRF-TOKEN` header carries the raw token, a form parameter the XOR-masked
 one, and the token is resolved on every request so its copy reaches the
-portal. `SecurityConfig.SpaTokenHandler` is a copy of that handler, so the
-masking for anything rendered into a page is unchanged.
+portal. The web chain calls `spa()` and then replaces only its repository, so
+that handler, and the masking for anything rendered into a page, is unchanged.
 
 ### D4 — Which requests may create a session
 
@@ -69,9 +69,11 @@ including `/api/**` requests answered `401`, and including the `/error`
 dispatch that renders another chain's `401` (which is how `/git/**` and
 `/status/**` refusals created sessions). The web chain now uses an
 `HttpSessionRequestCache` that saves only a `REQUEST`-dispatched `GET` outside
-`/api/**`, excluding favicons and `XMLHttpRequest` calls. Those are the
-requests answered with a sign-in redirect, so a deep link still survives the
-sign-in.
+`/api/**` that asks for HTML by name (`text/html` or `application/xhtml+xml`,
+a bare `*/*` not counting), excluding favicons and `XMLHttpRequest` calls.
+That is a page navigation, which the OIDC login entry point answers with a
+sign-in redirect, so a deep link still survives the sign-in. A `GET` that does
+not ask for HTML is answered `401` by the default entry point and is not saved.
 
 ### Not in this change
 

@@ -126,6 +126,18 @@ class SessionBoundCsrfTests {
                     .as("%s sets no session cookie", path)
                     .isEmpty();
         }
+        // Outside /api/** too: a GET that is not a page navigation is answered 401, not redirected.
+        for (String accept : List.of("*/*", "application/json", "text/event-stream")) {
+            HttpResponse<String> response = send(
+                    HttpRequest.newBuilder(uri("/approvals"))
+                            .header("Accept", accept)
+                            .GET(),
+                    Map.of());
+            assertThat(response.statusCode()).as("Accept: %s", accept).isEqualTo(401);
+            assertThat(sessionCookies(response))
+                    .as("a GET accepting %s sets no session cookie", accept)
+                    .isEmpty();
+        }
         String forged = UUID.randomUUID().toString();
         HttpResponse<String> mutation = post(MUTATION, Map.of("XSRF-TOKEN", forged), forged);
         assertThat(mutation.statusCode()).as("an anonymous write").isIn(401, 403);
@@ -187,6 +199,24 @@ class SessionBoundCsrfTests {
         assertThat(response.headers().firstValue("location"))
                 .hasValueSatisfying(location -> assertThat(location).startsWith("https://idp.invalid/authorize"));
         assertThat(sessionCookies(response)).hasSize(1);
+        assertThat(storedSessions()).isEqualTo(before + 1);
+    }
+
+    @Test
+    @SVCs({"SVC_GW_AUTH_0062"})
+    void a_page_navigation_is_redirected_to_the_sign_in_and_kept_to_return_to() throws Exception {
+        long before = storedSessions();
+
+        HttpResponse<String> response = send(
+                HttpRequest.newBuilder(uri("/approvals"))
+                        .header("Accept", "text/html,application/xhtml+xml,*/*;q=0.8")
+                        .GET(),
+                Map.of());
+
+        assertThat(response.statusCode()).isEqualTo(302);
+        assertThat(response.headers().firstValue("location"))
+                .hasValueSatisfying(location -> assertThat(location).endsWith("/oauth2/authorization/idp"));
+        assertThat(sessionCookies(response)).as("the page is kept to return to").hasSize(1);
         assertThat(storedSessions()).isEqualTo(before + 1);
     }
 

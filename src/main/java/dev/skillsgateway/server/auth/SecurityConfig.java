@@ -3,10 +3,8 @@ package dev.skillsgateway.server.auth;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import io.github.reqstool.annotations.Requirements;
 import jakarta.servlet.DispatcherType;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -16,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -33,20 +32,16 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
-import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.header.writers.ContentSecurityPolicyHeaderWriter;
 import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.DispatcherTypeRequestMatcher;
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestHeaderRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
-import org.springframework.util.StringUtils;
 
 @Configuration
 @EnableWebSecurity
@@ -297,9 +292,8 @@ public class SecurityConfig {
      * <p>This is the only chain carrying an <em>ambient</em> credential, so it is the only one that
      * needs a CSRF token (GW_AUTH_0030): an {@code XSRF-TOKEN} cookie the portal's own script reads,
      * echoed in {@code X-XSRF-TOKEN}, and compared with the token held in the session (GW_AUTH_0058).
-     * The four chains above stay exempt because
-     * each authenticates every request on its own and honours no cookie — their comments say so
-     * individually.
+     * The four chains above stay exempt because each authenticates every request on its own and
+     * honours no cookie — their comments say so individually.
      */
     @Bean
     @Order(6)
@@ -363,19 +357,18 @@ public class SecurityConfig {
     }
 
     /**
-     * The cookie-and-header exchange {@code csrf.spa()} configures, with the token kept in the
-     * session rather than taken from the cookie (GW_AUTH_0058).
+     * The cookie-and-header exchange {@code csrf.spa()} configures, with its cookie repository
+     * replaced so the token is kept in the session rather than taken from the cookie (GW_AUTH_0058).
      */
     @Requirements({"GW_AUTH_0030", "GW_AUTH_0058"})
     private static void sessionBoundToken(CsrfConfigurer<HttpSecurity> csrf, RequestMatcher sessionMayStart) {
-        csrf.csrfTokenRepository(new SessionBoundCsrfTokenRepository(sessionMayStart))
-                .csrfTokenRequestHandler(new SpaTokenHandler());
+        csrf.spa().csrfTokenRepository(new SessionBoundCsrfTokenRepository(sessionMayStart));
     }
 
     /**
-     * Saves only a request the entry point answers with a sign-in redirect, so the user lands back
-     * on it afterwards. An {@code /api/**} request is answered 401 and has nothing to return to, so
-     * saving it would only create a session for an unauthenticated caller (GW_AUTH_0059).
+     * Saves only a page navigation, which the entry point answers with a sign-in redirect, so the
+     * user lands back on it afterwards. Anything else is answered 401 and has nothing to return to,
+     * so saving it would only create a session for an unauthenticated caller (GW_AUTH_0059).
      */
     @Requirements({"GW_AUTH_0059"})
     private static HttpSessionRequestCache signInRequestCache() {
@@ -388,34 +381,16 @@ public class SecurityConfig {
                         PathPatternRequestMatcher.withDefaults().matcher("/api/**")),
                 new NegatedRequestMatcher(
                         PathPatternRequestMatcher.withDefaults().matcher("/favicon.*")),
-                new NegatedRequestMatcher(new RequestHeaderRequestMatcher("X-Requested-With", "XMLHttpRequest"))));
+                new NegatedRequestMatcher(new RequestHeaderRequestMatcher("X-Requested-With", "XMLHttpRequest")),
+                pageNavigation()));
         return cache;
     }
 
-    /**
-     * Spring Security's own SPA handler, which {@code spa()} keeps private: the header carries the
-     * raw token, a form parameter the XOR-masked one, and the token is resolved on every request so
-     * that its copy reaches the portal on a read.
-     */
-    private static final class SpaTokenHandler implements CsrfTokenRequestHandler {
-
-        private final CsrfTokenRequestAttributeHandler plain = new CsrfTokenRequestAttributeHandler();
-
-        private final XorCsrfTokenRequestAttributeHandler xor = new XorCsrfTokenRequestAttributeHandler();
-
-        SpaTokenHandler() {
-            xor.setCsrfRequestAttributeName(null);
-        }
-
-        @Override
-        public void handle(HttpServletRequest request, HttpServletResponse response, Supplier<CsrfToken> csrfToken) {
-            xor.handle(request, response, csrfToken);
-        }
-
-        @Override
-        public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
-            String header = request.getHeader(csrfToken.getHeaderName());
-            return (StringUtils.hasText(header) ? plain : xor).resolveCsrfTokenValue(request, csrfToken);
-        }
+    /** Asks for HTML by name, as a browser navigation does; an {@code Accept} of only a wildcard does not. */
+    private static RequestMatcher pageNavigation() {
+        MediaTypeRequestMatcher html =
+                new MediaTypeRequestMatcher(MediaType.TEXT_HTML, MediaType.APPLICATION_XHTML_XML);
+        html.setIgnoredMediaTypes(Set.of(MediaType.ALL));
+        return html;
     }
 }

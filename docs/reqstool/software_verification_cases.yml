@@ -4425,8 +4425,8 @@ cases:
     verification: automated-test
     description: |
       GIVEN a running gateway configured with an identity provider
-      WHEN unauthenticated requests are made to the web API, to the revocation-check surface and to the git facade, including a state-changing POST to the web API
-      THEN each is refused as unauthenticated, no response sets a session cookie, and the session store holds no more sessions than before
+      WHEN unauthenticated requests are made to the web API, to a portal page without asking for HTML, to the revocation-check surface and to the git facade, including a state-changing POST to the web API, and requests are made with a machine credential and with a personal access token
+      THEN each unauthenticated request is refused as unauthenticated, each credentialed one is served without an anti-forgery token, no response sets a session cookie, and the session store holds no more sessions than before
     revision: "0.5.0"
 
   - id: SVC_GW_AUTH_0062
@@ -4435,6 +4435,6 @@ cases:
     verification: automated-test
     description: |
       GIVEN a running gateway configured with an identity provider
-      WHEN an unauthenticated browser starts a sign-in
-      THEN it is redirected to the identity provider and the response sets a session cookie, and the session store holds one more session
+      WHEN an unauthenticated browser starts a sign-in, either directly or by navigating to a portal page
+      THEN the sign-in is redirected to the identity provider and the page navigation to the sign-in, each response sets a session cookie, and the session store holds one more session for each
     revision: "0.5.0"
