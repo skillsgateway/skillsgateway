@@ -80,6 +80,26 @@ test("following_a_finding_past_the_part_shown_loads_the_part_that_holds_its_line
   expect(document.activeElement).toBe(line40);
 });
 
+/**
+ * @SVCs SVC_GW_APPROVAL_0039
+ */
+test("a_newly_addressed_line_outside_the_part_shown_loads_the_part_that_holds_it", async () => {
+  server.use(http.get("/api/v1/snapshots/:id/vetting", () => HttpResponse.json(locatedVetting)));
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const explorer = (line: number) => (
+    <QueryClientProvider client={queryClient}>
+      <SnapshotExplorer snapshotId={1} selectedPath="data/huge.txt" onSelect={() => {}} selectedLine={line} />
+    </QueryClientProvider>
+  );
+  const { container, rerender } = render(explorer(40));
+  await waitForLine(container, 40);
+
+  // The address moves back to the head of the same file, as the browser's Back button moves it.
+  rerender(explorer(1));
+  expect(await (await pane()).findByText("first part only")).toBeInTheDocument();
+  expect(document.activeElement).toBe(container.querySelector('[data-line="1"]'));
+});
+
 /** The numbered line once the file part holding it has loaded. */
 async function waitForLine(container: HTMLElement, line: number) {
   return await screen.findByText(`line ${line} of the large file`).then(

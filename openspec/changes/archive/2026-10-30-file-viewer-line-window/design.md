@@ -30,11 +30,11 @@ from a hostile upstream, and any cap leaves some line beyond it.
 
 ### D3 — The portal asks for the focused line
 
-`useSnapshotFile` takes the focused line and sends it only once the reviewer has
-followed a line. A file within the cap returns the same text whatever line is
-asked for, so the query key changes but the content does not. A finding outside
-the shown range becomes a button that focuses its line. That reuses the path an
-in-range finding already takes.
+`useSnapshotFile` takes a line: the addressed line when the file opens, then any
+line focused outside the part shown, whether followed from a finding or named by
+a new address. A line inside the part shown asks for nothing new. A finding
+outside the shown range becomes a button that focuses its line. That reuses the
+path an in-range finding already takes.
 
 ### D4 — A blank path is a bad request
 

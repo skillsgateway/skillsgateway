@@ -654,7 +654,7 @@ export function useSnapshotFile(snapshotId: number | null, path: string | null, 
       ),
     enabled: snapshotId !== null && path !== null,
     placeholderData: (previous, previousQuery) =>
-      previousQuery?.queryKey[2] === path ? previous : undefined,
+      previousQuery?.queryKey[1] === snapshotId && previousQuery.queryKey[2] === path ? previous : undefined,
   });
 }
 

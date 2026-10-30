@@ -1203,7 +1203,7 @@ function fileContent(path: string, line: number | null = null): Schemas["FileCon
   }
   if (path === "data/huge.txt") {
     // A named line past the head returns the part holding it, numbered from firstLine (GW_APPROVAL_0036).
-    return line !== null && line > 1
+    return line !== null && line > 2
       ? { snapshotId: 1, path, size: 900000, binary: false, truncated: true, firstLine: line - 2,
           text: [line - 2, line - 1, line, line + 1].map((n) => `line ${n} of the large file`).join("\n") }
       : { snapshotId: 1, path, size: 900000, binary: false, truncated: true, firstLine: 1, text: "first part only" };

@@ -142,7 +142,9 @@ export function SourceView({
           key={`${id}-beyond-${i}`}
           id={`${id}-beyond-${i}`}
           finding={finding}
-          prefix={`Line ${finding.line} is beyond the part shown${truncated ? " (the file is truncated)" : ""}`}
+          prefix={`Line ${finding.line} is ${finding.line! < firstLine ? "before" : "beyond"} the part shown${
+            truncated ? " (the file is truncated)" : ""
+          }`}
         />
       ))}
     </div>

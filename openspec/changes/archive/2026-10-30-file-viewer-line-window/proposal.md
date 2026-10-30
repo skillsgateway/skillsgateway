@@ -18,10 +18,10 @@ gets approved. Separately, an empty `path` answers 500.
     128 KiB that starts at a line boundary and contains that line.
   - The response gains `firstLine`, the number of the first line returned. It is
     1 for the head, for a blob within the cap, and when the line is past the end.
-  - A blank `path` is answered with 400.
+  - A blank `path`, or a `line` below 1, is answered with 400.
   - The portal numbers lines from `firstLine`, and following a finding outside
     the part shown loads the part around its line.
-- New `SVC_GW_APPROVAL_0037` (the window), `SVC_GW_APPROVAL_0038` (a blank path
+- New `SVC_GW_APPROVAL_0037` (the window), `SVC_GW_APPROVAL_0038` (a blank path or line below 1
   is 400), `SVC_GW_APPROVAL_0039` (the portal reaches the line).
 - Not **BREAKING**: `line` is optional and `firstLine` is a new field. A request
   without `line` gets today's text.

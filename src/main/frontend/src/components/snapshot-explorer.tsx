@@ -10,6 +10,7 @@ import {
   useSnapshotPathSearch,
   useSnapshotVetting,
   type SnapshotDiffEntry,
+  type SnapshotFileContent,
   type SnapshotTreeChild,
 } from "@/api/queries";
 import { MarkdownView } from "@/components/markdown-view";
@@ -106,10 +107,14 @@ function FileFindings({
         {findings.map((finding, index) => {
           // A line outside the part shown is still followed: that loads the part holding it.
           const located = finding.line !== null && finding.line >= 1;
-          const shown = located && finding.line! >= firstLine && finding.line! < firstLine + lineCount;
-          const label = `${finding.severity} · ${finding.ruleId} · ${
-            !located ? "no line" : shown ? `line ${finding.line}` : `line ${finding.line}, beyond the part shown`
-          }`;
+          const where = !located
+            ? "no line"
+            : finding.line! < firstLine
+              ? `line ${finding.line}, before the part shown`
+              : finding.line! >= firstLine + lineCount
+                ? `line ${finding.line}, beyond the part shown`
+                : `line ${finding.line}`;
+          const label = `${finding.severity} · ${finding.ruleId} · ${where}`;
           return (
             <li key={`${index}:${finding.location}:${finding.ruleId}`} className="flex flex-wrap items-baseline gap-x-2">
               {located ? (
@@ -136,6 +141,14 @@ function FileFindings({
   );
 }
 
+const countLines = (text: string) => text.split(/\r?\n/).length - (text.endsWith("\n") ? 1 : 0);
+
+/** Whether `line` lies outside the part of a truncated blob that `content` holds. */
+function outsidePart(content: SnapshotFileContent, line: number) {
+  const first = content.firstLine ?? 1;
+  return content.truncated === true && (line < first || line >= first + countLines(content.text ?? ""));
+}
+
 /**
  * The blob itself: inert text, Markdown rendered without any HTML pipeline, bounds stated. A
  * file's findings are listed above it, and each is written out beneath its line in the numbered
@@ -155,7 +168,7 @@ function FileContent({
   focus: LineFocus;
   onLine: (line: number) => void;
 }) {
-  // The line whose part of a large file is asked for: the addressed line, then each line followed
+  // The line whose part of a large file is asked for: the addressed line, then each line focused
   // outside the part shown (GW_APPROVAL_0036). A file within the limit is whole whatever is asked.
   const [part, setPart] = useState<number | null>(focus.line);
   const file = useSnapshotFile(snapshotId, path, part);
@@ -166,7 +179,10 @@ function FileContent({
   const [followed, setFollowed] = useState(focus.seq);
   if (followed !== focus.seq) {
     setFollowed(focus.seq);
-    if (focus.line !== null) setView("source");
+    if (focus.line !== null) {
+      setView("source");
+      if (!file.data || outsidePart(file.data, focus.line)) setPart(focus.line);
+    }
   }
   if (file.isLoading) return <Notice>Loading {path}…</Notice>;
   if (file.isError) {
@@ -183,14 +199,9 @@ function FileContent({
     return <Notice>Binary file ({content.size} bytes) — content is not rendered.</Notice>;
   }
   const text = content.text ?? "";
-  const lineCount = text.split(/\r?\n/).length - (text.endsWith("\n") ? 1 : 0);
+  const lineCount = countLines(text);
   const firstLine = content.firstLine ?? 1;
   const source = kind === null || view === "source";
-  const toLine = (line: number) => {
-    setView("source");
-    if (content.truncated && (line < firstLine || line >= firstLine + lineCount)) setPart(line);
-    onLine(line);
-  };
   return (
     <div className="space-y-2">
       {content.truncated ? (
@@ -201,7 +212,7 @@ function FileContent({
         </p>
       ) : null}
       {findings.length > 0 ? (
-        <FileFindings findings={findings} firstLine={firstLine} lineCount={lineCount} onLine={toLine} />
+        <FileFindings findings={findings} firstLine={firstLine} lineCount={lineCount} onLine={onLine} />
       ) : null}
       {kind !== null && findings.length > 0 ? (
         <SegmentedGroup
