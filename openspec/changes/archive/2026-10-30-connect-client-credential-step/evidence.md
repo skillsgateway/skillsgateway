@@ -1,8 +1,25 @@
 # Evidence: connect-client-credential-step
 
-Source state: `37a57755` (tree `f0546184`), on top of `origin/main` `1cf15a45`.
-Every gate result below is from one fresh run after the last code edit, on
-2026-10-30.
+Source state: `507fee0e`, rebased onto `origin/main` `b1155dfa`. Every gate
+result below is from one fresh run on that commit, after the last code edit, on
+2026-10-30. The manual runs further down were made on the first round's source,
+`37a57755`, before the review fixes listed next.
+
+## Review fixes (second round)
+
+- The credential step's config key is single-quoted
+  (`git config --global 'credential.{origin}.helper' store`), so an origin with an
+  IPv6 literal is not taken as a glob. Checked by hand with `bash -O failglob`
+  (which refuses an unmatched glob, as zsh does by default): the unquoted
+  `credential.http://[::2]:8080.helper` fails with `no match`; the quoted form
+  succeeds and `git config --get-urlmatch credential.helper 'http://[::1]:8080/git/x.git'`
+  answers `store`. The exact-text unit test was changed first and seen failing.
+- The token-reach note reads "A token created here is not limited to …", since it
+  is also shown to a reader who brings an existing, possibly scoped, token. Its
+  unit test was changed first and seen failing.
+- The clean-client e2e gives each shell command a 60 s timeout (`spawnSync`
+  blocks the event loop, so Playwright's own timeout could not fire) and removes
+  its temporary home, which holds the stored credential, in a `finally`.
 
 ## The commands, run by hand on a clean client
 
@@ -103,12 +120,12 @@ because zsh gives it another meaning.
 
 | Gate | Command | Result |
 |---|---|---|
-| Java suite, Spotless, Checkstyle, SBOM, UI gate, jar | `./mvnw clean verify` | `Tests run: 1175, Failures: 0, Errors: 0, Skipped: 9` · UI `Test Files 31 passed (31)` · `Tests 238 passed (238)` · `BUILD SUCCESS` · `Total time: 14:39 min` |
-| Storybook story tests | `(cd src/main/frontend && pnpm test:stories)` | `Test Files 21 passed (21)` · `Tests 112 passed (112)` on the second run; the first hit the known harness flake (5 files failed to load, 82/82 tests passed) and passed after clearing `node_modules/.cache/storybook` and `.vite` |
-| e2e | `(cd src/main/frontend && pnpm e2e)` | `28 passed (2.1m)`, including `the_wizard_commands_store_the_credential_and_clone_on_a_clean_client` and `setup_wizard_composes_origin_derived_commands_and_holds_show_once` |
-| Requirements traceability | `reqstool status local -p docs/reqstool` | exit 0 · `REQUIREMENTS: 369` · 1198 passed, 0 failed, 0 skipped · 0 SVCs missing tests · GW_AUTH_0014 1/1, GW_AUTH_0062 3/3, GW_AUTH_0063 2/2 |
-| OpenSpec | `openspec validate --all --strict` | `Totals: 30 passed, 0 failed (30 items)` |
-| Docs | `mkdocs build --strict` | `Documentation built in 1.65 seconds` |
+| Java suite, Spotless, Checkstyle, SBOM, UI gate, jar | `flock …/sgw-verify.lock ./mvnw clean verify` | `Tests run: 1179, Failures: 0, Errors: 0, Skipped: 9` · UI `Test Files 31 passed (31)` · `Tests 238 passed (238)` · `BUILD SUCCESS` · `Total time: 07:48 min` |
+| Storybook story tests | `(cd src/main/frontend && flock …/sgw-stories.lock pnpm test:stories)` | `Test Files 21 passed (21)` · `Tests 112 passed (112)`, after the known harness flake (`Failed to fetch dynamically imported module`) on the run before it, cleared by deleting `node_modules/.cache/storybook` and `.vite` |
+| e2e | `(cd src/main/frontend && flock …/sgw-e2e.lock pnpm e2e)` | `28 passed (2.0m)`, including `the_wizard_commands_store_the_credential_and_clone_on_a_clean_client` (runs the quoted command text in bash) and `setup_wizard_composes_origin_derived_commands_and_holds_show_once` |
+| Requirements traceability | `reqstool status local -p docs/reqstool` | exit 0 · `REQUIREMENTS: 370` · 1202 passed, 0 failed, 0 skipped · 0 SVCs missing tests · GW_AUTH_0014 1/1, GW_AUTH_0062 3/3, GW_AUTH_0063 2/2 |
+| OpenSpec | `openspec validate --all --strict` | `Totals: 29 passed, 0 failed (29 items)` |
+| Docs | `mkdocs build --strict` | `Documentation built in 2.01 seconds` |
 | Supply chain | no dependency added or changed | — |
 
 ## Known limits
