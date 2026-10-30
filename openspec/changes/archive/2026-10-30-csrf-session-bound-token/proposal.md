@@ -3,16 +3,13 @@
 ## Why
 
 The web chain's anti-forgery check (`GW_AUTH_0030 — A cross-site request cannot
-act on an ambient session`) used `csrf.spa()`, which compares the
-`X-XSRF-TOKEN` header with the `XSRF-TOKEN` cookie and nothing else. Any equal
-pair passed, including one the gateway never issued and one issued to another
-session, so the check rested on nobody else being able to write a cookie for the
-gateway's host. The requirement's own wording is "the anti-forgery token it
-issued to that session"; this change makes the implementation say that too.
+act on an ambient session`) used `csrf.spa()`, which keeps the token in a
+cookie. The requirement's own wording is "the anti-forgery token it issued to
+that session"; this change keeps the token in the session, so the
+implementation says that too.
 
 Separately, an unauthenticated request to the web chain was answered `401` and
-also left a new server session behind (the request cache saved it), so every
-anonymous probe wrote a row to the session store.
+also left a new server session behind (the request cache saved it).
 
 ## What Changes
 

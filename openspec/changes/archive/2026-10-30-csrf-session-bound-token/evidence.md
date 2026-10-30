@@ -1,8 +1,11 @@
 # Evidence: csrf-session-bound-token
 
-Source state: `f9bacc36`, the last commit touching `src/` or `docs/`. The one
-later commit, `70ef5b96`, changes only this change's `mutants.sh`. Every result
-below is from one fresh run after that commit, on 2026-10-30.
+Source state: `6e2cc931`, the last commit touching `src/` or `docs/`, on
+`main` at `b1155dfa`. The later commits change only this change's `mutants.sh`
+and planning files. Every result below is from one fresh run on that rebased
+tree, on 2026-10-30. The same gates had passed before the rebase (as
+`f9bacc36` on `f33acd20`); the rebase conflicted only where both sides appended
+to `requirements.yml`, and both entries were kept.
 
 Tier 3 (authentication, the web chain's trust boundary). Spec approval: not
 obtained, autonomous run (the owner asked for implementation without a review
@@ -24,13 +27,13 @@ stop). Independent verification: not performed. Both are declared downgrades.
 
 | Layer | Command | Result |
 |---|---|---|
-| Java suite, Spotless, Checkstyle, SBOM, UI gate, jar | `./mvnw clean verify` | `Tests run: 1187, Failures: 0, Errors: 0, Skipped: 9` · UI `Test Files 31 passed (31)` · `Tests 234 passed (234)` · `BUILD SUCCESS` · `Total time: 17:10 min` |
-| Storybook story tests | `(cd src/main/frontend && pnpm test:stories)` | `Test Files 21 passed (21)` · `Tests 111 passed (111)`, on the second run; the first hit the known harness flake (`Failed to fetch dynamically imported module`), cleared by deleting `node_modules/.cache/storybook` and `node_modules/.vite` |
-| e2e (real sign-in against the mock IdP, approvals, sign-out) | `(cd src/main/frontend && pnpm e2e)` | `27 passed (1.9m)` |
-| Requirements traceability | `reqstool status local -p docs/reqstool` | exit 0 · requirements `349 (100.00%)` verified · tests `1205` passed, `0` failed · SVCs missing tests `0` |
-| OpenSpec | `openspec validate --all --strict` | `Totals: 30 passed, 0 failed (30 items)` |
-| Docs | `mkdocs build --strict` | `Documentation built in 1.76 seconds` |
-| Mutation | `openspec/changes/csrf-session-bound-token/mutants.sh` | `9 mutants run, all killed` |
+| Java suite, Spotless, Checkstyle, SBOM, UI gate, jar | `./mvnw clean verify` | `Tests run: 1191, Failures: 0, Errors: 0, Skipped: 9` · UI `Test Files 31 passed (31)` · `Tests 234 passed (234)` · `BUILD SUCCESS` · `Total time: 14:11 min` |
+| Storybook story tests | `(cd src/main/frontend && pnpm test:stories)` | `Test Files 21 passed (21)` · `Tests 111 passed (111)`, after deleting `node_modules/.cache/storybook` and `node_modules/.vite` (before the rebase two runs hit the known harness flake, `Failed to fetch dynamically imported module`) |
+| e2e (real sign-in against the mock IdP, approvals, sign-out) | `(cd src/main/frontend && pnpm e2e)` | `27 passed (2.0m)` |
+| Requirements traceability | `reqstool status local -p docs/reqstool` | exit 0 · requirements `350 (100.00%)` verified · tests `1209` passed, `0` failed · SVCs missing tests `0` |
+| OpenSpec | `openspec validate --all --strict` | `Totals: 29 passed, 0 failed (29 items)` |
+| Docs | `mkdocs build --strict` | `Documentation built in 2.16 seconds` |
+| Mutation | `openspec/changes/archive/2026-10-30-csrf-session-bound-token/mutants.sh` | `9 mutants run, all killed` |
 | Mutation runner negative control | `ONLY=M99 mutants.sh` | `no mutant selected`, exit 5 |
 | Real execution, escape hatch | the jar with `SKILLSGATEWAY_DEVINSECUREAUTH=true` against a throwaway PostgreSQL, driven with `curl` | see below |
 | Supply chain | no dependency added or changed | — |
@@ -57,7 +60,8 @@ apply exactly once`). Both anchors were fixed and the full run repeated.
 
 The development branch of the web chain (D4) has no automated test, because a
 dev-hatch context over real HTTP would be another Spring test context
-(`ContextBudgetTests`). It was run instead, on the jar built from `f9bacc36`:
+(`ContextBudgetTests`). It was run instead, on the jar built from `f9bacc36`,
+before the rebase; the rebase changed nothing under `src/main/java/…/auth`:
 
 ```
 sessions after health probes: 0
