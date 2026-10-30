@@ -1,7 +1,8 @@
 # Evidence: connect-client-credential-step
 
-Source state: `7e551d78` (tree `136bd9a7`), on top of `origin/main` `1cf15a45`. Every gate result below is from one fresh run after the
-last code edit, on 2026-10-30.
+Source state: `37a57755` (tree `f0546184`), on top of `origin/main` `1cf15a45`.
+Every gate result below is from one fresh run after the last code edit, on
+2026-10-30.
 
 ## The commands, run by hand on a clean client
 
@@ -41,6 +42,28 @@ Cloning into 'clean-demo'...
 clone exit=0
 ```
 
+**Adding the marketplace to Claude Code (2.1.314), same kind of clean client**,
+after the two credential lines with a second throwaway token (revoked after):
+
+```
+$ claude plugin marketplace add http://localhost:8080/git/clean-demo
+Technical details: Request failed with status code 401
+exit=1
+$ claude plugin marketplace add http://localhost:8080/git/clean-demo.git
+Cloning repository (timeout: 120s): http://localhost:8080/git/clean-demo.git
+Clone complete, validating marketplace…
+✔ Successfully added marketplace: clean-demo (declared in user settings)
+exit=0
+$ claude plugin marketplace list
+  ❯ clean-demo
+    Source: Git (http://localhost:8080/git/clean-demo.git)
+```
+
+Without the suffix Claude Code downloads the URL as a marketplace file over
+plain HTTP, never asking git's credential helper; with it, it clones a git
+remote and the stored credential applies. The wizard now composes the second
+form.
+
 **Scoped to this gateway only:** `git config --get-urlmatch credential.helper`
 answers `store` for `http://localhost:8080/git/x` and nothing (exit 1) for
 `https://github.com/x` and for `http://localhost:9090/x`.
@@ -71,28 +94,25 @@ because zsh gives it another meaning.
 
 | Scenario | Test | Seen failing first |
 |---|---|---|
-| SVC_GW_AUTH_0068 | e2e `the_wizard_commands_store_the_credential_and_clone_on_a_clean_client` | new e2e; the before run above is the failure it guards |
+| SVC_GW_AUTH_0068 | e2e `the_wizard_commands_store_the_credential_and_clone_on_a_clean_client`: also clones the marketplace-add URL (which must end in `.git`) with the stored credential | new e2e; the before run above is the failure it guards |
 | SVC_GW_AUTH_0069 | `setup-wizard.test.tsx` `the_credential_command_names_the_store_helper_for_this_origin_only_and_reads_the_token_at_a_prompt`, `a_minted_token_is_shown_in_its_own_field_and_in_no_command` | yes |
 | SVC_GW_AUTH_0070 | `the_token_step_says_the_token_is_not_limited_to_this_marketplace`, `the_ledger_statement_covers_served_fetches_and_not_refused_requests` | yes |
-| SVC_GW_AUTH_0014 (revised) | e2e `setup_wizard_composes_origin_derived_commands_and_holds_show_once` reads the token from its field instead of parsing it from the command; same show-once and no-redisplay assertions | n/a |
+| SVC_GW_AUTH_0014 (revised) | e2e `setup_wizard_composes_origin_derived_commands_and_holds_show_once` reads the token from its field instead of parsing it from the command, with the same show-once and no-redisplay assertions; its exact marketplace-add text now carries `.git` | n/a |
 
 ## Gates
 
 | Gate | Command | Result |
 |---|---|---|
-| Java suite, Spotless, Checkstyle, SBOM, UI gate, jar | `./mvnw clean verify` | `Tests run: 1175, Failures: 0, Errors: 0, Skipped: 9` · UI `Test Files 31 passed (31)` · `Tests 238 passed (238)` · `BUILD SUCCESS` · `Total time: 17:23 min` (shared machine, two other suites running) |
-| Storybook story tests | `(cd src/main/frontend && pnpm test:stories)` | `Test Files 21 passed (21)` · `Tests 112 passed (112)` |
+| Java suite, Spotless, Checkstyle, SBOM, UI gate, jar | `./mvnw clean verify` | `Tests run: 1175, Failures: 0, Errors: 0, Skipped: 9` · UI `Test Files 31 passed (31)` · `Tests 238 passed (238)` · `BUILD SUCCESS` · `Total time: 14:39 min` |
+| Storybook story tests | `(cd src/main/frontend && pnpm test:stories)` | `Test Files 21 passed (21)` · `Tests 112 passed (112)` on the second run; the first hit the known harness flake (5 files failed to load, 82/82 tests passed) and passed after clearing `node_modules/.cache/storybook` and `.vite` |
 | e2e | `(cd src/main/frontend && pnpm e2e)` | `28 passed (2.1m)`, including `the_wizard_commands_store_the_credential_and_clone_on_a_clean_client` and `setup_wizard_composes_origin_derived_commands_and_holds_show_once` |
-| Requirements traceability | `reqstool status local -p docs/reqstool` | exit 0 · `REQUIREMENTS: 369` · 1198 passed, 0 failed, 0 skipped · 0 SVCs missing tests · GW_AUTH_0062 3/3, GW_AUTH_0063 2/2 |
+| Requirements traceability | `reqstool status local -p docs/reqstool` | exit 0 · `REQUIREMENTS: 369` · 1198 passed, 0 failed, 0 skipped · 0 SVCs missing tests · GW_AUTH_0014 1/1, GW_AUTH_0062 3/3, GW_AUTH_0063 2/2 |
 | OpenSpec | `openspec validate --all --strict` | `Totals: 30 passed, 0 failed (30 items)` |
-| Docs | `mkdocs build --strict` | `Documentation built in 2.18 seconds` |
+| Docs | `mkdocs build --strict` | `Documentation built in 1.65 seconds` |
 | Supply chain | no dependency added or changed | — |
 
 ## Known limits
 
-- The marketplace-add command the wizard composes,
-  `claude plugin marketplace add {origin}/git/{name}`, is outside this change.
-  Run by hand on the same clean client after the credential step, Claude Code
-  2.1.314 treated the URL as a marketplace file to download and answered
-  `HTTP 401`; with a `.git` suffix (which the facade accepts) it cloned through
-  git, used the stored credential and added the marketplace.
+- `architecture.md` still shows the design-era example
+  `claude plugin marketplace add https://skills.corp.example/m/approved`, which
+  names no facade path; it is left as written.
