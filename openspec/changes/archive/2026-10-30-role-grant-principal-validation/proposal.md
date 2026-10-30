@@ -32,8 +32,9 @@ what was written differ from what is matched:
   configured mapping claim value with surrounding whitespace or such characters
   refuses startup instead of being trimmed.
 - New `SVC_GW_AUTH_0063` … `SVC_GW_AUTH_0067`.
-- Two existing `SVC_GW_AUTH_0015.1` assertions that expected a padded claim
-  value to match are tightened to expect no role. That SVC's own text already
+- Two existing assertions that expected a padded claim value to match are
+  tightened to expect no role (`SVC_GW_AUTH_0015.1` — Claim-derived roles
+  compose, scope correctly, and never widen past an exact match). That SVC's own text already
   lists whitespace near-misses as conferring nothing.
 - Not **BREAKING** for the API contract: the 422 response already exists and
   only its description widens. A deployment whose provider pads group names
@@ -47,7 +48,9 @@ None.
 
 ### Modified Capabilities
 
-- `admin-roles`: adds `GW_AUTH_0060` and `GW_AUTH_0061`.
+- `admin-roles`: adds `GW_AUTH_0060` — A role grant names its principal exactly
+  as a session presents it, and `GW_AUTH_0061` — Claim values are matched as
+  the identity provider delivers them.
 
 ## Impact
 

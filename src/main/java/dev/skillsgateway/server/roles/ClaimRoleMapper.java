@@ -26,9 +26,9 @@ import org.springframework.stereotype.Component;
  * with other services the values are the organisation's, not the gateway's.
  *
  * <p>Two rules carry the trust boundary. The match is exact on the value as delivered, untrimmed,
- * so a mapping can never widen who is privileged by resembling something. And claims are read only from an {@link
- * OidcUser}: a personal access token, the {@code dev-insecure-auth} principal and an anonymous
- * request have no claims and derive nothing, whatever authorities they carry.
+ * so a mapping can never widen who is privileged by resembling something. And claims are read
+ * only from an {@link OidcUser}: a personal access token, the {@code dev-insecure-auth} principal
+ * and an anonymous request have no claims and derive nothing, whatever authorities they carry.
  *
  * <p>The mapping table is validated at construction, so a deployment with a malformed mapping
  * refuses to start rather than silently conferring nothing.

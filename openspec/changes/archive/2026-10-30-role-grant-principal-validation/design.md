@@ -86,7 +86,8 @@ known to be malformed.
 Token values are compared exactly. The lone string is kept as a one-element
 list, as today: providers emit a single-valued claim as a string (a group
 mapper configured single-valued, a federation service with one group), and
-`SVC_GW_AUTH_0015.1` already relies on it. It still must match exactly, and a
+`SVC_GW_AUTH_0015.1` — Claim-derived roles compose, scope correctly, and never
+widen past an exact match — already relies on it. It still must match exactly, and a
 delimited string is still never split. Any other type (number, boolean, object,
 null) grants nothing, as today; the randomized sweep keeps proving it.
 
@@ -100,7 +101,8 @@ padding inside it, which can only be a mistake.
 `ClaimRoleMappingTests.claim_values_that_only_resemble_a_mapping_grant_nothing`
 asserted a padded value is granted, and the sweep's oracle in
 `ClaimRoleMapperTests` trimmed. Both now expect the exact behaviour. This
-tightens them: `SVC_GW_AUTH_0015.1` lists whitespace near-misses among the
+tightens them: `SVC_GW_AUTH_0015.1` — Claim-derived roles compose, scope
+correctly, and never widen past an exact match — lists whitespace near-misses among the
 values that confer nothing.
 
 ## Failure model (Tier 3, authorization)

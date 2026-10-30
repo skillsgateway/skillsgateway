@@ -9,7 +9,7 @@
 
 - [x] 2.1 `RolePrincipalsTests` (SVC_GW_AUTH_0065): named cases plus a seeded
   randomized sweep against an independent oracle. Watch it fail against a stub.
-- [x] 2.2 `RoleGrantPrincipalTests` (SVC_GW_AUTH_0063): the API refuses each
+- [x] 2.2 `RoleEnforcementTests` (SVC_GW_AUTH_0063): the API refuses each
   malformed principal with 422, stores and ledgers nothing, and does not echo
   it; well-formed principals including the 255 boundary are granted. Watch the
   refusals fail first.
