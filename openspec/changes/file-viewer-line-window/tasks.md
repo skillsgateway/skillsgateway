@@ -2,7 +2,7 @@
 
 ## 1. Requirements (reqstool)
 
-- [ ] 1.1 Add GW_APPROVAL_0036, SVC_GW_APPROVAL_0037, SVC_GW_APPROVAL_0038 and SVC_GW_APPROVAL_0039 in `docs/reqstool/`; verify with `reqstool status local -p docs/reqstool`.
+- [x] 1.1 Add GW_APPROVAL_0036, SVC_GW_APPROVAL_0037, SVC_GW_APPROVAL_0038 and SVC_GW_APPROVAL_0039 in `docs/reqstool/`; verify with `reqstool status local -p docs/reqstool`.
 
 ## 2. API window (SVC_GW_APPROVAL_0037, SVC_GW_APPROVAL_0038)
 
@@ -21,4 +21,4 @@
 
 ## 5. Gates and evidence
 
-- [ ] 5.1 Every AGENTS.md gate fresh, recorded in `evidence.md`; before/after screenshots for the PR body.
+- [x] 5.1 Every AGENTS.md gate fresh, recorded in `evidence.md`; before/after screenshots for the PR body.
