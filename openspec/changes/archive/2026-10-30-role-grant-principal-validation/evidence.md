@@ -1,8 +1,14 @@
 # Evidence: role-grant-principal-validation
 
-Source state: `723b93de`. Every result below is from one fresh run after the
-last code edit, on 2026-10-30. This report and the archive commit change no
-code.
+Source state: `a5c085d4` (rebased onto main after review fixes). Every gate
+result below is from one fresh run on that commit, after the last code edit,
+on 2026-10-30. This report changes no code.
+
+The first run was on `723b93de` before the rebase; the review that followed
+changed no production behaviour (test characters written as escapes, a shared
+test helper, a reflowed comment), so the RED-run and mutation history below
+still holds. Mutants M6–M11, whose test file changed, were rerun on
+`a5c085d4`.
 
 Tier 3 (authorization). Spec approval: not obtained (autonomous run; the
 owner asked for implementation). Independent verification: not performed.
@@ -36,14 +42,14 @@ No assertion was loosened and no test was removed.
 
 | Layer | Command | Result |
 | --- | --- | --- |
-| Java suite, Spotless, Checkstyle, UI gate, SBOM, jar | `./mvnw clean verify` | `Tests run: 1183, Failures: 0, Errors: 0, Skipped: 9` · `BUILD SUCCESS` · `Total time: 09:45 min` |
+| Java suite, Spotless, Checkstyle, UI gate, SBOM, jar | `./mvnw clean verify` | `Tests run: 1187, Failures: 0, Errors: 0, Skipped: 9` · `BUILD SUCCESS` · `Total time: 08:35 min` |
 | Storybook story tests | `(cd src/main/frontend && pnpm test:stories)` | `Test Files 21 passed (21)` · `Tests 111 passed (111)` |
-| e2e | `(cd src/main/frontend && pnpm e2e)` | `27 passed (1.8m)` |
-| Requirements traceability | `reqstool status local -p docs/reqstool` | exit 0; `1205` passed, `0` failed, `0` SVCs missing tests; GW_AUTH_0060 and GW_AUTH_0061 each `12 12` |
-| OpenSpec | `openspec validate --all --strict` | `Totals: 30 passed, 0 failed (30 items)` |
-| Docs | `mkdocs build --strict` | `Documentation built in 1.78 seconds` |
+| e2e | `(cd src/main/frontend && pnpm e2e)` | `27 passed (2.0m)` |
+| Requirements traceability | `reqstool status local -p docs/reqstool` | exit 0; `1209` passed, `0` failed, `0` SVCs missing tests; GW_AUTH_0060 and GW_AUTH_0061 each `12 12` |
+| OpenSpec | `openspec validate --all --strict` | `Totals: 29 passed, 0 failed (29 items)` |
+| Docs | `mkdocs build --strict` | `Documentation built in 2.58 seconds` |
 | API contract | `OpenApiContractTests` (in verify) | passes with the regenerated `openapi.json`; only two descriptions changed |
-| Mutation | `openspec/changes/archive/2026-10-30-role-grant-principal-validation/mutants.sh` (run in two halves with `ONLY`) | `12 mutants run, all killed` |
+| Mutation | `openspec/changes/archive/2026-10-30-role-grant-principal-validation/mutants.sh` (run in two halves with `ONLY`) | `12 mutants run, all killed`; rerun `ONLY='M6\|M7\|M8\|M9\|M10\|M11'` on `a5c085d4`: `6 mutants run, all killed` |
 | Mutation runner negative control | `ONLY=M99 mutants.sh` | `no mutant selected`, exit 5 |
 | Property-style | seeded sweeps in `RolePrincipalsTests` (20 000 strings incl. adjacent lone surrogates that pair) and `ClaimRoleMapperTests` (2 000 payloads) | pass |
 | Supply chain | no dependency added or changed | — |
