@@ -2857,6 +2857,16 @@ requirements:
     categories: ["security"]
     revision: 0.5.0
 
+  - id: GW_APPROVAL_0036
+    title: A finding's line is readable in a file larger than the preview cap
+    significance: shall
+    description: "The system shall, when a file read names a line of a text file larger than the fixed size limit, return at most that limit of the file's text starting at a line boundary and containing the named line, together with the number of the first line returned, and shall return the head with first line 1 when no line is named, when the file is within the limit, or when the named line lies past the end of the file; shall answer a blank path with a bad request; and the portal shall number a file's lines from that first line and let a reviewer follow a finding whose line lies outside the part shown to the part that holds it."
+    rationale: "A reviewer decides a finding by reading its line. A file read that only ever returned the head left findings deep in a large file unreadable, so the reviewer waived or accepted them blind; the cap that protects the reviewer's browser stays, and only where it applies moves."
+    references:
+      requirement_ids: ["GW_INGEST_0015", "GW_APPROVAL_0029"]
+    categories: ["functional-suitability", "usability"]
+    revision: 0.5.0
+
   - id: GW_INGEST_0045
     title: The snapshot inventory lists every component a plugin declares
     significance: shall

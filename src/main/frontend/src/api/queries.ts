@@ -638,15 +638,23 @@ export type SnapshotFileContent = components["schemas"]["FileContent"];
 export type SnapshotDiff = components["schemas"]["SnapshotDiff"];
 export type SnapshotDiffEntry = components["schemas"]["DiffEntryView"];
 
-/** One blob of the pinned commit, as inert text (or metadata only, for a binary blob). */
-export function useSnapshotFile(snapshotId: number | null, path: string | null) {
+/**
+ * One blob of the pinned commit, as inert text (or metadata only, for a binary blob). Naming a
+ * line asks a blob over the size limit for the part that holds it (GW_APPROVAL_0036); the part
+ * shown stays on screen while the next one loads.
+ */
+export function useSnapshotFile(snapshotId: number | null, path: string | null, line: number | null = null) {
   return useQuery({
-    queryKey: ["snapshot-file", snapshotId, path],
+    queryKey: ["snapshot-file", snapshotId, path, line],
     queryFn: () =>
       api<SnapshotFileContent>(
-        `/api/v1/snapshots/${snapshotId}/file?path=${encodeURIComponent(path ?? "")}`,
+        `/api/v1/snapshots/${snapshotId}/file?path=${encodeURIComponent(path ?? "")}${
+          line === null ? "" : `&line=${line}`
+        }`,
       ),
     enabled: snapshotId !== null && path !== null,
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[2] === path ? previous : undefined,
   });
 }
 

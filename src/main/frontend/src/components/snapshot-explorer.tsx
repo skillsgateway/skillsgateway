@@ -88,10 +88,12 @@ const SOURCE_VIEWS = {
  */
 function FileFindings({
   findings,
+  firstLine,
   lineCount,
   onLine,
 }: {
   findings: readonly FileFinding[];
+  firstLine: number;
   lineCount: number;
   onLine: (line: number) => void;
 }) {
@@ -102,17 +104,15 @@ function FileFindings({
       </p>
       <ul className="space-y-1 text-xs">
         {findings.map((finding, index) => {
-          const reachable = finding.line !== null && finding.line >= 1 && finding.line <= lineCount;
+          // A line outside the part shown is still followed: that loads the part holding it.
+          const located = finding.line !== null && finding.line >= 1;
+          const shown = located && finding.line! >= firstLine && finding.line! < firstLine + lineCount;
           const label = `${finding.severity} · ${finding.ruleId} · ${
-            finding.line === null || finding.line < 1
-              ? "no line"
-              : reachable
-                ? `line ${finding.line}`
-                : `line ${finding.line}, beyond the part shown`
+            !located ? "no line" : shown ? `line ${finding.line}` : `line ${finding.line}, beyond the part shown`
           }`;
           return (
             <li key={`${index}:${finding.location}:${finding.ruleId}`} className="flex flex-wrap items-baseline gap-x-2">
-              {reachable ? (
+              {located ? (
                 <Button
                   variant="link"
                   size="xs"
@@ -155,7 +155,10 @@ function FileContent({
   focus: LineFocus;
   onLine: (line: number) => void;
 }) {
-  const file = useSnapshotFile(snapshotId, path);
+  // The line whose part of a large file is asked for: the addressed line, then each line followed
+  // outside the part shown (GW_APPROVAL_0036). A file within the limit is whole whatever is asked.
+  const [part, setPart] = useState<number | null>(focus.line);
+  const file = useSnapshotFile(snapshotId, path, part);
   const kind = path.endsWith(".md") ? "md" : path.endsWith(".json") ? "json" : null;
   // Markdown and JSON open as they read; following a finding to a line opens the numbered source,
   // because that is where the line is marked. Keyed by path, so a new file chooses afresh.
@@ -181,19 +184,25 @@ function FileContent({
   }
   const text = content.text ?? "";
   const lineCount = text.split(/\r?\n/).length - (text.endsWith("\n") ? 1 : 0);
+  const firstLine = content.firstLine ?? 1;
   const source = kind === null || view === "source";
   const toLine = (line: number) => {
     setView("source");
+    if (content.truncated && (line < firstLine || line >= firstLine + lineCount)) setPart(line);
     onLine(line);
   };
   return (
     <div className="space-y-2">
       {content.truncated ? (
         <p className="text-xs text-muted-foreground">
-          Truncated: showing the first part of {content.size} bytes.
+          {firstLine === 1
+            ? `Truncated: showing the first part of ${content.size} bytes.`
+            : `Truncated: showing lines ${firstLine}–${firstLine + lineCount - 1} of ${content.size} bytes.`}
         </p>
       ) : null}
-      {findings.length > 0 ? <FileFindings findings={findings} lineCount={lineCount} onLine={toLine} /> : null}
+      {findings.length > 0 ? (
+        <FileFindings findings={findings} firstLine={firstLine} lineCount={lineCount} onLine={toLine} />
+      ) : null}
       {kind !== null && findings.length > 0 ? (
         <SegmentedGroup
           label="File view"
@@ -209,6 +218,7 @@ function FileContent({
           text={text}
           findings={findings}
           truncated={content.truncated === true}
+          firstLine={firstLine}
           focusLine={focus.line}
           focusKey={focus.seq}
         />
@@ -444,7 +454,7 @@ function countLine(
  * Inspection, not execution: Markdown is rendered without an HTML pipeline, binary blobs are
  * described, and every bound the reads impose — a page of a listing, a truncated blob — is stated.
  *
- * @Requirements GW_INGEST_0032, GW_INGEST_0015, GW_INGEST_0016, GW_APPROVAL_0025, GW_APPROVAL_0026, GW_APPROVAL_0027
+ * @Requirements GW_INGEST_0032, GW_INGEST_0015, GW_INGEST_0016, GW_APPROVAL_0025, GW_APPROVAL_0026, GW_APPROVAL_0027, GW_APPROVAL_0036
  */
 export function SnapshotExplorer({
   snapshotId,

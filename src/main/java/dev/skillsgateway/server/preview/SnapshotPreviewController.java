@@ -96,15 +96,27 @@ public class SnapshotPreviewController {
             description = "One blob addressed strictly within the pinned commit's tree — a path the tree does"
                     + " not contain, traversal shapes included, is not found. Text is returned for rendering"
                     + " only, cut at 128 KiB with an explicit truncation marker; a blob detected as binary"
-                    + " returns metadata without text. Privileged.")
+                    + " returns metadata without text. line names a line to show: for a blob over the cap the"
+                    + " 128 KiB returned start at a line boundary before it and hold it, and firstLine numbers"
+                    + " the first line returned. Privileged.")
     @ApiResponse(responseCode = "200", description = "Blob metadata, and its text unless binary")
+    @ApiResponse(responseCode = "400", description = "A blank path, or a line below 1")
     @ApiResponse(responseCode = "403", description = "The session holds no applicable role")
     @ApiResponse(responseCode = "404", description = "Snapshot not found, or the path is not in the pinned tree")
     public SnapshotPreviewService.FileContent file(
-            @PathVariable long id, @RequestParam String path, Authentication authentication) {
+            @PathVariable long id,
+            @RequestParam String path,
+            @RequestParam(required = false) Integer line,
+            Authentication authentication) {
         roleService.requireApproverOfSnapshot(authentication, id);
+        if (path.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "path must not be blank");
+        }
+        if (line != null && line < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "line must be 1 or more");
+        }
         return previewService
-                .file(id, path)
+                .file(id, path, line)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "no such path in snapshot %d: %s".formatted(id, path)));
     }

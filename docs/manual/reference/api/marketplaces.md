@@ -598,17 +598,25 @@ snapshot.
 
 ### `GET /snapshots/{id}/file?path={path}`
 
+Query: `path`, and `line` (optional, 1 or more).
+
 One blob, as text for rendering only. Content is cut at 128 KiB with
 `"truncated": true` and the full `size` still reported; a blob detected as
 binary returns metadata with no `text` at all.
 
+`line` asks for the part of a large blob that holds that line. For a blob over
+the cap, the 128 KiB returned start at a line boundary up to 64 KiB before that
+line, and `firstLine` numbers the first line returned. Without `line`, for a blob
+within the cap, or for a line past the end, the response is the head and
+`firstLine` is 1.
+
 ```json
 {"snapshotId":42,"path":"plugins/acme-tools/skills/deploy/SKILL.md",
- "size":841,"binary":false,"truncated":false,"text":"# Deploy\n..."}
+ "size":841,"binary":false,"truncated":false,"firstLine":1,"text":"# Deploy\n..."}
 ```
 
-**200** · **403** no applicable role · **404** unknown
-snapshot, or the path is not in the pinned tree.
+**200** · **400** a blank `path`, or a `line` below 1 · **403** no applicable role ·
+**404** unknown snapshot, or the path is not in the pinned tree.
 
 ### `GET /snapshots/{id}/diff`
 

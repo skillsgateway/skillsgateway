@@ -62,6 +62,32 @@ test("a_finding_beyond_a_truncated_file_is_listed_and_described", async () => {
 });
 
 /**
+ * @SVCs SVC_GW_APPROVAL_0039
+ */
+test("following_a_finding_past_the_part_shown_loads_the_part_that_holds_its_line", async () => {
+  const user = userEvent.setup();
+  const { container } = renderExplorer("data/huge.txt");
+
+  const summary = await (await pane()).findByRole("region", { name: "Findings in this file" });
+  await user.click(within(summary).getByRole("button", { name: /runtime-dependency · line 40, beyond the part shown/ }));
+
+  // The part holding line 40 replaces the head, numbered from its own first line.
+  const line40 = await waitForLine(container, 40);
+  expect(line40).toHaveAttribute("data-severity", "medium");
+  expect(container.querySelector('[data-line="38"]')).not.toBeNull();
+  expect(container.querySelector('[data-line="1"]')).toBeNull();
+  expect(await (await pane()).findByText(/showing lines 38–41 of 900000 bytes/i)).toBeInTheDocument();
+  expect(document.activeElement).toBe(line40);
+});
+
+/** The numbered line once the file part holding it has loaded. */
+async function waitForLine(container: HTMLElement, line: number) {
+  return await screen.findByText(`line ${line} of the large file`).then(
+    () => container.querySelector<HTMLElement>(`[data-line="${line}"]`)!,
+  );
+}
+
+/**
  * @SVCs SVC_GW_APPROVAL_0029
  */
 test("a_markdown_file_without_findings_keeps_its_rendered_view", async () => {

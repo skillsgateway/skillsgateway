@@ -822,7 +822,9 @@ is.
 - **Above the file**, "N findings in this file" lists each finding with its
   severity, rule, line, vetter and message. An entry with a line moves to that
   line. A finding whose location has no line, or whose line is beyond the part
-  of a truncated file that is shown, is listed there too.
+  of a truncated file that is shown, is listed there too. Following one beyond
+  the part shown loads the part of the file that holds its line, numbered from
+  that part's first line: "Truncated: showing lines 1789–4210 of 346255 bytes".
 - **In the file**, a file is shown as numbered lines. Each line a finding
   locates is tinted by its highest severity, and **each finding on it is
   written out beneath the line**: severity, vetter, rule and message, and
@@ -856,7 +858,7 @@ Every bound of these reads is a state this page renders on purpose:
 | No approver role | "You cannot read this snapshot's contents.", naming the role needed |
 | Snapshot is not this marketplace's | "Snapshot N is not a snapshot of X." |
 | A `.json` file that does not tokenise as JSON | "Not valid JSON — shown as stored.", with the stored bytes |
-| A finding's line beyond a truncated blob | Listed above the file, and written out below it as "Line N is beyond the part shown" |
+| A finding's line beyond a truncated blob | Listed above the file, and written out below it as "Line N is beyond the part shown"; following it loads the part that holds the line |
 
 The tree keeps one width whatever file is open; a long line scrolls inside the
 file pane rather than taking width from the tree.

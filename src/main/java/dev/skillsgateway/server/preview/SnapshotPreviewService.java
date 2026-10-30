@@ -8,14 +8,17 @@ import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.storage.GitStorage;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -195,6 +198,11 @@ public class SnapshotPreviewService {
 
             @Schema(description = "True when the text was cut at the per-file size limit")
             boolean truncated,
+
+            @Schema(
+                    description = "Number of the first line of text: 1, unless a line was named in a"
+                            + " file over the size limit and the part holding it starts later")
+            int firstLine,
 
             @Schema(description = "Blob content as UTF-8 text, or null for a binary blob")
             String text) {}
@@ -456,8 +464,8 @@ public class SnapshotPreviewService {
      * — a path the tree does not contain, which includes every traversal shape, is absent, and
      * absent answers not-found.
      */
-    @Requirements({"GW_INGEST_0015"})
-    public Optional<FileContent> file(long snapshotId, String path) {
+    @Requirements({"GW_INGEST_0015", "GW_APPROVAL_0036"})
+    public Optional<FileContent> file(long snapshotId, String path, Integer line) {
         Resolved resolved = resolve(snapshotId);
         try (Repository repo = storage.quarantine(resolved.marketplace().name());
                 RevWalk walk = new RevWalk(repo)) {
@@ -467,7 +475,7 @@ public class SnapshotPreviewService {
                 if (tree == null) {
                     return Optional.empty();
                 }
-                return Optional.of(read(repo, resolved.snapshot().id(), path, tree.getObjectId(0)));
+                return Optional.of(read(repo, resolved.snapshot().id(), path, tree.getObjectId(0), line));
             }
         } catch (IOException e) {
             throw new UncheckedIOException("cannot read %s of snapshot %d".formatted(path, snapshotId), e);
@@ -650,7 +658,7 @@ public class SnapshotPreviewService {
         }
     }
 
-    private static FileContent read(Repository repo, long snapshotId, String path, ObjectId objectId)
+    private static FileContent read(Repository repo, long snapshotId, String path, ObjectId objectId, Integer line)
             throws IOException {
         ObjectLoader loader = repo.open(objectId, Constants.OBJ_BLOB);
         long size = loader.getSize();
@@ -660,9 +668,49 @@ public class SnapshotPreviewService {
         }
         boolean complete = size <= head.length;
         if (RawText.isBinary(head, head.length, complete)) {
-            return new FileContent(snapshotId, path, size, true, false, null);
+            return new FileContent(snapshotId, path, size, true, false, 1, null);
         }
-        return new FileContent(snapshotId, path, size, false, !complete, new String(head, StandardCharsets.UTF_8));
+        LineStart start = complete || line == null ? null : windowStart(loader, line);
+        if (start != null && start.offset() > 0) {
+            byte[] window;
+            try (InputStream in = loader.openStream()) {
+                in.skipNBytes(start.offset());
+                window = in.readNBytes(MAX_TEXT_BYTES);
+            }
+            return new FileContent(
+                    snapshotId, path, size, false, true, start.line(), new String(window, StandardCharsets.UTF_8));
+        }
+        return new FileContent(snapshotId, path, size, false, !complete, 1, new String(head, StandardCharsets.UTF_8));
+    }
+
+    private record LineStart(int line, long offset) {}
+
+    /**
+     * Where the part of a large blob that holds {@code line} starts (GW_APPROVAL_0036): the earliest
+     * line start at most half the size limit before that line's own start, so the line has context
+     * above it and room below. Null when the blob has fewer lines. Only line starts that could still
+     * be that start are kept, so memory stays bounded by the half-limit, not by the blob.
+     */
+    @Requirements({"GW_APPROVAL_0036"})
+    private static LineStart windowStart(ObjectLoader loader, int line) throws IOException {
+        Deque<LineStart> kept = new ArrayDeque<>();
+        kept.addLast(new LineStart(1, 0));
+        int current = 1;
+        long offset = 0;
+        try (InputStream in = new BufferedInputStream(loader.openStream())) {
+            int b;
+            while (current < line && (b = in.read()) != -1) {
+                offset++;
+                if (b == '\n') {
+                    current++;
+                    kept.addLast(new LineStart(current, offset));
+                    while (kept.getFirst().offset() < offset - MAX_TEXT_BYTES / 2) {
+                        kept.removeFirst();
+                    }
+                }
+            }
+        }
+        return current < line ? null : kept.getFirst();
     }
 
     /** The served tip: {@code refs/heads/main} of the published repository, or null when nothing serves. */

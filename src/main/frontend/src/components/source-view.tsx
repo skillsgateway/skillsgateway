@@ -50,13 +50,14 @@ function Note({ id, finding, prefix }: { id: string; finding: FileFinding; prefi
  * Each line is focusable (`tabIndex=-1`) and described by its findings, so moving to a line from
  * the file's summary or from an addressed link reads what was found there.
  *
- * @Requirements GW_APPROVAL_0029, GW_APPROVAL_0030
+ * @Requirements GW_APPROVAL_0029, GW_APPROVAL_0030, GW_APPROVAL_0036
  */
 export function SourceView({
   path,
   text,
   findings,
   truncated = false,
+  firstLine = 1,
   focusLine = null,
   focusKey = 0,
 }: {
@@ -64,6 +65,8 @@ export function SourceView({
   text: string;
   findings: readonly FileFinding[];
   truncated?: boolean;
+  /** The number of the text's first line: above 1 for a part of a large file (GW_APPROVAL_0036). */
+  firstLine?: number;
   focusLine?: number | null;
   /** Changes when the same line is asked for again, so it is focused again. */
   focusKey?: number;
@@ -76,7 +79,10 @@ export function SourceView({
     if (finding.line === null || finding.line < 1) continue;
     byLine.set(finding.line, [...(byLine.get(finding.line) ?? []), finding]);
   }
-  const beyond = findings.filter((finding) => finding.line !== null && finding.line > lines.length);
+  const last = firstLine + lines.length - 1;
+  const beyond = findings.filter(
+    (finding) => finding.line !== null && finding.line >= 1 && (finding.line < firstLine || finding.line > last),
+  );
   const refs = useRef(new Map<number, HTMLElement>());
 
   useEffect(() => {
@@ -94,7 +100,7 @@ export function SourceView({
         className="overflow-x-auto rounded-md border bg-muted/40 py-2 font-mono text-xs"
       >
         {lines.map((content, index) => {
-          const n = index + 1;
+          const n = firstLine + index;
           const onLine = byLine.get(n) ?? [];
           const severity = highestSeverity(onLine);
           const noteIds = onLine.map((_, i) => `${id}-L${n}-${i}`);
