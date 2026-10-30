@@ -65,6 +65,16 @@ run() { # id test-class expected-method file old new
 
 I=SessionBoundCsrfTests
 U=SessionBoundCsrfTokenRepositoryTests
+
+# A kill means something only against a green baseline: the unmutated tests must pass first.
+if [[ -z "${DRY:-}" ]]; then
+  mkdir -p target
+  ./mvnw -q -o -Dskip.ui.verify=true -Dskip.installnodepnpm -Dskip.pnpm -Djacoco.skip=true \
+      -Dspotless.check.skip=true -Dcheckstyle.skip=true \
+      -Dtest="$I,$U,SessionCookieTests" -Dsurefire.failIfNoSpecifiedTests=false test > target/mutant-baseline.log 2>&1 \
+    || { echo "baseline: tests fail unmutated (see target/mutant-baseline.log)"; exit 6; }
+  echo "baseline green"
+fi
 run M1-cookie-read-as-token $I the_portal_flow_is_accepted_and_a_pair_the_session_was_never_issued_is_refused "$RP" \
   'return session.loadToken(request);' 'var c = WebUtils.getCookie(request, COOKIE_NAME); return c != null ? new org.springframework.security.web.csrf.DefaultCsrfToken("X-XSRF-TOKEN", "_csrf", c.getValue()) : session.loadToken(request);'
 run M2-cookie-repository-back $I a_token_issued_to_one_session_is_refused_on_another "$SC" \

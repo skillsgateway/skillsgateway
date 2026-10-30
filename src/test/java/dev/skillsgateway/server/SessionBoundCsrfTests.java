@@ -126,9 +126,13 @@ class SessionBoundCsrfTests {
                                 .header("Accept", accept)
                                 .GET(),
                         Map.of());
+                // Another chain's 401 renders through /error, which sends a browser to sign in instead.
                 assertThat(response.statusCode())
                         .as("%s, Accept: %s", path, accept)
-                        .isEqualTo(401);
+                        .isIn(
+                                accept.equals("text/html") && !path.startsWith("/api/")
+                                        ? List.of(401, 302)
+                                        : List.of(401));
                 assertThat(sessionCookies(response))
                         .as("%s, Accept: %s, sets no session cookie", path, accept)
                         .isEmpty();
