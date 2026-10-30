@@ -101,7 +101,7 @@ extra:
 nav:
   - Home: index.md
   - Tutorials:
-      - Try it locally: guides/local-development.md
+      - Try it out: guides/try-it-out.md
   - How-to guides:
       - Deploy and operate:
           - Deploying on Kubernetes: guides/deploying-on-kubernetes.md
@@ -134,6 +134,7 @@ nav:
           - Consuming approved skills: guides/consuming-skills.md
           - The virtual catalog: guides/virtual-catalog.md
       - Maintain the project:
+          - Local development: guides/local-development.md
           - Cutting a release: guides/releasing.md
   - Reference:
       - Configuration: reference/configuration.md

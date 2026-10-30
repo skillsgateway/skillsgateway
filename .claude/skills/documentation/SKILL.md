@@ -59,7 +59,7 @@ one page.
 
 | Type | The reader's need | Test | Here |
 | --- | --- | --- | --- |
-| **Tutorial** | Learning — a guided first success, for someone who does not yet know what they want | Could a newcomer follow it start to finish and have something working? | `guides/local-development.md` |
+| **Tutorial** | Learning — a guided first success, for someone who does not yet know what they want | Could a newcomer follow it start to finish and have something working? | `guides/try-it-out.md` |
 | **How-to guide** | A goal — solving one problem, for someone who already knows what they want | Does it name a task in its title and finish it? | Most of `guides/` |
 | **Reference** | Facts — describing the machinery, consulted not read | Is it exhaustive, lookup-shaped, and boring on purpose? | `reference/`, the capability map, the glossary |
 | **Explanation** | Understanding — why it is like this | Does it discuss and give context rather than instruct? | `architecture.md`, `concepts/` |
@@ -67,7 +67,8 @@ one page.
 The distinction that is easiest to get wrong is **tutorial versus how-to**. A
 tutorial is for someone learning; it makes choices for them and does not
 enumerate alternatives. A how-to is for someone working; it assumes competence
-and may branch. "Try it locally" is the one tutorial, and it must stay one.
+and may branch. "Try it out" is the one tutorial, and it must stay one.
+`guides/local-development.md` is the contributor's how-to.
 
 The `How-to guides` section is grouped by topic — *Deploy and operate*, *Govern
 the estate*, *Consume skills*, *Maintain the project*. That grouping is inside
