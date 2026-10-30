@@ -29,7 +29,7 @@ export const Serving: Story = {
     const body = within(canvasElement.ownerDocument.body);
     await expect(await body.findByRole("button", { name: "Copy credential command" })).toBeVisible();
     // The credential step configures a helper and reads the token at a prompt: no token in it.
-    await expect(body.getByTestId("wizard-credential-config")).toHaveTextContent(".helper store");
+    await expect(body.getByTestId("wizard-credential-config")).toHaveTextContent(".helper' store");
     await expect(body.getByTestId("wizard-credential-config")).toHaveTextContent("read -rs SGW_TOKEN");
     await expect(body.getByTestId("wizard-token-reach")).toHaveTextContent(
       "not limited to 'corp-marketplace'",
