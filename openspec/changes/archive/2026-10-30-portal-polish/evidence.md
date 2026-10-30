@@ -1,7 +1,7 @@
 # Evidence: portal-polish
 
-One fresh run of every AGENTS.md gate after the last code edit, at commit `94786737`
-(branch `fix/portal-polish`).
+One fresh run of every AGENTS.md gate after the last code edit, at commit `bd9878af`
+(branch `fix/portal-polish`, after the review fixes; the first run was at `94786737`).
 
 ## Fails first
 
@@ -19,26 +19,39 @@ pass every_other_client_and_every_machine_surface_keeps_its_problem_document    
 
 With the change restored all five pass.
 
+## Review fixes, failing first
+
+Each new or extended test was run against the code before its fix:
+
+```text
+FAIL BrowserPagesTests.every_other_client_and_every_machine_surface_keeps_its_problem_document
+     (/%61pi/v1/no-such-thing: Content type [text/html;charset=UTF-8] is not compatible with [application/problem+json])
+FAIL review-queue.test  ordering_by_marketplace_keeps_each_marketplace_newest_first_both_ways
+FAIL app-layout-address.test  an_address_that_does_not_decode_still_names_its_tab  (URIError: URI malformed)
+FAIL marketplace-detail.test  an_empty_snapshot_parameter_is_not_reported_missing  ("Snapshot  was not found")
+FAIL tokens.test  a_refused_lifetime_is_stated_beside_the_choice_until_another_is_chosen
+```
+
+All pass with the fixes.
+
 ## Gates
 
 ```text
 $ ./mvnw clean verify
 [INFO] Tests run: 1184, Failures: 0, Errors: 0, Skipped: 9
 [INFO]  Test Files  33 passed (33)
-[INFO]       Tests  246 passed (246)
+[INFO]       Tests  250 passed (250)
 [INFO] BUILD SUCCESS
-[INFO] Total time:  07:28 min
+[INFO] Total time:  08:28 min
 
 $ (cd src/main/frontend && pnpm test:stories)
  Test Files  21 passed (21)
       Tests  111 passed (111)
-(the first two attempts hit the known "Failed to fetch dynamically imported module" harness flake
-while the e2e suite was running; cleared node_modules/.cache/storybook and .vite, then green)
 
 $ (cd src/main/frontend && pnpm e2e)
   ✓   8 [chromium] › e2e/portal.spec.ts:389:1 › an_unknown_address_opened_cold_shows_page_not_found_inside_the_portal
   ✓   9 [chromium] › e2e/portal.spec.ts:404:1 › a_deep_link_returns_from_sign_in_without_the_marker_and_names_its_tab
-  29 passed (1.8m)
+  29 passed (2.0m)
 
 $ reqstool status local -p docs/reqstool
                 Total Tests: 1110                              Total SVCs: 387
@@ -48,10 +61,10 @@ GW_AUTH_0067 3 SVCs 5/5 · GW_AUTH_0068 2/2 · GW_AUTH_0069 3/3 · GW_AUTH_0070 
 exit 0
 
 $ openspec validate --all --strict
-Totals: 30 passed, 0 failed (30 items)
+Totals: 29 passed, 0 failed (29 items)
 
 $ mkdocs build --strict
-INFO    -  Documentation built in 1.55 seconds
+INFO    -  Documentation built in 2.00 seconds
 ```
 
 ## Impeccable harden (touched pages)
