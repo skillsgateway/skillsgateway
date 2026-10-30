@@ -338,7 +338,7 @@ function DecisionRow({ snapshot, others }: { snapshot: Snapshot; others: readonl
  */
 function DecisionNeedsRole({ marketplace }: { marketplace: string | null }) {
   return (
-    <p className="border-t pt-4 text-xs text-muted-foreground" data-testid="snapshot-decision">
+    <p className="border-t pt-4 text-xs break-words text-muted-foreground" data-testid="snapshot-decision">
       {marketplace
         ? `Approving or rejecting a snapshot of ${marketplace} needs the approver role for it.`
         : "Approving or rejecting this snapshot needs the approver role for its marketplace."}

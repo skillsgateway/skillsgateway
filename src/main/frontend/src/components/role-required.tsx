@@ -35,8 +35,8 @@ export function RoleRequired({
       <Card>
         <CardContent className="flex items-start gap-3 py-6">
           <ShieldAlert className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
-          <div className="space-y-1">
-            <p role="alert" className="text-sm font-medium">
+          <div className="min-w-0 space-y-1">
+            <p role="alert" className="text-sm font-medium break-words">
               This {title ? "page" : "section"} needs {roleName(role)}.
             </p>
             <p className="text-sm text-muted-foreground">
