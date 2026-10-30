@@ -13,13 +13,13 @@
 
 ## 3. Portal
 
-- [ ] 3.1 Catch-all route and not-found page; e2e cold load of an unknown address (`@SVCs SVC_GW_AUTH_0080`).
-- [ ] 3.2 Tab title hook and `continue` stripping in the shell (`@Requirements GW_AUTH_0069`, test `@SVCs SVC_GW_AUTH_0082`).
-- [ ] 3.3 Unknown snapshot stated on Review and Snapshots (`@Requirements GW_AUTH_0069`, test `@SVCs SVC_GW_AUTH_0083`).
-- [ ] 3.4 Shared lifetimes; tokens page lifetime choice and Expires column (`@Requirements GW_AUTH_0070`, test `@SVCs SVC_GW_AUTH_0084`).
-- [ ] 3.5 Review queue waiting time, finding count, sorting (`@SVCs SVC_GW_INGEST_0037`).
-- [ ] 3.6 Overflow: inventory description, audit principal, Adoption path; vetting step names whole; tests.
-- [ ] 3.7 Accessibility: skip link, `aria-sort`, webhook checkbox names; tests.
+- [x] 3.1 Catch-all route and not-found page; e2e cold load of an unknown address (`@SVCs SVC_GW_AUTH_0080`).
+- [x] 3.2 Tab title hook and `continue` stripping in the shell (`@Requirements GW_AUTH_0069`, test `@SVCs SVC_GW_AUTH_0082`).
+- [x] 3.3 Unknown snapshot stated on Review and Snapshots (`@Requirements GW_AUTH_0069`, test `@SVCs SVC_GW_AUTH_0083`).
+- [x] 3.4 Shared lifetimes; tokens page lifetime choice and Expires column (`@Requirements GW_AUTH_0070`, test `@SVCs SVC_GW_AUTH_0084`).
+- [x] 3.5 Review queue waiting time, finding count, sorting (`@SVCs SVC_GW_INGEST_0037`).
+- [x] 3.6 Overflow: inventory description, audit principal, Adoption path; vetting step names whole; tests.
+- [x] 3.7 Accessibility: skip link, `aria-sort`, webhook checkbox names; tests.
 
 ## 4. Documentation
 

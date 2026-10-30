@@ -8,6 +8,7 @@ import {
   type IssuedToken,
   type TokenView,
 } from "@/api/queries";
+import { SegmentedGroup } from "@/components/segmented-group";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DEFAULT_LIFETIME, expiryFor, LIFETIMES, type Lifetime } from "@/lib/token-lifetimes";
 
 export function IssuedTokenDialog({ issued, onClose }: { issued: IssuedToken; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
@@ -74,15 +76,21 @@ export function IssuedTokenDialog({ issued, onClose }: { issued: IssuedToken; on
   );
 }
 
+/** An expiry in the past: the server no longer accepts the token, though it is still listed. */
+function expired(token: TokenView): boolean {
+  return token.expiresAt !== undefined && token.expiresAt !== null && Date.parse(token.expiresAt) <= Date.now();
+}
+
 /**
  * The token list. Presentational: it renders what it is given and reports a revocation upwards,
  * so both states of the Last used column can be seen in a story without a server.
  *
  * "Last used" is relative because the question it answers is recency, and the exact instant stays
  * one hover away. "never" rather than the em dash used elsewhere: a credential nothing has
- * authenticated with is a fact worth reading, not an absent value.
+ * authenticated with is a fact worth reading, not an absent value — and the same for a token that
+ * never expires.
  *
- * @Requirements GW_AUTH_0031
+ * @Requirements GW_AUTH_0031, GW_AUTH_0070
  */
 export function TokenTable({
   tokens,
@@ -100,6 +108,7 @@ export function TokenTable({
           <TableHead>Name</TableHead>
           <TableHead>Created</TableHead>
           <TableHead>Last used</TableHead>
+          <TableHead>Expires</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -118,7 +127,20 @@ export function TokenTable({
               />
             </TableCell>
             <TableCell>
-              {token.revokedAt ? <Badge variant="destructive">revoked</Badge> : <Badge>active</Badge>}
+              <Timestamp
+                value={token.expiresAt}
+                absent="never"
+                className={token.expiresAt ? undefined : "text-muted-foreground"}
+              />
+            </TableCell>
+            <TableCell>
+              {token.revokedAt ? (
+                <Badge variant="destructive">revoked</Badge>
+              ) : expired(token) ? (
+                <Badge variant="secondary">expired</Badge>
+              ) : (
+                <Badge>active</Badge>
+              )}
             </TableCell>
             <TableCell className="text-right">
               {!token.revokedAt ? (
@@ -141,15 +163,16 @@ export function TokenTable({
 }
 
 /**
- * Personal access token self-service: create with show-once cleartext, revoke.
+ * Personal access token self-service: create with a chosen lifetime and show-once cleartext, revoke.
  *
- * @Requirements GW_AUTH_0005
+ * @Requirements GW_AUTH_0005, GW_AUTH_0070
  */
 export function TokensPage() {
   const tokens = useTokens();
   const create = useCreateToken();
   const revoke = useRevokeToken();
   const [name, setName] = useState("");
+  const [lifetime, setLifetime] = useState<Lifetime>(DEFAULT_LIFETIME);
   const [issued, setIssued] = useState<IssuedToken | null>(null);
 
   // The server stores the name verbatim (NOT NULL, no further constraint), so the only
@@ -163,7 +186,7 @@ export function TokensPage() {
       toast.error("Token name is required");
       return;
     }
-    create.mutate(trimmedName, {
+    create.mutate({ name: trimmedName, expiresAt: expiryFor(lifetime) }, {
       onSuccess: (token) => {
         setIssued(token);
         setName("");
@@ -182,7 +205,7 @@ export function TokensPage() {
         </p>
       </div>
       <form onSubmit={onCreate} className="space-y-2">
-        <div className="flex items-end gap-3">
+        <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-2">
             <Label htmlFor="token-name">Token name</Label>
             <Input
@@ -194,13 +217,28 @@ export function TokensPage() {
               aria-describedby="token-name-hint"
             />
           </div>
+          <SegmentedGroup
+            label="Expires"
+            value={lifetime}
+            options={LIFETIMES}
+            onChange={setLifetime}
+            describedBy="token-name-hint"
+          />
           <Button type="submit" disabled={!canCreate}>
             {create.isPending ? "Creating…" : "Create token"}
           </Button>
         </div>
         <p id="token-name-hint" className="text-xs text-muted-foreground">
-          A name is required — it identifies the token in this list.
+          A name is required — it identifies the token in this list. The lifetime defaults to 30
+          days; this gateway may cap it lower, in which case a longer choice is refused.
         </p>
+        {create.isError ? (
+          // The server's lifetime cap is the one rule this form cannot mirror, so its refusal stays
+          // beside the choice rather than only in a toast.
+          <p role="alert" className="text-xs text-destructive">
+            {create.error.message}
+          </p>
+        ) : null}
       </form>
       {tokens.isLoading ? <p>Loading…</p> : null}
       {tokens.isError ? (

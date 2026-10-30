@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router-dom";
 import { expect, test } from "vitest";
@@ -66,4 +67,80 @@ test("a_queue_that_cannot_be_read_is_an_error", async () => {
   server.use(http.get("/api/v1/marketplaces", () => HttpResponse.json({ detail: "boom" }, { status: 500 })));
   renderPage();
   expect(await screen.findByRole("alert")).toBeInTheDocument();
+});
+
+/**
+ * The queue says how long each snapshot has waited and how many findings its vetting run recorded,
+ * and the reader orders it by waiting time or by marketplace; the headers say which order is in force.
+ *
+ * @SVCs SVC_GW_INGEST_0037
+ */
+test("the_queue_shows_waiting_and_findings_and_orders_by_either_column", async () => {
+  server.use(
+    http.get("/api/v1/marketplaces", () =>
+      HttpResponse.json([
+        {
+          id: 1,
+          name: "zeta",
+          url: "https://example.com/zeta.git",
+          snapshots: [{ ...heldSnapshot, id: 11, marketplaceId: 1, sha: "a".repeat(40), createdAt: "2026-09-03T00:00:00Z" }],
+        },
+        {
+          id: 2,
+          name: "alpha",
+          url: "https://example.com/alpha.git",
+          snapshots: [{ ...heldSnapshot, id: 22, marketplaceId: 2, sha: "b".repeat(40), createdAt: "2026-09-01T00:00:00Z" }],
+        },
+      ]),
+    ),
+    http.get("/api/v1/snapshots/:id/vetting", ({ params }) => {
+      const findings = params.id === "11" ? 3 : 0;
+      return HttpResponse.json({
+        snapshotId: Number(params.id),
+        outcome: findings > 0 ? "blocked" : "clear",
+        run: {
+          runId: 1,
+          verdicts: [
+            {
+              vetter: "secret-scan",
+              state: findings > 0 ? "fail" : "pass",
+              findings: Array.from({ length: findings }, (_, i) => ({ rule: "r", severity: "high", message: "m", location: `f:${i}` })),
+            },
+          ],
+        },
+      });
+    }),
+  );
+  const user = userEvent.setup();
+  renderPage();
+  const table = await screen.findByRole("table");
+  const names = () =>
+    within(table)
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => within(row).getAllByRole("link")[0]!.textContent);
+
+  // Newest first by default, and the ingestion column says so.
+  expect(names()).toEqual(["zeta", "alpha"]);
+  const ingested = screen.getByRole("columnheader", { name: "Ingested" });
+  expect(ingested).toHaveAttribute("aria-sort", "descending");
+  expect(screen.getByRole("columnheader", { name: "Marketplace" })).toHaveAttribute("aria-sort", "none");
+
+  // Finding counts, read from each snapshot's run; waiting time is relative, the instant a hover away.
+  const [zeta, alpha] = within(table).getAllByRole("row").slice(1);
+  await waitFor(() => expect(within(zeta!).getByText("3")).toBeInTheDocument());
+  await waitFor(() => expect(within(alpha!).getByText("0")).toBeInTheDocument());
+  const stamp = within(zeta!).getByTitle(/2026-09-03T00:00:00Z/);
+  expect(stamp.textContent).toMatch(/ago/);
+
+  // Oldest first: what has waited longest leads.
+  await user.click(within(ingested).getByRole("button", { name: "Ingested" }));
+  expect(names()).toEqual(["alpha", "zeta"]);
+  expect(ingested).toHaveAttribute("aria-sort", "ascending");
+
+  await user.click(screen.getByRole("button", { name: "Marketplace" }));
+  expect(names()).toEqual(["alpha", "zeta"]);
+  expect(screen.getByRole("columnheader", { name: "Marketplace" })).toHaveAttribute("aria-sort", "ascending");
+  await user.click(screen.getByRole("button", { name: "Marketplace" }));
+  expect(names()).toEqual(["zeta", "alpha"]);
 });

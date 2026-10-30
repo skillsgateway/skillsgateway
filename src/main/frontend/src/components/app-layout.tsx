@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { signOut } from "@/api/client";
 import { useAwaitingDecision, useIsAdmin, useMe, type EffectiveRole, type MeView } from "@/api/queries";
 import { isDecidable } from "@/lib/snapshot-roles";
+import { pageTitle, useDocumentTitle, useStripSignInMarker } from "@/lib/page-address";
 
 type NavItem = {
   to: string;
@@ -480,15 +481,24 @@ function GatewayVersion() {
  * Portal shell: grouped sidebar navigation, breadcrumb top bar, and the signed-in user's
  * menu — identity, roles, theme, personal tokens and sign out.
  *
- * @Requirements GW_INGEST_0007, GW_AUTH_0044, GW_AUTH_0048
+ * @Requirements GW_INGEST_0007, GW_AUTH_0044, GW_AUTH_0048, GW_AUTH_0069
  */
 export function AppLayout() {
   const location = useLocation();
+  const matches = useMatches();
+  // A route may name its own title (the catch-all does); otherwise the address decides (GW_AUTH_0069).
+  const routeTitle = matches
+    .map((match) => (match.handle as { title?: string } | undefined)?.title)
+    .findLast((title) => title !== undefined);
+  useDocumentTitle(
+    routeTitle ? pageTitle("", routeTitle) : pageTitle(location.pathname, breadcrumb(location.pathname)),
+  );
+  useStripSignInMarker();
   // A route asks for the whole viewport by declaring it, rather than the shell recognising
   // paths: a workspace whose panes own their scroll cannot live inside the reading column.
   // Only from lg up — below that there is no room for two panes side by side, so the page
   // scrolls like every other one rather than clipping itself into a phone-sized viewport.
-  const layouts = useMatches().map(
+  const layouts = matches.map(
     (match) => (match.handle as { layout?: string } | undefined)?.layout,
   );
   const wide = layouts.includes("wide");
@@ -509,6 +519,13 @@ export function AppLayout() {
         wide ? "min-h-screen lg:h-screen lg:overflow-hidden" : "min-h-screen",
       )}
     >
+      {/* The first stop for a keyboard: past the navigation to the page itself. */}
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-md bg-background px-3 py-2 text-sm font-medium shadow focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:ring-3 focus:ring-ring/50"
+      >
+        Skip to content
+      </a>
       <aside className="flex w-60 shrink-0 flex-col border-r bg-sidebar lg:min-h-0 lg:overflow-y-auto">
         <div className="flex items-center gap-2 px-4 py-4 font-semibold">
           <BrandMark className="size-5" />
@@ -578,8 +595,10 @@ export function AppLayout() {
           <UserMenu />
         </header>
         <main
+          id="main"
+          tabIndex={-1}
           className={cn(
-            "w-full flex-1 px-6 py-8",
+            "w-full flex-1 px-6 py-8 focus:outline-none",
             wide ? "lg:min-h-0 lg:overflow-hidden" : full ? "mx-auto max-w-[1600px]" : "mx-auto max-w-6xl",
           )}
         >

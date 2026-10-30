@@ -128,7 +128,8 @@ export const issuedToken: Schemas["IssuedToken"] = {
 
 /**
  * Two tokens, because the Last used column has exactly two shapes worth seeing: one a client
- * authenticated with recently, and one that has never authenticated at all.
+ * authenticated with recently, and one that has never authenticated at all. The Expires column's
+ * two live shapes ride along the other way round: the first never expires, the second does.
  */
 export const tokenViews: Schemas["TokenView"][] = [
   {
@@ -147,6 +148,7 @@ export const tokenViews: Schemas["TokenView"][] = [
     id: 8,
     name: "spare-laptop",
     createdAt: "2026-08-14T10:00:00Z",
+    expiresAt: "2099-09-13T10:00:00Z",
     scopes: [],
     pushScopes: [],
     sessionDerived: false,

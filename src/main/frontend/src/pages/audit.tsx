@@ -27,6 +27,7 @@ import {
 import { AuditStatusBadge, auditRowClass } from "@/components/audit-status";
 import { LoadOlderEntries } from "@/components/load-older-entries";
 import { Timestamp } from "@/components/timestamp";
+import { ariaSort } from "@/lib/aria-sort";
 import { auditStatus } from "@/lib/audit-status";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,6 +155,7 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
         header: "Status",
         accessorFn: (row) => auditStatus(row),
         enableColumnFilter: false,
+        enableSorting: false,
         cell: ({ row }) => <AuditStatusBadge status={auditStatus(row.original)} />,
       },
       {
@@ -197,7 +199,12 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
         ),
         accessorFn: (row) => cell(row.principal),
         filterFn: includesString,
-        cell: ({ getValue }) => <span className="text-xs">{getValue<string>()}</span>,
+        // An identity provider decides how long a principal is; a long one is cut here, whole on hover.
+        cell: ({ getValue }) => (
+          <span className="block max-w-56 truncate text-xs" title={getValue<string>()}>
+            {getValue<string>()}
+          </span>
+        ),
       },
       {
         id: "marketplace",
@@ -232,6 +239,7 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
         header: "Commit",
         accessorFn: (row) => cell(row.sha),
         filterFn: includesString,
+        enableSorting: false,
         cell: ({ getValue }) => {
           const value = getValue<string>();
           return (
@@ -248,7 +256,9 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
         enableColumnFilter: false,
         enableSorting: false,
         cell: ({ getValue }) => (
-          <span className="text-xs whitespace-normal break-words text-muted-foreground">{getValue<string>()}</span>
+          <span className="block min-w-48 text-xs whitespace-normal wrap-anywhere text-muted-foreground">
+            {getValue<string>()}
+          </span>
         ),
       },
     ],
@@ -306,7 +316,10 @@ function LedgerTable({ rows }: { rows: AuditRow[] }) {
             {table.getHeaderGroups().map((group) => (
               <TableRow key={group.id}>
                 {group.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    aria-sort={header.column.getCanSort() ? ariaSort(header.column.getIsSorted()) : undefined}
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
