@@ -23,19 +23,28 @@ closing line says every fetch is recorded on the ledger when a refused request
   in its own show-once field to paste at the prompt. The step says the `store`
   helper keeps the token in plaintext and that an OS keychain helper is the
   alternative.
+- The marketplace-add command becomes
+  `claude plugin marketplace add {origin}/git/{name}.git`. Without the suffix
+  Claude Code downloads the URL as a marketplace file over plain HTTP, with no
+  credential, and is answered `401`; with it, Claude Code clones it as a git
+  remote through the stored credential. The facade already serves both forms.
+  `GW_AUTH_0014` says the command addresses the facade clone path as a git
+  remote.
 - New `GW_AUTH_0063 — The client wizard states what a token reaches and what
   the ledger records`. The token step says the token is not limited to the
   marketplace the wizard was opened from; the closing line says served fetches
   are recorded, and that refused requests are not.
 - Modified `GW_AUTH_0014 — Client setup wizard`: the minted cleartext is shown
   in the wizard only while it is open, rather than substituted into the
-  command snippets. The show-once and never-redisplay obligations are
+  command snippets, and the marketplace-add command addresses the facade clone
+  path as a git remote. The show-once and never-redisplay obligations are
   unchanged.
 - New `SVC_GW_AUTH_0068` (e2e: the wizard's own commands, run in a shell with
   an empty `HOME` and no prompt, store the credential and clone the approved
   marketplace), `SVC_GW_AUTH_0069` (unit: command composition and the token
   field), `SVC_GW_AUTH_0070` (unit: the reach and ledger statements).
-- Docs: `guides/consuming-skills.md`, `reference/portal.md`, and every page
+- Docs: `guides/consuming-skills.md`, `reference/portal.md`,
+  `guides/virtual-catalog.md`, `guides/client-enforcement.md`, and every page
   that claims every fetch is recorded.
 - Not **BREAKING**: a portal copy and command change; no API or configuration
   changes.

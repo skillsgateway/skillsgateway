@@ -233,9 +233,14 @@ to named marketplaces, create a scoped token through the API.
 === "Claude Code"
 
     ```console
-    $ claude plugin marketplace add https://skills.corp.example/git/acme
+    $ claude plugin marketplace add https://skills.corp.example/git/acme.git
     $ claude plugin install acme-tools
     ```
+
+    Keep the `.git` suffix. It is what makes Claude Code clone the URL as a
+    git remote, through the credential stored in step 3. Without it the URL is
+    downloaded as a marketplace file over plain HTTP, with no credential, and
+    answered `401`. The facade serves `/git/acme` and `/git/acme.git` alike.
 
 === "Copilot / Cursor"
 

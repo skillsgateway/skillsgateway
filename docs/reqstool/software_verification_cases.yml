@@ -4574,8 +4574,8 @@ cases:
     verification: automated-test
     description: |
       GIVEN an approved marketplace, a token minted in its client set-up wizard, and a shell with an empty home directory, no system git configuration and terminal prompts disabled
-      WHEN the wizard's clone command is run, then the wizard's credential command is run exactly as shown with the token entered at its prompt, and then the clone command is run again
-      THEN the first clone fails for want of a credential, the credential command succeeds, the second clone succeeds, and neither command's text contains the token
+      WHEN the wizard's clone command is run, then the wizard's credential command is run exactly as shown with the token entered at its prompt, and then the clone command is run again and the URL of the wizard's marketplace-add command is cloned
+      THEN the first clone fails for want of a credential, the credential command succeeds, the second clone and the clone of the marketplace-add URL succeed, the marketplace-add URL ends in .git, and no command's text contains the token
     revision: "0.5.0"
 
   - id: SVC_GW_AUTH_0069

@@ -18,15 +18,21 @@
 - [x] 2.4 e2e: SVC_GW_AUTH_0014 reads the token from its field; new
   SVC_GW_AUTH_0068 runs the wizard's commands in a shell with an empty `HOME`
   and clones the approved marketplace.
+- [x] 2.5 Marketplace-add command ends in `.git`; SVC_GW_AUTH_0014 and the
+  unit test assert the exact `.git` form; SVC_GW_AUTH_0068 clones the
+  marketplace-add URL with the stored credential.
 
 ## 3. Documentation
 
 - [x] 3.1 `guides/consuming-skills.md` and `reference/portal.md`; correct
   every "every fetch is recorded" claim in the portal and `docs/manual/`.
   Verify with `mkdocs build --strict`.
+- [x] 3.2 The `.git` form in `guides/consuming-skills.md`,
+  `guides/virtual-catalog.md`, `guides/client-enforcement.md` and
+  `reference/portal.md`.
 
 ## 4. Gates and evidence
 
 - [x] 4.1 Manual run of the exact commands against a running gateway with an
   empty `HOME`, recorded in `evidence.md`.
-- [x] 4.2 Every AGENTS.md gate fresh, recorded in `evidence.md`.
+- [ ] 4.2 Every AGENTS.md gate fresh, recorded in `evidence.md`.

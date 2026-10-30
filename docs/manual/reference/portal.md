@@ -585,7 +585,10 @@ Inside the wizard:
    copy control is the same corner icon button the other snippets use, so the
    three read as one family.
 3. **Add the marketplace to Claude Code** —
-   `claude plugin marketplace add {origin}/git/{name}`.
+   `claude plugin marketplace add {origin}/git/{name}.git`. The `.git` suffix
+   makes Claude Code treat the URL as a git remote, so the credential stored in
+   step 2 authenticates it; without the suffix it is fetched as a marketplace
+   file over plain HTTP and answered `401`.
 4. **Clone directly** — a plain `git clone` of the facade URL, with no token in it:
    the credential stored by step 2 authenticates it, and nothing lands in
    `.git/config` or shell history.

@@ -292,9 +292,11 @@ export function SetupWizard({
               Manager, libsecret), skip the first line and the token is stored there instead.
             </p>
           </div>
+          {/* The `.git` suffix is what makes Claude Code treat the URL as a git remote (and so use
+              the stored credential); without it the URL is fetched as a marketplace file. */}
           <Snippet
             title="2. Add the marketplace to Claude Code"
-            command={`claude plugin marketplace add ${cloneUrl}`}
+            command={`claude plugin marketplace add ${cloneUrl}.git`}
             copyLabel="Copy marketplace add command"
             testId="wizard-add-command"
           />

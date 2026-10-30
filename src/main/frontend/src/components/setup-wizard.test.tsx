@@ -38,7 +38,7 @@ test("commands_are_composed_from_the_browsing_origin_and_the_facade_path", async
   await user.click(screen.getByRole("button", { name: "Connect a client" }));
   const origin = window.location.origin;
   expect(await screen.findByTestId("wizard-add-command")).toHaveTextContent(
-    `claude plugin marketplace add ${origin}/git/corp-marketplace`,
+    `claude plugin marketplace add ${origin}/git/corp-marketplace.git`,
   );
   expect(screen.getByTestId("wizard-credential-config")).toHaveTextContent(window.location.host);
   expect(screen.getByTestId("wizard-clone-command")).toHaveTextContent("/git/corp-marketplace");

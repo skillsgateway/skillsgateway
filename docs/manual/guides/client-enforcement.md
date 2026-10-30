@@ -34,7 +34,7 @@ A minimal managed-settings fragment pointing a fleet at the gateway:
 ```json
 {
   "strictKnownMarketplaces": [
-    "https://skills.example.corp/git/catalog"
+    "https://skills.example.corp/git/catalog.git"
   ]
 }
 ```

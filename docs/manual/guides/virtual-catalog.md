@@ -6,7 +6,7 @@ currently approved-and-served snapshot of every marketplace, so a consumer runs
 one `claude plugin marketplace add` instead of one per marketplace.
 
 ```console
-$ claude plugin marketplace add https://skills.corp.example/git/catalog
+$ claude plugin marketplace add https://skills.corp.example/git/catalog.git
 $ claude plugin install acme-tools-deploy   # <marketplace>-<plugin>
 ```
 

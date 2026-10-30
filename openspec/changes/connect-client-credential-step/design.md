@@ -17,7 +17,7 @@ and no shell history.
 
 **Non-Goals:** Windows `cmd`/PowerShell variants (the existing snippet was
 already POSIX); scoping the wizard's token to one marketplace; recording refused
-facade requests on the ledger; the marketplace-add command's URL form.
+facade requests on the ledger.
 
 ## Decisions
 
@@ -54,6 +54,13 @@ assertions.
 unscoped. Scoping it to the marketplace would break the reader's second
 marketplace: git keeps one credential per gateway, so the second wizard run
 would replace the first token. The token step says so.
+
+**The marketplace-add URL carries `.git`.** Claude Code decides from the URL
+whether it names a git remote or a marketplace file: a URL without the suffix is
+downloaded over plain HTTP, never consults git's credential helpers, and is
+answered `401`. With the suffix it is cloned by git, so the stored credential
+applies. The facade already strips a trailing `.git` from the name. The clone
+command keeps the bare form, which git handles either way.
 
 ## Risks / Trade-offs
 

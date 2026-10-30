@@ -1020,7 +1020,7 @@ test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async 
   await page.getByRole("button", { name: "Connect a client" }).click();
   const origin = new URL(page.url()).origin;
   await expect(page.getByTestId("wizard-add-command")).toHaveText(
-    `claude plugin marketplace add ${origin}/git/${name}`,
+    `claude plugin marketplace add ${origin}/git/${name}.git`,
   );
   await expect(page.getByTestId("wizard-credential-config")).toContainText(new URL(origin).host);
   // No token yet, so nothing to show; the commands never carry one (they read it at a prompt).
@@ -1075,8 +1075,10 @@ test("the_wizard_commands_store_the_credential_and_clone_on_a_clean_client", asy
   expect(token).toMatch(/^sgw_/);
   const credential = (await page.getByTestId("wizard-credential-config").textContent()) ?? "";
   const clone = (await page.getByTestId("wizard-clone-command").textContent()) ?? "";
+  const add = (await page.getByTestId("wizard-add-command").textContent()) ?? "";
   expect(credential).not.toContain(token);
   expect(clone).not.toContain(token);
+  expect(add).not.toContain(token);
 
   const home = mkdtempSync(join(tmpdir(), "e2e-clean-client-"));
   const env = {
@@ -1102,6 +1104,13 @@ test("the_wizard_commands_store_the_credential_and_clone_on_a_clean_client", asy
   const cloned = run(clone);
   expect(cloned.status, cloned.stderr).toBe(0);
   expect(existsSync(join(home, name, ".git"))).toBe(true);
+
+  // The marketplace-add URL is the git remote Claude Code clones: the stored credential serves it.
+  const addUrl = add.split(" ").pop() ?? "";
+  expect(addUrl).toMatch(/\.git$/);
+  const viaAdd = run(`git clone --depth 1 ${addUrl} via-add`);
+  expect(viaAdd.status, viaAdd.stderr).toBe(0);
+  expect(existsSync(join(home, "via-add", ".git"))).toBe(true);
 });
 
 /**
