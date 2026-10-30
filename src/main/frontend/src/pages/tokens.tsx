@@ -47,7 +47,7 @@ export function IssuedTokenDialog({ issued, onClose }: { issued: IssuedToken; on
     <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Token '{issued.name}' created</DialogTitle>
+          <DialogTitle className="wrap-anywhere">Token '{issued.name}' created</DialogTitle>
           <DialogDescription>
             This value is shown exactly once — copy it now. Only a hash is stored.
           </DialogDescription>
@@ -116,7 +116,12 @@ export function TokenTable({
       <TableBody>
         {tokens.map((token) => (
           <TableRow key={token.id}>
-            <TableCell>{token.name}</TableCell>
+            <TableCell>
+              {/* The server stores the name verbatim, with no length limit; cut here, whole on hover. */}
+              <span className="block max-w-64 truncate" title={token.name}>
+                {token.name}
+              </span>
+            </TableCell>
             <TableCell><Timestamp value={token.createdAt} /></TableCell>
             <TableCell>
               <Timestamp

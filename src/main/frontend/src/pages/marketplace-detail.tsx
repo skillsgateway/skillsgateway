@@ -199,7 +199,7 @@ function MissingSnapshot({
   if (address.addressedParam === null || refreshing) return null;
   if (snapshots.some((s) => s.id === address.addressedId)) return null;
   return (
-    <p role="alert" className="text-sm break-words text-destructive">
+    <p role="alert" className="text-sm wrap-anywhere text-destructive">
       Snapshot {address.addressedParam} was not found in {marketplace}. The link may name a snapshot
       that was removed, or one of another marketplace.
     </p>

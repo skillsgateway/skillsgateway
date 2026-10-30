@@ -163,9 +163,16 @@ export function ReviewQueuePage() {
                     <FindingCount snapshotId={snapshot.id ?? 0} />
                   </TableCell>
                   {/* Relative, because the question is how long it has waited; the instant is on hover. */}
-                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                    <Timestamp value={snapshot.createdAt} relative />
-                    {snapshot.ingestedBy ? ` by ${snapshot.ingestedBy}` : ""}
+                  <TableCell className="text-xs text-muted-foreground">
+                    <span className="flex gap-1 whitespace-nowrap">
+                      <Timestamp value={snapshot.createdAt} relative />
+                      {snapshot.ingestedBy ? (
+                        // A principal is as long as its identity provider makes it; cut, whole on hover.
+                        <span className="max-w-48 truncate" title={snapshot.ingestedBy}>
+                          by {snapshot.ingestedBy}
+                        </span>
+                      ) : null}
+                    </span>
                   </TableCell>
                 </TableRow>
               ))}
