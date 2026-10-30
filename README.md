@@ -72,7 +72,7 @@ than every diff line.
 ## Documentation
 
 The user-facing documentation site (MkDocs Material, `docs/manual/`) is
-published to <https://skillsgateway.github.io/skillsgateway>: background and goals,
+published to <https://skillsgateway.dev>: background and goals,
 concepts (the quarantine → approve → serve lifecycle, snapshots and the audit
 ledger, trust boundaries), guides (local development, registering a marketplace,
 approving snapshots, consuming skills, webhooks, ledger export, retention), and

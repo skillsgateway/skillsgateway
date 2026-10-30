@@ -11,20 +11,27 @@ vendor's own documentation before deciding on it._
 
 ## LiteLLM Skills Gateway
 
-*Claims below read from the linked documentation on 2026-09-02.*
+*Claims below read from the linked documentation on 2026-10-30.*
 
 [LiteLLM's Skills Gateway](https://docs.litellm.ai/docs/skills_gateway) is a
-centralized **registry** for Claude Code skills: teams register a GitHub URL
-via API or UI, the system auto-detects the skill name (including nested
-subdirectories), an admin flips an *enable* endpoint, and the skill appears on
-an unauthenticated hub page and in a generated marketplace manifest that
-Claude Code clients add with `/plugin marketplace add`. Skills carry semver,
-descriptions, keywords, and a domain/namespace hierarchy.
+centralized **registry** for Claude Code skills. A proxy admin registers a
+skill by its source — a `github` repository, a `url`, a `git-subdir` (a path
+inside a git repository) or an `archive` (an HTTPS zip) — via API or UI, and
+the skill appears on an unauthenticated hub page and in a generated
+marketplace manifest that Claude Code clients add with
+`/plugin marketplace add`. The documentation is explicit that there is no
+approval step: "New skills are enabled as soon as they are registered."
+Disabled skills can instead be granted to individual keys or teams. Skills
+carry semver, descriptions, keywords, and a domain/namespace hierarchy.
 
 It solves the **discovery and distribution** half of the problem. It is a
-registry of *pointers*: the content authority remains the upstream repository,
-and "publishing" gates the visibility of a listing, not the bytes a client
-receives.
+registry of *pointers*: Claude Code fetches the source itself, on the
+developer's machine, so the content authority remains the upstream
+repository, and "publishing" gates the visibility of a listing, not the bytes
+a client receives. The one pinning mechanism is an optional `sha256` on
+`archive` sources, which the `auto_install` and `required` installation
+preferences require; git-hosted sources carry no pin. Neither scanning nor
+audit logging is described.
 
 ## agentgateway
 
@@ -64,26 +71,28 @@ registry](https://github.com/agentgateway/agentgateway/issues/3094), a
 maintainer replied that ["agentgateway is not really positioning itself as a
 registry"](https://github.com/agentgateway/agentgateway/issues/3094#issuecomment-5357819313)
 and pointed toward [aregistry.ai](https://aregistry.ai/) for that need
-instead.
+instead. The issue was closed as not planned on 2026-08-27.
 
 ## AWS Agent Registry
 
-*Claims below read from the linked documentation on 2026-09-02.*
+*Claims below read from the linked documentation on 2026-09-02; the
+namespace migration, approval configuration and event coverage re-read from
+the [migration guide](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/registry-faq.html)
+on 2026-10-30.*
 
 [AWS Agent Registry](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/registry.html)
 is a managed catalog for publishing and discovering MCP servers, agents,
 skills and custom resources across an organization.
 
-!!! warning "The namespace is moving"
+!!! warning "The namespace has moved"
 
-    As of 2026-09-02 the documentation carries a migration banner: the service
-    has launched under a new `agent-registry` namespace, and support for the
-    public-preview `bedrock-agentcore` namespace is stated to be discontinued
-    on **2026-09-17**. Some API names differ between the two
-    (`SearchRegistryRecords` became `SearchDiscoverableRegistryRecords`; the
-    `ListDiscoverableRegistryRecords` and `BatchGetDiscoverableRegistryRecord`
-    APIs exist only in the new namespace). The links on this page point at the
-    documentation as it stood on that date and may themselves move.
+    The service launched under a new `agent-registry` namespace on 2026-08-06,
+    and the migration guide states that the old `bedrock-agentcore` namespace
+    **shuts down on 2026-10-30**. The new namespace changes the data model as
+    well as the endpoints: `SearchRegistryRecords` became
+    `SearchDiscoverableRegistryRecords`, `ListDiscoverableRegistryRecords` and
+    `BatchGetDiscoverableRegistryRecord` are new, and a record's descriptors
+    were restructured. The links on this page may themselves move.
 
 A record has a
 [record type](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/registry-supported-record-types.html)
@@ -110,9 +119,13 @@ revision while the approved revision stays discoverable until the new one is
 approved — a genuinely careful piece of design, and the closest thing in this
 comparison to Skills Gateway's held updates. Discovery APIs and the per-registry
 MCP endpoint return only approved revisions; management APIs return the latest
-revision whatever its status. Submission raises an EventBridge event so an
+revision whatever its status. Every record state change — draft, pending
+approval, approved, rejected, deprecated — raises an EventBridge event, so an
 existing security or compliance pipeline can call `UpdateRegistryRecordStatus`
-to decide; administrators may also enable auto-approval outright. Inbound
+to decide; administrators may also turn approval off outright with the
+`APPROVE_ALL` value of `autoApprovalRules` (which replaced the boolean
+`autoApproval`). `SKILL` records cannot be auto-synchronized from their
+source. Inbound
 authorization for search and the MCP endpoint is IAM or JWT from a corporate
 IdP, while control-plane operations are always IAM.
 
@@ -140,7 +153,7 @@ consumption is documented — so who *changed* the catalog is recorded, while wh
 ## JFrog AI Catalog and Agent Skills Registry
 
 *Claims below read from the linked documentation and product pages on
-2026-09-02.*
+2026-09-02; the Skills Registry's own documentation read on 2026-10-30.*
 
 JFrog does not ship a product called "AI Registry". The governance product is
 the [JFrog AI Catalog](https://jfrog.com/ai-catalog/), within which the
@@ -181,14 +194,58 @@ precondition of the human decision rather than a replacement for it. What JFrog
 has and this does not is artifact signing, and scanning of the packaged formats
 Artifactory already holds.
 
-Two caveats. The public pages are marketing pages, and several claims — the
-exact approval state machine, what is audited, how remote-endpoint MCP servers
-(as opposed to packaged ones) are pinned — are not stated at the level of
-detail the AWS documentation offers; treat them as advertised rather than
-verified. And the Agent Skills Registry was announced in 2026 in partnership
-with NVIDIA; the architecture documentation lists the skills registry as a
-planned feature, and no GA date is stated on the pages read here. Confirm its
-current availability with JFrog before comparing it as a shipping product.
+The Skills Registry now has its own
+[documentation](https://docs.jfrog.com/ai-ml/docs/skills-registry), which is
+more concrete than the product page. A skill is installed through JFrog
+tooling — the agent in the IDE, or `jf agent skills install <name> --harness
+<harness>` with the JFrog CLI — rather than from a git remote. The flow it
+describes is publish, Xray scan, automatic registration in the AI Catalog,
+then install: a skill whose scan is suspicious or malicious is not
+installable, an unscanned one is blocked where Xray applies to the repository,
+and project policies can block a skill after installation, with waivers for
+exceptions. Local enforcement requires a preview to be enabled in MyJFrog, and
+skill scanning has to be enabled by JFrog Support.
+
+Two caveats. The skills documentation describes **no manual approval or
+promotion step**: the gate is the scan result and policy, so the product
+page's "strict approval workflows" is advertised rather than documented. And
+several claims — what is audited, how remote-endpoint MCP servers (as opposed
+to packaged ones) are pinned — are still not stated at the level of detail the
+AWS documentation offers. Confirm both with JFrog before relying on them.
+
+## First-party client controls
+
+*Claims below read from the linked documentation on 2026-10-30.*
+
+The clients themselves now ship organization controls, and they are the first
+answer most teams reach for. They are complements to a gateway rather than
+alternatives — the [client enforcement guide](../guides/client-enforcement.md)
+uses them to make the gateway the only door — but it is worth being exact
+about what they do and do not cover.
+
+- **Claude Code.** [Managed settings](https://code.claude.com/docs/en/plugins/org)
+  register marketplaces (`extraKnownMarketplaces`), force-enable or block
+  plugins (`enabledPlugins`), and restrict where plugins may come from with a
+  `strictKnownMarketplaces` allowlist and a `blockedMarketplaces` blocklist,
+  checked before any download and again at session start. The documentation is
+  plain that both lists "match the source of the marketplace a plugin comes
+  from", not its contents. Installs and loads are reported as OpenTelemetry
+  events and, on the Enterprise plan, through an analytics API.
+- **GitHub Copilot.** Enterprise-managed settings accept the same
+  `strictKnownMarketplaces` key in the Copilot CLI and VS Code, in
+  [public preview since 2026-06-25](https://github.blog/changelog/2026-06-25-enterprise-managed-settings-now-support-strictknownmarketplaces-in-vs-code-and-the-cli/):
+  plugins install only from the marketplaces an administrator lists.
+- **Cursor.** [Team marketplaces](https://cursor.com/docs/plugins) on the
+  Teams and Enterprise plans let an administrator mark plugins *Default On* or
+  *Required*, and for GitHub-imported marketplaces "Serve marketplace from
+  Cursor" keeps a synced copy of the repository and serves plugins from it.
+  Plugins in Cursor's own public marketplace are reviewed by hand before they
+  are listed.
+
+All three decide **where** skills may come from. None of them vets the content
+of an organization's own marketplaces, binds an approval to a commit, or
+records each fetch; an allowlisted upstream that changes still flows straight
+to every client.
 
 ## The difference in one table
 
@@ -198,12 +255,12 @@ in particular is a different layer and several rows do not apply to it.
 | Concern | Skills Gateway | LiteLLM Skills Gateway | agentgateway | AWS Agent Registry | JFrog AI Catalog |
 | --- | --- | --- | --- | --- | --- |
 | What is registered | The upstream URL, ingested into a quarantine repository | A pointer to an upstream GitHub URL | Nothing — a route to a live MCP/A2A/LLM backend | A metadata record: a schema-validated descriptor plus an optional repository URL or package identifier | Metadata over a versioned artifact stored in Artifactory |
-| What clients receive | Bytes from a SHA-pinned, human-approved snapshot served by the read-only facade | Content fetched from upstream at install time | Proxied protocol traffic, live from the backend | Descriptor metadata from search; the skill itself is fetched elsewhere | The artifact from Artifactory, through Agent Guard or a package client |
-| Publish gate | Human approval of a specific snapshot; held updates never displace the approved one | Listing visibility (enable/disable) | None — a route is a configuration change | Curator approve/reject with a `statusReason`; auto-approval is a per-registry option | Project-scoped approval, plus Curation policy at the repository perimeter |
-| Rug-pull protection | The core of the design: [snapshots and held updates](snapshots-and-ledger.md) | None — upstream refs stay mutable and authoritative | None — the backend is live and mutable by design | Partial: an edit becomes a new `DRAFT` while the approved revision stays discoverable — but the referenced repository or package is outside the registry's control | Strong for what Artifactory stores (immutable, signed artifacts); not documented for remote-endpoint MCP servers |
+| What clients receive | Bytes from a SHA-pinned, human-approved snapshot served by the read-only facade | Content fetched from upstream at install time | Proxied protocol traffic, live from the backend | Descriptor metadata from search; the skill itself is fetched elsewhere | The artifact from Artifactory, through Agent Guard, the JFrog CLI or a package client |
+| Publish gate | Human approval of a specific snapshot; held updates never displace the approved one | None — a skill is enabled as soon as it is registered; an admin can disable it | None — a route is a configuration change | Curator approve/reject with a `statusReason`; auto-approval is a per-registry option | Scan result and project policy (the skills documentation describes no manual approval step), plus Curation policy at the repository perimeter |
+| Rug-pull protection | The core of the design: [snapshots and held updates](snapshots-and-ledger.md) | None for git-hosted sources — upstream refs stay mutable and authoritative; an optional `sha256` pins `archive` sources | None — the backend is live and mutable by design | Partial: an edit becomes a new `DRAFT` while the approved revision stays discoverable — but the referenced repository or package is outside the registry's control | Strong for what Artifactory stores (immutable, signed artifacts); not documented for remote-endpoint MCP servers |
 | Revocation | Revocation unpublishes the served ref itself | Disable the listing; already-installed content unaffected | Remove the route or policy; effective for new calls | Deprecate (terminal, irreversible) or reject to hide from discovery; already-fetched content unaffected | Unapprove or block via Curation; Agent Guard refuses at call time |
 | Audit | Append-only ledger of every fetch and administrative action | Not described | Per-request OpenTelemetry metrics, logs and traces | CloudTrail management events for the control plane; no data-plane consumption logging documented | Platform audit and ML-BOM provenance; not detailed on the public pages |
-| Facade access | PAT-only facade — a deliberate [trust boundary](trust-boundaries.md) | Unauthenticated public hub | JWT/OAuth/API key with CEL authorization, enforced by the proxy | IAM or JWT for search and the MCP endpoint; control plane always IAM | JFrog Platform credentials, enforced client-side by Agent Guard |
+| Facade access | PAT-only facade — a deliberate [trust boundary](trust-boundaries.md) | Unauthenticated public hub; disabled skills can be granted per key or team | JWT/OAuth/API key with CEL authorization, enforced by the proxy | IAM or JWT for search and the MCP endpoint; control plane always IAM | JFrog Platform credentials, enforced client-side by Agent Guard |
 | Single catalog | The [virtual catalog](../guides/virtual-catalog.md), strictly derived from approved-and-served snapshots, self-contained relative sources only | Generated manifest of external pointers | One endpoint multiplexing many MCP backends — no catalog of content | One registry with hybrid search and a native MCP endpoint | One system of record across models, MCP servers and skills |
 | Skill metadata for discovery | Marketplace-granular catalog; skill-level browse is not a current capability | Semver, keywords, domains/namespaces per skill | Not applicable | `SKILL.md` plus a structured definition, with hybrid semantic and keyword search | Versioned skill packages with scan and signature status |
 
@@ -211,6 +268,10 @@ in particular is a different layer and several rows do not apply to it.
 
 The four products divide along two axes: whether they hold the bytes, and
 whether anything must be approved before a consumer gets them.
+
+**The clients' own controls hold nothing and approve sources, not content.**
+An allowlist is the right way to make the gateway the only door, and the
+wrong place to stop a mutated upstream that is already on the list.
 
 **agentgateway holds nothing and approves nothing** — deliberately. It is a
 data plane, and its contribution is policy at the moment of invocation. It
@@ -246,7 +307,7 @@ Two capabilities the comparison surfaces as honest gaps on this side:
   every fetch of it. That is strong inside the gateway's perimeter and offers
   nothing outside it, which is a real difference rather than a matter of taste.
 
-What none of the three alternatives offers is the combination this project is
+What none of the alternatives on this page offers is the combination this project is
 built around: a snapshot the gateway itself holds, an approval that binds that
 exact snapshot, a facade that will serve nothing else, and a ledger that
 records every read as well as every decision.
