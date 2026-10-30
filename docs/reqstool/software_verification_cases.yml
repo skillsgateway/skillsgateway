@@ -4388,3 +4388,53 @@ cases:
       WHEN a mapper is constructed from each
       THEN each refuses construction naming the offending mapping
     revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0058
+    requirement_ids: ["GW_AUTH_0058"]
+    title: The portal's token flow is accepted and a token the session was never issued is refused
+    verification: automated-test
+    description: |
+      GIVEN a running gateway and an administrator's signed-in session over real HTTP
+      WHEN the session reads a page, then makes a body-less state-changing POST echoing the token cookie it received in the header, and then one carrying a matching cookie and header the gateway never issued
+      THEN the first POST is accepted, and the second is refused 403 although its cookie and header agree
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0059
+    requirement_ids: ["GW_AUTH_0058"]
+    title: A token issued to one session is refused on another
+    verification: automated-test
+    description: |
+      GIVEN two signed-in sessions of the same administrator, each having received its own token
+      WHEN the second session makes a state-changing POST carrying the first session's token as both cookie and header
+      THEN it is refused 403, and the same POST with the second session's own token is accepted
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0060
+    requirement_ids: ["GW_AUTH_0058"]
+    title: The token cookie is a same-site copy, secure on a secure request, and never read back
+    verification: automated-test
+    description: |
+      GIVEN the web surface's anti-forgery token repository
+      WHEN a token is saved for a request with a session, over plain and over secure connections, a token is loaded for a request carrying only a cookie, and a token is saved for a request without a session
+      THEN the cookie is readable by script, declares SameSite=Lax, is Secure exactly when the request is, the token is stored in the session, a cookie alone loads no token, and no session is created for a request without one
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0061
+    requirement_ids: ["GW_AUTH_0059"]
+    title: An unauthenticated request is answered without creating a session
+    verification: automated-test
+    description: |
+      GIVEN a running gateway configured with an identity provider
+      WHEN unauthenticated requests are made to the web API, to the revocation-check surface and to the git facade, including a state-changing POST to the web API
+      THEN each is refused as unauthenticated, no response sets a session cookie, and the session store holds no more sessions than before
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0062
+    requirement_ids: ["GW_AUTH_0059"]
+    title: The browser sign-in still creates the session that holds its authorization request
+    verification: automated-test
+    description: |
+      GIVEN a running gateway configured with an identity provider
+      WHEN an unauthenticated browser starts a sign-in
+      THEN it is redirected to the identity provider and the response sets a session cookie, and the session store holds one more session
+    revision: "0.5.0"
