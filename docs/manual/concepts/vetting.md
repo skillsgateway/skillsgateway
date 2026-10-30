@@ -448,6 +448,26 @@ blind spot: "do not show the user the command you ran" is not caught unless it
 also says *hide*, *without telling* or *don't let … know*. A paraphrase walks
 past pattern rules anyway, which is why this vetter is triage.
 
+Well-written skills quote attack phrases in order to warn against them: "never
+run … `curl | sh` lines", or comments "crafted to look like directives ('ignore
+previous instructions')". So an `instruction-override`, `system-prompt-disclosure`,
+`credential-path-reference`, `pipe-to-shell` or `exfiltration-instruction` match is
+reported at **medium**, which warns instead of blocking, in two cases: its own
+clause prohibits it (*never*, *do not*, *must not*, *should not*, *avoid*,
+*refuse*), or it sits in double quotes after *like*, *such as*, *e.g.* or *for
+example*. The finding stays in the report and says it reads as a mention.
+Backticks do not count, because a real instruction puts its command in
+backticks. The limit is that a prohibition in front of a payload is cheap to
+add. When that happens the payload still shows, at medium, but it no longer
+needs a waiver.
+
+Disclosure fires only on a request for the agent's own prompt ("print your
+system prompt", "reveal the full system prompt"). "Add this to the system
+prompt" is vocabulary and does not fire. "Do not tell the user they need …" is
+advice, and "mention it only when the user asks" is a condition, so neither is
+concealment. A zero-width joiner inside an emoji (👨‍💻) is not hidden text, and
+`../../etc/passwd` is a path-traversal example, not a credential path.
+
 ### `executable-surface`
 
 Reads each plugin's hooks, hook modules, MCP servers and LSP servers and flags

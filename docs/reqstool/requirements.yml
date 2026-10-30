@@ -3262,3 +3262,13 @@ requirements:
       requirement_ids: ["GW_VETTING_0067"]
     categories: ["security", "reliability"]
     revision: 0.5.0
+
+  - id: GW_VETTING_0069
+    title: Prompt-injection markers quoted or prohibited in their own clause warn instead of blocking, and ordinary vocabulary raises none
+    significance: shall
+    description: "The system shall report an instruction-override, system-prompt-disclosure, credential-path, pipe-to-shell or exfiltration marker at medium rather than high where its own clause, before the marker, holds a prohibition (never, do not, must not, should not, avoid, refuse) or where the marker sits inside double quotes in a clause that introduces an example (like, such as, e.g., for example, for instance), and shall not treat backticks as such a context; shall raise a system-prompt-disclosure finding only for a request for the agent's own system prompt, initial prompt or instructions; shall not raise a concealment finding where the person addressed is followed by 'they' or 'to', or where 'only', 'unless' or 'if' lies between the verb and the person; shall not treat a zero-width joiner between two pictographic characters as invisible; and shall not treat /etc/passwd reached through '../' as a credential path."
+    rationale: "Public marketplaces from the major vendors failed this vetter on findings that were all false positives: skills that quote an attack phrase to warn against it, 'the system prompt' as ordinary vocabulary, advice about what to tell the user, emoji sequences and path-traversal test strings. A mention is still shown to the reviewer, at a severity that does not block, because a prohibition in front of a payload is cheap for an attacker to add."
+    references:
+      requirement_ids: ["GW_VETTING_0040"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.5.0

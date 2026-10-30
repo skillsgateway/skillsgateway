@@ -1917,6 +1917,26 @@ cases:
       THEN the vetting reads blocked with the download-and-run finding and the NUL shown as U+FFFD, and the approval is refused
     revision: "0.1.0"
 
+  - id: SVC_GW_VETTING_0072
+    requirement_ids: ["GW_VETTING_0069"]
+    title: Lines from public marketplaces that quote, prohibit or merely name a marker raise no high finding
+    verification: automated-test
+    description: |
+      GIVEN instruction files carrying, one each, the lines from public marketplaces that raised high prompt-injection findings without being injections
+      WHEN the prompt-injection vetter scans them
+      THEN none raises a high finding, and those that quote or prohibit a marker raise it at medium
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0073
+    requirement_ids: ["GW_VETTING_0069"]
+    title: Payloads still fail, and a payload behind a prohibition is still reported
+    verification: automated-test
+    description: |
+      GIVEN instruction files carrying disclosure, concealment, override, pipe-to-shell, credential-path and invisible-character payloads, and a payload preceded by a prohibition
+      WHEN the prompt-injection vetter scans them
+      THEN each payload raises exactly one high finding of its rule, and the prohibited one raises exactly one medium finding of its rule
+    revision: "0.1.0"
+
 
   - id: SVC_GW_VETTING_0026
     requirement_ids: ["GW_VETTING_0026"]
