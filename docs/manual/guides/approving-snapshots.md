@@ -12,7 +12,9 @@ immutable SHA.
 
 A held snapshot gives you four things. In the portal they are the tabs of its
 card on the marketplace's **Review** — reached from the **Review queue**, which
-lists what awaits a decision across every marketplace — where the newest
+lists what awaits a decision across every marketplace, with how long each has
+waited and how many findings its vetting recorded, and sorts oldest first on
+request — where the newest
 snapshot awaiting a decision is already open; its one-line delta — `1 skill added, 1 modified ·
 3 files · +48 −7 · vs 65f64622` — tells you the size of the review before you
 open any of them.

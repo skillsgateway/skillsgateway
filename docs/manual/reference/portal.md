@@ -44,6 +44,16 @@ deployment can set, so it cannot claim to be a version it is not; a gateway run
 from an exploded build carries no build information and the footer is then
 absent entirely rather than saying "unknown".
 
+The first <kbd>Tab</kbd> on any page reaches a **Skip to content** link that moves
+past the sidebar to the page itself.
+
+Each page names itself in the browser tab, then its marketplace where it has one,
+then the product: *Audit log · Skills Gateway*, *Snapshots · acme · Skills
+Gateway*. An address the portal does not have shows **Page not found** inside the
+shell, with a link to the overview; the gateway answers it with status `404`.
+After sign-in the portal removes the `continue` marker the sign-in leaves on the
+address it returns to, so the address you copy is the one you were sent.
+
 ## User menu
 
 The header's breadcrumb sits opposite a menu named after the signed-in user
@@ -68,6 +78,23 @@ The header's breadcrumb sits opposite a menu named after the signed-in user
   Under the `skills-gateway.dev-insecure-auth` development escape hatch there is
   no session to end, so the menu states that instead of offering a control that
   would appear to fail.
+
+### Sign-in and sign-out pages
+
+`/login` and `/logout` are minimal pages in the portal's style, not part of the
+single-page application and loading nothing from elsewhere. Each states the
+reader's session as it is: *You are signed in as* the username, or *You are not
+signed in* with a **Sign in with your identity provider** link (which opens the
+portal, and so the sign-in). `/logout` offers a **Sign out** button only to a
+session that has one to end; under the escape hatch it says there is none. A
+browser rarely sees either page: an unauthenticated portal address goes straight
+to the identity provider, and the menu's **Sign out** never shows one.
+
+A request the gateway cannot parse at all — an address with an invalid
+percent-escape — is answered `400` with a page in the same style to a browser,
+and with one line of plain text to any other client. API, facade, publication,
+revocation-check, webhook and actuator addresses keep their own refusals,
+whatever the client accepts.
 
 The menu only reports what the session holds; it never hides or disables a
 control by role — the server is the sole authority on what a request may do,
@@ -151,8 +178,14 @@ queries are in flight the chips show an ellipsis.
 Every snapshot awaiting a decision — `held` or `revoked`, not deleted — across
 every marketplace, newest first. One row each: **Marketplace** (a link to it),
 **Commit** (12 characters, a link that opens the snapshot on its marketplace's
-[Review](#marketplace-detail)), **State**, **Vetting** outcome, and **Ingested**
-(when, and by whom).
+[Review](#marketplace-detail)), **State**, **Vetting** outcome, **Findings** (how
+many the latest vetting run recorded, waived or not; *not run* when the chain
+never ran), and **Ingested** — how long ago, which is how long it has waited, and
+by whom; the exact instant is on hover.
+
+**Marketplace** and **Ingested** are sortable: **Ingested** turns the queue to
+oldest first, which puts what has waited longest at the top, and **Marketplace**
+groups it by marketplace, newest first within each.
 
 The queue offers **no Approve or Reject**. A decision is made on the snapshot's
 card, below the verdicts, diff and contents it rests on; the queue is where the
@@ -406,7 +439,9 @@ focused. Choosing another file drops it.
 
 An address naming a snapshot that no longer awaits a decision — an older link to
 one since approved — still opens it on Review, under **Linked snapshot**, with a
-link to it among the snapshots.
+link to it among the snapshots. An address naming a snapshot this marketplace
+does not hold — no snapshot by that id, or another marketplace's — says
+*Snapshot {id} was not found in {marketplace}* on both sections.
 
 #### The card
 
@@ -1238,9 +1273,14 @@ Empty state: "No export sinks yet."
 "Personal access tokens authenticate git clients against the facade. Values are
 hashed at rest and shown exactly once."
 
-An inline form with a **Token name** field and a **Create token** button posts to
-`POST /api/v1/tokens`. **Create token** stays disabled until the name field holds a
-non-blank value — the name is trimmed before it is sent. The response opens a
+An inline form with a **Token name** field, an **Expires** choice and a **Create
+token** button posts to `POST /api/v1/tokens`. **Expires** offers the same lifetimes
+as [Connect a client](#connect-a-client) — 7, 30 or 90 days, or no expiry —
+and defaults to 30 days; a gateway whose
+[`skills-gateway.tokens.max-ttl`](configuration.md#access-tokens) is shorter refuses
+the longer choices, and the refusal is shown beneath the form. **Create token** stays
+disabled until the name field holds a non-blank value — the name is trimmed before it
+is sent. The response opens a
 show-once dialog — "This value is shown
 exactly once — copy it now. Only a hash is stored." — with the token in a code
 block and a clipboard button that flips to a checkmark for two seconds.
@@ -1250,7 +1290,8 @@ block and a clipboard button that flips to a checkmark for two seconds.
 | Name | The name you gave it. |
 | Created | Creation timestamp. |
 | Last used | How long ago the token last authenticated successfully, or **never**. Hover for the exact instant. |
-| Status | `active` (primary badge) or `revoked` (destructive). |
+| Expires | When the token stops authenticating, or **never**. |
+| Status | `active` (primary badge), `expired` (secondary) once the expiry has passed, or `revoked` (destructive). |
 | Actions | **Revoke**, shown only while active. |
 
 **Last used** is the column to read before revoking: it separates a token

@@ -23,7 +23,7 @@
 
 ## 4. Documentation
 
-- [ ] 4.1 `reference/portal.md` and affected guides. Verify with `mkdocs build --strict`.
+- [x] 4.1 `reference/portal.md` and affected guides. Verify with `mkdocs build --strict`.
 
 ## 5. Gates and evidence
 
