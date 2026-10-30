@@ -43,6 +43,6 @@
 
 ## 6. Gates and evidence
 
-- [ ] 6.1 `mutants.sh` kills every mutant; its negative control exits nonzero.
-- [ ] 6.2 Every AGENTS.md gate fresh after the last code edit, recorded in
+- [x] 6.1 `mutants.sh` kills every mutant; its negative control exits nonzero.
+- [x] 6.2 Every AGENTS.md gate fresh after the last code edit, recorded in
   `evidence.md` with the commit SHA.
