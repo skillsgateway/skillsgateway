@@ -2358,12 +2358,12 @@ requirements:
   - id: GW_INGEST_0037
     title: Review queue across marketplaces
     significance: shall
-    description: "The portal shall state, in its navigation on every page, the number of snapshots awaiting a decision across the marketplaces the session may read, and shall present a queue listing each such snapshot with its marketplace, commit, state, vetting outcome and ingestion, each entry opening that snapshot where its evidence is presented; the queue, and the list of marketplaces, shall offer no approve or reject control of their own."
+    description: "The portal shall state, in its navigation on every page, the number of snapshots awaiting a decision across the marketplaces the session may read, and shall present a queue listing each such snapshot with its marketplace, commit, state, vetting outcome, the number of findings its vetting run recorded, its ingestion and how long it has been waiting, ordered by waiting time or by marketplace at the reader's choice, each entry opening that snapshot where its evidence is presented; the queue, and the list of marketplaces, shall offer no approve or reject control of their own."
     references:
       requirement_ids: ["GW_INGEST_0007"]
     rationale: "Deciding what awaits a decision is the reviewer's most frequent task, and it was answerable only by opening each marketplace in turn. The queue gathers the work without becoming a second place to do it: an approval offered beside a single badge, away from the report, diff and contents it rests on, is a decision without its evidence."
     categories: ["interaction-capability"]
-    revision: 0.3.0
+    revision: 0.5.0
 
   - id: GW_APPROVAL_0019
     title: Approval is refused on a normalised plugin-name collision with the approved estate
@@ -3175,6 +3175,46 @@ requirements:
     references:
       requirement_ids: ["GW_AUTH_0024"]
     categories: ["security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0067
+    title: A browser request the gateway cannot serve is answered with a portal page
+    significance: shall
+    description: "The system shall answer a browser's request for a page at an address it does not serve with the portal, stating that the page was not found, and a request it cannot parse with a minimal page in the portal's style, and shall answer the same requests from any other client, and every request under the API, facade, publication, revocation-check, webhook and actuator paths, in the format that surface already uses."
+    rationale: "A mistyped or stale link read raw JSON naming a static resource, and a malformed one read the servlet container's default page: neither says where the reader is or how to get back. The machine surfaces' formats are contracts their clients parse, so the page is offered only to a client that asks for one."
+    references:
+      requirement_ids: ["GW_INGEST_0007"]
+    categories: ["interaction-capability"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0068
+    title: The sign-in and sign-out pages state only what is true of the session reading them
+    significance: shall
+    description: "The system shall present its sign-in and sign-out pages in the portal's style without loading any resource from elsewhere, shall state on each whether the session reading it is signed in and as whom rather than reporting a sign-out the reader may not have performed, and shall offer sign-out only to a session that has one to end."
+    rationale: "The framework's generated pages were unbranded and told anyone who opened the sign-in page with its sign-out marker that they had been signed out. A statement of the session's current state is true whoever reads it, and a sign-out offered where there is no session to end would appear to fail."
+    references:
+      requirement_ids: ["GW_AUTH_0045"]
+    categories: ["interaction-capability", "security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0069
+    title: The portal's address and tab title identify what it shows
+    significance: shall
+    description: "The portal shall title each page in the browser tab with the page and, where the page belongs to a marketplace, that marketplace, ahead of the product name; shall remove from the address the marker sign-in leaves on the page it returns to, keeping the rest of the address; and shall state that a snapshot named in the address was not found in that marketplace rather than presenting the marketplace as though no snapshot had been named."
+    rationale: "Every tab read \"Skills Gateway\", so several open pages could not be told apart; the sign-in marker made a copied address differ from the one that was shared; and a link to a snapshot that does not exist, or belongs elsewhere, silently showed an unrelated state that reads like an answer."
+    references:
+      requirement_ids: ["GW_INGEST_0032"]
+    categories: ["interaction-capability"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0070
+    title: Personal access tokens are created with a chosen lifetime and listed with their expiry
+    significance: shall
+    description: "The portal's personal access token page shall offer the same choice of lifetime as the client set-up wizard, with the same default, and shall list each token's expiry, stating where a token never expires and where it has expired."
+    rationale: "The page minted only tokens that never expire while the wizard defaulted to thirty days, so the bounded choice depended on which form a user happened to use, and nothing on the page said when a credential would stop working."
+    references:
+      requirement_ids: ["GW_AUTH_0005"]
+    categories: ["interaction-capability", "security"]
     revision: 0.5.0
 
   - id: GW_OBSERVABILITY_0005

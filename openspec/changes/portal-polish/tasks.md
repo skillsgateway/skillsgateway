@@ -2,14 +2,14 @@
 
 ## 1. Requirements (reqstool)
 
-- [ ] 1.1 Add GW_AUTH_0067–GW_AUTH_0070 and SVC_GW_AUTH_0078–SVC_GW_AUTH_0084; modify GW_INGEST_0037 and SVC_GW_INGEST_0037 in `docs/reqstool/`.
+- [x] 1.1 Add GW_AUTH_0067–GW_AUTH_0070 and SVC_GW_AUTH_0078–SVC_GW_AUTH_0084; modify GW_INGEST_0037 and SVC_GW_INGEST_0037 in `docs/reqstool/`.
 
 ## 2. Server: browser error and sign-in pages
 
-- [ ] 2.1 Minimal-page renderer; `SignInFailureHandler` uses it (existing SVC_GW_AUTH_0054 tests stay green).
-- [ ] 2.2 Browser not-found advice (`@Requirements GW_AUTH_0067`) + MockMvc test (`@SVCs SVC_GW_AUTH_0078`): browser gets the portal entry with 404; `*/*`, JSON and every machine prefix keep problem+json. Watch it fail first.
-- [ ] 2.3 Host error valve (`@Requirements GW_AUTH_0067`) + real-HTTP test (`@SVCs SVC_GW_AUTH_0079`) sharing an existing context. Watch it fail first.
-- [ ] 2.4 Sign-in pages controller, default login page disabled, `GET /login` and `GET /logout` permitted (`@Requirements GW_AUTH_0068`) + test (`@SVCs SVC_GW_AUTH_0081`). Watch it fail first.
+- [x] 2.1 Minimal-page renderer; `SignInFailureHandler` uses it (existing SVC_GW_AUTH_0054 tests stay green).
+- [x] 2.2 Browser not-found advice (`@Requirements GW_AUTH_0067`) + MockMvc test (`@SVCs SVC_GW_AUTH_0078`): browser gets the portal entry with 404; `*/*`, JSON and every machine prefix keep problem+json. Watch it fail first.
+- [x] 2.3 Host error valve (`@Requirements GW_AUTH_0067`) + real-HTTP test (`@SVCs SVC_GW_AUTH_0079`) sharing an existing context. Watch it fail first.
+- [x] 2.4 Sign-in pages controller, default login page disabled, `GET /login` and `GET /logout` permitted (`@Requirements GW_AUTH_0068`) + test (`@SVCs SVC_GW_AUTH_0081`). Watch it fail first.
 
 ## 3. Portal
 

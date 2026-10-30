@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.auth;
 
+import dev.skillsgateway.server.api.BrandedPage;
 import io.github.reqstool.annotations.Requirements;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,7 +15,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.web.util.HtmlUtils;
 
 /**
  * Answers a failed browser sign-in on the spot with its reason (GW_AUTH_0054), instead of
@@ -89,25 +89,14 @@ final class SignInFailureHandler implements AuthenticationFailureHandler {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.TEXT_HTML_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.getWriter().write("""
-                <!DOCTYPE html>
-                <html lang="en">
-                <head><meta charset="utf-8"><title>%s</title>
-                <style>body{font-family:system-ui,sans-serif;max-width:36rem;margin:4rem auto;padding:0 1rem;\
-                line-height:1.5}code{background:#f3f0fa;padding:.1rem .3rem;border-radius:.2rem}</style></head>
-                <body>
-                <h1>%s</h1>
-                <p>%s</p>
-                <p>Error code: <code>%s</code></p>
-                <p><a href="%s">Start sign-in again</a></p>
-                </body>
-                </html>
-                """.formatted(
+        response.getWriter()
+                .write(BrandedPage.render(
                         reason.heading,
-                        reason.heading,
-                        reason.explanation,
-                        HtmlUtils.htmlEscape(code),
-                        HtmlUtils.htmlEscape(restart)));
+                        "<p>%s</p>\n<p>Error code: <code>%s</code></p>\n<p><a href=\"%s\">Start sign-in again</a></p>"
+                                .formatted(
+                                        BrandedPage.escape(reason.explanation),
+                                        BrandedPage.escape(code),
+                                        BrandedPage.escape(restart))));
     }
 
     /** The registration the callback path names, or {@code unknown}; it ends up in a link, so it is checked. */
