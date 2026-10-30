@@ -39,6 +39,9 @@
       description: "Node runtime and @types/node together",
       groupName: "node",
       matchDepNames: ["node", "@types/node"],
+      // npm versioning offers a new @types/node major on publish; node
+      // versioning holds it until that Node line is LTS, as the runtime is.
+      versioning: "node",
     },
     {
       // The image's base layers and the CI service containers by digest, so
