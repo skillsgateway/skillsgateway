@@ -247,6 +247,29 @@ of an organization's own marketplaces, binds an approval to a commit, or
 records each fetch; an allowlisted upstream that changes still flows straight
 to every client.
 
+### Claude Enterprise skill and plugin scanning
+
+*Claims below read from the linked help article on 2026-10-30.*
+
+Anthropic's [skill and plugin scanning](https://support.claude.com/en/articles/15927065-get-started-with-skill-and-plugin-scanning)
+is the one first-party control that looks at content. When a member or owner
+uploads or edits a third-party skill or plugin — including skills bundled in
+plugins and hooks shipped with them — Claude reviews it and returns **pass**,
+**warn** or **fail**. A warning must be acknowledged before use; a failure
+blocks the item unless someone permitted to do so allows it, and that
+"Allow anyway" applies to that version only. It is available on Enterprise
+plans in Claude, Claude Cowork and Enterprise plugin marketplaces, and is on
+by default for organizations that had not chosen a setting before 2026-10-02.
+
+The article states its own limits: MCP servers, skills shared through a
+connected MCP server, skills Claude creates and skills or plugins that
+pre-date scanning are not scanned, nor are organizations on CMEK, ZDR or HIPAA
+configurations, and a pass "isn't a guarantee that a skill is safe in every
+respect". It does not mention marketplaces that Claude Code clones from a git
+repository. Within its scope it is an automated verdict on an uploaded
+version — closer to JFrog's scan gate than to an approval bound to a pinned
+snapshot — and no per-fetch record is described.
+
 ## The difference in one table
 
 Read the columns as answers to the same question, not as scores; agentgateway
@@ -271,7 +294,10 @@ whether anything must be approved before a consumer gets them.
 
 **The clients' own controls hold nothing and approve sources, not content.**
 An allowlist is the right way to make the gateway the only door, and the
-wrong place to stop a mutated upstream that is already on the list.
+wrong place to stop a mutated upstream that is already on the list. Claude
+Enterprise's scanning is the exception that looks at content, for what is
+uploaded to Claude: an automated verdict per version, not a human approval
+of a pinned snapshot.
 
 **agentgateway holds nothing and approves nothing** — deliberately. It is a
 data plane, and its contribution is policy at the moment of invocation. It
