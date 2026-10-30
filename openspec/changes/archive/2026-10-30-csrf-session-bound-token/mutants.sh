@@ -14,7 +14,7 @@ trap 'git checkout -- src/main' EXIT
 
 SC=src/main/java/dev/skillsgateway/server/auth/SecurityConfig.java
 RP=src/main/java/dev/skillsgateway/server/auth/SessionBoundCsrfTokenRepository.java
-known='^M([1-9])-'
+known='^M([1-9][0-9]*)-'
 
 mutate() { # file old new: replace exactly one occurrence, or fail
   python3 - "$1" "$2" "$3" <<'PY'
@@ -68,7 +68,7 @@ U=SessionBoundCsrfTokenRepositoryTests
 run M1-cookie-read-as-token $I the_portal_flow_is_accepted_and_a_pair_the_session_was_never_issued_is_refused "$RP" \
   'return session.loadToken(request);' 'var c = WebUtils.getCookie(request, COOKIE_NAME); return c != null ? new org.springframework.security.web.csrf.DefaultCsrfToken("X-XSRF-TOKEN", "_csrf", c.getValue()) : session.loadToken(request);'
 run M2-cookie-repository-back $I a_token_issued_to_one_session_is_refused_on_another "$SC" \
-  'csrf.csrfTokenRepository(new SessionBoundCsrfTokenRepository(sessionMayStart))' 'csrf.csrfTokenRepository(org.springframework.security.web.csrf.CookieCsrfTokenRepository.withHttpOnlyFalse())'
+  'csrf.spa().csrfTokenRepository(new SessionBoundCsrfTokenRepository(sessionMayStart))' 'csrf.spa().csrfTokenRepository(org.springframework.security.web.csrf.CookieCsrfTokenRepository.withHttpOnlyFalse())'
 run M3-token-creates-session $I an_unauthenticated_request_is_answered_without_creating_a_session "$RP" \
   'if (request.getSession(false) == null && !sessionMayStart.matches(request)) {' 'if (false) {'
 run M4-api-request-saved $I an_unauthenticated_request_is_answered_without_creating_a_session "$SC" \
@@ -84,6 +84,12 @@ run M8-never-secure $U the_cookie_is_secure_when_the_request_is "$RP" \
   '.secure(request.isSecure())' '.secure(false)'
 run M9-copy-not-repaired $U with_a_session_the_stored_token_wins_over_the_cookie_and_the_copy_is_repaired "$RP" \
   'if (copy == null || !token.getToken().equals(copy.getValue())) {' 'if (false) {'
+run M10-non-page-get-saved $I an_unauthenticated_request_is_answered_without_creating_a_session "$SC" \
+  $'XMLHttpRequest")),\n                pageNavigation()));' $'XMLHttpRequest"))));'
+run M11-page-navigation-not-saved $I a_page_navigation_is_redirected_to_the_sign_in_and_kept_to_return_to "$SC" \
+  $'XMLHttpRequest")),\n                pageNavigation()));' $'XMLHttpRequest")),\n                request -> false));'
+run M12-spa-handler-dropped $I the_portal_flow_is_accepted_and_a_pair_the_session_was_never_issued_is_refused "$SC" \
+  'csrf.spa().csrfTokenRepository(' 'csrf.csrfTokenRepository('
 
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi
