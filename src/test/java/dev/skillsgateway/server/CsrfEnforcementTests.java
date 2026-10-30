@@ -24,10 +24,10 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
  * administrator, so a refusal here can only be the token — a role failure would answer 403 too.
  *
  * <p>What the cookies themselves say is asserted in {@link SessionCookieTests} instead, and has to
- * be: {@code csrf()} reflectively replaces the application's {@code CookieCsrfTokenRepository} with
- * a session-backed one, and that replacement lands on the cached context's filter chain for the
- * rest of the JVM. Suites that predate this one already use it, so in this context there is no
- * cookie repository left to observe.
+ * be: {@code csrf()} reflectively replaces the application's token repository with a test one,
+ * and that replacement lands on the cached context's filter chain for the rest of the JVM. Suites
+ * that predate this one already use it, so in this context there is no token repository left to
+ * observe.
  */
 class CsrfEnforcementTests extends AbstractGatewayTest {
 

@@ -1588,6 +1588,12 @@ cross-site request cannot act on an ambient session; the control itself is the
 CSRF token on the web chain, described under
 [The web surface](../concepts/trust-boundaries.md#the-web-surface).
 
+The `XSRF-TOKEN` cookie that carries the portal's copy of that token is
+`SameSite=Lax` too, and `Secure` whenever the request reached the gateway over
+HTTPS as the [forwarded-header strategy](#forwarded-headers) reports it. It is
+not a setting: the gateway never reads that cookie back, so its attributes do
+not need tuning.
+
 The cookie is named `SESSION`. The session it names is stored in the gateway's
 database, not in the replica's memory, so any replica can answer any request of
 it and a load balancer needs no session affinity (GW_AUTH_0053 — A browser
@@ -1671,6 +1677,11 @@ belongs where the proxy's address is inside the internal ranges. The Helm chart
 sets `native` through its `forwardHeadersStrategy` value; other runtimes set
 the variable — see
 [Running behind a proxy](../guides/deploying-without-kubernetes.md#running-behind-a-proxy).
+
+The OIDC redirect URI the gateway sends is built from the request's host unless
+`SGW_OIDC_REDIRECT_URI` fixes it. Register the exact redirect URI or URIs with
+the identity provider, never a wildcard, and have the proxy set `Host` or
+`X-Forwarded-Host` itself rather than pass on the client's.
 
 The gateway registers the `framework` filter itself and reads the setting at
 runtime (GW_AUTH_0029 — Proxy-reported scheme and host are honoured only when

@@ -352,14 +352,23 @@ unauthenticated path.
 
 Requests to `/api/**` that lack a session get a clean **401** rather than a 302
 to the identity provider, so an expired session surfaces in the SPA as an error
-instead of an HTML login page rendered into a `fetch()`.
+instead of an HTML login page rendered into a `fetch()`. A refused request
+leaves no session behind, here or on any other chain: the only anonymous
+request that creates one is the start of a sign-in, whose session holds the
+authorization request across the round trip to the identity provider
+(GW_AUTH_0059 — An unauthenticated request leaves no session behind).
 
 The session cookie is the only **ambient** credential the gateway has, so this
 is the only chain that needs a CSRF token; the other four authenticate every
 request on their own and honour no cookie, so a forged cross-site request
-arrives at them unauthenticated. Every response here sets an `XSRF-TOKEN` cookie
-readable by script, and a state-changing request must echo it in an
-`X-XSRF-TOKEN` header. What that stops is the shape the JSON content-type
+arrives at them unauthenticated. The token is kept in the server-side session,
+and a state-changing request must present it in an `X-XSRF-TOKEN` header. The
+portal learns it from an `XSRF-TOKEN` cookie readable by script, which is a copy
+the gateway writes and never reads back: a header is compared with the token
+stored in the caller's own session, so a token issued to another session, or
+one the gateway never issued, is refused whatever cookie accompanies it
+(GW_AUTH_0058 — The anti-forgery token is held by the session it was issued
+to). What that stops is the shape the JSON content-type
 requirement does not: `approve`, `reject`, `revet`, `restore` and the rebuild,
 reconcile, retention and rotation triggers are body-less `POST`s, which a plain
 cross-site HTML form can produce — and Firefox and Safari apply no default

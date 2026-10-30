@@ -18,10 +18,10 @@ import org.springframework.boot.test.web.server.LocalServerPort;
  *
  * <p>This suite owns its context, and that is the whole reason it exists rather than being two more
  * methods on {@link CsrfEnforcementTests}. {@code SecurityMockMvcRequestPostProcessors.csrf()}
- * reflectively swaps the application's {@code CookieCsrfTokenRepository} for a session-backed one,
- * and the swap lands on the cached context's {@code FilterChainProxy} permanently. Any context a
- * suite has used it in no longer has the cookie repository the portal depends on, so no assertion
- * made there could tell a working deployment from a broken one.
+ * reflectively swaps the application's token repository for a test one, and the swap lands on
+ * the cached context's {@code FilterChainProxy} permanently. Any context a suite has used it in no
+ * longer has the token repository the portal depends on, so no assertion made there could tell a
+ * working deployment from a broken one.
  *
  * <p>Nothing here uses MockMvc, for the same reason.
  *
@@ -37,7 +37,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
         // context rather than adding a thirty-third (ContextBudgetTests). The posture that suite
         // needs is the posture this one needs — a real server, a configured provider that is never
         // reached, and the authorization redirect as the probe — and it uses no MockMvc, so its
-        // context still holds the real cookie repository. If this list drifts from that one the
+        // context still holds the real token repository. If this list drifts from that one the
         // budget test says so, loudly, which is the coupling working rather than failing.
         properties = {
             "spring.security.oauth2.client.registration.idp.client-id=test",
