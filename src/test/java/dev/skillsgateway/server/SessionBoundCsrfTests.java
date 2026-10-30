@@ -119,12 +119,20 @@ class SessionBoundCsrfTests {
         long before = storedSessions();
 
         for (String path : List.of("/api/v1/me", "/status/v1/snapshots", "/git/nothing.git/info/refs")) {
-            HttpResponse<String> response =
-                    send(HttpRequest.newBuilder(uri(path)).GET(), Map.of());
-            assertThat(response.statusCode()).as(path).isEqualTo(401);
-            assertThat(sessionCookies(response))
-                    .as("%s sets no session cookie", path)
-                    .isEmpty();
+            // Also asking for HTML as a browser would, so only the path and dispatch rules refuse to save it.
+            for (String accept : List.of("*/*", "text/html")) {
+                HttpResponse<String> response = send(
+                        HttpRequest.newBuilder(uri(path))
+                                .header("Accept", accept)
+                                .GET(),
+                        Map.of());
+                assertThat(response.statusCode())
+                        .as("%s, Accept: %s", path, accept)
+                        .isEqualTo(401);
+                assertThat(sessionCookies(response))
+                        .as("%s, Accept: %s, sets no session cookie", path, accept)
+                        .isEmpty();
+            }
         }
         // Outside /api/** too: a GET that is not a page navigation is answered 401, not redirected.
         for (String accept : List.of("*/*", "application/json", "text/event-stream")) {
