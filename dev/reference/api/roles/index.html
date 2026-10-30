@@ -2677,7 +2677,7 @@ source <code>config</code> and <code>claim</code> on <a href="../#session"><code
 <tr>
 <td><code>principal</code></td>
 <td>yes</td>
-<td>The identity as the OIDC session reports it.</td>
+<td>The identity exactly as the OIDC session reports it. See below.</td>
 </tr>
 <tr>
 <td><code>role</code></td>
@@ -2717,10 +2717,24 @@ source <code>config</code> and <code>claim</code> on <a href="../#session"><code
 </tr>
 <tr>
 <td>422</td>
-<td>Missing principal, unknown role, approver without a marketplace, or a global role with one.</td>
+<td>Missing or malformed principal, unknown role, approver without a marketplace, or a global role with one.</td>
 </tr>
 </tbody>
 </table>
+<p>A grant is matched against the session's principal name exactly, so the
+principal must be one a session can present. It is <strong>refused, never trimmed</strong>,
+when it:</p>
+<ul>
+<li>is blank, or begins or ends with whitespace (including a no-break space);</li>
+<li>contains a control, invisible format (bidirectional controls, zero-width
+  characters, a byte-order mark), line separator, paragraph separator or
+  unpaired surrogate character;</li>
+<li>is longer than <strong>255</strong> characters, counted as Unicode code points. That is the
+  OpenID Connect limit for <code>sub</code>; an e-mail address is shorter.</li>
+</ul>
+<p>The refusal says which rule was broken and does not repeat the value. Grants
+declared in <a href="../../../guides/declarative-estate/"><code>estate.grants</code></a> pass the same
+rule.</p>
 <hr />
 <h2 id="delete-apiv1rolesid"><code>DELETE /api/v1/roles/{id}</code><a class="headerlink" href="#delete-apiv1rolesid" title="Permanent link">&para;</a></h2>
 <p>Revoke a grant. The row is deleted; the ledger keeps the history as

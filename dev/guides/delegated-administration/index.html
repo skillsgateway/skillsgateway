@@ -2756,7 +2756,9 @@ to start without:</p>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"principal": "carol@example.com", "role": "auditor"}'</span>
 </code></pre></div>
 <p>An approver grant must name a marketplace that exists; admin and auditor grants
-must not name one. See the <a href="../../reference/api/roles/">roles API reference</a> for
+must not name one. The principal is matched exactly, so a principal with
+surrounding whitespace, an invisible character or more than 255 characters is
+refused rather than trimmed. See the <a href="../../reference/api/roles/">roles API reference</a> for
 the full contract.</p>
 <h2 id="step-2-name-at-least-one-bootstrap-admin">Step 2 — name at least one bootstrap admin<a class="headerlink" href="#step-2-name-at-least-one-bootstrap-admin" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>

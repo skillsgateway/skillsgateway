@@ -5382,11 +5382,14 @@ when a group is renamed, a claim stops being emitted or a mapping is wrong.</p>
 <p>The third source, a row in the grants API, is described in
 <a href="../../guides/delegated-administration/">Delegated administration</a>; a session's
 effective roles are the union of all three.</p>
-<p>Claim values are matched <strong>exactly</strong>, after trimming surrounding whitespace: no
-prefix, glob or case-insensitive matching, because a looser match can only ever
-widen who is privileged. The claim may be a list of strings or a single string;
-a delimited string is one value and is never split. A malformed mapping — an
-unknown role, a blank value, an unscoped <code>approver</code>, a scoped global role —
+<p>Claim values are matched <strong>exactly as the provider delivers them</strong>: no
+trimming, no prefix, glob or case-insensitive matching, because a looser match
+can only ever widen who is privileged. A value the provider pads with
+whitespace does not match. The claim may be a list of strings or a single
+string; a delimited string is one value and is never split, and a claim of any
+other type carries no value. A malformed mapping — an unknown role, a blank
+value, a value that begins or ends with whitespace or contains a control or
+invisible format character, an unscoped <code>approver</code>, a scoped global role —
 refuses startup rather than silently granting nothing. A mapping may name a
 marketplace that is not registered yet; until it is, the mapping matches
 nothing.</p>
