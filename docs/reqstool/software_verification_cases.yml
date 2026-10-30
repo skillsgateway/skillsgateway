@@ -1937,6 +1937,66 @@ cases:
       THEN each payload raises exactly one high finding of its rule, and the prohibited one raises exactly one medium finding of its rule
     revision: "0.1.0"
 
+  - id: SVC_GW_VETTING_0074
+    requirement_ids: ["GW_VETTING_0070"]
+    title: The chain's step, headline and stop reason count findings and groups in one wording
+    verification: automated-test
+    description: |
+      GIVEN a run whose vetter recorded 18 findings in 3 groups, and one whose findings did not collapse
+      WHEN the chain is drawn
+      THEN the step, the headline and the reason the chain stopped say 18 findings in 3 groups for the first and only the finding count for the second
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0075
+    requirement_ids: ["GW_VETTING_0070"]
+    title: The vetter section counts findings in the chain's wording
+    verification: automated-test
+    description: |
+      GIVEN a run whose vetter recorded several findings in fewer groups, and a passing vetter with a coverage summary
+      WHEN a reviewer reads the vetting report
+      THEN the vetter's section says the same count as its step, not the stored count text, and the passing vetter still shows its coverage summary
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0076
+    requirement_ids: ["GW_VETTING_0071"]
+    title: A failed vetter with every blocking finding waived is drawn as waived and not objecting
+    verification: automated-test
+    description: |
+      GIVEN a run with one failed vetter whose high findings are all waived, one failed vetter with a high finding left, and a vetter that was not reached
+      WHEN the chain is drawn
+      THEN the first reads waived in the tone of clear with waivers and is not listed as objecting, the second reads fail and is, and the not-reached vetter never reads waived
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0077
+    requirement_ids: ["GW_VETTING_0071"]
+    title: The vetter section shows a waived vetter as waived with its recorded verdict
+    verification: automated-test
+    description: |
+      GIVEN a run whose failed vetter has every blocking finding waived
+      WHEN a reviewer reads the vetting report
+      THEN that vetter's section says waived and that it recorded fail, and shows no fail badge
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0078
+    requirement_ids: ["GW_VETTING_0072"]
+    title: A finding's listed lines are read from the end of its message
+    verification: automated-test
+    description: |
+      GIVEN findings whose messages end with a single line, a list of lines, a list cut short with a count of more, a mention of a line mid-sentence, and no list
+      WHEN the file's findings are read
+      THEN each finding carries its location's line first and every listed line after it once, and the mid-sentence mention and the cut-off count add no line
+    revision: "0.1.0"
+
+  - id: SVC_GW_VETTING_0079
+    requirement_ids: ["GW_VETTING_0072"]
+    title: The file view marks and describes every line a finding lists
+    verification: automated-test
+    description: |
+      GIVEN a file with one finding located on one line whose message lists that line and another
+      WHEN a reviewer opens the file
+      THEN both lines are marked and each is described by the finding
+    revision: "0.1.0"
+
 
   - id: SVC_GW_VETTING_0026
     requirement_ids: ["GW_VETTING_0026"]
