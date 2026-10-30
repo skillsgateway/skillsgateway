@@ -8,7 +8,6 @@ import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.storage.GitStorage;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -696,18 +695,22 @@ public class SnapshotPreviewService {
         Deque<LineStart> kept = new ArrayDeque<>();
         kept.addLast(new LineStart(1, 0));
         int current = 1;
-        long offset = 0;
-        try (InputStream in = new BufferedInputStream(loader.openStream())) {
-            int b;
-            while (current < line && (b = in.read()) != -1) {
-                offset++;
-                if (b == '\n') {
-                    current++;
-                    kept.addLast(new LineStart(current, offset));
-                    while (kept.getFirst().offset() < offset - MAX_TEXT_BYTES / 2) {
-                        kept.removeFirst();
+        long read = 0;
+        byte[] buffer = new byte[8192];
+        try (InputStream in = loader.openStream()) {
+            int n;
+            while (current < line && (n = in.read(buffer)) != -1) {
+                for (int i = 0; i < n && current < line; i++) {
+                    if (buffer[i] == '\n') {
+                        long offset = read + i + 1;
+                        current++;
+                        kept.addLast(new LineStart(current, offset));
+                        while (kept.getFirst().offset() < offset - MAX_TEXT_BYTES / 2) {
+                            kept.removeFirst();
+                        }
                     }
                 }
+                read += n;
             }
         }
         return current < line ? null : kept.getFirst();
