@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { WaiveForm, type RunFinding } from "@/components/vetting-report";
 import { targetOf } from "@/lib/vetting-flow";
+import { VisibleText } from "@/components/visible-text";
+import { showControls } from "@/lib/visible-controls";
 
 function CollisionRow({
   snapshotId,
@@ -23,13 +25,17 @@ function CollisionRow({
   return (
     <li className="list-none text-sm">
       <div className="flex flex-wrap items-baseline gap-2">
-        <span className={`font-mono text-xs break-all ${waiver ? "line-through" : ""}`}>{collision.pluginName}</span>
-        <span className="font-mono text-xs break-all text-muted-foreground">{collision.location}</span>
+        <span className={`font-mono text-xs break-all ${waiver ? "line-through" : ""}`}>
+          <VisibleText text={collision.pluginName} />
+        </span>
+        <span className="font-mono text-xs break-all text-muted-foreground">
+          <VisibleText text={collision.location} />
+        </span>
         <span className="text-muted-foreground">
           looks like{" "}
-          {incumbents
-            .map((incumbent) => `${incumbent.pluginName} in ${incumbent.marketplace}`)
-            .join(", ")}
+          <VisibleText
+            text={incumbents.map((incumbent) => `${incumbent.pluginName} in ${incumbent.marketplace}`).join(", ")}
+          />
         </span>
         {waiver ? (
           <Badge variant="secondary" className="h-auto whitespace-normal break-words">
@@ -39,7 +45,7 @@ function CollisionRow({
           <Button
             size="sm"
             variant="outline"
-            aria-label={`Waive name collision for ${collision.pluginName}`}
+            aria-label={`Waive name collision for ${showControls(collision.pluginName ?? "")}`}
             onClick={() => setWaiving(true)}
           >
             Waive name collision

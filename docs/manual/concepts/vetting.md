@@ -436,7 +436,7 @@ Pattern heuristics over the snapshot's Markdown instruction content
 | `pipe-to-shell` | `curl … \| sh` inside instructions |
 | `exfiltration-instruction` | Sending credentials or environment values to a host |
 | `hidden-html-instruction` | Agent-directed text inside an HTML comment |
-| `invisible-characters` | Zero-width, bidirectional, and Unicode-tag characters used to hide text from a human reading the diff |
+| `invisible-characters` | Zero-width, bidirectional, and Unicode-tag characters used to hide text from a human reading the diff. The portal shows each such character as a visible token rather than applying it ([Admin portal](../reference/portal.md#conventions-across-pages)) |
 
 The rules are tuned against real skill repositories as well as against payloads.
 A negation never reaches into the next sentence, so "do not silently overwrite

@@ -93,6 +93,16 @@ and refuses what it must regardless of what the menu shows.
   the hover tooltip, so an auditor can always recover the recorded value. A
   timestamp the portal cannot parse is shown verbatim rather than hidden, and
   an absent one renders as an em dash.
+- **Text from an upstream repository is shown as written.** Every invisible or
+  bidirectional control character in it — a Unicode format character, such as a
+  zero-width space, a right-to-left override or a byte-order mark — is shown as a
+  bordered token naming its code point, for example `⟨U+202E⟩`, and is never
+  applied or removed. A screen reader reads the character's name; hovering shows
+  it. A zero-width joiner inside an emoji sequence is left alone, as the
+  prompt-injection vetter leaves it. This covers plugin, skill and component
+  names and descriptions, file paths, finding locations, and file contents.
+  Search, selection, links and **Copy link** use the text as stored, so a token
+  is display only; a selection copied from the page copies the token.
 
 ## Authorization
 
@@ -885,6 +895,12 @@ a hostile file appears as visible text and links are shown but never navigable.
 Other text renders as numbered lines. This is inspection, not execution: nothing
 fetched here is ever run, followed or injected as markup, and the page changes
 nothing about what the facade serves.
+
+A numbered line that holds an invisible or bidirectional control character shows
+each one as a token in place and carries a note beneath it, "Contains invisible
+or bidirectional control characters, shown as ⟨U+…⟩", which also describes the
+line to a screen reader. The note appears in any file, whether or not a vetter
+reported the line.
 
 The reads are privileged — admin or an approver of this marketplace — and the
 page is gated by the server refusing them, not by the link being hidden.

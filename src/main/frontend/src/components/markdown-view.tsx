@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from "react";
+import { VisibleText } from "@/components/visible-text";
 
 /** Inline spans: `code`, **bold**, *italic*, and [text](url) shown inertly as "text (url)". */
 function inline(text: string, key: number): ReactNode {
@@ -7,32 +8,43 @@ function inline(text: string, key: number): ReactNode {
   let last = 0;
   let index = 0;
   for (const match of text.matchAll(pattern)) {
-    if (match.index > last) parts.push(text.slice(last, match.index));
+    if (match.index > last) parts.push(<VisibleText key={`t${index}`} text={text.slice(last, match.index)} />);
     const token = match[0];
     index += 1;
     if (token.startsWith("`")) {
       parts.push(
         <code key={index} className="rounded bg-muted px-1 font-mono text-[0.85em]">
-          {token.slice(1, -1)}
+          <VisibleText text={token.slice(1, -1)} />
         </code>,
       );
     } else if (token.startsWith("**")) {
-      parts.push(<strong key={index}>{token.slice(2, -2)}</strong>);
+      parts.push(
+        <strong key={index}>
+          <VisibleText text={token.slice(2, -2)} />
+        </strong>,
+      );
     } else if (token.startsWith("*")) {
-      parts.push(<em key={index}>{token.slice(1, -1)}</em>);
+      parts.push(
+        <em key={index}>
+          <VisibleText text={token.slice(1, -1)} />
+        </em>,
+      );
     } else {
       // A link stays a description, never a navigation: text plus the target, both as text.
       const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(token);
       parts.push(
         <span key={index}>
-          {link?.[1]}
-          <span className="text-muted-foreground"> ({link?.[2]})</span>
+          <VisibleText text={link?.[1]} />
+          <span className="text-muted-foreground">
+            {" "}
+            (<VisibleText text={link?.[2]} />)
+          </span>
         </span>,
       );
     }
     last = match.index + token.length;
   }
-  if (last < text.length) parts.push(text.slice(last));
+  if (last < text.length) parts.push(<VisibleText key="rest" text={text.slice(last)} />);
   return <Fragment key={key}>{parts}</Fragment>;
 }
 
@@ -89,7 +101,7 @@ export function MarkdownView({ text }: { text: string }) {
       if (line.startsWith("```")) {
         blocks.push(
           <pre key={key++} className="overflow-x-auto rounded-md border bg-muted p-3 font-mono text-xs">
-            {code.join("\n")}
+            <VisibleText text={code.join("\n")} />
           </pre>,
         );
         code = null;
@@ -144,7 +156,7 @@ export function MarkdownView({ text }: { text: string }) {
   if (code !== null) {
     blocks.push(
       <pre key={key++} className="overflow-x-auto rounded-md border bg-muted p-3 font-mono text-xs">
-        {code.join("\n")}
+        <VisibleText text={code.join("\n")} />
       </pre>,
     );
   }

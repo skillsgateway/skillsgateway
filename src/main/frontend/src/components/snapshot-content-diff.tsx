@@ -6,6 +6,8 @@ import {
   type SnapshotSkillDiff,
 } from "@/api/queries";
 import { Badge } from "@/components/ui/badge";
+import { VisibleText } from "@/components/visible-text";
+import { showControls } from "@/lib/visible-controls";
 
 /** A status badge reads the same for a plugin and for a skill, so one function draws both. */
 function StatusBadge({ status }: { status?: string }) {
@@ -127,23 +129,27 @@ function Body({ diff }: { diff: ContentDiff }) {
           {plugins.map(({ plugin, skills }) => (
             <li key={`${plugin.name}-${plugin.source}`} className="rounded-md border p-3">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="break-all font-medium">{plugin.name}</span>
+                <span className="break-all font-medium">
+                  <VisibleText text={plugin.name} />
+                </span>
                 <StatusBadge status={plugin.status} />
                 <span className="break-all font-mono text-xs text-muted-foreground">
-                  {plugin.source}
+                  <VisibleText text={plugin.source} />
                 </span>
               </div>
               {skills.length === 0 ? (
                 <p className="mt-1 text-xs text-muted-foreground">{emptyNote(plugin.status)}</p>
               ) : (
-                <ul aria-label={`Changed skills in ${plugin.name}`} className="mt-2 space-y-1">
+                <ul aria-label={`Changed skills in ${showControls(plugin.name ?? "")}`} className="mt-2 space-y-1">
                   {skills.map((skill) => (
                     <li key={skill.path} className="flex flex-wrap items-center gap-2 text-sm">
-                      <span className="break-all">{skill.name}</span>
+                      <span className="break-all">
+                        <VisibleText text={skill.name} />
+                      </span>
                       <StatusBadge status={skill.status} />
                       {skill.movedFromPlugin ? (
                         <span className="text-xs text-muted-foreground">
-                          from {skill.movedFromPlugin}
+                          from <VisibleText text={skill.movedFromPlugin} />
                         </span>
                       ) : null}
                     </li>

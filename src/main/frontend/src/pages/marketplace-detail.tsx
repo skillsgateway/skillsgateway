@@ -47,6 +47,7 @@ import {
   parseSnapshotTab,
   type SnapshotTab,
 } from "@/lib/snapshot-roles";
+import { VisibleText } from "@/components/visible-text";
 
 /** What every section of one marketplace reads: the marketplace and its snapshots, sorted once. */
 type MarketplaceContext = {
@@ -381,7 +382,7 @@ export function MarketplaceSettingsPage() {
             <dt className="font-medium">Project</dt>
             <dd>{marketplace.forgeProject ?? "—"}</dd>
             <dt className="font-medium">Description</dt>
-            <dd>{marketplace.description ?? "—"}</dd>
+            <dd>{marketplace.description ? <VisibleText text={marketplace.description} /> : "—"}</dd>
             <dt className="font-medium">Last upstream update</dt>
             <dd><Timestamp value={marketplace.upstreamUpdatedAt} /></dd>
             <dt className="font-medium">Last ingest</dt>

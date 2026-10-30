@@ -3,6 +3,8 @@ import { Fragment, useId, useState } from "react";
 import { useSnapshotContent, type SnapshotContent } from "@/api/queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { VisibleText } from "@/components/visible-text";
+import { showControls } from "@/lib/visible-controls";
 
 type Plugin = NonNullable<SnapshotContent["plugins"]>[number];
 type Hook = NonNullable<Plugin["hooks"]>[number];
@@ -29,14 +31,22 @@ function HookRow({ hook }: { hook: Hook }) {
   return (
     <li className="space-y-1 rounded-md border p-2 text-xs">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-md border bg-muted px-2 py-0.5 font-medium">{trigger}</span>
+        <span className="rounded-md border bg-muted px-2 py-0.5 font-medium">
+          <VisibleText text={trigger} />
+        </span>
         <span className="text-muted-foreground">
           {hook.type}
           {hook.declaredBy && hook.declaredBy !== "plugin" ? ` · declared by ${hook.declaredBy}` : null}
         </span>
       </div>
-      {hook.runs ? <code className="block font-mono break-all">{hook.runs}</code> : null}
-      <span className="block font-mono break-all text-muted-foreground">{hook.location}</span>
+      {hook.runs ? (
+        <code className="block font-mono break-all">
+          <VisibleText text={hook.runs} />
+        </code>
+      ) : null}
+      <span className="block font-mono break-all text-muted-foreground">
+        <VisibleText text={hook.location} />
+      </span>
     </li>
   );
 }
@@ -48,7 +58,9 @@ function HookModuleRow({ module }: { module: HookModule }) {
   const imports = (module.files ?? []).slice(1);
   return (
     <li className="space-y-1 rounded-md border p-2 text-xs">
-      <code className="block font-mono font-medium break-all">{module.path}</code>
+      <code className="block font-mono font-medium break-all">
+        <VisibleText text={module.path} />
+      </code>
       <div className="flex flex-wrap items-center gap-1">
         {events.length === 0 ? (
           <span className="text-muted-foreground">no events a scan can see</span>
@@ -56,28 +68,32 @@ function HookModuleRow({ module }: { module: HookModule }) {
           events.map((event) => (
             <span
               key={event.name}
-              title={event.location}
+              title={showControls(event.location ?? "")}
               className="rounded-md border bg-muted px-2 py-0.5 font-medium"
             >
-              {event.name}
+              <VisibleText text={event.name} />
             </span>
           ))
         )}
         {uses.map((use) => (
-          <code key={use.name} title={use.location} className="rounded-md border px-2 py-0.5 font-mono">
-            {`$.${use.name}`}
+          <code key={use.name} title={showControls(use.location ?? "")} className="rounded-md border px-2 py-0.5 font-mono">
+            <VisibleText text={`$.${use.name}`} />
           </code>
         ))}
       </div>
       {imports.length > 0 ? (
-        <span className="block font-mono break-all text-muted-foreground">{`imports ${imports.join(", ")}`}</span>
+        <span className="block font-mono break-all text-muted-foreground">
+          <VisibleText text={`imports ${imports.join(", ")}`} />
+        </span>
       ) : null}
       {(module.unscanned ?? []).map((problem) => (
         <span key={`${problem.path}:${problem.message}`} className="block break-all">
-          {`not scanned: ${problem.path} — ${problem.message}`}
+          <VisibleText text={`not scanned: ${problem.path} — ${problem.message}`} />
         </span>
       ))}
-      <span className="block font-mono break-all text-muted-foreground">{`declared at ${module.location}`}</span>
+      <span className="block font-mono break-all text-muted-foreground">
+        <VisibleText text={`declared at ${module.location}`} />
+      </span>
     </li>
   );
 }
@@ -89,7 +105,7 @@ function KindList({ plugin, kind }: { plugin: Plugin; kind: Kind }) {
       <div className="flex flex-wrap gap-2">
         {(plugin.skills ?? []).map((skill) => (
           <Badge key={skill.path} variant="outline">
-            {skill.name}
+            <VisibleText text={skill.name} />
           </Badge>
         ))}
       </div>
@@ -118,8 +134,12 @@ function KindList({ plugin, kind }: { plugin: Plugin; kind: Kind }) {
     <ul className="space-y-1 text-sm">
       {(plugin[kind] ?? []).map((component, index) => (
         <li key={`${index}:${component.path}`} className="flex flex-wrap items-baseline gap-2">
-          <span className="font-medium">{component.name}</span>
-          <span className="font-mono text-xs break-all text-muted-foreground">{component.path}</span>
+          <span className="font-medium">
+            <VisibleText text={component.name} />
+          </span>
+          <span className="font-mono text-xs break-all text-muted-foreground">
+            <VisibleText text={component.path} />
+          </span>
         </li>
       ))}
     </ul>
@@ -149,11 +169,17 @@ export function PluginInventory({ plugin }: { plugin: Plugin }) {
     <div className="rounded-md border p-3">
       <div className="flex flex-wrap items-center gap-2 font-medium">
         <Puzzle className="size-4 shrink-0 text-primary" aria-hidden />
-        <span className="break-all">{plugin.name}</span>
-        <span className="font-mono text-xs break-all text-muted-foreground">{plugin.source}</span>
+        <span className="break-all">
+          <VisibleText text={plugin.name} />
+        </span>
+        <span className="font-mono text-xs break-all text-muted-foreground">
+          <VisibleText text={plugin.source} />
+        </span>
       </div>
       {plugin.description ? (
-        <p className="mt-1 text-sm text-muted-foreground">{plugin.description}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          <VisibleText text={plugin.description} />
+        </p>
       ) : null}
       {present.length === 0 ? (
         <p className="mt-2 text-xs text-muted-foreground">no components found</p>
@@ -188,7 +214,7 @@ export function PluginInventory({ plugin }: { plugin: Plugin }) {
               key={kind}
               id={`${id}-${kind}`}
               role="region"
-              aria-label={`${many} of ${plugin.name}`}
+              aria-label={`${many} of ${showControls(plugin.name ?? "")}`}
               hidden={!open.has(kind)}
               className="mt-2"
             >

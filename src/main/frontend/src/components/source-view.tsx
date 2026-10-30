@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef } from "react";
 import { highestSeverity, type FileFinding, type Severity } from "@/lib/file-findings";
 import { formatDay } from "@/lib/datetime";
+import { revealControls } from "@/lib/visible-controls";
+import { RevealedText, VisibleText } from "@/components/visible-text";
 
 /** The tint of a marked line. The severity word leads each note, so colour is never the only signal. */
 const TINT: Record<Severity, string> = {
@@ -31,7 +33,9 @@ function Note({ id, finding, prefix }: { id: string; finding: FileFinding; prefi
       {" · "}
       <span className="font-mono">{finding.ruleId}</span>
       {" — "}
-      <span>{finding.message}</span>
+      <span>
+        <VisibleText text={finding.message} />
+      </span>
       {finding.waived ? (
         <span className="text-muted-foreground">
           {" "}
@@ -39,6 +43,23 @@ function Note({ id, finding, prefix }: { id: string; finding: FileFinding; prefi
           {finding.waived.until ? ` until ${formatDay(finding.waived.until)}` : ""})
         </span>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * Written beneath a line that holds a format character, so the line is marked in words even where
+ * no vetter looked; the tokens in the line show which characters and where.
+ *
+ * @Requirements GW_APPROVAL_0038
+ */
+function ControlsMarker({ id }: { id: string }) {
+  return (
+    <div
+      id={id}
+      className="ml-12 border-l-2 border-dashed border-destructive/70 bg-background py-1 pr-2 pl-3 font-sans text-xs whitespace-normal"
+    >
+      Contains invisible or bidirectional control characters, shown as ⟨U+…⟩.
     </div>
   );
 }
@@ -107,17 +128,21 @@ export function SourceView({
           const onLine = byLine.get(n) ?? [];
           const severity = highestSeverity(onLine);
           const noteIds = onLine.map((_, i) => `${id}-L${n}-${i}`);
+          const shown = revealControls(content);
+          const markerId = shown.controls > 0 ? `${id}-L${n}-controls` : null;
+          const describedBy = markerId ? [...noteIds, markerId] : noteIds;
           return (
             <li
               key={n}
               data-line={n}
               data-severity={severity ?? undefined}
+              data-controls={shown.controls > 0 ? shown.controls : undefined}
               tabIndex={-1}
               ref={(element) => {
                 if (element) refs.current.set(n, element);
                 else refs.current.delete(n);
               }}
-              aria-describedby={noteIds.length > 0 ? noteIds.join(" ") : undefined}
+              aria-describedby={describedBy.length > 0 ? describedBy.join(" ") : undefined}
               className={`scroll-mt-4 border-l-2 outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 severity ? TINT[severity] : "border-transparent"
               }`}
@@ -131,11 +156,14 @@ export function SourceView({
                 >
                   {n}
                 </span>
-                <span className="min-w-0 pr-3 break-all whitespace-pre-wrap">{content === "" ? " " : content}</span>
+                <span className="min-w-0 pr-3 break-all whitespace-pre-wrap">
+                  {content === "" ? " " : <RevealedText revealed={shown} />}
+                </span>
               </div>
               {onLine.map((finding, i) => (
                 <Note key={noteIds[i]} id={noteIds[i]!} finding={finding} />
               ))}
+              {markerId ? <ControlsMarker id={markerId} /> : null}
             </li>
           );
         })}
