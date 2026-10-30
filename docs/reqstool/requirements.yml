@@ -2864,7 +2864,7 @@ requirements:
     rationale: "A reviewer decides a finding by reading its line. A file read that only ever returned the head left findings deep in a large file unreadable, so the reviewer waived or accepted them blind; the cap that protects the reviewer's browser stays, and only where it applies moves."
     references:
       requirement_ids: ["GW_INGEST_0015", "GW_APPROVAL_0029"]
-    categories: ["functional-suitability", "usability"]
+    categories: ["functional-suitability", "interaction-capability"]
     revision: 0.5.0
 
   - id: GW_INGEST_0045
