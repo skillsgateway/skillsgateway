@@ -158,7 +158,9 @@ decision the session cannot make, the card says so in place of the decision —
 *"Approving or rejecting a snapshot of {name} needs the approver role for it."*
 A page or section the session cannot read shows one statement of the role it
 needs — *"This page needs the auditor role."* — with a line on why, and makes
-none of the reads the server would refuse.
+none of the reads the server would refuse. The one exception is
+[Snapshot contents](#snapshot-contents): the explorer asks, and states the
+server's refusal when it comes.
 
 Roles can change while a page is open. Whenever the server refuses a request
 (`403`), the portal reads `GET /api/v1/me` again and the page follows the

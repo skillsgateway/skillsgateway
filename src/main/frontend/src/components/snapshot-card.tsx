@@ -201,7 +201,7 @@ function RevetPanel({ snapshot }: { snapshot: Snapshot }) {
 export function SnapshotDeltaLine({ snapshotId }: { snapshotId: number }) {
   const { decide } = useMarketplaceRights();
   const diff = useSnapshotDiff(decide ? snapshotId : null);
-  const content = useSnapshotContentDiff(snapshotId);
+  const content = useSnapshotContentDiff(decide ? snapshotId : null);
   if (!decide) return null;
   if (diff.isPending) {
     return <p className="font-mono text-xs text-muted-foreground">Measuring the change…</p>;

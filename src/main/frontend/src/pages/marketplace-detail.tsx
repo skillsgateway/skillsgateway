@@ -570,7 +570,7 @@ export function MarketplaceLayout() {
   const running = ingestStatus.data?.running;
   const busy = ingest.isPending || live;
   const rights = {
-    marketplace: marketplace.name ?? "",
+    marketplace: marketplace.name ?? null,
     decide: access.approves(marketplace.name ?? ""),
     administer: access.isAdmin,
   };
