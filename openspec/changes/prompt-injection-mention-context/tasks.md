@@ -2,7 +2,7 @@
 
 ## 1. Requirements (reqstool)
 
-- [ ] 1.1 Add GW_VETTING_0069, SVC_GW_VETTING_0072 and SVC_GW_VETTING_0073 in `docs/reqstool/`; verify with `reqstool status local -p docs/reqstool` (after the build).
+- [x] 1.1 Add GW_VETTING_0069, SVC_GW_VETTING_0072 and SVC_GW_VETTING_0073 in `docs/reqstool/`; verify with `reqstool status local -p docs/reqstool` (after the build).
 
 ## 2. Precision (SVC_GW_VETTING_0072, SVC_GW_VETTING_0073)
 
@@ -18,4 +18,4 @@
 
 ## 4. Gates and evidence
 
-- [ ] 4.1 `mutants.sh` over the new conditions, then every AGENTS.md gate fresh, recorded in `evidence.md`.
+- [x] 4.1 `mutants.sh` over the new conditions, then every AGENTS.md gate fresh, recorded in `evidence.md`.
