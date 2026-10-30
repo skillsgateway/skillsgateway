@@ -1,6 +1,7 @@
 # Local development
 
 Get a gateway running on your machine, with or without an identity provider.
+First time? [Try it out](try-it-out.md) is the guided version.
 
 ## Prerequisites
 

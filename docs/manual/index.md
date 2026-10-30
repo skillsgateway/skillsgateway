@@ -83,8 +83,9 @@ in the repository, at [docs/decisions/](https://github.com/skillsgateway/skillsg
 This site follows [Diátaxis](https://diataxis.fr): four sections, split by what
 you need right now rather than by who you are.
 
-- **Learning it?** [Try it locally](guides/local-development.md) — a gateway
-  running on your machine, start to finish.
+- **Learning it?** [Try it out](guides/try-it-out.md) — a gateway on your
+  machine vetting, approving and serving two public marketplaces, start to
+  finish.
 - **Understanding it?**
   [Lifecycle — quarantine to serve](concepts/lifecycle.md) is the product in one
   page; [Architecture](architecture.md) is the whole picture.
