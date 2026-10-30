@@ -1,19 +1,19 @@
 # Evidence: role-aware-portal-controls
 
 One fresh run of every gate after the last code edit, at commit
-`bcf2c53228a3fb55d8e4bd5de7134cb03bb35ce0` (this file and the archive follow it
-and change no code).
+`4ef068476aa681de2a022c94f766dd7f5f60a39e` (the review fixes; this file follows
+it and changes no code).
 
 ## Gates
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Java + UI + jar | `./mvnw clean verify` | exit 0; surefire 1179 tests, 0 failures, 0 errors, 9 skipped; vitest 241 tests, 0 failures |
-| Stories | `(cd src/main/frontend && pnpm test:stories)` | `Test Files 22 passed (22)`, `Tests 116 passed (116)` (first attempt hit the known "no tests" Storybook cache flake; caches cleared, rerun) |
+| Java + UI + jar | `./mvnw clean verify` | `BUILD SUCCESS`; surefire 1179 tests, 0 failures, 0 errors, 9 skipped; vitest `Test Files 33 passed (33)`, `Tests 241 passed (241)` |
+| Stories | `(cd src/main/frontend && pnpm test:stories)` | `Test Files 22 passed (22)`, `Tests 116 passed (116)` (the first two attempts hit the known Storybook cache flakes, "no tests" and "Failed to fetch dynamically imported module"; caches cleared, rerun) |
 | e2e | `(cd src/main/frontend && pnpm e2e)` | `27 passed (1.8m)`, exit 0 |
 | Traceability | `reqstool status local -p docs/reqstool` | exit 0; 1203 passed, 0 failed, 0 skipped; 0 SVCs missing tests, 0 missing MVRs; GW_AUTH_0064, GW_AUTH_0065, GW_AUTH_0066 green |
-| OpenSpec | `openspec validate --all --strict` | `Totals: 30 passed, 0 failed (30 items)` |
-| Docs | `mkdocs build --strict` | `Documentation built in 1.54 seconds` |
+| OpenSpec | `openspec validate --all --strict` | `Totals: 29 passed, 0 failed (29 items)` |
+| Docs | `mkdocs build --strict` | `Documentation built in 2.67 seconds` |
 
 ## The tests fail without the change
 
