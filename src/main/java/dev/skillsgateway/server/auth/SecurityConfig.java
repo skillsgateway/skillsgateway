@@ -2,7 +2,9 @@ package dev.skillsgateway.server.auth;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import io.github.reqstool.annotations.Requirements;
+import jakarta.servlet.DispatcherType;
 import java.util.List;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -12,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,15 +27,20 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ContentSecurityPolicyHeaderWriter;
 import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.DispatcherTypeRequestMatcher;
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestHeaderRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 @Configuration
@@ -282,11 +290,10 @@ public class SecurityConfig {
      * requiring PATs. GW_AUTH_0002 holds for every default-configured deployment.
      *
      * <p>This is the only chain carrying an <em>ambient</em> credential, so it is the only one that
-     * needs a CSRF token (GW_AUTH_0030). {@code spa()} is Spring Security 7's built-in form of the
-     * cookie-and-header exchange: an {@code XSRF-TOKEN} cookie the portal's own script reads, echoed
-     * in {@code X-XSRF-TOKEN}, XOR-masked per response. The four chains above stay exempt because
-     * each authenticates every request on its own and honours no cookie — their comments say so
-     * individually.
+     * needs a CSRF token (GW_AUTH_0030): an {@code XSRF-TOKEN} cookie the portal's own script reads,
+     * echoed in {@code X-XSRF-TOKEN}, and compared with the token held in the session (GW_AUTH_0058).
+     * The four chains above stay exempt because each authenticates every request on its own and
+     * honours no cookie — their comments say so individually.
      */
     @Bean
     @Order(6)
@@ -315,8 +322,15 @@ public class SecurityConfig {
                             AnonymousAuthenticationFilter.class)
                     // Same CSRF posture as the configured chain below, deliberately: the hatch
                     // opens authentication, not this. Exempting /api/** here instead would let the
-                    // portal's own token handling break only in production.
-                    .csrf(CsrfConfigurer::spa);
+                    // portal's own token handling break only in production. No sign-in creates a
+                    // session here, so a request may start the one that holds the token -- but not a
+                    // health probe, nor the error dispatch that renders another chain's refusal.
+                    .csrf(csrf -> sessionBoundToken(
+                            csrf,
+                            new AndRequestMatcher(
+                                    new DispatcherTypeRequestMatcher(DispatcherType.REQUEST),
+                                    new NegatedRequestMatcher(PathPatternRequestMatcher.withDefaults()
+                                            .matcher("/actuator/**")))));
             return http.build();
         }
         http.authorizeHttpRequests(authorize -> authorize
@@ -330,10 +344,53 @@ public class SecurityConfig {
                         .anyRequest()
                         .authenticated())
                 .oauth2Login(login -> login.failureHandler(new SignInFailureHandler()))
-                .csrf(CsrfConfigurer::spa)
+                .csrf(csrf -> sessionBoundToken(
+                        csrf,
+                        PathPatternRequestMatcher.withDefaults()
+                                .matcher(OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI
+                                        + "/{registrationId}")))
+                .requestCache(cache -> cache.requestCache(signInRequestCache()))
                 .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
                         new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
                         PathPatternRequestMatcher.withDefaults().matcher("/api/**")));
         return http.build();
+    }
+
+    /**
+     * The cookie-and-header exchange {@code csrf.spa()} configures, with its cookie repository
+     * replaced so the token is kept in the session rather than taken from the cookie (GW_AUTH_0058).
+     */
+    @Requirements({"GW_AUTH_0030", "GW_AUTH_0058"})
+    private static void sessionBoundToken(CsrfConfigurer<HttpSecurity> csrf, RequestMatcher sessionMayStart) {
+        csrf.spa().csrfTokenRepository(new SessionBoundCsrfTokenRepository(sessionMayStart));
+    }
+
+    /**
+     * Saves only a page navigation, which the entry point answers with a sign-in redirect, so the
+     * user lands back on it afterwards. Anything else is answered 401 and has nothing to return to,
+     * so saving it would only create a session for an unauthenticated caller (GW_AUTH_0059).
+     */
+    @Requirements({"GW_AUTH_0059"})
+    private static HttpSessionRequestCache signInRequestCache() {
+        HttpSessionRequestCache cache = new HttpSessionRequestCache();
+        cache.setRequestMatcher(new AndRequestMatcher(
+                // Not the error dispatch that renders another chain's 401: that is no page either.
+                new DispatcherTypeRequestMatcher(DispatcherType.REQUEST),
+                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/**"),
+                new NegatedRequestMatcher(
+                        PathPatternRequestMatcher.withDefaults().matcher("/api/**")),
+                new NegatedRequestMatcher(
+                        PathPatternRequestMatcher.withDefaults().matcher("/favicon.*")),
+                new NegatedRequestMatcher(new RequestHeaderRequestMatcher("X-Requested-With", "XMLHttpRequest")),
+                pageNavigation()));
+        return cache;
+    }
+
+    /** Asks for HTML by name, as a browser navigation does; an {@code Accept} of only a wildcard does not. */
+    private static RequestMatcher pageNavigation() {
+        MediaTypeRequestMatcher html =
+                new MediaTypeRequestMatcher(MediaType.TEXT_HTML, MediaType.APPLICATION_XHTML_XML);
+        html.setIgnoredMediaTypes(Set.of(MediaType.ALL));
+        return html;
     }
 }

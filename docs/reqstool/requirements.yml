@@ -3292,3 +3292,23 @@ requirements:
       requirement_ids: ["GW_AUTH_0015.1", "GW_AUTH_0015.2"]
     categories: ["security"]
     revision: 0.5.0
+
+  - id: GW_AUTH_0058
+    title: The anti-forgery token is held by the session it was issued to
+    significance: shall
+    description: "The system shall keep the anti-forgery token of its cookie-authenticated web surface in the server-side session it was issued to, shall accept a state-changing request only when the token the request presents equals the one stored in the caller's own session, whatever any cookie the request carries says, and shall issue the readable copy of the token in a cookie that declares an explicit same-site attribute and is marked secure whenever the request that receives it arrived over a secure connection."
+    rationale: "A token compared only with a cookie proves that whoever sent the request could set that cookie, not that the gateway issued the token to this session, and a cookie is not confined to one host and port the way a session's server-side state is. Keeping the token in the session store also keeps it valid whichever instance answers. The cookie remains because the portal reads the token from it; it is a copy, never the reference."
+    references:
+      requirement_ids: ["GW_AUTH_0030", "GW_AUTH_0053"]
+    categories: ["security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0059
+    title: An unauthenticated request leaves no session behind
+    significance: shall
+    description: "The system shall create no server-side session for a request it answers as unauthenticated, nor for any request on a surface that authenticates every request itself, and shall create one on the web surface only for a browser sign-in in progress or a signed-in user."
+    rationale: "A session stored for every anonymous request is a row in the shared session store per probe, written by callers who never signed in and kept until it expires. The browser sign-in is the one anonymous request that needs a session, because the authorization request it saves must survive the round trip to the identity provider."
+    references:
+      requirement_ids: ["GW_AUTH_0053"]
+    categories: ["security", "reliability"]
+    revision: 0.5.0

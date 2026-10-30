@@ -70,13 +70,17 @@ mode.
 
 **Unauthenticated requests** to `/api/**` receive a clean **401**, not a 302 to
 the identity provider, so an expired session surfaces as an error rather than an
-HTML login page rendered into a `fetch()`.
+HTML login page rendered into a `fetch()`. A request answered **401** creates no
+session.
 
-**CSRF.** The session path carries a token. Every response sets an `XSRF-TOKEN`
-cookie readable by script, and a state-changing request must echo it in an
-`X-XSRF-TOKEN` header or receive **403**: a session cookie on its own does not
-authorise a mutation. The portal's fetch wrapper sends it on every call, so a
-portal user does nothing differently. One consequence worth knowing before you
+**CSRF.** The session path carries a token, held in the session. A response
+sets an `XSRF-TOKEN` cookie readable by script with that token whenever the
+browser's copy is missing or out of date, and a state-changing request must echo
+it in an `X-XSRF-TOKEN` header or receive **403**: a session cookie on its own
+does not authorise a mutation, and neither does a header matching some other
+`XSRF-TOKEN` cookie, because the header is compared with the session's token.
+The portal's fetch wrapper sends it on every call, so a portal user does
+nothing differently. One consequence worth knowing before you
 meet it: the Scalar reference at `/docs` sends its requests from the browser
 without that header, so a mutation tried from there is refused even though a
 read from there works. Why the session path needs a token at all is in
