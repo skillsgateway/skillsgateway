@@ -329,9 +329,14 @@ public class SecurityConfig {
                     // Same CSRF posture as the configured chain below, deliberately: the hatch
                     // opens authentication, not this. Exempting /api/** here instead would let the
                     // portal's own token handling break only in production. No sign-in creates a
-                    // session here, so any request may start the one that holds the token -- but not
-                    // the error dispatch that renders another chain's refusal, such as the facade's.
-                    .csrf(csrf -> sessionBoundToken(csrf, new DispatcherTypeRequestMatcher(DispatcherType.REQUEST)));
+                    // session here, so a request may start the one that holds the token -- but not a
+                    // health probe, nor the error dispatch that renders another chain's refusal.
+                    .csrf(csrf -> sessionBoundToken(
+                            csrf,
+                            new AndRequestMatcher(
+                                    new DispatcherTypeRequestMatcher(DispatcherType.REQUEST),
+                                    new NegatedRequestMatcher(PathPatternRequestMatcher.withDefaults()
+                                            .matcher("/actuator/**")))));
             return http.build();
         }
         http.authorizeHttpRequests(authorize -> authorize

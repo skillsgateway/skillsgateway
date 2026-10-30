@@ -49,10 +49,14 @@ creates none, with one exception passed in by the chain:
   `/oauth2/authorization/{registrationId}`, which creates the session for the
   authorization request anyway. The existing assertion that the sign-in
   redirect sets a readable `XSRF-TOKEN` keeps holding.
-- the development escape hatch: any request dispatched as `REQUEST`. Nothing
-  signs in there, so without this the hatch would have no token at all and the
-  portal could not write. An error dispatch is excluded, so the facade's `401`
-  rendered through `/error` creates no session there either.
+- the development escape hatch: any request dispatched as `REQUEST` outside
+  `/actuator/**`. Nothing signs in there, so without this the hatch would have
+  no token at all and the portal could not write. Health probes are excluded so
+  a local orchestrator's polling does not fill the store, and an error dispatch
+  is excluded so the facade's `401` rendered through `/error` creates no session
+  there either. This branch has no automated test (a dev-hatch context over
+  real HTTP would be another Spring test context); `evidence.md` records it run
+  for real.
 
 Without a session, a generated token is stored nowhere, so a state-changing
 request has nothing to match and is refused.
