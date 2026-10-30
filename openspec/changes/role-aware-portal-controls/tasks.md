@@ -34,4 +34,4 @@
 
 ## 7. Gates and evidence
 
-- [ ] 7.1 Screenshots (local only), `/impeccable audit` + `harden` on the affected surfaces, every AGENTS.md gate fresh, `evidence.md`.
+- [x] 7.1 Screenshots (local only), `/impeccable audit` + `harden` on the affected surfaces, every AGENTS.md gate fresh, `evidence.md`.
