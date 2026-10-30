@@ -96,17 +96,19 @@ function emojiJoiner(text: string, index: number): boolean {
 export function revealControls(text: string): Revealed {
   const parts: (string | Control)[] = [];
   let last = 0;
+  let controls = 0;
   for (const match of text.matchAll(FORMAT)) {
     const index = match.index;
     if (match[0] === "\u200d" && emojiJoiner(text, index)) continue;
     const codePoint = match[0].codePointAt(0)!;
     if (index > last) parts.push(text.slice(last, index));
     parts.push({ codePoint, token: `⟨U+${hex(codePoint)}⟩`, name: controlName(codePoint) });
+    controls += 1;
     last = index + match[0].length;
   }
-  if (parts.length === 0) return { parts: text === "" ? [] : [text], controls: 0 };
+  if (controls === 0) return { parts: text === "" ? [] : [text], controls: 0 };
   if (last < text.length) parts.push(text.slice(last));
-  return { parts, controls: parts.filter((part) => typeof part !== "string").length };
+  return { parts, controls };
 }
 
 /** The text with each format character as its token, for a `title` or an `aria-label`. */

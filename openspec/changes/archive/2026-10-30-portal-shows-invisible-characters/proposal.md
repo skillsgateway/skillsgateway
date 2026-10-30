@@ -42,8 +42,8 @@ None.
 - Portal: a shared helper (`lib/visible-controls.ts`) and a `VisibleText`
   component, used by the source view, the file tree, the file changes, the
   snapshot inventory, the content diff, finding locations, the name-collision
-  notice, the Markdown and JSON views, the adoption report and the marketplace
-  description.
+  notice, the Markdown and JSON views, the adoption report, the marketplace
+  description and the external plugin sources in a snapshot's provenance.
 - Docs: `reference/portal.md`; one sentence in `concepts/vetting.md`.
 
 The capability map absorbs this change: it adds no backend package, object type,

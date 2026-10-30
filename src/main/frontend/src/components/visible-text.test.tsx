@@ -1,12 +1,17 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router-dom";
 import { expect, test, vi } from "vitest";
-import { snapshotContent } from "@/test/msw-handlers";
+import { compositeProvenance, snapshotContent } from "@/test/msw-handlers";
+import { server } from "@/test/msw-server";
 import { LocationHrefContext } from "@/lib/location-href";
 import { FindingLocation } from "./finding-locations";
+import { ProvenanceDetails } from "./provenance-details";
 import { SnapshotFileTree } from "./snapshot-file-tree";
 import { PluginInventory } from "./snapshot-inventory";
+import { SourceView } from "./source-view";
 
 const RLO = "\u202E";
 const PDF = "\u202C";
@@ -93,4 +98,43 @@ test("selecting_a_file_whose_name_holds_a_control_passes_the_path_as_written", a
 
   await user.click(screen.getByRole("button", { name: /^read⟨U\+202E⟩dm\.sh/ }));
   expect(onSelect).toHaveBeenCalledWith(path);
+});
+
+/**
+ * @SVCs SVC_GW_APPROVAL_0041
+ */
+test("the_source_view_names_its_file_with_the_token", () => {
+  render(<SourceView path={`p/read${RLO}dm.sh`} text="echo" findings={[]} />);
+
+  expect(screen.getByRole("list", { name: "Lines of p/read⟨U+202E⟩dm.sh" })).toBeInTheDocument();
+});
+
+/**
+ * @SVCs SVC_GW_APPROVAL_0041
+ */
+test("an_external_plugin_name_and_clone_url_show_their_controls_as_tokens", async () => {
+  const member = compositeProvenance.closure!.members![0]!;
+  server.use(
+    http.get("/api/v1/snapshots/:id/provenance", () =>
+      HttpResponse.json({
+        ...compositeProvenance,
+        closure: {
+          ...compositeProvenance.closure!,
+          members: [{ ...member, pluginName: `to${RLO}ols`, cloneUrl: `https://example.test/to${RLO}ols` }],
+        },
+      }),
+    ),
+  );
+  const { container } = render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <ProvenanceDetails snapshotId={compositeProvenance.snapshotId!} />
+    </QueryClientProvider>,
+  );
+
+  const sources = await screen.findByRole("region", { name: "External plugin sources" });
+  expect(within(sources).getByText("to", { exact: false, selector: ".font-medium" })).toHaveTextContent(
+    "to⟨U+202E⟩ (right-to-left override)ols",
+  );
+  expect(sources).toHaveTextContent("https://example.test/to⟨U+202E⟩ (right-to-left override)ols");
+  expectNoRawControl(container);
 });

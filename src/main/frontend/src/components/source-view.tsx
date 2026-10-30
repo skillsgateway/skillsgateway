@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from "react";
 import { highestSeverity, type FileFinding, type Severity } from "@/lib/file-findings";
 import { formatDay } from "@/lib/datetime";
-import { revealControls } from "@/lib/visible-controls";
+import { revealControls, showControls } from "@/lib/visible-controls";
 import { RevealedText, VisibleText } from "@/components/visible-text";
 
 /** The tint of a marked line. The severity word leads each note, so colour is never the only signal. */
@@ -120,7 +120,7 @@ export function SourceView({
   return (
     <div className="space-y-2">
       <ol
-        aria-label={`Lines of ${path}`}
+        aria-label={`Lines of ${showControls(path)}`}
         className="overflow-x-auto rounded-md border bg-muted/40 py-2 font-mono text-xs"
       >
         {lines.map((content, index) => {

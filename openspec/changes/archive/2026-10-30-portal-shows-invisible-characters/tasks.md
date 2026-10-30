@@ -12,7 +12,7 @@
 ## 3. Apply to upstream text (SVC_GW_APPROVAL_0041, SVC_GW_APPROVAL_0043)
 
 - [x] 3.1 Component tests: a plugin name, description and skill name in the inventory, a file name in the tree, and a finding location show the token and not the raw character (`@SVCs SVC_GW_APPROVAL_0041`); selecting a file whose name holds a control passes the original path (`@SVCs SVC_GW_APPROVAL_0043`). Watch them fail first.
-- [x] 3.2 Use `VisibleText`/`showControls` in the inventory, file tree, file changes, content diff, finding locations, name-collision notice, explorer header and findings list, Markdown and JSON views, diff text, adoption report and marketplace description. Verify with 3.1 and the existing component tests.
+- [x] 3.2 Use `VisibleText`/`showControls` in the inventory, file tree, file changes, content diff, finding locations, name-collision notice, explorer header and findings list, Markdown and JSON views, diff text, adoption report, marketplace description and the provenance closure's external plugin sources. Verify with 3.1 and the existing component tests.
 
 ## 4. Source view (SVC_GW_APPROVAL_0042)
 
