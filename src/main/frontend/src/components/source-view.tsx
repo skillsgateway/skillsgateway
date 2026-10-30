@@ -50,7 +50,7 @@ function Note({ id, finding, prefix }: { id: string; finding: FileFinding; prefi
  * Each line is focusable (`tabIndex=-1`) and described by its findings, so moving to a line from
  * the file's summary or from an addressed link reads what was found there.
  *
- * @Requirements GW_APPROVAL_0029, GW_APPROVAL_0030, GW_APPROVAL_0036
+ * @Requirements GW_APPROVAL_0029, GW_APPROVAL_0030, GW_APPROVAL_0036, GW_VETTING_0072
  */
 export function SourceView({
   path,
@@ -76,8 +76,11 @@ export function SourceView({
   if (lines.length > 1 && lines[lines.length - 1] === "") lines.pop();
   const byLine = new Map<number, FileFinding[]>();
   for (const finding of findings) {
-    if (finding.line === null || finding.line < 1) continue;
-    byLine.set(finding.line, [...(byLine.get(finding.line) ?? []), finding]);
+    // Every line the finding names, not only its location's (GW_VETTING_0072).
+    for (const n of finding.lines ?? (finding.line === null ? [] : [finding.line])) {
+      if (n < 1) continue;
+      byLine.set(n, [...(byLine.get(n) ?? []), finding]);
+    }
   }
   const last = firstLine + lines.length - 1;
   const beyond = findings.filter(

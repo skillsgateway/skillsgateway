@@ -601,7 +601,8 @@ it can be read without opening anything:
 
 ```text
 Blocked at step 1 · secret-scan found 1 critical finding
-Clear · 5 vetters, 0 findings
+Blocked at step 2 · license-scan found 18 high findings in 3 groups
+Clear · 5 vetters, 21 findings in 9 groups
 Clear with waivers · 2 findings accepted
 Stopped at step 1 · secret-scan found 1 critical finding, so 2 later vetters
                     did not run — re-vet to see what they say
@@ -618,11 +619,11 @@ How to read a node:
 | --- | --- |
 | Stage label | Where the node sits: `Source`, `Step N` for each vetter in run order, `Result`, `Gate`. |
 | Name | `Ingest`, a vetter's name, `Outcome`, `Approval`. |
-| State word | `pass`, `warn`, `fail`, `error`, `pending`, `skipped` (switched off), `not reached` (the chain stopped before it), `not run` (no verdict at all) for a vetter; `clear`, `clear with waivers`, `blocked` for the outcome; `open` or `closed` for the approval gate. The word is always present — colour never carries a state on its own. |
-| Top edge | The same state, as colour: the accent for a pass or warn, red for a fail or error, a plain hairline for anything that reached no conclusion. A second, scannable carrier of the word above it, never a replacement for it. |
-| Finding count | How many findings that vetter raised, when it raised any. |
+| State word | `pass`, `warn`, `fail`, `error`, `pending`, `waived` (it failed, and active waivers cover every finding at high or above), `skipped` (switched off), `not reached` (the chain stopped before it), `not run` (no verdict at all) for a vetter; `clear`, `clear with waivers`, `blocked` for the outcome; `open` or `closed` for the approval gate. The word is always present — colour never carries a state on its own. |
+| Top edge | The same state, as colour: the accent for a pass, warn or waived, red for a fail or error, a plain hairline for anything that reached no conclusion. A second, scannable carrier of the word above it, never a replacement for it. |
+| Finding count | How many findings that vetter raised, when it raised any, one per location: *3 findings*, or *18 findings in 3 groups* when identical content collapsed them into fewer [finding groups](#waiving-a-finding). The headline, the stop reason and the vetter's block below count the same way. |
 | `external` chip | The verdict comes from an operator-configured external service, not from a built-in vetter. |
-| `N waived` chip | How many of that vetter's findings an active waiver is suppressing. The vetter keeps the verdict it reached: an accepted risk is never redrawn as a pass. |
+| `N waived` chip | How many of that vetter's findings an active waiver is suppressing. A vetter whose remaining findings would still block keeps the verdict it reached; one whose blocking findings are all covered reads `waived`, never `pass`: an accepted risk is never redrawn as a clean result. |
 
 The stage the chain arrives at — `Result` here, `Gate` on the marketplace chain —
 is drawn as a filled surface rather than an outline, so the end of the chain reads
@@ -630,8 +631,9 @@ as the end.
 
 Every node is a button. Activating one opens its detail:
 
-- **A vetter** — its verdict, its version, whether it is built in or external,
-  its self-description, and its findings, with a waived one struck through and
+- **A vetter** — its verdict (for `waived`, also the verdict it recorded), its
+  version, whether it is built in or external, its self-description, its count,
+  and its findings, with a waived one struck through and
   badged. A `skipped` node states that an administrator switched the vetter
   off for this marketplace and that the scope and reason are on the
   [marketplace's vetting chain](#vetting-chain-administrators), which is
@@ -640,7 +642,7 @@ Every node is a button. Activating one opens its detail:
   finding which stopped the chain lets the next run get this far without standing
   in for the verdict this vetter never gave.
 - **The outcome** — how the aggregation reached its answer, what the vetters
-  themselves recorded, which vetters are objecting, the vetters the run never
+  themselves recorded, which vetters are objecting (a `waived` vetter is not), the vetters the run never
   reached, and the findings that still need a waiver.
 - **Ingest** and **Approval** — what the step is, and why the gate is where it is.
 
@@ -649,9 +651,13 @@ read side by side and a waiver is written next to the one being accepted. Both
 are always shown.
 
 It shows the effective chain outcome badge and one block per vetter: an icon
-and badge for the verdict state, the vetter name, a one-line summary, and
-every finding as severity badge, rule id, `path:line`, and message. A vetter
-with nothing to report shows "Nothing found."
+and badge for the verdict state, the vetter name, the count in the chain's
+wording with the worst severity (*18 findings in 3 groups; worst high*), or,
+for a vetter with nothing above informational, its coverage summary, and
+every finding group as severity badge, rule id, `path:line`, and message. The
+severity sits in a column of its own, so a long message wraps under its rule.
+A vetter whose blocking findings are all waived shows a **waived** badge and
+*recorded fail* beside it. A vetter with nothing to report shows "Nothing found."
 
 A finding an active waiver is suppressing is struck through and badged
 **waived by {approver} until {date}**; one that still blocks carries a
@@ -838,8 +844,10 @@ is.
   **Formatted**) control switches between the two. Other text always opens
   numbered.
 
-A finding is marked on the one line its location names; a finding whose message
-names further lines marks only that one. **Copy link** includes the line once one is chosen, and the address of this
+A finding is marked on the line its location names and on every further line
+its message lists at its end, as in *… (lines 81, 86)*. Lines a long list counts
+as *+N more* are not named, so they are not marked; the note on the first line
+still says how many there are. **Copy link** includes the line once one is chosen, and the address of this
 route takes `?line=` beside `?path=`.
 
 A reviewer who may read contents but not vetting still gets the file, without

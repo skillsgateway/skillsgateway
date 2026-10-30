@@ -2,7 +2,7 @@
  * A snapshot's vetting findings, read per file for the Contents view: which lines of a file
  * findings locate, what each says, and whether an active waiver covers it.
  *
- * @Requirements GW_APPROVAL_0029
+ * @Requirements GW_APPROVAL_0029, GW_VETTING_0072
  */
 import type { VettingView } from "@/api/queries";
 
@@ -18,6 +18,8 @@ export interface FileFinding {
   location: string;
   /** The located line; null when the location names none. */
   line: number | null;
+  /** Every line of the file the finding names: `line` first, then the others its message lists. */
+  lines?: number[];
   waived: { by: string; until: string | null } | null;
 }
 
@@ -28,6 +30,24 @@ export function parseLocation(location: string): { path: string; line: number | 
   const suffix = location.slice(colon + 1);
   if (!/^\d+$/.test(suffix)) return { path: location, line: null };
   return { path: location.slice(0, colon), line: Number(suffix) };
+}
+
+/**
+ * The lines a finding's message lists in its closing parentheses — `… (line 4)`, `… (lines 81, 86)`
+ * or `… (lines 2, 3, 4, 5, 6 +3 more)`, as `ExecutableSurfaceVetter.lineList` writes them. Lines
+ * hidden behind "+N more" cannot be known, and a line mentioned anywhere else is not read.
+ */
+export function listedLines(message: string): number[] {
+  const match = /\((?:line|lines) (\d+(?:, \d+)*)(?: \+\d+ more)?\)\s*$/.exec(message);
+  if (!match) return [];
+  return match[1]!.split(", ").map(Number).filter((line) => line >= 1);
+}
+
+/** The located line first, then every other line the message lists, each once. */
+function linesOf(line: number | null, message: string): number[] {
+  const all = line !== null && line >= 1 ? [line] : [];
+  for (const listed of listedLines(message)) if (!all.includes(listed)) all.push(listed);
+  return all;
 }
 
 /** Every finding of the latest run, by the path its location names, in chain and finding order. */
@@ -49,6 +69,7 @@ export function findingsByPath(view: VettingView | undefined): Map<string, FileF
         message: finding.message ?? "",
         location: finding.location,
         line,
+        lines: linesOf(line, finding.message ?? ""),
         waived: waiver ? { by: waiver.approvedBy ?? "", until: waiver.expiresAt ?? null } : null,
       });
       byPath.set(path, list);

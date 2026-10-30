@@ -107,3 +107,32 @@ test("the_focused_line_is_focused", () => {
 
   expect(document.activeElement).toBe(lineOf(container, 2));
 });
+
+/**
+ * @SVCs SVC_GW_VETTING_0079
+ */
+test("every_line_a_finding_lists_is_marked_and_described_by_it", () => {
+  const { container } = render(
+    <SourceView
+      path="s/SKILL.md"
+      text={"# s\n\nnpx agents\n\nnpm install agents\nend"}
+      findings={[
+        finding({
+          ruleId: "runtime-dependency",
+          severity: "medium",
+          message: "runs npx agents; npm install agents (lines 3, 5)",
+          location: "s/SKILL.md:3",
+          line: 3,
+          lines: [3, 5],
+        }),
+      ]}
+    />,
+  );
+
+  for (const n of [3, 5]) {
+    expect(lineOf(container, n)).toHaveAttribute("data-severity", "medium");
+    expect(lineOf(container, n)).toHaveAccessibleDescription(/runtime-dependency.*\(lines 3, 5\)/);
+  }
+  expect(lineOf(container, 4)).not.toHaveAttribute("data-severity");
+  expect(screen.getAllByRole("note")).toHaveLength(2);
+});

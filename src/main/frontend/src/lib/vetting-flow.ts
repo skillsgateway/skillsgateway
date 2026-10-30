@@ -5,7 +5,7 @@
  * can be wrong — is testable without a DOM, and so the snapshot flow and the marketplace flow
  * cannot drift into two different orders.
  *
- * @Requirements GW_VETTING_0031
+ * @Requirements GW_VETTING_0031, GW_VETTING_0070, GW_VETTING_0071
  */
 import type {
   ChainVetter,
@@ -77,6 +77,8 @@ export function verdictWord(state: string | undefined): string {
       return "skipped";
     case "not_reached":
       return "not reached";
+    case "waived":
+      return "waived";
     default:
       return "not run";
   }
@@ -87,6 +89,8 @@ export function verdictTone(state: string | undefined): FlowTone {
     case "pass":
       return "pass";
     case "warn":
+    // The tone of the outcome it lets through, "clear with waivers": accepted, not clean.
+    case "waived":
       return "warn";
     case "fail":
     case "error":
@@ -110,6 +114,108 @@ export function outcomeTone(outcome: string | undefined): FlowTone {
   if (outcome === "clear") return "pass";
   if (outcome === "clear_with_waivers") return "warn";
   return "blocked";
+}
+
+/** One finding of a verdict: one location of a group, or the finding itself where there are no groups. */
+interface Entry {
+  ruleId: string;
+  severity?: string;
+  location: string;
+}
+
+function entriesOf(verdict: VettingVerdict | undefined): Entry[] {
+  if (verdict?.groups) {
+    return verdict.groups.flatMap((group) => {
+      const locations = group.locations ?? [];
+      return (locations.length > 0 ? locations : [""]).map((location) => ({
+        ruleId: group.ruleId ?? "",
+        severity: group.severity,
+        location,
+      }));
+    });
+  }
+  return (verdict?.findings ?? []).map((finding) => ({
+    ruleId: finding.id ?? "",
+    severity: finding.severity,
+    location: finding.location ?? "",
+  }));
+}
+
+/**
+ * How many findings a verdict has, counted one per location, and how many groups they collapse
+ * into (GW_VETTING_0041) — the one unit every surface counts in.
+ */
+export function findingCounts(verdict: VettingVerdict | undefined): { findings: number; groups: number } {
+  const findings = entriesOf(verdict).length;
+  return { findings, groups: verdict?.groups ? verdict.groups.length : findings };
+}
+
+/**
+ * "3 findings", or "18 findings in 3 groups" when grouping collapsed some; `adjective` goes before
+ * the noun ("2 high findings").
+ *
+ * @Requirements GW_VETTING_0070
+ */
+export function findingCount(counts: { findings: number; groups: number }, adjective?: string): string {
+  const noun = `${adjective ? `${adjective} ` : ""}${plural(counts.findings, "finding")}`;
+  return counts.groups < counts.findings
+    ? `${counts.findings} ${noun} in ${counts.groups} ${plural(counts.groups, "group")}`
+    : `${counts.findings} ${noun}`;
+}
+
+/** The backend's stored count line (`VettingRepository.detailOf`), which the report rewords. */
+const STORED_COUNT = /^\d+ finding\(s\); worst \w+$/;
+
+/**
+ * What a vetter's section says beside its verdict: its findings in the chain's wording with the
+ * worst severity, and the stored detail only when it is something else — the vetter's coverage
+ * summary.
+ *
+ * @Requirements GW_VETTING_0070
+ */
+export function verdictSummary(verdict: VettingVerdict): { count?: string; detail?: string } {
+  const entries = entriesOf(verdict);
+  const worst = worstSeverity(entries.map((entry) => entry.severity));
+  const counted =
+    entries.length > 0 &&
+    worst !== "info" &&
+    verdict.state !== "not_reached" &&
+    verdict.state !== "disabled";
+  const detail = verdict.detail && !STORED_COUNT.test(verdict.detail) ? verdict.detail : undefined;
+  return {
+    count: counted ? `${findingCount(findingCounts(verdict))}; worst ${worst}` : undefined,
+    detail: detail ?? (counted ? undefined : verdict.detail),
+  };
+}
+
+const BLOCKING_SEVERITIES = new Set(["high", "critical"]);
+
+/**
+ * The state a verdict reads in, with the waivers active now: "waived" for one the server would
+ * now count as clearing only because waivers cover its blocking findings — the portal's mirror of
+ * `WaiverEvaluation.effectiveState`. Anything else is the recorded state.
+ *
+ * @Requirements GW_VETTING_0071
+ */
+export function effectiveState(
+  verdict: VettingVerdict | undefined,
+  suppressions: readonly WaiverSuppression[],
+): string | undefined {
+  const state = verdict?.state;
+  if (state !== "fail" && state !== "error" && state !== "pending") return state;
+  const vetter = verdict?.vetter ?? "";
+  const waived = new Set(
+    suppressions
+      .filter((suppression) => (suppression.vetter ?? "") === vetter)
+      .map((suppression) => `${suppression.ruleId ?? ""}\0${suppression.location ?? ""}`),
+  );
+  const entries = entriesOf(verdict);
+  const covered = (entry: Entry) => waived.has(`${entry.ruleId}\0${entry.location}`);
+  if (!entries.some(covered)) return state;
+  const blockingLeft = entries.some(
+    (entry) => !covered(entry) && BLOCKING_SEVERITIES.has(entry.severity ?? ""),
+  );
+  return blockingLeft ? state : "waived";
 }
 
 /** Suppressions grouped by the vetter that raised the finding, so a node can count its own. */
@@ -161,20 +267,21 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
   ordered.forEach((verdict, index) => {
     const name = verdict.vetter ?? "";
     const vetter = byName.get(name);
-    const findings = entriesOf(verdict);
+    const counts = findingCounts(verdict);
+    const state = effectiveState(verdict, view?.suppressed ?? []);
     nodes.push({
       id: `vetter-${name}`,
       kind: "vetter",
       label: name,
-      state: verdictWord(verdict.state),
-      tone: verdictTone(verdict.state),
+      state: verdictWord(state),
+      tone: verdictTone(state),
       eyebrow: `Step ${index + 1}`,
       // The bookkeeping finding a not-reached or disabled verdict carries is a record of why the
       // vetter did not run, not something it found. Counting it on the node would read as a
       // result, which is the one thing these states must never look like.
       meta:
-        findings.length > 0 && verdict.state !== "not_reached" && verdict.state !== "disabled"
-          ? `${findings.length} ${plural(findings.length, "finding")}`
+        counts.findings > 0 && verdict.state !== "not_reached" && verdict.state !== "disabled"
+          ? findingCount(counts)
           : undefined,
       external: vetter?.external === true,
       waived: waived.get(name) ?? 0,
@@ -183,8 +290,12 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
     });
   });
 
+  // A vetter whose blocking findings are all waived is no longer objecting (GW_VETTING_0071).
   const blocking = ordered
-    .filter((verdict) => verdict.state === "fail" || verdict.state === "error" || verdict.state === "pending")
+    .filter((verdict) => {
+      const state = effectiveState(verdict, view?.suppressed ?? []);
+      return state === "fail" || state === "error" || state === "pending";
+    })
     .map((verdict) => verdict.vetter ?? "");
 
   nodes.push({
@@ -316,27 +427,25 @@ export interface FlowHeadline {
   detail: string;
 }
 
-/**
- * What a verdict counts as findings: its groups — identical content at several locations is one
- * thing to judge (GW_VETTING_0041) — or its findings, for a view that carries no groups.
- */
-function entriesOf(verdict: VettingVerdict | undefined): { severity?: string }[] {
-  return verdict?.groups ?? verdict?.findings ?? [];
-}
-
 /** The headline for a snapshot's chain. */
 export function snapshotHeadline(nodes: FlowNode[]): FlowHeadline {
   const vetters = nodes.filter((node) => node.kind === "vetter");
   const outcome = nodes.find((node) => node.kind === "outcome");
   const ran = vetters.filter((node) => node.state !== "not run" && node.state !== "not reached");
-  const findings = vetters.reduce((total, node) => total + entriesOf(node.verdict).length, 0);
+  const counts = vetters.reduce(
+    (total, node) => {
+      const own = findingCounts(node.verdict);
+      return { findings: total.findings + own.findings, groups: total.groups + own.groups };
+    },
+    { findings: 0, groups: 0 },
+  );
   const waived = vetters.reduce((total, node) => total + (node.waived ?? 0), 0);
 
   if (outcome?.state === "clear") {
     return {
       result: "Clear",
       tone: "pass",
-      detail: `${vetters.length} ${plural(vetters.length, "vetter")}, ${findings} ${plural(findings, "finding")}`,
+      detail: `${vetters.length} ${plural(vetters.length, "vetter")}, ${findingCount(counts)}`,
     };
   }
   if (outcome?.state === "clear with waivers") {
@@ -381,16 +490,16 @@ export function snapshotHeadline(nodes: FlowNode[]): FlowHeadline {
 function stoppedReason(node: FlowNode): string {
   if (node.state === "pending") return "has not answered yet";
   if (node.state === "error") return "did not produce a verdict";
-  const findings = entriesOf(node.verdict);
-  if (findings.length === 0) return "objected";
-  const worst = worstSeverity(findings.map((finding) => finding.severity));
-  return `found ${findings.length} ${worst ? `${worst.toLowerCase()} ` : ""}${plural(findings.length, "finding")}`;
+  const entries = entriesOf(node.verdict);
+  if (entries.length === 0) return "objected";
+  const worst = worstSeverity(entries.map((entry) => entry.severity));
+  return `found ${findingCount(findingCounts(node.verdict), worst?.toLowerCase())}`;
 }
 
 /** Severity order as the gateway ranks it; the worst present is the one worth naming. */
 const SEVERITY_ORDER = ["info", "low", "medium", "high", "critical"];
 
-function worstSeverity(severities: (string | undefined)[]): string | undefined {
+export function worstSeverity(severities: (string | undefined)[]): string | undefined {
   let worst: string | undefined;
   for (const severity of severities) {
     if (severity === undefined) continue;

@@ -168,10 +168,18 @@ it came from.
 A **blocked** outcome means at least one vetter failed, errored or has not
 answered, or that the chain never ran for this snapshot at all.
 
+Counts are of findings, one per location: "18 findings in 3 groups" means
+eighteen findings that identical content collapses into three things to judge,
+and three waive actions. A vetter that failed but whose blocking findings are all
+covered by active waivers reads **waived** and shows the verdict it recorded.
+It is not **pass**: the outcome is *clear with waivers*, and the waivers are
+listed under **Accepted risks**.
+
 Read each finding where it is. Every location in the **Vetting** tab is a link
 that opens the file in **Contents** at that line. The line is marked, and the
 finding's severity, rule and message are written beneath it, next to the text
-it is about. Files with findings are marked in the tree, and "N findings in
+it is about. A finding that names several lines, as in "(lines 81, 86)", marks
+each of them. Files with findings are marked in the tree, and "N findings in
 this file" above a file leads to each of its lines. The link carries the line
 in the address (`&line=`), so the second approver can be sent straight to the
 same evidence. See [Snapshot contents](../reference/portal.md#snapshot-contents).
