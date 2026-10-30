@@ -304,6 +304,57 @@ class EstateReconciliationTests extends AbstractGatewayTest {
     }
 
     @Test
+    @SVCs({"SVC_GW_AUTH_0064"})
+    void a_declared_grant_with_a_malformed_principal_fails_in_isolation_even_over_a_stored_row() {
+        String tag = uniqueName("estate-pv");
+        String padded = " " + tag + "-padded";
+        String bidi = tag + "-bidi\u202Exe.exe";
+        String good = tag + "-good";
+        // A row written before the rule existed: the declaration must still be reported, not "unchanged".
+        roleGrantRepository.insert(padded, "auditor", null, "legacy").orElseThrow();
+        long failedBefore = ledgerCount("estate-reconciliation-failed");
+
+        EstateReconciliation report = reconciler.reconcile(
+                new Estate(
+                        null,
+                        List.of(
+                                new DeclaredGrant(padded, "auditor", null),
+                                new DeclaredGrant(bidi, "auditor", null),
+                                new DeclaredGrant(good, "auditor", null)),
+                        null,
+                        null,
+                        null),
+                "api");
+
+        assertThat(report.failed()).isEqualTo(2);
+        assertThat(report.created()).isEqualTo(1);
+        assertThat(report.unchanged()).isZero();
+        assertThat(report.entries())
+                .filteredOn(entry -> "failed".equals(entry.action()))
+                .extracting(EstateReconciliation.Entry::name)
+                .containsExactlyInAnyOrder(
+                        " %s-padded/auditor/-".formatted(tag), "%s-bidi\\u202Exe.exe/auditor/-".formatted(tag));
+        assertThat(roleService.rolesOf(bidi)).isEmpty();
+        assertThat(roleService.rolesOf(good))
+                .containsExactly(new RoleService.EffectiveRole("auditor", null, RoleService.EffectiveRole.GRANT));
+
+        List<String> failures = fetchLogRepository.list().stream()
+                .filter(entry -> "estate-reconciliation-failed".equals(entry.get("event")))
+                .map(entry -> String.valueOf(entry.get("detail")))
+                .filter(detail -> detail.contains(tag))
+                .toList();
+        assertThat(ledgerCount("estate-reconciliation-failed")).isEqualTo(failedBefore + 2);
+        assertThat(failures).hasSize(2).noneMatch(detail -> detail.contains("\u202E"));
+        assertThat(failures).anyMatch(detail -> detail.contains("\\u202E"));
+    }
+
+    private long ledgerCount(String event) {
+        return fetchLogRepository.list().stream()
+                .filter(entry -> event.equals(entry.get("event")))
+                .count();
+    }
+
+    @Test
     @SVCs({"SVC_GW_ESTATE_0004"})
     void declared_secrets_are_write_only_rotated_idempotently_and_floored() throws Exception {
         String first = "estate-rotate-secret-one-0123456789";

@@ -71,6 +71,14 @@ Grants may reference marketplaces declared in the same file (marketplaces
 reconcile first) **or** marketplaces registered through the API earlier —
 adoption can be incremental.
 
+A declared `principal` meets the same rule as the grants API: no surrounding
+whitespace, no control or invisible format characters, at most 255 characters
+([Roles](../reference/api/roles.md#post-apiv1roles)). One that breaks it is a
+failed entry, never trimmed, even when a grant row already carries it; the
+entry and its ledger record show any invisible character escaped as `\uXXXX`.
+YAML drops unquoted surrounding whitespace on its own, so this mostly catches a
+value quoted with the padding inside it.
+
 This schema is part of the [compatibility promise](../reference/compatibility.md#the-api-contract):
 a key added later is additive, but renaming or removing one is a breaking
 change like any other.

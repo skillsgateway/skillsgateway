@@ -17,6 +17,7 @@ import dev.skillsgateway.server.persistence.WebhookSubscriber;
 import dev.skillsgateway.server.persistence.WebhookSubscriberRepository;
 import dev.skillsgateway.server.policy.PolicyRule;
 import dev.skillsgateway.server.policy.PolicyRuleService;
+import dev.skillsgateway.server.roles.RolePrincipals;
 import dev.skillsgateway.server.roles.RoleService;
 import dev.skillsgateway.server.sync.SyncService;
 import dev.skillsgateway.server.webhook.WebhookService;
@@ -104,8 +105,7 @@ public class EstateReconciler {
             entries.add(isolated("marketplace", declared.name(), () -> reconcileMarketplace(declared)));
         }
         for (DeclaredGrant declared : estate.grants()) {
-            String name = "%s/%s/%s"
-                    .formatted(declared.principal(), declared.role(), Objects.toString(declared.marketplace(), "-"));
+            String name = grantName(declared);
             entries.add(isolated("grant", name, () -> reconcileGrant(declared)));
         }
         for (DeclaredWebhook declared : estate.webhooks()) {
@@ -231,19 +231,29 @@ public class EstateReconciler {
      * (GW_ESTATE_0003); an identical existing grant — declared or interactively created — is converged
      * state, so the reconciler checks before it writes and a duplicate is unchanged, not an error.
      */
-    @Requirements({"GW_ESTATE_0003"})
+    @Requirements({"GW_ESTATE_0003", "GW_AUTH_0060"})
     private Entry reconcileGrant(DeclaredGrant declared) {
-        String name = "%s/%s/%s"
-                .formatted(declared.principal(), declared.role(), Objects.toString(declared.marketplace(), "-"));
-        boolean exists = declared.principal() != null
-                && roleService.rolesOf(declared.principal()).stream()
-                        .anyMatch(role -> Objects.equals(role.role(), declared.role())
-                                && Objects.equals(role.marketplace(), declared.marketplace()));
+        String name = grantName(declared);
+        // Before the existence check, so a stored row carrying a malformed principal cannot make
+        // the declaration read as converged.
+        RolePrincipals.requireGrantable(declared.principal());
+        boolean exists = roleService.rolesOf(declared.principal()).stream()
+                .anyMatch(role -> Objects.equals(role.role(), declared.role())
+                        && Objects.equals(role.marketplace(), declared.marketplace()));
         if (exists) {
             return Entry.unchanged("grant", name);
         }
         roleService.grant(declared.principal(), declared.role(), declared.marketplace(), ACTOR);
         return Entry.created("grant", name, null);
+    }
+
+    /** The entry's name; the principal escaped, because a malformed one lands on the ledger. */
+    private static String grantName(DeclaredGrant declared) {
+        return "%s/%s/%s"
+                .formatted(
+                        RolePrincipals.display(declared.principal()),
+                        declared.role(),
+                        Objects.toString(declared.marketplace(), "-"));
     }
 
     /**

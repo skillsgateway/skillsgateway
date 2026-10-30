@@ -79,6 +79,49 @@ class ClaimRoleMapperTests {
     }
 
     @Test
+    @SVCs({"SVC_GW_AUTH_0066"})
+    void a_padded_or_altered_claim_value_confers_no_role_and_a_lone_exact_string_does() {
+        ClaimRoleMapper mapper = mapper("groups");
+        for (String altered : List.of(
+                " gw-admins",
+                "gw-admins ",
+                "\tgw-admins",
+                "gw-admins\n",
+                "gw-admins\u00a0",
+                "\u3000gw-admins",
+                "gw-admins\u200B",
+                "\u202Egw-admins",
+                "\uFEFFgw-admins")) {
+            assertThat(mapper.rolesFrom(oidc(Map.of("groups", List.of(altered)))))
+                    .as("list %s", altered)
+                    .isEmpty();
+            assertThat(mapper.rolesFrom(oidc(Map.of("groups", altered))))
+                    .as("lone %s", altered)
+                    .isEmpty();
+        }
+        assertThat(mapper.rolesFrom(oidc(Map.of("groups", "gw-admins"))))
+                .containsExactly(new EffectiveRole("admin", null, EffectiveRole.CLAIM));
+        for (Object wrongType : List.of(42, true, Map.of("gw-admins", true), List.of(List.of("gw-admins")))) {
+            assertThat(mapper.rolesFrom(oidc(Map.of("groups", wrongType))))
+                    .as("%s", wrongType)
+                    .isEmpty();
+        }
+    }
+
+    @Test
+    @SVCs({"SVC_GW_AUTH_0067"})
+    void a_padded_or_invisible_configured_claim_value_refuses_construction() {
+        for (String value : List.of(" gw-admins", "gw-admins\t", "gw\u200B-admins", "\u202Egw-admins")) {
+            assertThatThrownBy(() -> new ClaimRoleMapper(
+                            new Roles(List.of(), "groups", List.of(new ClaimMapping(value, "admin", null)))))
+                    .as(value)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("skills-gateway.roles.mappings[0]")
+                    .hasMessageContaining("claim-value");
+        }
+    }
+
+    @Test
     @SVCs({"SVC_GW_AUTH_0016"})
     void truncation_is_detected_only_when_the_provider_says_the_claim_was_dropped() {
         ClaimRoleMapper mapper = mapper("groups");
@@ -140,7 +183,7 @@ class ClaimRoleMapperTests {
      * testing by hand, not a property-based framework — no such dependency is in the build.
      */
     @Test
-    @SVCs({"SVC_GW_AUTH_0015.1"})
+    @SVCs({"SVC_GW_AUTH_0015.1", "SVC_GW_AUTH_0066"})
     void arbitrary_claim_payloads_never_throw_and_never_grant_without_an_exact_match() {
         Random random = new Random(0x5AFE_C1A1L);
         ClaimRoleMapper mapper = mapper("groups");
@@ -177,7 +220,7 @@ class ClaimRoleMapperTests {
                 continue;
             }
             for (ClaimMapping mapping : MAPPINGS) {
-                if (mapping.claimValue().equals(text.trim())) {
+                if (mapping.claimValue().equals(text)) {
                     roles.add(mapping.role());
                 }
             }

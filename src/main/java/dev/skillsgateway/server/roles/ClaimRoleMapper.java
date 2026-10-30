@@ -25,8 +25,8 @@ import org.springframework.stereotype.Component;
  * name, its path and every value come from configuration, because on an app registration shared
  * with other services the values are the organisation's, not the gateway's.
  *
- * <p>Two rules carry the trust boundary. The match is exact on a trimmed value, so a mapping can
- * never widen who is privileged by resembling something. And claims are read only from an {@link
+ * <p>Two rules carry the trust boundary. The match is exact on the value as delivered, untrimmed,
+ * so a mapping can never widen who is privileged by resembling something. And claims are read only from an {@link
  * OidcUser}: a personal access token, the {@code dev-insecure-auth} principal and an anonymous
  * request have no claims and derive nothing, whatever authorities they carry.
  *
@@ -67,7 +67,7 @@ public class ClaimRoleMapper {
      * Every mapping the deployment declared, or no application at all. A typo that quietly grants
      * nothing is the failure this refuses: an operator who misspells a role learns at startup.
      */
-    @Requirements({"GW_AUTH_0015", "GW_AUTH_0015.2"})
+    @Requirements({"GW_AUTH_0015", "GW_AUTH_0015.2", "GW_AUTH_0061"})
     private List<ClaimMapping> validated(List<ClaimMapping> declared) {
         List<ClaimMapping> checked = new ArrayList<>();
         for (int i = 0; i < declared.size(); i++) {
@@ -75,6 +75,11 @@ public class ClaimRoleMapper {
             String where = "skills-gateway.roles.mappings[%d]".formatted(i);
             if (mapping.claimValue() == null || mapping.claimValue().isBlank()) {
                 throw new IllegalStateException("%s needs a claim-value".formatted(where));
+            }
+            // Refused rather than trimmed, so the value matched is the value written (GW_AUTH_0061).
+            Optional<String> malformed = RolePrincipals.problem(mapping.claimValue());
+            if (malformed.isPresent()) {
+                throw new IllegalStateException("%s claim-value %s".formatted(where, malformed.get()));
             }
             if (mapping.role() == null || !ROLES.contains(mapping.role())) {
                 throw new IllegalStateException(
@@ -92,7 +97,7 @@ public class ClaimRoleMapper {
                         "%s is a %s mapping and cannot name a marketplace".formatted(where, mapping.role()));
             }
             checked.add(new ClaimMapping(
-                    mapping.claimValue().trim(),
+                    mapping.claimValue(),
                     mapping.role(),
                     scoped ? mapping.marketplace().trim() : null));
         }
@@ -137,18 +142,22 @@ public class ClaimRoleMapper {
         return Boolean.TRUE.equals(all.get("has" + claimPath.getLast()));
     }
 
-    /** Trimmed claim values, from a list or a lone string; a delimited string is never split. */
+    /**
+     * Claim values as delivered, never trimmed (GW_AUTH_0061), from a list or a lone string; a
+     * delimited string is never split, and any other type carries no value.
+     */
+    @Requirements({"GW_AUTH_0061"})
     private Set<String> claimValues(Authentication authentication) {
         Object value = claimsOf(authentication).map(this::resolve).orElse(null);
         Set<String> values = new LinkedHashSet<>();
         if (value instanceof Collection<?> collection) {
             for (Object element : collection) {
                 if (element instanceof String text) {
-                    values.add(text.trim());
+                    values.add(text);
                 }
             }
         } else if (value instanceof String text) {
-            values.add(text.trim());
+            values.add(text);
         }
         return values;
     }

@@ -654,6 +654,78 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         return builder;
     }
 
+    @Test
+    @SVCs({"SVC_GW_AUTH_0063"})
+    void a_malformed_principal_is_refused_unrecorded_and_a_well_formed_one_is_granted_exactly() throws Exception {
+        var root = oidcLogin().idToken(token -> token.subject("root"));
+        String tag = uniqueName("pv");
+        List<String> malformed = List.of(
+                "  " + tag + "-padded ",
+                tag + "-bidi\u202E",
+                tag + "-zero\u200Bwidth",
+                tag + "-bell\u0007",
+                tag + "-line\u2028sep",
+                tag + "-lone\uD800",
+                "\u00a0" + tag + "-nbsp",
+                tag + "-" + "x".repeat(256 - tag.length() - 1));
+        long grantedBefore = ledgerCount("role-granted");
+        for (String principal : malformed) {
+            String body = postGrant(root, grantJsonEscaped(principal))
+                    .andExpect(status().isUnprocessableContent())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+            assertThat(body).as(principal).doesNotContain(tag);
+            mockMvc.perform(get("/api/v1/me").with(oidcLogin().idToken(token -> token.subject(principal))))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.roles").isEmpty());
+        }
+        assertThat(ledgerCount("role-granted")).isEqualTo(grantedBefore);
+        String listed = mockMvc.perform(get("/api/v1/roles").with(root))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(listed).doesNotContain(tag);
+
+        String astral = "\uD835\uDC9C";
+        List<String> wellFormed = List.of(
+                tag + "@example.com",
+                "J\u00f6rg M\u00fcller " + tag,
+                astral + tag,
+                tag + "-" + "y".repeat(253 - tag.length()) + astral);
+        for (String principal : wellFormed) {
+            String created = postGrant(root, grantJsonEscaped(principal))
+                    .andExpect(status().isCreated())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+            assertThat(MAPPER.readTree(created).get("principal").asText()).isEqualTo(principal);
+            mockMvc.perform(get("/api/v1/me").with(oidcLogin().idToken(token -> token.subject(principal))))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.roles[0].role").value("auditor"));
+        }
+        assertThat(wellFormed.getLast().codePointCount(0, wellFormed.getLast().length()))
+                .isEqualTo(255);
+    }
+
+    private long ledgerCount(String event) {
+        return fetchLogRepository.list().stream()
+                .filter(entry -> event.equals(entry.get("event")))
+                .count();
+    }
+
+    /** Every non-ASCII and control character as a JSON escape, so a lone surrogate survives transport. */
+    private static String grantJsonEscaped(String principal) {
+        StringBuilder escaped = new StringBuilder();
+        principal
+                .chars()
+                .forEach(c -> escaped.append(
+                        c < 0x20 || c > 0x7e || c == '"' || c == '\\'
+                                ? "\\u%04x".formatted(c)
+                                : String.valueOf((char) c)));
+        return "{\"principal\": \"" + escaped + "\", \"role\": \"auditor\"}";
+    }
+
     private void grant(OidcLoginRequestPostProcessor admin, String principal, String role, String marketplace)
             throws Exception {
         postGrant(admin, grantJson(principal, role, marketplace)).andExpect(status().isCreated());
