@@ -74,7 +74,8 @@ run M3-token-creates-session $I an_unauthenticated_request_is_answered_without_c
 run M4-api-request-saved $I an_unauthenticated_request_is_answered_without_creating_a_session "$SC" \
   'matcher("/api/**")),' 'matcher("/nothing/**")),'
 run M5-error-dispatch-saved $I an_unauthenticated_request_is_answered_without_creating_a_session "$SC" \
-  'new DispatcherTypeRequestMatcher(DispatcherType.REQUEST),' 'new org.springframework.security.web.util.matcher.OrRequestMatcher(new DispatcherTypeRequestMatcher(DispatcherType.REQUEST), new DispatcherTypeRequestMatcher(DispatcherType.ERROR)),'
+  $'no page either.\n                new DispatcherTypeRequestMatcher(DispatcherType.REQUEST),' \
+  $'no page either.\n                new org.springframework.security.web.util.matcher.OrRequestMatcher(new DispatcherTypeRequestMatcher(DispatcherType.REQUEST), new DispatcherTypeRequestMatcher(DispatcherType.ERROR)),'
 run M6-sign-in-starts-no-session SessionCookieTests the_login_redirect_writes_a_readable_token_cookie_and_a_lax_session_cookie "$SC" \
   '+ "/{registrationId}"' '+ "/never/{registrationId}"'
 run M7-no-same-site $U a_saved_token_is_stored_in_the_session_and_copied_to_a_same_site_script_readable_cookie "$RP" \
