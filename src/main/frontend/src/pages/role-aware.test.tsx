@@ -50,6 +50,17 @@ function watchRefusedReads() {
   return { reads, stop: () => server.events.removeListener("request:start", listener) };
 }
 
+/** Records every read of a snapshot's held content (its tree, files and file comparisons). */
+function watchTreeReads() {
+  const reads: string[] = [];
+  const listener = ({ request }: { request: Request }) => {
+    const path = new URL(request.url).pathname;
+    if (/^\/api\/v1\/snapshots\/\d+\/(tree|files|file)/.test(path)) reads.push(path);
+  };
+  server.events.on("request:start", listener);
+  return { reads, stop: () => server.events.removeListener("request:start", listener) };
+}
+
 function renderWith(element: ReactNode, at = "/", client?: QueryClient) {
   const queryClient = client ?? new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -88,7 +99,7 @@ function renderMarketplace(name = "corp-marketplace", section = "", client?: Que
         <Route path="activity" element={<MarketplaceActivityPage />} />
       </Route>
     </Routes>,
-    `/marketplaces/${name}${section ? `/${section}` : ""}`,
+    `/marketplaces/${name}${section.startsWith("?") ? section : section ? `/${section}` : ""}`,
     client,
   );
 }
@@ -106,7 +117,7 @@ async function heldCard() {
  * A session with no role, and an auditor, see a held snapshot and its evidence but no control
  * that changes anything — and the decision says which role it needs instead of disappearing.
  *
- * @SVCs SVC_GW_AUTH_0072
+ * @SVCs SVC_GW_AUTH_0072, SVC_GW_INGEST_0032
  */
 test("a_session_with_no_role_or_only_the_auditor_role_is_offered_no_mutation", async () => {
   for (const roles of [NO_ROLE, AUDITOR]) {
@@ -122,7 +133,23 @@ test("a_session_with_no_role_or_only_the_auditor_role_is_offered_no_mutation", a
     expect(within(card).getByTestId("snapshot-decision")).toHaveTextContent(
       "Approving or rejecting a snapshot of corp-marketplace needs the approver role for it.",
     );
+    // The held content is the approver's read: no Contents tab, and a finding's location is text
+    // rather than a link into a read the server refuses.
+    expect(within(card).queryByRole("tab", { name: "Contents" })).not.toBeInTheDocument();
+    expect(within(card).getAllByText(/plugins\/hello\/DEPLOY\.md:5/).length).toBeGreaterThan(0);
+    expect(within(card).queryByRole("link", { name: /DEPLOY\.md:5/ })).not.toBeInTheDocument();
     page.unmount();
+
+    // An address that names the Contents tab states the role instead of reading the tree.
+    const tree = watchTreeReads();
+    const addressed = renderMarketplace("corp-marketplace", "?snapshot=1&tab=contents&path=README.md");
+    const contents = await screen.findByRole("region", { name: "Snapshot 1" });
+    expect(await within(contents).findByRole("alert")).toHaveTextContent(
+      "This section needs the approver role for corp-marketplace.",
+    );
+    addressed.unmount();
+    tree.stop();
+    expect(tree.reads).toEqual([]);
 
     const snapshots = renderMarketplace("corp-marketplace", "snapshots");
     expect(await screen.findByText("deleted")).toBeInTheDocument();

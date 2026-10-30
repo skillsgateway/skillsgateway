@@ -28,7 +28,7 @@ Each surface maps to the check its endpoint makes:
 | --- | --- | --- |
 | Ingest | `requireApprover(name)` | approves(name) |
 | Approve, Reject, Waive, Revoke waiver, Re-vet, re-run chain | `requireApproverOfSnapshot` / `OfWaiver` | approves(marketplace of the page) |
-| File changes (diff), fetchers of a revoked snapshot | `requireApproverOfSnapshot` | approves(...) |
+| File changes (diff), fetchers of a revoked snapshot, contents (tree, file) | `requireApproverOfSnapshot` | approves(...) |
 | Delete / Restore snapshot, Register marketplace | `requireAdmin` | isAdmin |
 | Audit log, export, adoption, webhooks list, sinks list, a marketplace's activity | `requireAuditor` | isAuditor |
 | Webhook / sink create, delete, replay | `requireAdmin` | isAdmin (unchanged) |
@@ -61,9 +61,16 @@ missing it shows `RoleRequired` and mounts nothing else, so a refused read is
 never sent. `VettingRefusal` becomes an instance of it, and its existing alert
 text is kept.
 
-The snapshot explorer keeps its own 403 state (`Forbidden`), because that is
-driven by the server's answer per read, and `GW_INGEST_0045 — Addressable
-snapshot file inspection` already specifies it.
+Snapshot contents are gated the same way (revised in review, reversing the
+first draft, which let the explorer ask and show its own 403 state). The card's
+Contents tab is offered only where the session approves the marketplace; an
+address naming the tab, and the standalone
+`/marketplaces/:name/snapshots/:id/files` page, show `RoleRequired` for the
+approver role instead of reading the tree. A vetting finding's location stays
+plain text for such a session, the way the approve dialog already renders it,
+rather than linking to a tab it cannot open. The explorer's own 403 state
+remains for a read the server refuses anyway, after a role is revoked. This
+modifies `GW_INGEST_0032 — Addressable snapshot file inspection`.
 
 ### D4 — Navigation leaves out what the session cannot read
 

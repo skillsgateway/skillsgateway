@@ -36,6 +36,11 @@ The server's authorization is not changed.
 - New `GW_AUTH_0066 — The portal re-reads the session's roles when the server
   refuses`: any API response of 403 re-reads `GET /api/v1/me`, so the controls
   and pages follow a revoked or granted role without a reload.
+- Modified `GW_INGEST_0032 — Addressable snapshot file inspection`: the
+  snapshot card's Contents tab and the standalone contents page are offered
+  only to an approver of the marketplace or an administrator; anyone else is
+  told the role it needs and no content read is made. A vetting finding's
+  location is plain text for such a session.
 - Copy: the no-role user menu says what such a session can actually do
   (`GW_AUTH_0044 — Portal user menu with identity and effective roles`, wording
   only). The vetting chain refusal no longer points approvers at a marketplace
@@ -51,6 +56,7 @@ None.
 ### Modified Capabilities
 
 - `admin-portal`: adds `GW_AUTH_0064`, `GW_AUTH_0065` and `GW_AUTH_0066`.
+- `snapshot-preview`: modifies `GW_INGEST_0032` (the refusal state of the contents surface).
 
 ## Impact
 

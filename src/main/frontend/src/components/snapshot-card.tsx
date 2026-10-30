@@ -414,25 +414,37 @@ export function SnapshotCard({
             className="max-w-full justify-start overflow-x-auto overflow-y-hidden pb-[7px] group-data-horizontal/tabs:h-9"
           >
             <TabsTrigger value="vetting">Vetting</TabsTrigger>
-            <TabsTrigger value="contents">Contents</TabsTrigger>
+            {rights.decide ? <TabsTrigger value="contents">Contents</TabsTrigger> : null}
             <TabsTrigger value="diff">Diff</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
             <TabsTrigger value="provenance">Provenance</TabsTrigger>
           </TabsList>
           <TabsContent value="vetting" className="pt-2">
-            <VettingReport snapshotId={id} locationHref={(location) => contentsHref(id, location)} />
+            {/* Without the approver role a location stays text: Contents is not theirs to open. */}
+            <VettingReport
+              snapshotId={id}
+              locationHref={rights.decide ? (location) => contentsHref(id, location) : undefined}
+            />
           </TabsContent>
           <TabsContent value="contents" className="pt-2">
-            {/* Bounded, so the tree and the file scroll inside the card and the page does not. */}
-            <div className="lg:h-[36rem]">
-              <SnapshotExplorer
-                snapshotId={id}
-                selectedPath={path}
-                onSelect={onPath}
-                selectedLine={line}
-                onSelectLine={onLine}
-              />
-            </div>
+            {rights.decide ? (
+              // Bounded, so the tree and the file scroll inside the card and the page does not.
+              <div className="lg:h-[36rem]">
+                <SnapshotExplorer
+                  snapshotId={id}
+                  selectedPath={path}
+                  onSelect={onPath}
+                  selectedLine={line}
+                  onSelectLine={onLine}
+                />
+              </div>
+            ) : (
+              // Reached only by an address naming the tab; the tab itself is not offered.
+              <RoleRequired role={{ approverOf: rights.marketplace ?? "this marketplace" }}>
+                The contents are the held content, which is shown to the marketplace's approvers
+                and to administrators.
+              </RoleRequired>
+            )}
           </TabsContent>
           <TabsContent value="diff" className="space-y-6 pt-2">
             <SnapshotContentDiff snapshotId={id} />

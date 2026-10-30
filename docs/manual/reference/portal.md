@@ -149,7 +149,7 @@ reads the session's roles from `GET /api/v1/me` and offers only what they permit
 
 | Control or page | Offered to |
 | --- | --- |
-| **Ingest**, **Approve**, **Reject**, **Waive**, **Revoke** a waiver, **Re-vet now**, re-running the chain, a revoked snapshot's fetchers, the file-by-file **Diff** | an approver of that marketplace, or an administrator |
+| **Ingest**, **Approve**, **Reject**, **Waive**, **Revoke** a waiver, **Re-vet now**, re-running the chain, a revoked snapshot's fetchers, the file-by-file **Diff**, the **Contents** tab and [Snapshot contents](#snapshot-contents) | an approver of that marketplace, or an administrator |
 | **Delete** and **Restore** a snapshot, **Register marketplace**, everything under a marketplace's Settings beyond its upstream facts, the [Vetting chain](#vetting-chain-governance) page | an administrator |
 | [Audit log](#audit-log), [Adoption](#adoption), [Webhooks](#webhooks), [Audit sinks](#audit-sinks), a marketplace's **Activity**, the Overview's **Fetch ledger** card | an auditor or an administrator |
 
@@ -158,9 +158,9 @@ decision the session cannot make, the card says so in place of the decision —
 *"Approving or rejecting a snapshot of {name} needs the approver role for it."*
 A page or section the session cannot read shows one statement of the role it
 needs — *"This page needs the auditor role."* — with a line on why, and makes
-none of the reads the server would refuse. The one exception is
-[Snapshot contents](#snapshot-contents): the explorer asks, and states the
-server's refusal when it comes.
+none of the reads the server would refuse. For a session without the approver
+role, a snapshot card has no **Contents** tab and its vetting findings' locations
+are plain text rather than links into it.
 
 Roles can change while a page is open. Whenever the server refuses a request
 (`403`), the portal reads `GET /api/v1/me` again and the page follows the
@@ -496,8 +496,8 @@ Top to bottom, in this order on purpose:
 
     | Tab | Shows |
     | --- | --- |
-    | **Vetting** (default) | The [vetting report](#the-chain-flow): chain outcome, verdicts, findings, waivers. Every `path:line` location is a link that opens the file at that line in **Contents** (not in the approve dialog, which stays on the decision) |
-    | **Contents** | The [file explorer](#snapshot-contents), inside the card |
+    | **Vetting** (default) | The [vetting report](#the-chain-flow): chain outcome, verdicts, findings, waivers. Every `path:line` location is a link that opens the file at that line in **Contents** (not in the approve dialog, which stays on the decision, and not for a session without the approver role, which has no **Contents** tab) |
+    | **Contents** | The [file explorer](#snapshot-contents), inside the card. Offered to an approver of the marketplace or an administrator; an address naming this tab shows anyone else the role it needs |
     | **Diff** | Changes since the last approved snapshot — plugins and skills marked added, changed, moved or removed, only what changed, from `content-diff`. With nothing approved yet it says there is no baseline. Below it, **Files changed against the served commit** lists every changed path from `diff`, 500 at a time, with **Show N more**, the totals over the whole diff, and each file's diff opened in place |
     | **Inventory** | What the snapshot ships: one block per declared plugin with its `source` and description. Below them is one count per component kind the plugin has (skills, commands, agents, hooks, hook modules, MCP servers and LSP servers), for example "1 skill · 4 agents · 3 hooks". Each count is collapsed and expands its own list in place. A hook row shows its trigger (the event, and the tool matcher when there is one), what it runs, and where it is declared. A hook module row shows its file, the events it registers, the `$` interfaces it reaches, the plugin files it imports, anything it loads that could not be scanned, and where it is declared. Read from `GET /api/v1/snapshots/{id}/content` |
     | **Provenance** | Upstream URL and SHA, the served SHA, who decided it and when, and the closure of external plugin sources |
@@ -953,7 +953,8 @@ Every bound of these reads is a state this page renders on purpose:
 | Path removed by this snapshot | Marked `removed` in the tree; the pane shows the removal |
 | File unchanged vs served | "Unchanged against the served commit." |
 | Nothing served yet | No baseline; approving serves all of it |
-| No approver role | "You cannot read this snapshot's contents.", naming the role needed |
+| No approver role for the marketplace (from the session's roles) | "This page needs the approver role for X.", and nothing is read |
+| A read the server refuses anyway (a role revoked since the page opened) | "You cannot read this snapshot's contents.", naming the role needed |
 | Snapshot is not this marketplace's | "Snapshot N is not a snapshot of X." |
 | A `.json` file that does not tokenise as JSON | "Not valid JSON — shown as stored.", with the stored bytes |
 | A finding's line outside the part of a truncated blob shown | Listed above the file, and written out below it as "Line N is beyond the part shown" (or "before", above it); following it loads the part that holds the line |

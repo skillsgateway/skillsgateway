@@ -24,6 +24,10 @@
 - [x] 4.4 Sidebar leaves out Oversight and Integrations for a non-auditor, and Activity in a marketplace's sections (`SVC_GW_AUTH_0075`; `SVC_GW_AUTH_0048` re-pointed at an auditor, unchanged in what it asserts).
 - [x] 4.5 Tests: no role on each gated page, auditor reads them (`SVC_GW_AUTH_0074`).
 
+## 4a. Snapshot contents (GW_INGEST_0032, revised in review)
+
+- [x] 4a.1 Contents tab offered only with the approver role; an address naming it, and the standalone files page, show `RoleRequired` and read nothing; finding locations are text without the role. Requirement and SVC text revised. Tests seen failing first (`SVC_GW_AUTH_0072`, `SVC_GW_INGEST_0032`).
+
 ## 5. Copy
 
 - [x] 5.1 No-role user menu wording (`GW_AUTH_0044`).
