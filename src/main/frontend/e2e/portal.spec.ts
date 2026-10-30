@@ -1,5 +1,5 @@
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Locator, type Page } from "@playwright/test";
@@ -1000,7 +1000,7 @@ test("adoption_page_shows_a_real_facade_fetch_and_its_identity", async ({ page }
 
 /**
  * The setup wizard composes everything a client needs from the page's own origin, and holds the
- * show-once line: a token minted inside it fills the snippets only while the wizard is open.
+ * show-once line: a token minted inside it is shown only while the wizard is open.
  *
  * @SVCs SVC_GW_AUTH_0014
  */
@@ -1023,8 +1023,8 @@ test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async 
     `claude plugin marketplace add ${origin}/git/${name}`,
   );
   await expect(page.getByTestId("wizard-credential-config")).toContainText(new URL(origin).host);
-  // No token yet: the snippets carry a placeholder, never a secret.
-  await expect(page.getByTestId("wizard-credential-config")).toContainText("<YOUR_TOKEN>");
+  // No token yet, so nothing to show; the commands never carry one (they read it at a prompt).
+  await expect(page.getByTestId("wizard-token-value")).toHaveCount(0);
   // The clone line never carries userinfo: the credential helper above holds the token.
   await expect(page.getByTestId("wizard-clone-command")).toHaveText(
     `git clone --depth 1 ${origin}/git/${name}`,
@@ -1038,16 +1038,70 @@ test("setup_wizard_composes_origin_derived_commands_and_holds_show_once", async 
   await page.getByLabel("Token name").fill(uniqueName("wiz"));
   await page.getByRole("button", { name: "Create token" }).click();
   await expect(page.getByText("Token created", { exact: false })).toBeVisible();
-  const credential = await page.getByTestId("wizard-credential-config").textContent();
-  const token = /password=([^\\]+)\\n/.exec(credential ?? "")?.[1];
-  expect(token).toBeTruthy();
-  expect(token).not.toBe("<YOUR_TOKEN>");
+  const token = await page.getByTestId("wizard-token-value").textContent();
+  expect(token).toMatch(/^sgw_/);
 
   // Close and reopen: the secret is gone with the wizard; nothing re-displays it.
   await page.getByRole("button", { name: "Done" }).click();
   await page.getByRole("button", { name: "Connect a client" }).click();
-  await expect(page.getByTestId("wizard-credential-config")).toContainText("<YOUR_TOKEN>");
+  await expect(page.getByTestId("wizard-credential-config")).toBeVisible();
+  await expect(page.getByTestId("wizard-token-value")).toHaveCount(0);
   await expect(page.getByText(token ?? "__never__")).toHaveCount(0);
+});
+
+/**
+ * The wizard's own commands, run as shown on a machine with no git configuration: an empty home,
+ * no system configuration and no terminal prompt. The clone fails before the credential step and
+ * succeeds after it, with the token typed at the step's prompt rather than written into it.
+ *
+ * @SVCs SVC_GW_AUTH_0068
+ */
+test("the_wizard_commands_store_the_credential_and_clone_on_a_clean_client", async ({ page }) => {
+  await login(page, "alice");
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Marketplaces" })
+    .click();
+  const name = uniqueName("clean");
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
+  await submitRegister(page);
+  await approveCard(page, await ingestOnReview(page, name));
+
+  await page.getByRole("button", { name: "Connect a client" }).click();
+  await page.getByRole("button", { name: "Create token" }).click();
+  const token = (await page.getByTestId("wizard-token-value").textContent()) ?? "";
+  expect(token).toMatch(/^sgw_/);
+  const credential = (await page.getByTestId("wizard-credential-config").textContent()) ?? "";
+  const clone = (await page.getByTestId("wizard-clone-command").textContent()) ?? "";
+  expect(credential).not.toContain(token);
+  expect(clone).not.toContain(token);
+
+  const home = mkdtempSync(join(tmpdir(), "e2e-clean-client-"));
+  const env = {
+    PATH: process.env.PATH ?? "/usr/bin:/bin",
+    HOME: home,
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_TERMINAL_PROMPT: "0",
+  };
+  const run = (command: string, input = "") =>
+    spawnSync("bash", ["-c", command], { cwd: home, env, input, encoding: "utf8" });
+
+  // Nothing stored yet: the wizard's clone has no credential and git may not ask for one.
+  const refused = run(clone);
+  expect(refused.status).not.toBe(0);
+  expect(refused.stderr).toMatch(/could not read (Username|Password)|unable to get password/);
+
+  // The credential step exactly as copied, the token typed at its prompt.
+  const stored = run(credential, `${token}\n`);
+  expect(stored.status, stored.stderr).toBe(0);
+  expect(stored.stdout).toContain("Token: ");
+  expect(stored.stdout).not.toContain(token);
+
+  const cloned = run(clone);
+  expect(cloned.status, cloned.stderr).toBe(0);
+  expect(existsSync(join(home, name, ".git"))).toBe(true);
 });
 
 /**

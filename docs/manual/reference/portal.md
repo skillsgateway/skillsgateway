@@ -566,22 +566,36 @@ Inside the wizard:
    ([`skills-gateway.tokens.max-ttl`](configuration.md#access-tokens)) is not
    exposed to the browser, so a longer choice than the deployment allows is
    refused by the server and the refusal is shown beneath the field. A token
-   minted here is filled into the snippets **only while the wizard stays open**;
-   closing it drops the value, and no previously issued token's value is ever
-   shown.
-2. **Store the credential** — a `git credential approve` line for this host.
-   This is the **primary copy target**, marked by a highlighted snippet box,
-   because a consumer who copies one thing should copy this. Its copy control is
-   the same corner icon button the other snippets use, so the three read as one
-   family.
+   minted here is shown in its own field, with a copy button, **only while the
+   wizard stays open**; closing it drops the value, and no previously issued
+   token's value is ever shown. No command carries it. The step also says the
+   token is not limited to this marketplace: it fetches every marketplace the
+   gateway serves its holder, and git keeps one credential per gateway, so one
+   token serves each marketplace added from here.
+2. **Store the credential** — two lines for bash or zsh. The first names git's
+   `store` helper for this origin only
+   (`git config --global credential.{origin}.helper store`), because
+   `git credential approve` stores nothing on a machine with no helper
+   configured. The second prompts for the token without echoing it and passes it
+   to `git credential approve`, so the token reaches neither the command nor the
+   shell history. A note beneath says `store` keeps the token in plaintext in
+   `~/.git-credentials`, and that a reader with an OS keychain helper skips the
+   first line. This is the **primary copy target**, marked by a highlighted
+   snippet box, because a consumer who copies one thing should copy this. Its
+   copy control is the same corner icon button the other snippets use, so the
+   three read as one family.
 3. **Add the marketplace to Claude Code** —
    `claude plugin marketplace add {origin}/git/{name}`.
 4. **Clone directly** — a plain `git clone` of the facade URL, with no token in it:
    the credential stored by step 2 authenticates it, and nothing lands in
    `.git/config` or shell history.
 
-The remaining snippets have icon copy buttons. Until a token is minted the
-credential snippet carries the `<YOUR_TOKEN>` placeholder.
+The remaining snippets have icon copy buttons. The commands read the same before
+and after a token is minted.
+
+A closing line says the facade serves only the approved snapshot, on `main`, and
+that each fetch it serves is recorded on the [audit ledger](#audit-log); a
+refused request (`401` or `404`) is not.
 
 ### Vetting
 

@@ -76,7 +76,7 @@ serves is keyed by the snapshot's SHA:
 - Quarantine holds `refs/snapshots/{sha}` — one immutable ref per snapshot.
 - Approval force-updates the published `refs/heads/main` to *that exact SHA*.
   The published ref moves only because a human approved a specific commit.
-- The ledger records the SHA on every fetch.
+- The ledger records the SHA on every fetch the facade serves.
 
 The consequence: "what exactly ran on that laptop" reduces to a ledger lookup,
 and an upstream force-push cannot change the answer retroactively.

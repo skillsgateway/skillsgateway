@@ -6,7 +6,7 @@ Agent Skills (`SKILL.md`) format adopted by Copilot and Cursor.
 
 It ingests upstream marketplaces into quarantine, holds every snapshot until a
 human approves it, and serves only approved, SHA-pinned content to unmodified
-git clients — recording every fetch in an append-only ledger.
+git clients — recording every fetch it serves in an append-only ledger.
 
 ```mermaid
 flowchart LR

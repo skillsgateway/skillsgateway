@@ -10,7 +10,7 @@ internet: no vetting gate, no immutable versions, no inventory, no audit
 trail. The Skills Gateway is the choke point: it ingests upstream
 marketplaces into quarantine, holds every snapshot until it passes vetting,
 and serves only approved, SHA-pinned content to unmodified git clients —
-with every fetch in an append-only audit ledger.
+with every served fetch in an append-only audit ledger.
 
 **Status: pre-1.0.** The core loop is implemented on Java 25 / Spring Boot 4 /
 JGit: ingestion into quarantine, hold until
@@ -30,7 +30,7 @@ before 1.0.
 - **A read-only git facade.** `/git/**` is an ordinary git remote for
   unmodified clients, authenticated with personal access tokens and serving only
   approved content.
-- **An append-only audit ledger.** Every fetch and every administrative action
+- **An append-only audit ledger.** Every served fetch and every administrative action
   is recorded with the acting identity, the marketplace and the SHA.
 - **Lifecycle webhooks.** Signed, retried delivery of snapshot ingest, approve,
   reject, soft-delete and restore events to registered subscribers.

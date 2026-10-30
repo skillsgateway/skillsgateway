@@ -259,7 +259,7 @@ flowchart LR
 - **Catalog & portal.** Search across gateway *and* federated
   repository-manager skills; per-skill page with scan history, owner, install count, trust
   signals; "request this upstream skill" button feeding the approval queue.
-- **Audit ledger.** Append-only record of every fetch (who, what, which SHA,
+- **Audit ledger.** Append-only record of every served fetch (who, what, which SHA,
   when), every approval (who, what diff, which scan report), every recall.
   Streams to the SIEM.
 - **Read-only forge mirror** (optional, off by default). Pushes a copy of what
@@ -660,7 +660,7 @@ reference transitions at all — see
    enables it, identity-provider bearer tokens
    ([ADR 0019 — The facade accepts identity-provider bearer tokens beside PATs](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0019-facade-accepts-idp-bearer-tokens.md));
    the web surface is OIDC-only; `/api/**` additionally takes a
-   gateway-issued machine credential. Every fetch is attributed to a principal
+   gateway-issued machine credential. Every served fetch is attributed to a principal
    and the token that authenticated it, not to an IP. Roles — global admin,
    per-marketplace approver, read-only auditor — are derived from the identity
    provider's own group or application-role claims. What stays open is

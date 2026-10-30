@@ -152,7 +152,7 @@ authenticated caller reads it. The event announces; the API discloses.
 
 There is no event for "someone fetched this marketplace", and there will not be
 one. Fetch volume is orders of magnitude above administrative change, the ledger
-already records every fetch with the identity behind it, and an
+already records every served fetch with the identity behind it, and an
 [audit sink](exporting-the-audit-ledger.md) already pushes those ledger entries
 to a receiver in signed, retried batches. Anything a per-fetch webhook could tell
 you is derivable from a sink today, over a delivery path built for that volume.

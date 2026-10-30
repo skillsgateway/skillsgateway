@@ -41,7 +41,7 @@ import org.springframework.http.MediaType;
                                 served to unmodified git clients over smart-HTTP. Only approved \
                                 content is ever fetchable; upstream changes never alter served \
                                 content until re-ingested and re-approved (rug-pull protection). \
-                                Every git fetch and every administrative action lands in an \
+                                Every served git fetch and every administrative action lands in an \
                                 append-only audit ledger.
 
                                 ## Quick start

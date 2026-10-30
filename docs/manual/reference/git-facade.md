@@ -192,7 +192,9 @@ Two hooks append to the ledger:
 | `upload-pack` | One entry per wanted object when the packfile is served. | The advertised ref that object resolves to. |
 
 Each entry carries the client address as `source`, the PAT's principal, the
-marketplace, the ref and the SHA. Negotiation rounds are not recorded.
+marketplace, the ref and the SHA. Negotiation rounds are not recorded, and
+neither is a refused request: a `401` or a `404` is answered before either hook
+runs.
 
 Because both namespaces above are legal wants, an `upload-pack` entry names
 which one the client received content through. A want that is not the tip can
