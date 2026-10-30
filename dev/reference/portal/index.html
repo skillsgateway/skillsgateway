@@ -4635,7 +4635,10 @@ is.</p>
 <li><strong>Above the file</strong>, "N findings in this file" lists each finding with its
   severity, rule, line, vetter and message. An entry with a line moves to that
   line. A finding whose location has no line, or whose line is beyond the part
-  of a truncated file that is shown, is listed there too.</li>
+  of a truncated file that is shown, is listed there too. Following one outside
+  the part shown loads the part of the file that holds its line, numbered from
+  that part's first line: "Truncated: showing lines 1789–4210 of 346255 bytes".
+  A finding above that part then reads "before the part shown".</li>
 <li><strong>In the file</strong>, a file is shown as numbered lines. Each line a finding
   locates is tinted by its highest severity, and <strong>each finding on it is
   written out beneath the line</strong>: severity, vetter, rule and message, and
@@ -4703,8 +4706,8 @@ markers.</p>
 <td>"Not valid JSON — shown as stored.", with the stored bytes</td>
 </tr>
 <tr>
-<td>A finding's line beyond a truncated blob</td>
-<td>Listed above the file, and written out below it as "Line N is beyond the part shown"</td>
+<td>A finding's line outside the part of a truncated blob shown</td>
+<td>Listed above the file, and written out below it as "Line N is beyond the part shown" (or "before", above it); following it loads the part that holds the line</td>
 </tr>
 </tbody>
 </table>
