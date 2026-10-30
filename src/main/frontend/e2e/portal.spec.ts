@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Locator, type Page } from "@playwright/test";
@@ -1087,30 +1087,42 @@ test("the_wizard_commands_store_the_credential_and_clone_on_a_clean_client", asy
     GIT_CONFIG_NOSYSTEM: "1",
     GIT_TERMINAL_PROMPT: "0",
   };
+  // spawnSync blocks the event loop, so a hung command would also stall Playwright's own timeout.
   const run = (command: string, input = "") =>
-    spawnSync("bash", ["-c", command], { cwd: home, env, input, encoding: "utf8" });
+    spawnSync("bash", ["-c", command], {
+      cwd: home,
+      env,
+      input,
+      encoding: "utf8",
+      timeout: 60_000,
+    });
 
-  // Nothing stored yet: the wizard's clone has no credential and git may not ask for one.
-  const refused = run(clone);
-  expect(refused.status).not.toBe(0);
-  expect(refused.stderr).toMatch(/could not read (Username|Password)|unable to get password/);
+  try {
+    // Nothing stored yet: the wizard's clone has no credential and git may not ask for one.
+    const refused = run(clone);
+    expect(refused.status).not.toBe(0);
+    expect(refused.stderr).toMatch(/could not read (Username|Password)|unable to get password/);
 
-  // The credential step exactly as copied, the token typed at its prompt.
-  const stored = run(credential, `${token}\n`);
-  expect(stored.status, stored.stderr).toBe(0);
-  expect(stored.stdout).toContain("Token: ");
-  expect(stored.stdout).not.toContain(token);
+    // The credential step exactly as copied, the token typed at its prompt.
+    const stored = run(credential, `${token}\n`);
+    expect(stored.status, stored.stderr).toBe(0);
+    expect(stored.stdout).toContain("Token: ");
+    expect(stored.stdout).not.toContain(token);
 
-  const cloned = run(clone);
-  expect(cloned.status, cloned.stderr).toBe(0);
-  expect(existsSync(join(home, name, ".git"))).toBe(true);
+    const cloned = run(clone);
+    expect(cloned.status, cloned.stderr).toBe(0);
+    expect(existsSync(join(home, name, ".git"))).toBe(true);
 
-  // The marketplace-add URL is the git remote Claude Code clones: the stored credential serves it.
-  const addUrl = add.split(" ").pop() ?? "";
-  expect(addUrl).toMatch(/\.git$/);
-  const viaAdd = run(`git clone --depth 1 ${addUrl} via-add`);
-  expect(viaAdd.status, viaAdd.stderr).toBe(0);
-  expect(existsSync(join(home, "via-add", ".git"))).toBe(true);
+    // The marketplace-add URL is the git remote Claude Code clones: the stored credential serves it.
+    const addUrl = add.split(" ").pop() ?? "";
+    expect(addUrl).toMatch(/\.git$/);
+    const viaAdd = run(`git clone --depth 1 ${addUrl} via-add`);
+    expect(viaAdd.status, viaAdd.stderr).toBe(0);
+    expect(existsSync(join(home, "via-add", ".git"))).toBe(true);
+  } finally {
+    // The home holds the token in ~/.git-credentials.
+    rmSync(home, { recursive: true, force: true });
+  }
 });
 
 /**

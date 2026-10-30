@@ -568,13 +568,13 @@ Inside the wizard:
    refused by the server and the refusal is shown beneath the field. A token
    minted here is shown in its own field, with a copy button, **only while the
    wizard stays open**; closing it drops the value, and no previously issued
-   token's value is ever shown. No command carries it. The step also says the
-   token is not limited to this marketplace: it fetches every marketplace the
+   token's value is ever shown. No command carries it. The step also says a
+   token created here is not limited to this marketplace: it fetches every marketplace the
    gateway serves its holder, and git keeps one credential per gateway, so one
    token serves each marketplace added from here.
 2. **Store the credential** — two lines for bash or zsh. The first names git's
    `store` helper for this origin only
-   (`git config --global credential.{origin}.helper store`), because
+   (`git config --global 'credential.{origin}.helper' store`), because
    `git credential approve` stores nothing on a machine with no helper
    configured. The second prompts for the token without echoing it and passes it
    to `git credential approve`, so the token reaches neither the command nor the

@@ -69,14 +69,15 @@ function CopyButton({ value, label }: { value: string; label: string }) {
  *
  * `git credential approve` stores nothing when no helper is configured, and still exits 0, so the
  * step has to configure one. The token is read at a prompt rather than written into the command,
- * which keeps it out of the shell history; the prompt is a separate `printf` because `read -p`
- * means something else in zsh. The second line is one line so that, pasted together with the
- * first, the `read` runs last and takes the token from the keyboard, not from the paste.
+ * which keeps it out of the shell history. The config key is quoted so an IPv6 origin's brackets
+ * are not read as a glob. The prompt is a separate `printf` because `read -p` means something else
+ * in zsh. The second line is one line so that, pasted together with the first, the `read` runs
+ * last and takes the token from the keyboard, not from the paste.
  */
 function credentialCommand(origin: string, protocol: string, host: string): string {
   const scheme = protocol.replace(":", "");
   return (
-    `git config --global credential.${origin}.helper store\n` +
+    `git config --global 'credential.${origin}.helper' store\n` +
     `printf 'Token: ' && read -rs SGW_TOKEN && echo && ` +
     `printf 'protocol=${scheme}\\nhost=${host}\\nusername=token\\npassword=%s\\n' "$SGW_TOKEN" ` +
     `| git credential approve; unset SGW_TOKEN`
@@ -271,8 +272,8 @@ export function SetupWizard({
               </>
             )}
             <p data-testid="wizard-token-reach" className="text-xs text-muted-foreground">
-              The token is not limited to '{marketplace}': it fetches every marketplace this gateway
-              serves you. Git keeps one credential per gateway, so the same token serves every
+              A token created here is not limited to '{marketplace}': it fetches every marketplace
+              this gateway serves you. Git keeps one credential per gateway, so the same token serves every
               marketplace you add from here.
             </p>
           </form>

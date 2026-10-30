@@ -61,7 +61,7 @@ test("the_credential_command_names_the_store_helper_for_this_origin_only_and_rea
   const { origin, host } = window.location;
   const scheme = window.location.protocol.replace(":", "");
   expect((await screen.findByTestId("wizard-credential-config")).textContent).toBe(
-    `git config --global credential.${origin}.helper store\n` +
+    `git config --global 'credential.${origin}.helper' store\n` +
       `printf 'Token: ' && read -rs SGW_TOKEN && echo && ` +
       `printf 'protocol=${scheme}\\nhost=${host}\\nusername=token\\npassword=%s\\n' "$SGW_TOKEN" ` +
       `| git credential approve; unset SGW_TOKEN`,
@@ -105,7 +105,7 @@ test("the_token_step_says_the_token_is_not_limited_to_this_marketplace", async (
   renderWizard();
   await user.click(screen.getByRole("button", { name: "Connect a client" }));
   const reach = await screen.findByTestId("wizard-token-reach");
-  expect(reach).toHaveTextContent("not limited to 'corp-marketplace'");
+  expect(reach).toHaveTextContent("A token created here is not limited to 'corp-marketplace'");
   expect(reach).toHaveTextContent(/every marketplace this gateway serves/);
 });
 

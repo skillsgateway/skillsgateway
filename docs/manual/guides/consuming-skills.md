@@ -195,7 +195,7 @@ clone fails with `unable to get password from user`. So name a helper for the
 gateway first, then store the token. In bash or zsh:
 
 ```console
-$ git config --global credential.https://skills.corp.example.helper store
+$ git config --global 'credential.https://skills.corp.example.helper' store
 $ printf 'Token: ' && read -rs SGW_TOKEN && echo && printf 'protocol=https\nhost=skills.corp.example\nusername=token\npassword=%s\n' "$SGW_TOKEN" | git credential approve; unset SGW_TOKEN
 Token:
 ```
