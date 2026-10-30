@@ -34,4 +34,4 @@
 
 ## 7. Gates and evidence
 
-- [ ] 7.1 Every AGENTS.md gate fresh, recorded in `evidence.md`.
+- [x] 7.1 Every AGENTS.md gate fresh, recorded in `evidence.md`.
