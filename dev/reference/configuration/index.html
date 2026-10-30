@@ -5798,6 +5798,11 @@ which is the vector. Naming the attribute is one half of GW_AUTH_0030 — A
 cross-site request cannot act on an ambient session; the control itself is the
 CSRF token on the web chain, described under
 <a href="../../concepts/trust-boundaries/#the-web-surface">The web surface</a>.</p>
+<p>The <code>XSRF-TOKEN</code> cookie that carries the portal's copy of that token is
+<code>SameSite=Lax</code> too, and <code>Secure</code> whenever the request reached the gateway over
+HTTPS as the <a href="#forwarded-headers">forwarded-header strategy</a> reports it. It is
+not a setting: the gateway never reads that cookie back, so its attributes do
+not need tuning.</p>
 <p>The cookie is named <code>SESSION</code>. The session it names is stored in the gateway's
 database, not in the replica's memory, so any replica can answer any request of
 it and a load balancer needs no session affinity (GW_AUTH_0053 — A browser
@@ -5899,6 +5904,10 @@ belongs where the proxy's address is inside the internal ranges. The Helm chart
 sets <code>native</code> through its <code>forwardHeadersStrategy</code> value; other runtimes set
 the variable — see
 <a href="../../guides/deploying-without-kubernetes/#running-behind-a-proxy">Running behind a proxy</a>.</p>
+<p>The OIDC redirect URI the gateway sends is built from the request's host unless
+<code>SGW_OIDC_REDIRECT_URI</code> fixes it. Register the exact redirect URI or URIs with
+the identity provider, never a wildcard, and have the proxy set <code>Host</code> or
+<code>X-Forwarded-Host</code> itself rather than pass on the client's.</p>
 <p>The gateway registers the <code>framework</code> filter itself and reads the setting at
 runtime (GW_AUTH_0029 — Proxy-reported scheme and host are honoured only when
 configured, identically on every packaging). Spring Boot's own registration is
