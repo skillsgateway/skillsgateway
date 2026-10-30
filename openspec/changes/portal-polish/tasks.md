@@ -27,5 +27,5 @@
 
 ## 5. Gates and evidence
 
-- [ ] 5.1 Impeccable audit/harden on the touched pages; outcome in the PR.
-- [ ] 5.2 Every AGENTS.md gate fresh, recorded in `evidence.md`.
+- [x] 5.1 Impeccable audit/harden on the touched pages; outcome in the PR.
+- [x] 5.2 Every AGENTS.md gate fresh, recorded in `evidence.md`.
