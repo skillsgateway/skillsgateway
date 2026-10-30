@@ -169,9 +169,9 @@ A **blocked** outcome means at least one vetter failed, errored or has not
 answered, or that the chain never ran for this snapshot at all.
 
 Counts are of findings, one per location: "18 findings in 3 groups" means
-eighteen findings that identical content collapses into three things to judge,
-and three waive actions. A vetter that failed but whose blocking findings are all
-covered by active waivers reads **waived** and shows the verdict it recorded.
+eighteen findings that identical content collapses into three things to judge.
+A vetter that failed but whose blocking findings are all covered by active
+waivers reads **waived** and shows the verdict it recorded.
 It is not **pass**: the outcome is *clear with waivers*, and the waivers are
 listed under **Accepted risks**.
 

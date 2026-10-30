@@ -264,11 +264,13 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
           .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
           .map((vetter) => ({ vetter: vetter.name }) as VettingVerdict);
 
+  const states = ordered.map((verdict) => effectiveState(verdict, view?.suppressed ?? []));
+
   ordered.forEach((verdict, index) => {
     const name = verdict.vetter ?? "";
     const vetter = byName.get(name);
     const counts = findingCounts(verdict);
-    const state = effectiveState(verdict, view?.suppressed ?? []);
+    const state = states[index];
     nodes.push({
       id: `vetter-${name}`,
       kind: "vetter",
@@ -292,10 +294,7 @@ export function snapshotFlow(view: VettingView | undefined): FlowNode[] {
 
   // A vetter whose blocking findings are all waived is no longer objecting (GW_VETTING_0071).
   const blocking = ordered
-    .filter((verdict) => {
-      const state = effectiveState(verdict, view?.suppressed ?? []);
-      return state === "fail" || state === "error" || state === "pending";
-    })
+    .filter((_, index) => states[index] === "fail" || states[index] === "error" || states[index] === "pending")
     .map((verdict) => verdict.vetter ?? "");
 
   nodes.push({
@@ -493,13 +492,17 @@ function stoppedReason(node: FlowNode): string {
   const entries = entriesOf(node.verdict);
   if (entries.length === 0) return "objected";
   const worst = worstSeverity(entries.map((entry) => entry.severity));
-  return `found ${findingCount(findingCounts(node.verdict), worst?.toLowerCase())}`;
+  const counts = findingCounts(node.verdict);
+  // The worst severity describes every finding only when every finding has it.
+  return entries.every((entry) => entry.severity === worst)
+    ? `found ${findingCount(counts, worst)}`
+    : `found ${findingCount(counts)}, worst ${worst}`;
 }
 
 /** Severity order as the gateway ranks it; the worst present is the one worth naming. */
 const SEVERITY_ORDER = ["info", "low", "medium", "high", "critical"];
 
-export function worstSeverity(severities: (string | undefined)[]): string | undefined {
+function worstSeverity(severities: (string | undefined)[]): string | undefined {
   let worst: string | undefined;
   for (const severity of severities) {
     if (severity === undefined) continue;

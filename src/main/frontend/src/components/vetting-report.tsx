@@ -627,7 +627,7 @@ function VerdictCard({
   snapshotId: number;
   verdict: VettingVerdict;
   /** The state with active waivers applied: "waived" where they cover every blocking finding. */
-  state?: string;
+  state: string | undefined;
   suppressions: Map<string, WaiverSuppression>;
   runFindings: RunFinding[];
   selection: Selection;

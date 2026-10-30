@@ -601,7 +601,7 @@ it can be read without opening anything:
 
 ```text
 Blocked at step 1 · secret-scan found 1 critical finding
-Blocked at step 2 · license-scan found 18 high findings in 3 groups
+Blocked at step 2 · license-scan found 18 findings in 3 groups, worst high
 Clear · 5 vetters, 21 findings in 9 groups
 Clear with waivers · 2 findings accepted
 Stopped at step 1 · secret-scan found 1 critical finding, so 2 later vetters
