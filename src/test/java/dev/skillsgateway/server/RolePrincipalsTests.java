@@ -33,7 +33,7 @@ class RolePrincipalsTests {
                 ASTRAL + "lice",
                 "a".repeat(RolePrincipals.MAX_LENGTH),
                 "a".repeat(RolePrincipals.MAX_LENGTH - 1) + ASTRAL,
-                "private-use")) {
+                "\uE000private-use")) {
             assertThat(RolePrincipals.problem(ok)).as(ok).isEmpty();
             assertThatCode(() -> RolePrincipals.requireGrantable(ok)).as(ok).doesNotThrowAnyException();
         }
@@ -42,15 +42,15 @@ class RolePrincipalsTests {
                 "   ",
                 "  Bob ",
                 "\tbob",
-                "bob ",
-                "　bob",
-                "bo‮b",
-                "bo​b",
-                "﻿bob",
+                "bob\u00A0",
+                "\u3000bob",
+                "bo\u202Eb",
+                "bo\u200Bb",
+                "\uFEFFbob",
                 "bo\u0007b",
                 "bo\u0085b",
-                "bo b",
-                "bo b",
+                "bo\u2028b",
+                "bo\u2029b",
                 "bo\uD800b",
                 "bo\uDC00b")) {
             assertThat(RolePrincipals.problem(bad)).as(bad).isPresent();
@@ -62,7 +62,7 @@ class RolePrincipalsTests {
     @SVCs({"SVC_GW_AUTH_0063", "SVC_GW_AUTH_0065"})
     void a_grant_refusal_is_422_and_never_repeats_the_value() {
         for (String bad :
-                List.of("  zed-padded ", "zed‮bidi", "zed\u0000nul", "z".repeat(RolePrincipals.MAX_LENGTH + 1))) {
+                List.of("  zed-padded ", "zed\u202Ebidi", "zed\u0000nul", "z".repeat(RolePrincipals.MAX_LENGTH + 1))) {
             assertThatThrownBy(() -> RolePrincipals.requireGrantable(bad))
                     .as(bad)
                     .isInstanceOfSatisfying(ResponseStatusException.class, e -> {
@@ -80,11 +80,12 @@ class RolePrincipalsTests {
     @Test
     @SVCs({"SVC_GW_AUTH_0064", "SVC_GW_AUTH_0065"})
     void display_escapes_every_invisible_code_point_and_is_bounded() {
-        assertThat(RolePrincipals.display("bo‮b​\u0007 \uD800")).isEqualTo("bo\\u202Eb\\u200B\\u0007\\u2028\\uD800");
+        assertThat(RolePrincipals.display("bo\u202Eb\u200B\u0007\u2028\uD800"))
+                .isEqualTo("bo\\u202Eb\\u200B\\u0007\\u2028\\uD800");
         assertThat(RolePrincipals.display("  Bob ")).isEqualTo("  Bob ");
         assertThat(RolePrincipals.display("alice@example.com")).isEqualTo("alice@example.com");
         assertThat(RolePrincipals.display(null)).isEqualTo("null");
-        String longest = RolePrincipals.display("‮".repeat(10_000));
+        String longest = RolePrincipals.display("\u202E".repeat(10_000));
         assertThat(longest.length()).isLessThanOrEqualTo(RolePrincipals.MAX_LENGTH * 6 + 1);
         assertThat(FORBIDDEN_ANYWHERE.matcher(longest).find()).isFalse();
     }
@@ -97,8 +98,8 @@ class RolePrincipalsTests {
     @SVCs({"SVC_GW_AUTH_0065"})
     void a_randomized_sweep_agrees_with_an_independent_oracle() {
         String[] alphabet = {
-            "a", "B", "é", "-", "@", " ", " ", "　", "\t", "\n", "\u0007", "\u0085", "​", "‮", "﻿", " ", " ", "\uD800",
-            "\uDC00", ASTRAL, "", "͸"
+            "a", "B", "é", "-", "@", " ", "\u00A0", "\u3000", "\t", "\n", "\u0007", "\u0085", "\u200B", "\u202E",
+            "\uFEFF", "\u2028", "\u2029", "\uD800", "\uDC00", ASTRAL, "\uE000", "\u0378"
         };
         Random random = new Random(0x9A1_C1A1L);
         for (int i = 0; i < 20_000; i++) {

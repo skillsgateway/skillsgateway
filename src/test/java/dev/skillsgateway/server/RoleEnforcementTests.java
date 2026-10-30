@@ -708,12 +708,6 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                 .isEqualTo(255);
     }
 
-    private long ledgerCount(String event) {
-        return fetchLogRepository.list().stream()
-                .filter(entry -> event.equals(entry.get("event")))
-                .count();
-    }
-
     /** Every non-ASCII and control character as a JSON escape, so a lone surrogate survives transport. */
     private static String grantJsonEscaped(String principal) {
         StringBuilder escaped = new StringBuilder();

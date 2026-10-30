@@ -348,12 +348,6 @@ class EstateReconciliationTests extends AbstractGatewayTest {
         assertThat(failures).anyMatch(detail -> detail.contains("\\u202E"));
     }
 
-    private long ledgerCount(String event) {
-        return fetchLogRepository.list().stream()
-                .filter(entry -> event.equals(entry.get("event")))
-                .count();
-    }
-
     @Test
     @SVCs({"SVC_GW_ESTATE_0004"})
     void declared_secrets_are_write_only_rotated_idempotently_and_floored() throws Exception {
