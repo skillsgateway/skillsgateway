@@ -78,6 +78,26 @@ test("a_finding_beyond_a_truncated_view_is_still_shown_with_its_line", () => {
 });
 
 /**
+ * @SVCs SVC_GW_APPROVAL_0039
+ */
+test("a_part_of_a_file_is_numbered_from_its_first_line_and_a_finding_before_it_says_so", () => {
+  const { container } = render(
+    <SourceView
+      path="p/big.sh"
+      text={"x\ny\nz"}
+      truncated
+      firstLine={38}
+      findings={[finding({ line: 5, location: "p/big.sh:5" }), finding({ line: 39, location: "p/big.sh:39" })]}
+    />,
+  );
+
+  expect(lineOf(container, 38)).toHaveTextContent("x");
+  expect(lineOf(container, 39)).toHaveAttribute("data-severity", "high");
+  expect(container.querySelector('[data-line="1"]')).toBeNull();
+  expect(screen.getByText(/line 5 is before the part shown/i)).toBeInTheDocument();
+});
+
+/**
  * @SVCs SVC_GW_APPROVAL_0030
  */
 test("the_focused_line_is_focused", () => {

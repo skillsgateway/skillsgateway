@@ -1197,12 +1197,16 @@ export function treePage(
   };
 }
 
-function fileContent(path: string): Schemas["FileContent"] {
+function fileContent(path: string, line: number | null = null): Schemas["FileContent"] {
   if (path.endsWith(".bin")) {
     return { snapshotId: 1, path, size: 4096, binary: true, truncated: false };
   }
   if (path === "data/huge.txt") {
-    return { snapshotId: 1, path, size: 900000, binary: false, truncated: true, text: "first part only" };
+    // A named line past the head returns the part holding it, numbered from firstLine (GW_APPROVAL_0036).
+    return line !== null && line > 2
+      ? { snapshotId: 1, path, size: 900000, binary: false, truncated: true, firstLine: line - 2,
+          text: [line - 2, line - 1, line, line + 1].map((n) => `line ${n} of the large file`).join("\n") }
+      : { snapshotId: 1, path, size: 900000, binary: false, truncated: true, firstLine: 1, text: "first part only" };
   }
   return { snapshotId: 1, path, size: 120, binary: false, truncated: false, text: skillMarkdown };
 }
@@ -1462,9 +1466,11 @@ export const handlers = [
       ? HttpResponse.json(listing)
       : HttpResponse.json({ detail: "no such directory" }, { status: 404 });
   }),
-  http.get("/api/v1/snapshots/:id/file", ({ request }) =>
-    HttpResponse.json(fileContent(new URL(request.url).searchParams.get("path") ?? "")),
-  ),
+  http.get("/api/v1/snapshots/:id/file", ({ request }) => {
+    const params = new URL(request.url).searchParams;
+    const line = params.get("line");
+    return HttpResponse.json(fileContent(params.get("path") ?? "", line === null ? null : Number(line)));
+  }),
   http.get("/api/v1/snapshots/:id/diff", ({ request }) =>
     HttpResponse.json(diffPage(snapshotDiff, request)),
   ),

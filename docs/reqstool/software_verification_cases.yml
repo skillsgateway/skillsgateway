@@ -3989,6 +3989,36 @@ cases:
       THEN the first is refused naming the administrator's withdrawal and still stands withdrawn against its commit, and the second is rejected
     revision: "0.1.0"
 
+  - id: SVC_GW_APPROVAL_0037
+    requirement_ids: ["GW_APPROVAL_0036"]
+    title: A file read that names a line returns the part of a large file that holds it
+    verification: automated-test
+    description: |
+      GIVEN an ingested snapshot carrying a text file of numbered lines larger than the size limit, and a small text file
+      WHEN the large file is read naming a line deep inside it, without a line, and naming a line past its end, and the small file is read naming a line
+      THEN the first returns at most the limit, starting at a line boundary, holding the named line, with the number of its first line; the others return the head with first line 1
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0038
+    requirement_ids: ["GW_APPROVAL_0036"]
+    title: A file read with a blank path, or a line below 1, is a bad request
+    verification: automated-test
+    description: |
+      GIVEN an ingested snapshot
+      WHEN a file read names an empty or blank path, or a line below 1
+      THEN it is answered with 400 rather than a server error
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0039
+    requirement_ids: ["GW_APPROVAL_0036"]
+    title: The portal follows a finding past the shown part of a file to its line
+    verification: automated-test
+    description: |
+      GIVEN a truncated file whose finding lies outside the part shown
+      WHEN the reviewer follows the finding, or the address names a line outside the part shown
+      THEN the portal requests the part holding that line and shows the line numbered and marked, and a finding before the part shown is described as before it
+    revision: "0.1.0"
+
   - id: SVC_GW_INGEST_0045
     requirement_ids: ["GW_INGEST_0045"]
     title: The inventory lists commands, agents, hooks, MCP servers and LSP servers from every declaration source

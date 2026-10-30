@@ -106,6 +106,77 @@ class PreviewTests extends AbstractGatewayTest {
     }
 
     @Test
+    @SVCs({"SVC_GW_APPROVAL_0037"})
+    void a_read_naming_a_line_returns_the_part_of_a_large_file_that_holds_it() throws Exception {
+        // 6000 fixed-width lines, ~300 KiB: line n reads "line 0000n …", so a window's position is checkable.
+        StringBuilder numbered = new StringBuilder();
+        for (int n = 1; n <= 6000; n++) {
+            numbered.append("line %05d of the numbered fixture text, padded\n".formatted(n));
+        }
+        Registered fixture = registerAndIngest(
+                uniqueName("window"),
+                createUpstream(DEFAULT_MANIFEST, Map.of("data/numbered.txt", numbered.toString())));
+        long id = fixture.snapshot().id();
+
+        JsonNode window = file(id, "data/numbered.txt", "5000");
+        int first = window.get("firstLine").asInt();
+        String text = window.get("text").asText();
+        String[] lines = text.split("\n", -1);
+        assertThat(window.get("truncated").asBoolean()).isTrue();
+        assertThat(text.length()).isLessThanOrEqualTo(128 * 1024);
+        // Starts at a line boundary, numbered by firstLine, with context before the line and the line itself.
+        assertThat(lines[0]).startsWith("line %05d ".formatted(first));
+        assertThat(first).isBetween(2, 5000 - 1000);
+        assertThat(lines[5000 - first]).startsWith("line 05000 ");
+
+        // No line, a line inside the head, and a line past the end: the head, numbered from 1.
+        for (String line : new String[] {null, "10", "999999"}) {
+            JsonNode head = file(id, "data/numbered.txt", line);
+            assertThat(head.get("firstLine").asInt()).as(line).isEqualTo(1);
+            assertThat(head.get("text").asText())
+                    .as(line)
+                    .startsWith("line 00001 ")
+                    .hasSize(128 * 1024);
+        }
+
+        // A file within the cap is whole whatever line is named.
+        JsonNode small = file(id, SKILL_PATH, "3");
+        assertThat(small.get("firstLine").asInt()).isEqualTo(1);
+        assertThat(small.get("truncated").asBoolean()).isFalse();
+    }
+
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0038"})
+    void a_read_with_a_blank_path_or_a_line_below_one_is_a_bad_request() throws Exception {
+        long id = registerAndIngest(uniqueName("blank"), createUpstream(DEFAULT_MANIFEST, Map.of()))
+                .snapshot()
+                .id();
+        for (String blank : List.of("", "   ")) {
+            mockMvc.perform(get("/api/v1/snapshots/{id}/file", id)
+                            .param("path", blank)
+                            .with(alice))
+                    .andExpect(status().isBadRequest());
+        }
+        mockMvc.perform(get("/api/v1/snapshots/{id}/file", id)
+                        .param("path", SKILL_PATH)
+                        .param("line", "0")
+                        .with(alice))
+                .andExpect(status().isBadRequest());
+    }
+
+    private JsonNode file(long id, String path, String line) throws Exception {
+        var request = get("/api/v1/snapshots/{id}/file", id).param("path", path).with(alice);
+        if (line != null) {
+            request = request.param("line", line);
+        }
+        return MAPPER.readTree(mockMvc.perform(request)
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
+    }
+
+    @Test
     @SVCs({"SVC_GW_INGEST_0016"})
     void the_diff_names_the_served_baseline_and_the_exact_delta_or_its_absence() throws Exception {
         Path upstream = createUpstream(DEFAULT_MANIFEST, Map.of("docs/REMOVE.md", "# Goes away\n"));

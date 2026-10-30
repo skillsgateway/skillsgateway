@@ -797,7 +797,7 @@ export interface paths {
         };
         /**
          * One file of the pinned commit
-         * @description One blob addressed strictly within the pinned commit's tree — a path the tree does not contain, traversal shapes included, is not found. Text is returned for rendering only, cut at 128 KiB with an explicit truncation marker; a blob detected as binary returns metadata without text. Privileged.
+         * @description One blob addressed strictly within the pinned commit's tree — a path the tree does not contain, traversal shapes included, is not found. Text is returned for rendering only, cut at 128 KiB with an explicit truncation marker; a blob detected as binary returns metadata without text. line names a line to show: for a blob over the cap the 128 KiB returned start at a line boundary before it and hold it, and firstLine numbers the first line returned. Privileged.
          */
         get: operations["file"];
         put?: never;
@@ -2667,6 +2667,11 @@ export interface components {
         FileContent: {
             /** @description True for a blob detected as binary; such a blob carries no text */
             binary?: boolean;
+            /**
+             * Format: int32
+             * @description Number of the first line of text: 1, unless a line was named in a file over the size limit and the part holding it starts later
+             */
+            firstLine?: number;
             /** @description Path within the snapshot */
             path?: string;
             /**
@@ -6053,6 +6058,7 @@ export interface operations {
         parameters: {
             query: {
                 path: string;
+                line?: number;
             };
             header?: never;
             path: {
@@ -6069,6 +6075,15 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["FileContent"];
+                };
+            };
+            /** @description A blank path, or a line below 1 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description The session holds no applicable role */
