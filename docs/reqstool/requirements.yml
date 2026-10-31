@@ -3431,6 +3431,7 @@ requirements:
     references:
       requirement_ids: ["GW_AUTH_0014"]
     categories: ["interaction-capability", "security"]
+    revision: 0.5.0
 
   - id: GW_AUTH_0064
     title: The portal offers only the controls the session's roles permit
