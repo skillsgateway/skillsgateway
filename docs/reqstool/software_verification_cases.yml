@@ -2759,16 +2759,18 @@ cases:
       twice, and a file named as JSON that does not tokenise
       WHEN the contents surface is opened at its address with no path selected, a file is
       selected, the resulting address is opened again from nothing, the listing is
-      narrowed by a filter, and the surface is opened by a session holding no approver
-      role
+      narrowed by a filter, the surface is opened by a session holding no approver
+      role for the marketplace, and a read of it is refused by the server
       THEN the address names the snapshot and the selected path, opening it afresh
       restores the same file and its content, the truncated blob states that it is cut,
       the binary blob is described rather than rendered, the removed path is shown as
       removed, the filter reports its matches against the size of the listing and states
       when that listing is itself cut, the JSON manifest is shown re-indented with both
       duplicated keys and its stored bytes one control away, the untokenisable file is shown
-      as stored with that stated, and the roleless session is told it is refused
-    revision: "0.3.0"
+      as stored with that stated, the session without the role is told the role the surface
+      needs and none of the snapshot's contents is read, and the refused read is stated as
+      refused
+    revision: "0.4.0"
 
   - id: SVC_GW_INGEST_0030.1
     requirement_ids: ["GW_INGEST_0030.1"]
@@ -4679,4 +4681,72 @@ cases:
       GIVEN the client set-up wizard opened on a marketplace
       WHEN it is read
       THEN the token step states that the token is not limited to that marketplace and fetches every marketplace the gateway serves, and the wizard states that served fetches are recorded on the audit ledger and refused requests are not, with no claim that every fetch is recorded
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0072
+    requirement_ids: ["GW_AUTH_0064"]
+    title: A session with no role, or only the auditor role, is offered no marketplace or snapshot mutation
+    verification: automated-test
+    description: |
+      GIVEN a portal session holding no role, and one holding only the auditor role
+      WHEN each opens a marketplace with a held snapshot, its vetting report, and the marketplace list
+      THEN neither is offered ingest, approve, reject, waive, delete or register, and the held
+      snapshot states that deciding it needs the approver role for its marketplace
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0073
+    requirement_ids: ["GW_AUTH_0064"]
+    title: An approver is offered decisions on its own marketplace only, and an administrator every control
+    verification: automated-test
+    description: |
+      GIVEN a portal session approving one marketplace, and one holding the administrative role
+      WHEN the approver opens another marketplace, then its own, and the administrator opens it
+      THEN the approver is offered no ingest or decision on the other marketplace, is offered ingest,
+      approve, reject and waive on its own but not delete or register, and the administrator is
+      offered all of them
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0074
+    requirement_ids: ["GW_AUTH_0065"]
+    title: The ledger, adoption and integration pages state the role they need instead of a refusal
+    verification: automated-test
+    description: |
+      GIVEN a portal session holding no role, and one holding the auditor role
+      WHEN each opens the audit log, adoption, webhooks, audit sinks, a marketplace's activity and the overview
+      THEN the first is told each page needs the auditor role, is shown no ledger download, no
+      empty-ledger message and no ledger count, and none of the refused reads is made, while the
+      auditor reads every page
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0075
+    requirement_ids: ["GW_AUTH_0065"]
+    title: Navigation leaves out the pages the session cannot read
+    verification: automated-test
+    description: |
+      GIVEN a portal session holding no role, one approving a marketplace, and one holding the auditor role
+      WHEN the portal shell is rendered inside that marketplace
+      THEN the first two are offered no oversight or integrations entry and no activity section,
+      and the auditor is offered all of them
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0076
+    requirement_ids: ["GW_AUTH_0066"]
+    title: A refused request re-reads the session and withdraws the controls of a revoked role
+    verification: automated-test
+    description: |
+      GIVEN a portal session approving a marketplace whose role is revoked while its page is open
+      WHEN the session presses a control the server now refuses
+      THEN the portal reads the session's roles again and withdraws that marketplace's decision
+      controls without a reload
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0077
+    requirement_ids: ["GW_AUTH_0065"]
+    title: The vetting chain page refuses with the role it needs and points only to what the reader can read
+    verification: automated-test
+    description: |
+      GIVEN a portal session without the administrative role
+      WHEN it opens the estate-wide vetting chain page
+      THEN the page states it needs the administrative role and points to a snapshot's vetting
+      report, not to a marketplace's chain
     revision: "0.5.0"

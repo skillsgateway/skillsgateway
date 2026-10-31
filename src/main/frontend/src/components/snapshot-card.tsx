@@ -31,14 +31,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VettingReport } from "@/components/vetting-report";
 import { snapshotDelta } from "@/lib/snapshot-delta";
+import { useMarketplaceRights } from "@/lib/marketplace-rights";
 import { isDecidable, type SnapshotTab } from "@/lib/snapshot-roles";
+import { RoleRequired } from "@/components/role-required";
 
 /**
  * Retention state of one snapshot: whether it is deleted, until when it can be restored, and
  * the control that does it. An approved snapshot is served by the facade and the gateway
- * refuses to delete it (GW_RETENTION_0003), so no delete control is offered for one.
+ * refuses to delete it (GW_RETENTION_0003), so no delete control is offered for one. Deleting and
+ * restoring are administrator acts; anyone else reads the state without the control.
  *
- * @Requirements GW_RETENTION_0006
+ * @Requirements GW_RETENTION_0006, GW_AUTH_0064
  */
 export function RetentionControls({
   snapshot,
@@ -50,6 +53,7 @@ export function RetentionControls({
 }) {
   const softDelete = useSoftDeleteSnapshot();
   const restore = useRestoreSnapshot();
+  const { administer } = useMarketplaceRights();
   const id = snapshot.id ?? 0;
   const busy = softDelete.isPending || restore.isPending;
 
@@ -60,27 +64,29 @@ export function RetentionControls({
         <span className="text-xs text-muted-foreground">
           restorable until <Timestamp value={snapshot.purgeAfter} dayOnly />
         </span>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={busy}
-          aria-label={`Restore snapshot ${id}`}
-          onClick={() =>
-            restore.mutate(id, {
-              onSuccess: () => {
-                toast.success(`Snapshot ${id} restored`);
-                onChanged?.();
-              },
-              onError: (error) => toast.error(error.message),
-            })
-          }
-        >
-          Restore
-        </Button>
+        {administer ? (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            aria-label={`Restore snapshot ${id}`}
+            onClick={() =>
+              restore.mutate(id, {
+                onSuccess: () => {
+                  toast.success(`Snapshot ${id} restored`);
+                  onChanged?.();
+                },
+                onError: (error) => toast.error(error.message),
+              })
+            }
+          >
+            Restore
+          </Button>
+        ) : null}
       </>
     );
   }
-  if (snapshot.state === "approved") return null;
+  if (snapshot.state === "approved" || !administer) return null;
   return (
     <Button
       size="sm"
@@ -109,15 +115,17 @@ export function RetentionControls({
  * The affected list is the point of the panel. A revoked snapshot is not an incident the gateway
  * can close on its own: every identity named here has already cloned the content, so the operator's
  * next action is about them, not about the ref. It is fetched only for a revoked snapshot, so an
- * ordinary review never asks the ledger a question it does not need answered.
+ * ordinary review never asks the ledger a question it does not need answered. Re-vetting and the
+ * fetch history are both the marketplace's approvers' to see (GW_AUTH_0064).
  *
- * @Requirements GW_VETTING_0018
+ * @Requirements GW_VETTING_0018, GW_AUTH_0064
  */
 function RevetPanel({ snapshot }: { snapshot: Snapshot }) {
   const id = snapshot.id ?? 0;
   const revet = useRevetSnapshot();
+  const { decide } = useMarketplaceRights();
   const revoked = snapshot.state === "revoked";
-  const fetchers = useSnapshotFetchers(revoked ? id : null);
+  const fetchers = useSnapshotFetchers(revoked && decide ? id : null);
   const approved = snapshot.state === "approved";
   if (!approved && !revoked) return null;
 
@@ -125,7 +133,7 @@ function RevetPanel({ snapshot }: { snapshot: Snapshot }) {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <RevocationNote snapshot={snapshot} />
-        {approved ? (
+        {approved && decide ? (
           <Button
             size="sm"
             variant="outline"
@@ -154,7 +162,7 @@ function RevetPanel({ snapshot }: { snapshot: Snapshot }) {
           </Button>
         ) : null}
       </div>
-      {revoked ? (
+      {revoked && decide ? (
         <section aria-label={`Identities that fetched snapshot ${id}`} className="rounded-md border p-3">
           <h3 className="text-sm font-medium">Already fetched by</h3>
           {fetchers.isLoading ? (
@@ -186,10 +194,15 @@ function RevetPanel({ snapshot }: { snapshot: Snapshot }) {
   );
 }
 
-/** The delta line for one snapshot, from the two reads it is assembled from. */
+/**
+ * The delta line for one snapshot, from the two reads it is assembled from. The file comparison is
+ * an approver's read, so a session that cannot make it is shown no line rather than a failed one.
+ */
 export function SnapshotDeltaLine({ snapshotId }: { snapshotId: number }) {
-  const diff = useSnapshotDiff(snapshotId);
-  const content = useSnapshotContentDiff(snapshotId);
+  const { decide } = useMarketplaceRights();
+  const diff = useSnapshotDiff(decide ? snapshotId : null);
+  const content = useSnapshotContentDiff(decide ? snapshotId : null);
+  if (!decide) return null;
   if (diff.isPending) {
     return <p className="font-mono text-xs text-muted-foreground">Measuring the change…</p>;
   }
@@ -318,6 +331,22 @@ function DecisionRow({ snapshot, others }: { snapshot: Snapshot; others: readonl
 }
 
 /**
+ * Where the decision would be, for a session that cannot make it: which role it needs, rather than
+ * a decision row that is simply missing from the snapshot the reader came to decide.
+ *
+ * @Requirements GW_AUTH_0064
+ */
+function DecisionNeedsRole({ marketplace }: { marketplace: string | null }) {
+  return (
+    <p className="border-t pt-4 text-xs break-words text-muted-foreground" data-testid="snapshot-decision">
+      {marketplace
+        ? `Approving or rejecting a snapshot of ${marketplace} needs the approver role for it.`
+        : "Approving or rejecting this snapshot needs the approver role for its marketplace."}
+    </p>
+  );
+}
+
+/**
  * One snapshot, open: identity, then the delta, then the evidence as tabs, then the decision.
  *
  * The order is the rule, not a layout preference — a decision control is never above what it
@@ -351,6 +380,7 @@ export function SnapshotCard({
 }) {
   const id = snapshot.id ?? 0;
   const decidable = isDecidable(snapshot);
+  const rights = useMarketplaceRights();
 
   return (
     <Card aria-label={`Snapshot ${id}`} role="region" data-testid="snapshot-card">
@@ -384,29 +414,48 @@ export function SnapshotCard({
             className="max-w-full justify-start overflow-x-auto overflow-y-hidden pb-[7px] group-data-horizontal/tabs:h-9"
           >
             <TabsTrigger value="vetting">Vetting</TabsTrigger>
-            <TabsTrigger value="contents">Contents</TabsTrigger>
+            {rights.decide ? <TabsTrigger value="contents">Contents</TabsTrigger> : null}
             <TabsTrigger value="diff">Diff</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
             <TabsTrigger value="provenance">Provenance</TabsTrigger>
           </TabsList>
           <TabsContent value="vetting" className="pt-2">
-            <VettingReport snapshotId={id} locationHref={(location) => contentsHref(id, location)} />
+            {/* Without the approver role a location stays text: Contents is not theirs to open. */}
+            <VettingReport
+              snapshotId={id}
+              locationHref={rights.decide ? (location) => contentsHref(id, location) : undefined}
+            />
           </TabsContent>
           <TabsContent value="contents" className="pt-2">
-            {/* Bounded, so the tree and the file scroll inside the card and the page does not. */}
-            <div className="lg:h-[36rem]">
-              <SnapshotExplorer
-                snapshotId={id}
-                selectedPath={path}
-                onSelect={onPath}
-                selectedLine={line}
-                onSelectLine={onLine}
-              />
-            </div>
+            {rights.decide ? (
+              // Bounded, so the tree and the file scroll inside the card and the page does not.
+              <div className="lg:h-[36rem]">
+                <SnapshotExplorer
+                  snapshotId={id}
+                  selectedPath={path}
+                  onSelect={onPath}
+                  selectedLine={line}
+                  onSelectLine={onLine}
+                />
+              </div>
+            ) : (
+              // Reached only by an address naming the tab; the tab itself is not offered.
+              <RoleRequired role={{ approverOf: rights.marketplace ?? "this marketplace" }}>
+                The contents are the held content, which is shown to the marketplace's approvers
+                and to administrators.
+              </RoleRequired>
+            )}
           </TabsContent>
           <TabsContent value="diff" className="space-y-6 pt-2">
             <SnapshotContentDiff snapshotId={id} />
-            <SnapshotFileChanges snapshotId={id} />
+            {rights.decide ? (
+              <SnapshotFileChanges snapshotId={id} />
+            ) : (
+              <RoleRequired role={{ approverOf: rights.marketplace ?? "this marketplace" }}>
+                The file-by-file comparison reads the held content, which is shown to the
+                marketplace's approvers and to administrators.
+              </RoleRequired>
+            )}
           </TabsContent>
           <TabsContent value="inventory" className="pt-2">
             <SnapshotInventory snapshotId={id} />
@@ -416,7 +465,13 @@ export function SnapshotCard({
           </TabsContent>
         </Tabs>
 
-        {decidable ? <DecisionRow snapshot={snapshot} others={others} /> : null}
+        {decidable ? (
+          rights.decide ? (
+            <DecisionRow snapshot={snapshot} others={others} />
+          ) : (
+            <DecisionNeedsRole marketplace={rights.marketplace} />
+          )
+        ) : null}
       </CardContent>
     </Card>
   );

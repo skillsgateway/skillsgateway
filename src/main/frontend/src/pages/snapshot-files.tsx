@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { useMarketplaces, useSnapshotDirectory } from "@/api/queries";
+import { useAccess, useMarketplaces, useSnapshotDirectory } from "@/api/queries";
+import { RoleRequired } from "@/components/role-required";
 import { SnapshotExplorer } from "@/components/snapshot-explorer";
 import { parseLineParam } from "@/lib/file-findings";
 import { SnapshotStateBadge } from "@/components/snapshot-state";
@@ -12,9 +13,10 @@ function Notice({ children }: { children: React.ReactNode }) {
 
 /**
  * The file explorer at its own full-width address. The snapshot card's Contents tab renders the
- * same {@link SnapshotExplorer}; this route stays so links already sent keep opening.
+ * same {@link SnapshotExplorer}; this route stays so links already sent keep opening. A session
+ * without the approver role for the named marketplace is told so, and nothing is read.
  *
- * @Requirements GW_INGEST_0032, GW_INGEST_0015, GW_INGEST_0016
+ * @Requirements GW_INGEST_0032, GW_INGEST_0015, GW_INGEST_0016, GW_AUTH_0065
  */
 export function SnapshotFilesPage() {
   const { name, id } = useParams<{ name: string; id: string }>();
@@ -24,10 +26,13 @@ export function SnapshotFilesPage() {
   const selectedLine = parseLineParam(params.get("line"));
 
   const marketplaces = useMarketplaces();
+  const access = useAccess();
+  // A session that could not be read is not judged here; the explorer states the server's refusal.
+  const allowed = access.isError || access.approves(name ?? "");
   // A malformed id addresses nothing, so nothing is asked of the gateway.
   const readable = Number.isInteger(snapshotId) && snapshotId > 0 ? snapshotId : null;
   // The root listing is the readability probe; the explorer reads the same cached query.
-  const files = useSnapshotDirectory(readable, "");
+  const files = useSnapshotDirectory(!access.isLoading && allowed ? readable : null, "");
 
   const select = (path: string) => {
     const next = new URLSearchParams(params);
@@ -61,6 +66,19 @@ export function SnapshotFilesPage() {
       <div className="space-y-4">
         {backLink}
         <Notice>{id} is not a snapshot address.</Notice>
+      </div>
+    );
+  }
+
+  if (access.isLoading) return <Notice>Loading…</Notice>;
+  if (!allowed) {
+    return (
+      <div className="space-y-4">
+        {backLink}
+        <RoleRequired role={{ approverOf: name ?? "" }} title="Snapshot contents">
+          The contents are the held content, which is shown to the marketplace's approvers and to
+          administrators.
+        </RoleRequired>
       </div>
     );
   }

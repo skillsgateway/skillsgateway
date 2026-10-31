@@ -212,6 +212,11 @@ test("an_unchanged_file_says_so_rather_than_showing_an_empty_diff", async () => 
   expect(await screen.findByText("Unchanged against the served commit.")).toBeInTheDocument();
 });
 
+/**
+ * A read the server still refuses (a role revoked since the page opened) is stated, not blank.
+ *
+ * @SVCs SVC_GW_INGEST_0032
+ */
 test("a_refused_read_is_a_stated_condition_not_a_blank_pane", async () => {
   server.use(
     http.get("/api/v1/snapshots/:id/tree", () =>
@@ -224,6 +229,40 @@ test("a_refused_read_is_a_stated_condition_not_a_blank_pane", async () => {
     await screen.findByText("You cannot read this snapshot's contents."),
   ).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /Back to corp-marketplace/ })).toBeInTheDocument();
+});
+
+/**
+ * A session without the approver role for the marketplace is told the role the page needs, and
+ * the held content is never asked for.
+ *
+ * @SVCs SVC_GW_INGEST_0032
+ */
+test("a_session_without_the_approver_role_is_told_the_role_and_reads_nothing", async () => {
+  server.use(
+    http.get("/api/v1/me", () =>
+      HttpResponse.json({
+        username: "bob",
+        roles: [{ role: "approver", marketplace: "other-marketplace", source: "grant" }],
+        claimsTruncated: false,
+      }),
+    ),
+  );
+  const reads: string[] = [];
+  const listener = ({ request }: { request: Request }) => {
+    const path = new URL(request.url).pathname;
+    if (/^\/api\/v1\/snapshots\//.test(path)) reads.push(path);
+  };
+  server.events.on("request:start", listener);
+  renderPage("/marketplaces/corp-marketplace/snapshots/1/files?path=README.md");
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "This page needs the approver role for corp-marketplace.",
+  );
+  expect(screen.getByRole("heading", { name: "Snapshot contents" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Back to corp-marketplace/ })).toBeInTheDocument();
+  expect(screen.queryByRole("navigation", { name: /File tree/ })).not.toBeInTheDocument();
+  server.events.removeListener("request:start", listener);
+  expect(reads).toEqual([]);
 });
 
 test("a_snapshot_that_is_not_the_named_marketplaces_is_a_wrong_link", async () => {

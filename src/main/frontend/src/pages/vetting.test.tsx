@@ -32,16 +32,46 @@ function asAdmin() {
 }
 
 /**
- * The default handler's session holds no role. The page must refuse rather than render an empty
- * shell, and must not reach for the data behind it — the server would refuse it anyway, but a
- * refused request is a 403 in the console for a reader who has done nothing wrong.
+ * A session holding no role. The page must refuse rather than render an empty shell, and must not
+ * reach for the data behind it — the server would refuse it anyway, but a refused request is a 403
+ * in the console for a reader who has done nothing wrong.
  */
 test("a_session_without_the_administrative_role_is_refused_the_page", async () => {
+  server.use(
+    http.get("/api/v1/me", () =>
+      HttpResponse.json({ username: "bob", roles: [], claimsTruncated: false }),
+    ),
+  );
   renderPage();
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "This page needs the administrative role.",
   );
   expect(screen.queryByText("The default chain")).not.toBeInTheDocument();
+});
+
+/**
+ * The refusal names the role and points only where the reader can go: a snapshot's vetting report,
+ * which every session reads, and not a marketplace's own chain, which is administrator-only too.
+ *
+ * @SVCs SVC_GW_AUTH_0077
+ */
+test("the_vetting_chain_refusal_points_only_to_what_the_reader_can_read", async () => {
+  server.use(
+    http.get("/api/v1/me", () =>
+      HttpResponse.json({
+        username: "bob",
+        roles: [{ role: "approver", marketplace: "corp-marketplace", source: "grant" }],
+        claimsTruncated: false,
+      }),
+    ),
+  );
+  renderPage();
+  const alert = await screen.findByRole("alert");
+  expect(alert).toHaveTextContent("This page needs the administrative role.");
+  const card = alert.parentElement!;
+  expect(card).toHaveTextContent("Vetting tab");
+  expect(card).not.toHaveTextContent(/chain of a marketplace/);
+  expect(screen.getByRole("link", { name: "Marketplaces" })).toHaveAttribute("href", "/marketplaces");
 });
 
 test("an_administrator_reads_the_default_chain_and_the_marketplaces_that_depart_from_it", async () => {

@@ -292,7 +292,8 @@ test("a_quiet_queue_shows_no_count", async () => {
 /**
  * What a reader consults is grouped apart from what an administrator sets, and the two outbound
  * integrations are sections of one entry. The estate-wide chain is offered to an administrator
- * only; everything else is offered to every session, and the server refuses what it must.
+ * only. The session without the administrative role is an auditor: a session holding no role at
+ * all is offered neither group (SVC_GW_AUTH_0075, below).
  *
  * @SVCs SVC_GW_AUTH_0048
  */
@@ -308,7 +309,7 @@ test("the_sidebar_groups_records_apart_from_configuration_and_nests_the_integrat
       ),
     );
 
-  signedInAs(null);
+  signedInAs("auditor");
   const withoutRole = renderLayout("/integrations/sinks");
   let main = await screen.findByRole("navigation", { name: "Main" });
   const groupOf = (name: string) =>

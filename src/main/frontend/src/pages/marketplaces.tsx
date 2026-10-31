@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import {
   useMarketplaces,
+  useIsAdmin,
   useRegisterMarketplace,
   type MarketplaceView,
   type Snapshot,
@@ -282,6 +283,7 @@ function MarketHeader({
  */
 export function MarketplacesPage() {
   const marketplaces = useMarketplaces();
+  const isAdmin = useIsAdmin();
   const [sorting, setSorting] = useState<SortingState>([{ id: "name", desc: false }]);
   const data = useMemo(() => marketplaces.data ?? [], [marketplaces.data]);
 
@@ -403,7 +405,8 @@ export function MarketplacesPage() {
             Registered upstreams and their quarantined, held, and approved snapshots.
           </p>
         </div>
-        <RegisterMarketplaceDialog existing={data} />
+        {/* Registration is the trust boundary, and an administrator's act (GW_AUTH_0064). */}
+        {isAdmin ? <RegisterMarketplaceDialog existing={data} /> : null}
       </div>
       {marketplaces.isLoading ? <p>Loading…</p> : null}
       {marketplaces.isError ? (

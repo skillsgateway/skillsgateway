@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FindingLocation, FindingLocations } from "@/components/finding-locations";
 import { parseLocation } from "@/lib/file-findings";
+import { useMarketplaceRights } from "@/lib/marketplace-rights";
 import { LocationHrefContext } from "@/lib/location-href";
 import {
   effectiveState,
@@ -402,6 +403,8 @@ function GroupRow({
   selection: Selection;
 }) {
   const [waiving, setWaiving] = useState(false);
+  // Waiving is the marketplace's approvers' act (GW_AUTH_0064).
+  const { decide } = useMarketplaceRights();
   const rule = group.ruleId ?? "";
   const locations = group.locations ?? [];
   const covering = locations
@@ -412,7 +415,7 @@ function GroupRow({
   const first = locations[0] ?? "—";
   const rest = locations.slice(1);
   const key = groupKey(vetter, group);
-  const selectable = !waived && high && Boolean(group.content) && locations.length > 0;
+  const selectable = decide && !waived && high && Boolean(group.content) && locations.length > 0;
   // Two cells of the list's grid: what selects and ranks the row, and the row's text, so a wrapped
   // message lines up under its rule on every row.
   return (
@@ -452,7 +455,7 @@ function GroupRow({
               {covering.length} of {locations.length} waived
             </Badge>
           ) : null}
-          {!waived && high && !waiving ? (
+          {decide && !waived && high && !waiving ? (
             <Button
               size="sm"
               variant="outline"
@@ -674,6 +677,7 @@ function VerdictCard({
 /** What has been accepted on this marketplace for the rules this run raised, and until when. */
 function WaiverList({ waivers }: { waivers: Waiver[] }) {
   const revoke = useRevokeWaiver();
+  const { decide } = useMarketplaceRights();
   if (waivers.length === 0) return null;
   return (
     <section aria-label="Waivers" className="space-y-2">
@@ -695,7 +699,7 @@ function WaiverList({ waivers }: { waivers: Waiver[] }) {
             <span className="text-xs text-muted-foreground">
               — {waiver.approvedBy}, until <Timestamp value={waiver.expiresAt} dayOnly />
             </span>
-            {waiver.active ? (
+            {waiver.active && decide ? (
               <Button
                 size="sm"
                 variant="outline"
@@ -750,6 +754,7 @@ export function ChainStalenessNotice({
   refreshable: boolean;
 }) {
   const revet = useRevetSnapshot();
+  const { decide } = useMarketplaceRights();
   if (!staleness || staleness.state === "IN_FORCE") return null;
 
   if (staleness.state === "UNDETERMINED") {
@@ -781,7 +786,7 @@ export function ChainStalenessNotice({
         Approval is not blocked by this. If you approve anyway, the ledger records that the
         evidence came from the superseded chain.
       </p>
-      {refreshable ? (
+      {refreshable && decide ? (
         <Button
           size="sm"
           variant="outline"

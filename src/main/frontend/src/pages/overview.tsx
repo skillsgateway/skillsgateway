@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useLedgerTotal, useMarketplaces, useTokens } from "@/api/queries";
+import { useAccess, useLedgerTotal, useMarketplaces, useTokens } from "@/api/queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,7 +49,13 @@ function SectionCard({
  * The ledger's size as the server counts it — every entry, not the page a browse read returns,
  * and not only fetches: administrative actions and vetting bookkeeping are entries too.
  */
-function ledgerEntries(ledger: { total: number; estimate: boolean } | undefined): string {
+function ledgerEntries(
+  ledger: { total: number; estimate: boolean } | undefined,
+  failed: boolean,
+): string {
+  if (failed) {
+    return "ledger size could not be read";
+  }
   if (!ledger) {
     return "… ledger entries";
   }
@@ -59,14 +65,16 @@ function ledgerEntries(ledger: { total: number; estimate: boolean } | undefined)
 }
 
 /**
- * Gateway overview: what is registered, what awaits review, and what has been fetched.
+ * Gateway overview: what is registered, what awaits review, and what has been fetched. The ledger
+ * card is a reader's only: for anyone else it would be a count that never resolves.
  *
- * @Requirements GW_INGEST_0007
+ * @Requirements GW_INGEST_0007, GW_AUTH_0065
  */
 export function OverviewPage() {
   const marketplaces = useMarketplaces();
   const tokens = useTokens();
-  const ledger = useLedgerTotal();
+  const { isAuditor } = useAccess();
+  const ledger = useLedgerTotal(isAuditor);
 
   const snapshots = (marketplaces.data ?? []).flatMap((m) => m.snapshots ?? []);
   const held = snapshots.filter((s) => s.state === "held").length;
@@ -94,14 +102,16 @@ export function OverviewPage() {
             <Button render={<Link to="/marketplaces">Manage marketplaces</Link>} />
           }
         />
-        <SectionCard
-          icon={<ScrollText className="size-4" aria-hidden />}
-          title="Fetch ledger"
-          chips={<Chip>{ledgerEntries(ledger.data)}</Chip>}
-          action={
-            <Button variant="outline" render={<Link to="/audit">Open audit log</Link>} />
-          }
-        />
+        {isAuditor ? (
+          <SectionCard
+            icon={<ScrollText className="size-4" aria-hidden />}
+            title="Fetch ledger"
+            chips={<Chip>{ledgerEntries(ledger.data, ledger.isError)}</Chip>}
+            action={
+              <Button variant="outline" render={<Link to="/audit">Open audit log</Link>} />
+            }
+          />
+        ) : null}
         <SectionCard
           icon={<KeyRound className="size-4" aria-hidden />}
           title="Access tokens"

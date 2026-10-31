@@ -1343,8 +1343,15 @@ export const handlers = [
   http.get("/api/v1/adoption", () => HttpResponse.json(marketplaceAdoption)),
   http.get("/api/v1/adoption/staleness", () => HttpResponse.json(staleIdentities)),
   http.get("/api/v1/adoption/presence", () => HttpResponse.json(presenceReport)),
+  // An administrator by default, so a component test reaches every control; a test of another
+  // persona sets its own session (GW_AUTH_0064).
   http.get("/api/v1/me", () =>
-    HttpResponse.json({ username: "alice", roles: [], claimsTruncated: false, version: "0.3.0" }),
+    HttpResponse.json({
+      username: "alice",
+      roles: [{ role: "admin", source: "config" }],
+      claimsTruncated: false,
+      version: "0.3.0",
+    }),
   ),
   http.get("/api/v1/marketplaces", () => HttpResponse.json([marketplace])),
   http.get("/api/v1/marketplaces/:name/ingest", ({ params }) =>

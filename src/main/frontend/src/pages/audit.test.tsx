@@ -21,8 +21,9 @@ function renderPage() {
 
 test("the_ledger_download_is_the_page_action_and_the_sinks_are_linked", async () => {
   renderPage();
-  // The download link points at the NDJSON stream, not at a rendered table.
-  expect(screen.getByRole("link", { name: /Download ledger/ })).toHaveAttribute(
+  // The download link points at the NDJSON stream, not at a rendered table. It renders once the
+  // session is known to hold a role that may read the ledger.
+  expect(await screen.findByRole("link", { name: /Download ledger/ })).toHaveAttribute(
     "href",
     "/api/v1/audit/export",
   );

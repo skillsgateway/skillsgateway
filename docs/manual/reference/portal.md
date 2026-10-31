@@ -13,11 +13,11 @@ A fixed sidebar, grouped:
 | Gateway | Overview | [`/`](#overview) |
 | Gateway | Review queue | [`/review`](#review-queue) — with the count of snapshots awaiting a decision, absent at zero |
 | Gateway | Marketplaces | [`/marketplaces`](#marketplaces) |
-| Oversight | Audit log | [`/audit`](#audit-log) |
-| Oversight | Adoption | [`/adoption`](#adoption) |
+| Oversight | Audit log | [`/audit`](#audit-log) — **shown to auditors and administrators** |
+| Oversight | Adoption | [`/adoption`](#adoption) — **shown to auditors and administrators** |
 | Configuration | Vetting chain | [`/vetting`](#vetting-chain-governance) — **shown only to administrators** |
-| Configuration | Integrations → Webhooks | [`/integrations/webhooks`](#webhooks) |
-| Configuration | Integrations → Audit sinks | [`/integrations/sinks`](#audit-sinks) |
+| Configuration | Integrations → Webhooks | [`/integrations/webhooks`](#webhooks) — **shown to auditors and administrators** |
+| Configuration | Integrations → Audit sinks | [`/integrations/sinks`](#audit-sinks) — **shown to auditors and administrators** |
 | Reference | API reference | `/docs` — the Scalar API reference, not a portal route |
 | Reference | Documentation | this manual — leaves the portal, opens in a new tab |
 | Reference | Source code | the project repository — leaves the portal, opens in a new tab |
@@ -28,9 +28,15 @@ of object — are two sections listed beneath **Integrations** on every page;
 `/integrations` opens the first. The earlier address `/webhooks` redirects to
 `/integrations/webhooks`, so existing links keep working.
 
+The sidebar lists only the pages the session's roles can read; a group with
+nothing left in it is not drawn. A session with no role, or an approver, sees
+neither Oversight nor Integrations. Every address still opens: a page the session
+cannot read states the role it needs (see [Authorization](#authorization)).
+
 Inside a marketplace, the sidebar lists that marketplace beneath **Marketplaces**
 with its [sections](#marketplace-detail) — **Review** (with its own awaiting
-count), **Snapshots**, **Activity** and **Settings** — and the current section
+count), **Snapshots**, **Activity** (auditors and administrators only) and
+**Settings** — and the current section
 is the one highlighted entry. Leaving the marketplace closes the list; it is
 read from the address, never remembered. [Snapshot contents](#snapshot-contents)
 is reached from a snapshot's card. [Access tokens](#access-tokens) is a per-user concern, not
@@ -65,8 +71,9 @@ The header's breadcrumb sits opposite a menu named after the signed-in user
   identity provider`, `approver of acme-skills — granted in the portal`, and so
   on for a role sourced from configuration or from the local development
   authentication escape hatch. A session holding no role is told so, together
-  with what it can still do (read the portal, manage its own access tokens),
-  rather than shown an empty list. If the identity provider truncated the
+  with what it can still do (browse the marketplaces and their snapshots'
+  vetting, manage its own access tokens) and that anything else needs a role an
+  administrator grants, rather than shown an empty list. If the identity provider truncated the
   membership claim, a line says the role list may be incomplete.
 - The **theme control** — three-state, cycling **system → light → dark**: it
   defaults to _system_ (follow the operating system's appearance), and its icon
@@ -96,9 +103,10 @@ and with one line of plain text to any other client. API, facade, publication,
 revocation-check, webhook and actuator addresses keep their own refusals,
 whatever the client accepts.
 
-The menu only reports what the session holds; it never hides or disables a
-control by role — the server is the sole authority on what a request may do,
-and refuses what it must regardless of what the menu shows.
+The menu only reports what the session holds. The rest of the portal uses the
+same read to decide which controls and pages to offer (see
+[Authorization](#authorization)); the server stays the sole authority on what a
+request may do.
 
 ## Conventions across pages
 
@@ -136,8 +144,27 @@ and refuses what it must regardless of what the menu shows.
 The server refuses mutations, the audit
 surface and the [snapshot contents reads](#snapshot-contents) to sessions without an
 applicable role — see
-[Delegated administration](../guides/delegated-administration.md); the portal
-surfaces those refusals as errors rather than hiding controls.
+[Delegated administration](../guides/delegated-administration.md). The portal
+reads the session's roles from `GET /api/v1/me` and offers only what they permit:
+
+| Control or page | Offered to |
+| --- | --- |
+| **Ingest**, **Approve**, **Reject**, **Waive**, **Revoke** a waiver, **Re-vet now**, re-running the chain, a revoked snapshot's fetchers, the file-by-file **Diff**, the **Contents** tab and [Snapshot contents](#snapshot-contents) | an approver of that marketplace, or an administrator |
+| **Delete** and **Restore** a snapshot, **Register marketplace**, everything under a marketplace's Settings beyond its upstream facts, the [Vetting chain](#vetting-chain-governance) page | an administrator |
+| [Audit log](#audit-log), [Adoption](#adoption), [Webhooks](#webhooks), [Audit sinks](#audit-sinks), a marketplace's **Activity**, the Overview's **Fetch ledger** card | an auditor or an administrator |
+
+A control the session cannot use is not shown. Where a snapshot awaits a
+decision the session cannot make, the card says so in place of the decision —
+*"Approving or rejecting a snapshot of {name} needs the approver role for it."*
+A page or section the session cannot read shows one statement of the role it
+needs — *"This page needs the auditor role."* — with a line on why, and makes
+none of the reads the server would refuse. For a session without the approver
+role, a snapshot card has no **Contents** tab and its vetting findings' locations
+are plain text rather than links into it.
+
+Roles can change while a page is open. Whenever the server refuses a request
+(`403`), the portal reads `GET /api/v1/me` again and the page follows the
+answer without a reload.
 
 Access tokens are scoped per principal server-side regardless: you only ever
 see and revoke your own.
@@ -156,7 +183,7 @@ are `held`, `approved` and `rejected` across all of them. When any snapshot is
 held, a secondary badge reads *"{n} awaiting review"* and links to the
 [review queue](#review-queue). Action: **Manage marketplaces**.
 
-**Fetch ledger** — a chip with how many entries the ledger holds: *"{n} ledger
+**Fetch ledger** (auditors and administrators) — a chip with how many entries the ledger holds: *"{n} ledger
 entries"*, or *"about {n} ledger entries"* once the ledger is large enough that the
 server estimates rather than counts (see [`GET /api/v1/audit`](api/audit.md#get-apiv1audit)).
 It counts every entry: fetches, administrative actions and vetting bookkeeping.
@@ -469,8 +496,8 @@ Top to bottom, in this order on purpose:
 
     | Tab | Shows |
     | --- | --- |
-    | **Vetting** (default) | The [vetting report](#the-chain-flow): chain outcome, verdicts, findings, waivers. Every `path:line` location is a link that opens the file at that line in **Contents** (not in the approve dialog, which stays on the decision) |
-    | **Contents** | The [file explorer](#snapshot-contents), inside the card |
+    | **Vetting** (default) | The [vetting report](#the-chain-flow): chain outcome, verdicts, findings, waivers. Every `path:line` location is a link that opens the file at that line in **Contents** (not in the approve dialog, which stays on the decision, and not for a session without the approver role, which has no **Contents** tab) |
+    | **Contents** | The [file explorer](#snapshot-contents), inside the card. Offered to an approver of the marketplace or an administrator; an address naming this tab shows anyone else the role it needs |
     | **Diff** | Changes since the last approved snapshot — plugins and skills marked added, changed, moved or removed, only what changed, from `content-diff`. With nothing approved yet it says there is no baseline. Below it, **Files changed against the served commit** lists every changed path from `diff`, 500 at a time, with **Show N more**, the totals over the whole diff, and each file's diff opened in place |
     | **Inventory** | What the snapshot ships: one block per declared plugin with its `source` and description. Below them is one count per component kind the plugin has (skills, commands, agents, hooks, hook modules, MCP servers and LSP servers), for example "1 skill · 4 agents · 3 hooks". Each count is collapsed and expands its own list in place. A hook row shows its trigger (the event, and the tool matcher when there is one), what it runs, and where it is declared. A hook module row shows its file, the events it registers, the `$` interfaces it reaches, the plugin files it imports, anything it loads that could not be scanned, and where it is declared. Read from `GET /api/v1/snapshots/{id}/content` |
     | **Provenance** | Upstream URL and SHA, the served SHA, who decided it and when, and the closure of external plugin sources |
@@ -926,7 +953,8 @@ Every bound of these reads is a state this page renders on purpose:
 | Path removed by this snapshot | Marked `removed` in the tree; the pane shows the removal |
 | File unchanged vs served | "Unchanged against the served commit." |
 | Nothing served yet | No baseline; approving serves all of it |
-| No approver role | "You cannot read this snapshot's contents.", naming the role needed |
+| No approver role for the marketplace (from the session's roles) | "This page needs the approver role for X.", and nothing is read |
+| A read the server refuses anyway (a role revoked since the page opened) | "You cannot read this snapshot's contents.", naming the role needed |
 | Snapshot is not this marketplace's | "Snapshot N is not a snapshot of X." |
 | A `.json` file that does not tokenise as JSON | "Not valid JSON — shown as stored.", with the stored bytes |
 | A finding's line outside the part of a truncated blob shown | Listed above the file, and written out below it as "Line N is beyond the part shown" (or "before", above it); following it loads the part that holds the line |
@@ -966,7 +994,9 @@ page is gated by the server refusing them, not by the link being hidden.
 **Administrator-only.** The sidebar offers the entry only to a session holding
 the `admin` role, and the page itself renders a stated refusal —
 *"This page needs the administrative role."* — to any other session rather than
-an empty shell. The server refuses each of the page's reads independently, which
+an empty shell. It points such a session at what it can read instead: the
+vetters that ran on a snapshot, on that snapshot's **Vetting** tab. A
+marketplace's own chain is administrator-only too. The server refuses each of the page's reads independently, which
 is what actually protects them.
 
 Where [Marketplace detail](#vetting-chain-administrators) governs one
