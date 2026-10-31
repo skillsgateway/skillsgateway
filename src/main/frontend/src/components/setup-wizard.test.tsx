@@ -38,12 +38,92 @@ test("commands_are_composed_from_the_browsing_origin_and_the_facade_path", async
   await user.click(screen.getByRole("button", { name: "Connect a client" }));
   const origin = window.location.origin;
   expect(await screen.findByTestId("wizard-add-command")).toHaveTextContent(
-    `claude plugin marketplace add ${origin}/git/corp-marketplace`,
+    `claude plugin marketplace add ${origin}/git/corp-marketplace.git`,
   );
   expect(screen.getByTestId("wizard-credential-config")).toHaveTextContent(window.location.host);
   expect(screen.getByTestId("wizard-clone-command")).toHaveTextContent("/git/corp-marketplace");
-  // No token minted yet: every snippet carries the placeholder, never a secret.
-  expect(screen.getByTestId("wizard-credential-config")).toHaveTextContent("<YOUR_TOKEN>");
+  // No token minted yet, and none ever goes into a command: nothing to show in its field.
+  expect(screen.queryByTestId("wizard-token-value")).not.toBeInTheDocument();
+});
+
+/**
+ * The credential step works on a machine with no git configuration: it names the store helper for
+ * this origin only, then reads the token at a prompt that does not echo it, so the token is in
+ * neither the command nor the shell history. The exact text is asserted because it is the
+ * contract the e2e run proves in a real shell.
+ *
+ * @SVCs SVC_GW_AUTH_0069
+ */
+test("the_credential_command_names_the_store_helper_for_this_origin_only_and_reads_the_token_at_a_prompt", async () => {
+  const user = userEvent.setup();
+  renderWizard();
+  await user.click(screen.getByRole("button", { name: "Connect a client" }));
+  const { origin, host } = window.location;
+  const scheme = window.location.protocol.replace(":", "");
+  expect((await screen.findByTestId("wizard-credential-config")).textContent).toBe(
+    `git config --global 'credential.${origin}.helper' store\n` +
+      `printf 'Token: ' && read -rs SGW_TOKEN && echo && ` +
+      `printf 'protocol=${scheme}\\nhost=${host}\\nusername=token\\npassword=%s\\n' "$SGW_TOKEN" ` +
+      `| git credential approve; unset SGW_TOKEN`,
+  );
+  const note = screen.getByTestId("wizard-credential-note");
+  expect(note).toHaveTextContent(/plaintext/);
+  expect(note).toHaveTextContent(/~\/\.git-credentials/);
+  expect(note).toHaveTextContent(/keychain/);
+  expect(note).toHaveTextContent(/shell history/);
+});
+
+/**
+ * A minted token is shown in its own field, never inside a command: the commands read the same
+ * before and after minting, and the field is gone with the wizard.
+ *
+ * @SVCs SVC_GW_AUTH_0069
+ */
+test("a_minted_token_is_shown_in_its_own_field_and_in_no_command", async () => {
+  const user = userEvent.setup();
+  renderWizard();
+  await user.click(screen.getByRole("button", { name: "Connect a client" }));
+  const before = (await screen.findByTestId("wizard-credential-config")).textContent;
+  await user.clear(screen.getByLabelText("Token name"));
+  await user.type(screen.getByLabelText("Token name"), "my-laptop");
+  await user.click(screen.getByRole("button", { name: "Create token" }));
+  expect(await screen.findByTestId("wizard-token-value")).toHaveTextContent("sgw_cleartext_shown_once");
+  expect(screen.getByRole("button", { name: "Copy token" })).toBeInTheDocument();
+  expect(screen.getByTestId("wizard-credential-config").textContent).toBe(before);
+  for (const id of ["wizard-credential-config", "wizard-add-command", "wizard-clone-command"]) {
+    expect(screen.getByTestId(id)).not.toHaveTextContent("sgw_cleartext_shown_once");
+  }
+});
+
+/**
+ * The default name `<marketplace>-client` is not a scope: the token step says what it reaches.
+ *
+ * @SVCs SVC_GW_AUTH_0070
+ */
+test("the_token_step_says_the_token_is_not_limited_to_this_marketplace", async () => {
+  const user = userEvent.setup();
+  renderWizard();
+  await user.click(screen.getByRole("button", { name: "Connect a client" }));
+  const reach = await screen.findByTestId("wizard-token-reach");
+  expect(reach).toHaveTextContent("A token created here is not limited to 'corp-marketplace'");
+  expect(reach).toHaveTextContent(/every marketplace this gateway serves/);
+});
+
+/**
+ * The ledger records the fetches the facade serves; a refused request is not written, so the
+ * wizard must not say every fetch is recorded.
+ *
+ * @SVCs SVC_GW_AUTH_0070
+ */
+test("the_ledger_statement_covers_served_fetches_and_not_refused_requests", async () => {
+  const user = userEvent.setup();
+  renderWizard();
+  await user.click(screen.getByRole("button", { name: "Connect a client" }));
+  await screen.findByTestId("wizard-add-command");
+  expect(screen.queryByText(/every fetch/i)).not.toBeInTheDocument();
+  const ledger = screen.getByTestId("wizard-ledger-note");
+  expect(ledger).toHaveTextContent(/Each fetch it serves is recorded on the audit ledger/);
+  expect(ledger).toHaveTextContent(/refused request .* is not/);
 });
 
 test("create_token_is_disabled_until_the_name_is_non_blank", async () => {
@@ -113,26 +193,23 @@ test("a_serving_marketplace_shows_no_held_notice", async () => {
   expect(screen.queryByTestId("setup-held-notice")).not.toBeInTheDocument();
 });
 
-test("a_minted_token_fills_the_snippets_only_while_the_wizard_is_open", async () => {
+test("a_minted_token_is_shown_only_while_the_wizard_is_open", async () => {
   const user = userEvent.setup();
   renderWizard();
   await user.click(screen.getByRole("button", { name: "Connect a client" }));
   await user.clear(await screen.findByLabelText("Token name"));
   await user.type(screen.getByLabelText("Token name"), "my-laptop");
   await user.click(screen.getByRole("button", { name: "Create token" }));
-  // The MSW-issued cleartext lands in the snippets, show-once style.
+  // The MSW-issued cleartext is shown once, in its own field.
   expect(await screen.findByText(/Token created/)).toBeInTheDocument();
-  expect(screen.getByTestId("wizard-credential-config")).toHaveTextContent(
-    "sgw_cleartext_shown_once",
-  );
-  // The clone line carries no userinfo: the credential helper above already holds it.
-  expect(screen.getByTestId("wizard-clone-command")).not.toHaveTextContent("sgw_cleartext_shown_once");
+  expect(screen.getByTestId("wizard-token-value")).toHaveTextContent("sgw_cleartext_shown_once");
+  // The clone line carries no userinfo: the credential helper holds the token.
   expect(screen.getByTestId("wizard-clone-command")).not.toHaveTextContent("token:");
-  expect(screen.getByTestId("wizard-credential-config")).toHaveTextContent("sgw_cleartext_shown_once");
 
-  // Close and reopen: the wizard was unmounted, the secret is gone, the placeholder is back.
+  // Close and reopen: the wizard was unmounted and the secret is gone with it.
   await user.click(screen.getByRole("button", { name: "Done" }));
   await user.click(screen.getByRole("button", { name: "Connect a client" }));
-  expect(await screen.findByTestId("wizard-credential-config")).toHaveTextContent("<YOUR_TOKEN>");
+  await screen.findByTestId("wizard-credential-config");
+  expect(screen.queryByTestId("wizard-token-value")).not.toBeInTheDocument();
   expect(screen.queryByText(/sgw_cleartext_shown_once/)).not.toBeInTheDocument();
 });

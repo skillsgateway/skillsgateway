@@ -16,9 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-/** Value shown in every snippet until a token is minted inside this wizard instance. */
-const TOKEN_PLACEHOLDER = "<YOUR_TOKEN>";
-
 /**
  * The lifetimes offered, and the one chosen by default.
  *
@@ -64,6 +61,26 @@ function CopyButton({ value, label }: { value: string; label: string }) {
     <Button variant="outline" size="icon" aria-label={label} onClick={() => void copy()}>
       {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
     </Button>
+  );
+}
+
+/**
+ * The credential step: name git's `store` helper for this origin only, then hand it the token.
+ *
+ * `git credential approve` stores nothing when no helper is configured, and still exits 0, so the
+ * step has to configure one. The token is read at a prompt rather than written into the command,
+ * which keeps it out of the shell history. The config key is quoted so an IPv6 origin's brackets
+ * are not read as a glob. The prompt is a separate `printf` because `read -p` means something else
+ * in zsh. The second line is one line so that, pasted together with the first, the `read` runs
+ * last and takes the token from the keyboard, not from the paste.
+ */
+function credentialCommand(origin: string, protocol: string, host: string): string {
+  const scheme = protocol.replace(":", "");
+  return (
+    `git config --global 'credential.${origin}.helper' store\n` +
+    `printf 'Token: ' && read -rs SGW_TOKEN && echo && ` +
+    `printf 'protocol=${scheme}\\nhost=${host}\\nusername=token\\npassword=%s\\n' "$SGW_TOKEN" ` +
+    `| git credential approve; unset SGW_TOKEN`
   );
 }
 
@@ -135,11 +152,12 @@ export function HeldNotice({ marketplace }: { marketplace: string }) {
  * where git clients go.
  *
  * A token minted here goes through the exact same show-once creation flow as the tokens page:
- * the cleartext lives only in this component's state, is substituted into the snippets while
- * the wizard stays open, and is gone when it closes — no previously issued secret is ever
- * displayed (the server never returns one, and this component never stores one).
+ * the cleartext lives only in this component's state, is shown in its own field while the
+ * wizard stays open, and is gone when it closes — no previously issued secret is ever displayed
+ * (the server never returns one, and this component never stores one). No command carries it:
+ * the credential step reads it at a prompt.
  *
- * @Requirements GW_AUTH_0014, GW_AUTH_0043
+ * @Requirements GW_AUTH_0014, GW_AUTH_0043, GW_AUTH_0062, GW_AUTH_0063
  */
 export function SetupWizard({
   marketplace,
@@ -166,7 +184,6 @@ export function SetupWizard({
   const origin = window.location.origin;
   const { protocol, host } = window.location;
   const cloneUrl = `${origin}/git/${marketplace}`;
-  const token = cleartext ?? TOKEN_PLACEHOLDER;
 
   const onCreate = (event: React.FormEvent) => {
     event.preventDefault();
@@ -198,10 +215,21 @@ export function SetupWizard({
           <form onSubmit={onCreate} className="space-y-2">
             <div className="text-sm font-medium">1. Personal access token</div>
             {cleartext ? (
-              <p className="text-xs text-muted-foreground">
-                Token created — its value is filled into the snippets below and shown only while
-                this wizard is open. Only a hash is stored.
-              </p>
+              <>
+                <p className="text-xs text-muted-foreground">
+                  Token created — paste it when the credential command below asks for it. It is
+                  shown only while this wizard is open; only a hash is stored.
+                </p>
+                <div className="flex items-start gap-2 rounded-md border bg-muted p-3">
+                  <code
+                    data-testid="wizard-token-value"
+                    className="min-w-0 flex-1 font-mono text-xs break-all"
+                  >
+                    {cleartext}
+                  </code>
+                  <CopyButton value={cleartext} label="Copy token" />
+                </div>
+              </>
             ) : (
               <>
                 <div className="flex flex-wrap items-end gap-3">
@@ -238,22 +266,38 @@ export function SetupWizard({
                 <p id="wizard-token-name-hint" className="text-xs text-muted-foreground">
                   A name is required — it identifies the token in your token list. The lifetime
                   defaults to 30 days; this gateway may cap it lower, in which case a longer choice
-                  is refused. Already have a token? Leave this and put its value where the snippets
-                  say {TOKEN_PLACEHOLDER}; existing token values are never shown again.
+                  is refused. Already have a token? Leave this and paste its value when the
+                  credential command asks for it; existing token values are never shown again.
                 </p>
               </>
             )}
+            <p data-testid="wizard-token-reach" className="text-xs text-muted-foreground">
+              A token created here is not limited to '{marketplace}': it fetches every marketplace
+              this gateway serves you. Git keeps one credential per gateway, so the same token serves every
+              marketplace you add from here.
+            </p>
           </form>
-          <Snippet
-            lead
-            title="Store the credential — run this first"
-            command={`printf 'protocol=${protocol.replace(":", "")}\\nhost=${host}\\nusername=token\\npassword=${token}\\n' | git credential approve`}
-            copyLabel="Copy credential command"
-            testId="wizard-credential-config"
-          />
+          <div className="space-y-2">
+            <Snippet
+              lead
+              title="Store the credential — run this first"
+              command={credentialCommand(origin, protocol, host)}
+              copyLabel="Copy credential command"
+              testId="wizard-credential-config"
+            />
+            <p data-testid="wizard-credential-note" className="text-xs text-muted-foreground">
+              Run it in bash or zsh, then paste the token at the prompt; it is not echoed and never
+              reaches your shell history. The first line has git keep credentials for this gateway
+              only, in plaintext in <span className="font-mono">~/.git-credentials</span>, readable
+              only by you. If you already use an OS keychain helper (macOS Keychain, Git Credential
+              Manager, libsecret), skip the first line and the token is stored there instead.
+            </p>
+          </div>
+          {/* The `.git` suffix is what makes Claude Code treat the URL as a git remote (and so use
+              the stored credential); without it the URL is fetched as a marketplace file. */}
           <Snippet
             title="2. Add the marketplace to Claude Code"
-            command={`claude plugin marketplace add ${cloneUrl}`}
+            command={`claude plugin marketplace add ${cloneUrl}.git`}
             copyLabel="Copy marketplace add command"
             testId="wizard-add-command"
           />
@@ -263,9 +307,11 @@ export function SetupWizard({
             copyLabel="Copy clone command"
             testId="wizard-clone-command"
           />
-          <p className="text-xs text-muted-foreground">
+          <p data-testid="wizard-ledger-note" className="text-xs text-muted-foreground">
             The facade serves only the approved snapshot of this marketplace, on the single branch
-            'main'. Every fetch is recorded on the audit ledger.
+            'main'. Each fetch it serves is recorded on the audit ledger under your identity; a
+            refused request (a <span className="font-mono">401</span> or{" "}
+            <span className="font-mono">404</span>) is not.
           </p>
         </div>
         <DialogFooter>

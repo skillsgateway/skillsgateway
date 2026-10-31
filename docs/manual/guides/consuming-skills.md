@@ -189,18 +189,37 @@ yet, so the two are not confused for each other.
 
 ## 3. Store the credential
 
-So the client never prompts:
+`git credential approve` hands a credential to the helpers git is configured
+with. With none configured it stores nothing and still succeeds, and the next
+clone fails with `unable to get password from user`. So name a helper for the
+gateway first, then store the token. In bash or zsh:
 
 ```console
-$ printf 'protocol=https\nhost=skills.corp.example\nusername=token\npassword=sgw_...\n' \
-    | git credential approve
+$ git config --global 'credential.https://skills.corp.example.helper' store
+$ printf 'Token: ' && read -rs SGW_TOKEN && echo && printf 'protocol=https\nhost=skills.corp.example\nusername=token\npassword=%s\n' "$SGW_TOKEN" | git credential approve; unset SGW_TOKEN
+Token:
 ```
 
-Or configure the username and let your credential helper hold the secret:
+The first line applies to this gateway only: git matches `credential.<url>`
+against the remote's scheme, host and port, so every other remote keeps its
+credentials as before. The second reads the token at a prompt that does not echo
+it, so the token never reaches the shell history. This is what the portal's
+**Connect a client** wizard composes.
 
-```console
-$ git config --global credential.https://skills.corp.example.username token
-```
+!!! warning "`store` keeps the token in plaintext"
+
+    The `store` helper writes `~/.git-credentials`, readable only by your user
+    but not encrypted. If you already use an OS keychain helper (`osxkeychain`,
+    Git Credential Manager, `libsecret`), skip the first line:
+    `git credential approve` passes the token to every configured helper, so it
+    lands in the keychain instead. With a keychain helper you can also set only
+    the username and let git ask for the token on the first clone:
+    `git config --global credential.https://skills.corp.example.username token`.
+
+Git keeps one credential per gateway, so one token serves every marketplace on
+it. A token created without `scopes`, which includes every token the portal
+creates, reaches every marketplace the gateway serves. For a credential limited
+to named marketplaces, create a scoped token through the API.
 
 ## 4. Point your agent at it
 
@@ -214,9 +233,14 @@ $ git config --global credential.https://skills.corp.example.username token
 === "Claude Code"
 
     ```console
-    $ claude plugin marketplace add https://skills.corp.example/git/acme
+    $ claude plugin marketplace add https://skills.corp.example/git/acme.git
     $ claude plugin install acme-tools
     ```
+
+    Keep the `.git` suffix. It is what makes Claude Code clone the URL as a
+    git remote, through the credential stored in step 3. Without it the URL is
+    downloaded as a marketplace file over plain HTTP, with no credential, and
+    answered `401`. The facade serves `/git/acme` and `/git/acme.git` alike.
 
 === "Copilot / Cursor"
 
@@ -244,10 +268,13 @@ endpoint and a different credential; see
 The served SHA changes only when a reviewer approves a new snapshot. Upstream
 movement alone never changes what you receive.
 
-## Every fetch is recorded
+## Every served fetch is recorded
 
-Each `git fetch` appends entries to the audit ledger with your principal, the
-marketplace, the ref and the SHA. Check the portal's **Audit log** page.
+Each `git fetch` the facade serves appends entries to the audit ledger with your
+principal, the marketplace, the ref and the SHA. Check the portal's **Audit log**
+page. A refused request is not recorded: a `401` for a missing, wrong or revoked
+token, or a `404` for a marketplace that is held, unknown or outside the token's
+scopes, writes nothing to the ledger.
 
 This is what makes "which identities ever received this exact content"
 answerable — see [Snapshots and the audit ledger](../concepts/snapshots-and-ledger.md).

@@ -948,8 +948,8 @@ cases:
     description: |
       GIVEN a registered marketplace and its detail page in a real browser
       WHEN the user opens the setup wizard, mints a token inside it, and later closes and reopens the wizard
-      THEN the marketplace-add command and credential configuration carry the page's own origin and the marketplace's facade clone path, the minted cleartext appears in the snippets only while the wizard stays open, and after reopening the snippets carry a placeholder and no previously issued secret is displayed
-    revision: "0.1.0"
+      THEN the marketplace-add command and credential configuration carry the page's own origin and the marketplace's facade clone path, the minted cleartext is shown in the wizard only while it stays open, and after reopening no previously issued secret is displayed
+    revision: "0.5.0"
 
   - id: SVC_GW_INGEST_0015
     requirement_ids: ["GW_INGEST_0015"]
@@ -4566,4 +4566,34 @@ cases:
       GIVEN a running gateway configured with an identity provider
       WHEN an unauthenticated browser starts a sign-in, either directly or by navigating to a portal page
       THEN the sign-in is redirected to the identity provider and the page navigation to the sign-in, each response sets a session cookie, and the session store holds one more session for each
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0068
+    requirement_ids: ["GW_AUTH_0062"]
+    title: The wizard's own commands store the credential and clone on a clean client
+    verification: automated-test
+    description: |
+      GIVEN an approved marketplace, a token minted in its client set-up wizard, and a shell with an empty home directory, no system git configuration and terminal prompts disabled
+      WHEN the wizard's clone command is run, then the wizard's credential command is run exactly as shown with the token entered at its prompt, and then the clone command is run again and the URL of the wizard's marketplace-add command is cloned
+      THEN the first clone fails for want of a credential, the credential command succeeds, the second clone and the clone of the marketplace-add URL succeed, the marketplace-add URL ends in .git, and no command's text contains the token
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0069
+    requirement_ids: ["GW_AUTH_0062"]
+    title: The credential command names a helper for this origin only and reads the token at a prompt
+    verification: automated-test
+    description: |
+      GIVEN the client set-up wizard opened on a marketplace
+      WHEN it is read before and after a token is minted inside it
+      THEN the credential command configures the store helper for the page's own origin only and then reads the token at a non-echoing prompt for git credential approve, is the same text before and after minting and never contains the token, the minted token is shown in its own field, and the step states that the helper stores the token in plaintext and names an operating-system keychain as the alternative
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0070
+    requirement_ids: ["GW_AUTH_0063"]
+    title: The wizard says the token is not limited to this marketplace and that only served fetches are recorded
+    verification: automated-test
+    description: |
+      GIVEN the client set-up wizard opened on a marketplace
+      WHEN it is read
+      THEN the token step states that the token is not limited to that marketplace and fetches every marketplace the gateway serves, and the wizard states that served fetches are recorded on the audit ledger and refused requests are not, with no claim that every fetch is recorded
     revision: "0.5.0"

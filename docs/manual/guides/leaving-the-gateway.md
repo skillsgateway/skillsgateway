@@ -18,7 +18,7 @@ Two halves, and you need both:
 | Half | What it is | Where it lives |
 | --- | --- | --- |
 | The content | Ordinary git repositories, one per marketplace | The storage backend |
-| The decisions | Who approved which commit, what vetting found, every fetch | PostgreSQL |
+| The decisions | Who approved which commit, what vetting found, every served fetch | PostgreSQL |
 
 The content alone is skills nobody vouched for. The decisions alone are vouching
 for content you no longer have. Take both.

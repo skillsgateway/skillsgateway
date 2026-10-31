@@ -739,10 +739,10 @@ requirements:
   - id: GW_AUTH_0014
     title: Client setup wizard
     significance: shall
-    description: The system's portal shall offer, on a marketplace's detail page, a client setup wizard that composes for that marketplace the client marketplace-add command, a git credential-helper configuration block and a personal-access-token usage snippet, deriving every URL from the browsing origin and the marketplace's facade clone path with no additional server configuration, shall let the user mint a personal access token from inside the wizard through the existing show-once token flow with the cleartext substituted into the snippets only while the wizard remains open, and shall never display the secret of any previously issued token.
+    description: The system's portal shall offer, on a marketplace's detail page, a client setup wizard that composes for that marketplace the client marketplace-add command addressing the facade clone path as a git remote, a git credential-helper configuration block and a personal-access-token usage snippet, deriving every URL from the browsing origin and the marketplace's facade clone path with no additional server configuration, shall let the user mint a personal access token from inside the wizard through the existing show-once token flow with the cleartext shown in the wizard only while it remains open, and shall never display the secret of any previously issued token.
     rationale: A consumer's first contact with the gateway is copy-paste, and composing the exact commands from where the browser already is removes the transcription errors a hand-assembled URL invites; holding the show-once line inside the wizard keeps convenience from becoming a second place secrets live.
     categories: ["interaction-capability", "security"]
-    revision: 0.1.0
+    revision: 0.5.0
 
   - id: GW_INGEST_0015
     title: Snapshot file inspection
@@ -3371,4 +3371,24 @@ requirements:
     references:
       requirement_ids: ["GW_APPROVAL_0029", "GW_VETTING_0056"]
     categories: ["interaction-capability"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0062
+    title: The client wizard's credential step works on a client with no credential helper and keeps the token off the command line
+    significance: shall
+    description: "The client set-up wizard's credential-storage step shall, run as shown in bash or zsh on a client with no git configuration, configure a credential helper for the gateway's own origin only and store the token in it, so that the wizard's clone command then authenticates without prompting; shall read the token at a prompt that does not echo it rather than carry it in the command text; and shall state that the helper it configures keeps the token in plaintext and that an operating-system keychain helper is the alternative."
+    rationale: "git credential approve stores nothing when no helper is configured and still exits successfully, so a step that assumed one left a clean machine with a clone that failed for no visible reason. A token written into the command lands in the shell history and in whatever the command is pasted into."
+    references:
+      requirement_ids: ["GW_AUTH_0014"]
+    categories: ["interaction-capability", "security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0063
+    title: The client wizard states what a token reaches and what the ledger records
+    significance: shall
+    description: "The client set-up wizard shall state, where a token is minted, that the token is not limited to the marketplace the wizard was opened from and fetches every marketplace the gateway serves its holder; and shall describe the audit ledger as recording the fetches the facade serves, without claiming that it records refused requests."
+    rationale: "A default name of the form <marketplace>-client reads as a scope the token does not have, and a reader told that every fetch is recorded will look on the ledger for a refused attempt that was never written."
+    references:
+      requirement_ids: ["GW_AUTH_0014"]
+    categories: ["interaction-capability", "security"]
     revision: 0.5.0

@@ -282,7 +282,7 @@ in particular is a different layer and several rows do not apply to it.
 | Publish gate | Human approval of a specific snapshot; held updates never displace the approved one | None — a skill is enabled as soon as it is registered; an admin can disable it | None — a route is a configuration change | Curator approve/reject with a `statusReason`; auto-approval is a per-registry option | Scan result and project policy (the skills documentation describes no manual approval step), plus Curation policy at the repository perimeter |
 | Rug-pull protection | The core of the design: [snapshots and held updates](snapshots-and-ledger.md) | None for git-hosted sources — upstream refs stay mutable and authoritative; an optional `sha256` pins `archive` sources | None — the backend is live and mutable by design | Partial: an edit becomes a new `DRAFT` while the approved revision stays discoverable — but the referenced repository or package is outside the registry's control | Strong for what Artifactory stores (immutable, signed artifacts); not documented for remote-endpoint MCP servers |
 | Revocation | Revocation unpublishes the served ref itself | Disable the listing; already-installed content unaffected | Remove the route or policy; effective for new calls | Deprecate (terminal, irreversible) or reject to hide from discovery; already-fetched content unaffected | Unapprove or block via Curation; Agent Guard refuses at call time |
-| Audit | Append-only ledger of every fetch and administrative action | Not described | Per-request OpenTelemetry metrics, logs and traces | CloudTrail management events for the control plane; no data-plane consumption logging documented | Platform audit and ML-BOM provenance; not detailed on the public pages |
+| Audit | Append-only ledger of every served fetch and administrative action | Not described | Per-request OpenTelemetry metrics, logs and traces | CloudTrail management events for the control plane; no data-plane consumption logging documented | Platform audit and ML-BOM provenance; not detailed on the public pages |
 | Facade access | PAT-only facade — a deliberate [trust boundary](trust-boundaries.md) | Unauthenticated public hub; disabled skills can be granted per key or team | JWT/OAuth/API key with CEL authorization, enforced by the proxy | IAM or JWT for search and the MCP endpoint; control plane always IAM | JFrog Platform credentials, enforced client-side by Agent Guard |
 | Single catalog | The [virtual catalog](../guides/virtual-catalog.md), strictly derived from approved-and-served snapshots, self-contained relative sources only | Generated manifest of external pointers | One endpoint multiplexing many MCP backends — no catalog of content | One registry with hybrid search and a native MCP endpoint | One system of record across models, MCP servers and skills |
 | Skill metadata for discovery | Marketplace-granular catalog; skill-level browse is not a current capability | Semver, keywords, domains/namespaces per skill | Not applicable | `SKILL.md` plus a structured definition, with hybrid semantic and keyword search | Versioned skill packages with scan and signature status |
@@ -330,10 +330,10 @@ Two capabilities the comparison surfaces as honest gaps on this side:
 - **Artifact signing** — JFrog signs what it scans, so a consumer can verify
   provenance away from the serving system. Here the equivalent assurance is
   positional: the facade serves only the approved SHA, and the ledger records
-  every fetch of it. That is strong inside the gateway's perimeter and offers
+  every time it is served. That is strong inside the gateway's perimeter and offers
   nothing outside it, which is a real difference rather than a matter of taste.
 
 What none of the alternatives on this page offers is the combination this project is
 built around: a snapshot the gateway itself holds, an approval that binds that
 exact snapshot, a facade that will serve nothing else, and a ledger that
-records every read as well as every decision.
+records every served read as well as every decision.
