@@ -2166,6 +2166,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="User menu">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sign-in-and-sign-out-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sign-in and sign-out pages
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3121,6 +3138,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="User menu">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sign-in-and-sign-out-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sign-in and sign-out pages
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3805,6 +3839,14 @@ address for existing bookmarks and links.</p>
 deployment can set, so it cannot claim to be a version it is not; a gateway run
 from an exploded build carries no build information and the footer is then
 absent entirely rather than saying "unknown".</p>
+<p>The first <kbd>Tab</kbd> on any page reaches a <strong>Skip to content</strong> link that moves
+past the sidebar to the page itself.</p>
+<p>Each page names itself in the browser tab, then its marketplace where it has one,
+then the product: <em>Audit log · Skills Gateway</em>, <em>Snapshots · acme · Skills
+Gateway</em>. An address the portal does not have shows <strong>Page not found</strong> inside the
+shell, with a link to the overview; the gateway answers it with status <code>404</code>.
+After sign-in the portal removes the <code>continue</code> marker the sign-in leaves on the
+address it returns to, so the address you copy is the one you were sent.</p>
 <h2 id="user-menu">User menu<a class="headerlink" href="#user-menu" title="Permanent link">&para;</a></h2>
 <p>The header's breadcrumb sits opposite a menu named after the signed-in user
 (<code>GET /api/v1/me</code>). Opening it shows:</p>
@@ -3829,6 +3871,20 @@ absent entirely rather than saying "unknown".</p>
   no session to end, so the menu states that instead of offering a control that
   would appear to fail.</li>
 </ul>
+<h3 id="sign-in-and-sign-out-pages">Sign-in and sign-out pages<a class="headerlink" href="#sign-in-and-sign-out-pages" title="Permanent link">&para;</a></h3>
+<p><code>/login</code> and <code>/logout</code> are minimal pages in the portal's style, not part of the
+single-page application and loading nothing from elsewhere. Each states the
+reader's session as it is: <em>You are signed in as</em> the username, or <em>You are not
+signed in</em> with a <strong>Sign in with your identity provider</strong> link (which opens the
+portal, and so the sign-in). <code>/logout</code> offers a <strong>Sign out</strong> button only to a
+session that has one to end; under the escape hatch it says there is none. A
+browser rarely sees either page: an unauthenticated portal address goes straight
+to the identity provider, and the menu's <strong>Sign out</strong> never shows one.</p>
+<p>A request the gateway cannot parse at all — an address with an invalid
+percent-escape — is answered <code>400</code> with a page in the same style to a browser,
+and with one line of plain text to any other client. API, facade, publication,
+revocation-check, webhook and actuator addresses keep their own refusals,
+whatever the client accepts.</p>
 <p>The menu only reports what the session holds; it never hides or disables a
 control by role — the server is the sole authority on what a request may do,
 and refuses what it must regardless of what the menu shows.</p>
@@ -3896,8 +3952,13 @@ queries are in flight the chips show an ellipsis.</p>
 <p>Every snapshot awaiting a decision — <code>held</code> or <code>revoked</code>, not deleted — across
 every marketplace, newest first. One row each: <strong>Marketplace</strong> (a link to it),
 <strong>Commit</strong> (12 characters, a link that opens the snapshot on its marketplace's
-<a href="#marketplace-detail">Review</a>), <strong>State</strong>, <strong>Vetting</strong> outcome, and <strong>Ingested</strong>
-(when, and by whom).</p>
+<a href="#marketplace-detail">Review</a>), <strong>State</strong>, <strong>Vetting</strong> outcome, <strong>Findings</strong> (how
+many the latest vetting run recorded, waived or not; <em>not run</em> when the chain
+never ran), and <strong>Ingested</strong> — how long ago, which is how long it has waited, and
+by whom; the exact instant is on hover.</p>
+<p><strong>Marketplace</strong> and <strong>Ingested</strong> are sortable: <strong>Ingested</strong> turns the queue to
+oldest first, which puts what has waited longest at the top, and <strong>Marketplace</strong>
+groups it by marketplace, newest first within each.</p>
 <p>The queue offers <strong>no Approve or Reject</strong>. A decision is made on the snapshot's
 card, below the verdicts, diff and contents it rests on; the queue is where the
 work is found, not where it is done. Empty: "Nothing awaits a decision."</p>
@@ -4177,7 +4238,9 @@ restores all four:</p>
 focused. Choosing another file drops it.</p>
 <p>An address naming a snapshot that no longer awaits a decision — an older link to
 one since approved — still opens it on Review, under <strong>Linked snapshot</strong>, with a
-link to it among the snapshots.</p>
+link to it among the snapshots. An address naming a snapshot this marketplace
+does not hold — no snapshot by that id, or another marketplace's — says
+<em>Snapshot {id} was not found in {marketplace}</em> on both sections.</p>
 <h4 id="the-card">The card<a class="headerlink" href="#the-card" title="Permanent link">&para;</a></h4>
 <p>Top to bottom, in this order on purpose:</p>
 <ol>
@@ -5154,9 +5217,14 @@ channel with it, and toasts <em>Sink '{name}' deleted</em>.</p>
 <p><strong>Route:</strong> <code>/tokens</code> · <strong>Heading:</strong> Access tokens</p>
 <p>"Personal access tokens authenticate git clients against the facade. Values are
 hashed at rest and shown exactly once."</p>
-<p>An inline form with a <strong>Token name</strong> field and a <strong>Create token</strong> button posts to
-<code>POST /api/v1/tokens</code>. <strong>Create token</strong> stays disabled until the name field holds a
-non-blank value — the name is trimmed before it is sent. The response opens a
+<p>An inline form with a <strong>Token name</strong> field, an <strong>Expires</strong> choice and a <strong>Create
+token</strong> button posts to <code>POST /api/v1/tokens</code>. <strong>Expires</strong> offers the same lifetimes
+as <a href="#connect-a-client">Connect a client</a> — 7, 30 or 90 days, or no expiry —
+and defaults to 30 days; a gateway whose
+<a href="../configuration/#access-tokens"><code>skills-gateway.tokens.max-ttl</code></a> is shorter refuses
+the longer choices, and the refusal is shown beneath the form. <strong>Create token</strong> stays
+disabled until the name field holds a non-blank value — the name is trimmed before it
+is sent. The response opens a
 show-once dialog — "This value is shown
 exactly once — copy it now. Only a hash is stored." — with the token in a code
 block and a clipboard button that flips to a checkmark for two seconds.</p>
@@ -5181,8 +5249,12 @@ block and a clipboard button that flips to a checkmark for two seconds.</p>
 <td>How long ago the token last authenticated successfully, or <strong>never</strong>. Hover for the exact instant.</td>
 </tr>
 <tr>
+<td>Expires</td>
+<td>When the token stops authenticating, or <strong>never</strong>.</td>
+</tr>
+<tr>
 <td>Status</td>
-<td><code>active</code> (primary badge) or <code>revoked</code> (destructive).</td>
+<td><code>active</code> (primary badge), <code>expired</code> (secondary) once the expiry has passed, or <code>revoked</code> (destructive).</td>
 </tr>
 <tr>
 <td>Actions</td>
