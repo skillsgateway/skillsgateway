@@ -5310,7 +5310,7 @@ removal at the next major version — see
 <td><code>skills-gateway.roles.admins</code></td>
 <td>list of strings</td>
 <td><code>[]</code></td>
-<td>Principals that hold the admin role by configuration, matched exactly against the authenticated principal name. Effective without a grant row, and no API call can revoke them. Stored grants and claim-derived roles add to this list; they never replace it.</td>
+<td>Principals that hold the admin role by configuration, matched exactly against the authenticated principal name; an entry that could never match refuses startup (see below). Effective without a grant row, and no API call can revoke them. Stored grants and claim-derived roles add to this list; they never replace it.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.roles.claim</code></td>
@@ -5331,6 +5331,15 @@ removal at the next major version — see
 that names none could not be administered once it started, and it refuses to
 start instead. A grant made through the API does not satisfy the check —
 it is revocable through the API, so it says nothing about the <em>next</em> start.</p>
+<p>Because <code>roles.admins</code> is matched exactly, an entry is held to the same rule as
+a grant's principal: an entry that is blank, begins or ends with whitespace,
+contains a control, invisible format (a zero-width or bidirectional control
+character), line or paragraph separator, or is longer than 255 characters
+refuses startup. The refusal names the entry by position —
+<code>skills-gateway.roles.admins[2] must not begin or end with whitespace</code> — and
+never repeats its value; the entry is not trimmed for you. A comma-separated
+value, such as <code>SKILLS_GATEWAY_ROLES_ADMINS="ops, bob"</code>, is split and each
+part trimmed as it binds, so the space after a comma is harmless there.</p>
 <h3 id="admins-or-mappings"><code>admins</code> or <code>mappings</code>?<a class="headerlink" href="#admins-or-mappings" title="Permanent link">&para;</a></h3>
 <p>Both name administrators, and neither replaces the other.</p>
 <table>
