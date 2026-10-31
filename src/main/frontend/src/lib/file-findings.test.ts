@@ -4,6 +4,7 @@ import {
   contentsHref,
   findingsByPath,
   highestSeverity,
+  listedLines,
   parseLineParam,
   parseLocation,
   type FileFinding,
@@ -103,4 +104,38 @@ test("a_location_becomes_the_address_of_its_file_and_line", () => {
   expect(contentsHref(3, "a b/c.md:7")).toBe("?snapshot=3&tab=contents&path=a+b%2Fc.md&line=7");
   expect(contentsHref(3, "p/big.bin")).toBe("?snapshot=3&tab=contents&path=p%2Fbig.bin");
   expect(contentsHref(3, "")).toBeNull();
+});
+
+/**
+ * @SVCs SVC_GW_VETTING_0078
+ */
+test("a_findings_listed_lines_are_read_from_the_end_of_its_message", () => {
+  // As ExecutableSurfaceVetter.lineList writes them.
+  expect(listedLines("a skill script fetches a package (line 4)")).toEqual([4]);
+  expect(listedLines("a code block of these instructions runs npx (lines 81, 86)")).toEqual([81, 86]);
+  expect(listedLines("installs at run time (lines 2, 3, 4, 5, 6 +3 more)")).toEqual([2, 3, 4, 5, 6]);
+  // A mention anywhere but the closing list, or no list at all, names no line.
+  expect(listedLines("see line 3 (lines 81, 86) for more")).toEqual([]);
+  expect(listedLines("declares npm dependencies (no lockfile)")).toEqual([]);
+  expect(listedLines("pipes a download")).toEqual([]);
+
+  const lines = findingsByPath({
+    snapshotId: 1,
+    run: {
+      verdicts: [
+        {
+          vetter: "executable-surface",
+          findings: [
+            { id: "runtime-dependency", severity: "medium", location: "s/SKILL.md:81", message: "runs npx (lines 81, 86)" },
+            { id: "skill-fetch-exec", severity: "high", location: "s/SKILL.md:12", message: "curl | sh (lines 40, 12)" },
+            { id: "no-line", severity: "info", location: "s/SKILL.md", message: "whole file (line 7)" },
+          ],
+        },
+      ],
+    },
+  })
+    .get("s/SKILL.md")!
+    .map((finding) => finding.lines);
+  // The location's line first, then every other listed line once.
+  expect(lines).toEqual([[81, 86], [12, 40], [7]]);
 });

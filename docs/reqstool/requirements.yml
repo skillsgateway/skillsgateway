@@ -3322,3 +3322,33 @@ requirements:
       requirement_ids: ["GW_AUTH_0053"]
     categories: ["security", "reliability"]
     revision: 0.5.0
+
+  - id: GW_VETTING_0070
+    title: The vetting report counts findings and finding groups in one wording
+    significance: shall
+    description: "The system shall state the number of a verdict's findings in the same unit on every portal surface that counts them — the chain's step, its headline, the reason the chain stopped and the vetter's section — counting findings one per location, and shall name the number of finding groups beside it whenever grouping collapsed findings into fewer groups."
+    rationale: "A step that counted groups beside a section that counted locations told a reviewer two different numbers for the same verdict, and a headline that added them up was neither. One unit, with the groups named only when they differ, keeps the count a fact instead of a puzzle."
+    references:
+      requirement_ids: ["GW_VETTING_0031", "GW_VETTING_0041"]
+    categories: ["interaction-capability"]
+    revision: 0.5.0
+
+  - id: GW_VETTING_0071
+    title: A vetter whose every blocking finding is waived reads as waived, not failed
+    significance: shall
+    description: "The system shall present, in the portal's vetting chain and vetter section, a vetter that recorded a blocking verdict but whose findings at high severity or above are all covered by active waivers, and at least one of whose findings is, as waived — by a word and an icon in the tone of an outcome that clears with waivers, together with the verdict it recorded — and shall not list it among the vetters the outcome is blocked on; and shall never present a vetter that was not reached or was disabled as waived."
+    rationale: "A step that stayed red after its findings were accepted contradicted the outcome beside it, which read clear with waivers, and left the reviewer unsure whether anything was still blocking. The recorded verdict stays visible, because an accepted risk must never read as a clean pass."
+    references:
+      requirement_ids: ["GW_VETTING_0031", "GW_VETTING_0008"]
+    categories: ["interaction-capability", "security"]
+    revision: 0.5.0
+
+  - id: GW_VETTING_0072
+    title: The file view marks every line a finding names
+    significance: shall
+    description: "The system shall, in the portal's view of a snapshot file, mark and describe a finding on the line its location names and on every further line of that file the finding's message lists in its closing parenthesised line list, and shall mark no line a message mentions anywhere else."
+    rationale: "A vetter reports one finding for every line of a file that matches one rule, so that one decision is one waiver, and names the lines in its message. Marking only the first left the others for the reviewer to find by reading the whole file."
+    references:
+      requirement_ids: ["GW_APPROVAL_0029", "GW_VETTING_0056"]
+    categories: ["interaction-capability"]
+    revision: 0.5.0

@@ -9,6 +9,7 @@ import {
   twoRuleVetting,
   undeterminedChainVetting,
   vendoredVetting,
+  waivedVetting,
 } from "@/test/msw-handlers";
 import { server } from "@/test/msw-server";
 import { MemoryRouter } from "react-router-dom";
@@ -349,4 +350,35 @@ test("without_a_link_target_locations_stay_text", async () => {
 
   await screen.findByRole("list", { name: "Blocking findings" });
   expect(screen.queryByRole("link", { name: /SKILL\.md/ })).not.toBeInTheDocument();
+});
+
+/**
+ * @SVCs SVC_GW_VETTING_0075
+ */
+test("the_vetter_section_counts_findings_in_the_chains_wording", async () => {
+  // prompt-injection: 5 findings in 2 groups, stored as "5 finding(s); worst high".
+  vettingIs(vendoredVetting);
+  renderReport();
+
+  expect(await screen.findByText("5 findings in 2 groups; worst high")).toBeInTheDocument();
+  expect(screen.queryByText(/finding\(s\)/)).not.toBeInTheDocument();
+  // The step says the same.
+  expect(screen.getByRole("button", { name: /Step 2 prompt-injection fail 5 findings in 2 groups/ })).toBeInTheDocument();
+  // A pass's coverage summary is not a count, and stays.
+  expect(screen.getByText(/scanned 40 text file\(s\)/)).toBeInTheDocument();
+});
+
+/**
+ * @SVCs SVC_GW_VETTING_0077
+ */
+test("a_vetter_whose_blocking_findings_are_all_waived_reads_waived_with_its_recorded_verdict", async () => {
+  vettingIs(waivedVetting);
+  renderReport();
+
+  const step = await screen.findByRole("button", { name: /Step 1 secret-scan waived/ });
+  expect(step).toBeInTheDocument();
+  const card = screen.getByText("recorded fail").parentElement!;
+  expect(within(card).getByText("secret-scan")).toBeInTheDocument();
+  expect(within(card).getByText("waived")).toBeInTheDocument();
+  expect(within(card).queryByText("fail")).not.toBeInTheDocument();
 });

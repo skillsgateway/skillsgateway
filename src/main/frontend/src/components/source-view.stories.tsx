@@ -41,7 +41,7 @@ const EVERY_SEVERITY: FileFinding[] = [
  * A file as numbered lines, each line a finding locates marked by severity with its findings
  * written out beneath it — text, not colour alone, and described to a screen reader.
  *
- * @Requirements GW_APPROVAL_0029
+ * @Requirements GW_APPROVAL_0029, GW_VETTING_0072
  */
 const meta = {
   title: "Snapshots/SourceView",
@@ -98,5 +98,26 @@ export const FocusedLine: Story = {
   args: { findings: EVERY_SEVERITY, focusLine: 5 },
   play: async ({ canvasElement }) => {
     await expect(document.activeElement).toBe(canvasElement.querySelector('[data-line="5"]'));
+  },
+};
+
+/** One finding that lists two lines marks and describes both (GW_VETTING_0072). */
+export const MultiLine: Story = {
+  args: {
+    findings: [
+      finding({
+        line: 3,
+        lines: [3, 4],
+        severity: "medium",
+        ruleId: "runtime-dependency",
+        message: "a skill script installs a package; pipes a download into a shell (lines 3, 4)",
+      }),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    await expect(within(canvasElement).getAllByRole("note")).toHaveLength(2);
+    for (const n of [3, 4]) {
+      await expect(canvasElement.querySelector(`[data-line="${n}"]`)).toHaveAttribute("data-severity", "medium");
+    }
   },
 };

@@ -31,8 +31,10 @@ import { FindingLocation, FindingLocations } from "@/components/finding-location
 import { parseLocation } from "@/lib/file-findings";
 import { LocationHrefContext } from "@/lib/location-href";
 import {
+  effectiveState,
   snapshotFlow,
   snapshotHeadline,
+  verdictSummary,
   type WaiveTarget,
 } from "@/lib/vetting-flow";
 
@@ -47,6 +49,8 @@ function verdictIcon(state?: string) {
       return <CircleAlert className="size-4 text-destructive" aria-hidden />;
     case "disabled":
       return <CircleSlash className="size-4 text-muted-foreground" aria-hidden />;
+    case "waived":
+      return <ShieldOff className="size-4 text-primary" aria-hidden />;
     default:
       return <CircleHelp className="size-4 text-muted-foreground" aria-hidden />;
   }
@@ -69,6 +73,9 @@ function verdictBadge(state?: string) {
     // it must never read as a pass.
     case "disabled":
       return <Badge variant="outline">disabled</Badge>;
+    // Every blocking finding is covered by a waiver: in the outcome's colour, never as a pass.
+    case "waived":
+      return <Badge variant="secondary">waived</Badge>;
     default:
       return <Badge variant="outline">{state ?? "unknown"}</Badge>;
   }
@@ -406,9 +413,11 @@ function GroupRow({
   const rest = locations.slice(1);
   const key = groupKey(vetter, group);
   const selectable = !waived && high && Boolean(group.content) && locations.length > 0;
+  // Two cells of the list's grid: what selects and ranks the row, and the row's text, so a wrapped
+  // message lines up under its rule on every row.
   return (
-    <div className="text-sm">
-      <div className="flex flex-wrap items-baseline gap-2">
+    <>
+      <div className="flex items-baseline gap-2">
         {selectable ? (
           <Checkbox
             className="self-center"
@@ -425,63 +434,67 @@ function GroupRow({
         <Badge variant={waived ? "outline" : high ? "destructive" : "outline"}>
           {group.severity?.toLowerCase()}
         </Badge>
-        <span className={`font-mono text-xs ${waived ? "line-through" : ""}`}>{group.ruleId}</span>
-        <span className="font-mono text-xs break-all text-muted-foreground">
-          {locations.length > 0 ? <FindingLocation location={first} /> : first}
-        </span>
-        <span className="text-muted-foreground">{group.message}</span>
-        {waived ? (
-          <Badge variant="secondary">
-            waived by {covering[0]!.approvedBy} until{" "}
-            <Timestamp value={covering[0]!.expiresAt} dayOnly />
-          </Badge>
-        ) : covering.length > 0 ? (
-          <Badge variant="outline">
-            {covering.length} of {locations.length} waived
-          </Badge>
+      </div>
+      <div className="min-w-0 text-sm">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <span className={`font-mono text-xs ${waived ? "line-through" : ""}`}>{group.ruleId}</span>
+          <span className="font-mono text-xs break-all text-muted-foreground">
+            {locations.length > 0 ? <FindingLocation location={first} /> : first}
+          </span>
+          <span className="text-muted-foreground">{group.message}</span>
+          {waived ? (
+            <Badge variant="secondary">
+              waived by {covering[0]!.approvedBy} until{" "}
+              <Timestamp value={covering[0]!.expiresAt} dayOnly />
+            </Badge>
+          ) : covering.length > 0 ? (
+            <Badge variant="outline">
+              {covering.length} of {locations.length} waived
+            </Badge>
+          ) : null}
+          {!waived && high && !waiving ? (
+            <Button
+              size="sm"
+              variant="outline"
+              // A long rule id wraps rather than being cut, which would read as truncated again.
+              className="h-auto whitespace-normal break-words text-left"
+              aria-label={`Waive ${groupName(rule, locations)}`}
+              onClick={() => setWaiving(true)}
+            >
+              {locations.length > 1 ? `Waive ${rule} at ${locations.length} locations…` : `Waive ${rule}…`}
+            </Button>
+          ) : null}
+        </div>
+        {rest.length > 0 ? (
+          <details className="mt-1 text-xs text-muted-foreground">
+            <summary className="cursor-pointer">
+              {rest.length} more {rest.length === 1 ? "copy" : "copies"} of the same content
+            </summary>
+            <ul className="mt-1 space-y-0.5 font-mono break-all">
+              {rest.map((location) => (
+                <li key={location}>
+                  <FindingLocation location={location} />
+                </li>
+              ))}
+            </ul>
+          </details>
         ) : null}
-        {!waived && high && !waiving ? (
-          <Button
-            size="sm"
-            variant="outline"
-            // A long rule id wraps rather than being cut, which would read as truncated again.
-            className="h-auto whitespace-normal break-words text-left"
-            aria-label={`Waive ${groupName(rule, locations)}`}
-            onClick={() => setWaiving(true)}
-          >
-            {locations.length > 1 ? `Waive ${rule} at ${locations.length} locations…` : `Waive ${rule}…`}
-          </Button>
+        {waiving && !waived ? (
+          <WaiveForm
+            snapshotId={snapshotId}
+            target={{
+              ruleId: rule,
+              locations,
+              content: group.content,
+              line: group.line,
+            }}
+            runFindings={runFindings}
+            onDone={() => setWaiving(false)}
+            onCancel={() => setWaiving(false)}
+          />
         ) : null}
       </div>
-      {rest.length > 0 ? (
-        <details className="mt-1 text-xs text-muted-foreground">
-          <summary className="cursor-pointer">
-            {rest.length} more {rest.length === 1 ? "copy" : "copies"} of the same content
-          </summary>
-          <ul className="mt-1 space-y-0.5 font-mono break-all">
-            {rest.map((location) => (
-              <li key={location}>
-                <FindingLocation location={location} />
-              </li>
-            ))}
-          </ul>
-        </details>
-      ) : null}
-      {waiving && !waived ? (
-        <WaiveForm
-          snapshotId={snapshotId}
-          target={{
-            ruleId: rule,
-            locations,
-            content: group.content,
-            line: group.line,
-          }}
-          runFindings={runFindings}
-          onDone={() => setWaiving(false)}
-          onCancel={() => setWaiving(false)}
-        />
-      ) : null}
-    </div>
+    </>
   );
 }
 
@@ -602,34 +615,44 @@ function SelectionBar({
   );
 }
 
+/** @Requirements GW_VETTING_0070, GW_VETTING_0071 */
 function VerdictCard({
   snapshotId,
   verdict,
+  state,
   suppressions,
   runFindings,
   selection,
 }: {
   snapshotId: number;
   verdict: VettingVerdict;
+  /** The state with active waivers applied: "waived" where they cover every blocking finding. */
+  state: string | undefined;
   suppressions: Map<string, WaiverSuppression>;
   runFindings: RunFinding[];
   selection: Selection;
 }) {
   const groups = verdict.groups ?? [];
+  const summary = verdictSummary(verdict);
   return (
     <div className="rounded-md border p-3">
       <div className="flex flex-wrap items-center gap-2">
-        {verdictIcon(verdict.state)}
+        {verdictIcon(state)}
         <span className="font-medium">{verdict.vetter}</span>
-        {verdictBadge(verdict.state)}
-        {verdict.detail ? (
-          <span className="text-xs text-muted-foreground">{verdict.detail}</span>
+        {verdictBadge(state)}
+        {state !== verdict.state ? (
+          <span className="text-xs text-muted-foreground">recorded {verdict.state}</span>
         ) : null}
+        {summary.count ? <span className="text-xs text-muted-foreground">{summary.count}</span> : null}
+        {summary.detail ? <span className="text-xs text-muted-foreground">{summary.detail}</span> : null}
       </div>
       {groups.length > 0 ? (
-        <ul className="mt-2 space-y-1">
+        <ul className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1">
           {groups.map((group, index) => (
-            <li key={`${group.ruleId}-${group.content ?? ""}-${group.locations?.[0] ?? ""}-${index}`} className="list-none">
+            <li
+              key={`${group.ruleId}-${group.content ?? ""}-${group.locations?.[0] ?? ""}-${index}`}
+              className="col-span-2 grid list-none grid-cols-subgrid items-baseline"
+            >
               <GroupRow
                 snapshotId={snapshotId}
                 vetter={verdict.vetter}
@@ -900,6 +923,7 @@ export function VettingReport({
               key={verdict.vetter}
               snapshotId={snapshotId}
               verdict={verdict}
+              state={effectiveState(verdict, vetting.data?.suppressed ?? [])}
               suppressions={suppressions}
               runFindings={runFindings}
               selection={selection}

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import {
   blockedVetting,
   clearVetting,
@@ -6,7 +6,10 @@ import {
   marketplaceChain,
   waivedVetting,
 } from "@/test/msw-handlers";
+import type { VettingView } from "@/api/queries";
 import {
+  effectiveState,
+  findingCount,
   marketplaceFlow,
   marketplaceHeadline,
   snapshotFlow,
@@ -56,10 +59,11 @@ describe("snapshotFlow", () => {
     expect(snapshotFlow(clearVetting).find((node) => node.id === "gate")?.state).toBe("open");
   });
 
-  it("keeps a waived finding's vetter at the verdict it reached, and counts the acceptance", () => {
+  it("reads a vetter whose blocking findings are all waived as waived, and counts the acceptance", () => {
     const node = snapshotFlow(waivedVetting).find((n) => n.id === "vetter-secret-scan");
-    // Accepted risk is never rendered as a clean result: the vetter still failed.
-    expect(node?.state).toBe("fail");
+    // Accepted risk is never rendered as a clean result: "waived", in the outcome's tone, not "pass".
+    expect(node?.state).toBe("waived");
+    expect(node?.tone).toBe("warn");
     expect(node?.waived).toBe(1);
     expect(snapshotFlow(waivedVetting).find((n) => n.id === "outcome")?.state).toBe(
       "clear with waivers",
@@ -221,4 +225,98 @@ describe("sourceWord", () => {
     expect(sourceWord("default")).toBe("default — no setting recorded");
     expect(sourceWord(undefined)).toBe("default — no setting recorded");
   });
+});
+
+const LONG = "plugins/x/skills/y/SKILL.md";
+
+/** One license-scan verdict of 18 findings in 3 groups: 16 copies of one file, and two of their own. */
+const groupedVetting: VettingView = {
+  ...blockedVetting,
+  outcome: "blocked",
+  run: {
+    ...blockedVetting.run!,
+    verdicts: [
+      {
+        vetter: "license-scan",
+        position: 0,
+        state: "fail",
+        detail: "18 finding(s); worst high",
+        groups: [
+          {
+            ruleId: "no-license",
+            severity: "high",
+            message: "no licence",
+            locations: Array.from({ length: 16 }, (_, i) => `plugins/p${i}/LICENSE:1`),
+          },
+          { ruleId: "copyleft", severity: "medium", message: "copyleft", locations: [`${LONG}:3`] },
+          { ruleId: "copyleft", severity: "medium", message: "copyleft", locations: [`${LONG}:9`] },
+        ],
+      },
+      {
+        vetter: "secret-scan",
+        position: 1,
+        state: "warn",
+        groups: [
+          { ruleId: "generic-token", severity: "medium", message: "a token", locations: ["a.md:1"] },
+          { ruleId: "generic-token", severity: "medium", message: "a token", locations: ["b.md:1"] },
+        ],
+      },
+    ],
+  },
+};
+
+/**
+ * @SVCs SVC_GW_VETTING_0074
+ */
+test("the_step_headline_and_stop_reason_count_findings_and_groups_in_one_wording", () => {
+  const nodes = snapshotFlow(groupedVetting);
+  expect(nodes.find((node) => node.id === "vetter-license-scan")?.meta).toBe("18 findings in 3 groups");
+  // Nothing collapsed: the groups are not named.
+  expect(nodes.find((node) => node.id === "vetter-secret-scan")?.meta).toBe("2 findings");
+  // 16 of the 18 are high: the worst severity is named, not stretched over every finding.
+  expect(snapshotHeadline(nodes).detail).toBe("license-scan found 18 findings in 3 groups, worst high");
+
+  const clear = snapshotFlow({ ...groupedVetting, outcome: "clear" });
+  expect(snapshotHeadline(clear).detail).toBe("2 vetters, 20 findings in 5 groups");
+
+  expect(findingCount({ findings: 1, groups: 1 })).toBe("1 finding");
+  expect(findingCount({ findings: 4, groups: 1 }, "high")).toBe("4 high findings in 1 group");
+});
+
+/**
+ * @SVCs SVC_GW_VETTING_0076
+ */
+test("a_failed_vetter_with_every_blocking_finding_waived_is_waived_and_not_objecting", () => {
+  const suppress = (location: string) => ({
+    vetter: "license-scan",
+    ruleId: "no-license",
+    location,
+    approvedBy: "alice",
+    expiresAt: "2099-01-01T00:00:00Z",
+  });
+  const all = Array.from({ length: 16 }, (_, i) => suppress(`plugins/p${i}/LICENSE:1`));
+  const waived = snapshotFlow({ ...groupedVetting, outcome: "clear_with_waivers", suppressed: all });
+  const node = waived.find((n) => n.id === "vetter-license-scan");
+  // The medium findings left over do not block, so the vetter clears on the waivers alone.
+  expect(node?.state).toBe("waived");
+  expect(node?.tone).toBe("warn");
+  expect(node?.waived).toBe(16);
+  expect(waived.find((n) => n.id === "outcome")?.outcome?.blocking).toEqual([]);
+
+  // One blocking finding left: still a failure, still objecting.
+  const partial = snapshotFlow({ ...groupedVetting, suppressed: all.slice(1) });
+  expect(partial.find((n) => n.id === "vetter-license-scan")?.state).toBe("fail");
+  expect(partial.find((n) => n.id === "outcome")?.outcome?.blocking).toEqual(["license-scan"]);
+
+  // A waiver on another vetter's finding does not count.
+  const elsewhere = all.map((s) => ({ ...s, vetter: "secret-scan" }));
+  expect(effectiveState(groupedVetting.run!.verdicts![0], elsewhere)).toBe("fail");
+
+  // Never for a vetter that did not run.
+  const notReached = { vetter: "x", state: "not_reached" as const, findings: [{ id: "vetter-not-reached", severity: "info" as const, location: "x" }] };
+  expect(effectiveState(notReached, [{ vetter: "x", ruleId: "vetter-not-reached", location: "x" }])).toBe("not_reached");
+  const disabled = { ...notReached, state: "disabled" as const };
+  expect(effectiveState(disabled, [{ vetter: "x", ruleId: "vetter-not-reached", location: "x" }])).toBe("disabled");
+  // Nothing waived: the recorded state stands.
+  expect(effectiveState({ vetter: "x", state: "error" }, [])).toBe("error");
 });

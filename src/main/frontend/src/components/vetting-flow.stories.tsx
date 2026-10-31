@@ -78,7 +78,10 @@ export const Blocked: Story = {
   },
 };
 
-/** Cleared only because a finding was accepted: the vetter still reads as having failed. */
+/**
+ * Cleared only because a finding was accepted: the vetter reads "waived" in the outcome's tone —
+ * neither the red of a failure nor a pass (GW_VETTING_0071).
+ */
 export const WithWaivers: Story = {
   args: {
     ...snapshotStory(waivedVetting),
@@ -89,22 +92,28 @@ export const WithWaivers: Story = {
     await expect(canvas.getByText("Clear with waivers")).toBeInTheDocument();
     await expect(canvas.getByText("· 1 finding accepted")).toBeInTheDocument();
     await expect(canvas.getByText("1 waived")).toBeInTheDocument();
-    // Accepted risk is never redrawn as a clean result.
-    await expect(stage(canvas, "secret-scan", "fail")).toBeInTheDocument();
+    // Accepted risk is never redrawn as a clean result, nor left reading as a failure.
+    await expect(stage(canvas, "secret-scan", "waived")).toBeInTheDocument();
+    await userEvent.click(stage(canvas, "secret-scan", "waived"));
+    const dialog = within(await within(document.body).findByRole("dialog"));
+    await expect(dialog.getByText(/recorded fail; every blocking finding is covered by a waiver/)).toBeInTheDocument();
   },
 };
 
 /**
- * One file vendored into four plugins: the vetter counts two things to judge, not five, and its
- * evidence lists the group once with every location (GW_VETTING_0041, GW_VETTING_0044).
+ * One file vendored into four plugins: five findings in two groups, counted the same way on the
+ * step, the headline and the detail, and the group listed once with every location
+ * (GW_VETTING_0041, GW_VETTING_0044, GW_VETTING_0070).
  */
 export const VendoredCopies: Story = {
   args: snapshotStory(vendoredVetting),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("· prompt-injection found 2 high findings")).toBeInTheDocument();
+    await expect(canvas.getByText("· prompt-injection found 5 high findings in 2 groups")).toBeInTheDocument();
+    await expect(canvas.getByText("5 findings in 2 groups")).toBeInTheDocument();
     await userEvent.click(stage(canvas, "prompt-injection", "fail"));
     const dialog = within(await within(document.body).findByRole("dialog"));
+    await expect(dialog.getByText("5 findings in 2 groups; worst high")).toBeInTheDocument();
     await expect(
       dialog.getByText(
         "plugins/a/skills/x/SKILL.md:12, plugins/b/skills/x/SKILL.md:12, plugins/c/skills/x/SKILL.md:12 and 1 more",

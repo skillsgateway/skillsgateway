@@ -9,6 +9,7 @@ import {
   CircleSlash,
   PackageOpen,
   ShieldCheck,
+  ShieldOff,
 } from "lucide-react";
 import type { FindingGroup, WaiverSuppression } from "@/api/queries";
 import { Timestamp } from "@/components/timestamp";
@@ -24,6 +25,7 @@ import { FindingLocations } from "@/components/finding-locations";
 import {
   sourceChip,
   sourceWord,
+  verdictSummary,
   type FlowHeadline,
   type FlowNode,
   type FlowTone,
@@ -57,6 +59,7 @@ function NodeIcon({ node }: { node: FlowNode }) {
   const className = `size-4 ${toneText[node.tone]}`;
   if (node.kind === "step" && node.id === "ingest") return <PackageOpen className={className} aria-hidden />;
   if (node.kind === "step") return <ShieldCheck className={className} aria-hidden />;
+  if (node.state === "waived") return <ShieldOff className={className} aria-hidden />;
   if (node.tone === "pass") return <CircleCheck className={className} aria-hidden />;
   if (node.tone === "warn") return <AlertTriangle className={className} aria-hidden />;
   if (node.tone === "blocked") return <CircleAlert className={className} aria-hidden />;
@@ -82,6 +85,23 @@ function suppressionKey(vetter: string | undefined, rule: string | undefined, lo
   return `${vetter ?? ""}|${rule ?? ""}|${location ?? ""}`;
 }
 
+/**
+ * A list of finding rows on one grid: the severity in the first column and the rest in the second,
+ * so a wrapped message lines up under its rule on every row. Each child is one `FindingRow`.
+ */
+function FindingRows({ children }: { children: ReactNode }) {
+  return <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1 text-sm">{children}</div>;
+}
+
+function FindingRow({ severity, children }: { severity?: string; children: ReactNode }) {
+  return (
+    <div className="col-span-2 grid grid-cols-subgrid items-baseline">
+      <Badge variant="outline">{severity?.toLowerCase()}</Badge>
+      <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">{children}</div>
+    </div>
+  );
+}
+
 /** One finding group — identical content at every location it lists (GW_VETTING_0041). */
 function GroupLine({
   group,
@@ -93,8 +113,7 @@ function GroupLine({
   const locations = group.locations ?? [];
   const waived = locations.length > 0 && covering.length === locations.length;
   return (
-    <div className="flex flex-wrap items-baseline gap-2 text-sm">
-      <Badge variant="outline">{group.severity?.toLowerCase()}</Badge>
+    <FindingRow severity={group.severity}>
       <span className={`font-mono text-xs ${waived ? "line-through" : ""}`}>{group.ruleId}</span>
       <span className="font-mono text-xs break-all text-muted-foreground">
         <FindingLocations locations={locations} />
@@ -109,7 +128,7 @@ function GroupLine({
           {covering.length} of {locations.length} waived
         </Badge>
       ) : null}
-    </div>
+    </FindingRow>
   );
 }
 
@@ -123,11 +142,20 @@ function NodeDetail({
 }) {
   if (node.kind === "vetter") {
     const groups = node.verdict?.groups ?? [];
+    const summary = node.verdict ? verdictSummary(node.verdict) : {};
     return (
       <div className="space-y-3">
         <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-1 text-sm">
           <dt className="font-medium">Verdict</dt>
-          <dd className={toneText[node.tone]}>{node.state}</dd>
+          <dd className={toneText[node.tone]}>
+            {node.state}
+            {node.state === "waived" ? (
+              <span className="text-muted-foreground">
+                {" "}
+                — recorded {node.verdict?.state}; every blocking finding is covered by a waiver
+              </span>
+            ) : null}
+          </dd>
           <dt className="font-medium">Version</dt>
           <dd className="font-mono text-xs">{node.vetter?.version ?? "—"}</dd>
           <dt className="font-medium">Kind</dt>
@@ -136,9 +164,8 @@ function NodeDetail({
         {node.vetter?.description ? (
           <p className="text-sm text-muted-foreground">{node.vetter.description}</p>
         ) : null}
-        {node.verdict?.detail ? (
-          <p className="text-sm text-muted-foreground">{node.verdict.detail}</p>
-        ) : null}
+        {summary.count ? <p className="text-sm text-muted-foreground">{summary.count}</p> : null}
+        {summary.detail ? <p className="text-sm text-muted-foreground">{summary.detail}</p> : null}
         {node.state === "not reached" ? (
           <p className="text-sm text-muted-foreground">
             The chain stopped before this vetter and it was not run, so nothing here has been
@@ -157,7 +184,7 @@ function NodeDetail({
           </p>
         ) : null}
         {groups.length > 0 ? (
-          <div className="space-y-1">
+          <FindingRows>
             {groups.map((group, index) => (
               <GroupLine
                 key={`${group.ruleId}-${group.content ?? ""}-${group.locations?.[0] ?? ""}-${index}`}
@@ -169,7 +196,7 @@ function NodeDetail({
                   .filter((suppression): suppression is WaiverSuppression => suppression !== undefined)}
               />
             ))}
-          </div>
+          </FindingRows>
         ) : (
           <p className="text-sm text-muted-foreground">Nothing found.</p>
         )}
@@ -213,19 +240,17 @@ function NodeDetail({
         {uncovered.length > 0 ? (
           <div className="space-y-1">
             <p>Approval is blocked until each of these is waived:</p>
-            {uncovered.map((finding, index) => (
-              <div
-                key={`${finding.ruleId}-${finding.location}-${index}`}
-                className="flex flex-wrap items-baseline gap-2"
-              >
-                <Badge variant="outline">{finding.severity?.toLowerCase()}</Badge>
-                <span className="font-mono text-xs">{finding.ruleId}</span>
-                <span className="font-mono text-xs break-all text-muted-foreground">
-                  <FindingLocations locations={finding.locations ?? (finding.location ? [finding.location] : [])} />
-                </span>
-                <span className="text-muted-foreground">{finding.message}</span>
-              </div>
-            ))}
+            <FindingRows>
+              {uncovered.map((finding, index) => (
+                <FindingRow key={`${finding.ruleId}-${finding.location}-${index}`} severity={finding.severity}>
+                  <span className="font-mono text-xs">{finding.ruleId}</span>
+                  <span className="font-mono text-xs break-all text-muted-foreground">
+                    <FindingLocations locations={finding.locations ?? (finding.location ? [finding.location] : [])} />
+                  </span>
+                  <span className="text-muted-foreground">{finding.message}</span>
+                </FindingRow>
+              ))}
+            </FindingRows>
           </div>
         ) : (
           <p className="text-muted-foreground">No finding is waiting on a waiver.</p>
