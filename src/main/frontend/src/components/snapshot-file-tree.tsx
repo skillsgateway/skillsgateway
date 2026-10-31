@@ -2,6 +2,8 @@ import { ChevronDown, ChevronRight, File, FilePlus2, FilePen, FileX2, Folder, Fo
 import type { ReactNode } from "react";
 import type { SnapshotTreeChild } from "@/api/queries";
 import { highestSeverity, type FileFinding } from "@/lib/file-findings";
+import { VisibleText } from "@/components/visible-text";
+import { showControls } from "@/lib/visible-controls";
 
 const STATUS_ICON = {
   added: FilePlus2,
@@ -121,7 +123,7 @@ export function SnapshotFileTree({
         // terse markers out afterwards: a name has to contain its visible text (WCAG 2.5.3).
         const shown = fullPaths ? path : name;
         const fileMeaning = [
-          ...(shown === path ? [] : [path]),
+          ...(shown === path ? [] : [showControls(path)]),
           ...(found.length > 0 ? [plural(found.length, "finding"), `highest ${highestSeverity(found)}`] : []),
         ].join(", ");
         return node.kind === "directory" ? (
@@ -129,7 +131,7 @@ export function SnapshotFileTree({
             <button
               type="button"
               aria-expanded={expanded.has(path)}
-              aria-label={`${name} ${directoryMarkerText(node)} (${plural(node.files ?? 0, "file")})`}
+              aria-label={`${showControls(name)} ${directoryMarkerText(node)} (${plural(node.files ?? 0, "file")})`}
               onClick={() => onToggle(path)}
               className="flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs hover:bg-muted outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             >
@@ -143,7 +145,9 @@ export function SnapshotFileTree({
               ) : (
                 <Folder className="size-3.5 shrink-0 text-primary" aria-hidden />
               )}
-              <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
+              <span className="min-w-0 flex-1 truncate font-medium">
+                <VisibleText text={name} />
+              </span>
               {/* A real space between the spans: axe joins sibling text without one, so the
                   label's spaced words would not otherwise be found in the visible text. */}{" "}
               <DirectoryMarker node={node} />
@@ -157,7 +161,7 @@ export function SnapshotFileTree({
             <button
               type="button"
               aria-current={path === selectedPath ? "true" : undefined}
-              aria-label={[shown, findingsMarkerText(found), fileMarkerText(node)]
+              aria-label={[showControls(shown), findingsMarkerText(found), fileMarkerText(node)]
                 .filter(Boolean)
                 .join(" ")
                 .concat(fileMeaning ? ` (${fileMeaning})` : "")}
@@ -180,7 +184,9 @@ export function SnapshotFileTree({
                   />
                 );
               })()}
-              <span className="min-w-0 flex-1 truncate">{shown}</span>{" "}
+              <span className="min-w-0 flex-1 truncate">
+                <VisibleText text={shown} />
+              </span>{" "}
               {found.length > 0 ? (
                 // Stacked, so the slot is as wide as the wider marker and the name keeps its room.
                 <span className="flex shrink-0 flex-col items-end leading-tight">

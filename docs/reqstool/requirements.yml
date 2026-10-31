@@ -2867,6 +2867,26 @@ requirements:
     categories: ["functional-suitability", "interaction-capability"]
     revision: 0.5.0
 
+  - id: GW_APPROVAL_0037
+    title: The portal shows invisible and bidirectional control characters in upstream text as visible tokens
+    significance: shall
+    description: "The system shall show, in the portal, each Unicode format character (general category Cf) in text that comes from an upstream repository — plugin, skill and component names and descriptions, file paths and names, finding locations, and file contents — as a visible token naming its code point, with an accessible name for the character, rather than applying it or removing it; shall leave a zero-width joiner between two pictographs as it is, as the prompt-injection vetter does; and shall leave every other character, and the text that searching, selecting and addressing use, unchanged."
+    references:
+      requirement_ids: ["GW_APPROVAL_0005", "GW_APPROVAL_0029"]
+    rationale: "A reviewer approves what the portal shows. Bidirectional controls reorder the characters around them and zero-width characters render as nothing, so text shown with them applied is a rendering of the content, not the content. Removing them would show a clean name that is not the one served; a token shows exactly what is there and where."
+    categories: ["security", "interaction-capability"]
+    revision: 0.5.0
+
+  - id: GW_APPROVAL_0038
+    title: A source line that contains invisible or bidirectional control characters is marked in words
+    significance: shall
+    description: "The system shall mark, in a file's numbered source view, each line that contains a character GW_APPROVAL_0037 shows as a token with a written note that the line contains invisible or bidirectional control characters, shall describe the line by that note, and shall do so whether or not a vetter finding is on that line."
+    references:
+      requirement_ids: ["GW_APPROVAL_0037", "GW_APPROVAL_0029"]
+    rationale: "A token in a long line is easy to scroll past, and only instruction files are vetted for these characters; a marker in words on the line makes the reviewer see it in any file, and does not rely on colour."
+    categories: ["security", "interaction-capability"]
+    revision: 0.5.0
+
   - id: GW_INGEST_0045
     title: The snapshot inventory lists every component a plugin declares
     significance: shall

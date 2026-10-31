@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { VisibleText } from "@/components/visible-text";
 
 const WINDOWS: readonly SegmentedOption<number>[] = [
   { value: 7, label: "7 days" },
@@ -172,12 +173,16 @@ export function PresenceTable({ report }: { report: PresenceReport }) {
             {skills.map((skill) => (
               <TableRow key={`${skill.marketplace}/${skill.plugin}/${skill.skill}`}>
                 <TableCell className="min-w-56 whitespace-normal">
-                  <div className="font-medium">{skill.skill}</div>
+                  <div className="font-medium">
+                    <VisibleText text={skill.skill} />
+                  </div>
                   {skill.path ? (
-                    <div className="font-mono text-xs break-all text-muted-foreground">{skill.path}</div>
+                    <div className="font-mono text-xs break-all text-muted-foreground">
+                      <VisibleText text={skill.path} />
+                    </div>
                   ) : null}
                 </TableCell>
-                <TableCell>{skill.plugin ?? "—"}</TableCell>
+                <TableCell>{skill.plugin ? <VisibleText text={skill.plugin} /> : "—"}</TableCell>
                 <TableCell>{skill.marketplace}</TableCell>
                 <TableCell className="tabular-nums">{skill.identitiesHolding}</TableCell>
                 <TableCell className="tabular-nums">{skill.snapshotsDelivering}</TableCell>

@@ -4,6 +4,8 @@ import { useSnapshotDiffPages, type SnapshotDiffEntry } from "@/api/queries";
 import { DiffText } from "@/components/snapshot-explorer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { VisibleText } from "@/components/visible-text";
+import { showControls } from "@/lib/visible-controls";
 
 /** Entries per page of `GET /snapshots/{id}/diff`, for the "Show more" label. */
 const DIFF_PAGE = 500;
@@ -121,8 +123,8 @@ export function SnapshotFileChanges({ snapshotId }: { snapshotId: number }) {
                     ) : (
                       <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
                     )}
-                    <span title={path} className="min-w-0 flex-1 truncate font-mono text-xs">
-                      {path}
+                    <span title={showControls(path)} className="min-w-0 flex-1 truncate font-mono text-xs">
+                      <VisibleText text={path} />
                     </span>
                     <TypeBadge type={entry.type} />
                   </button>

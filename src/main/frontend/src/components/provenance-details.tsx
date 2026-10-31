@@ -1,5 +1,6 @@
 import { useProvenance } from "@/api/queries";
 import { Timestamp } from "@/components/timestamp";
+import { VisibleText } from "@/components/visible-text";
 
 /**
  * What was served, from where, and who approved it — and, for a snapshot with resolved external
@@ -52,9 +53,13 @@ export function ProvenanceDetails({ snapshotId }: { snapshotId: number }) {
           <ul className="mt-1 space-y-1">
             {members.map((member) => (
               <li key={member.graftPath} className="grid grid-cols-[max-content_1fr] gap-x-4">
-                <span className="font-medium">{member.pluginName}</span>
+                <span className="font-medium">
+                  <VisibleText text={member.pluginName} />
+                </span>
                 <span className="break-all">
-                  <span>{member.cloneUrl}</span>{" "}
+                  <span>
+                    <VisibleText text={member.cloneUrl} />
+                  </span>{" "}
                   <span className="font-mono">{member.resolvedSha}</span>
                 </span>
               </li>

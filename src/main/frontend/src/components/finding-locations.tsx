@@ -2,6 +2,7 @@ import { Fragment, useContext } from "react";
 import { Link } from "react-router-dom";
 import { LocationHrefContext } from "@/lib/location-href";
 import { SHOWN_LOCATIONS } from "@/lib/vetting-flow";
+import { VisibleText } from "@/components/visible-text";
 
 
 /** One location: a link to its file and line when the surface has somewhere to send it (GW_APPROVAL_0030). */
@@ -12,10 +13,10 @@ export function FindingLocation({ location }: { location: string }) {
       to={href}
       className="rounded-sm underline decoration-dotted underline-offset-2 outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
     >
-      {location}
+      <VisibleText text={location} />
     </Link>
   ) : (
-    <>{location}</>
+    <VisibleText text={location} />
   );
 }
 

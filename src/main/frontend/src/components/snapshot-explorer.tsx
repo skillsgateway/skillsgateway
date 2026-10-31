@@ -22,6 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { findingsByPath, type FileFinding } from "@/lib/file-findings";
 import { ancestorDirectories } from "@/lib/snapshot-tree";
+import { VisibleText } from "@/components/visible-text";
+import { showControls } from "@/lib/visible-controls";
 
 function Notice({ children }: { children: React.ReactNode }) {
   return <p className="text-sm text-muted-foreground">{children}</p>;
@@ -58,7 +60,7 @@ export function DiffText({ diff }: { diff: string }) {
                 : "";
         return (
           <div key={i} className={kind}>
-            {line}
+            <VisibleText text={line} />
           </div>
         );
       })}
@@ -130,7 +132,7 @@ function FileFindings({
                 <span className="font-mono">{label}</span>
               )}
               <span className="text-muted-foreground">
-                {finding.vetter} — {finding.message}
+                {finding.vetter} — <VisibleText text={finding.message} />
                 {finding.waived ? ` (waived by ${finding.waived.by})` : ""}
               </span>
             </li>
@@ -184,7 +186,12 @@ function FileContent({
       if (!file.data || outsidePart(file.data, focus.line)) setPart(focus.line);
     }
   }
-  if (file.isLoading) return <Notice>Loading {path}…</Notice>;
+  if (file.isLoading)
+    return (
+      <Notice>
+        Loading <VisibleText text={path} />…
+      </Notice>
+    );
   if (file.isError) {
     if (file.error instanceof ApiError && file.error.status === 403) return <Forbidden />;
     return (
@@ -256,7 +263,9 @@ function JsonContent({ text, truncated }: { text: string; truncated: boolean }) 
   const [view, setView] = useState<"formatted" | "raw">("formatted");
   const formatted = truncated ? null : formatJson(text);
   const raw = (
-    <pre className="overflow-x-auto rounded-md border bg-muted p-3 font-mono text-xs">{text}</pre>
+    <pre className="overflow-x-auto rounded-md border bg-muted p-3 font-mono text-xs">
+      <VisibleText text={text} />
+    </pre>
   );
   if (formatted === null)
     return (
@@ -273,7 +282,9 @@ function JsonContent({ text, truncated }: { text: string; truncated: boolean }) 
       {view === "raw" ? (
         raw
       ) : (
-        <pre className="overflow-x-auto rounded-md border bg-muted p-3 font-mono text-xs">{formatted}</pre>
+        <pre className="overflow-x-auto rounded-md border bg-muted p-3 font-mono text-xs">
+          <VisibleText text={formatted} />
+        </pre>
       )}
     </div>
   );
@@ -648,12 +659,12 @@ export function SnapshotExplorer({
                     aria-live="polite"
                     className="min-w-0 flex-1 truncate font-mono text-sm"
                   >
-                    {selectedPath}
+                    <VisibleText text={selectedPath} />
                   </span>
                   <Button
                     size="xs"
                     variant="outline"
-                    aria-label={`Copy the link to ${selectedPath}`}
+                    aria-label={`Copy the link to ${showControls(selectedPath)}`}
                     onClick={copyAddress}
                   >
                     <Link2 className="size-3.5" aria-hidden />

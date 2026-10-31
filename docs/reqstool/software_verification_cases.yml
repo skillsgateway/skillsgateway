@@ -4078,6 +4078,46 @@ cases:
       THEN the portal requests the part holding that line and shows the line numbered and marked, and a finding before the part shown is described as before it
     revision: "0.1.0"
 
+  - id: SVC_GW_APPROVAL_0040
+    requirement_ids: ["GW_APPROVAL_0037"]
+    title: Every format character becomes a named token and other text is left as it is
+    verification: automated-test
+    description: |
+      GIVEN text holding each class of format character — bidirectional embeddings, overrides, isolates and marks, the Arabic letter mark, zero-width characters, invisible operators, the byte-order mark, tag characters and the soft hyphen — and text holding none, including accented, right-to-left and CJK letters and emoji joined by zero-width joiners
+      WHEN the portal prepares each for display
+      THEN each format character becomes one token naming its code point and the character, in place, and the text without one, including each emoji sequence, is returned unchanged, while a zero-width joiner not between two pictographs is shown
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0041
+    requirement_ids: ["GW_APPROVAL_0037"]
+    title: Upstream names, descriptions, paths and locations show their control characters as tokens
+    verification: automated-test
+    description: |
+      GIVEN a plugin whose name, description and skill name, a file whose name, and a finding whose location each contain a right-to-left override
+      WHEN the snapshot inventory, the file tree and the finding location render them
+      THEN each shows the override as a token naming it, and none of the rendered text contains the override itself
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0042
+    requirement_ids: ["GW_APPROVAL_0038"]
+    title: A source line with a control character shows it as a token and is marked in words without a finding
+    verification: automated-test
+    description: |
+      GIVEN a file whose second line contains a right-to-left override and a pop directional formatting character, with no finding on that line
+      WHEN the source view renders it
+      THEN the line shows both as tokens, carries a written marker that it contains invisible or bidirectional control characters, and is described by it, and the other lines carry no marker
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0043
+    requirement_ids: ["GW_APPROVAL_0037"]
+    title: Selecting a file whose name holds a control character uses the name as written
+    verification: automated-test
+    description: |
+      GIVEN a file tree entry whose name contains a right-to-left override
+      WHEN the reviewer selects it
+      THEN the path passed on is the original path, character for character, while the entry shows the token
+    revision: "0.1.0"
+
   - id: SVC_GW_INGEST_0045
     requirement_ids: ["GW_INGEST_0045"]
     title: The inventory lists commands, agents, hooks, MCP servers and LSP servers from every declaration source
