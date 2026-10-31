@@ -48,15 +48,6 @@ class PluginRootBoundTests {
     @SVCs({"SVC_GW_VETTING_0066"})
     void an_interrupted_run_over_many_roots_stops() throws Exception {
         InMemorySnapshot snapshot = new InMemorySnapshot(roots(999, 200_000));
-        Thread thread = new Thread(() -> new ExecutableSurfaceVetter().vet(snapshot), "vetter-under-test");
-        thread.setDaemon(true);
-        thread.start();
-        Thread.sleep(300);
-        assertThat(thread.isAlive()).as("still vetting before the interruption").isTrue();
-        thread.interrupt();
-        thread.join(2_000);
-        assertThat(thread.isAlive())
-                .as("still vetting two seconds after the interruption")
-                .isFalse();
+        InterruptedRun.assertStopsWhenInterrupted(() -> new ExecutableSurfaceVetter().vet(snapshot));
     }
 }
