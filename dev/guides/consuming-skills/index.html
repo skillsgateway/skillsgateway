@@ -1527,10 +1527,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#every-fetch-is-recorded" class="md-nav__link">
+  <a href="#every-served-fetch-is-recorded" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Every fetch is recorded
+        Every served fetch is recorded
       
     </span>
   </a>
@@ -2726,10 +2726,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#every-fetch-is-recorded" class="md-nav__link">
+  <a href="#every-served-fetch-is-recorded" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Every fetch is recorded
+        Every served fetch is recorded
       
     </span>
   </a>
@@ -2928,13 +2928,33 @@ nothing to serve. A 401 means the token is wrong, expired or revoked. The portal
 says the same thing on the marketplace's own page when nothing is being served
 yet, so the two are not confused for each other.</p>
 <h2 id="3-store-the-credential">3. Store the credential<a class="headerlink" href="#3-store-the-credential" title="Permanent link">&para;</a></h2>
-<p>So the client never prompts:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="gp">$ </span><span class="nb">printf</span><span class="w"> </span><span class="s1">'protocol=https\nhost=skills.corp.example\nusername=token\npassword=sgw_...\n'</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="p">|</span><span class="w"> </span>git<span class="w"> </span>credential<span class="w"> </span>approve
+<p><code>git credential approve</code> hands a credential to the helpers git is configured
+with. With none configured it stores nothing and still succeeds, and the next
+clone fails with <code>unable to get password from user</code>. So name a helper for the
+gateway first, then store the token. In bash or zsh:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="gp">$ </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span><span class="s1">'credential.https://skills.corp.example.helper'</span><span class="w"> </span>store
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="gp">$ </span><span class="nb">printf</span><span class="w"> </span><span class="s1">'Token: '</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">read</span><span class="w"> </span>-rs<span class="w"> </span>SGW_TOKEN<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">printf</span><span class="w"> </span><span class="s1">'protocol=https\nhost=skills.corp.example\nusername=token\npassword=%s\n'</span><span class="w"> </span><span class="s2">"</span><span class="nv">$SGW_TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>git<span class="w"> </span>credential<span class="w"> </span>approve<span class="p">;</span><span class="w"> </span><span class="nb">unset</span><span class="w"> </span>SGW_TOKEN
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="go">Token:</span>
 </code></pre></div>
-<p>Or configure the username and let your credential helper hold the secret:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gp">$ </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>credential.https://skills.corp.example.username<span class="w"> </span>token
-</code></pre></div>
+<p>The first line applies to this gateway only: git matches <code>credential.&lt;url&gt;</code>
+against the remote's scheme, host and port, so every other remote keeps its
+credentials as before. The second reads the token at a prompt that does not echo
+it, so the token never reaches the shell history. This is what the portal's
+<strong>Connect a client</strong> wizard composes.</p>
+<div class="admonition warning">
+<p class="admonition-title"><code>store</code> keeps the token in plaintext</p>
+<p>The <code>store</code> helper writes <code>~/.git-credentials</code>, readable only by your user
+but not encrypted. If you already use an OS keychain helper (<code>osxkeychain</code>,
+Git Credential Manager, <code>libsecret</code>), skip the first line:
+<code>git credential approve</code> passes the token to every configured helper, so it
+lands in the keychain instead. With a keychain helper you can also set only
+the username and let git ask for the token on the first clone:
+<code>git config --global credential.https://skills.corp.example.username token</code>.</p>
+</div>
+<p>Git keeps one credential per gateway, so one token serves every marketplace on
+it. A token created without <code>scopes</code>, which includes every token the portal
+creates, reaches every marketplace the gateway serves. For a credential limited
+to named marketplaces, create a scoped token through the API.</p>
 <h2 id="4-point-your-agent-at-it">4. Point your agent at it<a class="headerlink" href="#4-point-your-agent-at-it" title="Permanent link">&para;</a></h2>
 <div class="admonition tip">
 <p class="admonition-title">One URL for everything</p>
@@ -2946,9 +2966,13 @@ names prefixed by their marketplace.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:3"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Claude Code</label><label for="__tabbed_3_2">Copilot / Cursor</label><label for="__tabbed_3_3">CI</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="gp">$ </span>claude<span class="w"> </span>plugin<span class="w"> </span>marketplace<span class="w"> </span>add<span class="w"> </span>https://skills.corp.example/git/acme
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="gp">$ </span>claude<span class="w"> </span>plugin<span class="w"> </span>install<span class="w"> </span>acme-tools
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gp">$ </span>claude<span class="w"> </span>plugin<span class="w"> </span>marketplace<span class="w"> </span>add<span class="w"> </span>https://skills.corp.example/git/acme.git
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="gp">$ </span>claude<span class="w"> </span>plugin<span class="w"> </span>install<span class="w"> </span>acme-tools
 </code></pre></div>
+<p>Keep the <code>.git</code> suffix. It is what makes Claude Code clone the URL as a
+git remote, through the credential stored in step 3. Without it the URL is
+downloaded as a marketplace file over plain HTTP, with no credential, and
+answered <code>401</code>. The facade serves <code>/git/acme</code> and <code>/git/acme.git</code> alike.</p>
 </div>
 <div class="tabbed-block">
 <p>Point the tool at the same URL as an ordinary skills repository — the
@@ -2956,7 +2980,7 @@ facade serves plain git, and the open Agent Skills format needs nothing
 more.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span>https://token:<span class="si">${</span><span class="nv">SGW_TOKEN</span><span class="si">}</span>@skills.corp.example/git/acme
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span>https://token:<span class="si">${</span><span class="nv">SGW_TOKEN</span><span class="si">}</span>@skills.corp.example/git/acme
 </code></pre></div>
 <p>Issue a dedicated token per pipeline so revocation is surgical.</p>
 </div>
@@ -2971,9 +2995,12 @@ endpoint and a different credential; see
 <a href="../publishing-first-party-skills/">Publishing first-party skills</a>.)</p>
 <p>The served SHA changes only when a reviewer approves a new snapshot. Upstream
 movement alone never changes what you receive.</p>
-<h2 id="every-fetch-is-recorded">Every fetch is recorded<a class="headerlink" href="#every-fetch-is-recorded" title="Permanent link">&para;</a></h2>
-<p>Each <code>git fetch</code> appends entries to the audit ledger with your principal, the
-marketplace, the ref and the SHA. Check the portal's <strong>Audit log</strong> page.</p>
+<h2 id="every-served-fetch-is-recorded">Every served fetch is recorded<a class="headerlink" href="#every-served-fetch-is-recorded" title="Permanent link">&para;</a></h2>
+<p>Each <code>git fetch</code> the facade serves appends entries to the audit ledger with your
+principal, the marketplace, the ref and the SHA. Check the portal's <strong>Audit log</strong>
+page. A refused request is not recorded: a <code>401</code> for a missing, wrong or revoked
+token, or a <code>404</code> for a marketplace that is held, unknown or outside the token's
+scopes, writes nothing to the ledger.</p>
 <p>This is what makes "which identities ever received this exact content"
 answerable — see <a href="../../concepts/snapshots-and-ledger/">Snapshots and the audit ledger</a>.</p>
 <h2 id="making-the-gateway-the-only-door">Making the gateway the only door<a class="headerlink" href="#making-the-gateway-the-only-door" title="Permanent link">&para;</a></h2>

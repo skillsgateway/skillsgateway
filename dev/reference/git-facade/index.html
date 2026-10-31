@@ -3020,7 +3020,9 @@ with a mode flag.</p>
 </tbody>
 </table>
 <p>Each entry carries the client address as <code>source</code>, the PAT's principal, the
-marketplace, the ref and the SHA. Negotiation rounds are not recorded.</p>
+marketplace, the ref and the SHA. Negotiation rounds are not recorded, and
+neither is a refused request: a <code>401</code> or a <code>404</code> is answered before either hook
+runs.</p>
 <p>Because both namespaces above are legal wants, an <code>upload-pack</code> entry names
 which one the client received content through. A want that is not the tip can
 only have come from a <code>refs/snapshots/&lt;sha&gt;</code> advertisement and records that ref,

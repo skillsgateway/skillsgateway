@@ -4352,22 +4352,38 @@ the header.</p>
    (<a href="../configuration/#access-tokens"><code>skills-gateway.tokens.max-ttl</code></a>) is not
    exposed to the browser, so a longer choice than the deployment allows is
    refused by the server and the refusal is shown beneath the field. A token
-   minted here is filled into the snippets <strong>only while the wizard stays open</strong>;
-   closing it drops the value, and no previously issued token's value is ever
-   shown.</li>
-<li><strong>Store the credential</strong> — a <code>git credential approve</code> line for this host.
-   This is the <strong>primary copy target</strong>, marked by a highlighted snippet box,
-   because a consumer who copies one thing should copy this. Its copy control is
-   the same corner icon button the other snippets use, so the three read as one
-   family.</li>
+   minted here is shown in its own field, with a copy button, <strong>only while the
+   wizard stays open</strong>; closing it drops the value, and no previously issued
+   token's value is ever shown. No command carries it. The step also says a
+   token created here is not limited to this marketplace: it fetches every marketplace the
+   gateway serves its holder, and git keeps one credential per gateway, so one
+   token serves each marketplace added from here.</li>
+<li><strong>Store the credential</strong> — two lines for bash or zsh. The first names git's
+   <code>store</code> helper for this origin only
+   (<code>git config --global 'credential.{origin}.helper' store</code>), because
+   <code>git credential approve</code> stores nothing on a machine with no helper
+   configured. The second prompts for the token without echoing it and passes it
+   to <code>git credential approve</code>, so the token reaches neither the command nor the
+   shell history. A note beneath says <code>store</code> keeps the token in plaintext in
+   <code>~/.git-credentials</code>, and that a reader with an OS keychain helper skips the
+   first line. This is the <strong>primary copy target</strong>, marked by a highlighted
+   snippet box, because a consumer who copies one thing should copy this. Its
+   copy control is the same corner icon button the other snippets use, so the
+   three read as one family.</li>
 <li><strong>Add the marketplace to Claude Code</strong> —
-   <code>claude plugin marketplace add {origin}/git/{name}</code>.</li>
+   <code>claude plugin marketplace add {origin}/git/{name}.git</code>. The <code>.git</code> suffix
+   makes Claude Code treat the URL as a git remote, so the credential stored in
+   step 2 authenticates it; without the suffix it is fetched as a marketplace
+   file over plain HTTP and answered <code>401</code>.</li>
 <li><strong>Clone directly</strong> — a plain <code>git clone</code> of the facade URL, with no token in it:
    the credential stored by step 2 authenticates it, and nothing lands in
    <code>.git/config</code> or shell history.</li>
 </ol>
-<p>The remaining snippets have icon copy buttons. Until a token is minted the
-credential snippet carries the <code>&lt;YOUR_TOKEN&gt;</code> placeholder.</p>
+<p>The remaining snippets have icon copy buttons. The commands read the same before
+and after a token is minted.</p>
+<p>A closing line says the facade serves only the approved snapshot, on <code>main</code>, and
+that each fetch it serves is recorded on the <a href="#audit-log">audit ledger</a>; a
+refused request (<code>401</code> or <code>404</code>) is not.</p>
 <h3 id="vetting">Vetting<a class="headerlink" href="#vetting" title="Permanent link">&para;</a></h3>
 <p>The snapshot card's <strong>Vetting</strong> tab — the tab a card opens on — is fed by
 <code>GET /api/v1/snapshots/{id}/vetting</code>.</p>

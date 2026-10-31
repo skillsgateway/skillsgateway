@@ -3016,7 +3016,7 @@ in particular is a different layer and several rows do not apply to it.</p>
 </tr>
 <tr>
 <td>Audit</td>
-<td>Append-only ledger of every fetch and administrative action</td>
+<td>Append-only ledger of every served fetch and administrative action</td>
 <td>Not described</td>
 <td>Per-request OpenTelemetry metrics, logs and traces</td>
 <td>CloudTrail management events for the control plane; no data-plane consumption logging documented</td>
@@ -3085,13 +3085,13 @@ because the disagreement is genuine rather than a matter of scope.</p>
 <li><strong>Artifact signing</strong> — JFrog signs what it scans, so a consumer can verify
   provenance away from the serving system. Here the equivalent assurance is
   positional: the facade serves only the approved SHA, and the ledger records
-  every fetch of it. That is strong inside the gateway's perimeter and offers
+  every time it is served. That is strong inside the gateway's perimeter and offers
   nothing outside it, which is a real difference rather than a matter of taste.</li>
 </ul>
 <p>What none of the alternatives on this page offers is the combination this project is
 built around: a snapshot the gateway itself holds, an approval that binds that
 exact snapshot, a facade that will serve nothing else, and a ledger that
-records every read as well as every decision.</p>
+records every served read as well as every decision.</p>
 
 
 

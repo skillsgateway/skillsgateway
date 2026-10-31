@@ -2960,7 +2960,7 @@ serves is keyed by the snapshot's SHA:</p>
 <li>Quarantine holds <code>refs/snapshots/{sha}</code> — one immutable ref per snapshot.</li>
 <li>Approval force-updates the published <code>refs/heads/main</code> to <em>that exact SHA</em>.
   The published ref moves only because a human approved a specific commit.</li>
-<li>The ledger records the SHA on every fetch.</li>
+<li>The ledger records the SHA on every fetch the facade serves.</li>
 </ul>
 <p>The consequence: "what exactly ran on that laptop" reduces to a ledger lookup,
 and an upstream force-push cannot change the answer retroactively.</p>
