@@ -36,7 +36,7 @@ instead, and every case was then seen failing.
 | Requirements traceability | `reqstool status local -p docs/reqstool` | exit 0; `1274` passed, `0` failed, `0` SVCs missing tests, `0` missing MVRs; GW_AUTH_0060 `15 15` |
 | OpenSpec | `openspec validate --all --strict` | `Totals: 30 passed, 0 failed (30 items)` |
 | Docs | `mkdocs build --strict` | `Documentation built in 1.55 seconds` |
-| Mutation | `openspec/changes/bootstrap-admins-principal-rule/mutants.sh` (on `2d99ad01`, same code) | `6 mutants run, all killed` |
+| Mutation | `openspec/changes/archive/2026-10-31-bootstrap-admins-principal-rule/mutants.sh` (on `2d99ad01`, same code) | `6 mutants run, all killed` |
 | Mutation dry run | `DRY=1 mutants.sh` | `6 mutants apply` |
 | Mutation runner negative control | `ONLY=M99 mutants.sh` | `no mutant selected`, exit 5 |
 | Supply chain | no dependency added or changed | — |
