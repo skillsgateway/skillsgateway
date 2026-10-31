@@ -34,10 +34,10 @@ a binding failure is wrapped in Spring's bind-error report, and the claim
 mapping (#780) set the precedent of a plain `IllegalStateException` naming
 `skills-gateway.roles.mappings[i]`.
 
-### One rule: `RolePrincipals.grantProblem`
+### One rule: `RolePrincipals.principalProblem`
 
 `requireGrantable` already combines the form rule with the length bound. That
-combination moves into `grantProblem(String) -> Optional<String>`;
+combination moves into `principalProblem(String) -> Optional<String>`;
 `requireGrantable` becomes a call to it plus the 422, and the guard calls it
 too. No second validator exists.
 

@@ -1253,7 +1253,7 @@ skills-gateway:
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `skills-gateway.roles.admins` | list of strings | `[]` | Principals that hold the admin role by configuration, matched exactly against the authenticated principal name. Effective without a grant row, and no API call can revoke them. Stored grants and claim-derived roles add to this list; they never replace it. |
+| `skills-gateway.roles.admins` | list of strings | `[]` | Principals that hold the admin role by configuration, matched exactly against the authenticated principal name; an entry that could never match refuses startup (see below). Effective without a grant row, and no API call can revoke them. Stored grants and claim-derived roles add to this list; they never replace it. |
 | `skills-gateway.roles.claim` | string | `groups` | Claim carrying membership. A dotted path walks nested claims (`realm_access.roles`). |
 | `skills-gateway.roles.mappings` | list | `[]` | Claim value → role. `approver` names a marketplace; `admin` and `auditor` must not. |
 
@@ -1262,6 +1262,16 @@ Naming an administrator in `roles.admins`, in `roles.mappings`, or in
 that names none could not be administered once it started, and it refuses to
 start instead. A grant made through the API does not satisfy the check —
 it is revocable through the API, so it says nothing about the *next* start.
+
+Because `roles.admins` is matched exactly, an entry is held to the same rule as
+a grant's principal: an entry that is blank, begins or ends with whitespace,
+contains a control, invisible format (a zero-width or bidirectional control
+character), line or paragraph separator, or is longer than 255 characters
+refuses startup. The refusal names the entry by position —
+`skills-gateway.roles.admins[2] must not begin or end with whitespace` — and
+never repeats its value; the entry is not trimmed for you. A comma-separated
+value, such as `SKILLS_GATEWAY_ROLES_ADMINS="ops, bob"`, is split and each
+part trimmed as it binds, so the space after a comma is harmless there.
 
 ### `admins` or `mappings`?
 

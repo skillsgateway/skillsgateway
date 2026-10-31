@@ -4583,6 +4583,16 @@ cases:
       THEN it refuses exactly the values an independent code-point-by-code-point computation calls malformed, and never throws
     revision: "0.5.0"
 
+  - id: SVC_GW_AUTH_0085
+    requirement_ids: ["GW_AUTH_0060"]
+    title: A malformed configured administrator refuses startup, naming its position
+    verification: automated-test
+    description: |
+      GIVEN configured administrator lists holding an entry with a leading space, a trailing space, a tab, a zero-width character, a bidi control, a blank entry, an entry of 256 code points, or one such entry after well-formed ones, and lists of well-formed entries including one of exactly 255 code points
+      WHEN the gateway starts with each list
+      THEN each list with a malformed entry refuses startup naming that entry's position and not its value, and each well-formed list starts
+    revision: "0.5.0"
+
   - id: SVC_GW_AUTH_0066
     requirement_ids: ["GW_AUTH_0061"]
     title: A padded or altered claim value confers no role, a lone exact string does

@@ -4,13 +4,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.roles.RoleBootstrapGuard;
+import dev.skillsgateway.server.roles.RolePrincipals;
 import io.github.reqstool.annotations.SVCs;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.MapPropertySource;
 
 /**
  * The startup refusal for an estate nobody could administer (GW_AUTH_0026), as a real Spring context
@@ -85,6 +94,81 @@ class RoleBootstrapGuardTests {
                         "skills-gateway.estate.grants[0].role=approver",
                         "skills-gateway.estate.grants[0].marketplace=acme")
                 .run(context -> assertRefused(context, "has no administrator"));
+    }
+
+    /**
+     * A configured administrator is matched exactly (GW_AUTH_0060), so an entry no session can present
+     * would start a gateway whose only administrator is nobody. Each must refuse, naming its position
+     * and never its value.
+     */
+    @ParameterizedTest(name = "[{index}] {0}")
+    @MethodSource("malformedAdministrators")
+    @SVCs({"SVC_GW_AUTH_0085"})
+    void a_malformed_configured_administrator_refuses_startup_naming_its_position(String fault, List<String> admins) {
+        int position = admins.size() - 1;
+        withAdmins(contexts, admins).run(context -> assertRefusedAt(context, position, admins.get(position)));
+    }
+
+    static Stream<Arguments> malformedAdministrators() {
+        return Stream.of(
+                Arguments.of("leading space", List.of(" bob")),
+                Arguments.of("trailing space", List.of("bob ")),
+                Arguments.of("trailing tab", List.of("bob\t")),
+                Arguments.of("zero-width space", List.of("bo\u200Bb")),
+                Arguments.of("bidi override", List.of("\u202Ebob")),
+                Arguments.of("blank", List.of("")),
+                Arguments.of("over 255 code points", List.of("b".repeat(RolePrincipals.MAX_LENGTH + 1))),
+                Arguments.of("one bad among good", List.of("ops", "alice@example.com", "bob\u200B")));
+    }
+
+    /** A malformed entry is a mistake in every mode, so the escape hatch does not skip the check. */
+    @Test
+    @SVCs({"SVC_GW_AUTH_0085"})
+    void a_malformed_configured_administrator_refuses_startup_under_the_escape_hatch_too() {
+        withAdmins(contexts.withPropertyValues("skills-gateway.dev-insecure-auth=true"), List.of("bob "))
+                .run(context -> assertRefusedAt(context, 0, "bob "));
+    }
+
+    @Test
+    @SVCs({"SVC_GW_AUTH_0085"})
+    void well_formed_configured_administrators_start() {
+        List<String> admins =
+                List.of("ops", "alice@example.com", "Bob Example", "Zo\u00EB", "b".repeat(RolePrincipals.MAX_LENGTH));
+        withAdmins(contexts, admins).run(context -> assertThat(context).hasNotFailed());
+        // The comma-delimited form (an environment variable) trims each element as it binds.
+        withAdmins(contexts.withPropertyValues("skills-gateway.roles.admins=ops, bob"), List.of())
+                .run(context -> assertThat(context).hasNotFailed());
+    }
+
+    /** Indexed entries from a map source: TestPropertyValues trims values, which would hide the fault. */
+    private static ApplicationContextRunner withAdmins(ApplicationContextRunner runner, List<String> admins) {
+        Map<String, Object> entries = new LinkedHashMap<>();
+        for (int i = 0; i < admins.size(); i++) {
+            entries.put("skills-gateway.roles.admins[%d]".formatted(i), admins.get(i));
+        }
+        return runner.withInitializer(context ->
+                context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("admins", entries)));
+    }
+
+    private static void assertRefusedAt(AssertableApplicationContext context, int position, String value) {
+        assertThat(context).hasFailed();
+        Throwable failure = context.getStartupFailure();
+        assertThat(failure)
+                .rootCause()
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("skills-gateway.roles.admins[%d] ".formatted(position))
+                .hasMessageNotContaining("has no administrator");
+        if (!value.strip().isEmpty()) {
+            assertThat(rootMessage(failure)).as("the refusal repeats the value").doesNotContain(value.strip());
+        }
+    }
+
+    private static String rootMessage(Throwable failure) {
+        Throwable cause = failure;
+        while (cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        return cause.getMessage();
     }
 
     private static void assertRefused(AssertableApplicationContext context, String signal) {
