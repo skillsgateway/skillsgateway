@@ -24,6 +24,6 @@
 
 ## 4. Gates and evidence
 
-- [ ] 4.1 `mutants.sh` kills every mutant; a dry run proves each applies.
+- [x] 4.1 `mutants.sh` kills every mutant; a dry run proves each applies.
 - [ ] 4.2 Every AGENTS.md gate fresh after the last code edit, recorded in
   `evidence.md` with the commit SHA.
