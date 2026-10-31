@@ -690,7 +690,7 @@ it can be read without opening anything:
 
 ```text
 Blocked at step 1 · secret-scan found 1 critical finding
-Blocked at step 2 · license-scan found 18 findings in 3 groups, worst high
+Blocked at step 2 · license-scan found 18 findings in 3 groups (16 high, 2 medium)
 Clear · 5 vetters, 21 findings in 9 groups
 Clear with waivers · 2 findings accepted
 Stopped at step 1 · secret-scan found 1 critical finding, so 2 later vetters
