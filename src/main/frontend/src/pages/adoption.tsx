@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { Store } from "lucide-react";
 import { useState } from "react";
 import {
@@ -122,7 +122,11 @@ export function StalenessTable({ entries }: { entries: StaleIdentity[] }) {
       <TableBody>
         {entries.map((entry) => (
           <TableRow key={`${entry.principal}-${entry.marketplace}`}>
-            <TableCell>{entry.principal}</TableCell>
+            <TableCell>
+              <span className="block max-w-56 truncate" title={entry.principal}>
+                {entry.principal}
+              </span>
+            </TableCell>
             <TableCell>{entry.marketplace}</TableCell>
             <TableCell className="font-mono text-xs" title={entry.sha}>
               {shortSha(entry.sha)}
@@ -139,6 +143,27 @@ export function StalenessTable({ entries }: { entries: StaleIdentity[] }) {
         ))}
       </TableBody>
     </Table>
+  );
+}
+
+/**
+ * A path that wraps at its slashes rather than mid-name ("SKILL.m" / "d"); a single segment too long
+ * for the cell still wraps rather than overflowing it.
+ */
+function BreakablePath({ path }: { path: string }) {
+  return (
+    <>
+      {path.split("/").map((segment, index) => (
+        <Fragment key={index}>
+          {index > 0 ? (
+            <>
+              /<wbr />
+            </>
+          ) : null}
+          <VisibleText text={segment} />
+        </Fragment>
+      ))}
+    </>
   );
 }
 
@@ -177,8 +202,8 @@ export function PresenceTable({ report }: { report: PresenceReport }) {
                     <VisibleText text={skill.skill} />
                   </div>
                   {skill.path ? (
-                    <div className="font-mono text-xs break-all text-muted-foreground">
-                      <VisibleText text={skill.path} />
+                    <div className="font-mono text-xs wrap-break-word text-muted-foreground">
+                      <BreakablePath path={skill.path} />
                     </div>
                   ) : null}
                 </TableCell>

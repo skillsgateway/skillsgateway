@@ -409,6 +409,40 @@ test("a_link_to_a_snapshot_not_awaiting_opens_it_on_review_and_points_to_snapsho
 });
 
 /**
+ * A link naming a snapshot this marketplace does not hold — none by that id, or one of another
+ * marketplace's — says so on Review and on Snapshots instead of reading as an empty queue; a link
+ * to one it does hold says nothing of the kind.
+ *
+ * @SVCs SVC_GW_AUTH_0083
+ */
+test("a_snapshot_the_marketplace_does_not_hold_is_stated_as_not_found", async () => {
+  const { unmount } = renderPage("?snapshot=99999");
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Snapshot 99999 was not found in corp-marketplace",
+  );
+  unmount();
+
+  const second = renderPage("?snapshot=99999", "snapshots");
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Snapshot 99999 was not found in corp-marketplace",
+  );
+  second.unmount();
+
+  renderPage("?snapshot=2");
+  await screen.findByRole("region", { name: "Linked snapshot" });
+  expect(screen.queryByText(/was not found in/)).not.toBeInTheDocument();
+});
+
+/** An empty `snapshot` parameter names no snapshot, so it is not reported as a missing one. */
+test("an_empty_snapshot_parameter_is_not_reported_missing", async () => {
+  renderPage("?snapshot=");
+  await screen.findAllByTestId("snapshot-card");
+  // The statement waits for the marketplace list to settle, so absence is only meaningful after that.
+  const alert = await screen.findByRole("alert", {}, { timeout: 1000 }).catch(() => null);
+  expect(alert).toBeNull();
+});
+
+/**
  * The header is on every section, and carries the marketplace's actions — ingestion and the
  * client wizard — with the served state stated beside them.
  *

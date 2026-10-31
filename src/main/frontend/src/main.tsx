@@ -15,6 +15,7 @@ import {
   MarketplaceSnapshotsPage,
 } from "@/pages/marketplace-detail";
 import { MarketplacesPage } from "@/pages/marketplaces";
+import { NotFoundPage } from "@/pages/not-found";
 import { SnapshotFilesPage } from "@/pages/snapshot-files";
 import { OverviewPage } from "@/pages/overview";
 import { ReviewQueuePage } from "@/pages/review-queue";
@@ -63,6 +64,8 @@ const router = createBrowserRouter([
       { path: "/integrations/sinks", element: <AuditSinksPage /> },
       // Moved under Integrations; the old address is published and bookmarked (GW_AUTH_0048).
       { path: "/webhooks", element: <Navigate to="/integrations/webhooks" replace /> },
+      // Everything else: the gateway answers an unknown address with the portal (GW_AUTH_0067).
+      { path: "*", element: <NotFoundPage />, handle: { title: "Page not found" } },
     ],
   },
 ]);

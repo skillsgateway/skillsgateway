@@ -176,7 +176,34 @@ function useSnapshotAddress() {
   const setLine = (id: number, next: number) => {
     if (path) setParams({ snapshot: String(id), tab: "contents", path, line: String(next) }, { replace: true });
   };
-  return { tab, path, line, addressedId, openSnapshot, setTab, setPath, setLine };
+  return { tab, path, line, addressedId, addressedParam: params.get("snapshot"), openSnapshot, setTab, setPath, setLine };
+}
+
+/**
+ * An address naming a snapshot this marketplace does not hold — none by that id, or one of another
+ * marketplace's (GW_AUTH_0069). Said once the list is settled, so a snapshot an ingest has only just
+ * produced is not reported missing while the list catches up.
+ *
+ * @Requirements GW_AUTH_0069
+ */
+function MissingSnapshot({
+  marketplace,
+  snapshots,
+  address,
+}: {
+  marketplace: string;
+  snapshots: Snapshot[];
+  address: ReturnType<typeof useSnapshotAddress>;
+}) {
+  const refreshing = useMarketplaces().isFetching;
+  if (!address.addressedParam || refreshing) return null;
+  if (snapshots.some((s) => s.id === address.addressedId)) return null;
+  return (
+    <p role="alert" className="text-sm wrap-anywhere text-destructive">
+      Snapshot {address.addressedParam} was not found in {marketplace}. The link may name a snapshot
+      that was removed, or one of another marketplace.
+    </p>
+  );
 }
 
 function SnapshotItem({
@@ -232,6 +259,7 @@ export function MarketplaceReviewPage() {
 
   return (
     <div className="space-y-6">
+      <MissingSnapshot marketplace={marketplace.name ?? ""} snapshots={snapshots} address={address} />
       {elsewhere ? (
         <section aria-labelledby="addressed-heading" className="space-y-3">
           <h2 id="addressed-heading" className="text-lg font-semibold">Linked snapshot</h2>
@@ -309,11 +337,18 @@ export function MarketplaceSnapshotsPage() {
     />
   );
 
+  const missing = <MissingSnapshot marketplace={marketplace.name ?? ""} snapshots={snapshots} address={address} />;
   if (snapshots.length === 0)
-    return <p className="text-sm text-muted-foreground">No snapshots yet.</p>;
+    return (
+      <div className="space-y-6">
+        {missing}
+        <p className="text-sm text-muted-foreground">No snapshots yet.</p>
+      </div>
+    );
 
   return (
     <div className="space-y-6">
+      {missing}
       {awaiting.length > 0 ? (
         <p className="text-sm text-muted-foreground">
           {awaiting.length} awaiting a decision —{" "}

@@ -22,6 +22,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
+import org.springframework.security.config.annotation.web.configurers.DefaultLoginPageConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -305,6 +306,8 @@ public class SecurityConfig {
             throws Exception {
         // Ahead of the escape hatch's early return, so local development runs under the same policy.
         http.headers(headers -> contentSecurityPolicy(headers, apiReferencePath));
+        // The framework's generated /login and /logout pages give way to SignInPagesController's (GW_AUTH_0068).
+        http.with(new DefaultLoginPageConfigurer<>(), DefaultLoginPageConfigurer::disable);
         if (properties.devInsecureAuth()) {
             log.warn("skills-gateway.dev-insecure-auth is ON — the web surface is UNAUTHENTICATED. "
                     + "Never enable this outside local development.");
@@ -340,6 +343,9 @@ public class SecurityConfig {
                         // Enumerated rather than /actuator/health/** so a future health endpoint
                         // that exposes component detail is not exempted by having been added.
                         .requestMatchers("/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness")
+                        .permitAll()
+                        // Each states the reading session as it is, so it has to be readable without one.
+                        .requestMatchers(HttpMethod.GET, "/login", "/logout")
                         .permitAll()
                         .anyRequest()
                         .authenticated())

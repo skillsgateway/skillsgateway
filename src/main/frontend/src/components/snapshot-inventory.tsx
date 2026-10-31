@@ -177,7 +177,7 @@ export function PluginInventory({ plugin }: { plugin: Plugin }) {
         </span>
       </div>
       {plugin.description ? (
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm wrap-anywhere text-muted-foreground">
           <VisibleText text={plugin.description} />
         </p>
       ) : null}

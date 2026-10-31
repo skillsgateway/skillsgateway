@@ -23,6 +23,7 @@ import {
 } from "@/api/queries";
 import { Timestamp } from "@/components/timestamp";
 import { SnapshotVettingBadge } from "@/components/vetting-report";
+import { ariaSort } from "@/lib/aria-sort";
 import { isDecidable } from "@/lib/snapshot-roles";
 import {
   MARKETPLACE_NAME,
@@ -304,6 +305,7 @@ export function MarketplacesPage() {
       {
         id: "forge",
         header: "Source",
+        enableSorting: false,
         accessorFn: (row) => forgeLabel(row),
         cell: ({ row }) => (
           <div className="max-w-xs">
@@ -419,7 +421,10 @@ export function MarketplacesPage() {
               {table.getHeaderGroups().map((group) => (
                 <TableRow key={group.id}>
                   {group.headers.map((header) => (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      aria-sort={header.column.getCanSort() ? ariaSort(header.column.getIsSorted()) : undefined}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(header.column.columnDef.header, header.getContext())}

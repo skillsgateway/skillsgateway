@@ -144,6 +144,7 @@ function EventFilterField({
       <div className="max-h-44 space-y-1 overflow-y-auto rounded-md border p-2">
         <label className="flex items-center gap-2 text-sm font-medium">
           <Checkbox
+            aria-label="All events"
             checked={allSelected}
             onCheckedChange={(checked) => onSelectedChange(checked ? new Set(registry) : new Set())}
           />
@@ -156,6 +157,7 @@ function EventFilterField({
           shown.map((event) => (
             <label key={event} className="flex items-center gap-2 font-mono text-xs">
               <Checkbox
+                aria-label={event}
                 checked={selected.has(event)}
                 onCheckedChange={(checked) => toggle(event, Boolean(checked))}
               />

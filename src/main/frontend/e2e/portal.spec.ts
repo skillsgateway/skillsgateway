@@ -381,6 +381,37 @@ test("tokens_are_reached_from_the_user_menu_and_the_route_still_resolves", async
 });
 
 /**
+ * An address the portal does not have, opened cold: the gateway answers with the portal, and the
+ * portal says page not found inside its own shell rather than showing a bare error document.
+ *
+ * @SVCs SVC_GW_AUTH_0080
+ */
+test("an_unknown_address_opened_cold_shows_page_not_found_inside_the_portal", async ({ page }) => {
+  await login(page, "alice");
+  const response = await page.goto("/nonexistent/route");
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
+  await expect(page).toHaveTitle("Page not found · Skills Gateway");
+});
+
+/**
+ * A deep link opened before signing in comes back without the sign-in marker in its address, and
+ * the tab names the page.
+ *
+ * @SVCs SVC_GW_AUTH_0082
+ */
+test("a_deep_link_returns_from_sign_in_without_the_marker_and_names_its_tab", async ({ page }) => {
+  await page.goto("/audit");
+  await page.waitForURL(/9090/);
+  await page.getByPlaceholder(/enter any user/i).fill("alice");
+  await page.getByRole("button", { name: /sign.?in/i }).click();
+  await expect(page.getByRole("heading", { name: "Audit log", level: 1 })).toBeVisible();
+  await expect(page).toHaveURL(/\/audit$/);
+  await expect(page).toHaveTitle("Audit log · Skills Gateway");
+});
+
+/**
  * Signing out ends the session: the next page the browser asks for is the identity provider's,
  * which is the only thing that proves the cookie no longer authenticates anything.
  *

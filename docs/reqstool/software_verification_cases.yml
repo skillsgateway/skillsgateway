@@ -3481,12 +3481,13 @@ cases:
     verification: automated-test
     description: |
       GIVEN two marketplaces, each with a snapshot awaiting a decision, and a third with none
-      WHEN a reviewer reads the portal navigation, opens the review queue, and opens an entry
+      WHEN a reviewer reads the portal navigation, opens the review queue, orders it, and opens an entry
       THEN the navigation states two awaiting, the queue lists both snapshots with marketplace,
-      commit, state, vetting outcome and ingestion and no approve or reject control, the list of
+      commit, state, vetting outcome, finding count, ingestion and waiting time and no approve or
+      reject control, ordering by waiting time or marketplace reorders the rows, the list of
       marketplaces offers none either, and the entry opens that snapshot on its marketplace's
       review beside its evidence
-    revision: "0.3.0"
+    revision: "0.5.0"
 
   - id: SVC_GW_APPROVAL_0019
     requirement_ids: ["GW_APPROVAL_0019"]
@@ -4417,6 +4418,88 @@ cases:
       WHEN the person lists their tokens, rotates the machine credential and revokes it through the personal routes
       THEN the listing omits it, rotation and revocation answer not found, and the machine credential still authenticates
     revision: "0.1.0"
+
+  - id: SVC_GW_AUTH_0078
+    requirement_ids: ["GW_AUTH_0067"]
+    title: An unknown address is the portal to a browser and the surface's own refusal to anything else
+    verification: automated-test
+    description: |
+      GIVEN a signed-in session
+      WHEN a browser asks for a page at an address nothing serves, and another client, and a browser
+      under each of the API, facade, publication, revocation-check, webhook and actuator paths, ask
+      for an address nothing serves
+      THEN the browser's page request is answered not found with the portal, and every other request
+      is answered not found with the problem document it was answered with before
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0079
+    requirement_ids: ["GW_AUTH_0067"]
+    title: A request the gateway cannot parse is answered with a minimal page only to a browser
+    verification: automated-test
+    description: |
+      GIVEN a running gateway
+      WHEN a browser and another client each send a request whose address cannot be decoded
+      THEN both are answered bad request, the browser with a page in the portal's style that names
+      the product and loads nothing from elsewhere, and the other client with plain text
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0080
+    requirement_ids: ["GW_AUTH_0067"]
+    title: An unknown portal address opened cold shows page not found inside the portal
+    verification: automated-test
+    description: |
+      GIVEN a signed-in browser
+      WHEN it opens an address the portal does not have
+      THEN the portal's navigation is shown with a statement that the page was not found and a way
+      back to the overview
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0081
+    requirement_ids: ["GW_AUTH_0068"]
+    title: The sign-in and sign-out pages state the reader's session and offer only what it can do
+    verification: automated-test
+    description: |
+      GIVEN a request with no session and a signed-in session
+      WHEN each opens the sign-in page, the sign-in page with the sign-out marker, and the sign-out page
+      THEN each page is in the portal's style and loads nothing from elsewhere; without a session they
+      state that the reader is not signed in, claim no sign-out and offer sign-in but no sign-out;
+      with one they name the signed-in user, and the sign-out page offers a sign-out carrying the
+      session's request-forgery token
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0082
+    requirement_ids: ["GW_AUTH_0069"]
+    title: Each page names itself in the tab and the sign-in marker leaves the address
+    verification: automated-test
+    description: |
+      GIVEN the portal shell
+      WHEN it shows an estate-wide page, a marketplace's section, and a page reached with the sign-in
+      marker beside other address parameters
+      THEN the tab title names the page, and the marketplace for the section, ahead of the product
+      name, and the marker is removed while every other parameter is kept
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0083
+    requirement_ids: ["GW_AUTH_0069"]
+    title: A snapshot the address names but the marketplace does not hold is stated as not found
+    verification: automated-test
+    description: |
+      GIVEN a marketplace with snapshots
+      WHEN its review and its snapshots are opened with an address naming a snapshot it does not hold
+      THEN each states that the snapshot was not found in that marketplace, and an address naming one
+      of its snapshots states nothing of the kind
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0084
+    requirement_ids: ["GW_AUTH_0070"]
+    title: The tokens page creates a token with the chosen lifetime and lists every token's expiry
+    verification: automated-test
+    description: |
+      GIVEN the personal access tokens page and tokens that expire, never expire and have expired
+      WHEN the user reads the list and creates a token after choosing a lifetime
+      THEN the list states each expiry, never and expired respectively, the lifetime defaults to the
+      wizard's default, and the creation request carries an expiry that far ahead
+    revision: "0.5.0"
 
   - id: SVC_GW_OBSERVABILITY_0005
     requirement_ids: ["GW_OBSERVABILITY_0005"]

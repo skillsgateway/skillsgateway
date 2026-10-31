@@ -82,3 +82,73 @@ test("a_failed_token_read_renders_the_servers_reason", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent("Token store unavailable");
   expect(screen.queryByText("No tokens yet.")).not.toBeInTheDocument();
 });
+
+/**
+ * The page offers the wizard's lifetimes with the wizard's default, posts the chosen one, and
+ * lists every token's expiry — never, a date, or expired.
+ *
+ * @SVCs SVC_GW_AUTH_0084
+ */
+test("tokens_are_created_with_a_chosen_lifetime_and_listed_with_their_expiry", async () => {
+  server.use(
+    http.get("/api/v1/tokens", () =>
+      HttpResponse.json([
+        { id: 1, name: "forever", createdAt: "2026-08-14T10:00:00Z", lastUsedAt: "2026-08-14T13:00:00Z" },
+        { id: 2, name: "bounded", createdAt: "2026-08-14T10:00:00Z", lastUsedAt: "2026-08-14T13:00:00Z", expiresAt: "2099-09-13T10:00:00Z" },
+        { id: 3, name: "lapsed", createdAt: "2026-08-14T10:00:00Z", lastUsedAt: "2026-08-14T13:00:00Z", expiresAt: "2026-08-15T10:00:00Z" },
+      ]),
+    ),
+  );
+  const posted: { name?: string; expiresAt?: string }[] = [];
+  server.use(
+    http.post("/api/v1/tokens", async ({ request }) => {
+      posted.push((await request.json()) as { name?: string; expiresAt?: string });
+      return HttpResponse.json({ id: 9, name: "ci-runner", token: "sgw_x", createdAt: "2026-08-14T10:00:00Z" }, { status: 201 });
+    }),
+  );
+  const user = userEvent.setup();
+  renderPage();
+
+  expect(await screen.findByRole("columnheader", { name: "Expires" })).toBeInTheDocument();
+  expect(within(screen.getByRole("row", { name: /forever/ })).getByText("never")).toBeInTheDocument();
+  expect(within(screen.getByRole("row", { name: /bounded/ })).getByTitle(/2099-09-13T10:00:00Z/)).toBeInTheDocument();
+  expect(within(screen.getByRole("row", { name: /bounded/ })).getByText("active")).toBeInTheDocument();
+  expect(within(screen.getByRole("row", { name: /lapsed/ })).getByText("expired")).toBeInTheDocument();
+
+  const expires = screen.getByRole("group", { name: "Expires" });
+  expect(within(expires).getByRole("button", { name: "30 days" })).toHaveAttribute("aria-pressed", "true");
+  for (const label of ["7 days", "90 days", "No expiry"]) {
+    expect(within(expires).getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "false");
+  }
+
+  await user.click(within(expires).getByRole("button", { name: "7 days" }));
+  await user.type(screen.getByLabelText("Token name"), "ci-runner");
+  const before = Date.now();
+  await user.click(screen.getByRole("button", { name: "Create token" }));
+  await screen.findByTestId("token-cleartext");
+
+  expect(posted).toHaveLength(1);
+  expect(posted[0]!.name).toBe("ci-runner");
+  const ahead = Date.parse(posted[0]!.expiresAt ?? "") - before;
+  expect(ahead).toBeGreaterThan(7 * 86_400_000 - 60_000);
+  expect(ahead).toBeLessThan(7 * 86_400_000 + 60_000);
+});
+
+/** A refused lifetime is stated beside the choice, and choosing another clears it. */
+test("a_refused_lifetime_is_stated_beside_the_choice_until_another_is_chosen", async () => {
+  server.use(
+    http.post("/api/v1/tokens", () =>
+      HttpResponse.json({ detail: "expiresAt exceeds the maximum token lifetime" }, { status: 422 }),
+    ),
+  );
+  const user = userEvent.setup();
+  renderPage();
+  await user.click(screen.getByRole("button", { name: "90 days" }));
+  await user.type(screen.getByLabelText("Token name"), "ci-runner");
+  await user.click(screen.getByRole("button", { name: "Create token" }));
+  const refusal = await screen.findByRole("alert");
+  expect(refusal).toHaveTextContent("maximum token lifetime");
+
+  await user.click(screen.getByRole("button", { name: "30 days" }));
+  expect(screen.queryByText(/maximum token lifetime/)).not.toBeInTheDocument();
+});

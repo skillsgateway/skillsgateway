@@ -385,7 +385,8 @@ export function VettingFlow({
             // not have. The ring is the Card's own silhouette, borrowed for the same reason.
             const terminal = node.terminal === true;
             return (
-              <li key={node.id} className="flex min-w-36 items-stretch">
+              // Not shrinkable: the row scrolls, so a step keeps its whole name rather than "secret-sc…".
+              <li key={node.id} className="flex min-w-36 shrink-0 items-stretch">
                 {index > 0 ? (
                   <span className="flex w-6 shrink-0 items-center" aria-hidden>
                     <span className="h-px flex-1 bg-border" />
@@ -406,7 +407,7 @@ export function VettingFlow({
                     className={`flex items-center gap-1.5 text-sm ${terminal ? "font-semibold" : "font-medium"}`}
                   >
                     <NodeIcon node={node} />
-                    <span className="min-w-0 truncate" title={node.label}>
+                    <span className="whitespace-nowrap" title={node.label}>
                       {node.label}
                     </span>
                   </span>
