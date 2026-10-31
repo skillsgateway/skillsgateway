@@ -99,6 +99,9 @@ The system SHALL pass SVC_GW_AUTH_0064.
 #### Scenario: SVC_GW_AUTH_0065
 The system SHALL pass SVC_GW_AUTH_0065.
 
+#### Scenario: SVC_GW_AUTH_0085
+The system SHALL pass SVC_GW_AUTH_0085.
+
 ### Requirement: GW_AUTH_0061
 The system SHALL implement GW_AUTH_0061.
 

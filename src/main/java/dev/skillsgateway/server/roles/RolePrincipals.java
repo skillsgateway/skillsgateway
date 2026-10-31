@@ -33,13 +33,20 @@ public final class RolePrincipals {
         return Optional.empty();
     }
 
-    /** The grants API's and the estate's check; the refusal names the rule, never the value. */
+    /** Why the value cannot be a grant's or a configured administrator's principal, length included. */
     @Requirements({"GW_AUTH_0060"})
-    public static void requireGrantable(String principal) {
+    public static Optional<String> principalProblem(String principal) {
         Optional<String> problem = problem(principal);
         if (problem.isEmpty() && principal.codePointCount(0, principal.length()) > MAX_LENGTH) {
             problem = Optional.of("must be at most %d characters".formatted(MAX_LENGTH));
         }
+        return problem;
+    }
+
+    /** The grants API's and the estate's check; the refusal names the rule, never the value. */
+    @Requirements({"GW_AUTH_0060"})
+    public static void requireGrantable(String principal) {
+        Optional<String> problem = principalProblem(principal);
         if (problem.isPresent()) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "the principal " + problem.get());
         }
