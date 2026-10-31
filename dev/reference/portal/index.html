@@ -3781,12 +3781,12 @@ session cookie is its only credential.</p>
 <tr>
 <td>Oversight</td>
 <td>Audit log</td>
-<td><a href="#audit-log"><code>/audit</code></a></td>
+<td><a href="#audit-log"><code>/audit</code></a> — <strong>shown to auditors and administrators</strong></td>
 </tr>
 <tr>
 <td>Oversight</td>
 <td>Adoption</td>
-<td><a href="#adoption"><code>/adoption</code></a></td>
+<td><a href="#adoption"><code>/adoption</code></a> — <strong>shown to auditors and administrators</strong></td>
 </tr>
 <tr>
 <td>Configuration</td>
@@ -3796,12 +3796,12 @@ session cookie is its only credential.</p>
 <tr>
 <td>Configuration</td>
 <td>Integrations → Webhooks</td>
-<td><a href="#webhooks"><code>/integrations/webhooks</code></a></td>
+<td><a href="#webhooks"><code>/integrations/webhooks</code></a> — <strong>shown to auditors and administrators</strong></td>
 </tr>
 <tr>
 <td>Configuration</td>
 <td>Integrations → Audit sinks</td>
-<td><a href="#audit-sinks"><code>/integrations/sinks</code></a></td>
+<td><a href="#audit-sinks"><code>/integrations/sinks</code></a> — <strong>shown to auditors and administrators</strong></td>
 </tr>
 <tr>
 <td>Reference</td>
@@ -3825,9 +3825,14 @@ outbound integrations — webhook subscribers and audit export sinks, the same k
 of object — are two sections listed beneath <strong>Integrations</strong> on every page;
 <code>/integrations</code> opens the first. The earlier address <code>/webhooks</code> redirects to
 <code>/integrations/webhooks</code>, so existing links keep working.</p>
+<p>The sidebar lists only the pages the session's roles can read; a group with
+nothing left in it is not drawn. A session with no role, or an approver, sees
+neither Oversight nor Integrations. Every address still opens: a page the session
+cannot read states the role it needs (see <a href="#authorization">Authorization</a>).</p>
 <p>Inside a marketplace, the sidebar lists that marketplace beneath <strong>Marketplaces</strong>
 with its <a href="#marketplace-detail">sections</a> — <strong>Review</strong> (with its own awaiting
-count), <strong>Snapshots</strong>, <strong>Activity</strong> and <strong>Settings</strong> — and the current section
+count), <strong>Snapshots</strong>, <strong>Activity</strong> (auditors and administrators only) and
+<strong>Settings</strong> — and the current section
 is the one highlighted entry. Leaving the marketplace closes the list; it is
 read from the address, never remembered. <a href="#snapshot-contents">Snapshot contents</a>
 is reached from a snapshot's card. <a href="#access-tokens">Access tokens</a> is a per-user concern, not
@@ -3857,8 +3862,9 @@ address it returns to, so the address you copy is the one you were sent.</p>
   identity provider</code>, <code>approver of acme-skills — granted in the portal</code>, and so
   on for a role sourced from configuration or from the local development
   authentication escape hatch. A session holding no role is told so, together
-  with what it can still do (read the portal, manage its own access tokens),
-  rather than shown an empty list. If the identity provider truncated the
+  with what it can still do (browse the marketplaces and their snapshots'
+  vetting, manage its own access tokens) and that anything else needs a role an
+  administrator grants, rather than shown an empty list. If the identity provider truncated the
   membership claim, a line says the role list may be incomplete.</li>
 <li>The <strong>theme control</strong> — three-state, cycling <strong>system → light → dark</strong>: it
   defaults to <em>system</em> (follow the operating system's appearance), and its icon
@@ -3885,9 +3891,10 @@ percent-escape — is answered <code>400</code> with a page in the same style to
 and with one line of plain text to any other client. API, facade, publication,
 revocation-check, webhook and actuator addresses keep their own refusals,
 whatever the client accepts.</p>
-<p>The menu only reports what the session holds; it never hides or disables a
-control by role — the server is the sole authority on what a request may do,
-and refuses what it must regardless of what the menu shows.</p>
+<p>The menu only reports what the session holds. The rest of the portal uses the
+same read to decide which controls and pages to offer (see
+<a href="#authorization">Authorization</a>); the server stays the sole authority on what a
+request may do.</p>
 <h2 id="conventions-across-pages">Conventions across pages<a class="headerlink" href="#conventions-across-pages" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Every mutation reports through a toast — the action's success message, or the
@@ -3923,8 +3930,41 @@ and refuses what it must regardless of what the menu shows.</p>
 <p>The server refuses mutations, the audit
 surface and the <a href="#snapshot-contents">snapshot contents reads</a> to sessions without an
 applicable role — see
-<a href="../../guides/delegated-administration/">Delegated administration</a>; the portal
-surfaces those refusals as errors rather than hiding controls.</p>
+<a href="../../guides/delegated-administration/">Delegated administration</a>. The portal
+reads the session's roles from <code>GET /api/v1/me</code> and offers only what they permit:</p>
+<table>
+<thead>
+<tr>
+<th>Control or page</th>
+<th>Offered to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Ingest</strong>, <strong>Approve</strong>, <strong>Reject</strong>, <strong>Waive</strong>, <strong>Revoke</strong> a waiver, <strong>Re-vet now</strong>, re-running the chain, a revoked snapshot's fetchers, the file-by-file <strong>Diff</strong>, the <strong>Contents</strong> tab and <a href="#snapshot-contents">Snapshot contents</a></td>
+<td>an approver of that marketplace, or an administrator</td>
+</tr>
+<tr>
+<td><strong>Delete</strong> and <strong>Restore</strong> a snapshot, <strong>Register marketplace</strong>, everything under a marketplace's Settings beyond its upstream facts, the <a href="#vetting-chain-governance">Vetting chain</a> page</td>
+<td>an administrator</td>
+</tr>
+<tr>
+<td><a href="#audit-log">Audit log</a>, <a href="#adoption">Adoption</a>, <a href="#webhooks">Webhooks</a>, <a href="#audit-sinks">Audit sinks</a>, a marketplace's <strong>Activity</strong>, the Overview's <strong>Fetch ledger</strong> card</td>
+<td>an auditor or an administrator</td>
+</tr>
+</tbody>
+</table>
+<p>A control the session cannot use is not shown. Where a snapshot awaits a
+decision the session cannot make, the card says so in place of the decision —
+<em>"Approving or rejecting a snapshot of {name} needs the approver role for it."</em>
+A page or section the session cannot read shows one statement of the role it
+needs — <em>"This page needs the auditor role."</em> — with a line on why, and makes
+none of the reads the server would refuse. For a session without the approver
+role, a snapshot card has no <strong>Contents</strong> tab and its vetting findings' locations
+are plain text rather than links into it.</p>
+<p>Roles can change while a page is open. Whenever the server refuses a request
+(<code>403</code>), the portal reads <code>GET /api/v1/me</code> again and the page follows the
+answer without a reload.</p>
 <p>Access tokens are scoped per principal server-side regardless: you only ever
 see and revoke your own.</p>
 <hr />
@@ -3936,7 +3976,7 @@ action leading elsewhere. Read-only — nothing here changes state.</p>
 are <code>held</code>, <code>approved</code> and <code>rejected</code> across all of them. When any snapshot is
 held, a secondary badge reads <em>"{n} awaiting review"</em> and links to the
 <a href="#review-queue">review queue</a>. Action: <strong>Manage marketplaces</strong>.</p>
-<p><strong>Fetch ledger</strong> — a chip with how many entries the ledger holds: <em>"{n} ledger
+<p><strong>Fetch ledger</strong> (auditors and administrators) — a chip with how many entries the ledger holds: <em>"{n} ledger
 entries"</em>, or <em>"about {n} ledger entries"</em> once the ledger is large enough that the
 server estimates rather than counts (see <a href="../api/audit/#get-apiv1audit"><code>GET /api/v1/audit</code></a>).
 It counts every entry: fetches, administrative actions and vetting bookkeeping.
@@ -4271,11 +4311,11 @@ it.
 <tbody>
 <tr>
 <td><strong>Vetting</strong> (default)</td>
-<td>The <a href="#the-chain-flow">vetting report</a>: chain outcome, verdicts, findings, waivers. Every <code>path:line</code> location is a link that opens the file at that line in <strong>Contents</strong> (not in the approve dialog, which stays on the decision)</td>
+<td>The <a href="#the-chain-flow">vetting report</a>: chain outcome, verdicts, findings, waivers. Every <code>path:line</code> location is a link that opens the file at that line in <strong>Contents</strong> (not in the approve dialog, which stays on the decision, and not for a session without the approver role, which has no <strong>Contents</strong> tab)</td>
 </tr>
 <tr>
 <td><strong>Contents</strong></td>
-<td>The <a href="#snapshot-contents">file explorer</a>, inside the card</td>
+<td>The <a href="#snapshot-contents">file explorer</a>, inside the card. Offered to an approver of the marketplace or an administrator; an address naming this tab shows anyone else the role it needs</td>
 </tr>
 <tr>
 <td><strong>Diff</strong></td>
@@ -4791,7 +4831,11 @@ markers.</p>
 <td>No baseline; approving serves all of it</td>
 </tr>
 <tr>
-<td>No approver role</td>
+<td>No approver role for the marketplace (from the session's roles)</td>
+<td>"This page needs the approver role for X.", and nothing is read</td>
+</tr>
+<tr>
+<td>A read the server refuses anyway (a role revoked since the page opened)</td>
 <td>"You cannot read this snapshot's contents.", naming the role needed</td>
 </tr>
 <tr>
@@ -4835,7 +4879,9 @@ page is gated by the server refusing them, not by the link being hidden.</p>
 <p><strong>Administrator-only.</strong> The sidebar offers the entry only to a session holding
 the <code>admin</code> role, and the page itself renders a stated refusal —
 <em>"This page needs the administrative role."</em> — to any other session rather than
-an empty shell. The server refuses each of the page's reads independently, which
+an empty shell. It points such a session at what it can read instead: the
+vetters that ran on a snapshot, on that snapshot's <strong>Vetting</strong> tab. A
+marketplace's own chain is administrator-only too. The server refuses each of the page's reads independently, which
 is what actually protects them.</p>
 <p>Where <a href="#vetting-chain-administrators">Marketplace detail</a> governs one
 marketplace's chain, this page governs the estate: the chain every marketplace
