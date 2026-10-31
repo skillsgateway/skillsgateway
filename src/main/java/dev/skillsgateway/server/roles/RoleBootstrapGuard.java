@@ -2,6 +2,8 @@ package dev.skillsgateway.server.roles;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import io.github.reqstool.annotations.Requirements;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class RoleBootstrapGuard {
 
     public RoleBootstrapGuard(SkillsGatewayProperties properties) {
+        requireWellFormedAdmins(properties.roles().admins());
         if (properties.devInsecureAuth()) {
             // The escape hatch confers the administrative role on its own principal (GW_AUTH_0028), so
             // the estate is administerable and there is nothing to check. DevInsecureAuthGuard
@@ -29,6 +32,23 @@ public class RoleBootstrapGuard {
         }
         if (!administrable(properties)) {
             throw new IllegalStateException(noAdministrator());
+        }
+    }
+
+    /**
+     * Every configured administrator is matched exactly, so an entry no session can present would
+     * pass the check below while naming nobody. Refused in every mode, by position, never by value.
+     */
+    @Requirements({"GW_AUTH_0060"})
+    private static void requireWellFormedAdmins(List<String> admins) {
+        for (int i = 0; i < admins.size(); i++) {
+            Optional<String> problem = RolePrincipals.principalProblem(admins.get(i));
+            if (problem.isPresent()) {
+                throw new IllegalStateException(("skills-gateway.roles.admins[%d] %s. A configured administrator"
+                                + " is matched exactly as a session presents its principal, so this entry would"
+                                + " match nobody; correct it and restart.")
+                        .formatted(i, problem.get()));
+            }
         }
     }
 
