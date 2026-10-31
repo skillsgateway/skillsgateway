@@ -4376,10 +4376,11 @@ the result it follows.</p>
 <p>Above the nodes, one sentence states the answer and where the chain stopped, so
 it can be read without opening anything:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Blocked at step 1 · secret-scan found 1 critical finding
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Clear · 5 vetters, 0 findings
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Clear with waivers · 2 findings accepted
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Stopped at step 1 · secret-scan found 1 critical finding, so 2 later vetters
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>                    did not run — re-vet to see what they say
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Blocked at step 2 · license-scan found 18 findings in 3 groups, worst high
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Clear · 5 vetters, 21 findings in 9 groups
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Clear with waivers · 2 findings accepted
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>Stopped at step 1 · secret-scan found 1 critical finding, so 2 later vetters
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>                    did not run — re-vet to see what they say
 </code></pre></div>
 <p>The last of those is the one a reader must not skim past: a chain that
 <a href="../../concepts/vetting/#stopping-the-chain-after-a-failure">stopped early</a> has a
@@ -4404,15 +4405,15 @@ never looked and what to do about it.</p>
 </tr>
 <tr>
 <td>State word</td>
-<td><code>pass</code>, <code>warn</code>, <code>fail</code>, <code>error</code>, <code>pending</code>, <code>skipped</code> (switched off), <code>not reached</code> (the chain stopped before it), <code>not run</code> (no verdict at all) for a vetter; <code>clear</code>, <code>clear with waivers</code>, <code>blocked</code> for the outcome; <code>open</code> or <code>closed</code> for the approval gate. The word is always present — colour never carries a state on its own.</td>
+<td><code>pass</code>, <code>warn</code>, <code>fail</code>, <code>error</code>, <code>pending</code>, <code>waived</code> (it failed, and active waivers cover every finding at high or above), <code>skipped</code> (switched off), <code>not reached</code> (the chain stopped before it), <code>not run</code> (no verdict at all) for a vetter; <code>clear</code>, <code>clear with waivers</code>, <code>blocked</code> for the outcome; <code>open</code> or <code>closed</code> for the approval gate. The word is always present — colour never carries a state on its own.</td>
 </tr>
 <tr>
 <td>Top edge</td>
-<td>The same state, as colour: the accent for a pass or warn, red for a fail or error, a plain hairline for anything that reached no conclusion. A second, scannable carrier of the word above it, never a replacement for it.</td>
+<td>The same state, as colour: the accent for a pass, warn or waived, red for a fail or error, a plain hairline for anything that reached no conclusion. A second, scannable carrier of the word above it, never a replacement for it.</td>
 </tr>
 <tr>
 <td>Finding count</td>
-<td>How many findings that vetter raised, when it raised any.</td>
+<td>How many findings that vetter raised, when it raised any, one per location: <em>3 findings</em>, or <em>18 findings in 3 groups</em> when identical content collapsed them into fewer <a href="#waiving-a-finding">finding groups</a>. The headline, the stop reason and the vetter's block below count the same way.</td>
 </tr>
 <tr>
 <td><code>external</code> chip</td>
@@ -4420,7 +4421,7 @@ never looked and what to do about it.</p>
 </tr>
 <tr>
 <td><code>N waived</code> chip</td>
-<td>How many of that vetter's findings an active waiver is suppressing. The vetter keeps the verdict it reached: an accepted risk is never redrawn as a pass.</td>
+<td>How many of that vetter's findings an active waiver is suppressing. A vetter whose remaining findings would still block keeps the verdict it reached; one whose blocking findings are all covered reads <code>waived</code>, never <code>pass</code>: an accepted risk is never redrawn as a clean result.</td>
 </tr>
 </tbody>
 </table>
@@ -4429,8 +4430,9 @@ is drawn as a filled surface rather than an outline, so the end of the chain rea
 as the end.</p>
 <p>Every node is a button. Activating one opens its detail:</p>
 <ul>
-<li><strong>A vetter</strong> — its verdict, its version, whether it is built in or external,
-  its self-description, and its findings, with a waived one struck through and
+<li><strong>A vetter</strong> — its verdict (for <code>waived</code>, also the verdict it recorded), its
+  version, whether it is built in or external, its self-description, its count,
+  and its findings, with a waived one struck through and
   badged. A <code>skipped</code> node states that an administrator switched the vetter
   off for this marketplace and that the scope and reason are on the
   <a href="#vetting-chain-administrators">marketplace's vetting chain</a>, which is
@@ -4439,7 +4441,7 @@ as the end.</p>
   finding which stopped the chain lets the next run get this far without standing
   in for the verdict this vetter never gave.</li>
 <li><strong>The outcome</strong> — how the aggregation reached its answer, what the vetters
-  themselves recorded, which vetters are objecting, the vetters the run never
+  themselves recorded, which vetters are objecting (a <code>waived</code> vetter is not), the vetters the run never
   reached, and the findings that still need a waiver.</li>
 <li><strong>Ingest</strong> and <strong>Approval</strong> — what the step is, and why the gate is where it is.</li>
 </ul>
@@ -4447,9 +4449,13 @@ as the end.</p>
 read side by side and a waiver is written next to the one being accepted. Both
 are always shown.</p>
 <p>It shows the effective chain outcome badge and one block per vetter: an icon
-and badge for the verdict state, the vetter name, a one-line summary, and
-every finding as severity badge, rule id, <code>path:line</code>, and message. A vetter
-with nothing to report shows "Nothing found."</p>
+and badge for the verdict state, the vetter name, the count in the chain's
+wording with the worst severity (<em>18 findings in 3 groups; worst high</em>), or,
+for a vetter with nothing above informational, its coverage summary, and
+every finding group as severity badge, rule id, <code>path:line</code>, and message. The
+severity sits in a column of its own, so a long message wraps under its rule.
+A vetter whose blocking findings are all waived shows a <strong>waived</strong> badge and
+<em>recorded fail</em> beside it. A vetter with nothing to report shows "Nothing found."</p>
 <p>A finding an active waiver is suppressing is struck through and badged
 <strong>waived by {approver} until {date}</strong>; one that still blocks carries a
 <strong>Waive finding {rule}</strong> button. When the effective outcome only clears because
@@ -4651,8 +4657,10 @@ is.</p>
   <strong>Formatted</strong>) control switches between the two. Other text always opens
   numbered.</li>
 </ul>
-<p>A finding is marked on the one line its location names; a finding whose message
-names further lines marks only that one. <strong>Copy link</strong> includes the line once one is chosen, and the address of this
+<p>A finding is marked on the line its location names and on every further line
+its message lists at its end, as in <em>… (lines 81, 86)</em>. Lines a long list counts
+as <em>+N more</em> are not named, so they are not marked; the note on the first line
+still says how many there are. <strong>Copy link</strong> includes the line once one is chosen, and the address of this
 route takes <code>?line=</code> beside <code>?path=</code>.</p>
 <p>A reviewer who may read contents but not vetting still gets the file, without
 markers.</p>
