@@ -273,8 +273,8 @@ test("the_step_headline_and_stop_reason_count_findings_and_groups_in_one_wording
   expect(nodes.find((node) => node.id === "vetter-license-scan")?.meta).toBe("18 findings in 3 groups");
   // Nothing collapsed: the groups are not named.
   expect(nodes.find((node) => node.id === "vetter-secret-scan")?.meta).toBe("2 findings");
-  // 16 of the 18 are high: the worst severity is named, not stretched over every finding.
-  expect(snapshotHeadline(nodes).detail).toBe("license-scan found 18 findings in 3 groups, worst high");
+  // 16 of the 18 are high: each severity is counted, worst first, not stretched over every finding.
+  expect(snapshotHeadline(nodes).detail).toBe("license-scan found 18 findings in 3 groups (16 high, 2 medium)");
 
   const clear = snapshotFlow({ ...groupedVetting, outcome: "clear" });
   expect(snapshotHeadline(clear).detail).toBe("2 vetters, 20 findings in 5 groups");

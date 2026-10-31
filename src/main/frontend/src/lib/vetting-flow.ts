@@ -493,10 +493,13 @@ function stoppedReason(node: FlowNode): string {
   if (entries.length === 0) return "objected";
   const worst = worstSeverity(entries.map((entry) => entry.severity));
   const counts = findingCounts(node.verdict);
-  // The worst severity describes every finding only when every finding has it.
-  return entries.every((entry) => entry.severity === worst)
-    ? `found ${findingCount(counts, worst)}`
-    : `found ${findingCount(counts)}, worst ${worst}`;
+  // One severity names the findings only when every finding has it; otherwise each is counted.
+  if (entries.every((entry) => entry.severity === worst)) return `found ${findingCount(counts, worst)}`;
+  const bySeverity = SEVERITY_ORDER.toReversed()
+    .map((severity) => [severity, entries.filter((entry) => entry.severity === severity).length] as const)
+    .filter(([, n]) => n > 0)
+    .map(([severity, n]) => `${n} ${severity}`);
+  return `found ${findingCount(counts)} (${bySeverity.join(", ")})`;
 }
 
 /** Severity order as the gateway ranks it; the worst present is the one worth naming. */
