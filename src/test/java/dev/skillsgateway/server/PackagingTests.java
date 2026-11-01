@@ -457,7 +457,7 @@ class PackagingTests {
         assertThat(body).contains("GITHUB_STEP_SUMMARY");
         assertThat(stepNames(wf, "image")).containsSubsequence("Push the multi-arch image", "Attest SBOM");
         Map<String, Object> attest = step(wf, "image", "Attest SBOM");
-        assertThat(String.valueOf(attest.get("uses"))).contains("attest-sbom");
+        assertThat(String.valueOf(attest.get("uses"))).startsWith("actions/attest@");
         assertThat(section(attest, "with"))
                 .containsEntry("sbom-path", "target/classes/META-INF/sbom/application.cdx.json")
                 .containsEntry("subject-digest", "${{ steps.push.outputs.digest }}");
