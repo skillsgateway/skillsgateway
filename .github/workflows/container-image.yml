@@ -55,10 +55,12 @@ jobs:
     permissions:
       contents: read
       # Publishing runs only from release.yml (never from a push, a schedule or
-      # a bare dispatch); these cover the GHCR push and the SBOM attestation.
+      # a bare dispatch); these cover the GHCR push, the attestations and the
+      # storage record that lists the image in the org's linked artifacts.
       packages: write
       id-token: write
       attestations: write
+      artifact-metadata: write
     services:
       postgres:
         image: postgres:18@sha256:3a4264520e121176619f54ff867d12774bc81e95e7b84db58d63bccdb6144b81

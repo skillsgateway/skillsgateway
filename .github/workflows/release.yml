@@ -166,6 +166,7 @@ jobs:
       packages: write
       id-token: write
       attestations: write
+      artifact-metadata: write
     with:
       version: ${{ needs.prepare.outputs.version }}
 
