@@ -20,25 +20,10 @@ class VetterCancellationTests {
     /** One line on which the download-then-run pattern backtracks for far longer than any test. */
     private static final String PATHOLOGICAL_LINE = "curl -o x ".repeat(6_554);
 
-    private static void assertStopsWhenInterrupted(Runnable work) throws InterruptedException {
-        Thread thread = new Thread(work, "vetter-under-test");
-        thread.setDaemon(true);
-        thread.start();
-        Thread.sleep(300);
-        assertThat(thread.isAlive())
-                .as("still matching before the interruption")
-                .isTrue();
-        thread.interrupt();
-        thread.join(2_000);
-        assertThat(thread.isAlive())
-                .as("still matching two seconds after the interruption")
-                .isFalse();
-    }
-
     @Test
     @SVCs({"SVC_GW_VETTING_0064"})
     void an_interrupted_scan_of_a_pathological_line_stops() throws Exception {
-        assertStopsWhenInterrupted(() -> RuntimeFetch.scan(PATHOLOGICAL_LINE, true));
+        InterruptedRun.assertStopsWhenInterrupted(() -> RuntimeFetch.scan(PATHOLOGICAL_LINE, true));
     }
 
     @Test
@@ -57,7 +42,7 @@ class VetterCancellationTests {
         files.put("p/s.sh", ("#!/bin/sh\n" + PATHOLOGICAL_LINE + "\n").getBytes(StandardCharsets.UTF_8));
         InMemorySnapshot snapshot = new InMemorySnapshot(files);
 
-        assertStopsWhenInterrupted(() -> new ExecutableSurfaceVetter().vet(snapshot));
+        InterruptedRun.assertStopsWhenInterrupted(() -> new ExecutableSurfaceVetter().vet(snapshot));
     }
 
     @Test
