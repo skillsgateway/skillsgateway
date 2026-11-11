@@ -231,8 +231,8 @@ importers:
         specifier: 1.65.0
         version: 1.65.0
       '@reqstool/reqstool-typescript-tags':
-        specifier: 0.3.0
-        version: 0.3.0
+        specifier: 1.0.0
+        version: 1.0.0
       '@storybook/addon-a11y':
         specifier: 10.6.6
         version: 10.6.6(storybook@10.6.6(@types/react@19.3.0)(react@19.3.1))
@@ -1279,8 +1279,8 @@ packages:
     resolution: {integrity: sha512-jDFMu4zirFVOF9nEWCT31s7OzzVhkxZkb4lO3yZhkdPXAOspLo10ED9thVgm6gtI0dJBTLa+mNP0IYeZpVSYGA==}
     engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
-  '@reqstool/reqstool-typescript-tags@0.3.0':
-    resolution: {integrity: sha512-oG8MH3LcTrh/jqypGE9Lc68pb7N62emVXcHmcX9nw6vYf/tTvFEBHlMKCIU2fimC9p3wam25A17SkfMJM1W6dw==}
+  '@reqstool/reqstool-typescript-tags@1.0.0':
+    resolution: {integrity: sha512-8e9dOs4Z+FKWsZlrFUX0lKE3G/QEjImctNkrazoNPdp9+hiKTRoRRaqNetbpF6DCVTR3IyKWGK+Ig2jd4MVodg==}
     hasBin: true
 
   '@rolldown/binding-android-arm-eabi@1.2.16':
@@ -1946,6 +1946,9 @@ packages:
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
 
+  argparse@3.0.4:
+    resolution: {integrity: sha512-fwWK3Zq22l4XJJjx5mcBHGikIk+hJqO+32dPm0Jur7+rtG5x1scOjSfdT9ZKeWHPpsya/l0HHK4tDImBkTrtvA==}
+
   aria-query@5.3.0:
     resolution: {integrity: sha512-b0P0sZPKtyu8HkeRAfCq0IfURZK+SuwMjY1UXGBU27wpAiTwQAIlq56IbIO+ytk/JjS1fMR14ee5WBBfKi5J6A==}
 
@@ -2508,8 +2511,8 @@ packages:
     resolution: {integrity: sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==}
     hasBin: true
 
-  js-yaml@5.3.0:
-    resolution: {integrity: sha512-muutsYr+e2+d3rTgUGslq5rxbBlUy3cJ61IsHag2QNDQV+7zXWjkUpmALIajhrlLlrgRUiymj6U3zUr/TMK84Q==}
+  js-yaml@5.5.0:
+    resolution: {integrity: sha512-paNr4LFIFPjeeSmwNYdrb8FafLLG/Cr2Af3GjbsHJ5CxIjH4r0c2emlmRdAtpPAieP1gRVzk6buBbVP5gBMGAg==}
     hasBin: true
 
   jsdom@30.1.3:
@@ -4246,11 +4249,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@reqstool/reqstool-typescript-tags@0.3.0':
+  '@reqstool/reqstool-typescript-tags@1.0.0':
     dependencies:
       commander: 15.0.0
       fast-glob: 3.3.3
-      js-yaml: 5.3.0
+      js-yaml: 5.5.0
       typescript: 6.0.3
 
   '@rolldown/binding-android-arm-eabi@1.2.16':
@@ -4830,6 +4833,8 @@ snapshots:
 
   argparse@2.0.1: {}
 
+  argparse@3.0.4: {}
+
   aria-query@5.3.0:
     dependencies:
       dequal: 2.0.3
@@ -5310,9 +5315,9 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  js-yaml@5.3.0:
+  js-yaml@5.5.0:
     dependencies:
-      argparse: 2.0.1
+      argparse: 3.0.4
 
   jsdom@30.1.3:
     dependencies:
