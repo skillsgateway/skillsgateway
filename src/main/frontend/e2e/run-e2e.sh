@@ -23,9 +23,10 @@ GATEWAY_PORT="${E2E_GATEWAY_PORT:-18081}"
 # and lsof (macOS) exists is used; with neither, the probe is skipped rather than guessed at.
 port_holder=""
 if command -v ss >/dev/null 2>&1; then
-  port_holder="$(ss -ltnp "sport = :$GATEWAY_PORT" 2>/dev/null | tail -n +2)"
+  port_holder="$(ss -ltnp "sport = :$GATEWAY_PORT" 2>/dev/null | tail -n +2 || true)"
 elif command -v lsof >/dev/null 2>&1; then
-  port_holder="$(lsof -nP -iTCP:"$GATEWAY_PORT" -sTCP:LISTEN 2>/dev/null | tail -n +2)"
+  # lsof exits 1 when nothing listens, which pipefail would turn into an exit.
+  port_holder="$(lsof -nP -iTCP:"$GATEWAY_PORT" -sTCP:LISTEN 2>/dev/null | tail -n +2 || true)"
 fi
 if [[ -n "$port_holder" ]]; then
   echo "port $GATEWAY_PORT is already in use — set E2E_GATEWAY_PORT to a free port:" >&2
