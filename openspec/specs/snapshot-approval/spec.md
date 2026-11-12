@@ -9,97 +9,113 @@ approval decisions by reviewers and the provenance record of every approval.
 The system SHALL implement GW_APPROVAL_0001.
 
 #### Scenario: SVC_GW_APPROVAL_0001
-The system SHALL pass SVC_GW_APPROVAL_0001.
+- **WHEN** SVC_GW_APPROVAL_0001 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0002
 The system SHALL implement GW_APPROVAL_0002.
 
 #### Scenario: SVC_GW_APPROVAL_0002
-The system SHALL pass SVC_GW_APPROVAL_0002.
+- **WHEN** SVC_GW_APPROVAL_0002 is run
+- **THEN** it passes
 
 ### Requirement: GW_INGEST_0004
 The system SHALL implement GW_INGEST_0004.
 
 #### Scenario: SVC_GW_INGEST_0004
-The system SHALL pass SVC_GW_INGEST_0004.
+- **WHEN** SVC_GW_INGEST_0004 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0004
 The system SHALL implement GW_APPROVAL_0004.
 
 #### Scenario: SVC_GW_APPROVAL_0004
-The system SHALL pass SVC_GW_APPROVAL_0004.
+- **WHEN** SVC_GW_APPROVAL_0004 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0004.1
 The system SHALL implement GW_APPROVAL_0004.1.
 
 #### Scenario: SVC_GW_APPROVAL_0004.1
-The system SHALL pass SVC_GW_APPROVAL_0004.1.
+- **WHEN** SVC_GW_APPROVAL_0004.1 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0004.2
 The system SHALL implement GW_APPROVAL_0004.2.
 
 #### Scenario: SVC_GW_APPROVAL_0004.2
-The system SHALL pass SVC_GW_APPROVAL_0004.2.
+- **WHEN** SVC_GW_APPROVAL_0004.2 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0004.3
 The system SHALL implement GW_APPROVAL_0004.3.
 
 #### Scenario: SVC_GW_APPROVAL_0004.3
-The system SHALL pass SVC_GW_APPROVAL_0004.3.
+- **WHEN** SVC_GW_APPROVAL_0004.3 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0004.4
 The system SHALL implement GW_APPROVAL_0004.4.
 
 #### Scenario: SVC_GW_APPROVAL_0004.4
-The system SHALL pass SVC_GW_APPROVAL_0004.4.
+- **WHEN** SVC_GW_APPROVAL_0004.4 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0004.5
 The system SHALL implement GW_APPROVAL_0004.5.
 
 #### Scenario: SVC_GW_APPROVAL_0004.5
-The system SHALL pass SVC_GW_APPROVAL_0004.5.
+- **WHEN** SVC_GW_APPROVAL_0004.5 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0010
 The system SHALL implement GW_APPROVAL_0010.
 
 #### Scenario: SVC_GW_APPROVAL_0010
-The system SHALL pass SVC_GW_APPROVAL_0010.
+- **WHEN** SVC_GW_APPROVAL_0010 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0011
 The system SHALL implement GW_APPROVAL_0011.
 
 #### Scenario: SVC_GW_APPROVAL_0011
-The system SHALL pass SVC_GW_APPROVAL_0011.
+- **WHEN** SVC_GW_APPROVAL_0011 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0012
 The system SHALL implement GW_APPROVAL_0012.
 
 #### Scenario: SVC_GW_APPROVAL_0012
-The system SHALL pass SVC_GW_APPROVAL_0012.
+- **WHEN** SVC_GW_APPROVAL_0012 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0013
 The system SHALL implement GW_APPROVAL_0013.
 
 #### Scenario: SVC_GW_APPROVAL_0013
-The system SHALL pass SVC_GW_APPROVAL_0013.
+- **WHEN** SVC_GW_APPROVAL_0013 is run
+- **THEN** it passes
 
 ### Requirement: GW_VETTING_0028
 The system SHALL implement GW_VETTING_0028.
 
 #### Scenario: SVC_GW_VETTING_0028
-The system SHALL pass SVC_GW_VETTING_0028.
+- **WHEN** SVC_GW_VETTING_0028 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0014
 The system SHALL implement GW_APPROVAL_0014.
 
 #### Scenario: SVC_GW_APPROVAL_0014
-The system SHALL pass SVC_GW_APPROVAL_0014.
+- **WHEN** SVC_GW_APPROVAL_0014 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0015
 The system SHALL implement GW_APPROVAL_0015.
 
 #### Scenario: SVC_GW_APPROVAL_0015
-The system SHALL pass SVC_GW_APPROVAL_0015.
+- **WHEN** SVC_GW_APPROVAL_0015 is run
+- **THEN** it passes
 
 WHEN an administrator revokes an approved snapshot with a non-empty stated
 reason
@@ -129,7 +145,8 @@ THEN the revocation SHALL be refused.
 The system SHALL implement GW_APPROVAL_0016.
 
 #### Scenario: SVC_GW_APPROVAL_0016
-The system SHALL pass SVC_GW_APPROVAL_0016.
+- **WHEN** SVC_GW_APPROVAL_0016 is run
+- **THEN** it passes
 
 WHEN a revocation request does not state what the marketplace serves afterwards
 THEN it SHALL be refused before anything is revoked.
@@ -155,7 +172,8 @@ THEN what the marketplace serves SHALL be unchanged.
 The system SHALL implement GW_APPROVAL_0017.
 
 #### Scenario: SVC_GW_APPROVAL_0017
-The system SHALL pass SVC_GW_APPROVAL_0017.
+- **WHEN** SVC_GW_APPROVAL_0017 is run
+- **THEN** it passes
 
 WHEN a snapshot an administrator revoked is approved ordinarily
 THEN the approval SHALL be refused naming the revocation with its stated reason,
@@ -190,82 +208,96 @@ as before, and SHALL NOT require a reversal.
 The system SHALL implement GW_VETTING_0038.1.
 
 #### Scenario: SVC_GW_VETTING_0038.1
-The system SHALL pass SVC_GW_VETTING_0038.1.
+- **WHEN** SVC_GW_VETTING_0038.1 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0018
 The system SHALL implement GW_APPROVAL_0018.
 
 #### Scenario: SVC_GW_APPROVAL_0018
-The system SHALL pass SVC_GW_APPROVAL_0018.
+- **WHEN** SVC_GW_APPROVAL_0018 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0019
 The system SHALL implement GW_APPROVAL_0019.
 
 #### Scenario: SVC_GW_APPROVAL_0019
-The system SHALL pass SVC_GW_APPROVAL_0019.
+- **WHEN** SVC_GW_APPROVAL_0019 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0019.1
 The system SHALL implement GW_APPROVAL_0019.1.
 
 #### Scenario: SVC_GW_APPROVAL_0019.1
-The system SHALL pass SVC_GW_APPROVAL_0019.1.
+- **WHEN** SVC_GW_APPROVAL_0019.1 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0019.2
 The system SHALL implement GW_APPROVAL_0019.2.
 
 #### Scenario: SVC_GW_APPROVAL_0019.2
-The system SHALL pass SVC_GW_APPROVAL_0019.2.
+- **WHEN** SVC_GW_APPROVAL_0019.2 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0019.3
 The system SHALL implement GW_APPROVAL_0019.3.
 
 #### Scenario: SVC_GW_APPROVAL_0019.3
-The system SHALL pass SVC_GW_APPROVAL_0019.3.
+- **WHEN** SVC_GW_APPROVAL_0019.3 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0019.4
 The system SHALL implement GW_APPROVAL_0019.4.
 
 #### Scenario: SVC_GW_APPROVAL_0019.4
-The system SHALL pass SVC_GW_APPROVAL_0019.4.
+- **WHEN** SVC_GW_APPROVAL_0019.4 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0020
 The system SHALL implement GW_APPROVAL_0020.
 
 #### Scenario: SVC_GW_APPROVAL_0020
-The system SHALL pass SVC_GW_APPROVAL_0020.
+- **WHEN** SVC_GW_APPROVAL_0020 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0021
 The system SHALL implement GW_APPROVAL_0021.
 
 #### Scenario: SVC_GW_APPROVAL_0021
-The system SHALL pass SVC_GW_APPROVAL_0021.
+- **WHEN** SVC_GW_APPROVAL_0021 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0031
 The system SHALL implement GW_APPROVAL_0031.
 
 #### Scenario: SVC_GW_APPROVAL_0032
-The system SHALL pass SVC_GW_APPROVAL_0032.
+- **WHEN** SVC_GW_APPROVAL_0032 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0032
 The system SHALL implement GW_APPROVAL_0032.
 
 #### Scenario: SVC_GW_APPROVAL_0033
-The system SHALL pass SVC_GW_APPROVAL_0033.
+- **WHEN** SVC_GW_APPROVAL_0033 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0033
 The system SHALL implement GW_APPROVAL_0033.
 
 #### Scenario: SVC_GW_APPROVAL_0034
-The system SHALL pass SVC_GW_APPROVAL_0034.
+- **WHEN** SVC_GW_APPROVAL_0034 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0034
 The system SHALL implement GW_APPROVAL_0034.
 
 #### Scenario: SVC_GW_APPROVAL_0035
-The system SHALL pass SVC_GW_APPROVAL_0035.
+- **WHEN** SVC_GW_APPROVAL_0035 is run
+- **THEN** it passes
 
 ### Requirement: GW_APPROVAL_0035
 The system SHALL implement GW_APPROVAL_0035.
 
 #### Scenario: SVC_GW_APPROVAL_0036
-The system SHALL pass SVC_GW_APPROVAL_0036.
+- **WHEN** SVC_GW_APPROVAL_0036 is run
+- **THEN** it passes

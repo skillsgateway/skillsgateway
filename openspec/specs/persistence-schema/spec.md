@@ -7,11 +7,13 @@ Cross-cutting rules for the gateway's database: enumerated persisted values stor
 The system SHALL implement GW_FACADE_0009.
 
 #### Scenario: SVC_GW_FACADE_0009
-The system SHALL pass SVC_GW_FACADE_0009.
+- **WHEN** SVC_GW_FACADE_0009 is run
+- **THEN** it passes
 
 ### Requirement: GW_FACADE_0030
 The system SHALL implement GW_FACADE_0030.
 
 #### Scenario: SVC_GW_FACADE_0030
-The system SHALL pass SVC_GW_FACADE_0030.
+- **WHEN** SVC_GW_FACADE_0030 is run
+- **THEN** it passes
 

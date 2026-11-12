@@ -15,47 +15,56 @@ run and transition, and the portal surface a reviewer answers a revocation from.
 The system SHALL implement GW_VETTING_0012.
 
 #### Scenario: SVC_GW_VETTING_0012
-The system SHALL pass SVC_GW_VETTING_0012.
+- **WHEN** SVC_GW_VETTING_0012 is run
+- **THEN** it passes
 
 ### Requirement: GW_VETTING_0013
 The system SHALL implement GW_VETTING_0013.
 
 #### Scenario: SVC_GW_VETTING_0013
-The system SHALL pass SVC_GW_VETTING_0013.
+- **WHEN** SVC_GW_VETTING_0013 is run
+- **THEN** it passes
 
 ### Requirement: GW_VETTING_0014
 The system SHALL implement GW_VETTING_0014.
 
 #### Scenario: SVC_GW_VETTING_0014
-The system SHALL pass SVC_GW_VETTING_0014.
+- **WHEN** SVC_GW_VETTING_0014 is run
+- **THEN** it passes
 
 ### Requirement: GW_VETTING_0015
 The system SHALL implement GW_VETTING_0015.
 
 #### Scenario: SVC_GW_VETTING_0015
-The system SHALL pass SVC_GW_VETTING_0015.
+- **WHEN** SVC_GW_VETTING_0015 is run
+- **THEN** it passes
 
 ### Requirement: GW_VETTING_0016
 The system SHALL implement GW_VETTING_0016.
 
 #### Scenario: SVC_GW_VETTING_0016
-The system SHALL pass SVC_GW_VETTING_0016.
+- **WHEN** SVC_GW_VETTING_0016 is run
+- **THEN** it passes
 
 ### Requirement: GW_VETTING_0017
 The system SHALL implement GW_VETTING_0017.
 
 #### Scenario: SVC_GW_VETTING_0017
-The system SHALL pass SVC_GW_VETTING_0017.
+- **WHEN** SVC_GW_VETTING_0017 is run
+- **THEN** it passes
 
 #### Scenario: SVC_GW_VETTING_0017.1
-The system SHALL pass SVC_GW_VETTING_0017.1.
+- **WHEN** SVC_GW_VETTING_0017.1 is run
+- **THEN** it passes
 
 #### Scenario: SVC_GW_VETTING_0017.2
-The system SHALL pass SVC_GW_VETTING_0017.2.
+- **WHEN** SVC_GW_VETTING_0017.2 is run
+- **THEN** it passes
 
 ### Requirement: GW_VETTING_0018
 The system SHALL implement GW_VETTING_0018.
 
 #### Scenario: SVC_GW_VETTING_0018
-The system SHALL pass SVC_GW_VETTING_0018.
+- **WHEN** SVC_GW_VETTING_0018 is run
+- **THEN** it passes
 

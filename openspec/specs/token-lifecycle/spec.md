@@ -12,52 +12,61 @@ the gateway sets rather than the holder.
 The system SHALL implement GW_AUTH_0006.
 
 #### Scenario: SVC_GW_AUTH_0006
-The system SHALL pass SVC_GW_AUTH_0006.
+- **WHEN** SVC_GW_AUTH_0006 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0007
 The system SHALL implement GW_AUTH_0007.
 
 #### Scenario: SVC_GW_AUTH_0007
-The system SHALL pass SVC_GW_AUTH_0007.
+- **WHEN** SVC_GW_AUTH_0007 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0008
 The system SHALL implement GW_AUTH_0008.
 
 #### Scenario: SVC_GW_AUTH_0008
-The system SHALL pass SVC_GW_AUTH_0008.
+- **WHEN** SVC_GW_AUTH_0008 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0009
 The system SHALL implement GW_AUTH_0009.
 
 #### Scenario: SVC_GW_AUTH_0009
-The system SHALL pass SVC_GW_AUTH_0009.
+- **WHEN** SVC_GW_AUTH_0009 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0018
 The system SHALL implement GW_AUTH_0018.
 
 #### Scenario: SVC_GW_AUTH_0018
-The system SHALL pass SVC_GW_AUTH_0018.
+- **WHEN** SVC_GW_AUTH_0018 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0024
 The system SHALL implement GW_AUTH_0024.
 
 #### Scenario: SVC_GW_AUTH_0024
-The system SHALL pass SVC_GW_AUTH_0024.
+- **WHEN** SVC_GW_AUTH_0024 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0031
 The system SHALL implement GW_AUTH_0031.
 
 #### Scenario: SVC_GW_AUTH_0031
-The system SHALL pass SVC_GW_AUTH_0031.
+- **WHEN** SVC_GW_AUTH_0031 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0055
 The system SHALL implement GW_AUTH_0055.
 
 #### Scenario: SVC_GW_AUTH_0055
-The system SHALL pass SVC_GW_AUTH_0055.
+- **WHEN** SVC_GW_AUTH_0055 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0057
 The system SHALL implement GW_AUTH_0057.
 
 #### Scenario: SVC_GW_AUTH_0057
-The system SHALL pass SVC_GW_AUTH_0057.
+- **WHEN** SVC_GW_AUTH_0057 is run
+- **THEN** it passes
