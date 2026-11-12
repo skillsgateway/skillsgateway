@@ -11,7 +11,7 @@
 # built for the target platform rather than cross-linked.
 
 # --- The runtime and the staged jar ------------------------------------------
-FROM eclipse-temurin:25-jdk@sha256:83f4a7fc27df94dcc7b8de04d14cbbba8da14406f921e966969c3b09000aa507 AS runtime
+FROM eclipse-temurin:25-jdk@sha256:b8705e936964c228dfce359e63dbf08f6c69cb380ed1d576b1f6b1064f15567d AS runtime
 
 # An explicit module set rather than the whole JDK -- jlink is the reason
 # java-base can stay small. It is deliberately NOT derived with `jdeps`: a Spring
