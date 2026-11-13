@@ -8,162 +8,161 @@ token self-service, served by the gateway itself behind the OIDC session.
 ### Requirement: GW_INGEST_0007
 The system SHALL implement GW_INGEST_0007.
 
-The portal's marketplace administration is presented as a sortable table with one
-row per marketplace (name linking to its page, source, latest snapshot state and
-vetting outcome, upstream-updated, snapshot count, and the count of snapshots
-awaiting a decision, linking to that marketplace's review). The table does not
-expand in place and carries no decision control: approve and reject are offered
-only on the marketplace's review, beside the evidence they rest on. The register
-form warns before submitting an already-registered clone URL and requires
-acknowledgement to proceed, without blocking the legitimate same-URL-under-a-new-name
-case.
-
-A marketplace's page is divided into addressable sections — review, snapshots,
-activity and settings — which the portal's navigation lists beneath the open
-marketplace. The marketplace's header, present on every section, states what the
-facade serves and carries the marketplace-level actions, ingestion among them. An
-address naming a snapshot, tab and path on the marketplace's page resolves to the
-same snapshot, tab and path on its review.
-
-The portal's navigation SHALL additionally offer, beside the API reference, a
-link to the project documentation site and a link to the project source
-repository. Both SHALL open in a new browsing context, SHALL be announced as
-doing so through their accessible name rather than by an icon alone, and SHALL
-carry no document-opener reference. Neither is operator-configurable: the two
-addresses are the project's own published coordinates.
-
-This is a presentation and navigation change only; the requirement's ID-level
-statement and its verification are unchanged.
-
 #### Scenario: SVC_GW_INGEST_0007
-The system SHALL pass SVC_GW_INGEST_0007.
+- **WHEN** SVC_GW_INGEST_0007 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0005
 The system SHALL implement GW_AUTH_0005.
 
 #### Scenario: SVC_GW_AUTH_0005
-The system SHALL pass SVC_GW_AUTH_0005.
+- **WHEN** SVC_GW_AUTH_0005 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0014
 The system SHALL implement GW_AUTH_0014.
 
 #### Scenario: SVC_GW_AUTH_0014
-The system SHALL pass SVC_GW_AUTH_0014.
+- **WHEN** SVC_GW_AUTH_0014 is run
+- **THEN** it passes
 
 
 ### Requirement: GW_AUTH_0043
 The system SHALL implement GW_AUTH_0043.
 
 #### Scenario: SVC_GW_AUTH_0043
-The system SHALL pass SVC_GW_AUTH_0043.
+- **WHEN** SVC_GW_AUTH_0043 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0044
 The system SHALL implement GW_AUTH_0044.
 
 #### Scenario: SVC_GW_AUTH_0044
-The system SHALL pass SVC_GW_AUTH_0044.
+- **WHEN** SVC_GW_AUTH_0044 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0045
 The system SHALL implement GW_AUTH_0045.
 
 #### Scenario: SVC_GW_AUTH_0045
-The system SHALL pass SVC_GW_AUTH_0045.
+- **WHEN** SVC_GW_AUTH_0045 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0046
 The system SHALL implement GW_AUTH_0046.
 
 #### Scenario: SVC_GW_AUTH_0046
-The system SHALL pass SVC_GW_AUTH_0046.
+- **WHEN** SVC_GW_AUTH_0046 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0047
 The system SHALL implement GW_AUTH_0047.
 
 #### Scenario: SVC_GW_AUTH_0047
-The system SHALL pass SVC_GW_AUTH_0047.
+- **WHEN** SVC_GW_AUTH_0047 is run
+- **THEN** it passes
 
 ### Requirement: GW_INGEST_0037
 The system SHALL implement GW_INGEST_0037.
 
 #### Scenario: SVC_GW_INGEST_0037
-The system SHALL pass SVC_GW_INGEST_0037.
+- **WHEN** SVC_GW_INGEST_0037 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0048
 The system SHALL implement GW_AUTH_0048.
 
 #### Scenario: SVC_GW_AUTH_0048
-The system SHALL pass SVC_GW_AUTH_0048.
+- **WHEN** SVC_GW_AUTH_0048 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0062
 The system SHALL implement GW_AUTH_0062.
 
 #### Scenario: SVC_GW_AUTH_0068
-The system SHALL pass SVC_GW_AUTH_0068.
+- **WHEN** SVC_GW_AUTH_0068 is run
+- **THEN** it passes
 
 #### Scenario: SVC_GW_AUTH_0069
-The system SHALL pass SVC_GW_AUTH_0069.
+- **WHEN** SVC_GW_AUTH_0069 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0063
 The system SHALL implement GW_AUTH_0063.
 
 #### Scenario: SVC_GW_AUTH_0070
-The system SHALL pass SVC_GW_AUTH_0070.
+- **WHEN** SVC_GW_AUTH_0070 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0067
 The system SHALL implement GW_AUTH_0067.
 
 #### Scenario: SVC_GW_AUTH_0078
-The system SHALL pass SVC_GW_AUTH_0078.
+- **WHEN** SVC_GW_AUTH_0078 is run
+- **THEN** it passes
 
 #### Scenario: SVC_GW_AUTH_0079
-The system SHALL pass SVC_GW_AUTH_0079.
+- **WHEN** SVC_GW_AUTH_0079 is run
+- **THEN** it passes
 
 #### Scenario: SVC_GW_AUTH_0080
-The system SHALL pass SVC_GW_AUTH_0080.
+- **WHEN** SVC_GW_AUTH_0080 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0068
 The system SHALL implement GW_AUTH_0068.
 
 #### Scenario: SVC_GW_AUTH_0081
-The system SHALL pass SVC_GW_AUTH_0081.
+- **WHEN** SVC_GW_AUTH_0081 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0069
 The system SHALL implement GW_AUTH_0069.
 
 #### Scenario: SVC_GW_AUTH_0082
-The system SHALL pass SVC_GW_AUTH_0082.
+- **WHEN** SVC_GW_AUTH_0082 is run
+- **THEN** it passes
 
 #### Scenario: SVC_GW_AUTH_0083
-The system SHALL pass SVC_GW_AUTH_0083.
+- **WHEN** SVC_GW_AUTH_0083 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0070
 The system SHALL implement GW_AUTH_0070.
 
 #### Scenario: SVC_GW_AUTH_0084
-The system SHALL pass SVC_GW_AUTH_0084.
+- **WHEN** SVC_GW_AUTH_0084 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0064
 The system SHALL implement GW_AUTH_0064.
 
 #### Scenario: SVC_GW_AUTH_0072
-The system SHALL pass SVC_GW_AUTH_0072.
+- **WHEN** SVC_GW_AUTH_0072 is run
+- **THEN** it passes
 
 #### Scenario: SVC_GW_AUTH_0073
-The system SHALL pass SVC_GW_AUTH_0073.
+- **WHEN** SVC_GW_AUTH_0073 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0065
 The system SHALL implement GW_AUTH_0065.
 
 #### Scenario: SVC_GW_AUTH_0074
-The system SHALL pass SVC_GW_AUTH_0074.
+- **WHEN** SVC_GW_AUTH_0074 is run
+- **THEN** it passes
 
 #### Scenario: SVC_GW_AUTH_0075
-The system SHALL pass SVC_GW_AUTH_0075.
+- **WHEN** SVC_GW_AUTH_0075 is run
+- **THEN** it passes
 
 #### Scenario: SVC_GW_AUTH_0077
-The system SHALL pass SVC_GW_AUTH_0077.
+- **WHEN** SVC_GW_AUTH_0077 is run
+- **THEN** it passes
 
 ### Requirement: GW_AUTH_0066
 The system SHALL implement GW_AUTH_0066.
 
 #### Scenario: SVC_GW_AUTH_0076
-The system SHALL pass SVC_GW_AUTH_0076.
+- **WHEN** SVC_GW_AUTH_0076 is run
+- **THEN** it passes

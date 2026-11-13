@@ -7,19 +7,22 @@ Outbound notification of snapshot and marketplace lifecycle events: signed deliv
 The system SHALL implement GW_WEBHOOK_0001.
 
 #### Scenario: SVC_GW_WEBHOOK_0001
-The system SHALL pass SVC_GW_WEBHOOK_0001.
+- **WHEN** SVC_GW_WEBHOOK_0001 is run
+- **THEN** it passes
 
 ### Requirement: GW_WEBHOOK_0002
 The system SHALL implement GW_WEBHOOK_0002.
 
 #### Scenario: SVC_GW_WEBHOOK_0002
-The system SHALL pass SVC_GW_WEBHOOK_0002.
+- **WHEN** SVC_GW_WEBHOOK_0002 is run
+- **THEN** it passes
 
 ### Requirement: GW_WEBHOOK_0003
 The system SHALL implement GW_WEBHOOK_0003.
 
 #### Scenario: SVC_GW_WEBHOOK_0003
-The system SHALL pass SVC_GW_WEBHOOK_0003.
+- **WHEN** SVC_GW_WEBHOOK_0003 is run
+- **THEN** it passes
 
 ### Requirement: GW_WEBHOOK_0004
 The system SHALL implement GW_WEBHOOK_0004.
@@ -30,40 +33,36 @@ surface, not among them, and its delivery attempts remain listed with the others
 marked as the sink's and linking to where the sink is managed.
 
 #### Scenario: SVC_GW_WEBHOOK_0004
-The system SHALL pass SVC_GW_WEBHOOK_0004.
+- **WHEN** SVC_GW_WEBHOOK_0004 is run
+- **THEN** it passes
 
 ### Requirement: GW_WEBHOOK_0005
 The system SHALL implement GW_WEBHOOK_0005.
 
 #### Scenario: SVC_GW_WEBHOOK_0005
-The system SHALL pass SVC_GW_WEBHOOK_0005.
+- **WHEN** SVC_GW_WEBHOOK_0005 is run
+- **THEN** it passes
 
 ### Requirement: GW_WEBHOOK_0006
 The system SHALL implement GW_WEBHOOK_0006.
 
 #### Scenario: SVC_GW_WEBHOOK_0006
-The system SHALL pass SVC_GW_WEBHOOK_0006.
+- **WHEN** SVC_GW_WEBHOOK_0006 is run
+- **THEN** it passes
 
 ### Requirement: GW_WEBHOOK_0007
 The system SHALL implement GW_WEBHOOK_0007.
 
 #### Scenario: SVC_GW_WEBHOOK_0007
-The system SHALL pass SVC_GW_WEBHOOK_0007.
+- **WHEN** SVC_GW_WEBHOOK_0007 is run
+- **THEN** it passes
 
 ### Requirement: GW_WEBHOOK_0008
 The system SHALL implement GW_WEBHOOK_0008.
 
-The requirement is narrowed: it no longer obliges the system to rewrite an
-existing subscriber's stored event filter when a name in the published
-vocabulary changes. The mechanism that satisfied that obligation was a data
-migration, and while the project is pre-1.0 there is no deployed database whose
-rows a migration could repair. Every other obligation is unchanged — the
-namespaced vocabulary, its publication as the set a subscriber may filter on,
-the refusal of a filter naming an event outside it, and the same name in the
-delivery's event header and in the delivered body.
-
 #### Scenario: SVC_GW_WEBHOOK_0008
-The system SHALL pass SVC_GW_WEBHOOK_0008.
+- **WHEN** SVC_GW_WEBHOOK_0008 is run
+- **THEN** it passes
 
 WHEN the subscribable event vocabulary is read
 THEN every event it offers SHALL be namespaced under the subject it is about,
@@ -81,28 +80,33 @@ in its body.
 The system SHALL implement GW_WEBHOOK_0009.
 
 #### Scenario: SVC_GW_WEBHOOK_0009
-The system SHALL pass SVC_GW_WEBHOOK_0009.
+- **WHEN** SVC_GW_WEBHOOK_0009 is run
+- **THEN** it passes
 
 ### Requirement: GW_API_0005
 The system SHALL implement GW_API_0005.
 
 #### Scenario: SVC_GW_API_0005
-The system SHALL pass SVC_GW_API_0005.
+- **WHEN** SVC_GW_API_0005 is run
+- **THEN** it passes
 
 ### Requirement: GW_API_0006
 The system SHALL implement GW_API_0006.
 
 #### Scenario: SVC_GW_API_0006
-The system SHALL pass SVC_GW_API_0006.
+- **WHEN** SVC_GW_API_0006 is run
+- **THEN** it passes
 
 ### Requirement: GW_WEBHOOK_0010
 The system SHALL implement GW_WEBHOOK_0010.
 
 #### Scenario: SVC_GW_WEBHOOK_0010
-The system SHALL pass SVC_GW_WEBHOOK_0010.
+- **WHEN** SVC_GW_WEBHOOK_0010 is run
+- **THEN** it passes
 
 ### Requirement: GW_WEBHOOK_0011
 The system SHALL implement GW_WEBHOOK_0011.
 
 #### Scenario: SVC_GW_WEBHOOK_0011
-The system SHALL pass SVC_GW_WEBHOOK_0011.
+- **WHEN** SVC_GW_WEBHOOK_0011 is run
+- **THEN** it passes

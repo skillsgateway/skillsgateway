@@ -7,55 +7,64 @@ Keeping storage and the ledger bounded without losing what must be kept: retenti
 The system SHALL implement GW_RETENTION_0001.
 
 #### Scenario: SVC_GW_RETENTION_0001
-The system SHALL pass SVC_GW_RETENTION_0001.
+- **WHEN** SVC_GW_RETENTION_0001 is run
+- **THEN** it passes
 
 ### Requirement: GW_RETENTION_0002
 The system SHALL implement GW_RETENTION_0002.
 
 #### Scenario: SVC_GW_RETENTION_0002
-The system SHALL pass SVC_GW_RETENTION_0002.
+- **WHEN** SVC_GW_RETENTION_0002 is run
+- **THEN** it passes
 
 ### Requirement: GW_RETENTION_0003
 The system SHALL implement GW_RETENTION_0003.
 
 #### Scenario: SVC_GW_RETENTION_0003
-The system SHALL pass SVC_GW_RETENTION_0003.
+- **WHEN** SVC_GW_RETENTION_0003 is run
+- **THEN** it passes
 
 ### Requirement: GW_RETENTION_0004
 The system SHALL implement GW_RETENTION_0004.
 
 #### Scenario: SVC_GW_RETENTION_0004
-The system SHALL pass SVC_GW_RETENTION_0004.
+- **WHEN** SVC_GW_RETENTION_0004 is run
+- **THEN** it passes
 
 ### Requirement: GW_RETENTION_0005
 The system SHALL implement GW_RETENTION_0005.
 
 #### Scenario: SVC_GW_RETENTION_0005
-The system SHALL pass SVC_GW_RETENTION_0005.
+- **WHEN** SVC_GW_RETENTION_0005 is run
+- **THEN** it passes
 
 ### Requirement: GW_RETENTION_0006
 The system SHALL implement GW_RETENTION_0006.
 
 #### Scenario: SVC_GW_RETENTION_0006
-The system SHALL pass SVC_GW_RETENTION_0006.
+- **WHEN** SVC_GW_RETENTION_0006 is run
+- **THEN** it passes
 
 ### Requirement: GW_RETENTION_0007
 The system SHALL implement GW_RETENTION_0007.
 
 #### Scenario: SVC_GW_RETENTION_0007
-The system SHALL pass SVC_GW_RETENTION_0007.
+- **WHEN** SVC_GW_RETENTION_0007 is run
+- **THEN** it passes
 
 ### Requirement: GW_FACADE_0019
 The system SHALL implement GW_FACADE_0019.
 
 #### Scenario: SVC_GW_FACADE_0019
-The system SHALL pass SVC_GW_FACADE_0019.
+- **WHEN** SVC_GW_FACADE_0019 is run
+- **THEN** it passes
 
 ### Requirement: GW_RETENTION_0008
 The system SHALL implement GW_RETENTION_0008.
 
 #### Scenario: SVC_GW_RETENTION_0008
-The system SHALL pass SVC_GW_RETENTION_0008.
+- **WHEN** SVC_GW_RETENTION_0008 is run
+- **THEN** it passes
 
 WHEN retention reclaims the content of a snapshot an administrator revoked
 THEN the content SHALL be reclaimed as for any other eligible snapshot.
@@ -77,23 +86,27 @@ THEN the removal SHALL proceed as before.
 The system SHALL implement GW_RETENTION_0009.
 
 #### Scenario: SVC_GW_RETENTION_0009
-The system SHALL pass SVC_GW_RETENTION_0009.
+- **WHEN** SVC_GW_RETENTION_0009 is run
+- **THEN** it passes
 
 
 ### Requirement: GW_RETENTION_0010
 The system SHALL implement GW_RETENTION_0010.
 
 #### Scenario: SVC_GW_RETENTION_0010
-The system SHALL pass SVC_GW_RETENTION_0010.
+- **WHEN** SVC_GW_RETENTION_0010 is run
+- **THEN** it passes
 
 ### Requirement: GW_RETENTION_0011
 The system SHALL implement GW_RETENTION_0011.
 
 #### Scenario: SVC_GW_RETENTION_0011
-The system SHALL pass SVC_GW_RETENTION_0011.
+- **WHEN** SVC_GW_RETENTION_0011 is run
+- **THEN** it passes
 
 ### Requirement: GW_RETENTION_0012
 The system SHALL implement GW_RETENTION_0012.
 
 #### Scenario: SVC_GW_RETENTION_0012
-The system SHALL pass SVC_GW_RETENTION_0012.
+- **WHEN** SVC_GW_RETENTION_0012 is run
+- **THEN** it passes

@@ -13,4 +13,5 @@ approved estate.
 The system SHALL implement GW_INGEST_0036.
 
 #### Scenario: SVC_GW_INGEST_0036
-The system SHALL pass SVC_GW_INGEST_0036.
+- **WHEN** SVC_GW_INGEST_0036 is run
+- **THEN** it passes

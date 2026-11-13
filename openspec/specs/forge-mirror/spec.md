@@ -15,46 +15,54 @@ the system's own records contradict.
 The system SHALL implement GW_FACADE_0020.
 
 #### Scenario: SVC_GW_FACADE_0020
-The system SHALL pass SVC_GW_FACADE_0020.
+- **WHEN** SVC_GW_FACADE_0020 is run
+- **THEN** it passes
 
 ### Requirement: GW_FACADE_0021
 The system SHALL implement GW_FACADE_0021.
 
 #### Scenario: SVC_GW_FACADE_0021
-The system SHALL pass SVC_GW_FACADE_0021.
+- **WHEN** SVC_GW_FACADE_0021 is run
+- **THEN** it passes
 
 ### Requirement: GW_FACADE_0022
 The system SHALL implement GW_FACADE_0022.
 
 #### Scenario: SVC_GW_FACADE_0022
-The system SHALL pass SVC_GW_FACADE_0022.
+- **WHEN** SVC_GW_FACADE_0022 is run
+- **THEN** it passes
 
 ### Requirement: GW_FACADE_0023
 The system SHALL implement GW_FACADE_0023.
 
 #### Scenario: SVC_GW_FACADE_0023
-The system SHALL pass SVC_GW_FACADE_0023.
+- **WHEN** SVC_GW_FACADE_0023 is run
+- **THEN** it passes
 
 ### Requirement: GW_FACADE_0025
 The system SHALL implement GW_FACADE_0025.
 
 #### Scenario: SVC_GW_FACADE_0025
-The system SHALL pass SVC_GW_FACADE_0025.
+- **WHEN** SVC_GW_FACADE_0025 is run
+- **THEN** it passes
 
 ### Requirement: GW_FACADE_0026
 The system SHALL implement GW_FACADE_0026.
 
 #### Scenario: SVC_GW_FACADE_0026
-The system SHALL pass SVC_GW_FACADE_0026.
+- **WHEN** SVC_GW_FACADE_0026 is run
+- **THEN** it passes
 
 ### Requirement: GW_FACADE_0027
 The system SHALL implement GW_FACADE_0027.
 
 #### Scenario: SVC_GW_FACADE_0027
-The system SHALL pass SVC_GW_FACADE_0027.
+- **WHEN** SVC_GW_FACADE_0027 is run
+- **THEN** it passes
 
 ### Requirement: GW_FACADE_0028
 The system SHALL implement GW_FACADE_0028.
 
 #### Scenario: SVC_GW_FACADE_0028
-The system SHALL pass SVC_GW_FACADE_0028.
+- **WHEN** SVC_GW_FACADE_0028 is run
+- **THEN** it passes

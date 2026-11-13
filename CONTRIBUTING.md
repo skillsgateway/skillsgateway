@@ -10,7 +10,8 @@
   [Running the gates on Podman](docs/manual/guides/local-development.md#running-the-gates-on-podman)
 - `git`, `gh`
 - reqstool CLI (`pipx install reqstool` — see `.github/workflows/ci.yml` for the
-  currently pinned version) and OpenSpec CLI (`npm i -g @fission-ai/openspec`)
+  currently pinned version) and OpenSpec CLI (`npm i -g @fission-ai/openspec@1.17.0`,
+  the version CI pins; it needs Node 22.12 or later)
 - Node/pnpm are provisioned by the Maven build; for UI development enable
   corepack (`corepack enable pnpm`)
 - The vendored Impeccable design skill runs a native engine through

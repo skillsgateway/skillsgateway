@@ -7,17 +7,20 @@ License vetting of ingested content: deterministic license detection at ingestio
 The system SHALL implement GW_VETTING_0019.
 
 #### Scenario: SVC_GW_VETTING_0019
-The system SHALL pass SVC_GW_VETTING_0019.
+- **WHEN** SVC_GW_VETTING_0019 is run
+- **THEN** it passes
 
 ### Requirement: GW_VETTING_0020
 The system SHALL implement GW_VETTING_0020.
 
 #### Scenario: SVC_GW_VETTING_0020
-The system SHALL pass SVC_GW_VETTING_0020.
+- **WHEN** SVC_GW_VETTING_0020 is run
+- **THEN** it passes
 
 ### Requirement: GW_VETTING_0021
 The system SHALL implement GW_VETTING_0021.
 
 #### Scenario: SVC_GW_VETTING_0021
-The system SHALL pass SVC_GW_VETTING_0021.
+- **WHEN** SVC_GW_VETTING_0021 is run
+- **THEN** it passes
 
