@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.admin;
 
+import dev.skillsgateway.server.approval.ApprovalPostureService;
 import dev.skillsgateway.server.approval.ApprovalRecorder;
 import dev.skillsgateway.server.approval.ApprovalService;
 import dev.skillsgateway.server.approval.ClosureIncompleteException;
@@ -89,6 +90,7 @@ public class AdminController {
     private final WebhookService webhookService;
     private final ApprovalRecorder approvalRecorder;
     private final RoleService roleService;
+    private final ApprovalPostureService postureService;
 
     public AdminController(
             ServedTip servedTip,
@@ -105,7 +107,8 @@ public class AdminController {
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
             ApprovalRecorder approvalRecorder,
-            RoleService roleService) {
+            RoleService roleService,
+            ApprovalPostureService postureService) {
         this.servedTip = servedTip;
         this.registrationService = registrationService;
         this.removalService = removalService;
@@ -121,6 +124,7 @@ public class AdminController {
         this.webhookService = webhookService;
         this.approvalRecorder = approvalRecorder;
         this.roleService = roleService;
+        this.postureService = postureService;
     }
 
     @Schema(description = "Marketplace registration request")
@@ -156,7 +160,25 @@ public class AdminController {
                     description = "Must be omitted or equal the upstream default branch; the ingested ref"
                             + " is the gateway's decision, never the consumer's (GW_INGEST_0006)",
                     example = "main")
-            String ref) {}
+            String ref,
+
+            @Schema(
+                    description = "Optional approval posture, chosen at registration (GW_APPROVAL_0044.1). auto"
+                            + " needs a reason and an expiry, and an internal basis: a marketplace outside the"
+                            + " internal prefixes is refused, since its override is set afterwards")
+            RegistrationApproval approval) {}
+
+    @Schema(description = "The approval posture chosen at registration")
+    public record RegistrationApproval(
+            @Schema(
+                    description = "manual or auto",
+                    allowableValues = {"manual", "auto"})
+            ApprovalPostureService.Posture posture,
+
+            @Schema(description = "Why; required for auto") String reason,
+
+            @Schema(description = "When auto lapses back to manual; required for auto, at most 90 days ahead")
+            Instant expiresAt) {}
 
     @Schema(description = "A registered marketplace with its snapshots and forge metadata")
     public record MarketplaceView(
@@ -251,8 +273,25 @@ public class AdminController {
             @RequestBody RegisterMarketplaceRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
         requireDefaultBranchRef(request.ref());
+        RegistrationApproval approval = request.approval();
+        if (approval != null) {
+            postureService.checkRegistration(
+                    request.name(),
+                    request.url(),
+                    request.origin(),
+                    approval.posture(),
+                    approval.reason(),
+                    approval.expiresAt());
+        }
         MarketplaceRegistrationService.RegistrationOutcome outcome = registrationService.register(
                 request.name(), request.url(), request.origin(), request.pushPolicy(), authentication.getName());
+        if (approval != null && approval.posture() == ApprovalPostureService.Posture.AUTO) {
+            postureService.set(
+                    outcome.marketplace().name(),
+                    new ApprovalPostureService.PostureRequest(
+                            approval.posture(), approval.reason(), approval.expiresAt(), null),
+                    authentication.getName());
+        }
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(RegisteredMarketplace.of(outcome.marketplace(), outcome.warnings()));
     }

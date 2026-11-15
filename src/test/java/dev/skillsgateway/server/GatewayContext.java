@@ -52,6 +52,9 @@ import org.springframework.context.annotation.Import;
             "skills-gateway.roles.admins=user,root,alice",
             // file is allowed only here so HTTP-level tests can register local fixtures.
             "skills-gateway.allowed-url-schemes=http,https,file",
+            // One internal organisation, so a suite can register a marketplace under it without a
+            // context of its own. The mode is left at off, so nothing is approved automatically.
+            "skills-gateway.approval.auto.internal-prefixes=https://git.internal.test/acme",
             // Webhook dispatch is driven explicitly by the tests: the poller is off and the
             // backoff is compressed so retry behaviour is observable without long sleeps.
             "skills-gateway.webhooks.enabled=false",

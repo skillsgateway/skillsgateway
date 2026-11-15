@@ -59,6 +59,39 @@ refused boot under real configuration belongs to the real-execution run.
 `ConfigSurfaceBudgetTests` rose by three, not six. See revision R4 in
 `acceptance.md`.
 
+### 4.1–4.4 — posture, override, four-eyes on the grant
+
+`ApprovalPostureTests` (17, four-eyes `warn`) and `ApprovalPostureEnforceTests`
+(4, the property sources of `FourEyesEnforceTests`, so it shares that context)
+were written against a skeleton with no controller and throwing methods. 19
+of the 21 failed (RED). Two passed:
+
+- the unknown-marketplace 404, vacuous until the endpoint existed;
+- S4.4, "approvals' four-eyes behaviour is unchanged", a characterization test,
+  which mutant 2 below proves.
+
+After the implementation all 21 pass. Mutants, each restored after its run:
+
+| Mutant | Result |
+|---|---|
+| The reconciler's exemption from the grant check removed | 1/4 enforce failed |
+| The reconciler added to `NON_HUMAN_ACTORS` (leaks into approvals) | 1/4 enforce failed (S4.4) |
+| `awaiting-second-administrator` never computed | 2/4 enforce failed |
+| The override's cap on the posture's expiry removed | 1/17 failed |
+| An attempt does not record a lapsed override | 1/17 failed |
+| A lapsed but unrecorded override still counts as active | **survived**; the test read only after an attempt had recorded the lapse. A read-before-attempt check was added to the test, and the mutant then failed 1/17 |
+| A lapsed posture still takes effect | 1/17 failed |
+| The 90-day limit unchecked | 2/17 errored, on the database `CHECK` (500, not 400) |
+| `manual` keeps the override | 1/17 failed |
+| The registration check skipped | 1/17 failed (the marketplace was created) |
+| The grant's four-eyes conflict not recorded | 2/17 and 1/4 failed |
+
+`RoleEnforcementTests` failed on the three new routes, as its walk is built
+to. They are classified there, admin-only, with the GET excluded from the
+auditor reads. `src/main/frontend/openapi.json` and `types.gen.ts` were
+regenerated, additions only. The suites the change reaches, 17 classes and 134
+tests, pass. `ContextBudgetTests` is unchanged.
+
 ## Final run
 
 (pending)

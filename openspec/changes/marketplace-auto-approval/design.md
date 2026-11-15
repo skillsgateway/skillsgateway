@@ -174,6 +174,17 @@ created and revoked through the API or the portal (D15).
 With both limits at 90 days, the cap matters when the override is older than
 the posture: renewing the posture never outlives the override it rests on.
 
+Three edges, each settled fail-closed during implementation:
+
+- Setting `manual` revokes the active override, so a later `auto` needs a new
+  dated judgement and cannot reuse a stale one.
+- An override for a marketplace that already has an internal basis is refused
+  (`400`). It would be an exception with nothing to except.
+- A lapsed override stops counting at once, on every read. The
+  `auto-approval-override-expired` entry is written by the first attempt that
+  meets the lapse, through a guarded update, so it lands on the ledger once. A
+  read never writes.
+
 ### D4 — Four-eyes on granting `auto`
 
 Setting `auto`, whether on an internal basis or by override, is checked by

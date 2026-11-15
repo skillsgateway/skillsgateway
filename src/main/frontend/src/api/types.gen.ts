@@ -292,6 +292,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/marketplaces/{name}/approval-posture": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A marketplace's approval posture
+         * @description The stored posture, whether it takes effect and on what basis, who set it, why, when it lapses, and the active override. The basis is computed at every read. Administrator-only.
+         */
+        get: operations["posture"];
+        /**
+         * Set a marketplace's approval posture
+         * @description manual, or auto with a reason and an expiry of at most 90 days. A marketplace outside the internal prefixes needs an override, given here, with its own reason and expiry; the posture never outlives it. Setting manual revokes the override. Under four-eyes enforce, a grant by the marketplace's registrant is stored but awaits a different administrator, who confirms it by setting it again. Administrator-only.
+         */
+        put: operations["setPosture"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/marketplaces/{name}/approval-posture/override": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke a marketplace's override
+         * @description Ends the active override at once. A posture that rested on it no longer takes effect. Administrator-only.
+         */
+        delete: operations["revokeOverride"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/marketplaces/{name}/ingest": {
         parameters: {
             query?: never;
@@ -3291,6 +3335,38 @@ export interface components {
              */
             status?: "applied" | "unchanged" | "failed";
         };
+        /** @description An expiring exception that lets a marketplace outside the internal prefixes be approved automatically */
+        OverrideRequest: {
+            /**
+             * Format: date-time
+             * @description When the override lapses; required, at most 90 days ahead
+             */
+            expiresAt?: string;
+            /** @description Why this source is trusted; required */
+            reason?: string;
+        };
+        /** @description The active override */
+        OverrideView: {
+            /**
+             * Format: date-time
+             * @description When it was created
+             */
+            createdAt?: string;
+            /** @description The administrator who created it */
+            createdBy?: string;
+            /**
+             * Format: date-time
+             * @description When it lapses
+             */
+            expiresAt?: string;
+            /**
+             * Format: int64
+             * @description Override id
+             */
+            id?: number;
+            /** @description Why this source is trusted */
+            reason?: string;
+        };
         /** @description Outcome of a retention pass */
         PassResult: {
             /**
@@ -3447,6 +3523,52 @@ export interface components {
             /** @description Identity of the last update, or null */
             updatedBy?: string;
         };
+        /** @description Set a marketplace's approval posture */
+        PostureRequest: {
+            /**
+             * Format: date-time
+             * @description When auto lapses back to manual; required for auto, at most 90 days ahead
+             */
+            expiresAt?: string;
+            /** @description For a marketplace outside the internal prefixes: the override auto rests on */
+            override?: components["schemas"]["OverrideRequest"];
+            /**
+             * @description manual or auto; required
+             * @enum {string}
+             */
+            posture?: "manual" | "auto";
+            /** @description Why; required for auto */
+            reason?: string;
+        };
+        /** @description A marketplace's approval posture and whether it takes effect */
+        PostureView: {
+            /**
+             * @description Why auto takes effect, or none when it does not: manual, lapsed, or with no internal basis left. awaiting-second-administrator under four-eyes enforce, when the grantor registered the marketplace
+             * @enum {string}
+             */
+            basis?: "internal-prefix" | "hosted" | "override" | "awaiting-second-administrator" | "none";
+            /**
+             * Format: date-time
+             * @description When auto lapses back to manual
+             */
+            expiresAt?: string;
+            /** @description The active override, if any */
+            override?: components["schemas"]["OverrideView"];
+            /**
+             * @description The stored posture
+             * @enum {string}
+             */
+            posture?: "manual" | "auto";
+            /** @description Why */
+            reason?: string;
+            /**
+             * Format: date-time
+             * @description When it was set
+             */
+            setAt?: string;
+            /** @description Who set the posture last */
+            setBy?: string;
+        };
         /** @description Which identities hold which served skills: presence, not invocation */
         PresenceReport: {
             /**
@@ -3518,6 +3640,8 @@ export interface components {
         };
         /** @description Marketplace registration request */
         RegisterMarketplaceRequest: {
+            /** @description Optional approval posture, chosen at registration (GW_APPROVAL_0044.1). auto needs a reason and an expiry, and an internal basis: a marketplace outside the internal prefixes is refused, since its override is set afterwards */
+            approval?: components["schemas"]["RegistrationApproval"];
             /**
              * @description Gateway-local marketplace name; it is the facade clone path /git/{name}
              * @example corp-marketplace
@@ -3589,6 +3713,21 @@ export interface components {
             url?: string;
             /** @description Non-blocking warnings about this registration, e.g. the upstream url already being registered under another marketplace name (GW_INGEST_0029) */
             warnings?: string[];
+        };
+        /** @description The approval posture chosen at registration */
+        RegistrationApproval: {
+            /**
+             * Format: date-time
+             * @description When auto lapses back to manual; required for auto, at most 90 days ahead
+             */
+            expiresAt?: string;
+            /**
+             * @description manual or auto
+             * @enum {string}
+             */
+            posture?: "manual" | "auto";
+            /** @description Why; required for auto */
+            reason?: string;
         };
         /** @description A removed marketplace and what its removal withdrew */
         Removal: {
@@ -5034,6 +5173,148 @@ export interface operations {
             };
             /** @description No reason was stated */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    posture: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The posture */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PostureView"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Named marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    setPosture: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PostureRequest"];
+            };
+        };
+        responses: {
+            /** @description The posture after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PostureView"];
+                };
+            };
+            /** @description No posture; auto without a reason or expiry, or for longer than allowed; an override without either, or for an internal marketplace */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Named marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description auto for a marketplace with no internal basis and no override; nextStep says how */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    revokeOverride: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The posture after the revocation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PostureView"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Named marketplace not found, or it has no active override */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

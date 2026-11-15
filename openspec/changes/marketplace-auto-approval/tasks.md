@@ -42,19 +42,19 @@ Annotation placement follows the reqstool conventions:
 
 ## 4. Posture, override and four-eyes
 
-- [ ] 4.1 Posture (`@SVCs SVC_GW_APPROVAL_0044.1`, `@Requirements GW_APPROVAL_0044.1`):
+- [x] 4.1 Posture (`@SVCs SVC_GW_APPROVAL_0044.1`, `@Requirements GW_APPROVAL_0044.1`):
   - it defaults to `manual`;
   - `auto` needs a reason and an expiry of at most 90 days (the posture's own `MAX_LIFETIME` constant), and a lapsed one is effectively manual;
   - only an administrator sets it, including at registration;
   - `auto` without an internal basis is refused at registration.
-- [ ] 4.2 Override (`@SVCs SVC_GW_APPROVAL_0044.3`, `@Requirements GW_APPROVAL_0044.3`):
+- [x] 4.2 Override (`@SVCs SVC_GW_APPROVAL_0044.3`, `@Requirements GW_APPROVAL_0044.3`):
   - it needs a reason and an expiry of at most 90 days (the override's own `MAX_LIFETIME` constant, matching the table's `CHECK`), and caps the posture's expiry;
   - expiry or revocation makes the basis `none`, recorded once.
-- [ ] 4.3 Four-eyes on the grant (`@SVCs SVC_GW_APPROVAL_0044.4`, `@Requirements GW_APPROVAL_0044.4`, design D4):
+- [x] 4.3 Four-eyes on the grant (`@SVCs SVC_GW_APPROVAL_0044.4`, `@Requirements GW_APPROVAL_0044.4`, design D4):
   - under `warn`, a grant by the registering administrator is recorded as a conflict;
   - under `enforce`, it stays `awaiting-second-administrator` until a different administrator confirms;
   - the estate reconciler is exempt, and approvals' four-eyes behaviour is unchanged.
-- [ ] 4.4 The posture endpoints and their ledger events (design D14).
+- [x] 4.4 The posture endpoints and their ledger events (design D14).
 
 ## 5. Eligibility (`AutoApprovalService`)
 
