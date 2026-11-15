@@ -17,8 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * A marketplace's approval posture (GW_APPROVAL_0044.1, GW_APPROVAL_0044.3, GW_APPROVAL_0044.4).
- * Administrator-only, reads included: a posture is the switch that lets content be published with
- * no person, and the role that may hold it is the one that governs the gateway.
+ * Setting it is administrator-only: a posture is the switch that lets content be published with no
+ * person, and the role that may hold it is the one that governs the gateway. Reading it is open to
+ * any session, as the marketplace's Settings page is (GW_APPROVAL_0044.15), so an automatic posture
+ * is never invisible to the people whose content it publishes.
  */
 @RestController
 @RequestMapping("/api/v1")
@@ -41,17 +43,16 @@ public class ApprovalPostureController {
     }
 
     @GetMapping("/marketplaces/{name}/approval-posture")
-    @Requirements({"GW_APPROVAL_0044.1", "GW_APPROVAL_0044.3"})
+    @Requirements({"GW_APPROVAL_0044.1", "GW_APPROVAL_0044.3", "GW_APPROVAL_0044.15"})
     @Tag(name = "Marketplaces")
     @Operation(
             summary = "A marketplace's approval posture",
             description = "The stored posture, whether it takes effect and on what basis, who set it, why, when it"
-                    + " lapses, and the active override. The basis is computed at every read. Administrator-only.")
+                    + " lapses, the active override, and the deployment's mode. The basis is computed at every"
+                    + " read. Open to any session.")
     @ApiResponse(responseCode = "200", description = "The posture")
-    @ApiResponse(responseCode = "403", description = "Caller does not hold the administrative role")
     @ApiResponse(responseCode = "404", description = "Named marketplace not found")
-    public ApprovalPostureService.PostureView posture(@PathVariable String name, Authentication authentication) {
-        roleService.requireAdmin(authentication);
+    public ApprovalPostureService.PostureView posture(@PathVariable String name) {
         return postureService.view(name);
     }
 

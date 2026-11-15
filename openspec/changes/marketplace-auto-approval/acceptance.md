@@ -312,3 +312,10 @@ Made during implementation, a correction of fact:
   (GW_APPROVAL_0016 — What a marketplace serves after a revocation is a stated
   choice). A snapshot that someone else withdraws during the request is
   skipped rather than failing it.
+- R10, a correction of this change's own group 4 implementation to the approved
+  design: `GET /api/v1/marketplaces/{name}/approval-posture` had been made
+  administrator-only, but D14 restricts only `PUT`, and D15 and S15.3 have a
+  non-administrator see the card. The read is now open to any session, as
+  `GET /api/v1/snapshots/{id}/auto-approval` already was, and setting a posture
+  stays administrator-only. The response gains `mode`, the deployment's mode,
+  which D15 needs on the card. Neither the route nor its tests exist on `main`.

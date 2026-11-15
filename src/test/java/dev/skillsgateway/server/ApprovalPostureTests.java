@@ -206,14 +206,18 @@ class ApprovalPostureTests extends AbstractGatewayTest {
 
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.1"})
-    void aNonAdministratorCannotSetAPosture() throws Exception {
+    void aNonAdministratorCannotSetAPostureAndCanReadIt() throws Exception {
         Marketplace marketplace = upstream("pnonadmin", INTERNAL + "skills.git", null);
 
         putPosture(marketplace.name(), auto("reason", in(Duration.ofDays(30))), "mallory")
                 .andExpect(status().isForbidden());
+        // Read by anyone who can see the marketplace's Settings, with the deployment mode, so a
+        // posture set under off or shadow does not read as publishing (acceptance R10).
         mockMvc.perform(get("/api/v1/marketplaces/{name}/approval-posture", marketplace.name())
                         .with(as("mallory")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posture").value("manual"))
+                .andExpect(jsonPath("$.mode").value("off"));
         mockMvc.perform(post("/api/v1/marketplaces")
                         .with(as("mallory"))
                         .contentType(MediaType.APPLICATION_JSON)

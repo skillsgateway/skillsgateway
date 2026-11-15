@@ -123,7 +123,14 @@ class AutoApprovalServiceTests {
         when(posture.effectiveBasis(marketplace)).thenReturn(Basis.HOSTED);
         when(posture.view("m"))
                 .thenReturn(new ApprovalPostureService.PostureView(
-                        ApprovalPostureService.Posture.AUTO, Basis.HOSTED, "root", Instant.now(), "r", null, null));
+                        ApprovalPostureService.Posture.AUTO,
+                        Basis.HOSTED,
+                        "root",
+                        Instant.now(),
+                        "r",
+                        null,
+                        null,
+                        SkillsGatewayProperties.AutoMode.ON));
         when(closures.findBySnapshot(SNAPSHOT)).thenReturn(Optional.empty());
         when(servedTip.of("m")).thenReturn(Optional.empty());
         when(vetting.chainStaleness(held)).thenReturn(ChainStaleness.of("c", "c"));

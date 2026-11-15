@@ -2883,6 +2883,15 @@
             "format": "date-time",
             "type": "string"
           },
+          "mode": {
+            "description": "The deployment's automatic approval mode. A posture publishes only under on; under shadow it is evaluated and recorded, and under off it does nothing",
+            "enum": [
+              "off",
+              "shadow",
+              "on"
+            ],
+            "type": "string"
+          },
           "override": {
             "$ref": "#/components/schemas/OverrideView",
             "description": "The active override, if any"
@@ -5484,7 +5493,7 @@
     },
     "/api/v1/marketplaces/{name}/approval-posture": {
       "get": {
-        "description": "The stored posture, whether it takes effect and on what basis, who set it, why, when it lapses, and the active override. The basis is computed at every read. Administrator-only.",
+        "description": "The stored posture, whether it takes effect and on what basis, who set it, why, when it lapses, the active override, and the deployment's mode. The basis is computed at every read. Open to any session.",
         "operationId": "posture",
         "parameters": [
           {
@@ -5506,16 +5515,6 @@
               }
             },
             "description": "The posture"
-          },
-          "403": {
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description": "Caller does not hold the administrative role"
           },
           "404": {
             "content": {

@@ -321,7 +321,7 @@ export interface paths {
         };
         /**
          * A marketplace's approval posture
-         * @description The stored posture, whether it takes effect and on what basis, who set it, why, when it lapses, and the active override. The basis is computed at every read. Administrator-only.
+         * @description The stored posture, whether it takes effect and on what basis, who set it, why, when it lapses, the active override, and the deployment's mode. The basis is computed at every read. Open to any session.
          */
         get: operations["posture"];
         /**
@@ -3620,6 +3620,11 @@ export interface components {
              * @description When auto lapses back to manual
              */
             expiresAt?: string;
+            /**
+             * @description The deployment's automatic approval mode. A posture publishes only under on; under shadow it is evaluated and recorded, and under off it does nothing
+             * @enum {string}
+             */
+            mode?: "off" | "shadow" | "on";
             /** @description The active override, if any */
             override?: components["schemas"]["OverrideView"];
             /**
@@ -5345,15 +5350,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PostureView"];
-                };
-            };
-            /** @description Caller does not hold the administrative role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Named marketplace not found */

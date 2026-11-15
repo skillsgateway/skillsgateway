@@ -165,10 +165,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // The forge mirror's drift report (GW_FACADE_0023) is admin-only too: it names an outbound
             // integration target and the state of its credential's last use, which is deployment
             // infrastructure rather than a record of what the gateway served to whom.
-            "GET /api/v1/mirror/drift",
-            // The approval posture (GW_APPROVAL_0044.1) is admin-only like the vetter settings: it reports
-            // the switch that publishes content with no person, and who may flip it.
-            "GET /api/v1/marketplaces/{name}/approval-posture");
+            "GET /api/v1/mirror/drift");
 
     /**
      * Reads scoped to the snapshot's own marketplace (GW_AUTH_0011): an approver of it, or an
@@ -209,7 +206,10 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "GET /api/v1/snapshots/{id}/name-collisions",
             // What an automatic approval would decide (GW_APPROVAL_0044.12): the vetting and release-age
             // reads' facts again, naming no identity; it writes nothing and approves nothing.
-            "GET /api/v1/snapshots/{id}/auto-approval");
+            "GET /api/v1/snapshots/{id}/auto-approval",
+            // A marketplace's approval posture (GW_APPROVAL_0044.15): shown on its Settings page to anyone
+            // who can see it, so an automatic posture is never invisible; setting it stays admin-only.
+            "GET /api/v1/marketplaces/{name}/approval-posture");
 
     @Test
     @SVCs({"SVC_GW_AUTH_0010"})
@@ -378,12 +378,11 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                     || route.equals("GET /api/v1/marketplaces/{name}/vetting-chain-settings")
                     || route.equals("GET /api/v1/vetting/global-chain")
                     || route.equals("GET /api/v1/vetting/global-chain-settings")
-                    || route.equals("GET /api/v1/mirror/drift")
-                    || route.equals("GET /api/v1/marketplaces/{name}/approval-posture")) {
+                    || route.equals("GET /api/v1/mirror/drift")) {
                 // Grant administration (GW_AUTH_0013), the machine-credential listing (GW_AUTH_0023), the
                 // vetter settings (GW_VETTING_0029), the chain mode and order (GW_VETTING_0032,
-                // GW_VETTING_0033), the mirror's drift report (GW_FACADE_0023) and the approval
-                // posture (GW_APPROVAL_0044.1) are admin-only, not auditor reads.
+                // GW_VETTING_0033) and the mirror's drift report (GW_FACADE_0023) are admin-only,
+                // not auditor reads.
                 continue;
             }
             mockMvc.perform(request(route).with(carol)).andExpect(status().isOk());

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.approval.ApprovalPostureRepository.StoredOverride;
 import dev.skillsgateway.server.approval.ApprovalPostureRepository.StoredPosture;
+import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.vetting.WaiverService;
@@ -140,20 +141,29 @@ public class ApprovalPostureService {
             Instant expiresAt,
 
             @Schema(description = "The active override, if any")
-            OverrideView override) {}
+            OverrideView override,
+
+            @Schema(
+                    description = "The deployment's automatic approval mode. A posture publishes only under on;"
+                            + " under shadow it is evaluated and recorded, and under off it does nothing",
+                    allowableValues = {"off", "shadow", "on"})
+            SkillsGatewayProperties.AutoMode mode) {}
 
     private final ApprovalPostureRepository repository;
     private final MarketplaceRepository marketplaceRepository;
     private final InternalSources internalSources;
     private final FourEyesGate fourEyesGate;
     private final AdminAuditLogger auditLogger;
+    private final SkillsGatewayProperties properties;
 
     public ApprovalPostureService(
             ApprovalPostureRepository repository,
             MarketplaceRepository marketplaceRepository,
             InternalSources internalSources,
             FourEyesGate fourEyesGate,
-            AdminAuditLogger auditLogger) {
+            AdminAuditLogger auditLogger,
+            SkillsGatewayProperties properties) {
+        this.properties = properties;
         this.repository = repository;
         this.marketplaceRepository = marketplaceRepository;
         this.internalSources = internalSources;
@@ -330,7 +340,8 @@ public class ApprovalPostureService {
                 stored.reason(),
                 stored.expiresAt(),
                 active.map(o -> new OverrideView(o.id(), o.reason(), o.createdBy(), o.createdAt(), o.expiresAt()))
-                        .orElse(null));
+                        .orElse(null),
+                properties.approval().auto().mode());
     }
 
     private Optional<StoredOverride> active(long marketplaceId, Instant now) {
