@@ -326,6 +326,10 @@ ApprovalOverride.none())`, which runs the closure, revocation, policy,
 name-collision, release-age and four-eyes gates unchanged. `ApprovalService`
 itself does not change.
 
+Under `shadow` the six checks run and those gates do not, since they run only
+inside `approve`, which publishes. A would-approve entry therefore means
+eligible, subject to the gates (acceptance R7).
+
 A refusal from any gate leaves the snapshot held, and is recorded (D9). A race
 with a person is settled by `decide`'s compare-and-set: the loser gets "changed
 while it was being decided", and the automatic path records that as a skip.
@@ -354,10 +358,15 @@ output is pinned by a test before the move.
 
 ### D10 — Triggers: after ingestion, after a waiver or posture change, and on the re-vetting tick
 
-- **After `IngestionService.ingest` returns** a held snapshot. This is a direct
-  call, outside the ingestion lock, not a transactional event: nothing on that
-  path runs in a transaction, so an after-commit listener would never fire.
-  Re-vetting a held snapshot (`RevetService.refreshHeld`) calls it the same way.
+- **After `IngestionService.ingest` returns** a held snapshot, outside the
+  ingestion lock. Re-vetting a held snapshot (`RevetService.refreshHeld`)
+  triggers it the same way. Every trigger is a synchronous application event
+  (`HeldSnapshotChanged`, and `RevetTick` for the tick): `AutoApprovalService`
+  is constructed with `WaiverService`, so a direct call back would be a
+  constructor-injection cycle. The listener is a
+  `@TransactionalEventListener` with `fallbackExecution = true`, so it runs
+  after the commit inside a transaction and at once outside one; nothing on the
+  ingestion path runs in a transaction (acceptance R8).
 - **After a waiver is created and after a posture is set**, for that
   marketplace's newest held snapshot.
 - **On each `RevetScheduler` tick**, one bounded step attempts the newest held

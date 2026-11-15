@@ -284,3 +284,31 @@ Made during implementation, a correction of fact:
   their keys are on a fixed descriptive list; any other key holds the snapshot.
   A side effect: a manifest edit that changes only descriptive fields, such as
   a version bump, no longer holds an update.
+- R7, a gap resolved fail-closed, for the owner to confirm: S12.2 says that
+  under `shadow` "every check runs". `ApprovalService`'s gates (closure,
+  revocation, policy, name collision, release age, four-eyes) run only inside
+  `approve`, which publishes, so shadow cannot run them without publishing.
+  Shadow runs D8's six checks, and a `snapshot-auto-approval-would-approve`
+  entry means "eligible, subject to the approval gates". D8 now says so.
+- R8, a correction of design D10: the triggers are synchronous Spring
+  application events, `HeldSnapshotChanged` and `RevetTick`, not direct calls.
+  `AutoApprovalService` is constructed with `WaiverService` and
+  `VettingService`, so a direct call back from `WaiverService` would be a
+  constructor-injection cycle; one event serves every publisher, and the
+  publishers need no reference to `approval`. The listener is a
+  `@TransactionalEventListener` with `fallbackExecution = true`: it runs after
+  the commit when there is a transaction, and at once when there is none, so
+  D10's objection that an after-commit listener would never fire does not
+  apply. The ingestion event is still published after `ingest` returns,
+  outside the ingestion lock.
+- R9, a refinement of design D13, for the owner to confirm: with
+  `serveAfter: previous_approved`, a marketplace whose served tip is withdrawn
+  returns to its newest approved snapshot that is not also being withdrawn.
+  Revoking newest first one at a time would otherwise republish each
+  intermediate automatic approval for a moment before withdrawing it. A
+  withdrawn snapshot that is not the served tip leaves the served reference
+  alone. When a marketplace has no snapshot to return to, the whole request is
+  refused before anything is withdrawn, as a single withdrawal is today
+  (GW_APPROVAL_0016 — What a marketplace serves after a revocation is a stated
+  choice). A snapshot that someone else withdraws during the request is
+  skipped rather than failing it.

@@ -58,9 +58,9 @@ Annotation placement follows the reqstool conventions:
 
 ## 5. Eligibility (`AutoApprovalService`)
 
-- [ ] 5.1 Newest only (`@SVCs SVC_GW_APPROVAL_0044.5`, `@Requirements GW_APPROVAL_0044.5`): an older held snapshot attempted after a newer one exists stays held, so the served tip never moves backwards. A revoked or deleted snapshot is never a candidate.
-- [ ] 5.2 No external source (`@SVCs SVC_GW_APPROVAL_0044.6`, `@Requirements GW_APPROVAL_0044.6`): one closure member, whatever its URL, including an internal one, keeps the snapshot held.
-- [ ] 5.3 Vetting (`@SVCs SVC_GW_APPROVAL_0044.7`, `@Requirements GW_APPROVAL_0044.7`):
+- [x] 5.1 Newest only (`@SVCs SVC_GW_APPROVAL_0044.5`, `@Requirements GW_APPROVAL_0044.5`): an older held snapshot attempted after a newer one exists stays held, so the served tip never moves backwards. A revoked or deleted snapshot is never a candidate.
+- [x] 5.2 No external source (`@SVCs SVC_GW_APPROVAL_0044.6`, `@Requirements GW_APPROVAL_0044.6`): one closure member, whatever its URL, including an internal one, keeps the snapshot held.
+- [x] 5.3 Vetting (`@SVCs SVC_GW_APPROVAL_0044.7`, `@Requirements GW_APPROVAL_0044.7`):
   - **stays held:**
     - an `UNDETERMINED` or `SUPERSEDED` chain;
     - any `NOT_REACHED`, `ERROR` or `PENDING` verdict, whatever `required-vetters` says;
@@ -73,31 +73,31 @@ Annotation placement follows the reqstool conventions:
     - medium findings only;
     - a high finding waived and present in the baseline in that blob;
     - with `required-vetters: [secret-scan]`, another vetter disabled and `secret-scan` passing, with the disabled vetter named in the `snapshot-auto-approved` entry.
-- [ ] 5.4 Executable surface (`@SVCs SVC_GW_APPROVAL_0044.8`, `@Requirements GW_APPROVAL_0044.8`):
+- [x] 5.4 Executable surface (`@SVCs SVC_GW_APPROVAL_0044.8`, `@Requirements GW_APPROVAL_0044.8`):
   - **stays held:**
     - a changed hook, hook module, MCP or LSP declaration, `allowed-tools` frontmatter, or agent `tools`;
     - an added or modified non-inert path: an unknown extension, mode `100755`, a mode-only change, a symlink, a gitlink, a shebang, a dependency manifest, or a launch target;
     - an oversize component file, or plugins past `MAX_PLUGINS`;
     - a first snapshot with any surface;
   - **approved:** a Markdown-only change, a deletion, and a first snapshot that is entirely inert.
-- [ ] 5.5 Gates (`@SVCs SVC_GW_APPROVAL_0044.9`, `@Requirements GW_APPROVAL_0044.9`):
+- [x] 5.5 Gates (`@SVCs SVC_GW_APPROVAL_0044.9`, `@Requirements GW_APPROVAL_0044.9`):
   - a policy denial, a name collision or an open closure leaves the snapshot held;
   - a snapshot that is too young is held, and approved on a later re-vetting tick once of age;
   - when a person decides first, the automatic attempt records a skip.
-- [ ] 5.6 Evidence (`@SVCs SVC_GW_APPROVAL_0044.10`, `@Requirements GW_APPROVAL_0044.10`): the automatic approval writes the same entries and webhook as 2.1, through `ApprovalRecorder`.
-- [ ] 5.7 Ledger (`@SVCs SVC_GW_APPROVAL_0044.11`, `@Requirements GW_APPROVAL_0044.11`):
+- [x] 5.6 Evidence (`@SVCs SVC_GW_APPROVAL_0044.10`, `@Requirements GW_APPROVAL_0044.10`): the automatic approval writes the same entries and webhook as 2.1, through `ApprovalRecorder`.
+- [x] 5.7 Ledger (`@SVCs SVC_GW_APPROVAL_0044.11`, `@Requirements GW_APPROVAL_0044.11`):
   - `snapshot-auto-approved` is typed `system`, with the basis, grantor, chain, baseline SHA, worst severity and waiver ids;
   - a skip is written only when `auto_approval_skip_reason` changes.
-- [ ] 5.8 Mode (`@SVCs SVC_GW_APPROVAL_0044.12`, `@Requirements GW_APPROVAL_0044.12`):
+- [x] 5.8 Mode (`@SVCs SVC_GW_APPROVAL_0044.12`, `@Requirements GW_APPROVAL_0044.12`):
   - under `off`, nothing is evaluated for publication;
   - under `shadow`, every check runs, `snapshot-auto-approval-would-approve` is written, and nothing is published;
   - under `on`, the snapshot is published;
   - with `revet.enabled=false`, the attempt skips with `revet-disabled`.
-- [ ] 5.9 Triggers (design D10): after `IngestionService.ingest` returns and after `refreshHeld`, as direct calls; after a waiver is created and after a posture is set; and one bounded step on the `RevetScheduler` tick. `GET /api/v1/snapshots/{id}/auto-approval` reports the same evaluation, from the same code.
-- [ ] 5.10 The end-to-end class `AutoApprovalTests` (`@SVCs SVC_GW_APPROVAL_0044` at class level, `@Requirements GW_APPROVAL_0044` on `AutoApprovalService.attempt`):
+- [x] 5.9 Triggers (design D10): after `IngestionService.ingest` returns and after `refreshHeld`, as events (acceptance R8); after a waiver is created and after a posture is set; and one bounded step on the `RevetScheduler` tick. `GET /api/v1/snapshots/{id}/auto-approval` reports the same evaluation, from the same code.
+- [x] 5.10 The end-to-end class `AutoApprovalTests` (`@SVCs SVC_GW_APPROVAL_0044` at class level, `@Requirements GW_APPROVAL_0044` on `AutoApprovalService.attempt`):
   - an internal marketplace in `on` mode ingests a Markdown-only update and serves it with no person;
   - the same update with an external source added stays held.
-- [ ] 5.11 Run `mutants.sh` over the predicate's conditions, and record the survivors with a rationale in `evidence.md`.
+- [x] 5.11 Run `mutants.sh` over the predicate's conditions, and record the survivors with a rationale in `evidence.md`.
 
 ## 6. Re-vetting and withdrawal
 

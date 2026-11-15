@@ -195,7 +195,7 @@ run M53-revet-ignored $T withReVettingOffTheAttemptSkips "$SVC" \
 run M54-skip-not-deduplicated $T aRepeatedSkipIsLedgeredOnce "$SVC" \
   'if (snapshotRepository.recordAutoApprovalSkip(snapshot.id(), reason)) {' 'if (true) {'
 run M55-race-not-ledgered $T whenAPersonDecidesFirstTheAttemptRecordsASkipAndPublishesNothing "$SVC" \
-  'if (refused instanceof IllegalStateException) {' 'if (false) {'
+  $'            if (refused instanceof IllegalStateException) {\n                // A person' $'            if (false) {\n                // A person'
 run M56-gate-reason-unstable $T aGateRefusalLeavesItHeldWithAStableReason "$SVC" \
   'String name = refused.getClass().getSimpleName().replaceFirst("Exception$", "");' 'String name = String.valueOf(refused.getMessage());'
 run M57-tick-attempts-nothing $T aTooYoungSnapshotIsApprovedOnALaterTickOnceOfAge "$SVC" \
@@ -211,6 +211,8 @@ run M60-auto-approver-human $T anInternalMarketplaceServesAMarkdownOnlyUpdateWit
   $',\n            // Approves with no person (GW_APPROVAL_0044.11).\n            AutoApprovalService.ACTOR);' ');'
 run M61-closure-ignored-end-to-end $T theSameUpdateWithAnExternalSourceAddedStaysHeld "$ELI" \
   'if (closureMembers > 0) {' 'if (false) {'
+run M62-no-human-path-evidence $T anAutomaticApprovalWritesTheDecisionEntryAndOneWebhookAsAPersonsDoes "$SVC" \
+  'recorder.recordApproved(approved, ACTOR);' ''
 
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi

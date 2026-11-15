@@ -12,7 +12,11 @@ import dev.skillsgateway.server.approval.ApprovalPostureService.PostureRequest;
 import dev.skillsgateway.server.approval.AutoApprovalService;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.Snapshot;
+import dev.skillsgateway.server.persistence.WebhookDeliveryRepository;
+import dev.skillsgateway.server.persistence.WebhookSubscriberRepository;
 import dev.skillsgateway.server.storage.ServedTip;
+import dev.skillsgateway.server.webhook.WebhookEvent;
+import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.SVCs;
 import java.time.Duration;
 import java.time.Instant;
@@ -58,6 +62,15 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
 
     @Autowired
     private JdbcClient jdbc;
+
+    @Autowired
+    private WebhookService webhookService;
+
+    @Autowired
+    private WebhookSubscriberRepository subscriberRepository;
+
+    @Autowired
+    private WebhookDeliveryRepository deliveryRepository;
 
     private Marketplace internalMarketplace(String repo) throws Exception {
         FORGE.publish(
@@ -114,6 +127,39 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
                         .contains("grantor=root")
                         .contains("baseline=" + first.sha()));
         assertThat(ledger(marketplace, "snapshot-approved")).hasSize(2);
+    }
+
+    /** The decision entry and the one webhook a person's clean approval writes (ApprovalEvidenceTests). */
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0044.10"})
+    void anAutomaticApprovalWritesTheDecisionEntryAndOneWebhookAsAPersonsDoes() throws Exception {
+        long subscriber = webhookService
+                .createSubscriber(
+                        uniqueName("auto-evidence"), "http://127.0.0.1:1/hook", List.of(WebhookEvent.SNAPSHOT_APPROVED))
+                .id();
+        try {
+            Marketplace marketplace = internalMarketplace("acme/" + uniqueName("skills"));
+            Snapshot approved = ingestionService.ingest(marketplace, null);
+            assertThat(snapshotRepository.findById(approved.id()).orElseThrow().state())
+                    .as(skipReason(approved))
+                    .isEqualTo(Snapshot.APPROVED);
+
+            assertThat(ledger(marketplace, "snapshot-approved"))
+                    .singleElement()
+                    .satisfies(entry -> assertThat(entry).startsWith("system ingestion-age="));
+            assertThat(deliveryRepository.listBySubscriber(subscriber))
+                    .singleElement()
+                    .satisfies(delivery -> {
+                        assertThat(delivery.event()).isEqualTo(WebhookEvent.SNAPSHOT_APPROVED);
+                        assertThat(delivery.payload())
+                                .contains("\"marketplace\":\"%s\"".formatted(marketplace.name()))
+                                .contains("\"snapshotId\":%d".formatted(approved.id()))
+                                .contains("\"sha\":\"%s\"".formatted(approved.sha()))
+                                .contains("\"actor\":\"%s\"".formatted(AutoApprovalService.ACTOR));
+                    });
+        } finally {
+            subscriberRepository.delete(subscriber);
+        }
     }
 
     @Test

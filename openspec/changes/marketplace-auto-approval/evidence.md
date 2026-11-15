@@ -104,8 +104,9 @@ inert. That is a contradiction between D7 and S8.2, resolved fail-closed as R6
 (a descriptive-key list for the manifest and `plugin.json`). Two tests were
 added for R6, then all 21 passed.
 
-Mutants, by `/tmp/surface-mutants.sh`, each applied with `perl`, checked as
-applied with `cmp`, then restored:
+Mutants, first by an exploratory script and then carried into the change's
+`mutants.sh` (M35–M50; see 5.11), each applied, checked as applied, then
+restored:
 
 | Mutant | First run (21 tests) | After the tests below (28) |
 |---|---|---|
@@ -150,8 +151,9 @@ waived high or critical finding needs the served baseline's run to have the
 same rule in the same blob. A finding with no blob, or no baseline at all,
 never satisfies that.
 
-Mutants, by `/tmp/eligibility-mutants.sh`, each checked as applied and then
-restored. All 21 were killed:
+Mutants, first by an exploratory script and then carried into `mutants.sh`
+(M19–M34; see 5.11), each checked as applied and then restored. All 21 were
+killed:
 
 | Mutant | Failed |
 |---|---|
@@ -172,6 +174,62 @@ restored. All 21 were killed:
 | Worst severity never set | 2/33 |
 | Waiver ids not named | 1/33 |
 | `everyVetter()` always false | 1/33 |
+
+### 5.5–5.10 — the attempt, its triggers and the end-to-end class
+
+`AutoApprovalService.attempt` runs the mode, the re-vetting check, the basis,
+the candidacy, the vetting predicate and the surface, in D8's order, and then
+calls `ApprovalService.approve` as `auto-approver`. The triggers are events
+(acceptance R8). Shadow runs the six checks and not the approval gates
+(acceptance R7).
+
+The order of writing, stated plainly: one test,
+`whenAPersonDecidesFirstTheAttemptRecordsASkipAndPublishesNothing` (S9.5), was
+written first and failed (RED). The first implementation stored a race as a
+skip through the held-only compare-and-set, which a decided row refuses, so
+nothing was ledgered. A race is now ledgered without deduplication, since it
+happens once per snapshot. The other seven `AutoApprovalServiceTests` (Mockito,
+no context) and both `AutoApprovalTests` (one new Spring context, acceptance
+R5) were written after the code they test. Their non-vacuity rests on mutants
+instead of RED: 11 mutants of the orchestration and 6 of the end-to-end path,
+all killed. They are now M51–M61 in `mutants.sh`.
+
+Two existing tests were extended, and neither was weakened.
+`RoleEnforcementTests` classifies the new
+`GET /api/v1/snapshots/{id}/auto-approval` as an open read, beside
+release-age. `OpenApiContractTests` now runs against the regenerated
+`openapi.json` and `types.gen.ts`, and the diff only adds to them.
+
+Regression after the wiring: 23 classes and 216 tests (every suite whose
+constructor or route changed, plus the budgets and the API contract) passed.
+After the race fix, a rerun of 4 classes and 19 tests also passed.
+
+### 5.11 — `mutants.sh`
+
+`mutants.sh` holds 62 mutants, one per condition: the URL-prefix matcher and
+its startup refusals (M1–M4), `required-vetters` (M5–M7), the posture and
+override expiry checks and four-eyes on the grant (M8–M18), the candidacy and
+vetting predicate (M19–M34), the surface (M35–M50), the attempt (M51–M58) and
+the end-to-end path (M59–M62). Each names the test method that must fail. A
+kill counts only from that method's surefire report. `DRY=1` proves that every
+mutant applies exactly once.
+
+```text
+$ DRY=1 openspec/changes/marketplace-auto-approval/mutants.sh | tail -1
+61 mutants apply
+$ openspec/changes/marketplace-auto-approval/mutants.sh | tail -4
+M59-ingestion-does-not-trigger killed
+M60-auto-approver-human killed
+M61-closure-ignored-end-to-end killed
+61 mutants run, all killed
+```
+
+M62 was added afterwards with its test
+(`anAutomaticApprovalWritesTheDecisionEntryAndOneWebhookAsAPersonsDoes`, task
+5.6, written after the code). It was run alone (`ONLY=M62`) and killed. The
+first run of M1–M61 was at commit `2886ea79`, in about 20 minutes. There were no survivors. The
+equivalent surface mutant from 5.4 (oversize reads ignored) is not in the
+script, because no test can kill it.
 
 ## Final run
 
