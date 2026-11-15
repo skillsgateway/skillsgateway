@@ -253,6 +253,44 @@ test("admin_removes_a_marketplace_from_its_settings", async ({ page }) => {
 });
 
 /**
+ * The approval posture from the portal (GW_APPROVAL_0044.15): on a marketplace outside the internal
+ * prefixes, automatic rests on an override, and revoking the override leaves no basis.
+ *
+ * @SVCs SVC_GW_APPROVAL_0044.15
+ */
+test("admin_sets_an_automatic_posture_with_an_override_and_revokes_it", async ({ page }) => {
+  await login(page, "alice");
+  await page.goto("/marketplaces");
+  const name = uniqueName("posture");
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
+  await submitRegister(page);
+  await expect(page.getByText(`Marketplace '${name}' registered`)).toBeVisible();
+
+  await openMarketplace(page, name);
+  await openSection(page, name, "Settings");
+  const card = page.getByRole("form", { name: "Set the approval posture" });
+  const inThirtyDays = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+  await card.getByRole("button", { name: "Automatic" }).click();
+  await card.getByLabel("Reason", { exact: true }).fill("vendor skills, audited quarterly");
+  await card.getByLabel("Lapses on", { exact: true }).fill(inThirtyDays);
+  await card.getByRole("checkbox", { name: "Add an override" }).click();
+  await card.getByLabel("Override reason").fill("vendor repository we audit quarterly");
+  await card.getByLabel("Override lapses on").fill(inThirtyDays);
+  await card.getByRole("button", { name: "Save posture" }).click();
+  await expect(page.getByText(`Approval posture of '${name}' saved`)).toBeVisible();
+  await expect(page.getByText("Administrator override")).toBeVisible();
+
+  await page.getByRole("button", { name: "Revoke override…" }).click();
+  const dialog = page.getByRole("dialog", { name: `Revoke the override on ${name}` });
+  await dialog.getByRole("button", { name: "Revoke override" }).click();
+  await expect(page.getByText(`Override on '${name}' revoked`)).toBeVisible();
+  await expect(page.getByText("Administrator override")).toHaveCount(0);
+  await expect(page.getByText(/has no active override, so the posture does not take effect/)).toBeVisible();
+});
+
+/**
  * Correcting a URL from the portal (GW_INGEST_0067): the gateway's refusal is shown in the dialog,
  * an accepted URL replaces the one shown, and once something has been ingested from it the URL
  * can no longer change.

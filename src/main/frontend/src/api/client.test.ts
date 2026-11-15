@@ -38,3 +38,20 @@ test("other_failures_do_not_reload", async () => {
   await expect(api("/api/v1/me")).rejects.toBeInstanceOf(ApiError);
   expect(reload).not.toHaveBeenCalled();
 });
+
+test("a_refusal_carries_the_servers_detail_and_next_step", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async () =>
+        new Response(JSON.stringify({ detail: "needs an override", nextStep: "set an override" }), {
+          status: 409,
+          headers: { "Content-Type": "application/problem+json" },
+        }),
+    ),
+  );
+  const refused = await api("/api/v1/marketplaces/m/approval-posture").catch((error: unknown) => error);
+  expect(refused).toBeInstanceOf(ApiError);
+  expect((refused as ApiError).message).toBe("needs an override");
+  expect((refused as ApiError).nextStep).toBe("set an override");
+});

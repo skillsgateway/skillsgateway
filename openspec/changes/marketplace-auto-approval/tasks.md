@@ -116,10 +116,10 @@ Annotation placement follows the reqstool conventions:
 
 ## 8. Portal
 
-- [ ] 8.1 Regenerate `src/api/types.gen.ts` with `pnpm gen:api-types` from the committed `openapi.json` after group 4, so the card uses the generated types.
-- [ ] 8.2 The Approval posture card on `MarketplaceSettingsPage` (`@Requirements GW_APPROVAL_0044.15` in JSDoc, design D15): it shows the posture, basis, grantor, reason, expiry, active override and deployment mode to anyone who can see Settings; an administrator sets or renews the posture, creates the override for a marketplace with no internal basis, and revokes the override behind a confirmation. Server refusals are shown as returned.
-- [ ] 8.3 Storybook stories for each state: manual; auto, internal; auto by override; awaiting a second administrator; lapsed; non-administrator view; a refused save. Verify with `pnpm test:stories`.
-- [ ] 8.4 An e2e test in `e2e/portal.spec.ts` (`@SVCs SVC_GW_APPROVAL_0044.15`): an administrator sets `auto` with an override on a marketplace outside the prefixes, sees the basis `override`, revokes it, and sees the basis `none`. Verify with `pnpm e2e`.
+- [x] 8.1 Regenerate `src/api/types.gen.ts` with `pnpm gen:api-types` from the committed `openapi.json` after group 4, so the card uses the generated types.
+- [x] 8.2 The Approval posture card on `MarketplaceSettingsPage` (`@Requirements GW_APPROVAL_0044.15` in JSDoc, design D15): it shows the posture, basis, grantor, reason, expiry, active override and deployment mode to anyone who can see Settings; an administrator sets or renews the posture, creates the override for a marketplace with no internal basis, and revokes the override behind a confirmation. Server refusals are shown as returned.
+- [x] 8.3 Storybook stories for each state: manual; auto, internal; auto by override; awaiting a second administrator; lapsed; non-administrator view; a refused save. Verify with `pnpm test:stories`.
+- [x] 8.4 An e2e test in `e2e/portal.spec.ts` (`@SVCs SVC_GW_APPROVAL_0044.15`): an administrator sets `auto` with an override on a marketplace outside the prefixes, sees the basis `override`, revokes it, and sees the basis `none`. Verify with `pnpm e2e`.
 - [ ] 8.5 Run `/impeccable audit` and `/impeccable harden` on the Settings page, and capture before/after screenshots for the PR body (`.claude/skills/ui-screenshots`).
 
 ## 9. Documentation

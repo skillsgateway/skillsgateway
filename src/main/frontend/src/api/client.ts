@@ -22,24 +22,31 @@ function csrfToken(): string | undefined {
 
 export class ApiError extends Error {
   readonly status: number;
+  /** What to do about the refusal, when the server says. */
+  readonly nextStep?: string;
 
-  constructor(status: number, detail: string) {
+  constructor(status: number, detail: string, nextStep?: string) {
     super(detail);
     this.status = status;
+    this.nextStep = nextStep;
   }
 }
 
 async function parseError(response: Response): Promise<ApiError> {
   let detail = `${response.status} ${response.statusText}`;
+  let nextStep: string | undefined;
   try {
     const body: unknown = await response.json();
     if (body && typeof body === "object" && "detail" in body && typeof body.detail === "string") {
       detail = body.detail;
     }
+    if (body && typeof body === "object" && "nextStep" in body && typeof body.nextStep === "string") {
+      nextStep = body.nextStep;
+    }
   } catch {
     // Non-JSON error body; keep the status line.
   }
-  return new ApiError(response.status, detail);
+  return new ApiError(response.status, detail, nextStep);
 }
 
 /**

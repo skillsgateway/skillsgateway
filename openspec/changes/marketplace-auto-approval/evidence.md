@@ -279,6 +279,28 @@ Mutants M74–M78, run with `ONLY='M7[4-8]'`, were all killed. The test gained
 its "a changed reason is re-applied" step before M77 was written, because
 nothing asserted it yet.
 
+### 8.1–8.4 — the portal card
+
+`types.gen.ts` was regenerated with the API in group 6, so 8.1 needed no new
+work. `client.test.ts` gained a test that a refusal carries the server's
+`nextStep`. It failed (RED) before `ApiError` had the field, and passes after.
+
+The ten `ApprovalPosture` stories cover S15.1–S15.4 and pass under
+`vitest --project storybook`, with axe on. Three hand-applied mutants of the
+card were each killed by a story:
+
+- a blank reason accepted, killed by `SavedOnlyWhenValid`;
+- the next step not rendered, killed by `RefusedSave`;
+- the 90-day maximum not checked, killed by `SavedOnlyWhenValid`.
+
+The unit suite (`pnpm test`) gives 38 files and 284 tests, all passing.
+
+`admin_sets_an_automatic_posture_with_an_override_and_revokes_it` (S15.5)
+passes under `pnpm e2e` against the packaged jar. A mutant whose revoke left
+the cached posture in place failed it at the assertion that "Administrator
+override" is gone (`toHaveCount`). The source was then restored and the jar
+rebuilt.
+
 ## Final run
 
 (pending)

@@ -113,6 +113,49 @@ export function useRemoveMarketplace() {
   });
 }
 
+export type PostureView = components["schemas"]["PostureView"];
+export type PostureRequest = components["schemas"]["PostureRequest"];
+
+const postureKey = (name: string) => ["approval-posture", name] as const;
+
+/**
+ * A marketplace's approval posture, its effective basis, the active override and the deployment's
+ * mode. Readable by any session.
+ *
+ * @Requirements GW_APPROVAL_0044.15
+ */
+export function useApprovalPosture(name: string) {
+  return useQuery({
+    queryKey: postureKey(name),
+    queryFn: () => api<PostureView>(`/api/v1/marketplaces/${encodeURIComponent(name)}/approval-posture`),
+  });
+}
+
+/** Set or renew a posture, with an override for a marketplace outside the internal prefixes. Admin-only. */
+export function useSetApprovalPosture(name: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: PostureRequest) =>
+      api<PostureView>(`/api/v1/marketplaces/${encodeURIComponent(name)}/approval-posture`, {
+        method: "PUT",
+        body: JSON.stringify(request),
+      }),
+    onSuccess: (view) => queryClient.setQueryData(postureKey(name), view),
+  });
+}
+
+/** End the active override at once. Admin-only. */
+export function useRevokeApprovalOverride(name: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      api<PostureView>(`/api/v1/marketplaces/${encodeURIComponent(name)}/approval-posture/override`, {
+        method: "DELETE",
+      }),
+    onSuccess: (view) => queryClient.setQueryData(postureKey(name), view),
+  });
+}
+
 export type EstateReconciliation = components["schemas"]["EstateReconciliation"];
 
 /** The last estate reconciliation report: which objects the configuration declares. Admin or auditor. */

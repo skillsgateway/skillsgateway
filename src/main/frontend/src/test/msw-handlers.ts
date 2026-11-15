@@ -1339,6 +1339,9 @@ export const queuedIngest = (name: string): Schemas["IngestStatus"] => ({
   running: { stage: "queued", startedAt: new Date().toISOString(), interrupted: false },
 });
 
+/** A marketplace no one has set a posture for, on a gateway with automatic approval off. */
+export const manualPosture: Schemas["PostureView"] = { posture: "manual", basis: "none", mode: "off" };
+
 export const handlers = [
   http.get("/api/v1/adoption", () => HttpResponse.json(marketplaceAdoption)),
   http.get("/api/v1/adoption/staleness", () => HttpResponse.json(staleIdentities)),
@@ -1392,6 +1395,7 @@ export const handlers = [
   ),
   http.get("/api/v1/marketplaces/:name/waivers", () => HttpResponse.json(waivedVetting.waivers)),
   http.get("/api/v1/marketplaces/:name/vetting-chain", () => HttpResponse.json(marketplaceChain)),
+  http.get("/api/v1/marketplaces/:name/approval-posture", () => HttpResponse.json(manualPosture)),
   http.get("/api/v1/marketplaces/:name/vetting-chain-settings", () =>
     HttpResponse.json(chainSettingsDefault),
   ),
