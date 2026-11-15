@@ -439,6 +439,49 @@ alphabetical: 140 tests, 0 failed, 11 classes
 reversealphabetical: 140 tests, 0 failed, 11 classes
 ```
 
+### 10.1 — the machine-credential classification (R12)
+
+The first full `./mvnw clean verify` failed 6 of 1357 tests. One was this
+change's: `MachineApiRegistryTests` refused the five new routes as
+unclassified. The test named the gap and was already RED; the named
+exclusion list in `MachineApiScopeTests` was extended with the three
+unreachable routes first and watched fail, and only then was
+`MachineApiRegistry` edited (commit `bb9f5ced`, revision R12). The other five
+were time bounds (`InventoryBoundTests`, `VettingTimeLimitTests`,
+`TreeBoundIndexTests`, `PluginRootBoundTests`, `SkillConformanceVetterTests`)
+on a run that took 16:39 under load. Run alone they passed 46/46 with the
+machine-credential suites, unchanged, and the fresh run below took 4:44 with
+none failing.
+
+`mutants.sh` was last run at `1398771e`: 79 mutants, all killed. The one
+production edit after it, the registry classification, is covered by the
+existing walks in `MachineApiScopeTests`, which refuse every unreachable route
+to a credential holding every scope and test each scope's routes one by one.
+
 ## Final run
 
-(pending)
+One fresh run of every gate after the last code edit, at commit `bb9f5ced`.
+
+```text
+$ ./mvnw clean verify
+[INFO] Tests run: 1357, Failures: 0, Errors: 0, Skipped: 9
+[INFO] BUILD SUCCESS
+[INFO] Total time:  04:44 min
+
+$ (cd src/main/frontend && pnpm test:stories)
+ Test Files  24 passed (24)
+      Tests  133 passed (133)
+
+$ (cd src/main/frontend && pnpm e2e)
+  31 passed (1.8m)
+
+$ reqstool status local -p docs/reqstool
+INCOMPLETE (0)
+404/404 complete · 0 incomplete · PASS
+
+$ openspec validate --all --strict
+Totals: 30 passed, 0 failed (30 items)
+
+$ mkdocs build --strict
+INFO    -  Documentation built in 2.43 seconds
+```

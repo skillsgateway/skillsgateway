@@ -138,5 +138,5 @@ Annotation placement follows the reqstool conventions:
 
 ## 10. Gates and evidence
 
-- [ ] 10.1 Run every AGENTS.md gate fresh after the last code edit: `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`, `reqstool status local -p docs/reqstool`, `openspec validate --all --strict`, `mkdocs build --strict`. Record the commands, result tails and commit SHA in `evidence.md`.
+- [x] 10.1 Run every AGENTS.md gate fresh after the last code edit: `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`, `reqstool status local -p docs/reqstool`, `openspec validate --all --strict`, `mkdocs build --strict`. Record the commands, result tails and commit SHA in `evidence.md`.
 - [ ] 10.2 `/opsx:archive` as the final commit of the PR.
