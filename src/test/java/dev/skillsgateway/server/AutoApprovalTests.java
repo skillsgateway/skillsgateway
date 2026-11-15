@@ -241,6 +241,36 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
     }
 
     /**
+     * Adversarial: an upstream that lays its own plugin out where grafts go, with no external
+     * source, has no closure record, so candidacy counts no members. The closure gate inside the
+     * approval still refuses a commit whose manifest grafts what no closure records.
+     */
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0044.9"})
+    void aPluginDisguisedAsAGraftWithNoClosureIsRefusedByTheClosureGate() throws Exception {
+        String repo = "acme/" + uniqueName("skills");
+        Marketplace marketplace = internalMarketplace(repo);
+        Snapshot first = ingestionService.ingest(marketplace, null);
+        assertThat(snapshotRepository.findById(first.id()).orElseThrow().state())
+                .as(skipReason(first))
+                .isEqualTo(Snapshot.APPROVED);
+
+        FORGE.publish(
+                repo,
+                Map.of(
+                        MANIFEST_PATH,
+                        DEFAULT_MANIFEST.replace("./plugins/hello", "./_plugins/hello"),
+                        "_plugins/hello/skills/hello/SKILL.md",
+                        CONFORMANT_SKILL));
+        Snapshot update = ingestionService.ingest(marketplace, null);
+
+        assertThat(snapshotRepository.findById(update.id()).orElseThrow().state())
+                .isEqualTo(Snapshot.HELD);
+        assertThat(skipReason(update)).startsWith("gate-refused: closure-incomplete");
+        assertThat(servedTip.of(marketplace.name())).contains(first.sha());
+    }
+
+    /**
      * Content no person looked at is recalled by re-vetting whatever the mode; content a person
      * vouched for follows the mode, here warn. Both carry the same secret, waived by path and then
      * the waiver revoked, so the two differ only in who approved them.

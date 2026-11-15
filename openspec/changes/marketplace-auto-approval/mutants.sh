@@ -258,5 +258,10 @@ run M77-reason-not-compared $T aDeclaredAutomaticPostureIsAppliedByTheReconciler
 run M78-not-the-reconciler $T aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
   'posture(() -> postureService.set(name, declared, ACTOR));' 'posture(() -> postureService.set(name, declared, "root"));'
 
+# --- adversarial pass ---
+CCG=src/main/java/dev/skillsgateway/server/approval/ClosureCompletenessGate.java
+run M79-closure-gate-open $T aPluginDisguisedAsAGraftWithNoClosureIsRefusedByTheClosureGate "$CCG" \
+  'if (!discrepancies.isEmpty()) {' 'if (false) {'
+
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi

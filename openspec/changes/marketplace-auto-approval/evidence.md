@@ -355,6 +355,36 @@ are sections of `reference/api/marketplaces.md`, which gained:
 Each property name, vetter name, ledger action and refusal code was checked
 against the code. `mkdocs build --strict` exits 0.
 
+### Adversarial pass
+
+Each bypass idea tried against the finished predicate, and the test that
+stops it:
+
+| Idea | Stopped by |
+| --- | --- |
+| A lookalike organisation (`acme-evil` under `acme`), another scheme, host or port, userinfo, encoded separators, dot segments, a case-shifted path | `InternalSourcesTests` |
+| A host-wide prefix on a multi-tenant forge or the `github-base-url` host | `InternalSourcesTests` (startup refusals) |
+| Switching every vetter off but one, an empty or misspelled `required-vetters` | `AutoApprovalEligibilityTests`, `RequiredVettersTests` |
+| A script given a Markdown name: a shebang, the executable bit, a symlink, a gitlink, a mode-only change | `SurfaceComparisonTests` |
+| A hook added in a skill's frontmatter, behind a Markdown path | `SurfaceComparisonTests` |
+| A Markdown or data file a hook launches | `SurfaceComparisonTests` (launch targets) |
+| A dependency manifest or lockfile, an unknown extension | `SurfaceComparisonTests` |
+| A new key in the marketplace manifest or a `plugin.json` | `SurfaceComparisonTests` |
+| An oversize or unparseable component file, too many plugins or plugin roots | `SurfaceComparisonTests` (unreadable means changed) |
+| A waiver written to pre-clear new content | `AutoApprovalEligibilityTests` (`waived-finding-new`) |
+| An external source pulled in by an internal marketplace | `AutoApprovalTests.theSameUpdateWithAnExternalSourceAddedStaysHeld` |
+| An older held snapshot moving the tip backwards | `AutoApprovalEligibilityTests` (`not-newest`) |
+| A person and the automatic path deciding at once | `AutoApprovalServiceTests` (`decided-elsewhere`) |
+| **New:** a local plugin laid out where grafts go, with no external source, so no closure record exists and candidacy counts no members | `AutoApprovalTests.aPluginDisguisedAsAGraftWithNoClosureIsRefusedByTheClosureGate` |
+
+The new idea did not get through. The closure gate inside the approval
+refuses a manifest that grafts what no closure records, and the snapshot stays
+held with `gate-refused: closure-incomplete`. The test passed on arrival. M79,
+which disables that gate, makes it fail (`expected: "held" but was:
+"approved"`), so the test depends on the gate. Under `shadow` such a snapshot
+can be recorded as would-approve, since the gates run only under `on`. That is
+the meaning acceptance R7 already gives a would-approve entry.
+
 ## Final run
 
 (pending)
