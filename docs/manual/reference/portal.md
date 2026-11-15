@@ -296,7 +296,7 @@ A marketplace is divided by what a visit is for, most frequent first:
 | **Review** (default) | What awaits a decision — the [snapshot cards](#the-card) and the decision |
 | **Snapshots** | What is served, and every earlier snapshot |
 | **Activity** | This marketplace's slice of the [audit log](#audit-log) |
-| **Settings** | The [upstream](#upstream) facts and, for an administrator, the [URL correction](#correct-the-url-administrators), the [vetting chain](#vetting-chain-administrators) and [removal](#remove-marketplace-administrators) |
+| **Settings** | The [upstream](#upstream) facts, the [approval posture](#approval-posture) and, for an administrator, the [URL correction](#correct-the-url-administrators), the posture's form, the [vetting chain](#vetting-chain-administrators) and [removal](#remove-marketplace-administrators) |
 
 ### Header
 
@@ -357,6 +357,46 @@ URL can no longer change, and that the marketplace can be
 marketplace the estate configuration declares has the button disabled, with
 the reason: correct the declaration and restart. The dialog calls
 [`PUT /api/v1/marketplaces/{name}/url`](api/marketplaces.md#put-marketplacesnameurl).
+
+### Approval posture
+
+On **Settings**, after the upstream facts, and **shown to every session that
+can see the page**, so an automatic posture is never invisible to the people
+whose content it publishes. Fed by
+`GET /api/v1/marketplaces/{name}/approval-posture`; see
+[Automatic approval](../guides/approving-snapshots.md#automatic-approval).
+
+The heading carries a badge for what the posture does today: **Approved
+automatically** (an `auto` posture on an effective basis, with the deployment
+mode `on`), **Shadow: recorded, not published** (the same under mode
+`shadow`), or **Not approved automatically**. Beneath it, a list gives the
+posture, the basis, the deployment mode, who set it and when, the reason,
+when it lapses, and the active override with its reason, author and date. A
+posture past its date is marked **Lapsed**. A note says what to do when an
+`auto` posture is not taking effect: renew a lapsed one, wait for another
+administrator under four-eyes, or set it again with an override.
+
+**For an administrator**, a form follows:
+
+- **Posture**: *Manual* or *Automatic*. Saving manual also revokes an active
+  override.
+- For *Automatic*, a **Reason** and a **Lapses on** date, from tomorrow to 90
+  days out. The posture lapses at the start of that day.
+- **Add an override**, for a marketplace outside the internal prefixes, with
+  its own **Override reason** and **Override lapses on**.
+
+**Save posture** is disabled until each required reason holds something other
+than whitespace and each date is in range, and reads *Saving…* while the
+request is in flight. It calls `PUT …/approval-posture`. A refusal from the
+server, such as an automatic posture with no internal basis and no override,
+is shown beneath the form as returned, with its next step.
+
+When an override is active, **Revoke override…** opens a confirmation that
+states what revoking does: the override ends now, an automatic posture that
+rests on it stops taking effect, and what is already served stays served.
+**Revoke override** calls `DELETE …/approval-posture/override`.
+
+If the posture cannot be loaded, the card says so with **Try again**.
 
 ### Vetting chain (administrators)
 

@@ -213,6 +213,20 @@ Deregistration, snapshot approval, waivers — everything that retracts
 or publishes content — stays interactive and audited, and is unreachable by a
 machine credential holding every scope there is.
 
+A marketplace's **approval posture** is declarable, as
+[`approval.posture`, `approval.reason` and `approval.expires-at`](../reference/configuration.md#declarative-estate)
+on its entry: whether its clean updates are
+[approved automatically](approving-snapshots.md#automatic-approval) is
+standing configuration, and the review of the estate repository is its
+separation of duties. The reconciler applies it with the same rules as the
+API. It fails the entry for an `auto` posture with no internal basis, or with
+a missing or too-distant expiry. Changing the reason or the date re-applies
+it, which is how a declared posture is renewed; a declared date that passes
+leaves the posture manual until the declaration changes. The **override** a
+marketplace outside the internal prefixes needs is not declarable, for the
+reason waivers are not: it is a dated judgement by a named person. Declaring
+one fails the entry.
+
 Identity-provider role mappings (`skills-gateway.roles.mappings`) are
 deliberately **not** an estate object either, for the opposite reason: they are
 already pure configuration. No endpoint creates or deletes them, there is no

@@ -124,7 +124,7 @@ Annotation placement follows the reqstool conventions:
 
 ## 9. Documentation
 
-- [ ] 9.1 Update the docs pages:
+- [x] 9.1 Update the docs pages:
   - `guides/approving-snapshots.md`: an Automatic approval section covering shadow mode, the checks, and withdrawal;
   - `guides/registering-a-marketplace.md`;
   - the declarative estate guide;

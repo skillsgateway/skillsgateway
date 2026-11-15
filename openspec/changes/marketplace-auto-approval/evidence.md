@@ -338,6 +338,23 @@ Two findings were dismissed, with reasons:
 - **A lapsed override cannot be shown as lapsed.** The API returns only the
   active override, so the card instead explains why the basis is none.
 
+The form's checks go beyond design D15's wording, because the forms rule
+outranks it (acceptance R11).
+
+### 9.1 — documentation
+
+The pages in 9.1 were updated, and so was `index.md`, whose "Only an explicit
+human approval publishes" is no longer true. The snapshots and approval API
+are sections of `reference/api/marketplaces.md`, which gained:
+
+- `approval` on registration;
+- the three approval-posture routes;
+- `POST /approval/auto/withdraw`;
+- `GET /snapshots/{id}/auto-approval`, with its refusal codes.
+
+Each property name, vetter name, ledger action and refusal code was checked
+against the code. `mkdocs build --strict` exits 0.
+
 ## Final run
 
 (pending)

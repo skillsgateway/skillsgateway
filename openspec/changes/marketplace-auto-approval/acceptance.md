@@ -319,3 +319,14 @@ Made during implementation, a correction of fact:
   `GET /api/v1/snapshots/{id}/auto-approval` already was, and setting a posture
   stays administrator-only. The response gains `mode`, the deployment's mode,
   which D15 needs on the card. Neither the route nor its tests exist on `main`.
+- R11, a correction of design D15, for the owner to confirm: D15 says the
+  form does not pre-empt the server's limits beyond the date picker's
+  maximum. The repository's forms rule (`.claude/skills/design-conventions`,
+  "Disabled until valid" and "The client mirrors the server, exactly")
+  outranks that, so **Save posture** stays disabled until each required
+  reason is not blank and each date runs from tomorrow to 90 days out. Those
+  are the server's own rules, copied exactly. The one difference is that a
+  date cannot say "later today", so tomorrow is the earliest choice. Every
+  other refusal (no internal basis, four-eyes, an override on an internal
+  marketplace) stays the server's, and is shown as returned with its next
+  step.

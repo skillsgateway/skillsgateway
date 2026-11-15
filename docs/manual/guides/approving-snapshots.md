@@ -632,6 +632,119 @@ a person holding the report.
 The rejected snapshot stays as evidence — it is the record that someone looked
 at this exact upstream commit and said no.
 
+## Automatic approval
+
+A marketplace your organisation owns can have its clean updates approved with
+no person. This is opt-in twice: the deployment's mode, and each
+marketplace's **approval posture**. Both default to off, so nothing changes
+until an administrator sets them. The decision and its accepted risk are
+[ADR 0023 — Automatic approval of internal marketplaces](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0023-automatic-approval-of-internal-marketplaces.md).
+
+### Which marketplaces qualify
+
+A posture of `auto` takes effect only on an internal basis:
+
+- the clone URL is under one of
+  [`skills-gateway.approval.auto.internal-prefixes`](../reference/configuration.md#automatic-approval);
+- or the marketplace is [hosted](publishing-first-party-skills.md) on the
+  gateway;
+- or an administrator records an **override**, a dated exception with its own
+  reason, for a marketplace outside the prefixes.
+
+Every posture of `auto` needs a reason and an expiry at most 90 days out, and
+lapses back to manual when it passes; renewing it is setting it again. An
+override is never declared in the [estate](declarative-estate.md), because it is a
+dated judgement by a named person. Four-eyes applies to the grant: under
+`enforce`, a posture set by the marketplace's registrant waits for a second
+administrator.
+
+Set it on the marketplace's **Settings** page, in the
+[Approval posture](../reference/portal.md#approval-posture) card, or with
+[`PUT /api/v1/marketplaces/{name}/approval-posture`](../reference/api/marketplaces.md#put-marketplacesnameapproval-posture).
+
+### What it checks
+
+After each ingestion, a new waiver, a posture change and each re-vetting tick,
+the gateway attempts the marketplace's newest held snapshot. It approves only
+when every one of these holds, in this order:
+
+1. **Re-vetting is on**, so something re-checks what it approves.
+2. **The posture takes effect**, on one of the bases above.
+3. **The snapshot is the newest, and pulls in no external source.** An older
+   held snapshot always waits for a person, so the served tip never moves
+   backwards.
+4. **The vetting chain cleared it**, under the chain in force, with every
+   vetter finished and every [required vetter](../reference/configuration.md#automatic-approval)
+   switched on. Medium and low findings clear as they do for a person. A
+   waived high or critical finding counts only if the served snapshot already
+   carried it in the same file.
+5. **The executable surface did not change.** Hooks, MCP and LSP servers,
+   `allowed-tools` and agent tools are the same as in the served snapshot, and
+   every added or modified file is inert: documentation, images and data by
+   extension, never a script, an executable bit, a symlink or a dependency
+   manifest. Anything the gateway could not read counts as changed.
+
+Then the ordinary approval gates run unchanged: closure, standing revocation,
+policy, plugin-name collision, minimum release age and four-eyes. A snapshot
+waiting out the release age is approved on a later re-vetting tick, so the lag
+is at most `skills-gateway.vetting.revet.interval`.
+
+A changed `SKILL.md` that raises no finding is approved. In an agent skill,
+Markdown is instructions, so this is the risk the ADR accepts, and the reason
+to start in shadow mode.
+
+Every outcome is on the ledger as the `auto-approver` actor:
+`snapshot-auto-approved` carries the basis, the chain, the baseline, the worst
+severity, the waivers and any switched-off vetters; a snapshot left held gets
+`snapshot-auto-approval-skipped` with the first failing check, once per
+distinct reason. An automatic approval otherwise records what a person's does,
+and fires the same webhook.
+
+### Start in shadow
+
+```yaml
+skills-gateway:
+  approval:
+    auto:
+      mode: shadow
+      internal-prefixes:
+        - https://git.example.com/platform
+```
+
+Under `shadow`, every check runs and nothing is published; an eligible snapshot
+is recorded as `snapshot-auto-approval-would-approve`. Watch those entries
+against what your reviewers then approve by hand, and ask
+[`GET /api/v1/snapshots/{id}/auto-approval`](../reference/api/marketplaces.md#get-snapshotsidauto-approval)
+why any one snapshot was or was not eligible. It answers the same in every mode
+and writes nothing. Move to `on` when the would-approve entries are ones you
+would have approved.
+
+`mode: off` is also the incident switch. It stops every attempt at once,
+whatever the postures say.
+
+### Recall
+
+Re-vetting treats an automatically approved snapshot as if
+`skills-gateway.vetting.revet.mode` were `enforce`: a new blocking finding
+withdraws it, even where the deployment's mode is `warn` for what people
+approved.
+
+To take back everything approved automatically since a time, for example after
+an internal repository was compromised:
+
+```console
+$ curl -X POST localhost:8080/api/v1/approval/auto/withdraw \
+    -H 'Content-Type: application/json' \
+    -d '{"since": "2026-11-14T00:00:00Z",
+         "reason": "internal repository compromised",
+         "serveAfter": "PREVIOUS_APPROVED"}'
+```
+
+Each one is an ordinary [withdrawal](#withdrawing-content-you-have-already-approved),
+newest first, and what people approved is untouched. If a marketplace has
+nothing earlier to return to, the request is refused before anything is
+withdrawn; choose `NOTHING` for it, or withdraw it on its own.
+
 ## Who may approve
 
 Two independent questions, answered in this order.
