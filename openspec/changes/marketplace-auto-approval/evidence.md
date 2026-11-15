@@ -385,6 +385,60 @@ which disables that gate, makes it fail (`expected: "held" but was:
 can be recorded as would-approve, since the gates run only under `on`. That is
 the meaning acceptance R7 already gives a would-approve entry.
 
+### Real execution
+
+This ran against the packaged jar (`skills-gateway-server-0.8.0-78-SNAPSHOT.jar`),
+the e2e compose PostgreSQL and `dev-insecure-auth` with `dev` as
+administrator. The marketplace was hosted, named `platform`, with an `auto`
+posture (basis `hosted`). Content was published by `git push` to
+`/publish/platform` with a token scoped to push there.
+
+**`mode: shadow`, the first push (`d8f8e69`):** the snapshot stays `held`,
+nothing is served, and `GET /snapshots/1/auto-approval` answers `eligible:
+true`. The ledger, with the per-vetter verdicts elided:
+
+```text
+1  | dev           | human  | marketplace-registered               | origin=hosted
+2  | dev           | human  | approval-posture-changed             | posture=auto; basis=hosted; expires=2026-12-15T16:40:20Z; reason=our own skills, published by CI
+3  | dev           | human  | four-eyes-conflict                   | on=approval-posture; mode=WARN; roles=registered-by; set
+5  | dev           | human  | marketplace-pushed                   | from=(new)
+11 | vetting       | system | vetting-completed                    | trigger=ingestion; outcome=clear; vetters=5; run=1; …
+12 | auto-approver | system | snapshot-auto-approval-would-approve | basis=hosted; grantor=dev; chain=…
+```
+
+**`mode: on`, the same gateway restarted, a Markdown-only push (`3d13ef4`,
+one line of `SKILL.md`):** snapshot 2 is `approved` by `auto-approver`, the
+served tip moves, and the older held snapshot 1 stays held (design D5).
+
+```text
+13 | dev           | human  | marketplace-pushed     | 3d13ef4 | from=d8f8e69…
+19 | vetting       | system | vetting-completed      | 3d13ef4 | trigger=ingestion; outcome=clear; vetters=5; run=2; …
+20 | auto-approver | system | snapshot-approved      | 3d13ef4 | ingestion-age=0s
+21 | auto-approver | system | snapshot-auto-approved | 3d13ef4 | basis=hosted; grantor=dev; chain=…;mode=run-all; baseline=none; worst=LOW; waivers=[]; disabledVetters=[]
+```
+
+`git ls-remote` against the facade:
+
+```text
+3d13ef49639a8dcc29e866b5e5c16c63e20fd263	HEAD
+3d13ef49639a8dcc29e866b5e5c16c63e20fd263	refs/heads/main
+```
+
+### Suite health
+
+The change's eleven new test classes ran twice, with
+`-Dsurefire.runOrder=alphabetical` and then `reversealphabetical`. They are
+`ApprovalEvidenceTests`, `ApprovalPostureEnforceTests`,
+`ApprovalPostureTests`, `AutoApprovalTests`, `AutoApprovalEligibilityTests`,
+`AutoApprovalServiceTests`, `AutoApprovalWithdrawalTests`,
+`InternalSourcesTests`, `RequiredVettersTests`,
+`DeclaredApprovalBindingTests` and `SurfaceComparisonTests`.
+
+```text
+alphabetical: 140 tests, 0 failed, 11 classes
+reversealphabetical: 140 tests, 0 failed, 11 classes
+```
+
 ## Final run
 
 (pending)
