@@ -252,7 +252,7 @@ run M74-override-declared $T aDeclaredAutomaticPostureIsAppliedByTheReconcilerAn
 run M75-registered-before-checked $T aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
   'approval.ifPresent(request -> posture(() -> postureService.checkRegistration(' 'approval.filter(request -> false).ifPresent(request -> posture(() -> postureService.checkRegistration('
 run M76-lapsed-reapplied $T aLapsedDeclaredPostureIsManualUntilTheDeclarationChanges "$EST" \
-  '&& declared.expiresAt().truncatedTo(ChronoUnit.MICROS).equals(stored.expiresAt())' '&& false'
+  $'.truncatedTo(ChronoUnit.MICROS)\n                                        .equals(stored.expiresAt())));' $'.truncatedTo(ChronoUnit.MICROS)\n                                        .equals(null)));'
 run M77-reason-not-compared $T aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
   '&& declared.reason().trim().equals(stored.reason())' ''
 run M78-not-the-reconciler $T aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \

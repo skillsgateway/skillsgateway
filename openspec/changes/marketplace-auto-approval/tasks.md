@@ -109,7 +109,7 @@ Annotation placement follows the reqstool conventions:
 
 ## 7. Estate
 
-- [ ] 7.1 `skills-gateway.estate.marketplaces[].approval.{posture, reason, expires-at}` (`@SVCs SVC_GW_ESTATE_0006`, `@Requirements GW_ESTATE_0006`):
+- [x] 7.1 `skills-gateway.estate.marketplaces[].approval.{posture, reason, expires-at}` (`@SVCs SVC_GW_ESTATE_0006`, `@Requirements GW_ESTATE_0006`):
   - the reconciler applies it as `config-reconciler`;
   - `auto` with no internal basis, or with a missing or too-distant expiry, is a reconciliation failure;
   - an override is never implied.

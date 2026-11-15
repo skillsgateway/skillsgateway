@@ -259,6 +259,26 @@ belongs to a marketplace that could be honoured. The refusal test now arranges
 that case and asserts that the honourable withdrawal is not made either. M71
 was then killed, and every other mutant was killed on the first run.
 
+### 7.1 — the declared posture
+
+Two tests in `AutoApprovalTests` (the one context with an internal prefix)
+were written after the configuration record and before the reconciler. The
+main one failed (RED, posture `MANUAL` where `AUTO` was declared). The lapse
+test passed vacuously, since nothing was applied yet, so M76 is its proof.
+After the implementation both pass. `DeclaredApprovalBindingTests` (binder
+only, no context) proves the documented property names bind, including an
+attempted `override`. `DeclaredMarketplace` keeps its five-argument
+constructor, so no existing estate test changed.
+
+The override slot exists only to be refused. Spring drops an unknown key
+silently, so without the slot a declared override would vanish instead of
+failing its entry. `ConfigSurfaceBudgetTests` is unchanged, at 112, because
+the keys sit inside the marketplace list's element (R4).
+
+Mutants M74–M78, run with `ONLY='M7[4-8]'`, were all killed. The test gained
+its "a changed reason is re-applied" step before M77 was written, because
+nothing asserted it yet.
+
 ## Final run
 
 (pending)
