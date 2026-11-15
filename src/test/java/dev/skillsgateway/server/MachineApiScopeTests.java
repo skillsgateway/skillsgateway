@@ -188,6 +188,9 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
         List<Route> exclusions = List.of(
                 new Route("POST", "/api/v1/snapshots/{id}/approve"),
                 new Route("POST", "/api/v1/snapshots/{id}/reject"),
+                new Route("PUT", "/api/v1/marketplaces/{name}/approval-posture"),
+                new Route("DELETE", "/api/v1/marketplaces/{name}/approval-posture/override"),
+                new Route("POST", "/api/v1/approval/auto/withdraw"),
                 new Route("POST", "/api/v1/snapshots/{id}/waivers"),
                 new Route("DELETE", "/api/v1/waivers/{id}"),
                 new Route("POST", "/api/v1/retention/evaluate"),

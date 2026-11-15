@@ -301,8 +301,8 @@ credential reaches the union of its scopes' endpoints and nothing more.
 
 | Scope | Reaches |
 | --- | --- |
-| `marketplaces:read` | `GET /api/v1/marketplaces`, `GET /api/v1/catalog`, and a snapshot's `/content`, `/content-diff`, `/licenses`, `/provenance`, `/release-age` |
-| `snapshots:read` | A snapshot's `/diff`, `/file`, `/files`, `/tree`, `/vetting`, `/fetchers`, `/four-eyes` |
+| `marketplaces:read` | `GET /api/v1/marketplaces`, `GET /api/v1/catalog`, and a snapshot's `/content`, `/content-diff`, `/licenses`, `/provenance`, `/release-age`, and `GET /api/v1/marketplaces/{name}/approval-posture` |
+| `snapshots:read` | A snapshot's `/diff`, `/file`, `/files`, `/tree`, `/vetting`, `/fetchers`, `/four-eyes`, `/name-collisions`, `/auto-approval` |
 | `marketplaces:register` | `POST /api/v1/marketplaces`, `PUT /api/v1/marketplaces/{name}/url` |
 | `marketplaces:ingest` | `POST /api/v1/marketplaces/{name}/ingest`, and `GET` of the same path to follow it |
 | `vetting:run` | `POST /api/v1/marketplaces/{name}/revet`, `POST /api/v1/snapshots/{id}/revet` |
@@ -335,6 +335,7 @@ of scopes and no role reaches any of these:**
 | Endpoint | Why |
 | --- | --- |
 | `POST /api/v1/snapshots/{id}/approve`, `/reject` | Publishes or refuses content; human judgement |
+| `PUT /api/v1/marketplaces/{name}/approval-posture`, `DELETE …/approval-posture/override`, `POST /api/v1/approval/auto/withdraw` | Granting automatic approval lets content publish with no person in the loop; revoking an override and the recall retract on the same authority |
 | `POST /api/v1/snapshots/{id}/waivers`, `DELETE /api/v1/waivers/{id}` | Overrides the vetting chain, and withdraws the override |
 | `POST /api/v1/retention/evaluate`, `/compact` | Soft-deletes and permanently purges: retracts content |
 | `DELETE /api/v1/snapshots/{id}`, `POST /api/v1/snapshots/{id}/restore` | Retracts and republishes content |

@@ -330,3 +330,18 @@ Made during implementation, a correction of fact:
   other refusal (no internal basis, four-eyes, an override on an internal
   marketplace) stays the server's, and is shown as returned with its next
   step.
+- R12, a gap in the design, for the owner to confirm: the design does not
+  classify the five new routes for machine credentials, and
+  `MachineApiRegistryTests` requires every `/api/**` route to be classified.
+  Setting a posture, revoking an override, and the recall
+  (`POST /api/v1/approval/auto/withdraw`) are added to the unreachable
+  table: a grant that lets content publish with no person, and two
+  retractions, belong with approve, revoke and waivers. The two reads join
+  existing read scopes rather than adding a scope: the posture joins
+  `marketplaces:read`, as marketplace metadata every session already reads,
+  and the evaluation joins `snapshots:read` beside `four-eyes` and
+  `name-collisions`, the same kind of "what an approval would meet" read.
+  `MachineApiScopeTests` names the three unreachable routes among the
+  load-bearing exclusions (GW_APPROVAL_0044 — An administrator can opt an
+  internal marketplace into automatic approval of snapshots that need no
+  human judgement).
