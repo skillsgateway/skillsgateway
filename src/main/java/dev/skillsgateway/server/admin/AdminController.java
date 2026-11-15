@@ -23,6 +23,7 @@ import dev.skillsgateway.server.approval.SelfReversalException;
 import dev.skillsgateway.server.approval.SnapshotTooYoungException;
 import dev.skillsgateway.server.approval.SnapshotWithdrawnException;
 import dev.skillsgateway.server.approval.VettingBlockedException;
+import dev.skillsgateway.server.auth.MachineApiAuthentication;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.ingestion.IngestJobs;
 import dev.skillsgateway.server.ingestion.IngestStatus;
@@ -276,6 +277,16 @@ public class AdminController {
         roleService.requireAdmin(authentication);
         requireDefaultBranchRef(request.ref());
         RegistrationAutoApproval autoApproval = request.autoApproval();
+        if (autoApproval != null
+                && Boolean.TRUE.equals(autoApproval.enabled())
+                && authentication instanceof MachineApiAuthentication) {
+            // Turning automatic approval on is unreachable by every scope (MachineApiRegistry);
+            // registration is reachable, so it must not carry the grant past that table.
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "a machine credential cannot turn automatic approval on; register without it and"
+                            + " have an administrator turn it on in the portal or the API");
+        }
         if (autoApproval != null) {
             autoApprovalSettingService.checkRegistration(
                     request.name(),

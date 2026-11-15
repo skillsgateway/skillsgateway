@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import dev.skillsgateway.server.approval.AutoApprovalSettingService;
 import dev.skillsgateway.server.auth.MachineApiRegistry;
 import dev.skillsgateway.server.auth.MachineApiRegistry.Route;
 import dev.skillsgateway.server.auth.TokenService;
@@ -15,6 +16,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -43,6 +45,9 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
      * makes a refusal here attributable to the scope allowlist and to nothing else.
      */
     private static final String MACHINE_PRINCIPAL = "scope-walk-machine";
+
+    @Autowired
+    private AutoApprovalSettingService settingService;
 
     private TokenService.IssuedToken credential(List<String> scopes) {
         return tokenService.createMachineCredential(
@@ -267,5 +272,38 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
                 .andExpect(status().is(FORBIDDEN));
         mockMvc.perform(request(new Route("POST", "/api/v1/retention/compact"), all))
                 .andExpect(status().is(FORBIDDEN));
+    }
+
+    /**
+     * Registration is reachable, and its body may turn automatic approval on. That grant is the one
+     * the unreachable table withholds from every scope, so registration must refuse it from a
+     * machine credential rather than become a way around the table.
+     */
+    @Test
+    @SVCs({"SVC_GW_AUTH_0022", "SVC_GW_APPROVAL_0044.1"})
+    void a_registration_credential_cannot_turn_on_automatic_approval_and_registers_nothing() throws Exception {
+        String registrar = credential(List.of("marketplaces:register")).token();
+        String name = uniqueName("mgrant");
+        String expires = Instant.now()
+                .plus(7, ChronoUnit.DAYS)
+                .truncatedTo(ChronoUnit.SECONDS)
+                .toString();
+
+        mockMvc.perform(post("/api/v1/marketplaces")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + registrar)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "%s", "origin": "hosted",
+                                 "autoApproval": {"enabled": true, "reason": "pipeline", "expiresAt": "%s"}}""".formatted(name, expires)))
+                .andExpect(status().is(FORBIDDEN));
+        assertThat(marketplaceRepository.findByName(name)).isEmpty();
+
+        mockMvc.perform(post("/api/v1/marketplaces")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + registrar)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "%s", "origin": "hosted"}""".formatted(name)))
+                .andExpect(status().isCreated());
+        assertThat(settingService.view(name).enabled()).isFalse();
     }
 }

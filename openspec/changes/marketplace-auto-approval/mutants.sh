@@ -263,5 +263,11 @@ CCG=src/main/java/dev/skillsgateway/server/approval/ClosureCompletenessGate.java
 run M79-closure-gate-open $T aPluginDisguisedAsAGraftWithNoClosureIsRefusedByTheClosureGate "$CCG" \
   'if (!discrepancies.isEmpty()) {' 'if (false) {'
 
+# --- review findings ---
+ADM=src/main/java/dev/skillsgateway/server/admin/AdminController.java
+T=MachineApiScopeTests
+run M80-machine-registers-a-grant $T a_registration_credential_cannot_turn_on_automatic_approval_and_registers_nothing "$ADM" \
+  '&& authentication instanceof MachineApiAuthentication) {' '&& false) {'
+
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi
