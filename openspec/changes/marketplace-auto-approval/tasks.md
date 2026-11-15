@@ -29,12 +29,12 @@ Annotation placement follows the reqstool conventions:
 
 ## 3. Schema, configuration and classification
 
-- [ ] 3.1 `V1__init.sql`:
+- [x] 3.1 `V1__init.sql`:
   - `marketplaces.approval_posture`, `approval_set_by`, `approval_reason` and `approval_expires_at`;
   - `snapshots.auto_approval_skip_reason`;
   - the `auto_approval_overrides` table, with its 90-day `CHECK` and a partial unique index for the active override (design D1, D3, D9).
-- [ ] 3.2 Add `skills-gateway.approval.auto.mode` (`off` | `shadow` | `on`, default `off`), `skills-gateway.approval.auto.internal-prefixes` and `skills-gateway.approval.auto.required-vetters` (unset by default, meaning every vetter). Startup refuses an unparseable prefix, a host-wide prefix on a multi-tenant host or on the `github-base-url` host, an empty `required-vetters` list, and a `required-vetters` name that is not a configured vetter. Raise `ConfigSurfaceBudgetTests` by the six leaves added (these three and the three estate keys of 7.1), and argue each in the PR.
-- [ ] 3.3 Internal-source classification, with tests written first (`@SVCs SVC_GW_APPROVAL_0044.2`, `@Requirements GW_APPROVAL_0044.2`). An exact organisation matches, and a hosted marketplace is internal. These do not match:
+- [x] 3.2 Add `skills-gateway.approval.auto.mode` (`off` | `shadow` | `on`, default `off`), `skills-gateway.approval.auto.internal-prefixes` and `skills-gateway.approval.auto.required-vetters` (unset by default, meaning every vetter). Startup refuses an unparseable prefix, a host-wide prefix on a multi-tenant host or on the `github-base-url` host, an empty `required-vetters` list, and a `required-vetters` name that is not a configured vetter. Raise `ConfigSurfaceBudgetTests` by the three leaves it counts (to 112; the three estate keys of 7.1 sit inside a list element it does not walk), and argue all six in the PR.
+- [x] 3.3 Internal-source classification, with tests written first (`@SVCs SVC_GW_APPROVAL_0044.2`, `@Requirements GW_APPROVAL_0044.2`). An exact organisation matches, and a hosted marketplace is internal. These do not match:
   - a lookalike organisation;
   - a different scheme, host or port;
   - userinfo, encoded separators or dot segments;

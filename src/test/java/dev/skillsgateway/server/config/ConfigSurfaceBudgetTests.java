@@ -68,7 +68,11 @@ class ConfigSurfaceBudgetTests {
     // upstream's token can live in. The argument is in that change's proposal, "Why the surface grows".
     // Still 109 after upstream-github-app: its `github-app` block sits inside that list's element, which
     // this walk does not descend into. Its proposal argues the growth anyway, "Why the surface grows".
-    private static final int BUDGET = 109;
+    // 112 since marketplace-auto-approval: `approval.auto.mode`, `approval.auto.internal-prefixes` and
+    // `approval.auto.required-vetters`. Its three estate keys sit inside the estate marketplace list's
+    // element, which this walk does not descend into. The proposal argues all six, under "Why the
+    // capability map cannot simply absorb this".
+    private static final int BUDGET = 112;
 
     /** Where the measured breakdown is written, so a run's numbers survive for a PR body. */
     private static final Path REPORT = Path.of("target", "config-surface.txt");

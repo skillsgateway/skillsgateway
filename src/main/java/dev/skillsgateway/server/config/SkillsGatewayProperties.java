@@ -55,7 +55,7 @@ public record SkillsGatewayProperties(
             vetting = new Vetting(null, null, null, null, null, null, null, null, null);
         }
         if (approval == null) {
-            approval = new Approval(null, null);
+            approval = new Approval(null, null, null);
         }
         if (sync == null) {
             sync = new Sync(null, null, null, null);
@@ -1106,7 +1106,7 @@ public record SkillsGatewayProperties(
      * name-collision rules live here; the vetting, policy and cooling-off preconditions predate them and
      * stay where they are.
      */
-    public record Approval(FourEyes fourEyes, NameCollision nameCollision) {
+    public record Approval(FourEyes fourEyes, NameCollision nameCollision, Auto auto) {
 
         public Approval {
             if (fourEyes == null) {
@@ -1115,6 +1115,58 @@ public record SkillsGatewayProperties(
             if (nameCollision == null) {
                 nameCollision = new NameCollision(null);
             }
+            if (auto == null) {
+                auto = new Auto(null, null, null);
+            }
+        }
+    }
+
+    /**
+     * Automatic approval of opted-in marketplaces (GW_APPROVAL_0044.2, GW_APPROVAL_0044.7,
+     * GW_APPROVAL_0044.12).
+     *
+     * @param mode {@code off} (the default, and the incident switch), {@code shadow} or {@code on}
+     * @param internalPrefixes the URL prefixes under which a marketplace is internal. Empty by
+     *     default, so only hosted marketplaces are; startup refuses one that does not parse and a
+     *     host-wide one on a multi-tenant forge
+     * @param requiredVetters the vetters that must have run, rather than been switched off, for a
+     *     snapshot to be approved automatically. Null — unset, the default — requires every vetter;
+     *     startup refuses an empty list and an unknown name, which would each require nothing
+     */
+    public record Auto(AutoMode mode, List<String> internalPrefixes, List<String> requiredVetters) {
+
+        /** The property an operator sets, quoted in a skip reason so the answer is discoverable. */
+        public static final String MODE_KEY = "skills-gateway.approval.auto.mode";
+
+        public static final String INTERNAL_PREFIXES_KEY = "skills-gateway.approval.auto.internal-prefixes";
+
+        public static final String REQUIRED_VETTERS_KEY = "skills-gateway.approval.auto.required-vetters";
+
+        public Auto {
+            if (mode == null) {
+                mode = AutoMode.OFF;
+            }
+            internalPrefixes = internalPrefixes == null ? List.of() : List.copyOf(internalPrefixes);
+            requiredVetters = requiredVetters == null ? null : List.copyOf(requiredVetters);
+        }
+    }
+
+    /** What automatic approval does in a deployment (GW_APPROVAL_0044.12). */
+    public enum AutoMode {
+
+        /** No posture takes effect; nothing is evaluated for publication. The default. */
+        OFF,
+
+        /** Every check runs and its result is recorded, and nothing is published. */
+        SHADOW,
+
+        /** Eligible snapshots are approved. */
+        ON;
+
+        /** Wire form: the lower-case name, so the published vocabulary matches every other enum's. */
+        @JsonValue
+        public String wire() {
+            return name().toLowerCase(java.util.Locale.ROOT);
         }
     }
 

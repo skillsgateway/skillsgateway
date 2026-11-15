@@ -14,6 +14,7 @@ CREATE TYPE marketplace_push_policy AS ENUM ('append-only', 'allow-rewrite');
 CREATE TYPE marketplace_sync_mode AS ENUM ('on-demand', 'scheduled', 'webhook');
 CREATE TYPE marketplace_last_ingest_outcome AS ENUM ('succeeded', 'failed');
 CREATE TYPE marketplace_ingest_stage AS ENUM ('queued', 'fetching', 'evaluating-manifest', 'vetting');
+CREATE TYPE marketplace_approval_posture AS ENUM ('manual', 'auto');
 CREATE TYPE snapshot_state AS ENUM ('held', 'approved', 'rejected', 'revoked');
 -- Who decided a revocation, which is what decides how it can be lifted (GW_APPROVAL_0017).
 -- 'revet' is a chain verdict against a finding: it lifts when the finding is cleared, by a waiver
@@ -103,6 +104,15 @@ CREATE TABLE marketplaces (
     -- the startup reconciler does not read that choice as a lost publication; cleared by the next
     -- approval that publishes.
     serving_suspended_at TIMESTAMPTZ,
+    -- Automatic approval (GW_APPROVAL_0044.1): manual unless an administrator set it to auto, and then
+    -- only with who, when, why and until when. A lapsed expiry reads as manual at the next attempt;
+    -- nothing transitions. Whether auto has a basis is computed at each attempt, never stored here,
+    -- because a stored "internal" bit would go stale when the prefix list changes.
+    approval_posture marketplace_approval_posture NOT NULL DEFAULT 'manual',
+    approval_set_by TEXT,
+    approval_set_at TIMESTAMPTZ,
+    approval_reason TEXT,
+    approval_expires_at TIMESTAMPTZ,
     -- Removal (GW_INGEST_0034) retires the row rather than deleting it: snapshots restrict deletion
     -- because they are the approval history, and the ledger keeps this row's id as its referent.
     deleted_at TIMESTAMPTZ,
@@ -122,7 +132,17 @@ CREATE TABLE marketplaces (
     CONSTRAINT marketplaces_upstream_has_url CHECK (origin = 'hosted' OR url IS NOT NULL),
     -- A hosted marketplace has no upstream to poll or be notified about: its ingestion trigger is
     -- the push itself, so the sweep must never see it (GW_FACADE_0006).
-    CONSTRAINT marketplaces_hosted_is_on_demand CHECK (origin <> 'hosted' OR sync_mode = 'on-demand')
+    CONSTRAINT marketplaces_hosted_is_on_demand CHECK (origin <> 'hosted' OR sync_mode = 'on-demand'),
+    -- An auto posture with no grantor, reason or expiry cannot be represented at all, and its expiry
+    -- is at most 90 days after it was set (GW_APPROVAL_0044.1).
+    CONSTRAINT marketplaces_auto_posture_is_recorded_whole CHECK (
+        approval_posture = 'manual'
+        OR (approval_set_by IS NOT NULL AND approval_set_by <> ''
+            AND approval_set_at IS NOT NULL
+            AND approval_reason IS NOT NULL AND approval_reason <> ''
+            AND approval_expires_at IS NOT NULL
+            AND approval_expires_at > approval_set_at
+            AND approval_expires_at <= approval_set_at + interval '90 days'))
 );
 
 CREATE UNIQUE INDEX uq_marketplaces_live_name ON marketplaces (name) WHERE deleted_at IS NULL;
@@ -175,6 +195,10 @@ CREATE TABLE snapshots (
     deleted_reason TEXT,
     -- When the restore window elapses and compaction may remove the row and its git storage.
     purge_after TIMESTAMPTZ,
+    -- Why the last automatic approval attempt left this snapshot held (GW_APPROVAL_0044.11). The skip is
+    -- ledgered only when this changes, so a re-vetting tick that reaches the same answer writes
+    -- nothing; deduplication never reads the ledger.
+    auto_approval_skip_reason TEXT,
     UNIQUE (marketplace_id, sha)
 );
 
@@ -571,6 +595,30 @@ CREATE INDEX idx_vetting_waivers_marketplace ON vetting_waivers (marketplace_id,
 -- The sweep's only query.
 CREATE INDEX idx_vetting_waivers_expiry_sweep ON vetting_waivers (expires_at)
     WHERE expired_recorded_at IS NULL AND revoked_at IS NULL;
+
+-- The administrator override that lets a marketplace with no internal basis be approved
+-- automatically (GW_APPROVAL_0044.3). An expiring exception a named person renews, like a waiver, and
+-- for the same reason never declarable in the estate. Expiry is decided by comparing expires_at to
+-- now; expired_recorded_at only makes its ledger entry a once-only write.
+
+CREATE TABLE auto_approval_overrides (
+    id BIGSERIAL PRIMARY KEY,
+    marketplace_id BIGINT NOT NULL REFERENCES marketplaces (id) ON DELETE CASCADE,
+    reason TEXT NOT NULL CHECK (reason <> ''),
+    created_by TEXT NOT NULL CHECK (created_by <> ''),
+    created_at TIMESTAMPTZ NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    revoked_at TIMESTAMPTZ,
+    revoked_by TEXT,
+    expired_recorded_at TIMESTAMPTZ,
+    CHECK (expires_at > created_at AND expires_at <= created_at + interval '90 days'),
+    CHECK ((revoked_at IS NULL) = (revoked_by IS NULL))
+);
+
+-- At most one override per marketplace that has been neither revoked nor recorded as expired. A
+-- lapsed one is recorded as expired before a replacement is created, so it never blocks one.
+CREATE UNIQUE INDEX uq_auto_approval_overrides_open ON auto_approval_overrides (marketplace_id)
+    WHERE revoked_at IS NULL AND expired_recorded_at IS NULL;
 
 -- Delegated administration (GW_AUTH_0010..GW_AUTH_0013).
 --

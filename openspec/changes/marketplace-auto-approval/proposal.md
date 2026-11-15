@@ -160,7 +160,9 @@ nothing else in the map changes:
 
 - **No new backend package, grantable role, or scheduled sweep.** The release-age
   retry rides the existing re-vetting tick.
-- **It adds six configuration leaves.** `ConfigSurfaceBudgetTests` rises by six:
+- **It adds six settable names.** `ConfigSurfaceBudgetTests` counts three of
+  them and rises to 112; the three estate keys sit inside the estate marketplace
+  list's element, which its walk does not descend into. All six are argued:
   - **The mode:** `off` is the incident switch, and `shadow` is the adopter's
     measurement.
   - **The prefix list:** "internal" has to be the operator's statement, not a

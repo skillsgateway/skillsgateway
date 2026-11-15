@@ -1,7 +1,8 @@
 # Evidence — marketplace-auto-approval
 
 - Tier: 3 (old-coder). SPEC: `acceptance.md`, approved by the owner on
-  2026-11-15 ("yes. approved"), with revisions R1–R3.
+  2026-11-15 ("yes. approved"), with revisions R1–R3, and R4, a correction of
+  fact made during implementation.
 - Final gate results go in "Final run" below, from one fresh run after the last
   code edit. The development log records each test watched failing (RED), and
   each characterization test proven non-vacuous by a throwaway mutant.
@@ -30,6 +31,33 @@ one below.
 - 2.3, `UpstreamCredentials.Target` extracted as `UrlPrefix`: the credential,
   redirect, GitHub App and external-source suites, 65 tests, all passing, with
   no test file changed.
+
+### 3.2 and 3.3 — configuration, startup refusals, internal sources
+
+`InternalSourcesTests` (36) and `RequiredVettersTests` (5) were written
+against stubs that validated nothing and classed nothing as internal: 27 of
+the 41 failed (RED). The 14 that passed were the "not internal" negatives,
+which an always-false stub satisfies trivially. The mutants below are what
+prove those negatives. After the implementation, all 41 pass, along with
+`UpstreamCredentialsTests` (13), `PropertyRecordGuardTests` (4),
+`ConfigSurfaceBudgetTests` at 112, and `ApprovalEvidenceTests` (3) on the
+edited schema. `ContextBudgetTests` is unchanged.
+
+| Mutant (restored after each run) | Result |
+|---|---|
+| A prefix matches on host alone | 6/36 failed |
+| A prefix matches without a segment boundary (`acme` covers `acme-evil`) | 4/36 failed |
+| The multi-tenant host refusal removed | 2/36 failed (gitlab.com, bitbucket.org; github.com is also the `github-base-url` host) |
+| The `github-base-url` host refusal removed | 1/36 failed |
+| A hosted marketplace is not internal | 2/36 failed |
+| An empty `required-vetters` list means "every vetter" | 1/5 failed |
+| An unknown `required-vetters` name is accepted | 2/5 failed |
+
+The refusals are proven at the constructors that Spring calls at startup. A
+refused boot under real configuration belongs to the real-execution run.
+
+`ConfigSurfaceBudgetTests` rose by three, not six. See revision R4 in
+`acceptance.md`.
 
 ## Final run
 

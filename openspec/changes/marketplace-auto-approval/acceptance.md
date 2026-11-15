@@ -215,7 +215,8 @@ evaluation the attempt used.
   the committed `openapi.json` is regenerated and the breaking-change gate
   passes.
 - M7: Add a backend package, a grantable role or a scheduled sweep. Raise
-  `ConfigSurfaceBudgetTests` by exactly six; `ContextBudgetTests` unchanged.
+  `ConfigSurfaceBudgetTests` by exactly three (R4); `ContextBudgetTests`
+  unchanged.
 - M8: Run subprocess git in production code.
 - M9: Put a rule in the portal that the server does not enforce, or change a
   portal page other than the marketplace Settings page. Existing stories and
@@ -260,3 +261,11 @@ Made before approval, at the owner's request:
   `skills-gateway.approval.auto.required-vetters`, unset meaning every vetter
   (S7.7–S7.10, F23, F24). The configuration budget rises by six, not five
   (M7). The estate scenarios are renamed from S15 to ES.
+
+Made during implementation, a correction of fact:
+
+- R4: `ConfigSurfaceBudgetTests` rises by three, to 112, not six. Its walk does
+  not descend into a list's element, and the three estate keys sit inside the
+  estate marketplace list's element, as the `upstream-github-app` change's
+  block does. The proposal still argues all six settable names. M7 now reads
+  "by exactly three".
