@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class RequiredVetters {
 
     private final List<String> names;
+    private final boolean everyVetter;
 
     @Autowired
     public RequiredVetters(SkillsGatewayProperties properties, List<Vetter> vetters) {
@@ -27,6 +28,13 @@ public class RequiredVetters {
 
     RequiredVetters(List<String> configured, List<Vetter> vetters) {
         this.names = validated(configured, vetters);
+        this.everyVetter = configured == null;
+    }
+
+    /** Unset: every verdict a run carries must not be {@code DISABLED}, named here or not. */
+    @Requirements({"GW_APPROVAL_0044.7"})
+    public boolean everyVetter() {
+        return everyVetter;
     }
 
     @Requirements({"GW_APPROVAL_0044.7"})

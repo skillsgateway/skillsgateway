@@ -92,6 +92,87 @@ auditor reads. `src/main/frontend/openapi.json` and `types.gen.ts` were
 regenerated, additions only. The suites the change reaches, 17 classes and 134
 tests, pass. `ContextBudgetTests` is unchanged.
 
+### 5.4 — executable surface (`SurfaceComparison`)
+
+`SurfaceComparisonTests` (19) were written against a skeleton returning
+"unchanged". 14 failed (RED); the 5 that passed assert unchanged and are
+proved by the always-same mutant below.
+
+The first implementation failed 2/19: the manifest, which the strict reader
+reads, counted as a covered component file, so no first snapshot could be
+inert. That is a contradiction between D7 and S8.2, resolved fail-closed as R6
+(a descriptive-key list for the manifest and `plugin.json`). Two tests were
+added for R6, then all 21 passed.
+
+Mutants, by `/tmp/surface-mutants.sh`, each applied with `perl`, checked as
+applied with `cmp`, then restored:
+
+| Mutant | First run (21 tests) | After the tests below (28) |
+|---|---|---|
+| Always changed | 21 failed | 28 failed |
+| Always unchanged | 15 failed | 22 failed |
+| Mode check dropped | 1 failed | 1 failed |
+| Mode-change check dropped | **survived** | 1 failed |
+| Dependency manifest or lockfile check dropped | 1 failed | |
+| Launch target check dropped | 1 failed | |
+| Shebang check dropped | 1 failed | |
+| Descriptive keys always accepted | 2 failed | |
+| Descriptive keys always refused | 3 failed | |
+| Covered data files treated as inert | 3 failed | |
+| Every extension inert | 4 failed | |
+| Hook problems ignored | **survived** | 1 failed |
+| Unscanned hook modules ignored | **survived** | 1 failed |
+| Oversize reads ignored | **survived** | **survived, equivalent** |
+| Malformed frontmatter ignored | 1 errored | |
+| Unparseable manifest ignored | **survived** (held, for the wrong reason) | 1 errored |
+| `MAX_PLUGINS` unchecked | 1 failed | |
+| `MAX_PLUGIN_ROOTS` unchecked | **survived** | 1 failed |
+| Declarations never compared | 3 failed | |
+| Removed declarations not compared | **survived** | 1 failed |
+
+Seven tests were added, one for each survivor, each asserting the reason and
+not only "changed". The oversize mutant is equivalent today: every read in
+`PluginComponents` and `HookModules` already reports an oversize file as a
+problem, and `tools` reports its own. The check stays, as the guard for a
+reader added later that leaves an oversize file out silently.
+
+### 5.1–5.3 — candidacy and the vetting predicate (`AutoApprovalEligibility`)
+
+Both halves are pure functions over data. `AutoApprovalEligibilityTests` (28)
+were written against a skeleton that threw, and all 28 failed (RED). After the
+implementation they pass, with `RequiredVettersTests` (5, now also asserting
+`everyVetter()`).
+
+`required-vetters` unset means no verdict may be `DISABLED`, including a
+verdict from a vetter that is not in the configured list. `everyVetter()`
+carries that, because `names()` resolves "unset" to the known vetters. A
+waived high or critical finding needs the served baseline's run to have the
+same rule in the same blob. A finding with no blob, or no baseline at all,
+never satisfies that.
+
+Mutants, by `/tmp/eligibility-mutants.sh`, each checked as applied and then
+restored. All 21 were killed:
+
+| Mutant | Failed |
+|---|---|
+| Deleted snapshot accepted | 1/33 |
+| A snapshot that is not held accepted | 3/33 |
+| An older snapshot accepted | 1/33 |
+| A closure member accepted | 1/33 |
+| Chain state ignored / only `SUPERSEDED` refused | 2/33 / 1/33 |
+| Verdicts that did not run accepted / `PENDING` alone accepted | 3/33 / 1/33 |
+| Unset `required-vetters` ignored | 1/33 |
+| A named required vetter's `DISABLED` ignored | 1/33 |
+| A required vetter absent from the chain accepted | 1/33 |
+| A blocked effective outcome accepted | 1/33 |
+| The waiver rule raised to critical only | 1/33 |
+| Baseline always matches / ignores the blob / accepts a null blob | 1/33 each |
+| Unread-surface findings accepted | 3/33 |
+| Disabled vetters not named | 1/33 |
+| Worst severity never set | 2/33 |
+| Waiver ids not named | 1/33 |
+| `everyVetter()` always false | 1/33 |
+
 ## Final run
 
 (pending)

@@ -215,8 +215,8 @@ evaluation the attempt used.
   the committed `openapi.json` is regenerated and the breaking-change gate
   passes.
 - M7: Add a backend package, a grantable role or a scheduled sweep. Raise
-  `ConfigSurfaceBudgetTests` by exactly three (R4); `ContextBudgetTests`
-  unchanged.
+  `ConfigSurfaceBudgetTests` by exactly three (R4); `ContextBudgetTests` by
+  exactly one, for `AutoApprovalTests` (R5).
 - M8: Run subprocess git in production code.
 - M9: Put a rule in the portal that the server does not enforce, or change a
   portal page other than the marketplace Settings page. Existing stories and
@@ -269,3 +269,18 @@ Made during implementation, a correction of fact:
   estate marketplace list's element, as the `upstream-github-app` change's
   block does. The proposal still argues all six settable names. M7 now reads
   "by exactly three".
+- R5, approved by the owner on 2026-11-15: `ContextBudgetTests` rises by one,
+  to 28, for `AutoApprovalTests`. E1, the triggers and the mode scenarios need
+  a gateway with `approval.auto.mode=on` and `vetting.revet.enabled=true`, and
+  design D12 makes the attempt refuse to act while re-vetting is off. The
+  shared context turns re-vetting off so no sweep reaches other suites'
+  fixtures, and no existing context has it on. The new context sets a long
+  sweep interval, so no background tick runs during the suite. M7 now reads
+  "by exactly one".
+- R6, a contradiction resolved fail-closed, for the owner to confirm: design D7
+  made a manifest JSON file never inert, but every marketplace has
+  `.claude-plugin/marketplace.json`, so S8.2's inert first snapshot could never
+  be approved. The manifest and `plugin.json` now count as inert only when all
+  their keys are on a fixed descriptive list; any other key holds the snapshot.
+  A side effect: a manifest edit that changes only descriptive fields, such as
+  a version bump, no longer holds an update.

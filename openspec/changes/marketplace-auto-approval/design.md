@@ -285,7 +285,16 @@ The surface is unchanged when both of these hold:
    - it does not start with `#!`;
    - its extension is on a fixed **inert** list: `md markdown txt rst adoc png
      jpg jpeg gif webp ico pdf csv tsv`, or `json yaml yml toml` when the path
-     is not a component or manifest file the reader in (1) covers.
+     is not a component or manifest file the reader in (1) covers;
+   - the marketplace manifest and a `plugin.json` are inert when every key, at
+     the top level and in each manifest entry, is on a fixed descriptive list
+     (name, version, description, author, owner, metadata, homepage,
+     repository, license, keywords, category, tags, `source`, `plugins`,
+     `$schema`). Any other key, `strict` and keys no reader examines included,
+     makes the file not inert (R6). Without this, every first snapshot would be
+     held, because every marketplace has a manifest. A changed `source` is not
+     a loophole: the roots are read again, so what a new root declares reaches
+     the comparison in (1).
 
    Everything else, including every unknown extension, counts as a script.
    Deletions do not count.

@@ -50,6 +50,7 @@ class RequiredVettersTests {
         List<String> unset = null;
         assertThat(new RequiredVetters(unset, CHAIN).names())
                 .containsExactlyInAnyOrder("secret-scan", "license-scan", "prompt-injection");
+        assertThat(new RequiredVetters(unset, CHAIN).everyVetter()).isTrue();
     }
 
     @Test
@@ -57,6 +58,8 @@ class RequiredVettersTests {
     void aListRequiresExactlyTheVettersItNames() {
         assertThat(new RequiredVetters(List.of("secret-scan", "prompt-injection"), CHAIN).names())
                 .containsExactlyInAnyOrder("secret-scan", "prompt-injection");
+        assertThat(new RequiredVetters(List.of("secret-scan"), CHAIN).everyVetter())
+                .isFalse();
     }
 
     @Test

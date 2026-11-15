@@ -160,6 +160,13 @@ nothing else in the map changes:
 
 - **No new backend package, grantable role, or scheduled sweep.** The release-age
   retry rides the existing re-vetting tick.
+- **It adds one Spring test context.** `ContextBudgetTests` rises to 28 for
+  `AutoApprovalTests`. The attempt acts only while re-vetting is enabled
+  (design D12), and the shared context disables re-vetting so no sweep reaches
+  other suites' fixtures. Proving that ingestion publishes with no person
+  therefore needs a second gateway, as `FourEyesEnforceTests` needs one for
+  `enforce`. Building the service by hand inside the shared context was
+  rejected: it would leave the triggers untested in `on` mode.
 - **It adds six settable names.** `ConfigSurfaceBudgetTests` counts three of
   them and rises to 112; the three estate keys sit inside the estate marketplace
   list's element, which its walk does not descend into. All six are argued:
