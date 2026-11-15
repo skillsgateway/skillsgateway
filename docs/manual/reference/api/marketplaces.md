@@ -111,7 +111,9 @@ registration: `{enabled, reason?, expiresAt?}`, with the rules `PUT
 /marketplaces/{name}/auto-approval` applies. It takes no exemption, because
 an exemption needs the marketplace to exist. To register a marketplace outside
 the internal prefixes with automatic approval on, register it, then turn
-automatic approval on with an exemption.
+automatic approval on with an exemption. If the marketplace is registered but
+the setting then fails, the response is still `201`, and `warnings` says
+automatic approval was not turned on; turn it on afterwards.
 
 | Status | Cause |
 | --- | --- |

@@ -275,5 +275,11 @@ T=AutoApprovalTests
 run M81-recall-leaves-it-on $T bulkWithdrawalTurnsAutomaticApprovalOffWhereItWithdrew "$WDR" \
   'if (settingService.turnOffAfterWithdrawal(name, administrator, "withdrawn: " + request.reason())) {' 'if (false) {'
 
+T=approval.AutoApprovalServiceTests
+run M82-unreadable-as-changed $T aSurfaceThatCannotBeComparedKeepsTheSnapshotHeldUnderItsOwnReason "$SVC" \
+  'return "surface-unreadable: the surface could not be compared ("' 'return "surface-changed: the surface could not be compared ("'
+T=admin.RegistrationAutoApprovalTests
+run M83-failed-setting-fails-registration $T aSettingThatFailsAfterRegistrationIsReportedOnTheRegisteredMarketplace "$ADM" \
+  '} catch (RuntimeException e) {' '} catch (UnsupportedOperationException e) {'
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi

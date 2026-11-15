@@ -391,3 +391,17 @@ Made during implementation, a correction of fact:
   any open exemption revoked, and the response names them in `turnedOff`
   (GW_APPROVAL_0044.14 — Every snapshot approved automatically since a given
   time can be withdrawn in one act).
+- R17, from the same review: a surface comparison that threw was recorded
+  as `surface-changed`, unlogged. It still keeps the snapshot held, but now
+  logs the error and records `surface-unreadable` with the exception type,
+  so an operator can tell a broken read from a real change
+  (GW_APPROVAL_0044.8 — A snapshot is approved automatically only when its
+  executable surface, read completely, is unchanged from the served
+  baseline).
+- R18, from the same review: registration writes the marketplace, its
+  repository and its webhook before the automatic approval setting, so no
+  transaction can undo it. A setting that fails afterwards no longer fails
+  the request as if nothing was registered; the response is 201 with a
+  warning that automatic approval was not turned on, and the error is
+  logged (GW_APPROVAL_0044.1 — Automatic approval of a marketplace is off
+  unless an administrator turns it on for a limited time).

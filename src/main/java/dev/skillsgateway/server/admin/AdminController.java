@@ -53,8 +53,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -73,6 +76,8 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("/api/v1")
 public class AdminController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
     /** The gateway ingests only the upstream default branch; this is not consumer-selectable. */
     private static final String DEFAULT_BRANCH = "main";
@@ -298,15 +303,28 @@ public class AdminController {
         }
         MarketplaceRegistrationService.RegistrationOutcome outcome = registrationService.register(
                 request.name(), request.url(), request.origin(), request.pushPolicy(), authentication.getName());
+        List<String> warnings = outcome.warnings();
         if (autoApproval != null && Boolean.TRUE.equals(autoApproval.enabled())) {
-            autoApprovalSettingService.set(
-                    outcome.marketplace().name(),
-                    new AutoApprovalSettingService.SettingRequest(
-                            true, autoApproval.reason(), autoApproval.expiresAt(), null),
-                    authentication.getName());
+            // The marketplace already exists, with its repository and webhook, so no rollback undoes
+            // it; a failed setting is reported on the registration rather than hiding it.
+            try {
+                autoApprovalSettingService.set(
+                        outcome.marketplace().name(),
+                        new AutoApprovalSettingService.SettingRequest(
+                                true, autoApproval.reason(), autoApproval.expiresAt(), null),
+                        authentication.getName());
+            } catch (RuntimeException e) {
+                log.error(
+                        "Marketplace {} registered but automatic approval was not turned on",
+                        outcome.marketplace().name(),
+                        e);
+                warnings = new ArrayList<>(warnings);
+                warnings.add("the marketplace is registered, but automatic approval was not turned on ("
+                        + e.getMessage() + "); turn it on in the portal or the API");
+            }
         }
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(RegisteredMarketplace.of(outcome.marketplace(), outcome.warnings()));
+                .body(RegisteredMarketplace.of(outcome.marketplace(), warnings));
     }
 
     @Schema(description = "Correct an upstream marketplace's URL")
