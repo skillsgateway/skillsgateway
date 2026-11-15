@@ -67,7 +67,11 @@ function day(offset: number): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-/** The start of the chosen day: always after now, and never more than 90 days from it. */
+/**
+ * The start of the chosen day: always after now, and never more than 90 days from it. A date
+ * cannot say "later today", so the earliest choice is tomorrow, where the server would accept any
+ * instant after now.
+ */
 function startOf(date: string): string {
   return new Date(`${date}T00:00:00`).toISOString();
 }
@@ -89,6 +93,17 @@ function status(view: PostureView): { label: string; variant: "default" | "secon
   return { label: "Not approved automatically", variant: "outline" };
 }
 
+/** A refusal as the server states it, with its next step when it gives one. */
+function Refusal({ error }: { error: Error }) {
+  const nextStep = error instanceof ApiError ? error.nextStep : undefined;
+  return (
+    <div role="alert" className="space-y-1 text-sm text-destructive break-words">
+      <p>{error.message}</p>
+      {nextStep ? <p className="text-muted-foreground">Next step: {nextStep}</p> : null}
+    </div>
+  );
+}
+
 /** The revoke confirmation: what ending the override does, before it is done. */
 export function RevokeOverrideDialog({ marketplace, onClose }: { marketplace: string; onClose: () => void }) {
   const revoke = useRevokeApprovalOverride(marketplace);
@@ -102,11 +117,7 @@ export function RevokeOverrideDialog({ marketplace, onClose }: { marketplace: st
             for a person again. What is already served stays served.
           </DialogDescription>
         </DialogHeader>
-        {revoke.isError ? (
-          <p role="alert" className="text-sm text-destructive break-words">
-            {revoke.error.message}
-          </p>
-        ) : null}
+        {revoke.isError ? <Refusal error={revoke.error} /> : null}
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose} disabled={revoke.isPending}>
             Cancel
@@ -171,7 +182,6 @@ export function ApprovalPostureForm({ marketplace, view }: { marketplace: string
       onSuccess: () => toast.success(`Approval posture of '${marketplace}' saved`),
     });
   };
-  const refused = set.error instanceof ApiError ? set.error : undefined;
 
   return (
     <form onSubmit={onSubmit} className="space-y-4 border-t pt-4" aria-label="Set the approval posture">
@@ -262,12 +272,7 @@ export function ApprovalPostureForm({ marketplace, view }: { marketplace: string
           Every snapshot waits for a person. Saving manual also revokes an active override.
         </p>
       )}
-      {refused ? (
-        <div role="alert" className="space-y-1 text-sm text-destructive break-words">
-          <p>{refused.message}</p>
-          {refused.nextStep ? <p className="text-muted-foreground">Next step: {refused.nextStep}</p> : null}
-        </div>
-      ) : null}
+      {set.isError ? <Refusal error={set.error} /> : null}
       <Button type="submit" disabled={!valid || set.isPending}>
         {set.isPending ? "Saving…" : "Save posture"}
       </Button>
@@ -302,9 +307,12 @@ export function ApprovalPosture({ marketplace, canAdminister }: { marketplace: s
       <CardContent className="space-y-4">
         {posture.isLoading ? <p className="text-sm text-muted-foreground">Loading the approval posture…</p> : null}
         {posture.isError ? (
-          <p role="alert" className="text-sm text-destructive">
-            The approval posture could not be loaded: {posture.error.message}
-          </p>
+          <div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-destructive">
+            <p>The approval posture could not be loaded: {posture.error.message}</p>
+            <Button variant="outline" size="sm" onClick={() => void posture.refetch()} disabled={posture.isFetching}>
+              Try again
+            </Button>
+          </div>
         ) : null}
         {view ? (
           <>
@@ -321,7 +329,7 @@ export function ApprovalPosture({ marketplace, canAdminister }: { marketplace: s
               <dt className="font-medium">Deployment mode</dt>
               <dd>{MODE[view.mode ?? "off"]}</dd>
               <dt className="font-medium">Set by</dt>
-              <dd>
+              <dd className="break-words">
                 {view.setBy ?? "—"}
                 {view.setAt ? (
                   <>

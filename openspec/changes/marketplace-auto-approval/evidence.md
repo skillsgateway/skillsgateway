@@ -301,6 +301,43 @@ the cached posture in place failed it at the assertion that "Administrator
 override" is gone (`toHaveCount`). The source was then restored and the jar
 rebuilt.
 
+### 8.5 — `/impeccable audit` and `/impeccable harden`
+
+The Settings page changed only by gaining the card, so both passes ran on
+`approval-posture.tsx`. `impeccable detect --json` found nothing (`[]`). The
+stories were captured at 1280 and 390 pixels, in light and dark.
+
+| Dimension | Score | Note |
+| --- | --- | --- |
+| Accessibility | 4 | axe clean in all ten stories; every input labelled; hints bound with `aria-describedby`; refusals are `role="alert"` |
+| Performance | 4 | one query and two mutations, no effects |
+| Responsive | 4 | after the fix below |
+| Theming | 4 | token classes only; dark checked |
+| Implementation integrity | 4 | shadcn primitives, `SegmentedGroup`, `Timestamp`; copies the forms rules |
+
+These findings were fixed. The two behavioural fixes were tested first, and
+both tests failed (RED) before the fix:
+
+- A posture that failed to load had no way to retry. It now has a "Try again"
+  button (`a_posture_that_failed_to_load_can_be_retried`).
+- A refused revocation dropped the server's next step. Both refusals now
+  share one `Refusal` element
+  (`a_refused_revocation_shows_the_servers_next_step`).
+- `break-all` on "Set by" split the time ("5:28 P M") at 390 pixels. It is
+  now `break-words`.
+- The forms rule asks for a per-form component test, so
+  `an_automatic_posture_is_saved_only_with_a_reason_that_is_not_blank_and_a_date`
+  was added. It passed on arrival, and a mutant that accepts a blank reason
+  fails it.
+
+Two findings were dismissed, with reasons:
+
+- **The earliest date is tomorrow,** while the server accepts any instant
+  after now. A date input cannot say "later today", and the code says so in a
+  comment. It is the D15 date-picker allowance.
+- **A lapsed override cannot be shown as lapsed.** The API returns only the
+  active override, so the card instead explains why the basis is none.
+
 ## Final run
 
 (pending)
