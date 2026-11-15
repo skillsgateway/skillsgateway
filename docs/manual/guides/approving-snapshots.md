@@ -680,9 +680,13 @@ It approves only when every one of these holds, in this order:
    carried it in the same file.
 5. **The executable surface did not change.** Hooks, MCP and LSP servers,
    `allowed-tools` and agent tools are the same as in the served snapshot, and
-   every added or modified file is inert: documentation, images and data by
-   extension, never a script, an executable bit, a symlink or a dependency
-   manifest. Anything the gateway could not read counts as changed.
+   every added or modified file is inert: documentation, images and tables
+   (`.csv`, `.tsv`) by extension, never a script, an executable bit, a
+   symlink or a dependency manifest. A changed `.json`, `.yaml`, `.yml` or
+   `.toml` file is never inert, because a script that did not change can read
+   it, and a plugin can declare something that runs in one. The marketplace
+   manifest and a `plugin.json` are the exception when they change only
+   descriptive fields. Anything the gateway could not read counts as changed.
 
 Then the ordinary approval gates run unchanged: closure, standing revocation,
 policy, plugin-name collision, minimum release age and four-eyes. A snapshot

@@ -4217,7 +4217,7 @@ cases:
     verification: automated-test
     description: |
       GIVEN an automatic internal marketplace serving a baseline, and a marketplace with no served baseline
-      WHEN automatic approval is attempted for a Markdown-only change; a deletion; a changed hook, hook module, MCP or LSP declaration; changed allowed tools or agent tools; an added path with an unknown extension, an interpreter line, a dependency manifest or a launch target; a path with mode 100755, a mode-only change, a symlink or a gitlink; an oversize component file; plugins past the plugin limit; and, with no baseline, a first snapshot that is entirely inert and one with any surface
+      WHEN automatic approval is attempted for a Markdown-only change; a deletion; a changed hook, hook module, MCP or LSP declaration; changed allowed tools or agent tools; an added path with an unknown extension, a JSON, YAML or TOML file no reader reads, an interpreter line, a dependency manifest or a launch target; a path with mode 100755, a mode-only change, a symlink or a gitlink; an oversize component file; plugins past the plugin limit; and, with no baseline, a first snapshot that is entirely inert and one with any surface
       THEN the Markdown-only change, the deletion and the inert first snapshot are approved, and every other snapshot stays held with a reason
     revision: "0.1.0"
 

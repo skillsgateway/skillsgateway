@@ -366,3 +366,21 @@ Made during implementation, a correction of fact:
   test kept its assertions, and the four-eyes conflict assertion was
   narrowed to name the grant. The development log above keeps the names in
   use when each entry was written.
+- R14, a correction of design D7 ("Every added or modified path is inert")
+  after the review of PR #879, approved by the owner: `json`, `yaml`, `yml`
+  and `toml` were inert wherever no component reader read them. That failed
+  open on the unknown: a data file read by an unchanged script, or a
+  component kind no reader here knows, was approved with no person. They
+  are now never inert, read or not. The marketplace manifest and a
+  `plugin.json` keep their descriptive-only exception. Residual risk, stated
+  rather than closed: a `.txt` or `.csv` that an unchanged script reads,
+  which is the class ADR 0023 already accepts for Markdown. The test that
+  pinned the old behaviour, `aDataFileNoReaderCoversIsInert`, is replaced by
+  `aChangedConfigurationFileIsChangedEvenWhereNoReaderReadsIt`, and
+  `anInertFirstSnapshotIsUnchanged` takes a `.csv` as its inert file
+  (GW_APPROVAL_0044.8 — A snapshot is approved automatically only when its
+  executable surface, read completely, is unchanged from the served
+  baseline).
+- R15, from the same review: registration accepted an enabled
+  `autoApproval` from a machine credential, a way around the unreachable
+  table of R12. It is refused with 403 and nothing is registered.

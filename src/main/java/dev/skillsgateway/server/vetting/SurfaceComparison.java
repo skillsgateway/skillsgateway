@@ -52,7 +52,10 @@ public final class SurfaceComparison {
     static final Set<String> INERT = Set.of(
             "md", "markdown", "txt", "rst", "adoc", "png", "jpg", "jpeg", "gif", "webp", "ico", "pdf", "csv", "tsv");
 
-    /** Inert only where no component reader reads them: elsewhere they declare what runs. */
+    /**
+     * Never inert, read or not: an unchanged script can read one, and a component kind no reader
+     * here knows can be declared in one. Named only so a refusal says which kind of file it was.
+     */
     static final Set<String> DATA = Set.of("json", "yaml", "yml", "toml");
 
     private static final String MANIFEST_PATH = ".claude-plugin/marketplace.json";
@@ -164,10 +167,10 @@ public final class SurfaceComparison {
                 if (INERT.contains(extension)) {
                     continue;
                 }
-                if (DATA.contains(extension) && !covered.contains(path)) {
-                    continue;
+                if (DATA.contains(extension)) {
+                    return path + (covered.contains(path) ? " (component file)" : " (configuration file)");
                 }
-                return path + (DATA.contains(extension) ? " (component file)" : " (not an inert extension)");
+                return path + " (not an inert extension)";
             }
         }
         return null;

@@ -163,14 +163,19 @@ class SurfaceComparisonTests {
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.8"})
     void anInertFirstSnapshotIsUnchanged() throws IOException {
-        assertUnchanged(null, with(base(), "docs/data.json", Entry.file("{\"a\": 1}")));
+        assertUnchanged(null, with(base(), "docs/table.csv", Entry.file("a,b\n1,2\n")));
     }
 
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.8"})
-    void aDataFileNoReaderCoversIsInert() throws IOException {
-        assertUnchanged(base(), with(base(), "docs/data.json", Entry.file("{\"a\": 1}")));
-        assertUnchanged(base(), with(base(), "docs/config.yaml", Entry.file("a: 1\n")));
+    void aChangedConfigurationFileIsChangedEvenWhereNoReaderReadsIt() throws IOException {
+        // An unchanged script can read it, and a component kind no reader here knows can be
+        // declared in it, so neither the reader's silence nor the extension makes it inert.
+        assertChanged(base(), with(base(), "docs/data.json", Entry.file("{\"a\": 1}")), "docs/data.json");
+        assertChanged(base(), with(base(), "docs/config.yaml", Entry.file("a: 1\n")), "docs/config.yaml");
+        assertChanged(base(), with(base(), "plugins/hello/settings.yml", Entry.file("a: 1\n")), "settings.yml");
+        assertChanged(base(), with(base(), "plugins/hello/monitors/monitors.json", Entry.file("{}")), "monitors.json");
+        assertChanged(base(), with(base(), "tool.toml", Entry.file("a = 1\n")), "tool.toml");
     }
 
     // --- held: first snapshot with surface ---

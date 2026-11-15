@@ -166,10 +166,12 @@ run M39-shebang $T aShebangIsAScriptWhateverTheExtension "$SUR" \
   'if (startsWithShebang(repo, tree.getObjectId(1))) {' 'if (false) {'
 run M40-descriptive-any-key $T aManifestOrPluginJsonKeyOffTheDescriptiveListIsNotInert "$SUR" \
   'if (!allowed.contains(names.next())) {' 'if (names.next() == null) {'
-run M41-covered-data-inert $T aChangedHookIsChanged "$SUR" \
-  'DATA.contains(extension) && !covered.contains(path)' 'DATA.contains(extension)'
+run M41-configuration-file-inert $T aChangedConfigurationFileIsChangedEvenWhereNoReaderReadsIt "$SUR" \
+  'return path + (covered.contains(path) ? " (component file)" : " (configuration file)");' 'continue;'
+run M41b-component-file-inert $T aChangedHookIsChanged "$SUR" \
+  'return path + (covered.contains(path) ? " (component file)" : " (configuration file)");' 'continue;'
 run M42-unknown-extension-inert $T anUnknownExtensionIsAScript "$SUR" \
-  'return path + (DATA.contains(extension) ? " (component file)" : " (not an inert extension)");' 'continue;'
+  'return path + " (not an inert extension)";' 'continue;'
 run M43-hook-problems $T anUnreadableHooksFileIsUnreadable "$SUR" 'if (!components.hookProblems().isEmpty()) {' 'if (false) {'
 run M44-unscanned-module $T anUnscannedHookModuleIsUnreadable "$SUR" 'if (!module.unscanned().isEmpty()) {' 'if (false) {'
 run M45-malformed-frontmatter $T malformedFrontmatterIsUnreadable "$SUR" 'if (parsed.malformed()) {' 'if (false) {'

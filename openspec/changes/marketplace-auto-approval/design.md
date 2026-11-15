@@ -288,8 +288,9 @@ The surface is unchanged when both of these hold:
    - it is not a launch target named by a declaration;
    - it does not start with `#!`;
    - its extension is on a fixed **inert** list: `md markdown txt rst adoc png
-     jpg jpeg gif webp ico pdf csv tsv`, or `json yaml yml toml` when the path
-     is not a component or manifest file the reader in (1) covers;
+     jpg jpeg gif webp ico pdf csv tsv`. `json yaml yml toml` are never inert,
+     read or not: an unchanged script can read one, and a component kind no
+     reader here knows can be declared in one (R14);
    - the marketplace manifest and a `plugin.json` are inert when every key, at
      the top level and in each manifest entry, is on a fixed descriptive list
      (name, version, description, author, owner, metadata, homepage,
