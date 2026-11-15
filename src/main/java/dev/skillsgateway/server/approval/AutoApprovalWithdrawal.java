@@ -34,16 +34,19 @@ public class AutoApprovalWithdrawal {
     private final MarketplaceRepository marketplaceRepository;
     private final ServedTip servedTip;
     private final RevocationService revocationService;
+    private final AutoApprovalSettingService settingService;
 
     public AutoApprovalWithdrawal(
             SnapshotRepository snapshotRepository,
             MarketplaceRepository marketplaceRepository,
             ServedTip servedTip,
-            RevocationService revocationService) {
+            RevocationService revocationService,
+            AutoApprovalSettingService settingService) {
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
         this.servedTip = servedTip;
         this.revocationService = revocationService;
+        this.settingService = settingService;
     }
 
     @Schema(description = "Withdraw every automatic approval since a time")
@@ -68,7 +71,14 @@ public class AutoApprovalWithdrawal {
             Snapshot nowServing) {}
 
     @Schema(description = "What a bulk withdrawal withdrew, newest decision first")
-    public record WithdrawResponse(List<Withdrawn> withdrawn) {}
+    public record WithdrawResponse(
+            List<Withdrawn> withdrawn,
+
+            @Schema(
+                    description = "The marketplaces whose automatic approval this request turned off, because"
+                            + " it withdrew their automatic approvals and the next push would otherwise be"
+                            + " approved the same way")
+            List<String> turnedOff) {}
 
     /**
      * @throws RollbackUnavailableException before anything is withdrawn, when a return was asked for
@@ -118,7 +128,16 @@ public class AutoApprovalWithdrawal {
                     .orElse(null);
             withdrawn.add(new Withdrawn(revoked.snapshot(), nowServing));
         }
-        return new WithdrawResponse(withdrawn);
+        List<String> turnedOff = new ArrayList<>();
+        for (String name : withdrawn.stream()
+                .map(w -> names.get(w.snapshot().marketplaceId()))
+                .distinct()
+                .toList()) {
+            if (settingService.turnOffAfterWithdrawal(name, administrator, "withdrawn: " + request.reason())) {
+                turnedOff.add(name);
+            }
+        }
+        return new WithdrawResponse(withdrawn, turnedOff);
     }
 
     private boolean served(Snapshot snapshot, Map<Long, String> names) {

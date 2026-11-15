@@ -745,7 +745,9 @@ $ curl -X POST localhost:8080/api/v1/auto-approval/withdraw \
 ```
 
 Each one is an ordinary [withdrawal](#withdrawing-content-you-have-already-approved),
-newest first, and what people approved is untouched. If a marketplace has
+newest first, and what people approved is untouched. Every marketplace it
+withdraws from has its automatic approval turned off, so the next push waits
+for a person until an administrator turns it on again. If a marketplace has
 nothing earlier to return to, the request is refused before anything is
 withdrawn; choose `NOTHING` for it, or withdraw it on its own.
 

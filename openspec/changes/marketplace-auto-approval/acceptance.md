@@ -384,3 +384,10 @@ Made during implementation, a correction of fact:
 - R15, from the same review: registration accepted an enabled
   `autoApproval` from a machine credential, a way around the unreachable
   table of R12. It is refused with 403 and nothing is registered.
+- R16, a correction of design D13 ("Bulk withdrawal") after the review of
+  PR #879, approved by the owner: a recall left automatic approval on, so
+  the next push was approved again. Every marketplace a bulk withdrawal
+  withdraws from now has automatic approval turned off by the caller, with
+  any open exemption revoked, and the response names them in `turnedOff`
+  (GW_APPROVAL_0044.14 — Every snapshot approved automatically since a given
+  time can be withdrawn in one act).

@@ -4704,6 +4704,13 @@
       "WithdrawResponse": {
         "description": "What a bulk withdrawal withdrew, newest decision first",
         "properties": {
+          "turnedOff": {
+            "description": "The marketplaces whose automatic approval this request turned off, because it withdrew their automatic approvals and the next push would otherwise be approved the same way",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "withdrawn": {
             "items": {
               "$ref": "#/components/schemas/Withdrawn"

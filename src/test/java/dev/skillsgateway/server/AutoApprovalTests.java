@@ -392,6 +392,47 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
         assertThat(ledger(third, RevocationService.EVENT_REVOKED)).hasSize(2);
     }
 
+    /**
+     * A recall that left automatic approval on would be undone by the next push. Every marketplace
+     * it withdrew from is turned off by the administrator who recalled, and one it did not touch is
+     * left as it was.
+     */
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0044.14"})
+    void bulkWithdrawalTurnsAutomaticApprovalOffWhereItWithdrew() throws Exception {
+        Marketplace recalled = internalMarketplace("acme/" + uniqueName("skills"));
+        Marketplace untouched = internalMarketplace("acme/" + uniqueName("skills"));
+        autoApproved(recalled, 0);
+        autoApproved(untouched, 0);
+        Instant since = Instant.now();
+        Thread.sleep(5);
+        autoApproved(recalled, 1);
+
+        withdraw(withdrawal(since, "previous_approved"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.turnedOff").value(org.hamcrest.Matchers.contains(recalled.name())));
+
+        assertThat(settingService.view(recalled.name()).enabled()).isFalse();
+        assertThat(settingService.view(untouched.name()).enabled()).isTrue();
+        assertThat(ledger(recalled, AutoApprovalSettingService.EVENT_CHANGED))
+                .last()
+                .satisfies(entry -> assertThat(entry).contains("enabled=false").contains("withdrawn"));
+        assertThat(jdbc.sql("SELECT principal FROM fetch_log WHERE marketplace = :marketplace AND event = :event"
+                                + " ORDER BY id DESC LIMIT 1")
+                        .param("marketplace", recalled.name())
+                        .param("event", AutoApprovalSettingService.EVENT_CHANGED)
+                        .query(String.class)
+                        .single())
+                .isEqualTo("root");
+
+        String repo = recalled.url().substring(FORGE.baseUrl().length() + 1).replaceFirst("\\.git$", "");
+        FORGE.publish(repo, Map.of("plugins/hello/skills/hello/SKILL.md", CONFORMANT_SKILL + "\nRevision 2.\n"));
+        Snapshot next = ingestionService.ingest(recalled, null);
+        assertThat(snapshotRepository.findById(next.id()).orElseThrow().state())
+                .as("the next push after a recall waits for a person")
+                .isEqualTo(Snapshot.HELD);
+    }
+
     /** A request that cannot be honoured whole changes nothing: no reason, no choice, nothing to return to. */
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.14"})

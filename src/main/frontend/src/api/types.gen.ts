@@ -4747,6 +4747,8 @@ export interface components {
         };
         /** @description What a bulk withdrawal withdrew, newest decision first */
         WithdrawResponse: {
+            /** @description The marketplaces whose automatic approval this request turned off, because it withdrew their automatic approvals and the next push would otherwise be approved the same way */
+            turnedOff?: string[];
             withdrawn?: components["schemas"]["Withdrawn"][];
         };
         /** @description One snapshot the request withdrew */

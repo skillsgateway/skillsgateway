@@ -419,6 +419,11 @@ after `since`, through `RevocationService.revoke`, newest first, one marketplace
 at a time under `PublicationLock`. It returns what it withdrew, and each
 revocation is ledgered as today.
 
+Every marketplace the request withdraws from has its automatic approval
+turned off by the caller, with any open exemption revoked, and the response
+names them in `turnedOff`: left on, the next push would be approved the same
+way (R16).
+
 ### D14 — API and estate
 
 - **Registration.** `POST /api/v1/marketplaces` accepts an optional

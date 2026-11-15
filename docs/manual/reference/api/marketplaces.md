@@ -1510,11 +1510,16 @@ such snapshot, the whole request is refused before anything is withdrawn.
 
 ```json
 {"withdrawn":[{"snapshot":{"id":42,"state":"revoked"},
-               "nowServing":{"id":31,"state":"approved"}}]}
+               "nowServing":{"id":31,"state":"approved"}}],
+ "turnedOff":["vendor"]}
 ```
 
 `nowServing` is what the marketplace serves after the request, or `null` when
-it serves nothing.
+it serves nothing. `turnedOff` names each marketplace whose automatic approval
+the request turned off. Every marketplace it withdrew from is turned off,
+because its next push would otherwise be approved the same way; each is
+ledgered as `auto-approval-changed` by the caller, and any open exemption is
+revoked. Turn it on again once the cause is fixed.
 
 | Status | Cause |
 | --- | --- |

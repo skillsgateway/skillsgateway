@@ -202,6 +202,29 @@ public class AutoApprovalSettingService {
         }
     }
 
+    /**
+     * Turns automatic approval off because its approvals were withdrawn: left on, the next push
+     * would be approved the same way. Nothing happens to a marketplace that is off already.
+     *
+     * @return whether it was on and is now off
+     */
+    @Transactional
+    @Requirements({"GW_APPROVAL_0044.14"})
+    public boolean turnOffAfterWithdrawal(String name, String actor, String reason) {
+        Marketplace marketplace = find(name);
+        repository.lock(marketplace.id());
+        if (!repository.find(marketplace.id()).enabled()) {
+            return false;
+        }
+        Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
+        recordLapse(marketplace, now);
+        repository.save(marketplace.id(), new StoredSetting(false, actor, now, reason, null));
+        repository.findOpen(marketplace.id()).ifPresent(exemption -> revoke(marketplace, exemption, actor, now));
+        auditLogger.record(
+                actor, marketplace, EVENT_CHANGED, null, "enabled=false (its automatic approvals were withdrawn)");
+        return true;
+    }
+
     @Transactional
     @Requirements({"GW_APPROVAL_0044.1", "GW_APPROVAL_0044.3", "GW_APPROVAL_0044.4"})
     public SettingView set(String name, SettingRequest request, String actor) {

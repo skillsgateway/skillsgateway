@@ -27,8 +27,9 @@ class AutoApprovalWithdrawalTests {
     private final MarketplaceRepository marketplaces = mock(MarketplaceRepository.class);
     private final ServedTip servedTip = mock(ServedTip.class);
     private final RevocationService revocation = mock(RevocationService.class);
+    private final AutoApprovalSettingService settings = mock(AutoApprovalSettingService.class);
     private final AutoApprovalWithdrawal withdrawal =
-            new AutoApprovalWithdrawal(snapshots, marketplaces, servedTip, revocation);
+            new AutoApprovalWithdrawal(snapshots, marketplaces, servedTip, revocation, settings);
 
     private static Snapshot approved(long id, String sha) {
         return new Snapshot(
