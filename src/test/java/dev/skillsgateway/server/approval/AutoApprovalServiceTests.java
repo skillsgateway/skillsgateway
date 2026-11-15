@@ -244,6 +244,20 @@ class AutoApprovalServiceTests {
     }
 
     @Test
+    @SVCs({"SVC_GW_APPROVAL_0044.8"})
+    void aSurfaceThatCannotBeComparedKeepsTheSnapshotHeldUnderItsOwnReason() throws IOException {
+        when(storage.quarantine("m")).thenThrow(new IllegalStateException("quarantine unavailable"));
+
+        assertThat(service.attempt(SNAPSHOT)).isEqualTo(AutoApprovalService.Outcome.SKIPPED);
+
+        verify(approvals, never()).approve(anyLong(), anyString(), any());
+        verify(snapshots)
+                .recordAutoApprovalSkip(
+                        eq(SNAPSHOT),
+                        startsWith("surface-unreadable: the surface could not be compared (IllegalStateException)"));
+    }
+
+    @Test
     @SVCs({"SVC_GW_APPROVAL_0044.12"})
     void withReVettingOffTheAttemptSkips() {
         when(properties.vetting().revet().enabled()).thenReturn(false);

@@ -309,7 +309,9 @@ public class AutoApprovalService {
                     ObjectId.fromString(sha));
             return result.unchanged() ? null : "surface-changed: " + result.reason();
         } catch (IOException | RuntimeException e) {
-            return "surface-changed: the surface could not be compared";
+            log.warn("Surface of {} at {} could not be compared; it stays held", marketplace.name(), sha, e);
+            return "surface-unreadable: the surface could not be compared ("
+                    + e.getClass().getSimpleName() + ")";
         }
     }
 
