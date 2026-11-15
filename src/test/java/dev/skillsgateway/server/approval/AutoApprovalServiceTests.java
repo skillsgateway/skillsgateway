@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -55,6 +57,8 @@ import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
+import org.springframework.dao.DataAccessResourceFailureException;
 
 /**
  * What one attempt does with the answer, in each mode and against each gate's refusal
@@ -345,5 +349,47 @@ class AutoApprovalServiceTests {
                         eq(AutoApprovalService.EVENT_SKIPPED),
                         anyString(),
                         startsWith("decided-elsewhere"));
+    }
+
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0044.11"})
+    void theEvidenceIsCapturedBeforeTheApprovalItRecords() {
+        assertThat(service.attempt(SNAPSHOT)).isEqualTo(AutoApprovalService.Outcome.APPROVED);
+
+        InOrder order = inOrder(setting, approvals);
+        order.verify(setting).view("m");
+        order.verify(approvals).approve(eq(SNAPSHOT), eq(AutoApprovalService.ACTOR), any());
+        verify(ledger)
+                .record(
+                        anyString(),
+                        anyString(),
+                        eq(AutoApprovalService.EVENT_APPROVED),
+                        anyString(),
+                        contains("grantor=root"));
+    }
+
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0044.9"})
+    void aSettingTurnedOffDuringTheAttemptPublishesNothing() {
+        when(setting.effectiveAllowedBy(marketplace)).thenReturn(AllowedBy.NONE);
+
+        assertThat(service.attempt(SNAPSHOT)).isEqualTo(AutoApprovalService.Outcome.SKIPPED);
+
+        verify(approvals, never()).approve(anyLong(), anyString(), any());
+        verify(snapshots).recordAutoApprovalSkip(SNAPSHOT, "not-allowed: none");
+    }
+
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0044.9"})
+    void aFailureToPublishIsNotRecordedAsAGateRefusal() {
+        when(approvals.approve(eq(SNAPSHOT), eq(AutoApprovalService.ACTOR), any()))
+                .thenThrow(new ApprovalException("publish failed for snapshot 7", new IOException("disk")))
+                .thenThrow(new DataAccessResourceFailureException("connection refused"));
+
+        service.attempt(SNAPSHOT);
+        service.attempt(SNAPSHOT);
+
+        verify(snapshots).recordAutoApprovalSkip(SNAPSHOT, "approval-failed: approval");
+        verify(snapshots).recordAutoApprovalSkip(SNAPSHOT, "approval-failed: data-access-resource-failure");
     }
 }

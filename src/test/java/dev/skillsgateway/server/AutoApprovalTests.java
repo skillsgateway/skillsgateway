@@ -549,6 +549,31 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
         assertThat(settingService.view(internal).reason()).isEqualTo("recertified");
     }
 
+    /** Declaring automatic approval attempts the held snapshot at once, as turning it on through the API does. */
+    @Test
+    @SVCs({"SVC_GW_ESTATE_0006", "SVC_GW_APPROVAL_0044.9"})
+    void aDeclaredAutomaticApprovalAttemptsTheHeldSnapshot() throws Exception {
+        String repo = "acme/" + uniqueName("skills");
+        FORGE.publish(
+                repo, Map.of(MANIFEST_PATH, DEFAULT_MANIFEST, "plugins/hello/skills/hello/SKILL.md", CONFORMANT_SKILL));
+        String url = FORGE.baseUrl() + "/" + repo + ".git";
+        Marketplace marketplace = marketplaceRepository.register(
+                uniqueName("estate-held"), url, null, Marketplace.ORIGIN_UPSTREAM, Marketplace.PUSH_APPEND_ONLY, null);
+        Snapshot held = ingestionService.ingest(marketplace, null);
+        assertThat(snapshotRepository.findById(held.id()).orElseThrow().state()).isEqualTo(Snapshot.HELD);
+
+        Instant expires = Instant.now().plus(Duration.ofDays(30)).truncatedTo(ChronoUnit.SECONDS);
+        EstateReconciliation report = estateReconciler.reconcile(
+                estateOf(declared(
+                        marketplace.name(), url, new DeclaredAutoApproval(true, "our own skills", expires, null))),
+                "api");
+
+        assertThat(entry(report, marketplace.name()).action()).isEqualTo("updated");
+        Snapshot now = snapshotRepository.findById(held.id()).orElseThrow();
+        assertThat(now.state()).as(skipReason(held)).isEqualTo(Snapshot.APPROVED);
+        assertThat(now.decidedBy()).isEqualTo(AutoApprovalService.ACTOR);
+    }
+
     /** Declared automatic approval past its expiry is converged, and reads as off until the declaration changes. */
     @Test
     @SVCs({"SVC_GW_ESTATE_0006"})

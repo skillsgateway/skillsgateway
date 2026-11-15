@@ -1572,8 +1572,10 @@ The refusal codes, in the order they are checked:
 | `surface-changed` | The executable surface differs from the served baseline, or a path is not inert. |
 | `surface-unreadable` | The surface could not be compared at all, for example the quarantine could not be read. The snapshot stays held and the gateway logs the error. |
 
-A real attempt can also record `gate-refused` (an approval gate refused it) and
-`decided-elsewhere` (a person decided it first).
+A real attempt can also record `gate-refused` (an approval gate refused it),
+`decided-elsewhere` (a person decided it first), `approval-failed` (the
+publication or a dependency failed; the gateway logs the error), and
+`not-allowed` when automatic approval was turned off while the attempt ran.
 
 | Status | Cause |
 | --- | --- |

@@ -373,7 +373,8 @@ output is pinned by a test before the move.
   after the commit inside a transaction and at once outside one; nothing on the
   ingestion path runs in a transaction (acceptance R8).
 - **After a waiver is created and after automatic approval is set**, for that
-  marketplace's newest held snapshot.
+  marketplace's newest held snapshot. Set means through the API or by the
+  estate reconciler applying a declared `enabled: true` (acceptance R20).
 - **On each `RevetScheduler` tick**, one bounded step attempts the newest held
   snapshot of each marketplace with automatic approval on. This is what approves a snapshot once it
   reaches the minimum release age; the lag is at most `revet.interval`. Because

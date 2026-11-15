@@ -282,7 +282,7 @@ export function AutoApprovalForm({ marketplace, view }: { marketplace: string; v
 }
 
 /**
- * A marketplace's automatic approval on its Settings page (GW_APPROVAL_0044.15, design D15): to
+ * A marketplace's automatic approval on its Settings page (GW_APPROVAL_0044.15): to
  * anyone who can see the page, whether its snapshots are approved with no person, what allows it,
  * who decided it, why and until when, and the gateway's mode; to an administrator, the form that
  * turns it on, off or renews it and the exemption's revocation. The server enforces every rule.

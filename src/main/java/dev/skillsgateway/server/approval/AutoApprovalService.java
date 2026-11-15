@@ -154,7 +154,7 @@ public class AutoApprovalService {
     }
 
     /**
-     * One attempt, in the order of design D8: mode, re-vetting, what allows it, candidacy, vetting,
+     * One attempt, in this order: mode, re-vetting, what allows it, candidacy, vetting,
      * surface.
      * Every refusal leaves the snapshot held and is recorded once per distinct reason.
      */
@@ -179,22 +179,32 @@ public class AutoApprovalService {
             skip(snapshot, marketplace, evaluation.refusal());
             return Outcome.SKIPPED;
         }
+        // The evidence names the grant this attempt relied on, read before publication can race a change.
+        String evidence = evidence(snapshot, marketplace, allowedBy, evaluation);
         if (mode == AutoMode.DRY_RUN) {
             if (snapshotRepository.recordAutoApprovalSkip(snapshot.id(), WOULD_APPROVE)) {
-                auditLogger.record(
-                        ACTOR,
-                        marketplace.name(),
-                        EVENT_WOULD_APPROVE,
-                        snapshot.sha(),
-                        evidence(snapshot, marketplace, allowedBy, evaluation));
+                auditLogger.record(ACTOR, marketplace.name(), EVENT_WOULD_APPROVE, snapshot.sha(), evidence);
             }
             return Outcome.WOULD_APPROVE;
+        }
+        // The surface comparison can take seconds; an administrator who turned it off meanwhile wins.
+        AllowedBy stillAllowedBy = settingService.effectiveAllowedBy(marketplace);
+        if (stillAllowedBy != allowedBy) {
+            skip(snapshot, marketplace, "not-allowed: " + stillAllowedBy.wire());
+            return Outcome.SKIPPED;
         }
         ApprovalService.Approved approved;
         try {
             approved = approvalService.approve(snapshot.id(), ACTOR, ApprovalOverride.none());
         } catch (RuntimeException refused) {
             String reason = gateRefusal(refused);
+            if (reason.startsWith("approval-failed")) {
+                log.warn(
+                        "Automatic approval of {} at {} failed; it stays held",
+                        marketplace.name(),
+                        snapshot.sha(),
+                        refused);
+            }
             if (refused instanceof IllegalStateException) {
                 // A person decided first, so the row is no longer held and its stored reason cannot
                 // change; a race happens once per snapshot, so it is ledgered without deduplication.
@@ -205,16 +215,11 @@ public class AutoApprovalService {
             return Outcome.SKIPPED;
         }
         recorder.recordApproved(approved, ACTOR);
-        auditLogger.record(
-                ACTOR,
-                marketplace.name(),
-                EVENT_APPROVED,
-                snapshot.sha(),
-                evidence(snapshot, marketplace, allowedBy, evaluation));
+        auditLogger.record(ACTOR, marketplace.name(), EVENT_APPROVED, snapshot.sha(), evidence);
         return Outcome.APPROVED;
     }
 
-    /** After an ingestion, a held snapshot's refreshed evidence, or a new waiver (design D10). */
+    /** After an ingestion, a held snapshot's refreshed evidence, or a new waiver. */
     @TransactionalEventListener(fallbackExecution = true)
     public void onHeldSnapshotChanged(HeldSnapshotChanged changed) {
         attemptNewest(changed.marketplaceId(), changed.cause());
@@ -229,7 +234,7 @@ public class AutoApprovalService {
         }
     }
 
-    /** After automatic approval is set (design D10). */
+    /** After automatic approval is turned on, through the API or the estate. */
     public void attemptNewest(String marketplace, String cause) {
         marketplaceRepository.findByName(marketplace).ifPresent(found -> attemptNewest(found.id(), cause));
     }
@@ -327,7 +332,11 @@ public class AutoApprovalService {
             return "decided-elsewhere: the snapshot was decided before the automatic approval reached it";
         }
         String name = refused.getClass().getSimpleName().replaceFirst("Exception$", "");
-        return "gate-refused: " + name.replaceAll("([a-z])([A-Z])", "$1-$2").toLowerCase(Locale.ROOT);
+        String code = name.replaceAll("([a-z])([A-Z])", "$1-$2").toLowerCase(Locale.ROOT);
+        // A gate refuses with its own exception; a failed publication or a broken dependency is not a gate.
+        boolean failure = refused instanceof ApprovalException
+                || !refused.getClass().getName().startsWith("dev.skillsgateway.");
+        return (failure ? "approval-failed: " : "gate-refused: ") + code;
     }
 
     private String evidence(Snapshot snapshot, Marketplace marketplace, AllowedBy allowedBy, Evaluation evaluation) {

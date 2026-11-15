@@ -2,6 +2,7 @@ package dev.skillsgateway.server.estate;
 
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.admin.MarketplaceRegistrationService;
+import dev.skillsgateway.server.approval.AutoApprovalService;
 import dev.skillsgateway.server.approval.AutoApprovalSettingService;
 import dev.skillsgateway.server.approval.AutoApprovalSettingService.SettingRequest;
 import dev.skillsgateway.server.approval.AutoApprovalSettingValidationException;
@@ -74,6 +75,7 @@ public class EstateReconciler {
     private final PolicyRuleService policyRuleService;
     private final AdminAuditLogger auditLogger;
     private final AutoApprovalSettingService settingService;
+    private final AutoApprovalService autoApprovalService;
     private final AtomicReference<EstateReconciliation> lastRun = new AtomicReference<>();
 
     public EstateReconciler(
@@ -86,8 +88,10 @@ public class EstateReconciler {
             AuditExportService auditExportService,
             PolicyRuleService policyRuleService,
             AdminAuditLogger auditLogger,
-            AutoApprovalSettingService settingService) {
+            AutoApprovalSettingService settingService,
+            AutoApprovalService autoApprovalService) {
         this.settingService = settingService;
+        this.autoApprovalService = autoApprovalService;
         this.registrationService = registrationService;
         this.marketplaceRepository = marketplaceRepository;
         this.syncService = syncService;
@@ -291,6 +295,9 @@ public class EstateReconciler {
             return Optional.empty();
         }
         asEntryFailure(() -> settingService.set(name, declared, ACTOR));
+        if (declared.enabled()) {
+            autoApprovalService.attemptNewest(name, "auto-approval-declared");
+        }
         return Optional.of("auto-approval.enabled=" + declared.enabled());
     }
 

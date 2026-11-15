@@ -281,5 +281,13 @@ run M82-unreadable-as-changed $T aSurfaceThatCannotBeComparedKeepsTheSnapshotHel
 T=admin.RegistrationAutoApprovalTests
 run M83-failed-setting-fails-registration $T aSettingThatFailsAfterRegistrationIsReportedOnTheRegisteredMarketplace "$ADM" \
   '} catch (RuntimeException e) {' '} catch (UnsupportedOperationException e) {'
+T=approval.AutoApprovalServiceTests
+run M85-no-recheck-before-approve $T aSettingTurnedOffDuringTheAttemptPublishesNothing "$SVC" \
+  'if (stillAllowedBy != allowedBy) {' 'if (false) {'
+run M86-failure-as-gate-refusal $T aFailureToPublishIsNotRecordedAsAGateRefusal "$SVC" \
+  'return (failure ? "approval-failed: " : "gate-refused: ") + code;' 'return "gate-refused: " + code;'
+T=AutoApprovalTests
+run M87-estate-does-not-attempt $T aDeclaredAutomaticApprovalAttemptsTheHeldSnapshot "$EST" \
+  'autoApprovalService.attemptNewest(name, "auto-approval-declared");' ''
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi

@@ -157,7 +157,10 @@ public final class AutoApprovalEligibility {
         return found;
     }
 
-    /** The same rule in the same blob, so a person approved that content with the finding in it. */
+    /**
+     * The same rule in the same blob of the served baseline's latest run: content already served
+     * with the finding in it, whether a person or an automatic approval served it.
+     */
     private static boolean inBaseline(VettingRepository.Run baseline, Finding finding) {
         if (baseline == null || finding.content() == null) {
             return false;

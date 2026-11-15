@@ -405,3 +405,18 @@ Made during implementation, a correction of fact:
   warning that automatic approval was not turned on, and the error is
   logged (GW_APPROVAL_0044.1 — Automatic approval of a marketplace is off
   unless an administrator turns it on for a limited time).
+- R19, from the verification of the remaining review findings on PR #879:
+  an attempt re-reads what allows it just before approving, so an
+  administrator who turns automatic approval off while the surface is
+  compared wins, and the ledgered evidence is captured before publication,
+  so it names the grant the attempt relied on. A failed publication or a
+  broken dependency records `approval-failed` and is logged, instead of
+  reading as `gate-refused` (GW_APPROVAL_0044.9 — An automatic approval
+  passes every approval gate; GW_APPROVAL_0044.11 — Every automatic
+  approval, and every attempt that leaves a snapshot held, is on the ledger
+  with its evidence).
+- R20, a correction of design D10 ("Triggers"): the estate reconciler set
+  automatic approval but never attempted, so a held snapshot waited for the
+  next re-vetting tick. Applying a declared `enabled: true` now attempts the
+  newest held snapshot, as the API does (GW_ESTATE_0006 — A marketplace's
+  automatic approval is declarable in the estate).
