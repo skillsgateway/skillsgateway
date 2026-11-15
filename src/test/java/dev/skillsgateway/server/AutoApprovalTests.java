@@ -14,6 +14,11 @@ import dev.skillsgateway.server.approval.ApprovalPostureService.PostureRequest;
 import dev.skillsgateway.server.approval.AutoApprovalService;
 import dev.skillsgateway.server.approval.RevocationService;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredApproval;
+import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredMarketplace;
+import dev.skillsgateway.server.config.SkillsGatewayProperties.Estate;
+import dev.skillsgateway.server.estate.EstateReconciler;
+import dev.skillsgateway.server.estate.EstateReconciliation;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.WebhookDeliveryRepository;
@@ -29,6 +34,7 @@ import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.SVCs;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -76,6 +82,9 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
 
     @Autowired
     private RevetService revetService;
+
+    @Autowired
+    private EstateReconciler estateReconciler;
 
     @Autowired
     private WaiverService waiverService;
@@ -395,6 +404,122 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
                         .orElseThrow()
                         .state())
                 .isEqualTo(Snapshot.APPROVED);
+    }
+
+    @Test
+    @SVCs({"SVC_GW_ESTATE_0006"})
+    void aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry() {
+        Instant expires = Instant.now().plus(Duration.ofDays(30)).truncatedTo(ChronoUnit.SECONDS);
+        String internal = uniqueName("estate-auto");
+        String outside = uniqueName("estate-outside");
+        String noExpiry = uniqueName("estate-noexpiry");
+        String tooLong = uniqueName("estate-toolong");
+        String withOverride = uniqueName("estate-override");
+        Estate estate = new Estate(
+                List.of(
+                        declared(internal, forgeUrl(), new DeclaredApproval("auto", "our own skills", expires, null)),
+                        declared(
+                                outside,
+                                "https://example.invalid/outside.git",
+                                new DeclaredApproval("auto", "a vendor", expires, null)),
+                        declared(noExpiry, forgeUrl(), new DeclaredApproval("auto", "our own skills", null, null)),
+                        declared(
+                                tooLong,
+                                forgeUrl(),
+                                new DeclaredApproval(
+                                        "auto", "our own skills", Instant.now().plus(Duration.ofDays(120)), null)),
+                        declared(
+                                withOverride,
+                                "https://example.invalid/vendor.git",
+                                new DeclaredApproval(
+                                        "auto",
+                                        "a vendor",
+                                        expires,
+                                        Map.of("reason", "trusted vendor", "expires-at", expires.toString())))),
+                null,
+                null,
+                null,
+                null);
+
+        EstateReconciliation report = estateReconciler.reconcile(estate, "api");
+
+        assertThat(entry(report, internal).action()).isEqualTo("created");
+        ApprovalPostureService.PostureView applied = postureService.view(internal);
+        assertThat(applied.posture()).isEqualTo(Posture.AUTO);
+        assertThat(applied.basis()).isEqualTo(ApprovalPostureService.Basis.INTERNAL_PREFIX);
+        assertThat(applied.setBy()).isEqualTo(EstateReconciler.ACTOR);
+        assertThat(applied.reason()).isEqualTo("our own skills");
+        assertThat(applied.expiresAt()).isEqualTo(expires);
+        assertThat(entry(report, outside).action()).isEqualTo("failed");
+        assertThat(entry(report, outside).detail()).contains("override");
+        assertThat(entry(report, noExpiry).action()).isEqualTo("failed");
+        assertThat(entry(report, noExpiry).detail()).contains("needs an expiry");
+        assertThat(entry(report, tooLong).action()).isEqualTo("failed");
+        assertThat(entry(report, tooLong).detail()).contains("at most 90 days");
+        assertThat(entry(report, withOverride).action()).isEqualTo("failed");
+        assertThat(entry(report, withOverride).detail()).contains("an override cannot be declared");
+        for (String refused : List.of(outside, noExpiry, tooLong, withOverride)) {
+            assertThat(marketplaceRepository.findByName(refused)).as(refused).isEmpty();
+        }
+        assertThat(jdbc.sql("SELECT count(*) FROM auto_approval_overrides o JOIN marketplaces m"
+                                + " ON m.id = o.marketplace_id WHERE m.name IN (:names)")
+                        .param("names", List.of(internal, outside, noExpiry, tooLong, withOverride))
+                        .query(Long.class)
+                        .single())
+                .isZero();
+
+        assertThat(entry(estateReconciler.reconcile(estate, "api"), internal).action())
+                .as("a converged declaration writes nothing")
+                .isEqualTo("unchanged");
+
+        String url = marketplaceRepository.findByName(internal).orElseThrow().url();
+        EstateReconciliation renewed = estateReconciler.reconcile(
+                estateOf(declared(internal, url, new DeclaredApproval("auto", "recertified", expires, null))), "api");
+        assertThat(entry(renewed, internal).action()).isEqualTo("updated");
+        assertThat(postureService.view(internal).reason()).isEqualTo("recertified");
+    }
+
+    /** A declared posture past its expiry is converged, and reads as manual until the declaration changes. */
+    @Test
+    @SVCs({"SVC_GW_ESTATE_0006"})
+    void aLapsedDeclaredPostureIsManualUntilTheDeclarationChanges() {
+        String name = uniqueName("estate-lapsed");
+        Instant expires = Instant.now().plus(Duration.ofDays(30)).truncatedTo(ChronoUnit.SECONDS);
+        String url = forgeUrl();
+        estateReconciler.reconcile(
+                estateOf(declared(name, url, new DeclaredApproval("auto", "our own skills", expires, null))), "api");
+        Instant lapsed = Instant.now().minus(Duration.ofDays(1)).truncatedTo(ChronoUnit.SECONDS);
+        jdbc.sql("UPDATE marketplaces SET approval_set_at = :setAt, approval_expires_at = :expiresAt"
+                        + " WHERE name = :name")
+                .param("setAt", lapsed.minus(Duration.ofDays(30)).atOffset(java.time.ZoneOffset.UTC))
+                .param("expiresAt", lapsed.atOffset(java.time.ZoneOffset.UTC))
+                .param("name", name)
+                .update();
+
+        EstateReconciliation report = estateReconciler.reconcile(
+                estateOf(declared(name, url, new DeclaredApproval("auto", "our own skills", lapsed, null))), "api");
+
+        assertThat(entry(report, name).action()).isEqualTo("unchanged");
+        assertThat(postureService.view(name).basis()).isEqualTo(ApprovalPostureService.Basis.NONE);
+    }
+
+    private static Estate estateOf(DeclaredMarketplace marketplace) {
+        return new Estate(List.of(marketplace), null, null, null, null);
+    }
+
+    private static DeclaredMarketplace declared(String name, String url, DeclaredApproval approval) {
+        return new DeclaredMarketplace(name, url, null, null, null, approval);
+    }
+
+    private static String forgeUrl() {
+        return FORGE.baseUrl() + "/acme/" + uniqueName("declared") + ".git";
+    }
+
+    private static EstateReconciliation.Entry entry(EstateReconciliation report, String name) {
+        return report.entries().stream()
+                .filter(entry -> name.equals(entry.name()))
+                .findFirst()
+                .orElseThrow();
     }
 
     private org.springframework.test.web.servlet.ResultActions withdraw(String body) throws Exception {

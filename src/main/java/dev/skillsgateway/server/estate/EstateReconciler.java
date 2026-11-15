@@ -2,7 +2,13 @@ package dev.skillsgateway.server.estate;
 
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.admin.MarketplaceRegistrationService;
+import dev.skillsgateway.server.approval.ApprovalPostureService;
+import dev.skillsgateway.server.approval.ApprovalPostureService.Posture;
+import dev.skillsgateway.server.approval.ApprovalPostureService.PostureRequest;
+import dev.skillsgateway.server.approval.NoInternalBasisException;
+import dev.skillsgateway.server.approval.PostureValidationException;
 import dev.skillsgateway.server.audit.AuditExportService;
+import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredApproval;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredAuditSink;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredGrant;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredMarketplace;
@@ -22,6 +28,7 @@ import dev.skillsgateway.server.roles.RoleService;
 import dev.skillsgateway.server.sync.SyncService;
 import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -67,6 +74,7 @@ public class EstateReconciler {
     private final AuditExportService auditExportService;
     private final PolicyRuleService policyRuleService;
     private final AdminAuditLogger auditLogger;
+    private final ApprovalPostureService postureService;
     private final AtomicReference<EstateReconciliation> lastRun = new AtomicReference<>();
 
     public EstateReconciler(
@@ -78,7 +86,9 @@ public class EstateReconciler {
             WebhookSubscriberRepository subscriberRepository,
             AuditExportService auditExportService,
             PolicyRuleService policyRuleService,
-            AdminAuditLogger auditLogger) {
+            AdminAuditLogger auditLogger,
+            ApprovalPostureService postureService) {
+        this.postureService = postureService;
         this.registrationService = registrationService;
         this.marketplaceRepository = marketplaceRepository;
         this.syncService = syncService;
@@ -181,11 +191,19 @@ public class EstateReconciler {
             throw validationFailure("sync-mode must be one of %s; webhook mode's inbound secret is"
                     + " generated and shown once, so it cannot be declared".formatted(DECLARABLE_SYNC_MODES));
         }
+        Optional<PostureRequest> approval = approvalOf(declared.approval());
         Optional<Marketplace> existing = marketplaceRepository.findByName(declared.name());
         if (existing.isEmpty()) {
+            approval.ifPresent(request -> posture(() -> postureService.checkRegistration(
+                    declared.name(),
+                    declared.url(),
+                    declared.origin(),
+                    request.posture(),
+                    request.reason(),
+                    request.expiresAt())));
             // Reported, never refused (GW_INGEST_0041): the entry converges and says why its upstream
             // could not be read; the registration service has put the same on the ledger.
-            List<String> warnings = registrationService
+            List<String> warnings = new ArrayList<>(registrationService
                     .register(
                             declared.name(),
                             declared.url(),
@@ -193,10 +211,12 @@ public class EstateReconciler {
                             declared.pushPolicy(),
                             ACTOR,
                             MarketplaceRegistrationService.Reachability.REPORT)
-                    .warnings();
+                    .warnings());
             if (mode != null && !Marketplace.SYNC_ON_DEMAND.equals(mode)) {
                 syncService.changeMode(declared.name(), mode, ACTOR);
             }
+            approval.flatMap(request -> reconcileApproval(declared.name(), request))
+                    .ifPresent(warnings::add);
             return Entry.created(
                     "marketplace", declared.name(), warnings.isEmpty() ? null : String.join("; ", warnings));
         }
@@ -221,9 +241,68 @@ public class EstateReconciler {
             syncService.changeMode(declared.name(), mode, ACTOR);
             changes.add("sync-mode=" + mode);
         }
+        approval.flatMap(request -> reconcileApproval(declared.name(), request)).ifPresent(changes::add);
         return changes.isEmpty()
                 ? Entry.unchanged("marketplace", declared.name())
                 : Entry.updated("marketplace", declared.name(), String.join("; ", changes));
+    }
+
+    /**
+     * A declared posture as the request the API takes (GW_ESTATE_0006). An override is refused, not
+     * dropped: it is a dated judgement by a named administrator, never configuration.
+     */
+    @Requirements({"GW_ESTATE_0006"})
+    private static Optional<PostureRequest> approvalOf(DeclaredApproval declared) {
+        if (declared == null) {
+            return Optional.empty();
+        }
+        if (declared.override() != null && !declared.override().isEmpty()) {
+            throw validationFailure("an override cannot be declared: it is a dated judgement by a named"
+                    + " administrator, made with PUT /api/v1/marketplaces/{name}/approval-posture or in the portal");
+        }
+        Posture posture;
+        if ("manual".equals(declared.posture())) {
+            posture = Posture.MANUAL;
+        } else if ("auto".equals(declared.posture())) {
+            posture = Posture.AUTO;
+        } else {
+            throw validationFailure("approval.posture must be manual or auto");
+        }
+        return Optional.of(new PostureRequest(posture, declared.reason(), declared.expiresAt(), null));
+    }
+
+    /**
+     * Applies a declared posture through the API's path, as {@link #ACTOR}, unless the stored one is
+     * already it. A declared expiry that has passed is converged too, so the posture reads as manual
+     * until the declaration changes rather than failing every run (GW_ESTATE_0006).
+     *
+     * @return what changed, or empty when converged
+     */
+    @Requirements({"GW_ESTATE_0006"})
+    private Optional<String> reconcileApproval(String name, PostureRequest declared) {
+        ApprovalPostureService.PostureView stored = postureService.view(name);
+        boolean converged = stored.posture() == declared.posture()
+                && (declared.posture() == Posture.MANUAL
+                        || (declared.reason() != null
+                                && declared.reason().trim().equals(stored.reason())
+                                && declared.expiresAt() != null
+                                && declared.expiresAt()
+                                        .truncatedTo(ChronoUnit.MICROS)
+                                        .equals(stored.expiresAt())));
+        if (converged) {
+            return Optional.empty();
+        }
+        posture(() -> postureService.set(name, declared, ACTOR));
+        return Optional.of("approval=" + declared.posture().wire());
+    }
+
+    /** The posture service's refusals are this entry's failure, as the API's are its 4xx. */
+    private static void posture(Runnable change) {
+        try {
+            change.run();
+        } catch (PostureValidationException | NoInternalBasisException refused) {
+            throw validationFailure(refused.getMessage());
+        }
     }
 
     /**

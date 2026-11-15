@@ -4,11 +4,13 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import io.github.reqstool.annotations.Requirements;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.ConstructorBinding;
 import org.springframework.util.unit.DataSize;
 
 @ConfigurationProperties(prefix = "skills-gateway")
@@ -685,8 +687,32 @@ public record SkillsGatewayProperties(
      *     declares no url, and like a url the origin is immutable after registration
      * @param pushPolicy for a hosted marketplace, {@code append-only} (the default) or
      *     {@code allow-rewrite}
+     * @param approval the approval posture (GW_ESTATE_0006); null means the stored posture is not
+     *     managed and never touched
      */
-    public record DeclaredMarketplace(String name, String url, String syncMode, String origin, String pushPolicy) {}
+    public record DeclaredMarketplace(
+            String name, String url, String syncMode, String origin, String pushPolicy, DeclaredApproval approval) {
+
+        @ConstructorBinding
+        public DeclaredMarketplace {}
+
+        public DeclaredMarketplace(String name, String url, String syncMode, String origin, String pushPolicy) {
+            this(name, url, syncMode, origin, pushPolicy, null);
+        }
+    }
+
+    /**
+     * A declared approval posture (GW_ESTATE_0006), applied as the estate reconciler with the same
+     * checks as the API.
+     *
+     * @param posture {@code manual} or {@code auto}
+     * @param reason why; required for {@code auto}
+     * @param expiresAt when {@code auto} lapses; required, at most 90 days after it is applied. Past
+     *     it, the posture is manual until the declaration changes
+     * @param override never accepted: an override is a dated judgement by a named administrator, so
+     *     a declaration that carries one fails its entry rather than having it silently dropped
+     */
+    public record DeclaredApproval(String posture, String reason, Instant expiresAt, Map<String, String> override) {}
 
     /**
      * A declared role grant (GW_ESTATE_0003), the exact shape of the grants API: approver grants name one

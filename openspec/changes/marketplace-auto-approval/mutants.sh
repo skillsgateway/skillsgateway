@@ -244,5 +244,19 @@ run M72-reason-optional $T bulkWithdrawalThatCannotBeHonouredWithdrawsNothing "$
 run M73-race-fails-the-request approval.AutoApprovalWithdrawalTests aSnapshotWithdrawnMeanwhileIsSkippedAndTheRestAreStillWithdrawn "$WDR" \
   $'            } catch (NotApprovedException withdrawnMeanwhile) {\n                continue;' $'            } catch (NotApprovedException withdrawnMeanwhile) {\n                throw withdrawnMeanwhile;'
 
+# --- the declared posture (GW_ESTATE_0006) ---
+EST=src/main/java/dev/skillsgateway/server/estate/EstateReconciler.java
+T=AutoApprovalTests
+run M74-override-declared $T aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
+  'if (declared.override() != null && !declared.override().isEmpty()) {' 'if (false) {'
+run M75-registered-before-checked $T aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
+  'approval.ifPresent(request -> posture(() -> postureService.checkRegistration(' 'approval.filter(request -> false).ifPresent(request -> posture(() -> postureService.checkRegistration('
+run M76-lapsed-reapplied $T aLapsedDeclaredPostureIsManualUntilTheDeclarationChanges "$EST" \
+  '&& declared.expiresAt().truncatedTo(ChronoUnit.MICROS).equals(stored.expiresAt())' '&& false'
+run M77-reason-not-compared $T aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
+  '&& declared.reason().trim().equals(stored.reason())' ''
+run M78-not-the-reconciler $T aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
+  'posture(() -> postureService.set(name, declared, ACTOR));' 'posture(() -> postureService.set(name, declared, "root"));'
+
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi
