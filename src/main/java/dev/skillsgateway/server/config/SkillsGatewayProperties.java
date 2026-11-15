@@ -687,11 +687,16 @@ public record SkillsGatewayProperties(
      *     declares no url, and like a url the origin is immutable after registration
      * @param pushPolicy for a hosted marketplace, {@code append-only} (the default) or
      *     {@code allow-rewrite}
-     * @param approval the approval posture (GW_ESTATE_0006); null means the stored posture is not
+     * @param autoApproval automatic approval (GW_ESTATE_0006); null means the stored setting is not
      *     managed and never touched
      */
     public record DeclaredMarketplace(
-            String name, String url, String syncMode, String origin, String pushPolicy, DeclaredApproval approval) {
+            String name,
+            String url,
+            String syncMode,
+            String origin,
+            String pushPolicy,
+            DeclaredAutoApproval autoApproval) {
 
         @ConstructorBinding
         public DeclaredMarketplace {}
@@ -702,17 +707,19 @@ public record SkillsGatewayProperties(
     }
 
     /**
-     * A declared approval posture (GW_ESTATE_0006), applied as the estate reconciler with the same
+     * Declared automatic approval (GW_ESTATE_0006), applied as the estate reconciler with the same
      * checks as the API.
      *
-     * @param posture {@code manual} or {@code auto}
-     * @param reason why; required for {@code auto}
-     * @param expiresAt when {@code auto} lapses; required, at most 90 days after it is applied. Past
-     *     it, the posture is manual until the declaration changes
-     * @param override never accepted: an override is a dated judgement by a named administrator, so
-     *     a declaration that carries one fails its entry rather than having it silently dropped
+     * @param enabled {@code true} or {@code false}
+     * @param reason why; required to turn it on
+     * @param expiresAt when it lapses; required to turn it on, at most 90 days after it is applied.
+     *     Past it, automatic approval is off until the declaration changes
+     * @param exemption never accepted: an administrator exemption is a dated judgement by a named
+     *     administrator, so a declaration that carries one fails its entry rather than having it
+     *     silently dropped
      */
-    public record DeclaredApproval(String posture, String reason, Instant expiresAt, Map<String, String> override) {}
+    public record DeclaredAutoApproval(
+            Boolean enabled, String reason, Instant expiresAt, Map<String, String> exemption) {}
 
     /**
      * A declared role grant (GW_ESTATE_0003), the exact shape of the grants API: approver grants name one
@@ -1120,10 +1127,10 @@ public record SkillsGatewayProperties(
         /** Revoke the snapshot and stop serving it (GW_VETTING_0013). */
         ENFORCE;
 
-        /** Wire form: the lower-case name, so the published vocabulary matches every other enum's. */
+        /** Wire form: the lower-case, hyphenated name, as the configuration value is written. */
         @JsonValue
         public String wire() {
-            return name().toLowerCase(java.util.Locale.ROOT);
+            return name().toLowerCase(java.util.Locale.ROOT).replace('_', '-');
         }
     }
 
@@ -1151,7 +1158,7 @@ public record SkillsGatewayProperties(
      * Automatic approval of opted-in marketplaces (GW_APPROVAL_0044.2, GW_APPROVAL_0044.7,
      * GW_APPROVAL_0044.12).
      *
-     * @param mode {@code off} (the default, and the incident switch), {@code shadow} or {@code on}
+     * @param mode {@code off} (the default, and the incident switch), {@code dry-run} or {@code on}
      * @param internalPrefixes the URL prefixes under which a marketplace is internal. Empty by
      *     default, so only hosted marketplaces are; startup refuses one that does not parse and a
      *     host-wide one on a multi-tenant forge
@@ -1180,19 +1187,19 @@ public record SkillsGatewayProperties(
     /** What automatic approval does in a deployment (GW_APPROVAL_0044.12). */
     public enum AutoMode {
 
-        /** No posture takes effect; nothing is evaluated for publication. The default. */
+        /** No marketplace's automatic approval takes effect; nothing is evaluated for publication. The default. */
         OFF,
 
         /** Every check runs and its result is recorded, and nothing is published. */
-        SHADOW,
+        DRY_RUN,
 
         /** Eligible snapshots are approved. */
         ON;
 
-        /** Wire form: the lower-case name, so the published vocabulary matches every other enum's. */
+        /** Wire form: the lower-case, hyphenated name, as the configuration value is written. */
         @JsonValue
         public String wire() {
-            return name().toLowerCase(java.util.Locale.ROOT);
+            return name().toLowerCase(java.util.Locale.ROOT).replace('_', '-');
         }
     }
 
@@ -1264,10 +1271,10 @@ public record SkillsGatewayProperties(
         /** Refuse the approval fail-closed; the snapshot stays held and nothing is published. */
         ENFORCE;
 
-        /** Wire form: the lower-case name, so the published vocabulary matches every other enum's. */
+        /** Wire form: the lower-case, hyphenated name, as the configuration value is written. */
         @JsonValue
         public String wire() {
-            return name().toLowerCase(java.util.Locale.ROOT);
+            return name().toLowerCase(java.util.Locale.ROOT).replace('_', '-');
         }
     }
 

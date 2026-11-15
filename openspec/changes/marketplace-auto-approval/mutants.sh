@@ -16,7 +16,7 @@ A=src/main/java/dev/skillsgateway/server/approval
 V=src/main/java/dev/skillsgateway/server/vetting
 SRC=$A/InternalSources.java
 REQ=$A/RequiredVetters.java
-POS=$A/ApprovalPostureService.java
+POS=$A/AutoApprovalSettingService.java
 EYE=$A/FourEyesGate.java
 ELI=$A/AutoApprovalEligibility.java
 SVC=$A/AutoApprovalService.java
@@ -92,28 +92,28 @@ run M6-unknown-name-accepted $T startupRefusesANameThatIsNotAConfiguredVetter "$
 run M7-every-vetter-false $T unsetRequiresEveryConfiguredVetter "$REQ" \
   'this.everyVetter = configured == null;' 'this.everyVetter = false;'
 
-# --- the posture and override expiry checks, the basis (GW_APPROVAL_0044.1, 0044.3, 0044.4) ---
-T=ApprovalPostureTests
-run M8-auto-without-reason $T autoNeedsAReasonAndAnExpiryOfAtMostNinetyDays "$POS" \
-  $'        if (reason == null || reason.isBlank()) {\n            throw new PostureValidationException(\n                    "auto needs' $'        if (false) {\n            throw new PostureValidationException(\n                    "auto needs'
-run M9-expiry-unbounded $T autoNeedsAReasonAndAnExpiryOfAtMostNinetyDays "$POS" \
+# --- the automatic-approval and exemption expiry checks, what allows it (GW_APPROVAL_0044.1, 0044.3, 0044.4) ---
+T=AutoApprovalSettingTests
+run M8-on-without-reason $T turningOnNeedsAReasonAndAnExpiryOfAtMostNinetyDays "$POS" \
+  $'        if (reason == null || reason.isBlank()) {\n            throw new AutoApprovalSettingValidationException(\n                    "automatic approval needs' $'        if (false) {\n            throw new AutoApprovalSettingValidationException(\n                    "automatic approval needs'
+run M9-expiry-unbounded $T turningOnNeedsAReasonAndAnExpiryOfAtMostNinetyDays "$POS" \
   'if (expiresAt.isAfter(now.plus(limit))) {' 'if (false) {'
-run M10-override-without-reason $T anOverrideNeedsAReasonAndAnExpiryOfAtMostNinetyDays "$POS" \
-  'if (override.reason() == null || override.reason().isBlank()) {' 'if (false) {'
-run M11-override-cap-dropped $T theOverrideCapsThePosturesExpiry "$POS" \
+run M10-exemption-without-reason $T anExemptionNeedsAReasonAndAnExpiryOfAtMostNinetyDays "$POS" \
+  'if (exemption.reason() == null || exemption.reason().isBlank()) {' 'if (false) {'
+run M11-exemption-cap-dropped $T theExemptionCapsTheAutomaticApprovalsExpiry "$POS" \
   'expiresAt = earliest(expiresAt, created.expiresAt());' ''
-run M12-no-basis-accepted $T autoOutsideThePrefixesNeedsAnOverride "$POS" \
+run M12-not-internal-accepted $T turningOnOutsideThePrefixesNeedsAnExemption "$POS" \
   '} else if (!internal) {' '} else if (false) {'
-run M13-lapse-still-effective $T aLapsedAutoPostureIsEffectivelyManual "$POS" \
+run M13-lapse-still-effective $T aLapsedAutomaticApprovalIsEffectivelyOff "$POS" \
   $'                || stored.expiresAt() == null\n                || !stored.expiresAt().isAfter(now)) {' $'                || stored.expiresAt() == null) {'
-run M14-manual-keeps-override $T settingManualRevokesTheOverride "$POS" \
-  'open.ifPresent(override -> revoke(marketplace, override, actor, now));
-            auditLogger.record(actor, marketplace, EVENT_POSTURE_CHANGED, null, "posture=manual");' 'auditLogger.record(actor, marketplace, EVENT_POSTURE_CHANGED, null, "posture=manual");'
-run M15-lapse-not-recorded $T anExpiredOverrideMakesTheBasisNoneRecordedOnceAcrossRepeatedAttempts "$POS" \
+run M14-off-keeps-exemption $T turningOffRevokesTheExemption "$POS" \
+  'open.ifPresent(exemption -> revoke(marketplace, exemption, actor, now));
+            auditLogger.record(actor, marketplace, EVENT_CHANGED, null, "enabled=false");' 'auditLogger.record(actor, marketplace, EVENT_CHANGED, null, "enabled=false");'
+run M15-lapse-not-recorded $T anExpiredExemptionMakesAllowedByNoneRecordedOnceAcrossRepeatedAttempts "$POS" \
   '&& repository.recordExpired(open.get().id(), now)) {' '&& false) {'
-run M16-override-on-internal $T anOverrideIsRefusedWhereThereIsAlreadyAnInternalBasis "$POS" \
-  $'            if (internal) {\n                throw new PostureValidationException(' $'            if (false) {\n                throw new PostureValidationException('
-T=ApprovalPostureEnforceTests
+run M16-exemption-on-internal $T anExemptionIsRefusedForAMarketplaceThatIsAlreadyInternal "$POS" \
+  $'            if (internal) {\n                throw new AutoApprovalSettingValidationException(' $'            if (false) {\n                throw new AutoApprovalSettingValidationException('
+T=AutoApprovalSettingEnforceTests
 run M17-registrant-grant-effective $T aGrantByTheRegistrantAwaitsASecondAdministrator "$POS" \
   '&& !fourEyesGate.grantConflicts(marketplace, stored.setBy()).isEmpty()) {' '&& false) {'
 run M18-reconciler-not-exempt $T theEstateReconcilersGrantNeedsNoSecondAdministrator "$EYE" \
@@ -188,8 +188,8 @@ run M50-removed-declaration $T aRemovedDeclarationIsChanged "$SUR" \
 T=approval.AutoApprovalServiceTests
 run M51-off-evaluates $T underOffNothingIsEvaluated "$SVC" \
   $'        if (mode == AutoMode.OFF) {\n            return Outcome.OFF;\n        }\n        Snapshot snapshot' $'        Snapshot snapshot'
-run M52-shadow-publishes $T underShadowEveryCheckRunsAndNothingIsPublished "$SVC" \
-  'if (mode == AutoMode.SHADOW) {' 'if (false) {'
+run M52-dry-run-publishes $T underDryRunEveryCheckRunsAndNothingIsPublished "$SVC" \
+  'if (mode == AutoMode.DRY_RUN) {' 'if (false) {'
 run M53-revet-ignored $T withReVettingOffTheAttemptSkips "$SVC" \
   'if (!properties.vetting().revet().enabled()) {' 'if (false) {'
 run M54-skip-not-deduplicated $T aRepeatedSkipIsLedgeredOnce "$SVC" \
@@ -199,7 +199,7 @@ run M55-race-not-ledgered $T whenAPersonDecidesFirstTheAttemptRecordsASkipAndPub
 run M56-gate-reason-unstable $T aGateRefusalLeavesItHeldWithAStableReason "$SVC" \
   'String name = refused.getClass().getSimpleName().replaceFirst("Exception$", "");' 'String name = String.valueOf(refused.getMessage());'
 run M57-tick-attempts-nothing $T aTooYoungSnapshotIsApprovedOnALaterTickOnceOfAge "$SVC" \
-  'for (long marketplaceId : postureRepository.autoMarketplaces()) {' 'for (long marketplaceId : List.<Long>of()) {'
+  'for (long marketplaceId : settingRepository.enabledMarketplaces()) {' 'for (long marketplaceId : List.<Long>of()) {'
 run M58-no-approval-evidence $T underOnAnEligibleSnapshotIsApprovedThroughTheOneApprovalPath "$SVC" \
   'recorder.recordApproved(approved, ACTOR);' ''
 
@@ -219,7 +219,7 @@ REV=src/main/java/dev/skillsgateway/server/vetting/RevetService.java
 WDR=$A/AutoApprovalWithdrawal.java
 RVK=$A/RevocationService.java
 REP=src/main/java/dev/skillsgateway/server/persistence/SnapshotRepository.java
-CTL=$A/ApprovalPostureController.java
+CTL=$A/AutoApprovalSettingController.java
 T=AutoApprovalTests
 run M63-auto-follows-warn $T underWarnAViolationRevokesAnAutomaticApprovalAndOnlyRecordsAPersons "$REV" \
   'return AutoApprovalService.ACTOR.equals(snapshot.decidedBy())' 'return false'
@@ -244,19 +244,19 @@ run M72-reason-optional $T bulkWithdrawalThatCannotBeHonouredWithdrawsNothing "$
 run M73-race-fails-the-request approval.AutoApprovalWithdrawalTests aSnapshotWithdrawnMeanwhileIsSkippedAndTheRestAreStillWithdrawn "$WDR" \
   $'            } catch (NotApprovedException withdrawnMeanwhile) {\n                continue;' $'            } catch (NotApprovedException withdrawnMeanwhile) {\n                throw withdrawnMeanwhile;'
 
-# --- the declared posture (GW_ESTATE_0006) ---
+# --- declared automatic approval (GW_ESTATE_0006) ---
 EST=src/main/java/dev/skillsgateway/server/estate/EstateReconciler.java
 T=AutoApprovalTests
-run M74-override-declared $T aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
-  'if (declared.override() != null && !declared.override().isEmpty()) {' 'if (false) {'
-run M75-registered-before-checked $T aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
-  'approval.ifPresent(request -> posture(() -> postureService.checkRegistration(' 'approval.filter(request -> false).ifPresent(request -> posture(() -> postureService.checkRegistration('
-run M76-lapsed-reapplied $T aLapsedDeclaredPostureIsManualUntilTheDeclarationChanges "$EST" \
+run M74-exemption-declared $T aDeclaredAutomaticApprovalIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
+  'if (declared.exemption() != null && !declared.exemption().isEmpty()) {' 'if (false) {'
+run M75-registered-before-checked $T aDeclaredAutomaticApprovalIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
+  'autoApproval.ifPresent(request -> asEntryFailure(() -> settingService.checkRegistration(' 'autoApproval.filter(request -> false).ifPresent(request -> asEntryFailure(() -> settingService.checkRegistration('
+run M76-lapsed-reapplied $T aLapsedDeclaredAutomaticApprovalIsOffUntilTheDeclarationChanges "$EST" \
   $'.truncatedTo(ChronoUnit.MICROS)\n                                        .equals(stored.expiresAt())));' $'.truncatedTo(ChronoUnit.MICROS)\n                                        .equals(null)));'
-run M77-reason-not-compared $T aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
+run M77-reason-not-compared $T aDeclaredAutomaticApprovalIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
   '&& declared.reason().trim().equals(stored.reason())' ''
-run M78-not-the-reconciler $T aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
-  'posture(() -> postureService.set(name, declared, ACTOR));' 'posture(() -> postureService.set(name, declared, "root"));'
+run M78-not-the-reconciler $T aDeclaredAutomaticApprovalIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
+  'asEntryFailure(() -> settingService.set(name, declared, ACTOR));' 'asEntryFailure(() -> settingService.set(name, declared, "root"));'
 
 # --- adversarial pass ---
 CCG=src/main/java/dev/skillsgateway/server/approval/ClosureCompletenessGate.java

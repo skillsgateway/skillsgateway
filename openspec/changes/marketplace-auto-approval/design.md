@@ -24,7 +24,7 @@ See proposal.md, Why. Today:
   `ApprovalService.approve` returns, `AdminController.approve` writes:
   - the `waiver-applied` entries;
   - `snapshot-approved`;
-  - the override and superseded-chain entries;
+  - the vetting-override and superseded-chain entries;
   - the warn-mode `four-eyes-conflict` entry;
   - the `SNAPSHOT_APPROVED` webhook.
 
@@ -70,8 +70,8 @@ Stakeholders:
 - Trust never travels from a marketplace to anything it pulls in.
 - Any doubt, including any read that did not complete, leaves the snapshot held
   for a person, exactly as today.
-- An automatic approval records the same evidence as a human one, plus its
-  basis.
+- An automatic approval records the same evidence as a human one, plus what
+  allowed it.
 - Whatever no person approved is withdrawn on new evidence without waiting for
   a person.
 - The adopter can watch what the gateway *would* approve before it does.
@@ -86,42 +86,43 @@ Stakeholders:
   administrator (`GW_APPROVAL_0017 — A snapshot an administrator revoked is
   approved again only on a recorded reversal by a second administrator`).
 - **A configurable severity threshold.**
-- **Portal surfaces beyond the posture card (D15).** The bulk withdrawal and
+- **Portal surfaces beyond the automatic approval card (D15).** The bulk withdrawal and
   the per-snapshot evaluation stay API-only in this change.
 - **Content-scoped waivers and rule tuning.**
 
 ## Decisions
 
-### D1 — Posture is a marketplace field with a grantor, a reason and an expiry; its basis is computed
+### D1 — Automatic approval is a marketplace field with a grantor, a reason and an expiry; what allows it is computed
 
-The posture record on `marketplaces` is:
+The automatic approval record on `marketplaces` is:
 
-- `approval_posture`: `manual` (default) or `auto`;
-- `approval_set_by`, `approval_reason`, `approval_expires_at`.
+- `auto_approval_enabled`: `false` (default) or `true`;
+- `auto_approval_set_by`, `auto_approval_reason`, `auto_approval_expires_at`.
 
-`auto` always needs a reason and an expiry of at most 90 days, whatever the
-basis. When the expiry passes, the posture is effectively `manual`. Renewal is
+Turning it on always needs a reason and an expiry of at most 90 days, whatever
+allows it. When the expiry passes, automatic approval is effectively off. Renewal is
 a new set, with a new reason and expiry. This is the recertification a
 regulated adopter needs.
 
 Ninety days is the gateway's limit for every expiring grant a named person
 makes: a waiver (`WaiverService.MAX_LIFETIME`) and, by default, a machine
-credential (`Tokens.DEFAULT_MACHINE_MAX_TTL`). The posture and the override
+credential (`Tokens.DEFAULT_MACHINE_MAX_TTL`). The setting and the exemption
 (D3) each get their own constant with that value, rather than sharing one, so
 that changing one limit is a decision about that grant alone.
 
-Alternative considered: 365 days for an internal basis. Rejected: it would be
+Alternative considered: 365 days for an internal source. Rejected: it would be
 the only grant on a yearly cycle, and nothing about an internal source makes a
 quarterly renewal a burden.
 
-Whether `auto` is effective is computed at each attempt, from the basis:
+Whether automatic approval takes effect is computed at each attempt, as
+`allowedBy`:
 
-- **`internal-prefix`:** the URL is under a configured prefix;
+- **`internal-source`:** the URL is under a configured prefix;
 - **`hosted`:** the origin is `hosted`;
-- **`override`:** an active override exists;
-- **otherwise `none`,** handled as manual.
+- **`exemption`:** an active administrator exemption exists;
+- **otherwise `none`,** handled as off.
 
-Removing a prefix from the configuration, or a posture or override expiring,
+Removing a prefix from the configuration, or the setting or exemption expiring,
 takes effect at the next attempt, with no repair step.
 
 Alternative considered: a stored "is internal" flag. Rejected, because it
@@ -154,52 +155,55 @@ marketplace's approver minted.
 Alternative considered: reusing the credential prefixes. Rejected: holding a
 credential for a URL is not trusting it.
 
-### D3 — The override: an expiring exception, never declared in the estate
+### D3 — The administrator exemption: an expiring exception, never declared in the estate
 
-Table `auto_approval_overrides`:
+Table `auto_approval_exemptions`:
 
 - columns: `id`, `marketplace_id`, `reason`, `created_by`, `created_at`,
   `expires_at`, `revoked_at`, `revoked_by`, `expired_recorded_at`;
 - `CHECK (expires_at <= created_at + interval '90 days')`, matching the
-  override's own `MAX_LIFETIME` constant (D1);
-- a partial unique index, so a marketplace has at most one active override.
+  exemption's own `EXEMPTION_MAX_LIFETIME` constant (D1);
+- a partial unique index, so a marketplace has at most one active exemption.
 
-Setting `auto` on a marketplace with no internal basis creates the override in
-the same request. The posture's own expiry is then capped at the override's.
+Turning automatic approval on for a marketplace whose source is not internal
+creates the exemption in the same request. The setting's own expiry is then
+capped at the exemption's.
 
-The override is not declarable in the estate, for the reason waivers are not:
+The exemption is not declarable in the estate, for the reason waivers are not:
 it is a dated judgement by a named person, not standing configuration. It is
 created and revoked through the API or the portal (D15).
 
-With both limits at 90 days, the cap matters when the override is older than
-the posture: renewing the posture never outlives the override it rests on.
+With both limits at 90 days, the cap matters when the exemption is older than
+the setting: renewing automatic approval never outlives the exemption it rests
+on.
 
 Three edges, each settled fail-closed during implementation:
 
-- Setting `manual` revokes the active override, so a later `auto` needs a new
-  dated judgement and cannot reuse a stale one.
-- An override for a marketplace that already has an internal basis is refused
+- Turning automatic approval off revokes the active exemption, so turning it
+  on again needs a new dated judgement and cannot reuse a stale one.
+- An exemption for a marketplace whose source is already internal is refused
   (`400`). It would be an exception with nothing to except.
-- A lapsed override stops counting at once, on every read. The
-  `auto-approval-override-expired` entry is written by the first attempt that
+- A lapsed exemption stops counting at once, on every read. The
+  `auto-approval-exemption-expired` entry is written by the first attempt that
   meets the lapse, through a guarded update, so it lands on the ledger once. A
   read never writes.
 
-### D4 — Four-eyes on granting `auto`
+### D4 — Four-eyes on turning automatic approval on
 
-Setting `auto`, whether on an internal basis or by override, is checked by
+Turning automatic approval on, whether for an internal source or by exemption,
+is checked by
 `FourEyesGate` as an approval would be. The grantor conflicts with the
 marketplace's `registered_by` (`registered-by`):
 
-- under `warn`, the conflict is recorded and the posture is set;
+- under `warn`, the conflict is recorded and automatic approval is set;
 - under `enforce`, it is refused, so a second administrator must set it.
 
-The choice stays in the registration request. Under `enforce`, `auto` chosen at
-registration is stored as requested but stays ineffective (basis
-`awaiting-second-administrator`) until a different administrator confirms it
-with `PUT …/approval-posture`.
+The choice stays in the registration request. Under `enforce`, automatic
+approval chosen at registration is stored as requested but stays ineffective
+(`allowedBy` `awaiting-second-administrator`) until a different administrator
+confirms it with `PUT …/auto-approval`.
 
-An estate-declared posture is set by `config-reconciler`. Its separation of
+Estate-declared automatic approval is set by `config-reconciler`. Its separation of
 duties is the review of the estate repository, outside the gateway, so the
 reconciler is excluded from this check only. It is not added to
 `FourEyesGate.NON_HUMAN_ACTORS`, which would also change approvals. The ADR
@@ -251,7 +255,7 @@ All of these must hold:
    vacuously.
 
    The setting is gateway-wide, not per marketplace. A per-marketplace list
-   would let whoever grants `auto` also lower the bar for that marketplace,
+   would let whoever turns automatic approval on also lower the bar for that marketplace,
    and four-eyes on the grant (D4) would then be the only check on both.
 4. **The effective outcome is `CLEAR` or `CLEAR_WITH_WAIVERS`.** Medium
    findings clear, as they do for a person.
@@ -306,7 +310,7 @@ The inert list is code. Widening it is a precision change, argued in a change.
 
 Accepted residual risk, stated in ADR 0023: in an agent skill, Markdown is
 instructions. A changed `SKILL.md` that raises no finding is approved
-automatically. Shadow mode (D11) is the adopter's way to see how often that
+automatically. A dry run (D11) is the adopter's way to see how often that
 happens before turning it on.
 
 ### D8 — `AutoApprovalService` uses the same approval path, as a system actor
@@ -316,7 +320,7 @@ It lives in the `approval` package. Its actor is `auto-approver`, added to
 
 1. the mode (D11);
 2. that re-vetting is enabled (D12);
-3. the basis (D1, D4);
+3. what allows it (D1, D4);
 4. the candidacy (D5);
 5. the vetting predicate (D6);
 6. the executable surface (D7).
@@ -326,7 +330,7 @@ ApprovalOverride.none())`, which runs the closure, revocation, policy,
 name-collision, release-age and four-eyes gates unchanged. `ApprovalService`
 itself does not change.
 
-Under `shadow` the six checks run and those gates do not, since they run only
+Under `dry-run` the six checks run and those gates do not, since they run only
 inside `approve`, which publishes. A would-approve entry therefore means
 eligible, subject to the gates (acceptance R7).
 
@@ -341,8 +345,8 @@ The post-approval block of `AdminController.approve` moves into
 adds:
 
 - **`snapshot-auto-approved`**, recorded as `system`. Its detail carries:
-  - the basis (the matched prefix, `hosted`, or the override id) and the
-    grantor;
+  - what allowed it (the matched prefix, `hosted`, or the exemption id) and
+    the grantor;
   - the chain identity, and the baseline SHA or `none`;
   - the worst severity and the waiver ids;
   - the vetters that were switched off, if any, so a relaxed
@@ -356,7 +360,7 @@ Alternative considered: the automatic path writes its own entries. Rejected,
 because two copies of "what an approval records" would drift. The human path's
 output is pinned by a test before the move.
 
-### D10 — Triggers: after ingestion, after a waiver or posture change, and on the re-vetting tick
+### D10 — Triggers: after ingestion, after a waiver or automatic approval change, and on the re-vetting tick
 
 - **After `IngestionService.ingest` returns** a held snapshot, outside the
   ingestion lock. Re-vetting a held snapshot (`RevetService.refreshHeld`)
@@ -367,22 +371,22 @@ output is pinned by a test before the move.
   `@TransactionalEventListener` with `fallbackExecution = true`, so it runs
   after the commit inside a transaction and at once outside one; nothing on the
   ingestion path runs in a transaction (acceptance R8).
-- **After a waiver is created and after a posture is set**, for that
+- **After a waiver is created and after automatic approval is set**, for that
   marketplace's newest held snapshot.
 - **On each `RevetScheduler` tick**, one bounded step attempts the newest held
-  snapshot of each `auto` marketplace. This is what approves a snapshot once it
+  snapshot of each marketplace with automatic approval on. This is what approves a snapshot once it
   reaches the minimum release age; the lag is at most `revet.interval`. Because
   only the newest snapshot per marketplace is attempted, a backlog of blocked
   old snapshots cannot starve the batch.
 
 No new scheduled sweep is added.
 
-### D11 — `off | shadow | on` for the deployment
+### D11 — `off | dry-run | on` for the deployment
 
 `skills-gateway.approval.auto.mode` is one of:
 
-- **`off` (default):** no posture takes effect;
-- **`shadow`:** every check runs, the result is recorded as
+- **`off` (default):** no marketplace's automatic approval takes effect;
+- **`dry-run`:** every check runs, the result is recorded as
   `snapshot-auto-approval-would-approve` or as a skip, and nothing is published;
 - **`on`:** eligible snapshots are approved.
 
@@ -408,7 +412,7 @@ Alternatives considered:
 
 ### D13 — Bulk withdrawal
 
-`POST /api/v1/approval/auto/withdraw` with `{since, reason, serveAfter}` is
+`POST /api/v1/auto-approval/withdraw` with `{since, reason, serveAfter}` is
 admin-only. It revokes every live snapshot approved by `auto-approver` at or
 after `since`, through `RevocationService.revoke`, newest first, one marketplace
 at a time under `PublicationLock`. It returns what it withdrew, and each
@@ -417,45 +421,46 @@ revocation is ledgered as today.
 ### D14 — API and estate
 
 - **Registration.** `POST /api/v1/marketplaces` accepts an optional
-  `approval: {posture, reason, expiresAt}`. `auto` without an internal basis is
-  a `409`, with `nextStep` pointing at the override.
-- **`GET /api/v1/marketplaces/{name}/approval-posture`** returns `posture`,
-  `basis`, `setBy`, `reason`, `expiresAt`, and the active override.
-- **`PUT /api/v1/marketplaces/{name}/approval-posture`** takes `{posture,
-  reason, expiresAt, override?: {reason, expiresAt}}`. It is admin-only.
-- **`DELETE /api/v1/marketplaces/{name}/approval-posture/override`** revokes
-  the override.
+  `autoApproval: {enabled, reason, expiresAt}`. Enabling it for a source that
+  is not internal is a `409`, with `nextStep` pointing at the exemption.
+- **`GET /api/v1/marketplaces/{name}/auto-approval`** returns `enabled`,
+  `allowedBy`, `setBy`, `reason`, `expiresAt`, and the active exemption.
+- **`PUT /api/v1/marketplaces/{name}/auto-approval`** takes `{enabled,
+  reason, expiresAt, exemption?: {reason, expiresAt}}`. It is admin-only.
+- **`DELETE /api/v1/marketplaces/{name}/auto-approval/exemption`** revokes
+  the exemption.
 - **`GET /api/v1/snapshots/{id}/auto-approval`** returns the evaluation (D11).
-- **Estate:** `skills-gateway.estate.marketplaces[].approval.{posture, reason,
-  expires-at}`. The reconciler applies it as `config-reconciler`. It refuses,
-  as a reconciliation failure, `auto` with no internal basis, and `auto` with a
-  missing or too-distant expiry. A lapsed declared expiry leaves the posture
-  effectively manual until the estate is changed.
-- **Ledger:** `approval-posture-changed`, `auto-approval-override-created`,
-  `auto-approval-override-revoked` and `auto-approval-override-expired`.
+- **Estate:** `skills-gateway.estate.marketplaces[].auto-approval.{enabled,
+  reason, expires-at}`. The reconciler applies it as `config-reconciler`. It
+  refuses, as a reconciliation failure, automatic approval enabled for a source
+  that is not internal, and enabled with a missing or too-distant expiry. A
+  lapsed declared expiry leaves automatic approval effectively off until the
+  estate is changed.
+- **Ledger:** `auto-approval-changed`, `auto-approval-exemption-granted`,
+  `auto-approval-exemption-revoked` and `auto-approval-exemption-expired`.
 
 Everything is additive under the API contract.
 
-### D15 — Portal: an Approval posture card on the Settings page
+### D15 — Portal: an Automatic approval card on the Settings page
 
-The marketplace Settings page (`MarketplaceSettingsPage`) gains an Approval
-posture card beside the existing administrator cards (vetting chain, remove).
-It reads `GET …/approval-posture` and writes through `PUT` and `DELETE …/override`.
+The marketplace Settings page (`MarketplaceSettingsPage`) gains an Automatic
+approval card beside the existing administrator cards (vetting chain, remove).
+It reads `GET …/auto-approval` and writes through `PUT` and `DELETE …/exemption`.
 The portal adds no rule of its own; every check stays on the server.
 
-- **Everyone who can see Settings** sees the posture, the effective basis
-  (including `awaiting-second-administrator` and `none`), the grantor, the
-  reason, the expiry, and the active override with its reason and expiry. A
-  lapsed posture or override reads as lapsed, not as active.
+- **Everyone who can see Settings** sees whether automatic approval is on,
+  what allows it (including `awaiting-second-administrator` and `none`), the
+  grantor, the reason, the expiry, and the active exemption with its reason and
+  expiry. A lapsed setting or exemption reads as lapsed, not as active.
 - **An administrator** can:
-  - set `auto` or `manual`, with a reason and an expiry date no more than 90
-    days out;
-  - for a marketplace with no internal basis, create the override in the same
-    form, with its own reason and expiry;
+  - turn automatic approval on or off, with a reason and an expiry date no
+    more than 90 days out;
+  - for a marketplace whose source is not internal, grant the exemption in the
+    same form, with its own reason and expiry;
   - renew either one;
-  - revoke the override, behind a confirmation.
-- **The deployment mode** is shown on the card, so `auto` set under mode `off`
-  or `shadow` does not read as publishing.
+  - revoke the exemption, behind a confirmation.
+- **The gateway mode** is shown on the card, so automatic approval turned on
+  under mode `off` or `dry-run` does not read as publishing.
 - **Server refusals** (a `400` on a missing reason or a distant expiry, a `409`
   with `nextStep`, a four-eyes refusal) are shown as returned. The form does
   not pre-empt them with its own copy of the limits beyond the date picker's
@@ -463,7 +468,7 @@ The portal adds no rule of its own; every check stays on the server.
 
 The card follows `.claude/skills/design-conventions` and the shadcn/Base UI
 components the vetting-chain card uses. It ships with Storybook stories for
-each state (manual, auto internal, auto by override, awaiting a second
+each state (off, on internal, on by exemption, awaiting a second
 administrator, lapsed, non-administrator view) and one e2e test.
 
 ## Risks / Trade-offs
@@ -495,8 +500,8 @@ administrator, lapsed, non-administrator view) and one e2e test.
   adopter that wants less lag shortens the interval.
 - **[The `AdminController` refactor changes the human approval's evidence.]**
   The human path's output is pinned by a test before the move.
-- **[Four-eyes `enforce` with one administrator means `auto` never takes
-  effect.]** This is the same trade-off as approvals have, documented the same
+- **[Four-eyes `enforce` with one administrator means automatic approval
+  never takes effect.]** This is the same trade-off as approvals have, documented the same
   way.
 - **[A new snapshot with a single benign change waits for a person, and blocks
   automatic approval of later ones until it is decided.]** Intended: only the
@@ -506,12 +511,13 @@ administrator, lapsed, non-administrator view) and one e2e test.
 ## Migration Plan
 
 Pre-1.0: the schema change edits `V1__init.sql`, and existing databases are
-recreated. The defaults (posture `manual`, mode `off`) keep today's behaviour.
+recreated. The defaults (automatic approval off, mode `off`) keep today's behaviour.
 Rollback is `mode: off`, plus bulk withdrawal for anything already published.
 
 ## Open Questions
 
-- Is the inert extension list complete enough for real marketplaces? Shadow mode
+- Is the inert extension list complete enough for real marketplaces? A dry run
   on the adopter's corpus answers this before `on`.
-- Should a posture expiry warn ahead of time, for example via a webhook 14 days
-  before? This design does not; the posture endpoint shows the date.
+- Should an automatic approval expiry warn ahead of time, for example via a
+  webhook 14 days before? This design does not; the automatic approval
+  endpoint shows the date.

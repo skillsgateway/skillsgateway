@@ -809,12 +809,12 @@ requirements:
     revision: 0.1.0
 
   - id: GW_ESTATE_0006
-    title: A marketplace's approval posture is declarable in the estate
+    title: A marketplace's automatic approval is declarable in the estate
     significance: shall
-    description: "The system shall accept in a declared marketplace its approval posture with a reason and an expiry, applying it as the estate reconciler; shall fail the entry, as a reconciliation failure, when it declares automatic approval for a marketplace with no internal basis, or with an expiry that is missing or more than 90 days after it is applied; shall never create an override from a declaration; and shall treat a declared posture whose expiry has passed as manual until the declaration changes."
+    description: "The system shall accept in a declared marketplace its automatic approval setting with a reason and an expiry, applying it as the estate reconciler; shall fail the entry, as a reconciliation failure, when it declares automatic approval for a marketplace whose source is not internal, or with an expiry that is missing or more than 90 days after it is applied; shall never create an administrator exemption from a declaration; and shall treat declared automatic approval whose expiry has passed as off until the declaration changes."
     references:
       requirement_ids: ["GW_APPROVAL_0044.1"]
-    rationale: "A posture is API-managed runtime state, so it must be declarable like the rest of the estate; the reason and expiry make a declared automatic posture a dated, recertified decision rather than a standing bit. The override stays out of the estate for the reason waivers do: it is a dated judgement by a named person, not configuration."
+    rationale: "Automatic approval is API-managed runtime state, so it must be declarable like the rest of the estate; the reason and expiry make declared automatic approval a dated, recertified decision rather than a standing bit. The administrator exemption stays out of the estate for the reason waivers do: it is a dated judgement by a named person, not configuration."
     categories: ["functional-suitability"]
     revision: 0.1.0
 
@@ -2900,15 +2900,15 @@ requirements:
   - id: GW_APPROVAL_0044
     title: An administrator can opt an internal marketplace into automatic approval of snapshots that need no human judgement
     significance: shall
-    description: "The system shall, for a marketplace whose approval posture is automatic and while the deployment's automatic approval mode is on, approve a held snapshot as the system actor auto-approver, with no person deciding, when and only when every condition of GW_APPROVAL_0044.1 to GW_APPROVAL_0044.9 holds; shall otherwise leave the snapshot held for a person, exactly as it would be held without automatic approval; and shall make whatever it approved recallable without waiting for a person."
+    description: "The system shall, for a marketplace whose automatic approval an administrator has turned on and while the deployment's automatic approval mode is on, approve a held snapshot as the system actor auto-approver, with no person deciding, when and only when every condition of GW_APPROVAL_0044.1 to GW_APPROVAL_0044.9 holds; shall otherwise leave the snapshot held for a person, exactly as it would be held without automatic approval; and shall make whatever it approved recallable without waiting for a person."
     rationale: "An organisation that uses the gateway as it uses a repository manager — one governed source for mostly its own skills and plugins — pays a person's click on every clean update of its own repositories, and that cost is why it cannot adopt. Internal content is not automatically safe, and an internal marketplace can pull in external repositories, so trust is never carried from the marketplace to what it pulls in: automatic approval is reached only by the narrow predicate of the children, any doubt leaves the snapshot with a person, and unattended content gets unattended recall. Risk stays expressed as findings, not tiers (ADR 0021); ADR 0023 records the decision."
     categories: ["security"]
     revision: 0.1.0
 
   - id: GW_APPROVAL_0044.1
-    title: A marketplace's approval posture is manual unless an administrator sets it to automatic for a limited time
+    title: Automatic approval of a marketplace is off unless an administrator turns it on for a limited time
     significance: shall
-    description: "The system shall keep for each marketplace an approval posture that is manual unless an administrator sets it to automatic; shall require, to set it to automatic, a reason and an expiry no more than 90 days after it is set, refusing a request that lacks either or names a later expiry; shall record who set it; shall treat a posture whose expiry has passed as manual until it is set again; shall let an administrator choose the posture at registration or later, and refuse the choice to anyone else; and shall refuse a registration that asks for automatic approval of a marketplace with no internal basis, creating no marketplace."
+    description: "The system shall keep for each marketplace an automatic approval setting that is off unless an administrator turns it on; shall require, to turn it on, a reason and an expiry no more than 90 days after it is set, refusing a request that lacks either or names a later expiry; shall record who set it; shall treat automatic approval whose expiry has passed as off until it is set again; shall let an administrator turn it on at registration or later, and refuse the choice to anyone else; and shall refuse a registration that asks for automatic approval of a marketplace whose source is not internal, creating no marketplace."
     references:
       requirement_ids: ["GW_APPROVAL_0044"]
     rationale: "Automatic approval is a dated decision by a named person, not a standing bit: the reason and the grantor make it accountable, and the expiry makes it a recertification a regulated adopter can show. Ninety days is the limit the gateway already holds every expiring grant to — a waiver, and by default a machine credential — and nothing about an internal source makes a quarterly renewal a burden."
@@ -2918,7 +2918,7 @@ requirements:
   - id: GW_APPROVAL_0044.2
     title: Internal sources are those under an operator-configured URL prefix, or hosted
     significance: shall
-    description: "The system shall treat a marketplace as internal when its origin is hosted, or when its URL falls under an operator-configured URL prefix — the same scheme, host and port, and a path equal to the prefix or continuing it after a path separator — and shall treat as not internal a URL carrying userinfo, an encoded separator or a dot segment, and a URL whose path differs from the prefix only in case; shall refuse to start on a prefix that does not parse, or on a prefix with no path segment whose host is github.com, gitlab.com, bitbucket.org or the configured GitHub base URL host; and shall determine the basis at each attempt rather than store it."
+    description: "The system shall treat a marketplace as internal when its origin is hosted, or when its URL falls under an operator-configured URL prefix — the same scheme, host and port, and a path equal to the prefix or continuing it after a path separator — and shall treat as not internal a URL carrying userinfo, an encoded separator or a dot segment, and a URL whose path differs from the prefix only in case; shall refuse to start on a prefix that does not parse, or on a prefix with no path segment whose host is github.com, gitlab.com, bitbucket.org or the configured GitHub base URL host; and shall determine whether a marketplace is internal at each attempt rather than store it."
     references:
       requirement_ids: ["GW_APPROVAL_0044"]
     rationale: "Internal has to be the operator's statement, not a marketplace's claim about itself. Matching on whole path segments keeps acme from covering acme-evil, and the refusals of userinfo, encoded separators and dot segments close the ways a URL can look internal and fetch from elsewhere. A host-wide prefix on a multi-tenant forge would make every user's namespace internal, so startup refuses it. A hosted marketplace's content arrives only through publication with a push scope an administrator or its approver minted. A stored flag would go stale when the prefix list changes, and a stale trusted bit fails open."
@@ -2926,22 +2926,22 @@ requirements:
     revision: 0.1.0
 
   - id: GW_APPROVAL_0044.3
-    title: Automatic approval of a marketplace outside the internal prefixes needs an expiring administrator override
+    title: Automatic approval of a marketplace outside the internal prefixes needs an expiring administrator exemption
     significance: shall
-    description: "The system shall allow automatic approval of a marketplace with no internal basis only under an administrator override recorded with its creator, a reason and an expiry no more than 90 days after its creation; shall allow at most one active override per marketplace; shall cap the posture's expiry at the override's; shall treat the marketplace as having no basis once its override expires or is revoked, recording that on the ledger once; and shall never accept an override from the declared estate."
+    description: "The system shall allow automatic approval of a marketplace whose source is not internal only under an administrator exemption recorded with its creator, a reason and an expiry no more than 90 days after its creation; shall allow at most one active exemption per marketplace; shall cap the automatic approval's expiry at the exemption's; shall treat automatic approval of the marketplace as not allowed once its exemption expires or is revoked, recording that on the ledger once; and shall never accept an exemption from the declared estate."
     references:
       requirement_ids: ["GW_APPROVAL_0044"]
-    rationale: "Some adopters have a marketplace they trust outside their own organisation's namespace. The override makes that an exception a named person renews, like a waiver, rather than a widening of what internal means; and for the reason waivers are not declarable, it is a dated judgement, not standing configuration. Capping the posture at the override keeps a renewed posture from outliving the exception it rests on."
+    rationale: "Some adopters have a marketplace they trust outside their own organisation's namespace. The exemption makes that an exception a named person renews, like a waiver, rather than a widening of what internal means; and for the reason waivers are not declarable, it is a dated judgement, not standing configuration. Capping automatic approval at the exemption keeps a renewal from outliving the exception it rests on."
     categories: ["security"]
     revision: 0.1.0
 
   - id: GW_APPROVAL_0044.4
     title: Granting automatic approval is subject to the four-eyes rule
     significance: shall
-    description: "The system shall apply the four-eyes rule to setting a marketplace's posture to automatic, treating the administrator who registered the marketplace as conflicted: under warn, it shall set the posture and record the conflict; under enforce, it shall store the request without letting it take effect until a different administrator confirms it; shall exempt from this check only a posture the estate reconciler applies from the declared estate; and shall leave the four-eyes rule for approvals, including its treatment of the estate reconciler, unchanged."
+    description: "The system shall apply the four-eyes rule to turning on a marketplace's automatic approval, treating the administrator who registered the marketplace as conflicted: under warn, it shall turn it on and record the conflict; under enforce, it shall store the request without letting it take effect until a different administrator confirms it; shall exempt from this check only automatic approval the estate reconciler applies from the declared estate; and shall leave the four-eyes rule for approvals, including its treatment of the estate reconciler, unchanged."
     references:
       requirement_ids: ["GW_APPROVAL_0044"]
-    rationale: "An automatic approval has no person in it, so separation of duties has to live in the grant: whoever registers a marketplace should not alone decide that its snapshots publish themselves. A declared posture is reviewed in the estate repository before it reaches the gateway, which is its second pair of eyes; exempting the reconciler from this check only, rather than from four-eyes altogether, keeps approvals exactly as they are."
+    rationale: "An automatic approval has no person in it, so separation of duties has to live in the grant: whoever registers a marketplace should not alone decide that its snapshots publish themselves. Declared automatic approval is reviewed in the estate repository before it reaches the gateway, which is its second pair of eyes; exempting the reconciler from this check only, rather than from four-eyes altogether, keeps approvals exactly as they are."
     categories: ["security"]
     revision: 0.1.0
 
@@ -2981,7 +2981,7 @@ requirements:
     description: "The system shall approve a snapshot automatically only when, compared with the served baseline, its declared executable surface — hooks, hook modules, MCP and LSP servers, each skill's allowed tools and each agent's tools — is unchanged and was read completely, and every path it adds or modifies is a regular, non-executable file of a fixed list of document, image and data types that is not a dependency manifest or lockfile, not named as a launch target, and does not begin with an interpreter line; shall treat a read that did not complete as a change; and, with no served baseline, shall require that the snapshot declares no executable surface and every path is inert."
     references:
       requirement_ids: ["GW_APPROVAL_0044"]
-    rationale: "What runs on an adopter's machine is the part of a change a person most needs to see, so any change to it, or any doubt about it, keeps the snapshot with a person. A list of inert types is the fail-closed form: an unknown extension, an executable bit, a symlink or a gitlink counts as code. Instructions are not on the surface — in an agent skill Markdown is instructions — and that residual risk is accepted in ADR 0023, with shadow mode as the adopter's way to measure it."
+    rationale: "What runs on an adopter's machine is the part of a change a person most needs to see, so any change to it, or any doubt about it, keeps the snapshot with a person. A list of inert types is the fail-closed form: an unknown extension, an executable bit, a symlink or a gitlink counts as code. Instructions are not on the surface — in an agent skill Markdown is instructions — and that residual risk is accepted in ADR 0023, with a dry run as the adopter's way to measure it."
     categories: ["security"]
     revision: 0.1.0
 
@@ -3008,7 +3008,7 @@ requirements:
   - id: GW_APPROVAL_0044.11
     title: Every automatic approval, and every attempt that leaves a snapshot held, is on the ledger with its evidence
     significance: shall
-    description: "The system shall record each automatic approval on the ledger as system activity of the actor auto-approver, with the basis it relied on and that basis's grantor, the vetting chain, the baseline commit or none, the worst finding severity, the waivers it relied on and the vetters that were switched off; shall store on the snapshot the reason an attempt left it held; and shall record that reason on the ledger when it differs from the reason last stored, and not when it repeats."
+    description: "The system shall record each automatic approval on the ledger as system activity of the actor auto-approver, with why automatic approval was allowed and who granted it, the vetting chain, the baseline commit or none, the worst finding severity, the waivers it relied on and the vetters that were switched off; shall store on the snapshot the reason an attempt left it held; and shall record that reason on the ledger when it differs from the reason last stored, and not when it repeats."
     references:
       requirement_ids: ["GW_APPROVAL_0044"]
     rationale: "A decision no person made has to carry everything a reviewer would have weighed, so that an auditor can reconstruct it. A reason for staying held answers the adopter's question of why a snapshot waits; recording it only when it changes keeps every re-vetting tick from flooding the ledger, and comparing against the snapshot rather than reading the ledger keeps the check cheap."
@@ -3016,12 +3016,12 @@ requirements:
     revision: 0.1.0
 
   - id: GW_APPROVAL_0044.12
-    title: Automatic approval is off, in shadow, or on for a deployment
+    title: Automatic approval is off, a dry run, or on for a deployment
     significance: shall
-    description: "The system shall offer for a deployment the automatic approval modes off, the default, under which no posture takes effect; shadow, under which every check runs and what would have been approved is recorded but nothing is published; and on, under which eligible snapshots are approved; shall report a snapshot's evaluation in every mode from the same code an attempt uses; and shall not approve automatically while re-vetting is disabled, recording why."
+    description: "The system shall offer for a deployment the automatic approval modes off, the default, under which no marketplace's automatic approval takes effect; dry run, under which every check runs and what would have been approved is recorded but nothing is published; and on, under which eligible snapshots are approved; shall report a snapshot's evaluation in every mode from the same code an attempt uses; and shall not approve automatically while re-vetting is disabled, recording why."
     references:
       requirement_ids: ["GW_APPROVAL_0044"]
-    rationale: "Off is the default and the incident switch. Shadow lets an adopter see on its own corpus what the gateway would publish before it does, which is the only evidence of whether the predicate is too wide or too narrow. Without re-vetting nothing would re-check automatically approved content, so automatic approval waits for it."
+    rationale: "Off is the default and the incident switch. A dry run lets an adopter see on its own corpus what the gateway would publish before it does, which is the only evidence of whether the predicate is too wide or too narrow. Without re-vetting nothing would re-check automatically approved content, so automatic approval waits for it."
     categories: ["functional-suitability"]
     revision: 0.1.0
 
@@ -3046,12 +3046,12 @@ requirements:
     revision: 0.1.0
 
   - id: GW_APPROVAL_0044.15
-    title: An administrator can view and set a marketplace's approval posture and override in the portal
+    title: An administrator can view and set a marketplace's automatic approval and exemption in the portal
     significance: shall
-    description: "The system shall show, in the portal on a marketplace's settings, its approval posture with its basis, grantor, reason and expiry, its active override with the override's reason and expiry, and the deployment's automatic approval mode, showing a lapsed posture or override as lapsed and a posture under a mode that publishes nothing as not publishing; shall let an administrator, and no one else, set or renew the posture, create an override for a marketplace with no internal basis, and revoke the override after a confirmation; and shall show the server's refusal of a change as the server returned it."
+    description: "The system shall show, in the portal on a marketplace's settings, its automatic approval setting with what allows it, its grantor, reason and expiry, its active administrator exemption with the exemption's reason and expiry, and the deployment's automatic approval mode, showing a lapsed setting or exemption as lapsed and automatic approval under a mode that publishes nothing as not publishing; shall let an administrator, and no one else, turn on, renew or turn off automatic approval, grant an exemption for a marketplace whose source is not internal, and revoke the exemption after a confirmation; and shall show the server's refusal of a change as the server returned it."
     references:
       requirement_ids: ["GW_APPROVAL_0044"]
-    rationale: "The override is an exception a named person renews every quarter, and an administrator renewing one should not need the API to do it. Showing the basis and the mode beside the posture keeps automatic from reading as publishing when it is not, and showing the server's refusals rather than a copy of its rules keeps the portal from disagreeing with the gateway."
+    rationale: "The exemption is an exception a named person renews every quarter, and an administrator renewing one should not need the API to do it. Showing what allows it and the mode beside the setting keeps automatic approval from reading as publishing when it is not, and showing the server's refusals rather than a copy of its rules keeps the portal from disagreeing with the gateway."
     categories: ["functional-suitability"]
     revision: 0.1.0
 

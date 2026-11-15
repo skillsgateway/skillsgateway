@@ -85,12 +85,12 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // The administrative vetter on/off switch (GW_VETTING_0029): admin-only, so it walks with
             // the role-gated mutations and is denied to every non-admin.
             "PUT /api/v1/vetting/vetters/{name}/toggle",
-            // A marketplace's approval posture and its override (GW_APPROVAL_0044.1, GW_APPROVAL_0044.3):
+            // A marketplace's automatic approval and its exemption (GW_APPROVAL_0044.1, GW_APPROVAL_0044.3):
             // the switch that publishes with no person, so administrator-only.
-            "PUT /api/v1/marketplaces/{name}/approval-posture",
-            "DELETE /api/v1/marketplaces/{name}/approval-posture/override",
+            "PUT /api/v1/marketplaces/{name}/auto-approval",
+            "DELETE /api/v1/marketplaces/{name}/auto-approval/exemption",
             // Withdrawing every automatic approval since a time (GW_APPROVAL_0044.14), as revoke is.
-            "POST /api/v1/approval/auto/withdraw",
+            "POST /api/v1/auto-approval/withdraw",
             "PUT /api/v1/vetting/chain-mode",
             "PUT /api/v1/vetting/chain-order",
             // The estate-wide form of the same three settings (GW_VETTING_0037), and the only way to
@@ -207,9 +207,9 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // What an automatic approval would decide (GW_APPROVAL_0044.12): the vetting and release-age
             // reads' facts again, naming no identity; it writes nothing and approves nothing.
             "GET /api/v1/snapshots/{id}/auto-approval",
-            // A marketplace's approval posture (GW_APPROVAL_0044.15): shown on its Settings page to anyone
-            // who can see it, so an automatic posture is never invisible; setting it stays admin-only.
-            "GET /api/v1/marketplaces/{name}/approval-posture");
+            // A marketplace's automatic approval (GW_APPROVAL_0044.15): shown on its Settings page to anyone
+            // who can see it, so automatic approval is never invisible; setting it stays admin-only.
+            "GET /api/v1/marketplaces/{name}/auto-approval");
 
     @Test
     @SVCs({"SVC_GW_AUTH_0010"})

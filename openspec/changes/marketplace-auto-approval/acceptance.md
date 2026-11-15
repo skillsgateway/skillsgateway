@@ -345,3 +345,24 @@ Made during implementation, a correction of fact:
   load-bearing exclusions (GW_APPROVAL_0044 — An administrator can opt an
   internal marketplace into automatic approval of snapshots that need no
   human judgement).
+- R13, a rename the owner asked for and approved after a second review of
+  the wording: "approval posture" was jargon. The feature is now named after
+  what it does, everywhere at once, because none of it is released. A
+  marketplace's **automatic approval** is on or off (`enabled`, was
+  `posture: manual|auto`); `allowedBy` (was `basis`) takes `internal-source`
+  (was `internal-prefix`), `hosted`, `exemption`,
+  `awaiting-second-administrator` or `none`; the expiring exception for a
+  marketplace outside the internal prefixes is an **administrator
+  exemption** (was override, a word that already meant a vetting override
+  and a marketplace's chain settings); the gateway mode `shadow` is
+  `dry-run`. Routes: `…/marketplaces/{name}/auto-approval`,
+  `…/auto-approval/exemption` and `POST /api/v1/auto-approval/withdraw`. The
+  estate keys are `auto-approval.*`, the registration field `autoApproval`,
+  the skip reason `not-allowed` (was `no-basis`), and the ledger events
+  `auto-approval-changed` and `auto-approval-exemption-*`. The glossary's
+  "Override" is now "Vetting override". Requirement ids are unchanged and
+  their titles follow, for example GW_APPROVAL_0044.12 — Automatic approval
+  is off, a dry run, or on for a deployment. No behaviour changed; every
+  test kept its assertions, and the four-eyes conflict assertion was
+  narrowed to name the grant. The development log above keeps the names in
+  use when each entry was written.

@@ -8,13 +8,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import dev.skillsgateway.server.approval.ApprovalPostureService;
-import dev.skillsgateway.server.approval.ApprovalPostureService.Posture;
-import dev.skillsgateway.server.approval.ApprovalPostureService.PostureRequest;
 import dev.skillsgateway.server.approval.AutoApprovalService;
+import dev.skillsgateway.server.approval.AutoApprovalSettingService;
+import dev.skillsgateway.server.approval.AutoApprovalSettingService.SettingRequest;
 import dev.skillsgateway.server.approval.RevocationService;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
-import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredApproval;
+import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredAutoApproval;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredMarketplace;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.Estate;
 import dev.skillsgateway.server.estate.EstateReconciler;
@@ -78,7 +77,7 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
     private static final String RULE = "aws-access-key-id";
 
     @Autowired
-    private ApprovalPostureService postureService;
+    private AutoApprovalSettingService settingService;
 
     @Autowired
     private RevetService revetService;
@@ -117,10 +116,10 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
                 Marketplace.ORIGIN_UPSTREAM,
                 Marketplace.PUSH_APPEND_ONLY,
                 null);
-        postureService.set(
+        settingService.set(
                 marketplace.name(),
-                new PostureRequest(
-                        Posture.AUTO, "our own skills repository", Instant.now().plus(Duration.ofDays(30)), null),
+                new SettingRequest(
+                        true, "our own skills repository", Instant.now().plus(Duration.ofDays(30)), null),
                 "root");
         return marketplace;
     }
@@ -158,7 +157,7 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
                 .last()
                 .satisfies(entry -> assertThat(entry)
                         .startsWith("system ")
-                        .contains("basis=internal-prefix " + FORGE.baseUrl() + "/acme")
+                        .contains("allowedBy=internal-source " + FORGE.baseUrl() + "/acme")
                         .contains("grantor=root")
                         .contains("baseline=" + first.sha()));
         assertThat(ledger(marketplace, "snapshot-approved")).hasSize(2);
@@ -235,7 +234,7 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
                         .with(oidcLogin().idToken(token -> token.subject("root"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mode").value("on"))
-                .andExpect(jsonPath("$.basis").value("internal-prefix"))
+                .andExpect(jsonPath("$.allowedBy").value("internal-source"))
                 .andExpect(jsonPath("$.eligible").value(false))
                 .andExpect(jsonPath("$.refusal").value(org.hamcrest.Matchers.startsWith("external-source")));
     }
@@ -353,7 +352,7 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
         approvalService.approve(person.snapshot().id(), "root");
 
         String request = withdrawal(since, "previous_approved");
-        mockMvc.perform(post("/api/v1/approval/auto/withdraw")
+        mockMvc.perform(post("/api/v1/auto-approval/withdraw")
                         .with(oidcLogin().idToken(token -> token.subject("carol")))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -362,7 +361,7 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
         assertThat(snapshotRepository.findById(thirdAfter.id()).orElseThrow().state())
                 .isEqualTo(Snapshot.APPROVED);
 
-        mockMvc.perform(post("/api/v1/approval/auto/withdraw")
+        mockMvc.perform(post("/api/v1/auto-approval/withdraw")
                         .with(oidcLogin().idToken(token -> token.subject("root")))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -438,31 +437,31 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
 
     @Test
     @SVCs({"SVC_GW_ESTATE_0006"})
-    void aDeclaredAutomaticPostureIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry() {
+    void aDeclaredAutomaticApprovalIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry() {
         Instant expires = Instant.now().plus(Duration.ofDays(30)).truncatedTo(ChronoUnit.SECONDS);
         String internal = uniqueName("estate-auto");
         String outside = uniqueName("estate-outside");
         String noExpiry = uniqueName("estate-noexpiry");
         String tooLong = uniqueName("estate-toolong");
-        String withOverride = uniqueName("estate-override");
+        String withExemption = uniqueName("estate-exemption");
         Estate estate = new Estate(
                 List.of(
-                        declared(internal, forgeUrl(), new DeclaredApproval("auto", "our own skills", expires, null)),
+                        declared(internal, forgeUrl(), new DeclaredAutoApproval(true, "our own skills", expires, null)),
                         declared(
                                 outside,
                                 "https://example.invalid/outside.git",
-                                new DeclaredApproval("auto", "a vendor", expires, null)),
-                        declared(noExpiry, forgeUrl(), new DeclaredApproval("auto", "our own skills", null, null)),
+                                new DeclaredAutoApproval(true, "a vendor", expires, null)),
+                        declared(noExpiry, forgeUrl(), new DeclaredAutoApproval(true, "our own skills", null, null)),
                         declared(
                                 tooLong,
                                 forgeUrl(),
-                                new DeclaredApproval(
-                                        "auto", "our own skills", Instant.now().plus(Duration.ofDays(120)), null)),
+                                new DeclaredAutoApproval(
+                                        true, "our own skills", Instant.now().plus(Duration.ofDays(120)), null)),
                         declared(
-                                withOverride,
+                                withExemption,
                                 "https://example.invalid/vendor.git",
-                                new DeclaredApproval(
-                                        "auto",
+                                new DeclaredAutoApproval(
+                                        true,
                                         "a vendor",
                                         expires,
                                         Map.of("reason", "trusted vendor", "expires-at", expires.toString())))),
@@ -474,26 +473,26 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
         EstateReconciliation report = estateReconciler.reconcile(estate, "api");
 
         assertThat(entry(report, internal).action()).isEqualTo("created");
-        ApprovalPostureService.PostureView applied = postureService.view(internal);
-        assertThat(applied.posture()).isEqualTo(Posture.AUTO);
-        assertThat(applied.basis()).isEqualTo(ApprovalPostureService.Basis.INTERNAL_PREFIX);
+        AutoApprovalSettingService.SettingView applied = settingService.view(internal);
+        assertThat(applied.enabled()).isTrue();
+        assertThat(applied.allowedBy()).isEqualTo(AutoApprovalSettingService.AllowedBy.INTERNAL_SOURCE);
         assertThat(applied.setBy()).isEqualTo(EstateReconciler.ACTOR);
         assertThat(applied.reason()).isEqualTo("our own skills");
         assertThat(applied.expiresAt()).isEqualTo(expires);
         assertThat(entry(report, outside).action()).isEqualTo("failed");
-        assertThat(entry(report, outside).detail()).contains("override");
+        assertThat(entry(report, outside).detail()).contains("exemption");
         assertThat(entry(report, noExpiry).action()).isEqualTo("failed");
         assertThat(entry(report, noExpiry).detail()).contains("needs an expiry");
         assertThat(entry(report, tooLong).action()).isEqualTo("failed");
         assertThat(entry(report, tooLong).detail()).contains("at most 90 days");
-        assertThat(entry(report, withOverride).action()).isEqualTo("failed");
-        assertThat(entry(report, withOverride).detail()).contains("an override cannot be declared");
-        for (String refused : List.of(outside, noExpiry, tooLong, withOverride)) {
+        assertThat(entry(report, withExemption).action()).isEqualTo("failed");
+        assertThat(entry(report, withExemption).detail()).contains("an exemption cannot be declared");
+        for (String refused : List.of(outside, noExpiry, tooLong, withExemption)) {
             assertThat(marketplaceRepository.findByName(refused)).as(refused).isEmpty();
         }
-        assertThat(jdbc.sql("SELECT count(*) FROM auto_approval_overrides o JOIN marketplaces m"
+        assertThat(jdbc.sql("SELECT count(*) FROM auto_approval_exemptions o JOIN marketplaces m"
                                 + " ON m.id = o.marketplace_id WHERE m.name IN (:names)")
-                        .param("names", List.of(internal, outside, noExpiry, tooLong, withOverride))
+                        .param("names", List.of(internal, outside, noExpiry, tooLong, withExemption))
                         .query(Long.class)
                         .single())
                 .isZero();
@@ -504,22 +503,22 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
 
         String url = marketplaceRepository.findByName(internal).orElseThrow().url();
         EstateReconciliation renewed = estateReconciler.reconcile(
-                estateOf(declared(internal, url, new DeclaredApproval("auto", "recertified", expires, null))), "api");
+                estateOf(declared(internal, url, new DeclaredAutoApproval(true, "recertified", expires, null))), "api");
         assertThat(entry(renewed, internal).action()).isEqualTo("updated");
-        assertThat(postureService.view(internal).reason()).isEqualTo("recertified");
+        assertThat(settingService.view(internal).reason()).isEqualTo("recertified");
     }
 
-    /** A declared posture past its expiry is converged, and reads as manual until the declaration changes. */
+    /** Declared automatic approval past its expiry is converged, and reads as off until the declaration changes. */
     @Test
     @SVCs({"SVC_GW_ESTATE_0006"})
-    void aLapsedDeclaredPostureIsManualUntilTheDeclarationChanges() {
+    void aLapsedDeclaredAutomaticApprovalIsOffUntilTheDeclarationChanges() {
         String name = uniqueName("estate-lapsed");
         Instant expires = Instant.now().plus(Duration.ofDays(30)).truncatedTo(ChronoUnit.SECONDS);
         String url = forgeUrl();
         estateReconciler.reconcile(
-                estateOf(declared(name, url, new DeclaredApproval("auto", "our own skills", expires, null))), "api");
+                estateOf(declared(name, url, new DeclaredAutoApproval(true, "our own skills", expires, null))), "api");
         Instant lapsed = Instant.now().minus(Duration.ofDays(1)).truncatedTo(ChronoUnit.SECONDS);
-        jdbc.sql("UPDATE marketplaces SET approval_set_at = :setAt, approval_expires_at = :expiresAt"
+        jdbc.sql("UPDATE marketplaces SET auto_approval_set_at = :setAt, auto_approval_expires_at = :expiresAt"
                         + " WHERE name = :name")
                 .param("setAt", lapsed.minus(Duration.ofDays(30)).atOffset(java.time.ZoneOffset.UTC))
                 .param("expiresAt", lapsed.atOffset(java.time.ZoneOffset.UTC))
@@ -527,18 +526,18 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
                 .update();
 
         EstateReconciliation report = estateReconciler.reconcile(
-                estateOf(declared(name, url, new DeclaredApproval("auto", "our own skills", lapsed, null))), "api");
+                estateOf(declared(name, url, new DeclaredAutoApproval(true, "our own skills", lapsed, null))), "api");
 
         assertThat(entry(report, name).action()).isEqualTo("unchanged");
-        assertThat(postureService.view(name).basis()).isEqualTo(ApprovalPostureService.Basis.NONE);
+        assertThat(settingService.view(name).allowedBy()).isEqualTo(AutoApprovalSettingService.AllowedBy.NONE);
     }
 
     private static Estate estateOf(DeclaredMarketplace marketplace) {
         return new Estate(List.of(marketplace), null, null, null, null);
     }
 
-    private static DeclaredMarketplace declared(String name, String url, DeclaredApproval approval) {
-        return new DeclaredMarketplace(name, url, null, null, null, approval);
+    private static DeclaredMarketplace declared(String name, String url, DeclaredAutoApproval autoApproval) {
+        return new DeclaredMarketplace(name, url, null, null, null, autoApproval);
     }
 
     private static String forgeUrl() {
@@ -553,7 +552,7 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
     }
 
     private org.springframework.test.web.servlet.ResultActions withdraw(String body) throws Exception {
-        return mockMvc.perform(post("/api/v1/approval/auto/withdraw")
+        return mockMvc.perform(post("/api/v1/auto-approval/withdraw")
                 .with(oidcLogin().idToken(token -> token.subject("root")))
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)

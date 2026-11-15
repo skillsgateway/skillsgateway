@@ -1,8 +1,8 @@
 package dev.skillsgateway.server.approval;
 
 import dev.skillsgateway.server.admin.AdminAuditLogger;
-import dev.skillsgateway.server.approval.ApprovalPostureService.Basis;
 import dev.skillsgateway.server.approval.ApprovalService.ApprovalOverride;
+import dev.skillsgateway.server.approval.AutoApprovalSettingService.AllowedBy;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.AutoMode;
 import dev.skillsgateway.server.persistence.Marketplace;
@@ -51,15 +51,15 @@ public class AutoApprovalService {
     public static final String EVENT_SKIPPED = "snapshot-auto-approval-skipped";
     public static final String EVENT_WOULD_APPROVE = "snapshot-auto-approval-would-approve";
 
-    /** Stored as the skip reason in shadow mode, so a repeated would-approve is not ledgered again. */
+    /** Stored as the skip reason in dry-run mode, so a repeated would-approve is not ledgered again. */
     static final String WOULD_APPROVE = "would-approve";
 
     private final SkillsGatewayProperties properties;
     private final MarketplaceRepository marketplaceRepository;
     private final SnapshotRepository snapshotRepository;
     private final SnapshotClosureRepository closureRepository;
-    private final ApprovalPostureService postureService;
-    private final ApprovalPostureRepository postureRepository;
+    private final AutoApprovalSettingService settingService;
+    private final AutoApprovalSettingRepository settingRepository;
     private final InternalSources internalSources;
     private final RequiredVetters requiredVetters;
     private final VettingService vettingService;
@@ -75,8 +75,8 @@ public class AutoApprovalService {
             MarketplaceRepository marketplaceRepository,
             SnapshotRepository snapshotRepository,
             SnapshotClosureRepository closureRepository,
-            ApprovalPostureService postureService,
-            ApprovalPostureRepository postureRepository,
+            AutoApprovalSettingService settingService,
+            AutoApprovalSettingRepository settingRepository,
             InternalSources internalSources,
             RequiredVetters requiredVetters,
             VettingService vettingService,
@@ -90,8 +90,8 @@ public class AutoApprovalService {
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
         this.closureRepository = closureRepository;
-        this.postureService = postureService;
-        this.postureRepository = postureRepository;
+        this.settingService = settingService;
+        this.settingRepository = settingRepository;
         this.internalSources = internalSources;
         this.requiredVetters = requiredVetters;
         this.vettingService = vettingService;
@@ -106,15 +106,15 @@ public class AutoApprovalService {
     @Schema(description = "What an automatic approval attempt would decide for a snapshot now")
     public record Evaluation(
             @Schema(
-                    description = "The deployment's automatic approval mode",
-                    allowableValues = {"off", "shadow", "on"})
+                    description = "The gateway's automatic approval mode",
+                    allowableValues = {"off", "dry-run", "on"})
             String mode,
 
             @Schema(
-                    description = "Why the marketplace's auto posture takes effect, or none",
-                    allowableValues = {"internal-prefix", "hosted", "override", "awaiting-second-administrator", "none"
+                    description = "Why the marketplace's automatic approval takes effect, or none",
+                    allowableValues = {"internal-source", "hosted", "exemption", "awaiting-second-administrator", "none"
                     })
-            String basis,
+            String allowedBy,
 
             @Schema(description = "Whether every check passes; under on, the approval gates then decide")
             boolean eligible,
@@ -150,11 +150,12 @@ public class AutoApprovalService {
                 .flatMap(snapshot -> marketplaceRepository
                         .findById(snapshot.marketplaceId())
                         .map(marketplace ->
-                                evaluate(snapshot, marketplace, postureService.effectiveBasis(marketplace))));
+                                evaluate(snapshot, marketplace, settingService.effectiveAllowedBy(marketplace))));
     }
 
     /**
-     * One attempt, in the order of design D8: mode, re-vetting, basis, candidacy, vetting, surface.
+     * One attempt, in the order of design D8: mode, re-vetting, what allows it, candidacy, vetting,
+     * surface.
      * Every refusal leaves the snapshot held and is recorded once per distinct reason.
      */
     @Requirements({"GW_APPROVAL_0044", "GW_APPROVAL_0044.9", "GW_APPROVAL_0044.11", "GW_APPROVAL_0044.12"})
@@ -172,20 +173,20 @@ public class AutoApprovalService {
         if (marketplace == null) {
             return Outcome.SKIPPED;
         }
-        Basis basis = postureService.resolveForAttempt(marketplace);
-        Evaluation evaluation = evaluate(snapshot, marketplace, basis);
+        AllowedBy allowedBy = settingService.resolveForAttempt(marketplace);
+        Evaluation evaluation = evaluate(snapshot, marketplace, allowedBy);
         if (!evaluation.eligible()) {
             skip(snapshot, marketplace, evaluation.refusal());
             return Outcome.SKIPPED;
         }
-        if (mode == AutoMode.SHADOW) {
+        if (mode == AutoMode.DRY_RUN) {
             if (snapshotRepository.recordAutoApprovalSkip(snapshot.id(), WOULD_APPROVE)) {
                 auditLogger.record(
                         ACTOR,
                         marketplace.name(),
                         EVENT_WOULD_APPROVE,
                         snapshot.sha(),
-                        evidence(snapshot, marketplace, basis, evaluation));
+                        evidence(snapshot, marketplace, allowedBy, evaluation));
             }
             return Outcome.WOULD_APPROVE;
         }
@@ -209,7 +210,7 @@ public class AutoApprovalService {
                 marketplace.name(),
                 EVENT_APPROVED,
                 snapshot.sha(),
-                evidence(snapshot, marketplace, basis, evaluation));
+                evidence(snapshot, marketplace, allowedBy, evaluation));
         return Outcome.APPROVED;
     }
 
@@ -219,16 +220,16 @@ public class AutoApprovalService {
         attemptNewest(changed.marketplaceId(), changed.cause());
     }
 
-    /** One bounded step on the re-vetting tick: each automatic marketplace's newest snapshot, once. */
+    /** One bounded step on the re-vetting tick: each enabled marketplace's newest snapshot, once. */
     @EventListener
     @Requirements({"GW_APPROVAL_0044.9"})
     public void onRevetTick(HeldSnapshotChanged.RevetTick tick) {
-        for (long marketplaceId : postureRepository.autoMarketplaces()) {
+        for (long marketplaceId : settingRepository.enabledMarketplaces()) {
             attemptNewest(marketplaceId, "revet-tick");
         }
     }
 
-    /** After a posture is set (design D10). */
+    /** After automatic approval is set (design D10). */
     public void attemptNewest(String marketplace, String cause) {
         marketplaceRepository.findByName(marketplace).ifPresent(found -> attemptNewest(found.id(), cause));
     }
@@ -248,15 +249,15 @@ public class AutoApprovalService {
         }
     }
 
-    private Evaluation evaluate(Snapshot snapshot, Marketplace marketplace, Basis basis) {
+    private Evaluation evaluate(Snapshot snapshot, Marketplace marketplace, AllowedBy allowedBy) {
         String mode = properties.approval().auto().mode().wire();
         String refusal = null;
         AutoApprovalEligibility.Vetting vetting = null;
         String baselineSha = servedTip.of(marketplace.name()).orElse(null);
         if (!properties.vetting().revet().enabled()) {
             refusal = "revet-disabled: re-vetting is off, so nothing would re-check what is approved";
-        } else if (!basis.effective()) {
-            refusal = "no-basis: " + basis.wire();
+        } else if (!allowedBy.effective()) {
+            refusal = "not-allowed: " + allowedBy.wire();
         }
         if (refusal == null) {
             long newest = snapshotRepository
@@ -291,7 +292,7 @@ public class AutoApprovalService {
         boolean eligible = refusal == null;
         return new Evaluation(
                 mode,
-                basis.wire(),
+                allowedBy.wire(),
                 eligible,
                 refusal,
                 baselineSha,
@@ -327,21 +328,23 @@ public class AutoApprovalService {
         return "gate-refused: " + name.replaceAll("([a-z])([A-Z])", "$1-$2").toLowerCase(Locale.ROOT);
     }
 
-    private String evidence(Snapshot snapshot, Marketplace marketplace, Basis basis, Evaluation evaluation) {
-        ApprovalPostureService.PostureView posture = postureService.view(marketplace.name());
-        String named = switch (basis) {
-            case INTERNAL_PREFIX ->
-                "internal-prefix "
+    private String evidence(Snapshot snapshot, Marketplace marketplace, AllowedBy allowedBy, Evaluation evaluation) {
+        AutoApprovalSettingService.SettingView setting = settingService.view(marketplace.name());
+        String named = switch (allowedBy) {
+            case INTERNAL_SOURCE ->
+                "internal-source "
                         + internalSources.matchingPrefix(marketplace.url()).orElse("?");
-            case OVERRIDE ->
-                "override "
-                        + (posture.override() == null ? "?" : posture.override().id());
-            default -> basis.wire();
+            case EXEMPTION ->
+                "exemption "
+                        + (setting.exemption() == null
+                                ? "?"
+                                : setting.exemption().id());
+            default -> allowedBy.wire();
         };
-        return "basis=%s; grantor=%s; chain=%s; baseline=%s; worst=%s; waivers=%s; disabledVetters=%s"
+        return "allowedBy=%s; grantor=%s; chain=%s; baseline=%s; worst=%s; waivers=%s; disabledVetters=%s"
                 .formatted(
                         named,
-                        posture.setBy(),
+                        setting.setBy(),
                         vettingService.chainStaleness(snapshot).runChain(),
                         evaluation.baselineSha() == null ? "none" : evaluation.baselineSha(),
                         evaluation.worstSeverity() == null ? "none" : evaluation.worstSeverity(),

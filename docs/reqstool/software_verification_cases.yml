@@ -1033,12 +1033,12 @@ cases:
 
   - id: SVC_GW_ESTATE_0006
     requirement_ids: ["GW_ESTATE_0006"]
-    title: A declared automatic posture is applied by the reconciler, and one without a basis or a valid expiry fails its entry
+    title: Declared automatic approval is applied by the reconciler, and one for a source that is not internal or without a valid expiry fails its entry
     verification: automated-test
     description: |
-      GIVEN declared marketplaces with an automatic posture under an internal prefix, with no internal basis, with no expiry, and with an expiry more than 90 days out, and a declaration that tries to carry an override
+      GIVEN declared marketplaces with automatic approval enabled under an internal prefix, with a source that is not internal, with no expiry, and with an expiry more than 90 days out, and a declaration that tries to carry an exemption
       WHEN reconciliation runs
-      THEN the internal declaration's posture is applied as the estate reconciler, the others each fail as isolated entries with their reasons, and no override is created
+      THEN the internal declaration's automatic approval is applied as the estate reconciler, the others each fail as isolated entries with their reasons, and no exemption is created
     revision: "0.1.0"
 
   - id: SVC_GW_WEBHOOK_0005
@@ -4136,19 +4136,19 @@ cases:
     title: An internal marketplace serves a clean Markdown-only update with no person, and the same update with an external source stays held
     verification: automated-test
     description: |
-      GIVEN a gateway in automatic approval mode on, and a marketplace under an internal prefix whose posture is automatic with a reason and expiry, serving an approved snapshot
+      GIVEN a gateway in automatic approval mode on, and a marketplace under an internal prefix whose automatic approval is on with a reason and expiry, serving an approved snapshot
       WHEN the upstream gains a Markdown-only change and is ingested, and then, separately, gains the same change together with an external source and is ingested
       THEN the first new snapshot is approved by auto-approver and served with no person deciding, and the second stays held for a person with the reason recorded
     revision: "0.1.0"
 
   - id: SVC_GW_APPROVAL_0044.1
     requirement_ids: ["GW_APPROVAL_0044.1"]
-    title: The posture defaults to manual, automatic needs a reason and an expiry within 90 days, lapses to manual, and is an administrator's choice
+    title: Automatic approval defaults to off, turning it on needs a reason and an expiry within 90 days, it lapses to off, and it is an administrator's choice
     verification: automated-test
     description: |
       GIVEN a newly registered marketplace, an internal marketplace, and sessions with and without the administrator role
-      WHEN the posture is read; automatic is set with no reason, with no expiry, and with an expiry 91 days out; automatic is set validly and the clock is moved past its expiry; automatic is chosen at registration by an administrator and by a non-administrator; and automatic is chosen at registration for a marketplace with no internal basis
-      THEN the new marketplace is manual, each incomplete or distant request is refused with the posture left manual, the lapsed posture has basis none and a clean snapshot stays held, the administrator's registration choice is stored, the non-administrator is refused on the update and on registration, and the registration with no internal basis is refused as a conflict naming the override as the next step, creating no marketplace
+      WHEN the setting is read; automatic approval is turned on with no reason, with no expiry, and with an expiry 91 days out; it is turned on validly and the clock is moved past its expiry; it is chosen at registration by an administrator and by a non-administrator; and it is chosen at registration for a marketplace whose source is not internal
+      THEN the new marketplace has automatic approval off, each incomplete or distant request is refused with automatic approval left off, the lapsed setting is allowed by none and a clean snapshot stays held, the administrator's registration choice is stored, the non-administrator is refused on the update and on registration, and the registration for a source that is not internal is refused as a conflict naming the exemption as the next step, creating no marketplace
     revision: "0.1.0"
 
   - id: SVC_GW_APPROVAL_0044.2
@@ -4163,12 +4163,12 @@ cases:
 
   - id: SVC_GW_APPROVAL_0044.3
     requirement_ids: ["GW_APPROVAL_0044.3"]
-    title: A marketplace outside the prefixes is automatic only under a 90-day override that caps the posture and lapses once on the ledger
+    title: A marketplace outside the prefixes is approved automatically only under a 90-day exemption that caps the setting and lapses once on the ledger
     verification: automated-test
     description: |
-      GIVEN a marketplace with no internal basis
-      WHEN automatic is set without an override, with an override lacking a reason or expiring 91 days out, and with a valid override and a posture expiring after it; and the override is then expired by the clock, and in another run revoked, with several attempts following each
-      THEN the requests without a valid override are refused, the valid one is accepted with the posture's expiry capped at the override's, and after expiry or revocation the basis is none and exactly one expiry or revocation entry is on the ledger across the repeated attempts
+      GIVEN a marketplace whose source is not internal
+      WHEN automatic approval is turned on without an exemption, with an exemption lacking a reason or expiring 91 days out, and with a valid exemption and a setting expiring after it; and the exemption is then expired by the clock, and in another run revoked, with several attempts following each
+      THEN the requests without a valid exemption are refused, the valid one is accepted with the setting's expiry capped at the exemption's, and after expiry or revocation it is allowed by none and exactly one expiry or revocation entry is on the ledger across the repeated attempts
     revision: "0.1.0"
 
   - id: SVC_GW_APPROVAL_0044.4
@@ -4177,8 +4177,8 @@ cases:
     verification: automated-test
     description: |
       GIVEN a marketplace registered by one administrator, a second administrator, and the four-eyes rule under warn and then under enforce
-      WHEN the registering administrator sets automatic under each mode, the second administrator then confirms it under enforce, the estate reconciler applies a declared automatic posture, and the estate reconciler's approval of a snapshot is evaluated
-      THEN under warn the posture is set and the conflict recorded, under enforce it stays awaiting a second administrator and takes effect only on the second administrator's confirmation, the reconciler's declared posture takes effect with no second administrator, and the reconciler's approval still conflicts exactly as before
+      WHEN the registering administrator turns automatic approval on under each mode, the second administrator then confirms it under enforce, the estate reconciler applies declared automatic approval, and the estate reconciler's approval of a snapshot is evaluated
+      THEN under warn automatic approval is turned on and the conflict recorded, under enforce it stays awaiting a second administrator and takes effect only on the second administrator's confirmation, the reconciler's declared automatic approval takes effect with no second administrator, and the reconciler's approval still conflicts exactly as before
     revision: "0.1.0"
 
   - id: SVC_GW_APPROVAL_0044.5
@@ -4236,7 +4236,7 @@ cases:
     title: An automatic approval writes exactly the ledger entries and webhook a person's approval writes
     verification: automated-test
     description: |
-      GIVEN a snapshot approved by a person through the API, with waivers, an override, a superseded chain and a warn-mode four-eyes conflict, and an equivalent snapshot approved automatically
+      GIVEN a snapshot approved by a person through the API, with waivers, a vetting override, a superseded chain and a warn-mode four-eyes conflict, and an equivalent snapshot approved automatically
       WHEN their ledger entries and webhook deliveries are compared
       THEN the person's approval writes its pinned entries and webhook, unchanged by moving them into the shared recorder, and the automatic approval writes the same kinds of entry and the same webhook through that recorder
     revision: "0.1.0"
@@ -4248,17 +4248,17 @@ cases:
     description: |
       GIVEN an automatic internal marketplace with an eligible snapshot, and one that stays held
       WHEN the eligible snapshot is approved, and the held one is attempted repeatedly with the same reason and then with a different reason
-      THEN the approval's entry is system activity of auto-approver with the basis, grantor, chain, baseline commit, worst severity, waiver ids and switched-off vetters, and the held snapshot stores its reason and has one ledger entry per distinct reason and none for the repeats
+      THEN the approval's entry is system activity of auto-approver with why it was allowed, the grantor, the chain, baseline commit, worst severity, waiver ids and switched-off vetters, and the held snapshot stores its reason and has one ledger entry per distinct reason and none for the repeats
     revision: "0.1.0"
 
   - id: SVC_GW_APPROVAL_0044.12
     requirement_ids: ["GW_APPROVAL_0044.12"]
-    title: Off evaluates nothing for publication, shadow records and publishes nothing, on publishes, and disabled re-vetting stops it
+    title: Off evaluates nothing for publication, a dry run records and publishes nothing, on publishes, and disabled re-vetting stops it
     verification: automated-test
     description: |
       GIVEN an automatic internal marketplace with an eligible snapshot
-      WHEN it is attempted under mode off, under shadow, under on, and under on with re-vetting disabled, and its evaluation is read in each mode
-      THEN off publishes nothing and records no evaluation, shadow records what would have been approved and publishes nothing, on publishes it, disabled re-vetting leaves it held with that reason, and the evaluation read reports the result the attempt used
+      WHEN it is attempted under mode off, under dry run, under on, and under on with re-vetting disabled, and its evaluation is read in each mode
+      THEN off publishes nothing and records no evaluation, dry run records what would have been approved and publishes nothing, on publishes it, disabled re-vetting leaves it held with that reason, and the evaluation read reports the result the attempt used
     revision: "0.1.0"
 
   - id: SVC_GW_APPROVAL_0044.13
@@ -4283,12 +4283,12 @@ cases:
 
   - id: SVC_GW_APPROVAL_0044.15
     requirement_ids: ["GW_APPROVAL_0044.15"]
-    title: An administrator sets automatic approval with an override in the portal, sees its basis, and revokes it
+    title: An administrator turns on automatic approval with an exemption in the portal, sees why it is allowed, and revokes the exemption
     verification: automated-test
     description: |
       GIVEN a gateway in the portal end-to-end harness, an administrator session, and a marketplace outside the internal prefixes
-      WHEN the administrator opens the marketplace's settings, sets automatic approval with a reason, an expiry and an override, and then revokes the override
-      THEN the posture card shows the basis override with the reason, expiry and grantor after the save, and the basis none after the revocation
+      WHEN the administrator opens the marketplace's settings, turns on automatic approval with a reason, an expiry and an exemption, and then revokes the exemption
+      THEN the automatic approval card shows it allowed by the administrator exemption with the reason, expiry and grantor after the save, and not allowed after the revocation
     revision: "0.1.0"
 
   - id: SVC_GW_INGEST_0045

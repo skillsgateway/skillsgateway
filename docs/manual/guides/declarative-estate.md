@@ -213,17 +213,18 @@ Deregistration, snapshot approval, waivers — everything that retracts
 or publishes content — stays interactive and audited, and is unreachable by a
 machine credential holding every scope there is.
 
-A marketplace's **approval posture** is declarable, as
-[`approval.posture`, `approval.reason` and `approval.expires-at`](../reference/configuration.md#declarative-estate)
+A marketplace's **automatic approval** is declarable, as
+[`auto-approval.enabled`, `auto-approval.reason` and `auto-approval.expires-at`](../reference/configuration.md#declarative-estate)
 on its entry: whether its clean updates are
 [approved automatically](approving-snapshots.md#automatic-approval) is
 standing configuration, and the review of the estate repository is its
 separation of duties. The reconciler applies it with the same rules as the
-API. It fails the entry for an `auto` posture with no internal basis, or with
-a missing or too-distant expiry. Changing the reason or the date re-applies
-it, which is how a declared posture is renewed; a declared date that passes
-leaves the posture manual until the declaration changes. The **override** a
-marketplace outside the internal prefixes needs is not declarable, for the
+API. It fails the entry when automatic approval is enabled for a marketplace
+whose source is not internal, or with a missing or too-distant expiry.
+Changing the reason or the date re-applies it, which is how declared automatic
+approval is renewed; a declared date that passes leaves automatic approval off
+until the declaration changes. The **administrator exemption** a marketplace
+outside the internal prefixes needs is not declarable, for the
 reason waivers are not: it is a dated judgement by a named person. Declaring
 one fails the entry.
 

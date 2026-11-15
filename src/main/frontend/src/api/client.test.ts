@@ -44,14 +44,14 @@ test("a_refusal_carries_the_servers_detail_and_next_step", async () => {
     "fetch",
     vi.fn(
       async () =>
-        new Response(JSON.stringify({ detail: "needs an override", nextStep: "set an override" }), {
+        new Response(JSON.stringify({ detail: "needs an exemption", nextStep: "add an exemption" }), {
           status: 409,
           headers: { "Content-Type": "application/problem+json" },
         }),
     ),
   );
-  const refused = await api("/api/v1/marketplaces/m/approval-posture").catch((error: unknown) => error);
+  const refused = await api("/api/v1/marketplaces/m/auto-approval").catch((error: unknown) => error);
   expect(refused).toBeInstanceOf(ApiError);
-  expect((refused as ApiError).message).toBe("needs an override");
-  expect((refused as ApiError).nextStep).toBe("set an override");
+  expect((refused as ApiError).message).toBe("needs an exemption");
+  expect((refused as ApiError).nextStep).toBe("add an exemption");
 });

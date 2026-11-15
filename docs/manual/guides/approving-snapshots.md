@@ -635,41 +635,41 @@ at this exact upstream commit and said no.
 ## Automatic approval
 
 A marketplace your organisation owns can have its clean updates approved with
-no person. This is opt-in twice: the deployment's mode, and each
-marketplace's **approval posture**. Both default to off, so nothing changes
+no person. This is opt-in twice: the gateway's mode, and each
+marketplace's **automatic approval** setting. Both default to off, so nothing changes
 until an administrator sets them. The decision and its accepted risk are
 [ADR 0023 — Automatic approval of internal marketplaces](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0023-automatic-approval-of-internal-marketplaces.md).
 
 ### Which marketplaces qualify
 
-A posture of `auto` takes effect only on an internal basis:
+Automatic approval takes effect only for an internal source:
 
 - the clone URL is under one of
   [`skills-gateway.approval.auto.internal-prefixes`](../reference/configuration.md#automatic-approval);
 - or the marketplace is [hosted](publishing-first-party-skills.md) on the
   gateway;
-- or an administrator records an **override**, a dated exception with its own
-  reason, for a marketplace outside the prefixes.
+- or an administrator grants an **administrator exemption**, a dated
+  exception with its own reason, for a marketplace outside the prefixes.
 
-Every posture of `auto` needs a reason and an expiry at most 90 days out, and
-lapses back to manual when it passes; renewing it is setting it again. An
-override is never declared in the [estate](declarative-estate.md), because it is a
-dated judgement by a named person. Four-eyes applies to the grant: under
-`enforce`, a posture set by the marketplace's registrant waits for a second
-administrator.
+Turning automatic approval on needs a reason and an expiry at most 90 days
+out, and it lapses back to off when the expiry passes; renewing it is setting
+it again. An exemption is never declared in the [estate](declarative-estate.md),
+because it is a dated judgement by a named person. Four-eyes applies to the
+grant: under `enforce`, automatic approval turned on by the marketplace's
+registrant waits for a second administrator.
 
 Set it on the marketplace's **Settings** page, in the
-[Approval posture](../reference/portal.md#approval-posture) card, or with
-[`PUT /api/v1/marketplaces/{name}/approval-posture`](../reference/api/marketplaces.md#put-marketplacesnameapproval-posture).
+[Automatic approval](../reference/portal.md#automatic-approval) card, or with
+[`PUT /api/v1/marketplaces/{name}/auto-approval`](../reference/api/marketplaces.md#put-marketplacesnameauto-approval).
 
 ### What it checks
 
-After each ingestion, a new waiver, a posture change and each re-vetting tick,
-the gateway attempts the marketplace's newest held snapshot. It approves only
-when every one of these holds, in this order:
+After each ingestion, a new waiver, a change to automatic approval and each
+re-vetting tick, the gateway attempts the marketplace's newest held snapshot.
+It approves only when every one of these holds, in this order:
 
 1. **Re-vetting is on**, so something re-checks what it approves.
-2. **The posture takes effect**, on one of the bases above.
+2. **Automatic approval takes effect**, for one of the reasons above.
 3. **The snapshot is the newest, and pulls in no external source.** An older
    held snapshot always waits for a person, so the served tip never moves
    backwards.
@@ -691,27 +691,27 @@ is at most `skills-gateway.vetting.revet.interval`.
 
 A changed `SKILL.md` that raises no finding is approved. In an agent skill,
 Markdown is instructions, so this is the risk the ADR accepts, and the reason
-to start in shadow mode.
+to start with a dry run.
 
 Every outcome is on the ledger as the `auto-approver` actor:
-`snapshot-auto-approved` carries the basis, the chain, the baseline, the worst
+`snapshot-auto-approved` carries why it was allowed, the chain, the baseline, the worst
 severity, the waivers and any switched-off vetters; a snapshot left held gets
 `snapshot-auto-approval-skipped` with the first failing check, once per
 distinct reason. An automatic approval otherwise records what a person's does,
 and fires the same webhook.
 
-### Start in shadow
+### Start with a dry run
 
 ```yaml
 skills-gateway:
   approval:
     auto:
-      mode: shadow
+      mode: dry-run
       internal-prefixes:
         - https://git.example.com/platform
 ```
 
-Under `shadow`, every check runs and nothing is published; an eligible snapshot
+Under `dry-run`, every check runs and nothing is published; an eligible snapshot
 is recorded as `snapshot-auto-approval-would-approve`. Watch those entries
 against what your reviewers then approve by hand, and ask
 [`GET /api/v1/snapshots/{id}/auto-approval`](../reference/api/marketplaces.md#get-snapshotsidauto-approval)
@@ -720,7 +720,7 @@ and writes nothing. Move to `on` when the would-approve entries are ones you
 would have approved.
 
 `mode: off` is also the incident switch. It stops every attempt at once,
-whatever the postures say.
+whatever each marketplace's setting says.
 
 ### Recall
 
@@ -733,7 +733,7 @@ To take back everything approved automatically since a time, for example after
 an internal repository was compromised:
 
 ```console
-$ curl -X POST localhost:8080/api/v1/approval/auto/withdraw \
+$ curl -X POST localhost:8080/api/v1/auto-approval/withdraw \
     -H 'Content-Type: application/json' \
     -d '{"since": "2026-11-14T00:00:00Z",
          "reason": "internal repository compromised",

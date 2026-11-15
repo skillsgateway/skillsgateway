@@ -253,15 +253,16 @@ test("admin_removes_a_marketplace_from_its_settings", async ({ page }) => {
 });
 
 /**
- * The approval posture from the portal (GW_APPROVAL_0044.15): on a marketplace outside the internal
- * prefixes, automatic rests on an override, and revoking the override leaves no basis.
+ * Automatic approval from the portal (GW_APPROVAL_0044.15): on a marketplace outside the internal
+ * prefixes, turning it on takes an administrator exemption, and revoking the exemption leaves
+ * nothing allowing it.
  *
  * @SVCs SVC_GW_APPROVAL_0044.15
  */
-test("admin_sets_an_automatic_posture_with_an_override_and_revokes_it", async ({ page }) => {
+test("admin_turns_on_automatic_approval_with_an_exemption_and_revokes_it", async ({ page }) => {
   await login(page, "alice");
   await page.goto("/marketplaces");
-  const name = uniqueName("posture");
+  const name = uniqueName("auto-approval");
   await page.getByRole("button", { name: "Register marketplace" }).click();
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
@@ -270,24 +271,24 @@ test("admin_sets_an_automatic_posture_with_an_override_and_revokes_it", async ({
 
   await openMarketplace(page, name);
   await openSection(page, name, "Settings");
-  const card = page.getByRole("form", { name: "Set the approval posture" });
+  const card = page.getByRole("form", { name: "Set automatic approval" });
   const inThirtyDays = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
-  await card.getByRole("button", { name: "Automatic" }).click();
+  await card.getByRole("button", { name: "On", exact: true }).click();
   await card.getByLabel("Reason", { exact: true }).fill("vendor skills, audited quarterly");
   await card.getByLabel("Lapses on", { exact: true }).fill(inThirtyDays);
-  await card.getByRole("checkbox", { name: "Add an override" }).click();
-  await card.getByLabel("Override reason").fill("vendor repository we audit quarterly");
-  await card.getByLabel("Override lapses on").fill(inThirtyDays);
-  await card.getByRole("button", { name: "Save posture" }).click();
-  await expect(page.getByText(`Approval posture of '${name}' saved`)).toBeVisible();
-  await expect(page.getByText("Administrator override")).toBeVisible();
+  await card.getByRole("checkbox", { name: "Add an exemption" }).click();
+  await card.getByLabel("Exemption reason").fill("vendor repository we audit quarterly");
+  await card.getByLabel("Exemption lapses on").fill(inThirtyDays);
+  await card.getByRole("button", { name: "Save automatic approval" }).click();
+  await expect(page.getByText(`Automatic approval of '${name}' saved`)).toBeVisible();
+  await expect(page.getByText("Administrator exemption")).toBeVisible();
 
-  await page.getByRole("button", { name: "Revoke override…" }).click();
-  const dialog = page.getByRole("dialog", { name: `Revoke the override on ${name}` });
-  await dialog.getByRole("button", { name: "Revoke override" }).click();
-  await expect(page.getByText(`Override on '${name}' revoked`)).toBeVisible();
-  await expect(page.getByText("Administrator override")).toHaveCount(0);
-  await expect(page.getByText(/has no active override, so the posture does not take effect/)).toBeVisible();
+  await page.getByRole("button", { name: "Revoke exemption…" }).click();
+  const dialog = page.getByRole("dialog", { name: `Revoke the exemption on ${name}` });
+  await dialog.getByRole("button", { name: "Revoke exemption" }).click();
+  await expect(page.getByText(`Exemption on '${name}' revoked`)).toBeVisible();
+  await expect(page.getByText("Administrator exemption")).toHaveCount(0);
+  await expect(page.getByText(/has no active exemption, so automatic approval does not take effect/)).toBeVisible();
 });
 
 /**

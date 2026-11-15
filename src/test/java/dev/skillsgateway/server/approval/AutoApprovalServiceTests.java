@@ -15,8 +15,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import dev.skillsgateway.server.admin.AdminAuditLogger;
-import dev.skillsgateway.server.approval.ApprovalPostureService.Basis;
 import dev.skillsgateway.server.approval.ApprovalService.ApprovalOverride;
+import dev.skillsgateway.server.approval.AutoApprovalSettingService.AllowedBy;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.AutoMode;
 import dev.skillsgateway.server.persistence.Marketplace;
@@ -71,8 +71,8 @@ class AutoApprovalServiceTests {
     private final MarketplaceRepository marketplaces = mock(MarketplaceRepository.class);
     private final SnapshotRepository snapshots = mock(SnapshotRepository.class);
     private final SnapshotClosureRepository closures = mock(SnapshotClosureRepository.class);
-    private final ApprovalPostureService posture = mock(ApprovalPostureService.class);
-    private final ApprovalPostureRepository postureRepository = mock(ApprovalPostureRepository.class);
+    private final AutoApprovalSettingService setting = mock(AutoApprovalSettingService.class);
+    private final AutoApprovalSettingRepository settingRepository = mock(AutoApprovalSettingRepository.class);
     private final InternalSources internalSources = mock(InternalSources.class);
     private final RequiredVetters requiredVetters = mock(RequiredVetters.class);
     private final VettingService vetting = mock(VettingService.class);
@@ -119,12 +119,12 @@ class AutoApprovalServiceTests {
         when(snapshots.newestLive(MARKETPLACE)).thenReturn(Optional.of(held));
         when(snapshots.recordAutoApprovalSkip(anyLong(), anyString())).thenReturn(true);
         when(marketplaces.findById(MARKETPLACE)).thenReturn(Optional.of(marketplace));
-        when(posture.resolveForAttempt(marketplace)).thenReturn(Basis.HOSTED);
-        when(posture.effectiveBasis(marketplace)).thenReturn(Basis.HOSTED);
-        when(posture.view("m"))
-                .thenReturn(new ApprovalPostureService.PostureView(
-                        ApprovalPostureService.Posture.AUTO,
-                        Basis.HOSTED,
+        when(setting.resolveForAttempt(marketplace)).thenReturn(AllowedBy.HOSTED);
+        when(setting.effectiveAllowedBy(marketplace)).thenReturn(AllowedBy.HOSTED);
+        when(setting.view("m"))
+                .thenReturn(new AutoApprovalSettingService.SettingView(
+                        true,
+                        AllowedBy.HOSTED,
                         "root",
                         Instant.now(),
                         "r",
@@ -157,8 +157,8 @@ class AutoApprovalServiceTests {
                 marketplaces,
                 snapshots,
                 closures,
-                posture,
-                postureRepository,
+                setting,
+                settingRepository,
                 internalSources,
                 requiredVetters,
                 vetting,
@@ -219,13 +219,13 @@ class AutoApprovalServiceTests {
                         eq("m"),
                         eq(AutoApprovalService.EVENT_APPROVED),
                         eq(held.sha()),
-                        startsWith("basis=hosted; grantor=root; chain=c; baseline=none; worst=none; waivers=[]"));
+                        startsWith("allowedBy=hosted; grantor=root; chain=c; baseline=none; worst=none; waivers=[]"));
     }
 
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.12", "SVC_GW_APPROVAL_0044.11"})
-    void underShadowEveryCheckRunsAndNothingIsPublished() throws IOException {
-        when(properties.approval().auto().mode()).thenReturn(AutoMode.SHADOW);
+    void underDryRunEveryCheckRunsAndNothingIsPublished() throws IOException {
+        when(properties.approval().auto().mode()).thenReturn(AutoMode.DRY_RUN);
         when(snapshots.recordAutoApprovalSkip(SNAPSHOT, AutoApprovalService.WOULD_APPROVE))
                 .thenReturn(true, false);
 
@@ -263,8 +263,8 @@ class AutoApprovalServiceTests {
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.11"})
     void aRepeatedSkipIsLedgeredOnce() {
-        when(posture.resolveForAttempt(marketplace)).thenReturn(Basis.NONE);
-        when(snapshots.recordAutoApprovalSkip(SNAPSHOT, "no-basis: none")).thenReturn(true, false);
+        when(setting.resolveForAttempt(marketplace)).thenReturn(AllowedBy.NONE);
+        when(snapshots.recordAutoApprovalSkip(SNAPSHOT, "not-allowed: none")).thenReturn(true, false);
 
         service.attempt(SNAPSHOT);
         service.attempt(SNAPSHOT);
@@ -275,7 +275,7 @@ class AutoApprovalServiceTests {
                         anyString(),
                         eq(AutoApprovalService.EVENT_SKIPPED),
                         anyString(),
-                        eq("no-basis: none"));
+                        eq("not-allowed: none"));
     }
 
     @Test
@@ -301,7 +301,7 @@ class AutoApprovalServiceTests {
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.9"})
     void aTooYoungSnapshotIsApprovedOnALaterTickOnceOfAge() {
-        when(postureRepository.autoMarketplaces()).thenReturn(List.of(MARKETPLACE));
+        when(settingRepository.enabledMarketplaces()).thenReturn(List.of(MARKETPLACE));
         when(approvals.approve(eq(SNAPSHOT), eq(AutoApprovalService.ACTOR), any()))
                 .thenThrow(mock(SnapshotTooYoungException.class))
                 .thenReturn(mock(ApprovalService.Approved.class));

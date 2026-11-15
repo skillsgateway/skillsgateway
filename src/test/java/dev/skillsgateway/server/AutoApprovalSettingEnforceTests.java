@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import dev.skillsgateway.server.approval.ApprovalPostureService;
+import dev.skillsgateway.server.approval.AutoApprovalSettingService;
 import dev.skillsgateway.server.approval.FourEyesGate;
 import dev.skillsgateway.server.estate.EstateReconciler;
 import dev.skillsgateway.server.persistence.Marketplace;
@@ -26,17 +26,17 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 /**
- * Four-eyes on granting {@code auto}, under {@code enforce} (GW_APPROVAL_0044.4). The property
+ * Four-eyes on turning automatic approval on, under {@code enforce} (GW_APPROVAL_0044.4). The property
  * sources are exactly {@code FourEyesEnforceTests}'s, so the two suites share one context.
  */
 @TestPropertySource(properties = "skills-gateway.approval.four-eyes.mode=enforce")
 @TestPropertySource(properties = {"skills-gateway.roles.admins=dana,rachel"})
-class ApprovalPostureEnforceTests extends AbstractGatewayTest {
+class AutoApprovalSettingEnforceTests extends AbstractGatewayTest {
 
     private static final String INTERNAL = "https://git.internal.test/acme/";
 
     @Autowired
-    private ApprovalPostureService postureService;
+    private AutoApprovalSettingService settingService;
 
     @Autowired
     private FourEyesGate fourEyesGate;
@@ -45,16 +45,16 @@ class ApprovalPostureEnforceTests extends AbstractGatewayTest {
         return oidcLogin().idToken(token -> token.subject(subject));
     }
 
-    private static String auto(Duration expiresIn) {
+    private static String on(Duration expiresIn) {
         return """
-                {"posture": "auto", "reason": "our platform team", "expiresAt": "%s"}""".formatted(Instant.now().plus(expiresIn).truncatedTo(ChronoUnit.SECONDS));
+                {"enabled": true, "reason": "our platform team", "expiresAt": "%s"}""".formatted(Instant.now().plus(expiresIn).truncatedTo(ChronoUnit.SECONDS));
     }
 
-    private ResultActions putPosture(String name, String subject) throws Exception {
-        return mockMvc.perform(put("/api/v1/marketplaces/{name}/approval-posture", name)
+    private ResultActions putSetting(String name, String subject) throws Exception {
+        return mockMvc.perform(put("/api/v1/marketplaces/{name}/auto-approval", name)
                 .with(as(subject))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(auto(Duration.ofDays(30))));
+                .content(on(Duration.ofDays(30))));
     }
 
     @Test
@@ -68,14 +68,14 @@ class ApprovalPostureEnforceTests extends AbstractGatewayTest {
                 Marketplace.PUSH_APPEND_ONLY,
                 "dana");
 
-        putPosture(marketplace.name(), "dana")
+        putSetting(marketplace.name(), "dana")
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.posture").value("auto"))
-                .andExpect(jsonPath("$.basis").value("awaiting-second-administrator"))
+                .andExpect(jsonPath("$.enabled").value(true))
+                .andExpect(jsonPath("$.allowedBy").value("awaiting-second-administrator"))
                 .andExpect(jsonPath("$.setBy").value("dana"));
-        assertThat(postureService.effectiveBasis(
+        assertThat(settingService.effectiveAllowedBy(
                         marketplaceRepository.findById(marketplace.id()).orElseThrow()))
-                .isEqualTo(ApprovalPostureService.Basis.AWAITING_SECOND_ADMINISTRATOR);
+                .isEqualTo(AutoApprovalSettingService.AllowedBy.AWAITING_SECOND_ADMINISTRATOR);
         assertThat(fetchLogRepository.list())
                 .filteredOn(entry -> marketplace.name().equals(entry.get("marketplace"))
                         && FourEyesGate.EVENT_CONFLICT.equals(entry.get("event")))
@@ -85,38 +85,37 @@ class ApprovalPostureEnforceTests extends AbstractGatewayTest {
                         .contains(FourEyesGate.ROLE_REGISTERED_BY));
 
         // The registrant setting it again changes nothing.
-        putPosture(marketplace.name(), "dana")
+        putSetting(marketplace.name(), "dana")
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.basis").value("awaiting-second-administrator"));
+                .andExpect(jsonPath("$.allowedBy").value("awaiting-second-administrator"));
 
         // A different administrator confirms it.
-        putPosture(marketplace.name(), "rachel")
+        putSetting(marketplace.name(), "rachel")
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.basis").value("internal-prefix"))
+                .andExpect(jsonPath("$.allowedBy").value("internal-source"))
                 .andExpect(jsonPath("$.setBy").value("rachel"));
     }
 
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.4"})
-    void autoChosenAtRegistrationAwaitsASecondAdministrator() throws Exception {
+    void automaticApprovalTurnedOnAtRegistrationAwaitsASecondAdministrator() throws Exception {
         String name = uniqueName("peregister");
 
         mockMvc.perform(post("/api/v1/marketplaces")
                         .with(as("dana"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name": "%s", "origin": "hosted", "approval": %s}""".formatted(name, auto(Duration.ofDays(14)))))
+                                {"name": "%s", "origin": "hosted", "autoApproval": %s}""".formatted(name, on(Duration.ofDays(14)))))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/api/v1/marketplaces/{name}/approval-posture", name)
-                        .with(as("rachel")))
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/auto-approval", name).with(as("rachel")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.posture").value("auto"))
-                .andExpect(jsonPath("$.basis").value("awaiting-second-administrator"));
+                .andExpect(jsonPath("$.enabled").value(true))
+                .andExpect(jsonPath("$.allowedBy").value("awaiting-second-administrator"));
 
-        putPosture(name, "rachel")
+        putSetting(name, "rachel")
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.basis").value("hosted"));
+                .andExpect(jsonPath("$.allowedBy").value("hosted"));
     }
 
     @Test
@@ -130,16 +129,13 @@ class ApprovalPostureEnforceTests extends AbstractGatewayTest {
                 Marketplace.PUSH_APPEND_ONLY,
                 EstateReconciler.ACTOR);
 
-        ApprovalPostureService.PostureView view = postureService.set(
+        AutoApprovalSettingService.SettingView view = settingService.set(
                 marketplace.name(),
-                new ApprovalPostureService.PostureRequest(
-                        ApprovalPostureService.Posture.AUTO,
-                        "declared in the estate",
-                        Instant.now().plus(Duration.ofDays(30)),
-                        null),
+                new AutoApprovalSettingService.SettingRequest(
+                        true, "declared in the estate", Instant.now().plus(Duration.ofDays(30)), null),
                 EstateReconciler.ACTOR);
 
-        assertThat(view.basis()).isEqualTo(ApprovalPostureService.Basis.INTERNAL_PREFIX);
+        assertThat(view.allowedBy()).isEqualTo(AutoApprovalSettingService.AllowedBy.INTERNAL_SOURCE);
         assertThat(fetchLogRepository.list())
                 .filteredOn(entry -> marketplace.name().equals(entry.get("marketplace"))
                         && FourEyesGate.EVENT_CONFLICT.equals(entry.get("event")))

@@ -37,7 +37,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MarketplaceVettingChain } from "@/components/marketplace-vetting-chain";
-import { ApprovalPosture } from "@/components/approval-posture";
+import { AutoApproval } from "@/components/auto-approval";
 import { EditMarketplaceUrl } from "@/components/edit-marketplace-url";
 import { RemoveMarketplace } from "@/components/remove-marketplace";
 import { SetupWizard } from "@/components/setup-wizard";
@@ -412,8 +412,8 @@ export function MarketplaceActivityPage() {
 }
 
 /**
- * Settings: what was registered and the approval posture, and — for an administrator only — the
- * URL correction, the posture's form, the vetting chain and removal. None of those is shown to
+ * Settings: what was registered and automatic approval, and — for an administrator only — the
+ * URL correction, the automatic-approval form, the vetting chain and removal. None of those is shown to
  * marketplace-scoped approvers, and the server refuses each independently.
  */
 export function MarketplaceSettingsPage() {
@@ -477,7 +477,7 @@ export function MarketplaceSettingsPage() {
           ) : null}
         </CardContent>
       </Card>
-      <ApprovalPosture marketplace={marketplace.name ?? ""} canAdminister={isAdmin} />
+      <AutoApproval marketplace={marketplace.name ?? ""} canAdminister={isAdmin} />
       {isAdmin ? <MarketplaceVettingChain marketplace={marketplace.name ?? ""} /> : null}
       {isAdmin ? <RemoveMarketplace name={marketplace.name ?? ""} /> : null}
     </div>

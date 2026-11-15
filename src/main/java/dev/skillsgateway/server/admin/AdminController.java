@@ -1,9 +1,9 @@
 package dev.skillsgateway.server.admin;
 
-import dev.skillsgateway.server.approval.ApprovalPostureService;
 import dev.skillsgateway.server.approval.ApprovalRecorder;
 import dev.skillsgateway.server.approval.ApprovalService;
 import dev.skillsgateway.server.approval.AutoApprovalService;
+import dev.skillsgateway.server.approval.AutoApprovalSettingService;
 import dev.skillsgateway.server.approval.ClosureIncompleteException;
 import dev.skillsgateway.server.approval.FourEyesConflictException;
 import dev.skillsgateway.server.approval.FourEyesGate;
@@ -91,7 +91,7 @@ public class AdminController {
     private final WebhookService webhookService;
     private final ApprovalRecorder approvalRecorder;
     private final RoleService roleService;
-    private final ApprovalPostureService postureService;
+    private final AutoApprovalSettingService autoApprovalSettingService;
     private final AutoApprovalService autoApprovalService;
 
     public AdminController(
@@ -110,7 +110,7 @@ public class AdminController {
             WebhookService webhookService,
             ApprovalRecorder approvalRecorder,
             RoleService roleService,
-            ApprovalPostureService postureService,
+            AutoApprovalSettingService autoApprovalSettingService,
             AutoApprovalService autoApprovalService) {
         this.servedTip = servedTip;
         this.registrationService = registrationService;
@@ -127,7 +127,7 @@ public class AdminController {
         this.webhookService = webhookService;
         this.approvalRecorder = approvalRecorder;
         this.roleService = roleService;
-        this.postureService = postureService;
+        this.autoApprovalSettingService = autoApprovalSettingService;
         this.autoApprovalService = autoApprovalService;
     }
 
@@ -167,21 +167,19 @@ public class AdminController {
             String ref,
 
             @Schema(
-                    description = "Optional approval posture, chosen at registration (GW_APPROVAL_0044.1). auto"
-                            + " needs a reason and an expiry, and an internal basis: a marketplace outside the"
-                            + " internal prefixes is refused, since its override is set afterwards")
-            RegistrationApproval approval) {}
+                    description = "Optional automatic approval, chosen at registration (GW_APPROVAL_0044.1)."
+                            + " Turning it on needs a reason and an expiry, and an internal source: a marketplace"
+                            + " outside the internal prefixes is refused, since its exemption is granted afterwards")
+            RegistrationAutoApproval autoApproval) {}
 
-    @Schema(description = "The approval posture chosen at registration")
-    public record RegistrationApproval(
-            @Schema(
-                    description = "manual or auto",
-                    allowableValues = {"manual", "auto"})
-            ApprovalPostureService.Posture posture,
+    @Schema(description = "Automatic approval chosen at registration")
+    public record RegistrationAutoApproval(
+            @Schema(description = "true or false; required") Boolean enabled,
 
-            @Schema(description = "Why; required for auto") String reason,
+            @Schema(description = "Why; required to turn it on")
+            String reason,
 
-            @Schema(description = "When auto lapses back to manual; required for auto, at most 90 days ahead")
+            @Schema(description = "When it lapses back to off; required to turn it on, at most 90 days ahead")
             Instant expiresAt) {}
 
     @Schema(description = "A registered marketplace with its snapshots and forge metadata")
@@ -277,23 +275,23 @@ public class AdminController {
             @RequestBody RegisterMarketplaceRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
         requireDefaultBranchRef(request.ref());
-        RegistrationApproval approval = request.approval();
-        if (approval != null) {
-            postureService.checkRegistration(
+        RegistrationAutoApproval autoApproval = request.autoApproval();
+        if (autoApproval != null) {
+            autoApprovalSettingService.checkRegistration(
                     request.name(),
                     request.url(),
                     request.origin(),
-                    approval.posture(),
-                    approval.reason(),
-                    approval.expiresAt());
+                    autoApproval.enabled(),
+                    autoApproval.reason(),
+                    autoApproval.expiresAt());
         }
         MarketplaceRegistrationService.RegistrationOutcome outcome = registrationService.register(
                 request.name(), request.url(), request.origin(), request.pushPolicy(), authentication.getName());
-        if (approval != null && approval.posture() == ApprovalPostureService.Posture.AUTO) {
-            postureService.set(
+        if (autoApproval != null && Boolean.TRUE.equals(autoApproval.enabled())) {
+            autoApprovalSettingService.set(
                     outcome.marketplace().name(),
-                    new ApprovalPostureService.PostureRequest(
-                            approval.posture(), approval.reason(), approval.expiresAt(), null),
+                    new AutoApprovalSettingService.SettingRequest(
+                            true, autoApproval.reason(), autoApproval.expiresAt(), null),
                     authentication.getName());
         }
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -754,9 +752,9 @@ public class AdminController {
     @Tag(name = "Snapshots")
     @Operation(
             summary = "Automatic approval evaluation",
-            description = "What an automatic approval attempt would decide for this snapshot now: the"
-                    + " marketplace's basis, and the first check that fails or none. The same evaluation the"
-                    + " attempt makes, in every mode, so under off and shadow it measures what on would do."
+            description = "What an automatic approval attempt would decide for this snapshot now: what allows"
+                    + " the marketplace's automatic approval, and the first check that fails or none. The same evaluation the"
+                    + " attempt makes, in every mode, so under off and dry-run it measures what on would do."
                     + " It writes nothing. Under on, an eligible snapshot still meets every approval gate.")
     @ApiResponse(responseCode = "200", description = "The evaluation")
     @ApiResponse(responseCode = "404", description = "Snapshot not found")

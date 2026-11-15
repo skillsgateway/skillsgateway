@@ -1012,9 +1012,10 @@ and what counts as internal. Java-side defaults; nothing appears in
 skills-gateway:
   approval:
     auto:
-      # off (default): no posture takes effect. shadow: every check runs and
-      # is recorded, nothing is published. on: eligible snapshots are approved.
-      mode: shadow
+      # off (default): no automatic approval takes effect. dry-run: every
+      # check runs and is recorded, nothing is published. on: eligible
+      # snapshots are approved.
+      mode: dry-run
       # URL prefixes under which a marketplace is internal. Hosted marketplaces
       # are internal without one.
       internal-prefixes:
@@ -1028,7 +1029,7 @@ skills-gateway:
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `skills-gateway.approval.auto.mode` | string | `off` | `off`, `shadow` or `on`. `off` is also the incident switch: it stops every attempt at once. |
+| `skills-gateway.approval.auto.mode` | string | `off` | `off`, `dry-run` or `on`. `off` is also the incident switch: it stops every attempt at once. |
 | `skills-gateway.approval.auto.internal-prefixes` | list | `[]` | A URL is internal when it has the prefix's scheme, host and port, and its path equals the prefix's or continues it after a `/`. `https://git.example.com/acme` never covers `…/acme-evil`. |
 | `skills-gateway.approval.auto.required-vetters` | list | unset (every vetter) | The vetters whose verdict must not be `DISABLED`. Each automatic approval's ledger entry names the vetters that were switched off. |
 
@@ -1051,7 +1052,7 @@ skipped as `revet-disabled`.
 !!! warning "A Markdown change with no finding is approved"
 
     In an agent skill, Markdown is instructions. A changed `SKILL.md` that
-    raises no finding passes the executable-surface check. Run `shadow` first
+    raises no finding passes the executable-surface check. Run `dry-run` first
     and read the would-approve entries before turning `on`.
 
 ---
@@ -1413,12 +1414,12 @@ skills-gateway:
       # its ingestion trigger. push-policy defaults to append-only.
       - name: platform-skills
         origin: hosted
-        # Optional approval posture. auto needs a reason and an expiry at most
-        # 90 days out, and an internal basis (an internal prefix, or hosted).
-        # An override is never declarable. A lapsed expires-at leaves the
-        # posture manual until this declaration changes.
-        approval:
-          posture: auto
+        # Optional automatic approval. enabled: true needs a reason, an expiry
+        # at most 90 days out, and an internal source (an internal prefix, or
+        # hosted). An exemption is never declarable. A lapsed expires-at
+        # leaves automatic approval off until this declaration changes.
+        auto-approval:
+          enabled: true
           reason: our own skills, published by CI
           expires-at: 2027-01-30T00:00:00Z
         push-policy: append-only
@@ -1468,10 +1469,10 @@ skills-gateway:
 | `skills-gateway.estate.marketplaces[].name` | string | — | Same rules as the API: `^[a-z0-9][a-z0-9_-]{0,62}$` (at most 63 characters), catalog name reserved. |
 | `skills-gateway.estate.marketplaces[].url` | string | — | Scheme must be allowlisted. Immutable once registered: a differing declared URL is a reconciliation failure, never an update. |
 | `skills-gateway.estate.marketplaces[].sync-mode` | string | unset (not managed) | `on-demand` or `scheduled`; `webhook` is refused. Unset never touches the stored mode. |
-| `skills-gateway.estate.marketplaces[].approval.posture` | string | unset (not managed) | `manual` or `auto`, applied as `config-reconciler` through the same rules as [`PUT …/approval-posture`](api/marketplaces.md#put-marketplacesnameapproval-posture). `auto` with no internal basis, or with a missing or too-distant expiry, is an isolated entry failure. |
-| `skills-gateway.estate.marketplaces[].approval.reason` | string | — | Required for `auto`. A changed reason is re-applied. |
-| `skills-gateway.estate.marketplaces[].approval.expires-at` | instant | — | Required for `auto`, at most 90 days ahead when applied. A changed date is re-applied; that is how a declared posture is renewed. |
-| `skills-gateway.estate.marketplaces[].approval.override` | — | — | Refused: an override is a dated judgement by a named person, made through the API or the portal. Declaring one fails the entry. |
+| `skills-gateway.estate.marketplaces[].auto-approval.enabled` | boolean | unset (not managed) | `true` or `false`, applied as `config-reconciler` through the same rules as [`PUT …/auto-approval`](api/marketplaces.md#put-marketplacesnameauto-approval). `true` for a marketplace whose source is not internal, or with a missing or too-distant expiry, is an isolated entry failure. |
+| `skills-gateway.estate.marketplaces[].auto-approval.reason` | string | — | Required when `enabled` is `true`. A changed reason is re-applied. |
+| `skills-gateway.estate.marketplaces[].auto-approval.expires-at` | instant | — | Required when `enabled` is `true`, at most 90 days ahead when applied. A changed date is re-applied; that is how declared automatic approval is renewed. |
+| `skills-gateway.estate.marketplaces[].auto-approval.exemption` | — | — | Refused: an administrator exemption is a dated judgement by a named person, made through the API or the portal. Declaring one fails the entry. |
 | `skills-gateway.estate.grants` | list | `[]` | Each entry: `principal`, `role` (`admin`/`approver`/`auditor`), `marketplace` (required for approver, forbidden otherwise). |
 | `skills-gateway.estate.webhooks` | list | `[]` | Each entry: `name`, `url`, optional `events` (a list; omitted means every event), `secret`. |
 | `skills-gateway.estate.webhooks[].secret` | string | — | Operator-supplied, minimum 16 characters, write-only. A changed value rotates the stored secret idempotently. |

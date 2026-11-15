@@ -13,7 +13,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Which marketplaces are internal (GW_APPROVAL_0044.2), away from any Spring context: the matcher
- * a posture's eligibility rests on, and the prefixes that refuse to load.
+ * automatic approval's eligibility rests on, and the prefixes that refuse to load.
  */
 class InternalSourcesTests {
 

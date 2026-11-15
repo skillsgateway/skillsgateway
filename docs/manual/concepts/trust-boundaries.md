@@ -334,10 +334,11 @@ decided deliberately or not at all (ADR 0006 in
 that trust-model change, made deliberately and kept narrow
 ([ADR 0023 — Automatic approval of internal marketplaces](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0023-automatic-approval-of-internal-marketplaces.md)).
 The human decision moves from each snapshot to the marketplace: an
-administrator grants a posture, with a reason and an expiry of at most 90 days,
-and four-eyes applies to that grant. The grant takes effect only for an
-internal source (a configured URL prefix, or a hosted marketplace) or under an
-override, which is a dated exception a named person records.
+administrator turns automatic approval on, with a reason and an expiry of at
+most 90 days, and four-eyes applies to that grant. The grant takes effect only
+for an internal source (a configured URL prefix, or a hosted marketplace) or
+under an administrator exemption, which is a dated exception a named person
+records.
 
 What the grant allows is narrow. Only the newest snapshot is a candidate, it
 may pull in no external source, the whole chain must clear it, and its
@@ -354,7 +355,7 @@ and automatic approval refuses to act while re-vetting is off. An
 administrator can withdraw everything approved automatically since a time in
 one act, and the deployment's `mode: off` stops every attempt at once. The
 residual risk, accepted in the ADR, is an instruction-only change that raises
-no finding; shadow mode is how an adopter measures it before turning it on.
+no finding; a dry run is how an adopter measures it before turning it on.
 
 What *a human* can do, deliberately and audibly, is the airline-cockpit escape
 hatch (ADR 0009): an **administrator** can disconnect the automation. Two acts,

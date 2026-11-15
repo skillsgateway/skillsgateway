@@ -40,7 +40,7 @@ this option protects, and on a clean internal update it decides nothing.
 Rejected, for the reasons in ADR 0021: a tier restates findings in a second,
 lossy vocabulary, and "Markdown only" is not "nothing runs".
 
-### Option C — A per-marketplace posture with a narrow, fail-closed predicate (chosen)
+### Option C — A per-marketplace automatic approval setting with a narrow, fail-closed predicate (chosen)
 
 An administrator opts a marketplace into automatic approval for a limited
 time. A snapshot of it is approved by a system actor only when a fixed
@@ -50,13 +50,14 @@ stays held for a person.
 
 ## Decision
 
-- **Opt-in, dated and accountable.** A marketplace's posture is `manual` by
-  default. `auto` records who set it, why, and an expiry of at most 90 days.
-  Setting it is subject to four-eyes: the registering administrator is
-  conflicted. A deployment-wide mode (`off`, `shadow`, `on`) defaults to `off`.
+- **Opt-in, dated and accountable.** A marketplace's automatic approval is
+  off by default. Turning it on records who did it, why, and an expiry of at
+  most 90 days. Turning it on is subject to four-eyes: the registering
+  administrator is conflicted. A deployment-wide mode (`off`, `dry-run`, `on`)
+  defaults to `off`.
 - **Internal is the operator's statement.** A marketplace is internal when it
   is hosted or its URL falls under an operator-configured prefix on whole path
-  segments. A marketplace outside the prefixes needs an administrator override
+  segments. A marketplace outside the prefixes needs an administrator exemption
   with its own 90-day expiry, which is never declarable in the estate.
 - **Trust never travels.** A snapshot with any closure member stays held,
   whatever the member's URL.
@@ -68,7 +69,7 @@ stays held for a person.
 - **Same path, same evidence.** The automatic approver calls the one approval
   decision, so every existing gate applies unchanged, and one recorder writes
   the same ledger entries and webhook for both paths. The automatic approver is
-  a typed system actor, and its entry carries the basis it relied on.
+  a typed system actor, and its entry carries what allowed it.
 - **Unattended recall.** Re-vetting revokes an automatically approved snapshot
   on new blocking evidence whatever the global re-vetting mode, and automatic
   approval acts only while re-vetting is enabled. An administrator can withdraw
@@ -76,7 +77,7 @@ stays held for a person.
 
 ### The four-eyes exemption for the estate reconciler
 
-A posture declared in the estate is applied by `config-reconciler`. Its
+Automatic approval declared in the estate is applied by `config-reconciler`. Its
 separation of duties is the review of the estate repository, which happens
 outside the gateway, so the reconciler is exempt from the four-eyes check on
 the grant. It is exempt from that check only: it is not added to
@@ -96,7 +97,7 @@ on/off switch never becomes a blanket approval`), so with every vetter but one
 switched off a single passing check would clear the chain. By default every
 vetter is required. An operator can name the required ones in
 `skills-gateway.approval.auto.required-vetters`, gateway-wide, so that the
-administrator granting `auto` cannot lower the bar for that marketplace.
+administrator turning automatic approval on cannot lower the bar for that marketplace.
 Startup refuses an empty list and an unknown name. Each automatic approval's
 ledger entry names the vetters that were switched off.
 
@@ -110,7 +111,7 @@ re-vetting or a person notices and it is withdrawn.
 The mitigations are the ones above: no external sources, the executable
 surface rule, the whole-chain rule, baseline-only waivers, every existing
 gate, automatic revocation on re-vetting, bulk withdrawal, and the mode switch.
-Shadow mode is how an adopter measures how often an instruction-only change
+A dry run is how an adopter measures how often an instruction-only change
 would publish before turning automatic approval on.
 
 ## Consequences

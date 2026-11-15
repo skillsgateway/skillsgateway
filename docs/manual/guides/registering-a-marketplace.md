@@ -282,20 +282,20 @@ informational only; nothing depends on it.
 ## Approving its updates automatically
 
 A marketplace your organisation owns can have its clean updates approved with
-no person. Registration takes an optional `approval`:
+no person. Registration takes an optional `autoApproval`:
 
 ```console
 $ curl -X POST localhost:8080/api/v1/marketplaces \
     -H 'Content-Type: application/json' \
     -d '{"name":"platform","url":"https://git.example.com/platform/skills.git",
-         "approval":{"posture":"auto","reason":"our own skills",
-                     "expiresAt":"2027-01-30T00:00:00Z"}}'
+         "autoApproval":{"enabled":true,"reason":"our own skills",
+                         "expiresAt":"2027-01-30T00:00:00Z"}}'
 ```
 
 This works only for a URL under a configured internal prefix, or a hosted
 marketplace; anything else is refused with `409` before anything is
 registered. To opt in a marketplace outside the prefixes, register it, then
-set the posture with an override on its Settings page. Nothing is published
+turn automatic approval on with an exemption on its Settings page. Nothing is published
 automatically while the deployment's mode is `off`, which is the default. See
 [Automatic approval](approving-snapshots.md#automatic-approval).
 

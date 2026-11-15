@@ -113,46 +113,46 @@ export function useRemoveMarketplace() {
   });
 }
 
-export type PostureView = components["schemas"]["PostureView"];
-export type PostureRequest = components["schemas"]["PostureRequest"];
+export type AutoApprovalView = components["schemas"]["AutoApprovalView"];
+export type AutoApprovalRequest = components["schemas"]["AutoApprovalRequest"];
 
-const postureKey = (name: string) => ["approval-posture", name] as const;
+const autoApprovalKey = (name: string) => ["auto-approval", name] as const;
 
 /**
- * A marketplace's approval posture, its effective basis, the active override and the deployment's
- * mode. Readable by any session.
+ * A marketplace's automatic approval, what allows it, the active exemption and the gateway's mode.
+ * Readable by any session.
  *
  * @Requirements GW_APPROVAL_0044.15
  */
-export function useApprovalPosture(name: string) {
+export function useAutoApproval(name: string) {
   return useQuery({
-    queryKey: postureKey(name),
-    queryFn: () => api<PostureView>(`/api/v1/marketplaces/${encodeURIComponent(name)}/approval-posture`),
+    queryKey: autoApprovalKey(name),
+    queryFn: () => api<AutoApprovalView>(`/api/v1/marketplaces/${encodeURIComponent(name)}/auto-approval`),
   });
 }
 
-/** Set or renew a posture, with an override for a marketplace outside the internal prefixes. Admin-only. */
-export function useSetApprovalPosture(name: string) {
+/** Turn automatic approval on, off or renew it, with an exemption for a marketplace outside the internal prefixes. Admin-only. */
+export function useSetAutoApproval(name: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (request: PostureRequest) =>
-      api<PostureView>(`/api/v1/marketplaces/${encodeURIComponent(name)}/approval-posture`, {
+    mutationFn: (request: AutoApprovalRequest) =>
+      api<AutoApprovalView>(`/api/v1/marketplaces/${encodeURIComponent(name)}/auto-approval`, {
         method: "PUT",
         body: JSON.stringify(request),
       }),
-    onSuccess: (view) => queryClient.setQueryData(postureKey(name), view),
+    onSuccess: (view) => queryClient.setQueryData(autoApprovalKey(name), view),
   });
 }
 
-/** End the active override at once. Admin-only. */
-export function useRevokeApprovalOverride(name: string) {
+/** End the active exemption at once. Admin-only. */
+export function useRevokeAutoApprovalExemption(name: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () =>
-      api<PostureView>(`/api/v1/marketplaces/${encodeURIComponent(name)}/approval-posture/override`, {
+      api<AutoApprovalView>(`/api/v1/marketplaces/${encodeURIComponent(name)}/auto-approval/exemption`, {
         method: "DELETE",
       }),
-    onSuccess: (view) => queryClient.setQueryData(postureKey(name), view),
+    onSuccess: (view) => queryClient.setQueryData(autoApprovalKey(name), view),
   });
 }
 

@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * Which marketplaces are internal, and so may be given an automatic-approval posture
+ * Which marketplaces are internal, and so may have automatic approval turned on
  * (GW_APPROVAL_0044.2). Decided from the URL at every attempt and never stored, so a narrowed
  * prefix list takes effect at once rather than leaving a stale "trusted" bit behind.
  *

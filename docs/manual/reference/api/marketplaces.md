@@ -106,18 +106,18 @@ refuses a non-fast-forward push, `allow-rewrite` permits one and records both
 tips on the ledger. See
 [Publishing first-party skills](../../guides/publishing-first-party-skills.md).
 
-`approval` chooses the [approval posture](#approval-posture) at registration:
-`{posture, reason?, expiresAt?}`, with the rules `PUT
-/marketplaces/{name}/approval-posture` applies. It takes no override, because
-an override needs the marketplace to exist. To register a marketplace outside
-the internal prefixes with an automatic posture, register it, then set the
-posture with an override.
+`autoApproval` turns on [automatic approval](#automatic-approval) at
+registration: `{enabled, reason?, expiresAt?}`, with the rules `PUT
+/marketplaces/{name}/auto-approval` applies. It takes no exemption, because
+an exemption needs the marketplace to exist. To register a marketplace outside
+the internal prefixes with automatic approval on, register it, then turn
+automatic approval on with an exemption.
 
 | Status | Cause |
 | --- | --- |
 | 201 | Registered; returns the marketplace plus `warnings` (see below). |
-| 400 | URL scheme not allowlisted, a `url` with userinfo (a credential in the URL), `ref` present and not `main`, a hosted registration supplying a `url`, an upstream one omitting it, a `pushPolicy` on an upstream marketplace, or an `approval` of `auto` without a reason or an expiry, or for longer than 90 days. |
-| 409 | `approval` is `auto` for a marketplace with no internal basis; `nextStep` says to set the posture with an override after registering. Or a live marketplace has that name. A [removed](#delete-marketplacesname) marketplace's name is free. A mistyped URL can be [corrected](#put-marketplacesnameurl) until the first snapshot. |
+| 400 | URL scheme not allowlisted, a `url` with userinfo (a credential in the URL), `ref` present and not `main`, a hosted registration supplying a `url`, an upstream one omitting it, a `pushPolicy` on an upstream marketplace, or an `autoApproval` that is enabled without a reason or an expiry, or for longer than 90 days. |
+| 409 | `autoApproval` is enabled for a marketplace whose source is not internal; `nextStep` says to turn automatic approval on with an exemption after registering. Or a live marketplace has that name. A [removed](#delete-marketplacesname) marketplace's name is free. A mistyped URL can be [corrected](#put-marketplacesnameurl) until the first snapshot. |
 | 422 | Name fails `^[a-z0-9][a-z0-9_-]{0,62}$` (at most 63 characters; the reason says the name is the `/git/<name>` path clients clone), or an unknown `origin`/`pushPolicy`. |
 | 502 | The upstream could not be read, or has no default branch. Nothing was registered. The problem carries `reason`, `rootCause` and `nextStep`; see [Registering a marketplace](../../guides/registering-a-marketplace.md#what-is-validated-and-why). |
 
@@ -230,86 +230,88 @@ do not block approving it. See
 
 ---
 
-## Approval posture
+## Automatic approval
 
 Whether a marketplace's snapshots can be approved with no person. See
 [Automatic approval](../../guides/approving-snapshots.md#automatic-approval)
 for what an automatic approval checks.
 
-### `GET /marketplaces/{name}/approval-posture`
+### `GET /marketplaces/{name}/auto-approval`
 
 Open to any session.
 
 ```json
-{"posture":"auto","basis":"override","setBy":"alice","setAt":"2026-11-10T09:00:00Z",
+{"enabled":true,"allowedBy":"exemption","setBy":"alice","setAt":"2026-11-10T09:00:00Z",
  "reason":"vendor skills, audited quarterly","expiresAt":"2027-01-30T00:00:00Z",
- "override":{"id":7,"reason":"vendor repository we audit quarterly","createdBy":"alice",
-             "createdAt":"2026-11-10T09:00:00Z","expiresAt":"2026-12-15T00:00:00Z"},
+ "exemption":{"id":7,"reason":"vendor repository we audit quarterly","createdBy":"alice",
+              "createdAt":"2026-11-10T09:00:00Z","expiresAt":"2026-12-15T00:00:00Z"},
  "mode":"on"}
 ```
 
 | Field | Meaning |
 | --- | --- |
-| `posture` | `manual` or `auto`, as stored. A lapsed `auto` stays `auto` here; `basis` says it does not take effect. |
-| `basis` | Why `auto` takes effect, computed at every read: `internal-prefix` (the URL is under a [configured prefix](../configuration.md#automatic-approval)), `hosted`, or `override`. `awaiting-second-administrator` when four-eyes is `enforce` and the grantor registered the marketplace. `none` for `manual`, a lapsed posture, or no internal source and no active override. |
-| `setBy`, `setAt`, `reason`, `expiresAt` | Who set the posture, when, why, and when `auto` lapses back to manual. |
-| `override` | The active override, or absent. A lapsed or revoked override is not returned. |
-| `mode` | The deployment's `skills-gateway.approval.auto.mode`: `off`, `shadow` or `on`. Only `on` publishes. |
+| `enabled` | Whether an administrator turned automatic approval on, as stored. A lapsed setting stays `true` here; `allowedBy` says it does not take effect. |
+| `allowedBy` | Why automatic approval takes effect, computed at every read: `internal-source` (the URL is under a [configured prefix](../configuration.md#automatic-approval)), `hosted`, or `exemption`. `awaiting-second-administrator` when four-eyes is `enforce` and the grantor registered the marketplace. `none` when automatic approval is off or has lapsed, or when the source is not internal and there is no active exemption. |
+| `setBy`, `setAt`, `reason`, `expiresAt` | Who set automatic approval, when, why, and when it lapses back to off. |
+| `exemption` | The active administrator exemption, or absent. A lapsed or revoked exemption is not returned. |
+| `mode` | The deployment's `skills-gateway.approval.auto.mode`: `off`, `dry-run` or `on`. Only `on` publishes. |
 
 | Status | Cause |
 | --- | --- |
-| 200 | The posture above. |
+| 200 | The setting above. |
 | 404 | Unknown marketplace. |
 
-### `PUT /marketplaces/{name}/approval-posture`
+### `PUT /marketplaces/{name}/auto-approval`
 
-Set or renew the posture. Administrator-only.
+Turn automatic approval on, renew it, or turn it off. Administrator-only.
 
-**Body** — `{posture, reason?, expiresAt?, override?: {reason, expiresAt}}`
+**Body** — `{enabled, reason?, expiresAt?, exemption?: {reason, expiresAt}}`
 
 ```console
-$ curl -X PUT localhost:8080/api/v1/marketplaces/vendor/approval-posture \
+$ curl -X PUT localhost:8080/api/v1/marketplaces/vendor/auto-approval \
     -H 'Content-Type: application/json' \
-    -d '{"posture":"auto","reason":"vendor skills, audited quarterly",
+    -d '{"enabled":true,"reason":"vendor skills, audited quarterly",
          "expiresAt":"2027-01-30T00:00:00Z",
-         "override":{"reason":"vendor repository we audit quarterly",
-                     "expiresAt":"2026-12-15T00:00:00Z"}}'
+         "exemption":{"reason":"vendor repository we audit quarterly",
+                      "expiresAt":"2026-12-15T00:00:00Z"}}'
 ```
 
-- `auto` needs a reason and an expiry in the future, at most 90 days ahead.
-  Renewal is the same call with a new reason and expiry.
-- A marketplace with no internal basis needs `override`, with its own reason
-  and expiry of at most 90 days. The posture's expiry is capped at the
-  override's, so the posture never outlives it.
-- `manual` revokes the active override, so a later `auto` needs a new one.
+- Turning it on needs a reason and an expiry in the future, at most 90 days
+  ahead. Renewal is the same call with a new reason and expiry.
+- A marketplace whose source is not internal needs `exemption`, with its own
+  reason and expiry of at most 90 days. The setting's expiry is capped at the
+  exemption's, so automatic approval never outlives it.
+- Turning it off revokes the active exemption, so turning it on again needs a
+  new one.
 - Four-eyes applies to the grant: the grantor conflicts with the
   marketplace's registrant. Under `warn` the conflict is recorded; under
-  `enforce` the posture is stored with basis `awaiting-second-administrator`
-  until a different administrator sets it again.
+  `enforce` the setting is stored with `allowedBy`
+  `awaiting-second-administrator` until a different administrator sets it
+  again.
 - The marketplace's newest held snapshot is attempted at once.
 
-The change is ledgered as `approval-posture-changed`, and an override as
-`auto-approval-override-created`.
+The change is ledgered as `auto-approval-changed`, and an exemption as
+`auto-approval-exemption-granted`.
 
 | Status | Cause |
 | --- | --- |
-| 200 | The posture after the change, as `GET` returns it. |
-| 400 | No posture; `auto` without a reason or an expiry, or for longer than 90 days; an override without either; or an override for a marketplace that already has an internal basis. |
+| 200 | The setting after the change, as `GET` returns it. |
+| 400 | No `enabled`; turning it on without a reason or an expiry, or for longer than 90 days; an exemption without either; or an exemption for a marketplace whose source is already internal. |
 | 403 | The caller does not hold the administrative role. |
 | 404 | Unknown marketplace. |
-| 409 | `auto` for a marketplace with no internal basis and no override. The problem's `nextStep` says how to proceed. |
+| 409 | Turning it on for a marketplace whose source is not internal, with no exemption. The problem's `nextStep` says how to proceed. |
 
-### `DELETE /marketplaces/{name}/approval-posture/override`
+### `DELETE /marketplaces/{name}/auto-approval/exemption`
 
-End the active override now. Administrator-only. An `auto` posture that
-rested on it stops taking effect; what is already served stays served. Ledgered
-as `auto-approval-override-revoked`.
+End the active exemption now. Administrator-only. Automatic approval that
+rested on it stops taking effect; what is already served stays served.
+Ledgered as `auto-approval-exemption-revoked`.
 
 | Status | Cause |
 | --- | --- |
-| 200 | The posture after the revocation. |
+| 200 | The setting after the revocation. |
 | 403 | The caller does not hold the administrative role. |
-| 404 | Unknown marketplace, or it has no active override. |
+| 404 | Unknown marketplace, or it has no active exemption. |
 
 ---
 
@@ -1481,13 +1483,13 @@ Quarantine is untouched. Retention may reclaim the content but
 
 ---
 
-## `POST /approval/auto/withdraw`
+## `POST /auto-approval/withdraw`
 
 Withdraw every snapshot approved automatically at or after a time, in one act.
 Administrator-only. Snapshots a person approved are untouched.
 
 ```console
-$ curl -X POST localhost:8080/api/v1/approval/auto/withdraw \
+$ curl -X POST localhost:8080/api/v1/auto-approval/withdraw \
     -H 'Content-Type: application/json' \
     -d '{"since":"2026-11-14T00:00:00Z","reason":"internal repository compromised",
          "serveAfter":"PREVIOUS_APPROVED"}'
@@ -1525,11 +1527,11 @@ it serves nothing.
 ## `GET /snapshots/{id}/auto-approval`
 
 What an automatic approval attempt would decide for this snapshot now. The
-same evaluation the attempt makes, in every mode, so under `off` and `shadow`
+same evaluation the attempt makes, in every mode, so under `off` and `dry-run`
 it measures what `on` would do. It writes nothing.
 
 ```json
-{"mode":"shadow","basis":"internal-prefix","eligible":false,
+{"mode":"dry-run","allowedBy":"internal-source","eligible":false,
  "refusal":"surface-changed: hooks/hooks.json declares a new hook",
  "baselineSha":"9f3c…","worstSeverity":"LOW","waiverIds":[],"disabledVetters":[]}
 ```
@@ -1537,7 +1539,7 @@ it measures what `on` would do. It writes nothing.
 | Field | Meaning |
 | --- | --- |
 | `mode` | The deployment's mode. |
-| `basis` | As on the [approval posture](#get-marketplacesnameapproval-posture). |
+| `allowedBy` | As on the [automatic approval setting](#get-marketplacesnameauto-approval). |
 | `eligible` | Whether every check passes. Under `on`, the approval gates still decide. |
 | `refusal` | The first failing check, as `code: detail`, or `null` when eligible. |
 | `baselineSha` | The served commit the executable surface was compared with, or `null` when nothing is served. |
@@ -1550,7 +1552,7 @@ The refusal codes, in the order they are checked:
 | Code | Meaning |
 | --- | --- |
 | `revet-disabled` | Re-vetting is off, so nothing would re-check what is approved. |
-| `no-basis` | The posture does not take effect; the detail is the basis. |
+| `not-allowed` | Automatic approval does not take effect for the marketplace; the detail is the `allowedBy` value. |
 | `not-held`, `not-newest` | Only the marketplace's newest snapshot, held, is a candidate. |
 | `external-source` | The snapshot pulls in an external plugin source. |
 | `no-run`, `chain-not-in-force` | Not vetted, or vetted under a chain no longer in force. |

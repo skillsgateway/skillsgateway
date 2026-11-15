@@ -18,11 +18,12 @@ recallable without waiting for a person.
 
 ## What Changes
 
-- **Approval posture per marketplace**, `manual` (default) or `auto`.
-  - `auto` records who set it, why, and an expiry of at most 90 days, after
-    which it lapses to manual until renewed. Ninety days matches the waiver
-    limit and the default machine-credential cap; the posture keeps its own
-    constant, so changing one limit never moves another.
+- **Automatic approval per marketplace**, off by default and turned on by an
+  administrator.
+  - Turning it on records who did it, why, and an expiry of at most 90 days,
+    after which it lapses to off until renewed. Ninety days matches the waiver
+    limit and the default machine-credential cap; automatic approval keeps its
+    own constant, so changing one limit never moves another.
   - It is chosen at registration or later, by an administrator. Under four-eyes
     `enforce` it takes effect only once a second administrator confirms it.
   - It is declarable in the estate.
@@ -30,8 +31,8 @@ recallable without waiting for a person.
   for example `https://github.com/acme-internal/`. They are matched on exact
   scheme, host and path segments, and startup refuses a host-wide prefix on a
   multi-tenant host. Hosted marketplaces are internal by construction.
-- **An administrator override** allows `auto` for a marketplace outside the
-  prefixes. It needs a reason and expires within 90 days. It is set through
+- **An administrator exemption** allows automatic approval for a marketplace
+  outside the prefixes. It needs a reason and expires within 90 days. It is set through
   the API or the portal, and never declared in the estate.
 - **A snapshot is approved automatically only when all of these hold**;
   otherwise it stays held for a person, exactly as today:
@@ -49,9 +50,9 @@ recallable without waiting for a person.
     any changed file that is not on a short inert list (documentation, images,
     plain data) count as surface;
   - every existing approval gate passes.
-- **Shadow mode.** The deployment setting is `off` (default), `shadow` or `on`.
-  `shadow` records what would have been approved and publishes nothing.
-- **Same evidence as a human approval**, plus the basis it relied on. The
+- **Dry run.** The deployment setting is `off` (default), `dry-run` or `on`.
+  `dry-run` records what would have been approved and publishes nothing.
+- **Same evidence as a human approval**, plus what allowed it. The
   automatic approver is a typed system actor on the ledger, and every attempt
   that leaves a snapshot held records why.
 - **Re-vetting always enforces for auto-approved snapshots**, whatever the global
@@ -62,10 +63,11 @@ recallable without waiting for a person.
   time.
 - **New ADR 0023** superseding ADR 0006's deny-only position ("nothing is served
   that a person did not approve") for opted-in marketplaces.
-- **Portal:** an Approval posture card on the marketplace's Settings page. It
-  shows the posture, its basis, grantor, reason and expiry, and the active
-  override. An administrator sets or renews the posture there, creates the
-  override for a marketplace outside the prefixes, and revokes it. The bulk
+- **Portal:** an Automatic approval card on the marketplace's Settings page.
+  It shows whether automatic approval is on, why it is allowed, its grantor,
+  reason and expiry, and the active exemption. An administrator turns it on,
+  renews it or turns it off there, grants the exemption for a marketplace
+  outside the prefixes, and revokes it. The bulk
   withdrawal and the per-snapshot evaluation stay API-only in this change.
 - Not **BREAKING**: every new API field is additive, and the defaults keep
   today's behaviour.
@@ -76,9 +78,9 @@ verified behaviours, so it is decomposed as a parent and dot-numbered children,
 as `GW_APPROVAL_0004` and `GW_APPROVAL_0019` are.
 
 - `GW_APPROVAL_0044 — An administrator can opt an internal marketplace into automatic approval of snapshots that need no human judgement` (parent)
-  - `GW_APPROVAL_0044.1 — A marketplace's approval posture is manual unless an administrator sets it to automatic for a limited time`
+  - `GW_APPROVAL_0044.1 — Automatic approval of a marketplace is off unless an administrator turns it on for a limited time`
   - `GW_APPROVAL_0044.2 — Internal sources are those under an operator-configured URL prefix, or hosted`
-  - `GW_APPROVAL_0044.3 — Automatic approval of a marketplace outside the internal prefixes needs an expiring administrator override`
+  - `GW_APPROVAL_0044.3 — Automatic approval of a marketplace outside the internal prefixes needs an expiring administrator exemption`
   - `GW_APPROVAL_0044.4 — Granting automatic approval is subject to the four-eyes rule`
   - `GW_APPROVAL_0044.5 — Only a marketplace's newest held snapshot is approved automatically`
   - `GW_APPROVAL_0044.6 — A snapshot is approved automatically only when it pulls in no external source`
@@ -87,11 +89,11 @@ as `GW_APPROVAL_0004` and `GW_APPROVAL_0019` are.
   - `GW_APPROVAL_0044.9 — An automatic approval passes every approval gate`
   - `GW_APPROVAL_0044.10 — An automatic approval records what a human approval records`
   - `GW_APPROVAL_0044.11 — Every automatic approval, and every attempt that leaves a snapshot held, is on the ledger with its evidence`
-  - `GW_APPROVAL_0044.12 — Automatic approval is off, in shadow, or on for a deployment`
+  - `GW_APPROVAL_0044.12 — Automatic approval is off, a dry run, or on for a deployment`
   - `GW_APPROVAL_0044.13 — Re-vetting withdraws an automatically approved snapshot on new blocking evidence, whatever the configured mode`
   - `GW_APPROVAL_0044.14 — Every snapshot approved automatically since a given time can be withdrawn in one act`
-  - `GW_APPROVAL_0044.15 — An administrator can view and set a marketplace's approval posture and override in the portal`
-- `GW_ESTATE_0006 — A marketplace's approval posture is declarable in the estate`
+  - `GW_APPROVAL_0044.15 — An administrator can view and set a marketplace's automatic approval and exemption in the portal`
+- `GW_ESTATE_0006 — A marketplace's automatic approval is declarable in the estate`
 
 Each requirement is verified by the SVC that mirrors its id:
 `SVC_GW_APPROVAL_0044` and `SVC_GW_APPROVAL_0044.1` to `.15`, and
@@ -117,8 +119,8 @@ not a capability beside it.
 ## Impact
 
 - **Backend, `approval` package (no new package):**
-  - the posture and the internal-source basis;
-  - the override;
+  - the automatic approval setting and the internal-source check;
+  - the administrator exemption;
   - `AutoApprovalService`;
   - a strict executable-surface reader and comparison;
   - the bulk withdrawal;
@@ -129,15 +131,15 @@ not a capability beside it.
   - `RevetService`, which enforces for auto-approved snapshots and makes the
     release-age retry on its existing tick;
   - `IngestionService` and `WaiverService`, which trigger an attempt.
-- **Schema (`V1__init.sql`):** posture columns on `marketplaces`,
-  `snapshots.auto_approval_skip_reason`, and an `auto_approval_overrides` table.
+- **Schema (`V1__init.sql`):** automatic approval columns on `marketplaces`,
+  `snapshots.auto_approval_skip_reason`, and an `auto_approval_exemptions` table.
 - **REST API (additive):**
-  - an optional `approval` field on registration;
-  - `GET`/`PUT /api/v1/marketplaces/{name}/approval-posture`, and `DELETE` on
-    its override;
+  - an optional `autoApproval` field on registration;
+  - `GET`/`PUT /api/v1/marketplaces/{name}/auto-approval`, and `DELETE` on
+    its exemption;
   - `GET /api/v1/snapshots/{id}/auto-approval`;
-  - `POST /api/v1/approval/auto/withdraw`.
-- **Portal (`src/main/frontend/src/`):** the Approval posture card on the
+  - `POST /api/v1/auto-approval/withdraw`.
+- **Portal (`src/main/frontend/src/`):** the Automatic approval card on the
   marketplace Settings page, with its Storybook stories and an e2e test; the
   PR carries before/after screenshots.
 - **Configuration:**
@@ -145,7 +147,7 @@ not a capability beside it.
   - `skills-gateway.approval.auto.internal-prefixes`;
   - `skills-gateway.approval.auto.required-vetters` (default: unset, meaning
     every vetter);
-  - `skills-gateway.estate.marketplaces[].approval.{posture, reason, expires-at}`.
+  - `skills-gateway.estate.marketplaces[].auto-approval.{enabled, reason, expires-at}`.
 - **Docs:**
   - the new ADR 0023, and amendments to ADR 0006 and ADR 0021;
   - the approving, registering, estate and configuration pages;
@@ -170,18 +172,18 @@ nothing else in the map changes:
 - **It adds six settable names.** `ConfigSurfaceBudgetTests` counts three of
   them and rises to 112; the three estate keys sit inside the estate marketplace
   list's element, which its walk does not descend into. All six are argued:
-  - **The mode:** `off` is the incident switch, and `shadow` is the adopter's
+  - **The mode:** `off` is the incident switch, and `dry-run` is the adopter's
     measurement.
   - **The prefix list:** "internal" has to be the operator's statement, not a
     marketplace's claim about itself.
   - **The required vetters:** which checks must have run before content is
-    published unattended is the operator's call, not that of whoever grants
-    `auto`. Unset keeps the strictest rule, so the leaf only ever loosens on a
+    published unattended is the operator's call, not that of whoever turns
+    automatic approval on. Unset keeps the strictest rule, so the leaf only ever loosens on a
     stated choice. It is gateway-wide rather than per marketplace, so a grantor
     cannot lower the bar for the one marketplace they are granting.
   - **The three estate keys:** the declarative-estate obligation, with the
-    reason and expiry that make a declared `auto` a dated, recertified decision
+    reason and expiry that make declared automatic approval a dated, recertified decision
     rather than a standing bit.
-- **It adds one object that is not declarable in the estate, the override.**
+- **It adds one object that is not declarable in the estate, the exemption.**
   Like a waiver, it is an expiring exception that a named person renews, so it
   is set through the API or the portal and deliberately left out of the estate.

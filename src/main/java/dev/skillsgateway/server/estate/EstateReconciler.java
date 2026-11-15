@@ -2,14 +2,13 @@ package dev.skillsgateway.server.estate;
 
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.admin.MarketplaceRegistrationService;
-import dev.skillsgateway.server.approval.ApprovalPostureService;
-import dev.skillsgateway.server.approval.ApprovalPostureService.Posture;
-import dev.skillsgateway.server.approval.ApprovalPostureService.PostureRequest;
-import dev.skillsgateway.server.approval.NoInternalBasisException;
-import dev.skillsgateway.server.approval.PostureValidationException;
+import dev.skillsgateway.server.approval.AutoApprovalSettingService;
+import dev.skillsgateway.server.approval.AutoApprovalSettingService.SettingRequest;
+import dev.skillsgateway.server.approval.AutoApprovalSettingValidationException;
+import dev.skillsgateway.server.approval.NotInternalException;
 import dev.skillsgateway.server.audit.AuditExportService;
-import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredApproval;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredAuditSink;
+import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredAutoApproval;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredGrant;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredMarketplace;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredPolicyRule;
@@ -74,7 +73,7 @@ public class EstateReconciler {
     private final AuditExportService auditExportService;
     private final PolicyRuleService policyRuleService;
     private final AdminAuditLogger auditLogger;
-    private final ApprovalPostureService postureService;
+    private final AutoApprovalSettingService settingService;
     private final AtomicReference<EstateReconciliation> lastRun = new AtomicReference<>();
 
     public EstateReconciler(
@@ -87,8 +86,8 @@ public class EstateReconciler {
             AuditExportService auditExportService,
             PolicyRuleService policyRuleService,
             AdminAuditLogger auditLogger,
-            ApprovalPostureService postureService) {
-        this.postureService = postureService;
+            AutoApprovalSettingService settingService) {
+        this.settingService = settingService;
         this.registrationService = registrationService;
         this.marketplaceRepository = marketplaceRepository;
         this.syncService = syncService;
@@ -191,14 +190,14 @@ public class EstateReconciler {
             throw validationFailure("sync-mode must be one of %s; webhook mode's inbound secret is"
                     + " generated and shown once, so it cannot be declared".formatted(DECLARABLE_SYNC_MODES));
         }
-        Optional<PostureRequest> approval = approvalOf(declared.approval());
+        Optional<SettingRequest> autoApproval = autoApprovalOf(declared.autoApproval());
         Optional<Marketplace> existing = marketplaceRepository.findByName(declared.name());
         if (existing.isEmpty()) {
-            approval.ifPresent(request -> posture(() -> postureService.checkRegistration(
+            autoApproval.ifPresent(request -> asEntryFailure(() -> settingService.checkRegistration(
                     declared.name(),
                     declared.url(),
                     declared.origin(),
-                    request.posture(),
+                    request.enabled(),
                     request.reason(),
                     request.expiresAt())));
             // Reported, never refused (GW_INGEST_0041): the entry converges and says why its upstream
@@ -215,7 +214,8 @@ public class EstateReconciler {
             if (mode != null && !Marketplace.SYNC_ON_DEMAND.equals(mode)) {
                 syncService.changeMode(declared.name(), mode, ACTOR);
             }
-            approval.flatMap(request -> reconcileApproval(declared.name(), request))
+            autoApproval
+                    .flatMap(request -> reconcileAutoApproval(declared.name(), request))
                     .ifPresent(warnings::add);
             return Entry.created(
                     "marketplace", declared.name(), warnings.isEmpty() ? null : String.join("; ", warnings));
@@ -241,48 +241,46 @@ public class EstateReconciler {
             syncService.changeMode(declared.name(), mode, ACTOR);
             changes.add("sync-mode=" + mode);
         }
-        approval.flatMap(request -> reconcileApproval(declared.name(), request)).ifPresent(changes::add);
+        autoApproval
+                .flatMap(request -> reconcileAutoApproval(declared.name(), request))
+                .ifPresent(changes::add);
         return changes.isEmpty()
                 ? Entry.unchanged("marketplace", declared.name())
                 : Entry.updated("marketplace", declared.name(), String.join("; ", changes));
     }
 
     /**
-     * A declared posture as the request the API takes (GW_ESTATE_0006). An override is refused, not
-     * dropped: it is a dated judgement by a named administrator, never configuration.
+     * Declared automatic approval as the request the API takes (GW_ESTATE_0006). An exemption is
+     * refused, not dropped: it is a dated judgement by a named administrator, never configuration.
      */
     @Requirements({"GW_ESTATE_0006"})
-    private static Optional<PostureRequest> approvalOf(DeclaredApproval declared) {
+    private static Optional<SettingRequest> autoApprovalOf(DeclaredAutoApproval declared) {
         if (declared == null) {
             return Optional.empty();
         }
-        if (declared.override() != null && !declared.override().isEmpty()) {
-            throw validationFailure("an override cannot be declared: it is a dated judgement by a named"
-                    + " administrator, made with PUT /api/v1/marketplaces/{name}/approval-posture or in the portal");
+        if (declared.exemption() != null && !declared.exemption().isEmpty()) {
+            throw validationFailure("an exemption cannot be declared: it is a dated judgement by a named"
+                    + " administrator, made with PUT /api/v1/marketplaces/{name}/auto-approval or in the portal");
         }
-        Posture posture;
-        if ("manual".equals(declared.posture())) {
-            posture = Posture.MANUAL;
-        } else if ("auto".equals(declared.posture())) {
-            posture = Posture.AUTO;
-        } else {
-            throw validationFailure("approval.posture must be manual or auto");
+        if (declared.enabled() == null) {
+            throw validationFailure("auto-approval.enabled must be true or false");
         }
-        return Optional.of(new PostureRequest(posture, declared.reason(), declared.expiresAt(), null));
+        return Optional.of(new SettingRequest(declared.enabled(), declared.reason(), declared.expiresAt(), null));
     }
 
     /**
-     * Applies a declared posture through the API's path, as {@link #ACTOR}, unless the stored one is
-     * already it. A declared expiry that has passed is converged too, so the posture reads as manual
-     * until the declaration changes rather than failing every run (GW_ESTATE_0006).
+     * Applies declared automatic approval through the API's path, as {@link #ACTOR}, unless the
+     * stored setting is already it. A declared expiry that has passed is converged too, so automatic
+     * approval reads as off until the declaration changes rather than failing every run
+     * (GW_ESTATE_0006).
      *
      * @return what changed, or empty when converged
      */
     @Requirements({"GW_ESTATE_0006"})
-    private Optional<String> reconcileApproval(String name, PostureRequest declared) {
-        ApprovalPostureService.PostureView stored = postureService.view(name);
-        boolean converged = stored.posture() == declared.posture()
-                && (declared.posture() == Posture.MANUAL
+    private Optional<String> reconcileAutoApproval(String name, SettingRequest declared) {
+        AutoApprovalSettingService.SettingView stored = settingService.view(name);
+        boolean converged = stored.enabled() == declared.enabled()
+                && (!declared.enabled()
                         || (declared.reason() != null
                                 && declared.reason().trim().equals(stored.reason())
                                 && declared.expiresAt() != null
@@ -292,15 +290,15 @@ public class EstateReconciler {
         if (converged) {
             return Optional.empty();
         }
-        posture(() -> postureService.set(name, declared, ACTOR));
-        return Optional.of("approval=" + declared.posture().wire());
+        asEntryFailure(() -> settingService.set(name, declared, ACTOR));
+        return Optional.of("auto-approval.enabled=" + declared.enabled());
     }
 
-    /** The posture service's refusals are this entry's failure, as the API's are its 4xx. */
-    private static void posture(Runnable change) {
+    /** The automatic-approval service's refusals are this entry's failure, as the API's are its 4xx. */
+    private static void asEntryFailure(Runnable change) {
         try {
             change.run();
-        } catch (PostureValidationException | NoInternalBasisException refused) {
+        } catch (AutoApprovalSettingValidationException | NotInternalException refused) {
             throw validationFailure(refused.getMessage());
         }
     }
