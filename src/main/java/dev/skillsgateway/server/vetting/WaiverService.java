@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 /**
@@ -47,18 +48,21 @@ public class WaiverService {
     private final SnapshotRepository snapshotRepository;
     private final MarketplaceRepository marketplaceRepository;
     private final AdminAuditLogger auditLogger;
+    private final ApplicationEventPublisher events;
 
     public WaiverService(
             WaiverRepository waiverRepository,
             VettingRepository vettingRepository,
             SnapshotRepository snapshotRepository,
             MarketplaceRepository marketplaceRepository,
-            AdminAuditLogger auditLogger) {
+            AdminAuditLogger auditLogger,
+            ApplicationEventPublisher events) {
         this.waiverRepository = waiverRepository;
         this.vettingRepository = vettingRepository;
         this.snapshotRepository = snapshotRepository;
         this.marketplaceRepository = marketplaceRepository;
         this.auditLogger = auditLogger;
+        this.events = events;
     }
 
     /**
@@ -161,6 +165,7 @@ public class WaiverService {
                 snapshot.sha(),
                 "rule=%s; scope=%s:%s%s; expires=%s"
                         .formatted(ruleId.trim(), scope.stored(), value, groupDetail(waiver), expiresAt));
+        events.publishEvent(new HeldSnapshotChanged(snapshot.marketplaceId(), "waiver-created"));
         return waiver;
     }
 

@@ -25,8 +25,11 @@ public class ApprovalPostureController {
 
     private final ApprovalPostureService postureService;
     private final RoleService roleService;
+    private final AutoApprovalService autoApprovalService;
 
-    public ApprovalPostureController(ApprovalPostureService postureService, RoleService roleService) {
+    public ApprovalPostureController(
+            ApprovalPostureService postureService, RoleService roleService, AutoApprovalService autoApprovalService) {
+        this.autoApprovalService = autoApprovalService;
         this.postureService = postureService;
         this.roleService = roleService;
     }
@@ -71,7 +74,9 @@ public class ApprovalPostureController {
             @RequestBody(required = false) ApprovalPostureService.PostureRequest request,
             Authentication authentication) {
         roleService.requireAdmin(authentication);
-        return postureService.set(name, request, authentication.getName());
+        ApprovalPostureService.PostureView view = postureService.set(name, request, authentication.getName());
+        autoApprovalService.attemptNewest(name, "posture-set");
+        return view;
     }
 
     @DeleteMapping("/marketplaces/{name}/approval-posture/override")

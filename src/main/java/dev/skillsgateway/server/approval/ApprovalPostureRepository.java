@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -66,6 +67,14 @@ public class ApprovalPostureRepository {
     }
 
     /** The override that is neither revoked nor recorded as expired, whether or not its expiry has passed. */
+    /** Live marketplaces whose stored posture is auto, lapsed or not: the attempt decides that. */
+    public List<Long> autoMarketplaces() {
+        return jdbc.sql(
+                        "SELECT id FROM marketplaces WHERE approval_posture = 'auto' AND deleted_at IS NULL ORDER BY id")
+                .query(Long.class)
+                .list();
+    }
+
     public Optional<StoredOverride> findOpen(long marketplaceId) {
         return jdbc.sql("SELECT * FROM auto_approval_overrides WHERE marketplace_id = :id"
                         + " AND revoked_at IS NULL AND expired_recorded_at IS NULL")

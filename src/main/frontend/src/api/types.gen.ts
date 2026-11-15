@@ -752,6 +752,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/snapshots/{id}/auto-approval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Automatic approval evaluation
+         * @description What an automatic approval attempt would decide for this snapshot now: the marketplace's basis, and the first check that fails or none. The same evaluation the attempt makes, in every mode, so under off and shadow it measures what on would do. It writes nothing. Under on, an eligible snapshot still meets every approval gate.
+         */
+        get: operations["autoApproval"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/snapshots/{id}/content": {
         parameters: {
             query?: never;
@@ -2660,6 +2680,34 @@ export interface components {
              * @description Entries updated to match the declaration
              */
             updated?: number;
+        };
+        /** @description What an automatic approval attempt would decide for a snapshot now */
+        Evaluation: {
+            /** @description The served commit the surface was compared with, or null when nothing is served */
+            baselineSha?: string;
+            /**
+             * @description Why the marketplace's auto posture takes effect, or none
+             * @enum {string}
+             */
+            basis?: "internal-prefix" | "hosted" | "override" | "awaiting-second-administrator" | "none";
+            /** @description The vetters switched off, which a relaxed required-vetters allowed */
+            disabledVetters?: string[];
+            /** @description Whether every check passes; under on, the approval gates then decide */
+            eligible?: boolean;
+            /**
+             * @description The deployment's automatic approval mode
+             * @enum {string}
+             */
+            mode?: "off" | "shadow" | "on";
+            /** @description The first failing check, a stable code then a detail; null when eligible */
+            refusal?: string;
+            /** @description The waivers suppressing a finding in the run */
+            waiverIds?: number[];
+            /**
+             * @description The worst severity among the run's findings, or null when it has none
+             * @enum {string}
+             */
+            worstSeverity?: "info" | "low" | "medium" | "high" | "critical";
         };
         /** @description Webhook event payload */
         EventPayload: {
@@ -6172,6 +6220,37 @@ export interface operations {
             };
             /** @description An override was requested without a reason */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    autoApproval: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The evaluation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Evaluation"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

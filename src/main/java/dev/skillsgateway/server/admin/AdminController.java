@@ -3,6 +3,7 @@ package dev.skillsgateway.server.admin;
 import dev.skillsgateway.server.approval.ApprovalPostureService;
 import dev.skillsgateway.server.approval.ApprovalRecorder;
 import dev.skillsgateway.server.approval.ApprovalService;
+import dev.skillsgateway.server.approval.AutoApprovalService;
 import dev.skillsgateway.server.approval.ClosureIncompleteException;
 import dev.skillsgateway.server.approval.FourEyesConflictException;
 import dev.skillsgateway.server.approval.FourEyesGate;
@@ -91,6 +92,7 @@ public class AdminController {
     private final ApprovalRecorder approvalRecorder;
     private final RoleService roleService;
     private final ApprovalPostureService postureService;
+    private final AutoApprovalService autoApprovalService;
 
     public AdminController(
             ServedTip servedTip,
@@ -108,7 +110,8 @@ public class AdminController {
             WebhookService webhookService,
             ApprovalRecorder approvalRecorder,
             RoleService roleService,
-            ApprovalPostureService postureService) {
+            ApprovalPostureService postureService,
+            AutoApprovalService autoApprovalService) {
         this.servedTip = servedTip;
         this.registrationService = registrationService;
         this.removalService = removalService;
@@ -125,6 +128,7 @@ public class AdminController {
         this.approvalRecorder = approvalRecorder;
         this.roleService = roleService;
         this.postureService = postureService;
+        this.autoApprovalService = autoApprovalService;
     }
 
     @Schema(description = "Marketplace registration request")
@@ -741,6 +745,24 @@ public class AdminController {
     public ReleaseAgeGate.Eligibility releaseAge(@PathVariable long id) {
         return approvalService
                 .releaseAge(id)
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "snapshot %d not found".formatted(id)));
+    }
+
+    @GetMapping("/snapshots/{id}/auto-approval")
+    @Requirements({"GW_APPROVAL_0044.12"})
+    @Tag(name = "Snapshots")
+    @Operation(
+            summary = "Automatic approval evaluation",
+            description = "What an automatic approval attempt would decide for this snapshot now: the"
+                    + " marketplace's basis, and the first check that fails or none. The same evaluation the"
+                    + " attempt makes, in every mode, so under off and shadow it measures what on would do."
+                    + " It writes nothing. Under on, an eligible snapshot still meets every approval gate.")
+    @ApiResponse(responseCode = "200", description = "The evaluation")
+    @ApiResponse(responseCode = "404", description = "Snapshot not found")
+    public AutoApprovalService.Evaluation autoApproval(@PathVariable long id) {
+        return autoApprovalService
+                .evaluate(id)
                 .orElseThrow(
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "snapshot %d not found".formatted(id)));
     }

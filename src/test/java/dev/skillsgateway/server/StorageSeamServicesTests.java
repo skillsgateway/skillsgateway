@@ -166,7 +166,8 @@ class StorageSeamServicesTests extends AbstractGatewayTest {
                 metrics,
                 upstreamGit,
                 marketplaceRepository,
-                auditLogger);
+                auditLogger,
+                event -> {});
 
         Snapshot snapshot = ingestion.ingest(marketplace, "alice");
 

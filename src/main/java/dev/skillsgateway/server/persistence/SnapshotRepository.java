@@ -136,6 +136,30 @@ public class SnapshotRepository {
                 .optional();
     }
 
+    /** The marketplace's newest snapshot that is not deleted, whatever its state. */
+    public Optional<Snapshot> newestLive(long marketplaceId) {
+        return jdbc.sql("SELECT * FROM snapshots WHERE marketplace_id = :marketplaceId AND deleted_at IS NULL"
+                        + " ORDER BY id DESC LIMIT 1")
+                .param("marketplaceId", marketplaceId)
+                .query(Snapshot.class)
+                .optional();
+    }
+
+    /**
+     * Stores why automatic approval last skipped the snapshot (GW_APPROVAL_0044.11).
+     *
+     * @return whether the reason changed, which is when the skip is ledgered
+     */
+    public boolean recordAutoApprovalSkip(long id, String reason) {
+        return jdbc.sql("UPDATE snapshots SET auto_approval_skip_reason = :reason"
+                                + " WHERE id = :id AND state = 'held'"
+                                + " AND auto_approval_skip_reason IS DISTINCT FROM :reason")
+                        .param("id", id)
+                        .param("reason", reason)
+                        .update()
+                == 1;
+    }
+
     public List<Snapshot> listByMarketplace(long marketplaceId) {
         return jdbc.sql("SELECT * FROM snapshots WHERE marketplace_id = :marketplaceId ORDER BY id")
                 .param("marketplaceId", marketplaceId)

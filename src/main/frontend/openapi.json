@@ -1250,6 +1250,70 @@
         },
         "type": "object"
       },
+      "Evaluation": {
+        "description": "What an automatic approval attempt would decide for a snapshot now",
+        "properties": {
+          "baselineSha": {
+            "description": "The served commit the surface was compared with, or null when nothing is served",
+            "type": "string"
+          },
+          "basis": {
+            "description": "Why the marketplace's auto posture takes effect, or none",
+            "enum": [
+              "internal-prefix",
+              "hosted",
+              "override",
+              "awaiting-second-administrator",
+              "none"
+            ],
+            "type": "string"
+          },
+          "disabledVetters": {
+            "description": "The vetters switched off, which a relaxed required-vetters allowed",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "eligible": {
+            "description": "Whether every check passes; under on, the approval gates then decide",
+            "type": "boolean"
+          },
+          "mode": {
+            "description": "The deployment's automatic approval mode",
+            "enum": [
+              "off",
+              "shadow",
+              "on"
+            ],
+            "type": "string"
+          },
+          "refusal": {
+            "description": "The first failing check, a stable code then a detail; null when eligible",
+            "type": "string"
+          },
+          "waiverIds": {
+            "description": "The waivers suppressing a finding in the run",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "worstSeverity": {
+            "description": "The worst severity among the run's findings, or null when it has none",
+            "enum": [
+              "info",
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "EventPayload": {
         "description": "Webhook event payload",
         "properties": {
@@ -6596,6 +6660,49 @@
           }
         },
         "summary": "Approve a held or revoked snapshot",
+        "tags": [
+          "Snapshots"
+        ]
+      }
+    },
+    "/api/v1/snapshots/{id}/auto-approval": {
+      "get": {
+        "description": "What an automatic approval attempt would decide for this snapshot now: the marketplace's basis, and the first check that fails or none. The same evaluation the attempt makes, in every mode, so under off and shadow it measures what on would do. It writes nothing. Under on, an eligible snapshot still meets every approval gate.",
+        "operationId": "autoApproval",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Evaluation"
+                }
+              }
+            },
+            "description": "The evaluation"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Snapshot not found"
+          }
+        },
+        "summary": "Automatic approval evaluation",
         "tags": [
           "Snapshots"
         ]

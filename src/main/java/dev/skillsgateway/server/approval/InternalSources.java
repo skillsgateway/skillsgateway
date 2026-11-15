@@ -7,6 +7,7 @@ import dev.skillsgateway.server.persistence.Marketplace;
 import io.github.reqstool.annotations.Requirements;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,7 @@ public class InternalSources {
     private static final Set<String> MULTI_TENANT_HOSTS = Set.of("github.com", "gitlab.com", "bitbucket.org");
 
     private final List<UrlPrefix> prefixes;
+    private final List<String> configured;
 
     @Autowired
     public InternalSources(SkillsGatewayProperties properties) {
@@ -36,6 +38,7 @@ public class InternalSources {
 
     InternalSources(List<String> configured, String githubBaseUrl) {
         this.prefixes = validated(configured, githubBaseUrl);
+        this.configured = List.copyOf(configured);
     }
 
     /** Hosted marketplaces are internal by construction: only a minted push scope can write them. */
@@ -46,8 +49,22 @@ public class InternalSources {
 
     @Requirements({"GW_APPROVAL_0044.2"})
     public boolean isInternal(String url) {
+        return matchingPrefix(url).isPresent();
+    }
+
+    /** The first configured prefix covering {@code url}, as configured: what an approval's evidence names. */
+    @Requirements({"GW_APPROVAL_0044.2"})
+    public Optional<String> matchingPrefix(String url) {
         UrlPrefix target = UrlPrefix.of(url);
-        return target != null && prefixes.stream().anyMatch(prefix -> prefix.covers(target));
+        if (target == null) {
+            return Optional.empty();
+        }
+        for (int i = 0; i < prefixes.size(); i++) {
+            if (prefixes.get(i).covers(target)) {
+                return Optional.of(configured.get(i));
+            }
+        }
+        return Optional.empty();
     }
 
     @Requirements({"GW_APPROVAL_0044.2"})

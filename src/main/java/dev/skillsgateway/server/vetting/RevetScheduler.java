@@ -4,6 +4,7 @@ import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.scheduling.SweepLeases;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -27,11 +28,17 @@ public class RevetScheduler {
     private final RevetService revetService;
     private final SkillsGatewayProperties.Revet properties;
     private final SweepLeases leases;
+    private final ApplicationEventPublisher events;
 
-    public RevetScheduler(RevetService revetService, SkillsGatewayProperties properties, SweepLeases leases) {
+    public RevetScheduler(
+            RevetService revetService,
+            SkillsGatewayProperties properties,
+            SweepLeases leases,
+            ApplicationEventPublisher events) {
         this.revetService = revetService;
         this.properties = properties.vetting().revet();
         this.leases = leases;
+        this.events = events;
     }
 
     @Scheduled(
@@ -62,6 +69,12 @@ public class RevetScheduler {
             }
         } catch (RuntimeException e) {
             log.warn("re-vetting sweep failed", e);
+        }
+        // What approves a snapshot once it is old enough (GW_APPROVAL_0044.9): no sweep of its own.
+        try {
+            events.publishEvent(new HeldSnapshotChanged.RevetTick());
+        } catch (RuntimeException e) {
+            log.warn("automatic approval step failed", e);
         }
     }
 }

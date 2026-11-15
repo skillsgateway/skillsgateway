@@ -74,7 +74,10 @@ class ContextBudgetTests {
     // 27 since corpus-aware-vetting. The name-collision rule's enforcing default cannot run in the
     // shared context, where every suite approves the same fixture plugin into one database; its suites
     // share AbstractNameCollisionTest's context instead.
-    private static final int BUDGET = 27;
+    // 28 since marketplace-auto-approval. AutoApprovalTests needs automatic approval on and the
+    // re-vetting sweep enabled, which the shared context turns off so no sweep reaches other suites'
+    // fixtures; its long sweep interval keeps the background tick from running during the suite.
+    private static final int BUDGET = 28;
 
     /** Where the measured breakdown is written, so a run's numbers survive for a PR body. */
     private static final Path REPORT = Path.of("target", "context-budget.txt");

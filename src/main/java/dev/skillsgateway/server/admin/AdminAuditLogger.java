@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.admin;
 
+import dev.skillsgateway.server.approval.AutoApprovalService;
 import dev.skillsgateway.server.auth.MachineApiAuthentication;
 import dev.skillsgateway.server.estate.EstateReconciler;
 import dev.skillsgateway.server.mirror.ForgeMirrorService;
@@ -60,7 +61,9 @@ public class AdminAuditLogger {
             VettingService.VETTING_ACTOR,
             // The forge mirror (GW_FACADE_0020) runs on its own thread with no authentication to derive
             // from, so its entries declare themselves system here rather than defaulting to human.
-            ForgeMirrorService.MIRROR_ACTOR);
+            ForgeMirrorService.MIRROR_ACTOR,
+            // Approves with no person (GW_APPROVAL_0044.11).
+            AutoApprovalService.ACTOR);
 
     private final FetchLogRepository fetchLogRepository;
 

@@ -256,6 +256,7 @@ public class RevetService {
                 snapshot.sha(),
                 "outcome=%s; the snapshot stays held and the approval gate reads this run"
                         .formatted(effect.outcome().stored()));
+        events.publishEvent(new HeldSnapshotChanged(snapshot.marketplaceId(), "held-refreshed"));
         return new RevetResult(
                 snapshot.id(),
                 marketplace,
