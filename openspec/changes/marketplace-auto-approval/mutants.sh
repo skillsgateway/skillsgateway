@@ -168,7 +168,7 @@ run M40-descriptive-any-key $T aManifestOrPluginJsonKeyOffTheDescriptiveListIsNo
   'if (!allowed.contains(names.next())) {' 'if (names.next() == null) {'
 run M41-configuration-file-inert $T aChangedConfigurationFileIsChangedEvenWhereNoReaderReadsIt "$SUR" \
   'return path + (covered.contains(path) ? " (component file)" : " (configuration file)");' 'continue;'
-run M41b-component-file-inert $T aChangedHookIsChanged "$SUR" \
+run M84-component-file-inert $T aChangedHookIsChanged "$SUR" \
   'return path + (covered.contains(path) ? " (component file)" : " (configuration file)");' 'continue;'
 run M42-unknown-extension-inert $T anUnknownExtensionIsAScript "$SUR" \
   'return path + " (not an inert extension)";' 'continue;'
