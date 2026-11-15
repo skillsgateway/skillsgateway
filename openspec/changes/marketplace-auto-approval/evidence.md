@@ -458,22 +458,40 @@ production edit after it, the registry classification, is covered by the
 existing walks in `MachineApiScopeTests`, which refuse every unreachable route
 to a credential holding every scope and test each scope's routes one by one.
 
+### R13 — the rename to "automatic approval"
+
+The owner asked for plainer wording after the first final run, so that run,
+at `bb9f5ced`, no longer counts; the one below replaces it. The tests were
+renamed first and watched fail: `test-compile` stopped at
+`AutoApprovalSettingTests.java:[12,41] cannot find symbol`, and
+`pnpm typecheck` at `TS2307 Cannot find module './auto-approval'`. Only then
+was the implementation renamed. No assertion was removed or weakened. The
+four-eyes conflict assertion was narrowed from `approval-posture` to
+`on=auto-approval`. All 79 mutants in `mutants.sh` still apply (a dry run
+against a clean copy), and each one's killing test exists under its new name.
+
+Two full `./mvnw clean verify` runs before the one below errored in
+container startup: 5 tests in `DevAuthTests` and `ForgeMirrorSweepTests`,
+then 6 in `DevAuthTests` and `LicensePolicyTests`, each with
+`NoHttpResponseException` from the Podman API socket. The first pair passed
+5/5 when run alone. The third run, unchanged, is the one recorded.
+
 ## Final run
 
-One fresh run of every gate after the last code edit, at commit `bb9f5ced`.
+One fresh run of every gate after the last code edit, at commit `182ee9d1`.
 
 ```text
 $ ./mvnw clean verify
 [INFO] Tests run: 1357, Failures: 0, Errors: 0, Skipped: 9
 [INFO] BUILD SUCCESS
-[INFO] Total time:  04:44 min
+[INFO] Total time:  05:04 min
 
 $ (cd src/main/frontend && pnpm test:stories)
  Test Files  24 passed (24)
       Tests  133 passed (133)
 
 $ (cd src/main/frontend && pnpm e2e)
-  31 passed (1.8m)
+  31 passed (1.9m)
 
 $ reqstool status local -p docs/reqstool
 INCOMPLETE (0)
@@ -483,5 +501,5 @@ $ openspec validate --all --strict
 Totals: 30 passed, 0 failed (30 items)
 
 $ mkdocs build --strict
-INFO    -  Documentation built in 2.43 seconds
+INFO    -  Documentation built in 1.21 seconds
 ```
