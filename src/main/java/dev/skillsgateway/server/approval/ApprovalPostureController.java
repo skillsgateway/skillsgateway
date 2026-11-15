@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,10 +27,15 @@ public class ApprovalPostureController {
     private final ApprovalPostureService postureService;
     private final RoleService roleService;
     private final AutoApprovalService autoApprovalService;
+    private final AutoApprovalWithdrawal withdrawal;
 
     public ApprovalPostureController(
-            ApprovalPostureService postureService, RoleService roleService, AutoApprovalService autoApprovalService) {
+            ApprovalPostureService postureService,
+            RoleService roleService,
+            AutoApprovalService autoApprovalService,
+            AutoApprovalWithdrawal withdrawal) {
         this.autoApprovalService = autoApprovalService;
+        this.withdrawal = withdrawal;
         this.postureService = postureService;
         this.roleService = roleService;
     }
@@ -92,5 +98,30 @@ public class ApprovalPostureController {
     public ApprovalPostureService.PostureView revokeOverride(@PathVariable String name, Authentication authentication) {
         roleService.requireAdmin(authentication);
         return postureService.revokeOverride(name, authentication.getName());
+    }
+
+    @PostMapping("/approval/auto/withdraw")
+    @Requirements({"GW_APPROVAL_0044.14"})
+    @Tag(name = "Snapshots")
+    @Operation(
+            summary = "Withdraw every automatic approval since a time",
+            description = "Revokes every live snapshot approved by auto-approver at or after since, newest decision"
+                    + " first, each as an ordinary withdrawal with the stated reason, ledgered and announced."
+                    + " Snapshots a person approved are untouched. A marketplace whose served snapshot is withdrawn"
+                    + " serves what serveAfter says: its newest approved snapshot this request does not withdraw,"
+                    + " or nothing. A return that a marketplace cannot make refuses the whole request before"
+                    + " anything is withdrawn. Administrator-only.")
+    @ApiResponse(responseCode = "200", description = "What was withdrawn, newest decision first")
+    @ApiResponse(responseCode = "403", description = "Caller does not hold the administrative role")
+    @ApiResponse(
+            responseCode = "409",
+            description = "A return to the previous approved snapshot was asked for and a marketplace has none;"
+                    + " nothing was withdrawn")
+    @ApiResponse(responseCode = "422", description = "No since, no reason, or no served-content choice")
+    public AutoApprovalWithdrawal.WithdrawResponse withdraw(
+            @RequestBody(required = false) AutoApprovalWithdrawal.WithdrawRequest request,
+            Authentication authentication) {
+        roleService.requireAdmin(authentication);
+        return withdrawal.withdraw(request, authentication.getName());
     }
 }

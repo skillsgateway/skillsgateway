@@ -64,6 +64,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/approval/auto/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw every automatic approval since a time
+         * @description Revokes every live snapshot approved by auto-approver at or after since, newest decision first, each as an ordinary withdrawal with the stated reason, ledgered and announced. Snapshots a person approved are untouched. A marketplace whose served snapshot is withdrawn serves what serveAfter says: its newest approved snapshot this request does not withdraw, or nothing. A return that a marketplace cannot make refuses the whole request before anything is withdrawn. Administrator-only.
+         */
+        post: operations["withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit": {
         parameters: {
             query?: never;
@@ -4714,6 +4734,32 @@ export interface components {
              */
             updatedAt?: string;
         };
+        /** @description Withdraw every automatic approval since a time */
+        WithdrawRequest: {
+            /** @description Why; recorded on each withdrawal */
+            reason?: string;
+            /**
+             * @description What a marketplace whose served snapshot is withdrawn serves afterwards: its newest approved snapshot this request does not withdraw, or nothing
+             * @enum {string}
+             */
+            serveAfter?: "previous_approved" | "nothing";
+            /**
+             * Format: date-time
+             * @description Withdraw the live snapshots approved automatically at or after this time
+             */
+            since?: string;
+        };
+        /** @description What a bulk withdrawal withdrew, newest decision first */
+        WithdrawResponse: {
+            withdrawn?: components["schemas"]["Withdrawn"][];
+        };
+        /** @description One snapshot the request withdrew */
+        Withdrawn: {
+            /** @description What its marketplace serves now, or null when it serves nothing */
+            nowServing?: components["schemas"]["Snapshot"];
+            /** @description The withdrawn snapshot */
+            snapshot?: components["schemas"]["Snapshot"];
+        };
     };
     responses: never;
     parameters: never;
@@ -4785,6 +4831,57 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["StaleIdentity"][];
+                };
+            };
+        };
+    };
+    withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["WithdrawRequest"];
+            };
+        };
+        responses: {
+            /** @description What was withdrawn, newest decision first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WithdrawResponse"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description A return to the previous approved snapshot was asked for and a marketplace has none; nothing was withdrawn */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No since, no reason, or no served-content choice */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };

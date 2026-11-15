@@ -89,6 +89,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // the switch that publishes with no person, so administrator-only.
             "PUT /api/v1/marketplaces/{name}/approval-posture",
             "DELETE /api/v1/marketplaces/{name}/approval-posture/override",
+            // Withdrawing every automatic approval since a time (GW_APPROVAL_0044.14), as revoke is.
+            "POST /api/v1/approval/auto/withdraw",
             "PUT /api/v1/vetting/chain-mode",
             "PUT /api/v1/vetting/chain-order",
             // The estate-wide form of the same three settings (GW_VETTING_0037), and the only way to

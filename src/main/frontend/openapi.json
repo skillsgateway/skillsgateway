@@ -4680,6 +4680,55 @@
           }
         },
         "type": "object"
+      },
+      "WithdrawRequest": {
+        "description": "Withdraw every automatic approval since a time",
+        "properties": {
+          "reason": {
+            "description": "Why; recorded on each withdrawal",
+            "type": "string"
+          },
+          "serveAfter": {
+            "description": "What a marketplace whose served snapshot is withdrawn serves afterwards: its newest approved snapshot this request does not withdraw, or nothing",
+            "enum": [
+              "previous_approved",
+              "nothing"
+            ],
+            "type": "string"
+          },
+          "since": {
+            "description": "Withdraw the live snapshots approved automatically at or after this time",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "WithdrawResponse": {
+        "description": "What a bulk withdrawal withdrew, newest decision first",
+        "properties": {
+          "withdrawn": {
+            "items": {
+              "$ref": "#/components/schemas/Withdrawn"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "Withdrawn": {
+        "description": "One snapshot the request withdrew",
+        "properties": {
+          "nowServing": {
+            "$ref": "#/components/schemas/Snapshot",
+            "description": "What its marketplace serves now, or null when it serves nothing"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/Snapshot",
+            "description": "The withdrawn snapshot"
+          }
+        },
+        "type": "object"
       }
     }
   },
@@ -4796,6 +4845,67 @@
         "summary": "Identities not on the served tip",
         "tags": [
           "Adoption"
+        ]
+      }
+    },
+    "/api/v1/approval/auto/withdraw": {
+      "post": {
+        "description": "Revokes every live snapshot approved by auto-approver at or after since, newest decision first, each as an ordinary withdrawal with the stated reason, ledgered and announced. Snapshots a person approved are untouched. A marketplace whose served snapshot is withdrawn serves what serveAfter says: its newest approved snapshot this request does not withdraw, or nothing. A return that a marketplace cannot make refuses the whole request before anything is withdrawn. Administrator-only.",
+        "operationId": "withdraw",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithdrawRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WithdrawResponse"
+                }
+              }
+            },
+            "description": "What was withdrawn, newest decision first"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "A return to the previous approved snapshot was asked for and a marketplace has none; nothing was withdrawn"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "No since, no reason, or no served-content choice"
+          }
+        },
+        "summary": "Withdraw every automatic approval since a time",
+        "tags": [
+          "Snapshots"
         ]
       }
     },

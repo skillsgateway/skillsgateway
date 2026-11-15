@@ -214,5 +214,35 @@ run M61-closure-ignored-end-to-end $T theSameUpdateWithAnExternalSourceAddedStay
 run M62-no-human-path-evidence $T anAutomaticApprovalWritesTheDecisionEntryAndOneWebhookAsAPersonsDoes "$SVC" \
   'recorder.recordApproved(approved, ACTOR);' ''
 
+# --- re-vetting recalls what no person approved; bulk withdrawal (GW_APPROVAL_0044.13, 0044.14) ---
+REV=src/main/java/dev/skillsgateway/server/vetting/RevetService.java
+WDR=$A/AutoApprovalWithdrawal.java
+RVK=$A/RevocationService.java
+REP=src/main/java/dev/skillsgateway/server/persistence/SnapshotRepository.java
+CTL=$A/ApprovalPostureController.java
+T=AutoApprovalTests
+run M63-auto-follows-warn $T underWarnAViolationRevokesAnAutomaticApprovalAndOnlyRecordsAPersons "$REV" \
+  'return AutoApprovalService.ACTOR.equals(snapshot.decidedBy())' 'return false'
+run M64-person-enforced $T underWarnAViolationRevokesAnAutomaticApprovalAndOnlyRecordsAPersons "$REV" \
+  $'                ? SkillsGatewayProperties.RevetMode.ENFORCE\n                : properties.mode();' $'                ? SkillsGatewayProperties.RevetMode.ENFORCE\n                : SkillsGatewayProperties.RevetMode.ENFORCE;'
+run M65-since-ignored $T bulkWithdrawalRevokesExactlyTheAutomaticApprovalsSinceATimeNewestFirst "$REP" \
+  ' AND decided_at >= :since AND deleted_at IS NULL ORDER BY decided_at DESC' ' AND :since IS NOT NULL AND deleted_at IS NULL ORDER BY decided_at DESC'
+run M66-approver-ignored $T bulkWithdrawalRevokesExactlyTheAutomaticApprovalsSinceATimeNewestFirst "$REP" \
+  'state = :approved::snapshot_state AND decided_by = :approver' 'state = :approved::snapshot_state AND :approver IS NOT NULL'
+run M67-oldest-first $T bulkWithdrawalRevokesExactlyTheAutomaticApprovalsSinceATimeNewestFirst "$REP" \
+  'ORDER BY decided_at DESC, id DESC' 'ORDER BY decided_at ASC, id ASC'
+run M68-return-to-a-withdrawn $T bulkWithdrawalRevokesExactlyTheAutomaticApprovalsSinceATimeNewestFirst "$RVK" \
+  'Set<Long> excluded = new HashSet<>(alsoWithdrawing);' 'Set<Long> excluded = new HashSet<>();'
+run M69-non-tip-takes-the-choice $T bulkWithdrawalRevokesExactlyTheAutomaticApprovalsSinceATimeNewestFirst "$WDR" \
+  'served(snapshot, names) ? request.serveAfter() : ServeAfter.NOTHING' 'request.serveAfter()'
+run M70-withdraw-not-admin-only $T bulkWithdrawalRevokesExactlyTheAutomaticApprovalsSinceATimeNewestFirst "$CTL" \
+  $'        roleService.requireAdmin(authentication);\n        return withdrawal.withdraw' $'        return withdrawal.withdraw'
+run M71-precheck-dropped $T bulkWithdrawalThatCannotBeHonouredWithdrawsNothing "$WDR" \
+  'if (request.serveAfter() == ServeAfter.PREVIOUS_APPROVED) {' 'if (false) {'
+run M72-reason-optional $T bulkWithdrawalThatCannotBeHonouredWithdrawsNothing "$WDR" \
+  'if (request.reason() == null || request.reason().isBlank()) {' 'if (false) {'
+run M73-race-fails-the-request approval.AutoApprovalWithdrawalTests aSnapshotWithdrawnMeanwhileIsSkippedAndTheRestAreStillWithdrawn "$WDR" \
+  $'            } catch (NotApprovedException withdrawnMeanwhile) {\n                continue;' $'            } catch (NotApprovedException withdrawnMeanwhile) {\n                throw withdrawnMeanwhile;'
+
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi

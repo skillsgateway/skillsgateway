@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.vetting;
 
 import dev.skillsgateway.server.admin.AdminAuditLogger;
+import dev.skillsgateway.server.approval.AutoApprovalService;
 import dev.skillsgateway.server.approval.PublicationLock;
 import dev.skillsgateway.server.catalog.CatalogService;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
@@ -48,7 +49,8 @@ import org.springframework.stereotype.Service;
  *       explains why.
  *   <li><b>Warn mode is genuinely inert.</b> It records and announces; nothing in it touches the
  *       published repository or the snapshot row. The only difference enforcement makes is whether
- *       {@link #quarantine} is called at all.
+ *       {@link #quarantine} is called at all. A snapshot no person approved is the exception: it
+ *       is always re-vetted as if under enforcement (GW_APPROVAL_0044.13).
  * </ul>
  */
 @Service
@@ -288,12 +290,13 @@ public class RevetService {
         WaiverEvaluation.Effect effect = waiverService.evaluate(snapshot);
         RevetVerdict.Classification classification = RevetVerdict.classify(recorded, effect);
 
+        SkillsGatewayProperties.RevetMode mode = modeFor(snapshot);
         List<FetchLogRepository.Fetcher> affected = List.of();
         boolean revoked = false;
         if (classification == RevetVerdict.Classification.VIOLATION) {
             affected = fetchLogRepository.fetchersOf(snapshot.marketplaceId(), snapshot.sha());
-            recordViolation(snapshot, marketplace, trigger, effect, affected, actor);
-            if (properties.enforcing()) {
+            recordViolation(snapshot, marketplace, trigger, mode, effect, affected, actor);
+            if (mode == SkillsGatewayProperties.RevetMode.ENFORCE) {
                 revoked = quarantine(snapshot, marketplace, effect, actor);
             }
         } else if (classification == RevetVerdict.Classification.INCONCLUSIVE) {
@@ -322,9 +325,21 @@ public class RevetService {
                 classification,
                 effect.outcome(),
                 revoked,
-                properties.mode(),
+                mode,
                 effect.uncovered(),
                 affected);
+    }
+
+    /**
+     * The mode re-vetting acts in for one snapshot. Content no person approved is recalled whatever
+     * the configured mode; content a person vouched for follows it, so a new noisy rule cannot
+     * mass-withdraw what people approved (GW_APPROVAL_0044.13).
+     */
+    @Requirements({"GW_APPROVAL_0044.13"})
+    private SkillsGatewayProperties.RevetMode modeFor(Snapshot snapshot) {
+        return AutoApprovalService.ACTOR.equals(snapshot.decidedBy())
+                ? SkillsGatewayProperties.RevetMode.ENFORCE
+                : properties.mode();
     }
 
     /**
@@ -337,6 +352,7 @@ public class RevetService {
             Snapshot snapshot,
             String marketplace,
             String trigger,
+            SkillsGatewayProperties.RevetMode mode,
             WaiverEvaluation.Effect effect,
             List<FetchLogRepository.Fetcher> affected,
             String actor) {
@@ -351,7 +367,7 @@ public class RevetService {
                 EVENT_VIOLATION,
                 snapshot.sha(),
                 "trigger=%s; mode=%s; vetters=%s; rules=%s; fetchedBy=%d"
-                        .formatted(trigger, properties.mode(), effect.blockingVetters(), rules, affected.size()));
+                        .formatted(trigger, mode, effect.blockingVetters(), rules, affected.size()));
         for (FetchLogRepository.Fetcher fetcher : affected) {
             auditLogger.record(
                     actor,
@@ -374,7 +390,7 @@ public class RevetService {
                 marketplace,
                 snapshot.sha(),
                 effect.blockingVetters(),
-                properties.mode());
+                mode);
     }
 
     /**

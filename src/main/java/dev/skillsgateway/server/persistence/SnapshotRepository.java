@@ -359,14 +359,33 @@ public class SnapshotRepository {
      */
     @Requirements({"GW_APPROVAL_0016"})
     public Optional<Snapshot> previousApproved(long marketplaceId, long excludingSnapshotId) {
+        return previousApproved(marketplaceId, List.of(excludingSnapshotId));
+    }
+
+    /** The newest live approved snapshot of a marketplace that is none of {@code excluding}. */
+    public Optional<Snapshot> previousApproved(long marketplaceId, Collection<Long> excluding) {
         return jdbc.sql("SELECT * FROM snapshots WHERE marketplace_id = :marketplaceId"
-                        + " AND id <> :excluding AND state = :approved::snapshot_state AND deleted_at IS NULL"
+                        + " AND id NOT IN (:excluding) AND state = :approved::snapshot_state AND deleted_at IS NULL"
                         + " ORDER BY id DESC LIMIT 1")
                 .param("marketplaceId", marketplaceId)
-                .param("excluding", excludingSnapshotId)
+                .param("excluding", List.copyOf(excluding))
                 .param("approved", Snapshot.APPROVED)
                 .query(Snapshot.class)
                 .optional();
+    }
+
+    /**
+     * Live snapshots approved by {@code approver} at or after {@code since}, newest decision first
+     * (GW_APPROVAL_0044.14).
+     */
+    public List<Snapshot> approvedBySince(String approver, Instant since) {
+        return jdbc.sql("SELECT * FROM snapshots WHERE state = :approved::snapshot_state AND decided_by = :approver"
+                        + " AND decided_at >= :since AND deleted_at IS NULL ORDER BY decided_at DESC, id DESC")
+                .param("approved", Snapshot.APPROVED)
+                .param("approver", approver)
+                .param("since", since.atOffset(ZoneOffset.UTC))
+                .query(Snapshot.class)
+                .list();
     }
 
     /**

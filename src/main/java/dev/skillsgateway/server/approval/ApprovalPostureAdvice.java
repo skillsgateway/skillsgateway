@@ -24,4 +24,13 @@ public class ApprovalPostureAdvice {
         problem.setProperty("nextStep", e.nextStep());
         return problem;
     }
+
+    /** A bulk withdrawal's return that a marketplace cannot make; raised before anything is withdrawn. */
+    @ExceptionHandler(RollbackUnavailableException.class)
+    public ProblemDetail rollbackUnavailable(RollbackUnavailableException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+        problem.setTitle("There is no previous approved snapshot to serve");
+        problem.setProperty("marketplace", e.marketplace());
+        return problem;
+    }
 }
