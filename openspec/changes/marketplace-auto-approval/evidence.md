@@ -231,6 +231,34 @@ first run of M1–M61 was at commit `2886ea79`, in about 20 minutes. There were 
 equivalent surface mutant from 5.4 (oversize reads ignored) is not in the
 script, because no test can kill it.
 
+### 6.1–6.2 — re-vetting recall and bulk withdrawal
+
+Written first, three tests in `AutoApprovalTests`, all failing (RED) for the
+right reason. Under `warn`, the automatic approval was classified a violation
+and not revoked (`recalled.revoked()` false). Both withdrawal tests got 404,
+because the route did not exist yet. After the implementation all six tests in
+the class pass. The violation entry of an automatic approval says
+`mode=ENFORCE`, the mode re-vetting acted in, and a person's says `mode=WARN`.
+
+`AutoApprovalWithdrawalTests` (Mockito, one test) covers the race that an
+end-to-end test cannot arrange: a snapshot someone else withdrew mid-request is
+skipped. It was written after the code, and M73 proves it.
+
+`RoleEnforcementTests` classifies `POST /api/v1/approval/auto/withdraw` as a
+role-gated mutation. `openapi.json` and `types.gen.ts` were regenerated, with
+additions only.
+
+Regression: 22 classes and 140 tests (every re-vetting, revocation, posture,
+role, contract and budget suite) passed.
+
+Mutants M63–M73, run with `ONLY='M6[3-9]|M7[0-3]'`. On the first run M71 (the
+up-front "nothing to return to" check dropped) **survived**. With one
+marketplace, `RevocationService` refuses the same request by itself before
+withdrawing. The check only matters when an earlier withdrawal in the order
+belongs to a marketplace that could be honoured. The refusal test now arranges
+that case and asserts that the honourable withdrawal is not made either. M71
+was then killed, and every other mutant was killed on the first run.
+
 ## Final run
 
 (pending)

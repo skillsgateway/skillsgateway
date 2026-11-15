@@ -358,10 +358,13 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.14"})
     void bulkWithdrawalThatCannotBeHonouredWithdrawsNothing() throws Exception {
+        Marketplace returnable = internalMarketplace("acme/" + uniqueName("skills"));
+        Snapshot returnableBefore = autoApproved(returnable, 0);
         Instant since = Instant.now();
         Thread.sleep(5);
         Marketplace alone = internalMarketplace("acme/" + uniqueName("skills"));
         Snapshot only = autoApproved(alone, 0);
+        Snapshot returnableAfter = autoApproved(returnable, 1);
 
         withdraw("{\"since\": \"%s\", \"serveAfter\": \"nothing\"}".formatted(since))
                 .andExpect(status().isUnprocessableEntity());
@@ -373,12 +376,25 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
                 .andExpect(jsonPath("$.marketplace").value(alone.name()));
         assertThat(snapshotRepository.findById(only.id()).orElseThrow().state()).isEqualTo(Snapshot.APPROVED);
         assertThat(servedTip.of(alone.name())).contains(only.sha());
+        assertThat(snapshotRepository
+                        .findById(returnableAfter.id())
+                        .orElseThrow()
+                        .state())
+                .as("the newer withdrawal, which could have been honoured, is not made either")
+                .isEqualTo(Snapshot.APPROVED);
+        assertThat(servedTip.of(returnable.name())).contains(returnableAfter.sha());
 
         withdraw(withdrawal(since, "nothing"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.withdrawn[0].snapshot.id").value((int) only.id()))
-                .andExpect(jsonPath("$.withdrawn[0].nowServing").doesNotExist());
+                .andExpect(jsonPath("$.withdrawn[*].snapshot.id")
+                        .value(org.hamcrest.Matchers.contains((int) returnableAfter.id(), (int) only.id())))
+                .andExpect(jsonPath("$.withdrawn[1].nowServing").doesNotExist());
         assertThat(servedTip.of(alone.name())).isEmpty();
+        assertThat(snapshotRepository
+                        .findById(returnableBefore.id())
+                        .orElseThrow()
+                        .state())
+                .isEqualTo(Snapshot.APPROVED);
     }
 
     private org.springframework.test.web.servlet.ResultActions withdraw(String body) throws Exception {

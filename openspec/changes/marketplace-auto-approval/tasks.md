@@ -101,8 +101,8 @@ Annotation placement follows the reqstool conventions:
 
 ## 6. Re-vetting and withdrawal
 
-- [ ] 6.1 Re-vetting (`@SVCs SVC_GW_APPROVAL_0044.13`, `@Requirements GW_APPROVAL_0044.13`): with global `revet.mode=warn`, a violation on an auto-approved snapshot revokes and unpublishes it, while the same violation on a human-approved snapshot only records.
-- [ ] 6.2 `POST /api/v1/approval/auto/withdraw` (`@SVCs SVC_GW_APPROVAL_0044.14`, `@Requirements GW_APPROVAL_0044.14`):
+- [x] 6.1 Re-vetting (`@SVCs SVC_GW_APPROVAL_0044.13`, `@Requirements GW_APPROVAL_0044.13`): with global `revet.mode=warn`, a violation on an auto-approved snapshot revokes and unpublishes it, while the same violation on a human-approved snapshot only records.
+- [x] 6.2 `POST /api/v1/approval/auto/withdraw` (`@SVCs SVC_GW_APPROVAL_0044.14`, `@Requirements GW_APPROVAL_0044.14`):
   - it is admin-only;
   - it revokes exactly the live auto-approved snapshots since `since`, newest first, through `RevocationService`;
   - human-approved snapshots are untouched, and the response lists what was withdrawn.
