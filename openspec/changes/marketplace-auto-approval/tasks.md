@@ -23,9 +23,9 @@ Annotation placement follows the reqstool conventions:
 
 ## 2. Preparation refactors (no behaviour change)
 
-- [ ] 2.1 Pin the human approval's evidence: a test that approves through `POST /api/v1/snapshots/{id}/approve` and asserts the exact ledger entries (`waiver-applied`, `snapshot-approved`, override, superseded chain, warn-mode `four-eyes-conflict`) and the `SNAPSHOT_APPROVED` webhook. It must pass before and after 2.2, and becomes the human half of `SVC_GW_APPROVAL_0044.10`.
-- [ ] 2.2 Move the post-approval block of `AdminController.approve` into `ApprovalRecorder` (design D9). Verify with 2.1 and the existing approval tests unchanged.
-- [ ] 2.3 Extract `UpstreamCredentials.Target` into a shared `UrlPrefix` (design D2). Verify with the existing credential tests unchanged.
+- [x] 2.1 Pin the human approval's evidence: a test that approves through `POST /api/v1/snapshots/{id}/approve` and asserts the exact ledger entries (`waiver-applied`, `snapshot-approved`, override, superseded chain, warn-mode `four-eyes-conflict`) and the `SNAPSHOT_APPROVED` webhook. It must pass before and after 2.2, and becomes the human half of `SVC_GW_APPROVAL_0044.10`.
+- [x] 2.2 Move the post-approval block of `AdminController.approve` into `ApprovalRecorder` (design D9). Verify with 2.1 and the existing approval tests unchanged.
+- [x] 2.3 Extract `UpstreamCredentials.Target` into a shared `UrlPrefix` (design D2). Verify with the existing credential tests unchanged.
 
 ## 3. Schema, configuration and classification
 

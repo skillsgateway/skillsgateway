@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.admin;
 
+import dev.skillsgateway.server.approval.ApprovalRecorder;
 import dev.skillsgateway.server.approval.ApprovalService;
 import dev.skillsgateway.server.approval.ClosureIncompleteException;
 import dev.skillsgateway.server.approval.FourEyesConflictException;
@@ -20,7 +21,6 @@ import dev.skillsgateway.server.approval.SelfReversalException;
 import dev.skillsgateway.server.approval.SnapshotTooYoungException;
 import dev.skillsgateway.server.approval.SnapshotWithdrawnException;
 import dev.skillsgateway.server.approval.VettingBlockedException;
-import dev.skillsgateway.server.approval.VettingOverrideRecord;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.ingestion.IngestJobs;
 import dev.skillsgateway.server.ingestion.IngestStatus;
@@ -40,7 +40,6 @@ import dev.skillsgateway.server.policy.PolicyDeniedException;
 import dev.skillsgateway.server.roles.RoleService;
 import dev.skillsgateway.server.storage.ServedTip;
 import dev.skillsgateway.server.vetting.LicenseReportService;
-import dev.skillsgateway.server.vetting.WaiverService;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
@@ -88,7 +87,7 @@ public class AdminController {
     private final LicenseReportService licenseReportService;
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
-    private final WaiverService waiverService;
+    private final ApprovalRecorder approvalRecorder;
     private final RoleService roleService;
 
     public AdminController(
@@ -105,7 +104,7 @@ public class AdminController {
             LicenseReportService licenseReportService,
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
-            WaiverService waiverService,
+            ApprovalRecorder approvalRecorder,
             RoleService roleService) {
         this.servedTip = servedTip;
         this.registrationService = registrationService;
@@ -120,7 +119,7 @@ public class AdminController {
         this.licenseReportService = licenseReportService;
         this.auditLogger = auditLogger;
         this.webhookService = webhookService;
-        this.waiverService = waiverService;
+        this.approvalRecorder = approvalRecorder;
         this.roleService = roleService;
     }
 
@@ -630,63 +629,8 @@ public class AdminController {
             roleService.requireApproverOfSnapshot(authentication, id);
         }
         ApprovalService.Approved approved = approvalService.approve(id, authentication.getName(), override);
-        Snapshot snapshot = approved.snapshot();
-        String marketplace = marketplaceName(snapshot.marketplaceId());
-        waiverService.recordUse(marketplace, snapshot.sha(), authentication.getName(), approved.waiversApplied());
-        // The override lands on the ledger as its own event beside snapshot-approved (GW_VETTING_0028), so
-        // the decision entry says who approved and this one says what they overrode and why — both
-        // facts kept, never one instead of the other.
-        if (approved.vettingOverride() != null) {
-            VettingOverrideRecord over = approved.vettingOverride();
-            auditLogger.record(
-                    authentication.getName(),
-                    marketplace,
-                    ApprovalService.EVENT_OVERRIDE,
-                    snapshot.sha(),
-                    "reason=%s; blockingVetters=%s; uncovered=%s"
-                            .formatted(over.reason(), over.blockingVetters(), over.uncoveredFindings()));
-        }
-        // The age at approval is on the decision's own ledger entry (GW_APPROVAL_0004.5): what the cooling-off
-        // window was worth for this snapshot is only reconstructible if the entry says how long the
-        // commit had been sitting in quarantine when someone adopted it.
-        auditLogger.record(
-                authentication.getName(),
-                marketplace,
-                "snapshot-approved",
-                snapshot.sha(),
-                "ingestion-age=" + ReleaseAgeGate.format(approved.ingestionAge()));
-        // The evidence this decision rested on was produced by a chain the marketplace no longer
-        // runs (GW_VETTING_0038.1): enabling a vetter re-runs nothing, so a snapshot at the gate can carry
-        // evidence the new vetter never produced. Recorded beside the approval, never instead of
-        // it, and never as a refusal — the reviewer owns the decision, the ledger owns the fact.
-        if (approved.chainStaleness() != null && approved.chainStaleness().stale()) {
-            auditLogger.record(
-                    authentication.getName(),
-                    marketplace,
-                    ApprovalService.EVENT_APPROVED_ON_SUPERSEDED_CHAIN,
-                    snapshot.sha(),
-                    "evidenceChain=%s; chainInForce=%s"
-                            .formatted(
-                                    approved.chainStaleness().runChain(),
-                                    approved.chainStaleness().currentChain()));
-        }
-        // Warn mode published a self-approval (GW_APPROVAL_0011). The decision entry above says who approved;
-        // this one says why that was not an independent review, and it is written beside the
-        // approval rather than instead of it so the ledger carries both facts.
-        if (!approved.fourEyesConflicts().isEmpty()) {
-            auditLogger.record(
-                    authentication.getName(),
-                    marketplace,
-                    FourEyesGate.EVENT_CONFLICT,
-                    snapshot.sha(),
-                    "mode=WARN, approved, conflicts=" + FourEyesGate.describe(approved.fourEyesConflicts()));
-        }
-        emit(
-                WebhookEvent.SNAPSHOT_APPROVED,
-                marketplaceName(snapshot.marketplaceId()),
-                snapshot,
-                authentication.getName());
-        return snapshot;
+        approvalRecorder.recordApproved(approved, authentication.getName());
+        return approved.snapshot();
     }
 
     @PostMapping("/snapshots/{id}/reject")
