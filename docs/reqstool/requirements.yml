@@ -808,6 +808,16 @@ requirements:
     categories: ["reliability", "security"]
     revision: 0.1.0
 
+  - id: GW_ESTATE_0006
+    title: A marketplace's approval posture is declarable in the estate
+    significance: shall
+    description: "The system shall accept in a declared marketplace its approval posture with a reason and an expiry, applying it as the estate reconciler; shall fail the entry, as a reconciliation failure, when it declares automatic approval for a marketplace with no internal basis, or with an expiry that is missing or more than 90 days after it is applied; shall never create an override from a declaration; and shall treat a declared posture whose expiry has passed as manual until the declaration changes."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044.1"]
+    rationale: "A posture is API-managed runtime state, so it must be declarable like the rest of the estate; the reason and expiry make a declared automatic posture a dated, recertified decision rather than a standing bit. The override stays out of the estate for the reason waivers do: it is a dated judgement by a named person, not configuration."
+    categories: ["functional-suitability"]
+    revision: 0.1.0
+
   - id: GW_WEBHOOK_0005
     title: Served webhook event registry
     significance: shall
@@ -2886,6 +2896,164 @@ requirements:
     rationale: "A token in a long line is easy to scroll past, and only instruction files are vetted for these characters; a marker in words on the line makes the reviewer see it in any file, and does not rely on colour."
     categories: ["security", "interaction-capability"]
     revision: 0.5.0
+
+  - id: GW_APPROVAL_0044
+    title: An administrator can opt an internal marketplace into automatic approval of snapshots that need no human judgement
+    significance: shall
+    description: "The system shall, for a marketplace whose approval posture is automatic and while the deployment's automatic approval mode is on, approve a held snapshot as the system actor auto-approver, with no person deciding, when and only when every condition of GW_APPROVAL_0044.1 to GW_APPROVAL_0044.9 holds; shall otherwise leave the snapshot held for a person, exactly as it would be held without automatic approval; and shall make whatever it approved recallable without waiting for a person."
+    rationale: "An organisation that uses the gateway as it uses a repository manager — one governed source for mostly its own skills and plugins — pays a person's click on every clean update of its own repositories, and that cost is why it cannot adopt. Internal content is not automatically safe, and an internal marketplace can pull in external repositories, so trust is never carried from the marketplace to what it pulls in: automatic approval is reached only by the narrow predicate of the children, any doubt leaves the snapshot with a person, and unattended content gets unattended recall. Risk stays expressed as findings, not tiers (ADR 0021); ADR 0023 records the decision."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.1
+    title: A marketplace's approval posture is manual unless an administrator sets it to automatic for a limited time
+    significance: shall
+    description: "The system shall keep for each marketplace an approval posture that is manual unless an administrator sets it to automatic; shall require, to set it to automatic, a reason and an expiry no more than 90 days after it is set, refusing a request that lacks either or names a later expiry; shall record who set it; shall treat a posture whose expiry has passed as manual until it is set again; shall let an administrator choose the posture at registration or later, and refuse the choice to anyone else; and shall refuse a registration that asks for automatic approval of a marketplace with no internal basis, creating no marketplace."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044"]
+    rationale: "Automatic approval is a dated decision by a named person, not a standing bit: the reason and the grantor make it accountable, and the expiry makes it a recertification a regulated adopter can show. Ninety days is the limit the gateway already holds every expiring grant to — a waiver, and by default a machine credential — and nothing about an internal source makes a quarterly renewal a burden."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.2
+    title: Internal sources are those under an operator-configured URL prefix, or hosted
+    significance: shall
+    description: "The system shall treat a marketplace as internal when its origin is hosted, or when its URL falls under an operator-configured URL prefix — the same scheme, host and port, and a path equal to the prefix or continuing it after a path separator — and shall treat as not internal a URL carrying userinfo, an encoded separator or a dot segment, and a URL whose path differs from the prefix only in case; shall refuse to start on a prefix that does not parse, or on a prefix with no path segment whose host is github.com, gitlab.com, bitbucket.org or the configured GitHub base URL host; and shall determine the basis at each attempt rather than store it."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044"]
+    rationale: "Internal has to be the operator's statement, not a marketplace's claim about itself. Matching on whole path segments keeps acme from covering acme-evil, and the refusals of userinfo, encoded separators and dot segments close the ways a URL can look internal and fetch from elsewhere. A host-wide prefix on a multi-tenant forge would make every user's namespace internal, so startup refuses it. A hosted marketplace's content arrives only through publication with a push scope an administrator or its approver minted. A stored flag would go stale when the prefix list changes, and a stale trusted bit fails open."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.3
+    title: Automatic approval of a marketplace outside the internal prefixes needs an expiring administrator override
+    significance: shall
+    description: "The system shall allow automatic approval of a marketplace with no internal basis only under an administrator override recorded with its creator, a reason and an expiry no more than 90 days after its creation; shall allow at most one active override per marketplace; shall cap the posture's expiry at the override's; shall treat the marketplace as having no basis once its override expires or is revoked, recording that on the ledger once; and shall never accept an override from the declared estate."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044"]
+    rationale: "Some adopters have a marketplace they trust outside their own organisation's namespace. The override makes that an exception a named person renews, like a waiver, rather than a widening of what internal means; and for the reason waivers are not declarable, it is a dated judgement, not standing configuration. Capping the posture at the override keeps a renewed posture from outliving the exception it rests on."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.4
+    title: Granting automatic approval is subject to the four-eyes rule
+    significance: shall
+    description: "The system shall apply the four-eyes rule to setting a marketplace's posture to automatic, treating the administrator who registered the marketplace as conflicted: under warn, it shall set the posture and record the conflict; under enforce, it shall store the request without letting it take effect until a different administrator confirms it; shall exempt from this check only a posture the estate reconciler applies from the declared estate; and shall leave the four-eyes rule for approvals, including its treatment of the estate reconciler, unchanged."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044"]
+    rationale: "An automatic approval has no person in it, so separation of duties has to live in the grant: whoever registers a marketplace should not alone decide that its snapshots publish themselves. A declared posture is reviewed in the estate repository before it reaches the gateway, which is its second pair of eyes; exempting the reconciler from this check only, rather than from four-eyes altogether, keeps approvals exactly as they are."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.5
+    title: Only a marketplace's newest held snapshot is approved automatically
+    significance: shall
+    description: "The system shall consider for automatic approval only a held snapshot that is neither revoked nor deleted and is its marketplace's newest non-deleted snapshot, and shall never approve automatically an older snapshot or one an administrator revoked."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044", "GW_APPROVAL_0017"]
+    rationale: "Approving an older snapshot after a newer one exists would move the served tip backwards with no person seeing it. A revoked snapshot is approved again only on a second administrator's recorded reversal, and automatic approval must not be a way around that."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.6
+    title: A snapshot is approved automatically only when it pulls in no external source
+    significance: shall
+    description: "The system shall approve a snapshot automatically only when its recorded closure has no members, whatever the URLs of those members, and shall otherwise leave it held for a person."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044"]
+    rationale: "An external source is fetched at a floating head, was never registered, and can redirect within its host, so nothing about the marketplace that pulls it in says anything about it. Trust must not travel from the marketplace to what it pulls in, and the simplest rule that guarantees it is that a snapshot with any member stays with a person."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.7
+    title: A snapshot is approved automatically only when the current vetting chain clears and every required vetter ran
+    significance: shall
+    description: "The system shall approve a snapshot automatically only when its vetting chain is in force, neither undetermined nor superseded; no vetter's verdict is not reached, errored or pending; every required vetter ran rather than being switched off, the required vetters being every vetter unless the operator names them in configuration; the effective outcome clears, medium and low findings clearing as they do for a person; a high or critical finding is cleared by a waiver only where the served baseline's vetting run carried the same rule in the same file content; and no finding, at any severity, records an unreadable hook configuration, an unscanned hook target or too many plugin roots; and shall refuse to start when the configured list of required vetters is empty or names a vetter that is not configured."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044", "GW_VETTING_0029"]
+    rationale: "A switched-off vetter neither blocks nor counts, so with every vetter but one switched off a single passing check would clear the chain; a person sees that and judges, an unattended decision cannot. By default every vetter is required. An operator may name the checks that must run, which is a stated choice the ledger shows with each approval; an empty list or a misspelt name would require nothing without saying so, and is refused. Faults and unfinished vetting are never an operator's choice and always hold. A waiver created for new content must not pre-clear it, and a read that did not complete is not evidence of anything."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.8
+    title: A snapshot is approved automatically only when its executable surface, read completely, is unchanged from the served baseline
+    significance: shall
+    description: "The system shall approve a snapshot automatically only when, compared with the served baseline, its declared executable surface — hooks, hook modules, MCP and LSP servers, each skill's allowed tools and each agent's tools — is unchanged and was read completely, and every path it adds or modifies is a regular, non-executable file of a fixed list of document, image and data types that is not a dependency manifest or lockfile, not named as a launch target, and does not begin with an interpreter line; shall treat a read that did not complete as a change; and, with no served baseline, shall require that the snapshot declares no executable surface and every path is inert."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044"]
+    rationale: "What runs on an adopter's machine is the part of a change a person most needs to see, so any change to it, or any doubt about it, keeps the snapshot with a person. A list of inert types is the fail-closed form: an unknown extension, an executable bit, a symlink or a gitlink counts as code. Instructions are not on the surface — in an agent skill Markdown is instructions — and that residual risk is accepted in ADR 0023, with shadow mode as the adopter's way to measure it."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.9
+    title: An automatic approval passes every approval gate
+    significance: shall
+    description: "The system shall make an automatic approval through the same approval decision as a person's, so that closure completeness, standing revocation, the effective vetting outcome, policy, name collision, minimum release age and the four-eyes rule are each evaluated unchanged; shall leave the snapshot held when any of them refuses; and shall record, publishing nothing, an attempt that a person's decision overtook."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044"]
+    rationale: "A second path to publication with its own copy of the gates would drift from the first. Calling the one approval decision keeps every gate a person's approval passes in force, and a race with a person is settled by the decision's existing compare-and-set rather than by new locking."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.10
+    title: An automatic approval records what a human approval records
+    significance: shall
+    description: "The system shall record for an automatic approval the same ledger entries and the same webhook that a person's approval of the same snapshot records, written by the same code for both."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044"]
+    rationale: "Auditors, exports and webhook subscribers already rely on what an approval records. If the automatic path wrote its own entries, the two would drift, and an automatic approval would be missing evidence exactly where it has the least human context."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.11
+    title: Every automatic approval, and every attempt that leaves a snapshot held, is on the ledger with its evidence
+    significance: shall
+    description: "The system shall record each automatic approval on the ledger as system activity of the actor auto-approver, with the basis it relied on and that basis's grantor, the vetting chain, the baseline commit or none, the worst finding severity, the waivers it relied on and the vetters that were switched off; shall store on the snapshot the reason an attempt left it held; and shall record that reason on the ledger when it differs from the reason last stored, and not when it repeats."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044"]
+    rationale: "A decision no person made has to carry everything a reviewer would have weighed, so that an auditor can reconstruct it. A reason for staying held answers the adopter's question of why a snapshot waits; recording it only when it changes keeps every re-vetting tick from flooding the ledger, and comparing against the snapshot rather than reading the ledger keeps the check cheap."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.12
+    title: Automatic approval is off, in shadow, or on for a deployment
+    significance: shall
+    description: "The system shall offer for a deployment the automatic approval modes off, the default, under which no posture takes effect; shadow, under which every check runs and what would have been approved is recorded but nothing is published; and on, under which eligible snapshots are approved; shall report a snapshot's evaluation in every mode from the same code an attempt uses; and shall not approve automatically while re-vetting is disabled, recording why."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044"]
+    rationale: "Off is the default and the incident switch. Shadow lets an adopter see on its own corpus what the gateway would publish before it does, which is the only evidence of whether the predicate is too wide or too narrow. Without re-vetting nothing would re-check automatically approved content, so automatic approval waits for it."
+    categories: ["functional-suitability"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.13
+    title: Re-vetting withdraws an automatically approved snapshot on new blocking evidence, whatever the configured mode
+    significance: shall
+    description: "The system shall revoke and stop serving an automatically approved snapshot when re-vetting finds new blocking evidence against it, whatever the configured re-vetting mode, recording the revocation as a re-vetting revocation is recorded; and shall leave a snapshot a person approved to follow the configured mode."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044"]
+    rationale: "Whatever no person approved must be withdrawn without waiting for a person. Requiring the global mode to enforce instead would let a gateway upgrade that adds a noisy rule mass-withdraw content people vouched for, so the stricter rule applies only where no person decided."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.14
+    title: Every snapshot approved automatically since a given time can be withdrawn in one act
+    significance: shall
+    description: "The system shall let an administrator withdraw, in one request with a reason, every still-served snapshot approved automatically at or after a given time, revoking each newest first as a revocation is recorded today and answering with what it withdrew; shall leave untouched every snapshot a person approved and every one approved automatically before that time; and shall refuse the request to anyone else."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044"]
+    rationale: "When an internal repository or a credential is found compromised, the question is everything that went out unattended since then, and answering it one snapshot at a time is too slow. The time bound and the restriction to automatic approvals keep recall from touching what a person vouched for."
+    categories: ["security"]
+    revision: 0.1.0
+
+  - id: GW_APPROVAL_0044.15
+    title: An administrator can view and set a marketplace's approval posture and override in the portal
+    significance: shall
+    description: "The system shall show, in the portal on a marketplace's settings, its approval posture with its basis, grantor, reason and expiry, its active override with the override's reason and expiry, and the deployment's automatic approval mode, showing a lapsed posture or override as lapsed and a posture under a mode that publishes nothing as not publishing; shall let an administrator, and no one else, set or renew the posture, create an override for a marketplace with no internal basis, and revoke the override after a confirmation; and shall show the server's refusal of a change as the server returned it."
+    references:
+      requirement_ids: ["GW_APPROVAL_0044"]
+    rationale: "The override is an exception a named person renews every quarter, and an administrator renewing one should not need the API to do it. Showing the basis and the mode beside the posture keeps automatic from reading as publishing when it is not, and showing the server's refusals rather than a copy of its rules keeps the portal from disagreeing with the gateway."
+    categories: ["functional-suitability"]
+    revision: 0.1.0
 
   - id: GW_INGEST_0045
     title: The snapshot inventory lists every component a plugin declares

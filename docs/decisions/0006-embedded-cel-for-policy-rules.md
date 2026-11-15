@@ -1,6 +1,9 @@
 # ADR 0006 — Embedded CEL for policy rules, not an OPA sidecar
 
-*Accepted, 2026-08-18.*
+*Accepted, 2026-08-18. Superseded in part by
+[ADR 0023](0023-automatic-approval-of-internal-marketplaces.md): auto-approval
+is no longer parked, for marketplaces an administrator opts in. The engine
+decision stands, and policy rules stay deny-only.*
 
 ## Context
 

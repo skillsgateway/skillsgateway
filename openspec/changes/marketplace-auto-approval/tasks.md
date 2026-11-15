@@ -14,12 +14,12 @@ Annotation placement follows the reqstool conventions:
 
 ## 1. Requirements and decision record
 
-- [ ] 1.1 Add the requirements and SVCs to `docs/reqstool/` (the system directory, which is the only module, so there are no subproject filters to update):
+- [x] 1.1 Add the requirements and SVCs to `docs/reqstool/` (the system directory, which is the only module, so there are no subproject filters to update):
   - **`requirements.yml`:** parent `GW_APPROVAL_0044` and its children `GW_APPROVAL_0044.1` to `.15`, each child with `references: requirement_ids: ["GW_APPROVAL_0044"]`, plus `GW_ESTATE_0006`. Each entry has a `title`, `significance: shall`, a `description`, a `rationale`, `categories` (`security` for every entry except `.12`, `.15` and `GW_ESTATE_0006`, which are `functional-suitability`) and `revision: 0.1.0`, inserted after `GW_APPROVAL_0038` and `GW_ESTATE_0005`.
   - **`software_verification_cases.yml`:** `SVC_GW_APPROVAL_0044`, `SVC_GW_APPROVAL_0044.1` to `.15` and `SVC_GW_ESTATE_0006`, each mirroring its requirement, as `automated-test` with GIVEN/WHEN/THEN.
 
   Use the titles in proposal.md. Verify with `reqstool status local -p docs/reqstool` after a `clean` build.
-- [ ] 1.2 Write `docs/decisions/0023-automatic-approval-of-internal-marketplaces.md`. It supersedes ADR 0006's deny-only position for opted-in marketplaces, and states the accepted residual risk (design D7), the reconciler's four-eyes exemption (D4), and why re-vetting enforces only for auto-approved snapshots (D12). Amend ADR 0006 (superseded in part) and ADR 0021 ("What would reopen this": decided, with the findings predicate and no tiers). Verify with `mkdocs build --strict`.
+- [x] 1.2 Write `docs/decisions/0023-automatic-approval-of-internal-marketplaces.md`. It supersedes ADR 0006's deny-only position for opted-in marketplaces, and states the accepted residual risk (design D7), the reconciler's four-eyes exemption (D4), and why re-vetting enforces only for auto-approved snapshots (D12). Amend ADR 0006 (superseded in part) and ADR 0021 ("What would reopen this": decided, with the findings predicate and no tiers). Verify with `mkdocs build --strict`.
 
 ## 2. Preparation refactors (no behaviour change)
 

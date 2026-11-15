@@ -1031,6 +1031,16 @@ cases:
       THEN the application serves with the valid entries applied, the invalid entry is on the ledger and in the report with its reason, the report endpoint answers auditors and admins and refuses sessions with no role, and the trigger endpoint refuses non-admins and records each admin trigger on the ledger with the acting identity
     revision: "0.1.0"
 
+  - id: SVC_GW_ESTATE_0006
+    requirement_ids: ["GW_ESTATE_0006"]
+    title: A declared automatic posture is applied by the reconciler, and one without a basis or a valid expiry fails its entry
+    verification: automated-test
+    description: |
+      GIVEN declared marketplaces with an automatic posture under an internal prefix, with no internal basis, with no expiry, and with an expiry more than 90 days out, and a declaration that tries to carry an override
+      WHEN reconciliation runs
+      THEN the internal declaration's posture is applied as the estate reconciler, the others each fail as isolated entries with their reasons, and no override is created
+    revision: "0.1.0"
+
   - id: SVC_GW_WEBHOOK_0005
     requirement_ids: ["GW_WEBHOOK_0005"]
     title: The registry is served, excludes the export event, and the portal composes a filter from it
@@ -4119,6 +4129,166 @@ cases:
       GIVEN a file tree entry whose name contains a right-to-left override
       WHEN the reviewer selects it
       THEN the path passed on is the original path, character for character, while the entry shows the token
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044
+    requirement_ids: ["GW_APPROVAL_0044"]
+    title: An internal marketplace serves a clean Markdown-only update with no person, and the same update with an external source stays held
+    verification: automated-test
+    description: |
+      GIVEN a gateway in automatic approval mode on, and a marketplace under an internal prefix whose posture is automatic with a reason and expiry, serving an approved snapshot
+      WHEN the upstream gains a Markdown-only change and is ingested, and then, separately, gains the same change together with an external source and is ingested
+      THEN the first new snapshot is approved by auto-approver and served with no person deciding, and the second stays held for a person with the reason recorded
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.1
+    requirement_ids: ["GW_APPROVAL_0044.1"]
+    title: The posture defaults to manual, automatic needs a reason and an expiry within 90 days, lapses to manual, and is an administrator's choice
+    verification: automated-test
+    description: |
+      GIVEN a newly registered marketplace, an internal marketplace, and sessions with and without the administrator role
+      WHEN the posture is read; automatic is set with no reason, with no expiry, and with an expiry 91 days out; automatic is set validly and the clock is moved past its expiry; automatic is chosen at registration by an administrator and by a non-administrator; and automatic is chosen at registration for a marketplace with no internal basis
+      THEN the new marketplace is manual, each incomplete or distant request is refused with the posture left manual, the lapsed posture has basis none and a clean snapshot stays held, the administrator's registration choice is stored, the non-administrator is refused on the update and on registration, and the registration with no internal basis is refused as a conflict naming the override as the next step, creating no marketplace
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.2
+    requirement_ids: ["GW_APPROVAL_0044.2"]
+    title: Only URLs on whole path segments under a configured prefix, and hosted marketplaces, are internal, and startup refuses dangerous prefixes
+    verification: automated-test
+    description: |
+      GIVEN an internal prefix for one organisation on a forge host, and a hosted marketplace
+      WHEN marketplace URLs are classified for the organisation itself, a lookalike organisation, another scheme, host or port, a URL with userinfo, a URL with an encoded separator or a dot segment, and a case-shifted path segment; and the gateway is started with an unparseable prefix, a host-wide prefix on github.com, gitlab.com and bitbucket.org, and a host-wide prefix on the configured GitHub base URL host
+      THEN the organisation's URL and the hosted marketplace are internal, every other URL is not, and each dangerous configuration is refused at startup
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.3
+    requirement_ids: ["GW_APPROVAL_0044.3"]
+    title: A marketplace outside the prefixes is automatic only under a 90-day override that caps the posture and lapses once on the ledger
+    verification: automated-test
+    description: |
+      GIVEN a marketplace with no internal basis
+      WHEN automatic is set without an override, with an override lacking a reason or expiring 91 days out, and with a valid override and a posture expiring after it; and the override is then expired by the clock, and in another run revoked, with several attempts following each
+      THEN the requests without a valid override are refused, the valid one is accepted with the posture's expiry capped at the override's, and after expiry or revocation the basis is none and exactly one expiry or revocation entry is on the ledger across the repeated attempts
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.4
+    requirement_ids: ["GW_APPROVAL_0044.4"]
+    title: A grant of automatic approval by the registering administrator is a four-eyes conflict, and approvals' four-eyes rule is unchanged
+    verification: automated-test
+    description: |
+      GIVEN a marketplace registered by one administrator, a second administrator, and the four-eyes rule under warn and then under enforce
+      WHEN the registering administrator sets automatic under each mode, the second administrator then confirms it under enforce, the estate reconciler applies a declared automatic posture, and the estate reconciler's approval of a snapshot is evaluated
+      THEN under warn the posture is set and the conflict recorded, under enforce it stays awaiting a second administrator and takes effect only on the second administrator's confirmation, the reconciler's declared posture takes effect with no second administrator, and the reconciler's approval still conflicts exactly as before
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.5
+    requirement_ids: ["GW_APPROVAL_0044.5"]
+    title: Only the newest held snapshot is a candidate, and a revoked or deleted one never is
+    verification: automated-test
+    description: |
+      GIVEN an automatic internal marketplace with two clean held snapshots, the older ingested first, and a clean snapshot an administrator revoked and one that was deleted
+      WHEN automatic approval is attempted for the older snapshot after the newer exists, and for the revoked and the deleted snapshots
+      THEN each stays as it was, with a recorded reason, and nothing is published
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.6
+    requirement_ids: ["GW_APPROVAL_0044.6"]
+    title: A snapshot with any closure member stays held, whether the member's URL is external or internal
+    verification: automated-test
+    description: |
+      GIVEN an automatic internal marketplace whose otherwise clean snapshots pull in one external source with an external URL, and one with a URL under the internal prefix
+      WHEN automatic approval is attempted for each
+      THEN both stay held for a person with a reason naming the external source
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.7
+    requirement_ids: ["GW_APPROVAL_0044.7"]
+    title: Automatic approval needs a current chain that clears with every required vetter run, waivers from the baseline only, and every read complete
+    verification: automated-test
+    description: |
+      GIVEN an automatic internal marketplace, with required vetters unset and then naming only secret-scan
+      WHEN automatic approval is attempted for snapshots whose chain is undetermined or superseded; with a disabled, not reached, errored or pending verdict; with every vetter but secret-scan disabled and secret-scan passing; with an uncovered high finding; with only medium findings; with a waived high finding absent from and then present in the baseline in the same file content; with an unreadable hook configuration, an unscanned hook target or too many plugin roots; and, under the named list, with secret-scan disabled, with another vetter disabled, and with a required vetter absent from the chain; and the gateway is started with an empty list and with an unknown vetter name
+      THEN with the list unset only the medium-only and baseline-waived snapshots are approved; under the named list a disabled secret-scan, an absent required vetter and any not reached, errored or pending verdict keep the snapshot held, while another disabled vetter does not and is named in the approval's ledger entry; and both misconfigurations are refused at startup
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.8
+    requirement_ids: ["GW_APPROVAL_0044.8"]
+    title: Any change to the executable surface, any non-inert path, or any incomplete read keeps a snapshot held
+    verification: automated-test
+    description: |
+      GIVEN an automatic internal marketplace serving a baseline, and a marketplace with no served baseline
+      WHEN automatic approval is attempted for a Markdown-only change; a deletion; a changed hook, hook module, MCP or LSP declaration; changed allowed tools or agent tools; an added path with an unknown extension, an interpreter line, a dependency manifest or a launch target; a path with mode 100755, a mode-only change, a symlink or a gitlink; an oversize component file; plugins past the plugin limit; and, with no baseline, a first snapshot that is entirely inert and one with any surface
+      THEN the Markdown-only change, the deletion and the inert first snapshot are approved, and every other snapshot stays held with a reason
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.9
+    requirement_ids: ["GW_APPROVAL_0044.9"]
+    title: An automatic approval is refused by every gate a person's is, and a person who decides first wins
+    verification: automated-test
+    description: |
+      GIVEN an automatic internal marketplace and otherwise eligible snapshots
+      WHEN automatic approval is attempted for one denied by policy, one whose plugin name collides with another marketplace's, one with an open closure, and one younger than the minimum release age that later comes of age; and for one that a person approves while the attempt is under way
+      THEN the denied, colliding and open-closure snapshots stay held, the young snapshot stays held and is approved on a later re-vetting tick once of age, and the overtaken attempt records a skip, publishes nothing, and leaves the person as the decider
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.10
+    requirement_ids: ["GW_APPROVAL_0044.10"]
+    title: An automatic approval writes exactly the ledger entries and webhook a person's approval writes
+    verification: automated-test
+    description: |
+      GIVEN a snapshot approved by a person through the API, with waivers, an override, a superseded chain and a warn-mode four-eyes conflict, and an equivalent snapshot approved automatically
+      WHEN their ledger entries and webhook deliveries are compared
+      THEN the person's approval writes its pinned entries and webhook, unchanged by moving them into the shared recorder, and the automatic approval writes the same kinds of entry and the same webhook through that recorder
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.11
+    requirement_ids: ["GW_APPROVAL_0044.11"]
+    title: The automatic approval's ledger entry carries its evidence, and a held reason is stored and ledgered only when it changes
+    verification: automated-test
+    description: |
+      GIVEN an automatic internal marketplace with an eligible snapshot, and one that stays held
+      WHEN the eligible snapshot is approved, and the held one is attempted repeatedly with the same reason and then with a different reason
+      THEN the approval's entry is system activity of auto-approver with the basis, grantor, chain, baseline commit, worst severity, waiver ids and switched-off vetters, and the held snapshot stores its reason and has one ledger entry per distinct reason and none for the repeats
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.12
+    requirement_ids: ["GW_APPROVAL_0044.12"]
+    title: Off evaluates nothing for publication, shadow records and publishes nothing, on publishes, and disabled re-vetting stops it
+    verification: automated-test
+    description: |
+      GIVEN an automatic internal marketplace with an eligible snapshot
+      WHEN it is attempted under mode off, under shadow, under on, and under on with re-vetting disabled, and its evaluation is read in each mode
+      THEN off publishes nothing and records no evaluation, shadow records what would have been approved and publishes nothing, on publishes it, disabled re-vetting leaves it held with that reason, and the evaluation read reports the result the attempt used
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.13
+    requirement_ids: ["GW_APPROVAL_0044.13"]
+    title: Under a warn re-vetting mode a violation revokes an automatically approved snapshot and only records one a person approved
+    verification: automated-test
+    description: |
+      GIVEN re-vetting in warn mode, one snapshot approved automatically and one approved by a person, and a vetting rule that newly blocks both
+      WHEN re-vetting runs
+      THEN the automatically approved snapshot is revoked and no longer served, with the re-vetting revocation recorded, and the person-approved snapshot is still served with the violation recorded
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.14
+    requirement_ids: ["GW_APPROVAL_0044.14"]
+    title: Bulk withdrawal revokes exactly the served automatic approvals since a time, and only for administrators
+    verification: automated-test
+    description: |
+      GIVEN snapshots approved automatically before and after a time, a snapshot a person approved after it, and sessions with and without the administrator role
+      WHEN each session requests withdrawal of automatic approvals since that time
+      THEN the non-administrator is refused, and the administrator's request revokes exactly the automatic approvals since that time, newest first, lists them in its answer, and leaves the person-approved snapshot and the earlier automatic approvals served
+    revision: "0.1.0"
+
+  - id: SVC_GW_APPROVAL_0044.15
+    requirement_ids: ["GW_APPROVAL_0044.15"]
+    title: An administrator sets automatic approval with an override in the portal, sees its basis, and revokes it
+    verification: automated-test
+    description: |
+      GIVEN a gateway in the portal end-to-end harness, an administrator session, and a marketplace outside the internal prefixes
+      WHEN the administrator opens the marketplace's settings, sets automatic approval with a reason, an expiry and an override, and then revokes the override
+      THEN the posture card shows the basis override with the reason, expiry and grantor after the save, and the basis none after the revocation
     revision: "0.1.0"
 
   - id: SVC_GW_INGEST_0045
