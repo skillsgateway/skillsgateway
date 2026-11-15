@@ -19,8 +19,10 @@ recallable without waiting for a person.
 ## What Changes
 
 - **Approval posture per marketplace**, `manual` (default) or `auto`.
-  - `auto` records who set it, why, and an expiry of at most 365 days, after
-    which it lapses to manual until renewed.
+  - `auto` records who set it, why, and an expiry of at most 90 days, after
+    which it lapses to manual until renewed. Ninety days matches the waiver
+    limit and the default machine-credential cap; the posture keeps its own
+    constant, so changing one limit never moves another.
   - It is chosen at registration or later, by an administrator. Under four-eyes
     `enforce` it takes effect only once a second administrator confirms it.
   - It is declarable in the estate.
@@ -29,14 +31,19 @@ recallable without waiting for a person.
   scheme, host and path segments, and startup refuses a host-wide prefix on a
   multi-tenant host. Hosted marketplaces are internal by construction.
 - **An administrator override** allows `auto` for a marketplace outside the
-  prefixes. It needs a reason, expires within 90 days, and is API-only.
+  prefixes. It needs a reason and expires within 90 days. It is set through
+  the API or the portal, and never declared in the estate.
 - **A snapshot is approved automatically only when all of these hold**;
   otherwise it stays held for a person, exactly as today:
   - it is the marketplace's newest snapshot;
   - it pulls in **no external source at all**;
-  - the whole current vetting chain ran, with no vetter disabled, and its
-    effective outcome clears. Medium findings are allowed. A waived high
-    finding is allowed only if the served version already carried it;
+  - the current vetting chain ran, its effective outcome clears, and every
+    required vetter ran rather than being switched off. By default every
+    vetter is required; an operator can name the required ones in
+    `skills-gateway.approval.auto.required-vetters`, and the others may then be
+    switched off without stopping automatic approval. Medium findings are
+    allowed. A waived high finding is allowed only if the served version
+    already carried it;
   - its executable surface is unchanged from the served version, and every read
     completed. Hooks, hook modules, MCP and LSP servers, tool permissions, and
     any changed file that is not on a short inert list (documentation, images,
@@ -55,8 +62,11 @@ recallable without waiting for a person.
   time.
 - **New ADR 0023** superseding ADR 0006's deny-only position ("nothing is served
   that a person did not approve") for opted-in marketplaces.
-- **Portal:** a follow-up change. This one ships the API, the ledger and shadow
-  mode.
+- **Portal:** an Approval posture card on the marketplace's Settings page. It
+  shows the posture, its basis, grantor, reason and expiry, and the active
+  override. An administrator sets or renews the posture there, creates the
+  override for a marketplace outside the prefixes, and revokes it. The bulk
+  withdrawal and the per-snapshot evaluation stay API-only in this change.
 - Not **BREAKING**: every new API field is additive, and the defaults keep
   today's behaviour.
 
@@ -72,7 +82,7 @@ as `GW_APPROVAL_0004` and `GW_APPROVAL_0019` are.
   - `GW_APPROVAL_0044.4 — Granting automatic approval is subject to the four-eyes rule`
   - `GW_APPROVAL_0044.5 — Only a marketplace's newest held snapshot is approved automatically`
   - `GW_APPROVAL_0044.6 — A snapshot is approved automatically only when it pulls in no external source`
-  - `GW_APPROVAL_0044.7 — A snapshot is approved automatically only when the whole current vetting chain ran and clears`
+  - `GW_APPROVAL_0044.7 — A snapshot is approved automatically only when the current vetting chain clears and every required vetter ran`
   - `GW_APPROVAL_0044.8 — A snapshot is approved automatically only when its executable surface, read completely, is unchanged from the served baseline`
   - `GW_APPROVAL_0044.9 — An automatic approval passes every approval gate`
   - `GW_APPROVAL_0044.10 — An automatic approval records what a human approval records`
@@ -80,10 +90,11 @@ as `GW_APPROVAL_0004` and `GW_APPROVAL_0019` are.
   - `GW_APPROVAL_0044.12 — Automatic approval is off, in shadow, or on for a deployment`
   - `GW_APPROVAL_0044.13 — Re-vetting withdraws an automatically approved snapshot on new blocking evidence, whatever the configured mode`
   - `GW_APPROVAL_0044.14 — Every snapshot approved automatically since a given time can be withdrawn in one act`
+  - `GW_APPROVAL_0044.15 — An administrator can view and set a marketplace's approval posture and override in the portal`
 - `GW_ESTATE_0006 — A marketplace's approval posture is declarable in the estate`
 
 Each requirement is verified by the SVC that mirrors its id:
-`SVC_GW_APPROVAL_0044` and `SVC_GW_APPROVAL_0044.1` to `.14`, and
+`SVC_GW_APPROVAL_0044` and `SVC_GW_APPROVAL_0044.1` to `.15`, and
 `SVC_GW_ESTATE_0006`.
 
 The parent is `0044`, not the next free requirement number `0039`, because
@@ -100,7 +111,7 @@ not a capability beside it.
 
 ### Modified Capabilities
 
-- `snapshot-approval`: adds `GW_APPROVAL_0044` and its children `.1` to `.14`.
+- `snapshot-approval`: adds `GW_APPROVAL_0044` and its children `.1` to `.15`.
 - `declarative-estate`: adds `GW_ESTATE_0006`.
 
 ## Impact
@@ -126,9 +137,14 @@ not a capability beside it.
     its override;
   - `GET /api/v1/snapshots/{id}/auto-approval`;
   - `POST /api/v1/approval/auto/withdraw`.
+- **Portal (`src/main/frontend/src/`):** the Approval posture card on the
+  marketplace Settings page, with its Storybook stories and an e2e test; the
+  PR carries before/after screenshots.
 - **Configuration:**
   - `skills-gateway.approval.auto.mode` (default `off`);
   - `skills-gateway.approval.auto.internal-prefixes`;
+  - `skills-gateway.approval.auto.required-vetters` (default: unset, meaning
+    every vetter);
   - `skills-gateway.estate.marketplaces[].approval.{posture, reason, expires-at}`.
 - **Docs:**
   - the new ADR 0023, and amendments to ADR 0006 and ADR 0021;
@@ -144,13 +160,19 @@ nothing else in the map changes:
 
 - **No new backend package, grantable role, or scheduled sweep.** The release-age
   retry rides the existing re-vetting tick.
-- **It adds five configuration leaves.** `ConfigSurfaceBudgetTests` rises by five:
+- **It adds six configuration leaves.** `ConfigSurfaceBudgetTests` rises by six:
   - **The mode:** `off` is the incident switch, and `shadow` is the adopter's
     measurement.
   - **The prefix list:** "internal" has to be the operator's statement, not a
     marketplace's claim about itself.
+  - **The required vetters:** which checks must have run before content is
+    published unattended is the operator's call, not that of whoever grants
+    `auto`. Unset keeps the strictest rule, so the leaf only ever loosens on a
+    stated choice. It is gateway-wide rather than per marketplace, so a grantor
+    cannot lower the bar for the one marketplace they are granting.
   - **The three estate keys:** the declarative-estate obligation, with the
     reason and expiry that make a declared `auto` a dated, recertified decision
     rather than a standing bit.
-- **It adds one API-only object, the override,** deliberately left out of the
-  estate. Like a waiver, it is an expiring exception that a named person renews.
+- **It adds one object that is not declarable in the estate, the override.**
+  Like a waiver, it is an expiring exception that a named person renews, so it
+  is set through the API or the portal and deliberately left out of the estate.

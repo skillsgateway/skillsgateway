@@ -3,7 +3,7 @@
 Trust-boundary change (`ApprovalService`, the approval evidence, re-vetting):
 follow `.claude/skills/old-coder`. Watch every SVC test fail before its
 implementation, include adversarial cases, and run mutation testing over the
-predicate. The portal is a follow-up change.
+predicate. The portal work is the Approval posture card (design D15).
 
 Annotation placement follows the reqstool conventions:
 
@@ -15,8 +15,8 @@ Annotation placement follows the reqstool conventions:
 ## 1. Requirements and decision record
 
 - [ ] 1.1 Add the requirements and SVCs to `docs/reqstool/` (the system directory, which is the only module, so there are no subproject filters to update):
-  - **`requirements.yml`:** parent `GW_APPROVAL_0044` and its children `GW_APPROVAL_0044.1` to `.14`, each child with `references: requirement_ids: ["GW_APPROVAL_0044"]`, plus `GW_ESTATE_0006`. Each entry has a `title`, `significance: shall`, a `description`, a `rationale`, `categories` (`security` for every entry except `.12` and `GW_ESTATE_0006`, which are `functional-suitability`) and `revision: 0.1.0`, inserted after `GW_APPROVAL_0038` and `GW_ESTATE_0005`.
-  - **`software_verification_cases.yml`:** `SVC_GW_APPROVAL_0044`, `SVC_GW_APPROVAL_0044.1` to `.14` and `SVC_GW_ESTATE_0006`, each mirroring its requirement, as `automated-test` with GIVEN/WHEN/THEN.
+  - **`requirements.yml`:** parent `GW_APPROVAL_0044` and its children `GW_APPROVAL_0044.1` to `.15`, each child with `references: requirement_ids: ["GW_APPROVAL_0044"]`, plus `GW_ESTATE_0006`. Each entry has a `title`, `significance: shall`, a `description`, a `rationale`, `categories` (`security` for every entry except `.12`, `.15` and `GW_ESTATE_0006`, which are `functional-suitability`) and `revision: 0.1.0`, inserted after `GW_APPROVAL_0038` and `GW_ESTATE_0005`.
+  - **`software_verification_cases.yml`:** `SVC_GW_APPROVAL_0044`, `SVC_GW_APPROVAL_0044.1` to `.15` and `SVC_GW_ESTATE_0006`, each mirroring its requirement, as `automated-test` with GIVEN/WHEN/THEN.
 
   Use the titles in proposal.md. Verify with `reqstool status local -p docs/reqstool` after a `clean` build.
 - [ ] 1.2 Write `docs/decisions/0023-automatic-approval-of-internal-marketplaces.md`. It supersedes ADR 0006's deny-only position for opted-in marketplaces, and states the accepted residual risk (design D7), the reconciler's four-eyes exemption (D4), and why re-vetting enforces only for auto-approved snapshots (D12). Amend ADR 0006 (superseded in part) and ADR 0021 ("What would reopen this": decided, with the findings predicate and no tiers). Verify with `mkdocs build --strict`.
@@ -33,7 +33,7 @@ Annotation placement follows the reqstool conventions:
   - `marketplaces.approval_posture`, `approval_set_by`, `approval_reason` and `approval_expires_at`;
   - `snapshots.auto_approval_skip_reason`;
   - the `auto_approval_overrides` table, with its 90-day `CHECK` and a partial unique index for the active override (design D1, D3, D9).
-- [ ] 3.2 Add `skills-gateway.approval.auto.mode` (`off` | `shadow` | `on`, default `off`) and `skills-gateway.approval.auto.internal-prefixes`. Startup refuses an unparseable prefix, and a host-wide prefix on a multi-tenant host or on the `github-base-url` host. Raise `ConfigSurfaceBudgetTests` by the leaves added, and argue each in the PR.
+- [ ] 3.2 Add `skills-gateway.approval.auto.mode` (`off` | `shadow` | `on`, default `off`), `skills-gateway.approval.auto.internal-prefixes` and `skills-gateway.approval.auto.required-vetters` (unset by default, meaning every vetter). Startup refuses an unparseable prefix, a host-wide prefix on a multi-tenant host or on the `github-base-url` host, an empty `required-vetters` list, and a `required-vetters` name that is not a configured vetter. Raise `ConfigSurfaceBudgetTests` by the six leaves added (these three and the three estate keys of 7.1), and argue each in the PR.
 - [ ] 3.3 Internal-source classification, with tests written first (`@SVCs SVC_GW_APPROVAL_0044.2`, `@Requirements GW_APPROVAL_0044.2`). An exact organisation matches, and a hosted marketplace is internal. These do not match:
   - a lookalike organisation;
   - a different scheme, host or port;
@@ -44,11 +44,11 @@ Annotation placement follows the reqstool conventions:
 
 - [ ] 4.1 Posture (`@SVCs SVC_GW_APPROVAL_0044.1`, `@Requirements GW_APPROVAL_0044.1`):
   - it defaults to `manual`;
-  - `auto` needs a reason and an expiry of at most 365 days, and a lapsed one is effectively manual;
+  - `auto` needs a reason and an expiry of at most 90 days (the posture's own `MAX_LIFETIME` constant), and a lapsed one is effectively manual;
   - only an administrator sets it, including at registration;
   - `auto` without an internal basis is refused at registration.
 - [ ] 4.2 Override (`@SVCs SVC_GW_APPROVAL_0044.3`, `@Requirements GW_APPROVAL_0044.3`):
-  - it needs a reason and an expiry of at most 90 days, and caps the posture's expiry;
+  - it needs a reason and an expiry of at most 90 days (the override's own `MAX_LIFETIME` constant, matching the table's `CHECK`), and caps the posture's expiry;
   - expiry or revocation makes the basis `none`, recorded once.
 - [ ] 4.3 Four-eyes on the grant (`@SVCs SVC_GW_APPROVAL_0044.4`, `@Requirements GW_APPROVAL_0044.4`, design D4):
   - under `warn`, a grant by the registering administrator is recorded as a conflict;
@@ -63,13 +63,16 @@ Annotation placement follows the reqstool conventions:
 - [ ] 5.3 Vetting (`@SVCs SVC_GW_APPROVAL_0044.7`, `@Requirements GW_APPROVAL_0044.7`):
   - **stays held:**
     - an `UNDETERMINED` or `SUPERSEDED` chain;
-    - any `DISABLED`, `NOT_REACHED`, `ERROR` or `PENDING` verdict. Include the adversarial case: every vetter but `secret-scan` disabled, and `secret-scan` passing;
+    - any `NOT_REACHED`, `ERROR` or `PENDING` verdict, whatever `required-vetters` says;
+    - with `required-vetters` unset, any `DISABLED` verdict. Include the adversarial case: every vetter but `secret-scan` disabled, and `secret-scan` passing;
+    - with `required-vetters: [secret-scan]`, `secret-scan` disabled;
     - an uncovered high finding;
     - a high finding waived but absent from the baseline in that blob;
     - `hook-config-unreadable`, `hook-target-unscanned` or `too-many-plugin-roots` at any severity;
   - **approved:**
     - medium findings only;
-    - a high finding waived and present in the baseline in that blob.
+    - a high finding waived and present in the baseline in that blob;
+    - with `required-vetters: [secret-scan]`, another vetter disabled and `secret-scan` passing, with the disabled vetter named in the `snapshot-auto-approved` entry.
 - [ ] 5.4 Executable surface (`@SVCs SVC_GW_APPROVAL_0044.8`, `@Requirements GW_APPROVAL_0044.8`):
   - **stays held:**
     - a changed hook, hook module, MCP or LSP declaration, `allowed-tools` frontmatter, or agent `tools`;
@@ -111,20 +114,29 @@ Annotation placement follows the reqstool conventions:
   - `auto` with no internal basis, or with a missing or too-distant expiry, is a reconciliation failure;
   - an override is never implied.
 
-## 8. Documentation
+## 8. Portal
 
-- [ ] 8.1 Update the docs pages:
+- [ ] 8.1 Regenerate `src/api/types.gen.ts` with `pnpm gen:api-types` from the committed `openapi.json` after group 4, so the card uses the generated types.
+- [ ] 8.2 The Approval posture card on `MarketplaceSettingsPage` (`@Requirements GW_APPROVAL_0044.15` in JSDoc, design D15): it shows the posture, basis, grantor, reason, expiry, active override and deployment mode to anyone who can see Settings; an administrator sets or renews the posture, creates the override for a marketplace with no internal basis, and revokes the override behind a confirmation. Server refusals are shown as returned.
+- [ ] 8.3 Storybook stories for each state: manual; auto, internal; auto by override; awaiting a second administrator; lapsed; non-administrator view; a refused save. Verify with `pnpm test:stories`.
+- [ ] 8.4 An e2e test in `e2e/portal.spec.ts` (`@SVCs SVC_GW_APPROVAL_0044.15`): an administrator sets `auto` with an override on a marketplace outside the prefixes, sees the basis `override`, revokes it, and sees the basis `none`. Verify with `pnpm e2e`.
+- [ ] 8.5 Run `/impeccable audit` and `/impeccable harden` on the Settings page, and capture before/after screenshots for the PR body (`.claude/skills/ui-screenshots`).
+
+## 9. Documentation
+
+- [ ] 9.1 Update the docs pages:
   - `guides/approving-snapshots.md`: an Automatic approval section covering shadow mode, the checks, and withdrawal;
   - `guides/registering-a-marketplace.md`;
   - the declarative estate guide;
-  - `reference/configuration.md`;
+  - `reference/configuration.md`, including `required-vetters`;
   - `reference/api/marketplaces.md`, and the snapshots and approval API pages;
+  - `reference/portal.md`: the Approval posture card;
   - `concepts/trust-boundaries.md`;
   - `capability-map.md`: the Approval row.
 
   Verify with `mkdocs build --strict`.
 
-## 9. Gates and evidence
+## 10. Gates and evidence
 
-- [ ] 9.1 Run every AGENTS.md gate fresh after the last code edit: `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`, `reqstool status local -p docs/reqstool`, `openspec validate --all --strict`, `mkdocs build --strict`. Record the commands, result tails and commit SHA in `evidence.md`.
-- [ ] 9.2 `/opsx:archive` as the final commit of the PR.
+- [ ] 10.1 Run every AGENTS.md gate fresh after the last code edit: `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`, `reqstool status local -p docs/reqstool`, `openspec validate --all --strict`, `mkdocs build --strict`. Record the commands, result tails and commit SHA in `evidence.md`.
+- [ ] 10.2 `/opsx:archive` as the final commit of the PR.

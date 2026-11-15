@@ -104,3 +104,10 @@ The system SHALL implement GW_APPROVAL_0044.14.
 #### Scenario: SVC_GW_APPROVAL_0044.14
 - **WHEN** SVC_GW_APPROVAL_0044.14 is run
 - **THEN** it passes
+
+### Requirement: GW_APPROVAL_0044.15
+The system SHALL implement GW_APPROVAL_0044.15.
+
+#### Scenario: SVC_GW_APPROVAL_0044.15
+- **WHEN** SVC_GW_APPROVAL_0044.15 is run
+- **THEN** it passes

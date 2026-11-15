@@ -86,8 +86,8 @@ Stakeholders:
   administrator (`GW_APPROVAL_0017 — A snapshot an administrator revoked is
   approved again only on a recorded reversal by a second administrator`).
 - **A configurable severity threshold.**
-- **Portal work.** It is a follow-up change. This change ships the API, the
-  ledger and shadow mode.
+- **Portal surfaces beyond the posture card (D15).** The bulk withdrawal and
+  the per-snapshot evaluation stay API-only in this change.
 - **Content-scoped waivers and rule tuning.**
 
 ## Decisions
@@ -99,10 +99,20 @@ The posture record on `marketplaces` is:
 - `approval_posture`: `manual` (default) or `auto`;
 - `approval_set_by`, `approval_reason`, `approval_expires_at`.
 
-`auto` always needs a reason and an expiry. The expiry is at most 365 days for
-an internal basis; an override is limited separately to 90 days (D3). When the
-expiry passes, the posture is effectively `manual`. Renewal is a new set, with
-a new reason and expiry. This is the recertification a regulated adopter needs.
+`auto` always needs a reason and an expiry of at most 90 days, whatever the
+basis. When the expiry passes, the posture is effectively `manual`. Renewal is
+a new set, with a new reason and expiry. This is the recertification a
+regulated adopter needs.
+
+Ninety days is the gateway's limit for every expiring grant a named person
+makes: a waiver (`WaiverService.MAX_LIFETIME`) and, by default, a machine
+credential (`Tokens.DEFAULT_MACHINE_MAX_TTL`). The posture and the override
+(D3) each get their own constant with that value, rather than sharing one, so
+that changing one limit is a decision about that grant alone.
+
+Alternative considered: 365 days for an internal basis. Rejected: it would be
+the only grant on a yearly cycle, and nothing about an internal source makes a
+quarterly renewal a burden.
 
 Whether `auto` is effective is computed at each attempt, from the basis:
 
@@ -144,21 +154,25 @@ marketplace's approver minted.
 Alternative considered: reusing the credential prefixes. Rejected: holding a
 credential for a URL is not trusting it.
 
-### D3 — The override: an expiring, API-only exception
+### D3 — The override: an expiring exception, never declared in the estate
 
 Table `auto_approval_overrides`:
 
 - columns: `id`, `marketplace_id`, `reason`, `created_by`, `created_at`,
   `expires_at`, `revoked_at`, `revoked_by`, `expired_recorded_at`;
-- `CHECK (expires_at <= created_at + interval '90 days')`, mirroring
-  `WaiverService.MAX_LIFETIME`;
+- `CHECK (expires_at <= created_at + interval '90 days')`, matching the
+  override's own `MAX_LIFETIME` constant (D1);
 - a partial unique index, so a marketplace has at most one active override.
 
 Setting `auto` on a marketplace with no internal basis creates the override in
 the same request. The posture's own expiry is then capped at the override's.
 
 The override is not declarable in the estate, for the reason waivers are not:
-it is a dated judgement by a named person, not standing configuration.
+it is a dated judgement by a named person, not standing configuration. It is
+created and revoked through the API or the portal (D15).
+
+With both limits at 90 days, the cap matters when the override is older than
+the posture: renewing the posture never outlives the override it rests on.
 
 ### D4 — Four-eyes on granting `auto`
 
@@ -195,23 +209,46 @@ A snapshot is a candidate only when all of these hold:
   source stays with a person, whatever that source's URL. Members are fetched
   at a floating `HEAD`, never registered, and can redirect within a host.
 
-### D6 — The vetting predicate: the whole current chain clears
+### D6 — The vetting predicate: the current chain clears, and every required vetter ran
 
 All of these must hold:
 
 1. **The chain is current.** `ChainStaleness.state` is `IN_FORCE`. `UNDETERMINED`
    and `SUPERSEDED` both fail.
-2. **Every vetter ran.** No verdict is `DISABLED`, `NOT_REACHED`, `ERROR` or
-   `PENDING`. Disabling a vetter for a marketplace therefore turns automatic
-   approval off for it, which closes the path where switching vetters off
-   leaves one passing vetter as the only evidence.
-3. **The effective outcome is `CLEAR` or `CLEAR_WITH_WAIVERS`.** Medium
+2. **Nothing failed to run.** No verdict is `NOT_REACHED`, `ERROR` or
+   `PENDING`, for any vetter. These are faults or unfinished work, not an
+   operator's choice, so no setting relaxes them.
+3. **Every required vetter ran.** A required vetter's verdict is not
+   `DISABLED`. Switching vetters off stays allowed, as today; it only decides
+   whether automatic approval can act. Without this rule, switching every
+   vetter off but one would leave that one passing vetter as the only
+   evidence, because a `DISABLED` verdict neither blocks nor counts
+   (`GW_VETTING_0029 — The vetter on/off switch never becomes a blanket
+   approval`).
+
+   Which vetters are required is
+   `skills-gateway.approval.auto.required-vetters`:
+   - **unset (the default):** every vetter is required, so any `DISABLED`
+     verdict keeps the snapshot held;
+   - **a list of vetter names:** only those are required; a `DISABLED` verdict
+     from any other vetter does not stop automatic approval.
+
+   Startup refuses an empty list (it would require nothing) and a name that is
+   not a configured vetter (a typo would silently require nothing). A required
+   vetter that a deployment later removes from the chain leaves the rule
+   unsatisfiable, so every snapshot stays held rather than the rule passing
+   vacuously.
+
+   The setting is gateway-wide, not per marketplace. A per-marketplace list
+   would let whoever grants `auto` also lower the bar for that marketplace,
+   and four-eyes on the grant (D4) would then be the only check on both.
+4. **The effective outcome is `CLEAR` or `CLEAR_WITH_WAIVERS`.** Medium
    findings clear, as they do for a person.
-4. **Waivers are restricted.** A high or critical finding suppressed by a
+5. **Waivers are restricted.** A high or critical finding suppressed by a
    waiver qualifies only if the served baseline's run carries the same rule id
    in the same blob, so the waiver was already in force when a person
    approved that content. A waiver cannot pre-clear new content.
-5. **Unread surfaces fail closed.** No finding carries `hook-config-unreadable`,
+6. **Unread surfaces fail closed.** No finding carries `hook-config-unreadable`,
    `hook-target-unscanned` or `too-many-plugin-roots`, whatever its severity.
 
 ### D7 — Executable surface: unchanged from the served baseline, read completely
@@ -283,7 +320,9 @@ adds:
   - the basis (the matched prefix, `hosted`, or the override id) and the
     grantor;
   - the chain identity, and the baseline SHA or `none`;
-  - the worst severity and the waiver ids.
+  - the worst severity and the waiver ids;
+  - the vetters that were switched off, if any, so a relaxed
+    `required-vetters` shows in each approval's evidence.
 - **`snapshot-auto-approval-skipped`**, with the first failing check. Its reason
   is also stored in `snapshots.auto_approval_skip_reason`, and the ledger entry
   is written only when the reason differs from the stored one. Deduplication
@@ -368,6 +407,36 @@ revocation is ledgered as today.
 
 Everything is additive under the API contract.
 
+### D15 — Portal: an Approval posture card on the Settings page
+
+The marketplace Settings page (`MarketplaceSettingsPage`) gains an Approval
+posture card beside the existing administrator cards (vetting chain, remove).
+It reads `GET …/approval-posture` and writes through `PUT` and `DELETE …/override`.
+The portal adds no rule of its own; every check stays on the server.
+
+- **Everyone who can see Settings** sees the posture, the effective basis
+  (including `awaiting-second-administrator` and `none`), the grantor, the
+  reason, the expiry, and the active override with its reason and expiry. A
+  lapsed posture or override reads as lapsed, not as active.
+- **An administrator** can:
+  - set `auto` or `manual`, with a reason and an expiry date no more than 90
+    days out;
+  - for a marketplace with no internal basis, create the override in the same
+    form, with its own reason and expiry;
+  - renew either one;
+  - revoke the override, behind a confirmation.
+- **The deployment mode** is shown on the card, so `auto` set under mode `off`
+  or `shadow` does not read as publishing.
+- **Server refusals** (a `400` on a missing reason or a distant expiry, a `409`
+  with `nextStep`, a four-eyes refusal) are shown as returned. The form does
+  not pre-empt them with its own copy of the limits beyond the date picker's
+  maximum.
+
+The card follows `.claude/skills/design-conventions` and the shadcn/Base UI
+components the vetting-chain card uses. It ships with Storybook stories for
+each state (manual, auto internal, auto by override, awaiting a second
+administrator, lapsed, non-administrator view) and one e2e test.
+
 ## Risks / Trade-offs
 
 - **[A compromised internal repository, or a stolen credential, publishes
@@ -385,6 +454,10 @@ Everything is additive under the API contract.
   accepted in ADR 0023.
 - **[A prefix misconfiguration makes a whole host internal.]** Startup refuses
   host-wide prefixes on multi-tenant hosts and on the `github-base-url` host.
+- **[`required-vetters` names too few vetters.]** That is a stated operator
+  choice, and each automatic approval's ledger entry names the vetters that
+  were switched off (D9).
+  Startup refuses the two silent forms, an empty list and an unknown name.
 - **[`github-base-url` is global.]** On a GitHub Enterprise deployment,
   `owner/repo` shorthand resolves to the internal host. This change accepts no
   external sources at all, so the issue does not reach automatic approval. It is
