@@ -37,18 +37,18 @@ executable spec is `design.md` (decisions 1, 2, 4, 5, 6) and is stated in the PR
 - [x] 5.4 `GitStorage` (`Role.HOSTED`, `hosted()`, `hostedIfPresent()`), `FilesystemGitStorage`, `ObjectStoreGitStorage`, `StorageMigration`.
 - [x] 5.5 `InternalSources`, `AutoApprovalSettingService` (`AllowedBy.HOSTED`), `AutoApprovalService`, `NotInternalException`, `EstateReconciler`, `SkillsGatewayProperties` javadoc.
 - [x] 5.6 Delete `HostedPushTests`, `PushScopeMintingTests`, `HostedMarketplaceTests`, `HostedLifecycleTests`, `ClaimMappedPushScopeTests`; edit each partly hosted test class, changing fixtures and not assertions about other behaviour; re-measure and lower `ContextBudgetTests` if it drops.
-- [ ] 5.7 `./mvnw -q spotless:apply`; run the full Java suite.
+- [x] 5.7 `./mvnw -q spotless:apply`; run the full Java suite.
 
 ## 6. Contract
 
-- [ ] 6.1 `cp target/openapi.json src/main/frontend/openapi.json && (cd src/main/frontend && pnpm run gen:api-types)`; run `OpenApiContractTests`; run oasdiff locally against the base contract and record that it classifies breaking.
+- [x] 6.1 `cp target/openapi.json src/main/frontend/openapi.json && (cd src/main/frontend && pnpm run gen:api-types)`; run `OpenApiContractTests`; run oasdiff locally against the base contract and record that it classifies breaking.
 
 ## 7. Portal
 
 - [x] 7.0 The Overview administrator banner for the former hosted repositories (role-gated query, no delete control), with stories and tests.
 - [x] 7.1 Remove the "publishes to" line (`tokens.tsx`, test, stories), the hosted branch (`marketplace-detail.tsx`), the hosted label (`auto-approval.tsx`), and the fixtures (`msw-handlers.ts`).
 - [x] 7.2 `/impeccable audit` on `tokens` and `marketplace-detail`; fix or record dismissals.
-- [ ] 7.3 Before/after screenshots (ui-screenshots recipe A, throwaway stories copied into both trees and deleted afterwards, fixture data only) kept in a git-ignored folder under `.claude/worktrees/`; nothing uploaded, no label applied.
+- [x] 7.3 Before/after screenshots (ui-screenshots recipe A, throwaway stories copied into both trees and deleted afterwards, fixture data only) kept in a git-ignored folder under `.claude/worktrees/`; nothing uploaded, no label applied.
 
 ## 8. Documentation (same PR)
 
@@ -58,9 +58,9 @@ executable spec is `design.md` (decisions 1, 2, 4, 5, 6) and is stated in the PR
 
 ## 9. Gates and evidence
 
-- [ ] 9.1 One final fresh run after the last edit, under the shared gate lock: `./mvnw clean verify`; `pnpm test:stories`; `pnpm e2e` with `E2E_GATEWAY_PORT=18083`; `reqstool status local -p docs/reqstool` (PASS); `openspec validate --all --strict`; `mkdocs build --strict`.
-- [ ] 9.2 Write `evidence.md` (commands, result tails, commit SHA).
-- [ ] 9.3 Grep commit messages, PR body and added lines for the confidentiality terms.
+- [x] 9.1 One final fresh run after the last edit, under the shared gate lock: `./mvnw clean verify`; `pnpm test:stories`; `pnpm e2e` with `E2E_GATEWAY_PORT=18083`; `reqstool status local -p docs/reqstool` (PASS); `openspec validate --all --strict`; `mkdocs build --strict`.
+- [x] 9.2 Write `evidence.md` (commands, result tails, commit SHA).
+- [x] 9.3 Grep commit messages, PR body and added lines for the confidentiality terms.
 
 ## Workflow follow-up
 
