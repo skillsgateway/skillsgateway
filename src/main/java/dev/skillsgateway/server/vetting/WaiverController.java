@@ -209,8 +209,6 @@ public class WaiverController {
     @Requirements({"GW_VETTING_0009"})
     @Tag(name = "Vetting")
     @Operation(
-            // Pinned at its published value; see TokenController#revoke.
-            operationId = "revoke_1",
             summary = "Withdraw a waiver",
             description = "Revokes the waiver. It stops suppressing its finding immediately — the effective"
                     + " vetting outcome is recomputed on every read — so a snapshot that was cleared only by this"

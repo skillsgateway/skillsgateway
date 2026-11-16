@@ -38,7 +38,8 @@ function threeMarketplaces() {
   );
 }
 
-type Patched = { id: number; scopes?: string[] };
+type PatchBody = { scopes?: string[]; allMarketplaces?: boolean };
+type Patched = { id: number; body: PatchBody };
 
 /** A token list that remembers a PATCH, as the server would, and the bodies it was sent. */
 function statefulTokens(initial: typeof scopedTokenViews): Patched[] {
@@ -47,10 +48,12 @@ function statefulTokens(initial: typeof scopedTokenViews): Patched[] {
   server.use(
     http.get("/api/v1/tokens", () => HttpResponse.json(tokens)),
     http.patch("/api/v1/tokens/:id", async ({ request, params }) => {
-      const body = (await request.json()) as { scopes?: string[] };
+      const body = (await request.json()) as PatchBody;
       const id = Number(params.id);
-      patched.push({ id, scopes: body.scopes });
-      tokens = tokens.map((token) => (token.id === id ? { ...token, scopes: body.scopes } : token));
+      patched.push({ id, body });
+      // As the server stores it: every marketplace is an empty `scopes`, but only ever by statement.
+      const scopes = body.allMarketplaces ? [] : body.scopes;
+      tokens = tokens.map((token) => (token.id === id ? { ...token, scopes } : token));
       return HttpResponse.json(tokens.find((token) => token.id === id));
     }),
   );
@@ -92,7 +95,7 @@ test("editing_a_tokens_reach_is_disabled_until_valid_and_different_and_never_sen
   expect(save).toHaveAccessibleDescription(/Saving changes the reach now/);
   await user.click(save);
   await waitFor(() => expect(patched).toHaveLength(1));
-  expect(patched[0]).toEqual({ id: 22, scopes: ["data"] });
+  expect(patched[0]).toEqual({ id: 22, body: { scopes: ["data"] } });
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   // The list shows the reach the server now holds.
   const row = await screen.findByRole("row", { name: /ci-corp-only/ });
@@ -101,12 +104,12 @@ test("editing_a_tokens_reach_is_disabled_until_valid_and_different_and_never_sen
 });
 
 /**
- * "Every marketplace" is the explicit empty list, the one place an empty list is sent, and a
+ * "Every marketplace" is the explicit `allMarketplaces: true`, an empty list is never sent, and a
  * widening is said so before it is saved. A narrowing is not warned about.
  *
  * @SVCs SVC_GW_AUTH_0108
  */
-test("widening_a_tokens_reach_is_warned_about_and_every_marketplace_is_the_explicit_empty_list", async () => {
+test("widening_a_tokens_reach_is_warned_about_and_every_marketplace_is_stated_as_all_marketplaces", async () => {
   threeMarketplaces();
   const patched = statefulTokens(scopedTokenViews);
   const user = userEvent.setup();
@@ -124,7 +127,9 @@ test("widening_a_tokens_reach_is_warned_about_and_every_marketplace_is_the_expli
   );
   await user.click(within(dialog).getByRole("button", { name: "Save reach" }));
   await waitFor(() => expect(patched).toHaveLength(1));
-  expect(patched[0]).toEqual({ id: 22, scopes: [] });
+  expect(patched[0]).toEqual({ id: 22, body: { allMarketplaces: true } });
+  // No edit ever carries an empty list: that is the one body the API refuses.
+  expect(patched.every((edit) => edit.body.scopes === undefined || edit.body.scopes.length > 0)).toBe(true);
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 
   // An unlimited token has nothing to widen: choosing names only narrows it.

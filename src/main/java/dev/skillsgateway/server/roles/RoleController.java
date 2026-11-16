@@ -109,8 +109,6 @@ public class RoleController {
     @Requirements({"GW_AUTH_0013"})
     @Tag(name = "Roles")
     @Operation(
-            // Pinned at its published value; see TokenController#revoke.
-            operationId = "revoke_4",
             summary = "Revoke a role grant",
             description = "Deletes the grant; the ledger keeps the history. Configuration-bootstrapped admins"
                     + " have no grant row, so they cannot be revoked here — by design, they are the escape"

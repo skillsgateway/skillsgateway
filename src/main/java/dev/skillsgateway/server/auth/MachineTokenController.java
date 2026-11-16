@@ -290,8 +290,6 @@ public class MachineTokenController {
     @Requirements({"GW_AUTH_0024"})
     @Tag(name = "Tokens")
     @Operation(
-            // Pinned at its published value; see TokenController#revoke.
-            operationId = "revoke_3",
             summary = "Revoke a machine API credential",
             description = "Immediate and permanent, checked at authentication time rather than swept, so it"
                     + " takes effect on the credential's very next request. Audit-logged.")

@@ -232,7 +232,8 @@ public class TokenService {
      * Replaces the marketplaces a live personal token may fetch (GW_AUTH_0083). The token is locked
      * first, so liveness, the "before" the ledger records and the write are one consistent step
      * (GW_AUTH_0085, GW_AUTH_0086); the entry commits with the change or neither does. Names are
-     * validated exactly as at creation and an empty list means every marketplace. Only the scopes
+     * validated exactly as at creation, and {@code null} (never an empty list) means every marketplace,
+     * stated explicitly by the caller. Only the scopes
      * move: the secret, expiry, name and every other attribute are untouched.
      *
      * @return empty when the principal has no such personal token (another user's, a machine
@@ -242,6 +243,11 @@ public class TokenService {
     @Requirements({"GW_AUTH_0083", "GW_AUTH_0085", "GW_AUTH_0086"})
     @Transactional
     public Optional<AccessToken> updateScopes(long id, String principal, List<String> scopes) {
+        if (scopes != null && scopes.isEmpty()) {
+            // Every marketplace is null here and never an empty list; the route refuses one first.
+            throw new InvalidTokenRequestException(
+                    "an empty scope list is not a way to say every marketplace; state every marketplace explicitly");
+        }
         Optional<AccessToken> locked = tokenRepository.lockLivePersonal(id, principal);
         if (locked.isEmpty()) {
             if (tokenRepository.findByIdAndPrincipal(id, principal).isEmpty()) {
@@ -296,9 +302,11 @@ public class TokenService {
         return Optional.of(after);
     }
 
-    /** The ledger's vocabulary for a scope list: {@code all} when empty (fetch scopes), else the sorted names. */
+    /** A scope list for the ledger: the sorted names, or every marketplace in words, never an empty array. */
     private static String describe(List<String> scopes) {
-        return scopes.isEmpty() ? "all" : scopes.stream().sorted().toList().toString();
+        return scopes.isEmpty()
+                ? "every marketplace"
+                : scopes.stream().sorted().toList().toString();
     }
 
     /**

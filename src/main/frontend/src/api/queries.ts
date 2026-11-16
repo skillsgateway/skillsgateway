@@ -3,6 +3,7 @@ import { api } from "./client";
 import type { components } from "./types.gen";
 import { accessOf, type Access } from "@/lib/access";
 import { isDecidable, newestFirst } from "@/lib/snapshot-roles";
+import type { UpdateScopesBody } from "@/lib/token-scope";
 
 export type MarketplaceView = components["schemas"]["MarketplaceView"];
 export type Snapshot = components["schemas"]["Snapshot"];
@@ -948,16 +949,15 @@ export function useCreateToken() {
 }
 
 /**
- * Changes the marketplaces a live personal token may fetch (GW_AUTH_0088). The body is `scopes` and
- * nothing else; an empty list means every marketplace, so a caller never passes one for a limited
- * choice. The response is the token, never a secret, so nothing sensitive is held by the
+ * Changes the marketplaces a live personal token may fetch (GW_AUTH_0088). The body is either a
+ * non-empty `scopes` list or `allMarketplaces: true`, never an empty list. The response is the token, never a secret, so nothing sensitive is held by the
  * mutation; the list is refetched, not seeded from it.
  */
 export function useUpdateTokenScopes() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, scopes }: { id: number; scopes: string[] }) =>
-      api<TokenView>(`/api/v1/tokens/${id}`, { method: "PATCH", body: JSON.stringify({ scopes }) }),
+    mutationFn: ({ id, body }: { id: number; body: UpdateScopesBody }) =>
+      api<TokenView>(`/api/v1/tokens/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tokens"] }),
   });
 }

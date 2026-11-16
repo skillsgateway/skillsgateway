@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/v1/tokens")
@@ -109,11 +110,12 @@ public class TokenController {
     @Schema(description = "Scope change request: the marketplaces the token may fetch, and nothing else")
     public static final class UpdateTokenScopesRequest {
         private List<String> scopes;
+        private Boolean allMarketplaces;
 
         @Schema(
-                description = "The complete list of marketplace names (the catalog's name is valid) the token"
-                        + " may fetch from now on. Required. Empty grants every marketplace, as at creation.",
-                requiredMode = Schema.RequiredMode.REQUIRED)
+                description = "The complete, non-empty list of marketplace names (the catalog's name is valid)"
+                        + " the token may fetch from now on. Give this or allMarketplaces, never both. An empty"
+                        + " list is refused: it is not a way to say every marketplace.")
         public List<String> getScopes() {
             return scopes;
         }
@@ -122,9 +124,21 @@ public class TokenController {
             this.scopes = scopes;
         }
 
+        @Schema(
+                description = "`true` makes the token fetch every marketplace, however it was created. Give this"
+                        + " or scopes, never both. Only `true` is accepted: to limit the token, list its"
+                        + " marketplaces in scopes.")
+        public Boolean getAllMarketplaces() {
+            return allMarketplaces;
+        }
+
+        public void setAllMarketplaces(Boolean allMarketplaces) {
+            this.allMarketplaces = allMarketplaces;
+        }
+
         @JsonAnySetter
         void refuse(String field, Object ignored) {
-            throw new TokenService.UnacceptedFieldException(field, "`scopes`");
+            throw new TokenService.UnacceptedFieldException(field, "`scopes` or `allMarketplaces`");
         }
     }
 
@@ -237,39 +251,67 @@ public class TokenController {
     @Tag(name = "Tokens")
     @Operation(
             summary = "Change the marketplaces a token fetches",
-            description = "Replaces the marketplaces one of your live tokens may fetch. Narrowing is always"
-                    + " allowed; every name is validated exactly as at creation, and an empty list grants every"
-                    + " marketplace. Only the scopes change: the secret, expiry, name and publication scopes are"
-                    + " untouched, and a later rotation carries the scopes as changed here. The body carries"
-                    + " `scopes` and nothing else; any other field is refused. Audit-logged with the scopes"
-                    + " before and after.")
+            description = "Replaces the marketplaces one of your live tokens may fetch, with either a non-empty"
+                    + " `scopes` list or `allMarketplaces`: true, however the token was created. Narrowing is"
+                    + " always allowed and every name is validated exactly as at creation. An empty list is"
+                    + " refused, as is a body with neither field, with both, or with `allMarketplaces` false."
+                    + " Only the scopes change: the secret, expiry, name and publication scopes are untouched,"
+                    + " and a later rotation carries the scopes as changed here. Any other field is refused."
+                    + " Audit-logged with the scopes before and after, every marketplace stated in words.")
     @ApiResponse(responseCode = "200", description = "Changed; the token as it now stands, never a secret")
-    @ApiResponse(responseCode = "400", description = "The body carries a field other than `scopes`")
+    @ApiResponse(
+            responseCode = "400",
+            description = "A field other than `scopes` and `allMarketplaces`, neither of them, both, an empty"
+                    + " `scopes` list, or `allMarketplaces` false; the message names the field to use")
     @ApiResponse(responseCode = "404", description = "No such token of yours")
     @ApiResponse(responseCode = "409", description = "The token is revoked or expired")
-    @ApiResponse(responseCode = "422", description = "Unknown scope, or `scopes` missing")
+    @ApiResponse(responseCode = "422", description = "Unknown scope")
     public ResponseEntity<TokenView> updateScopes(
             @PathVariable long id, @RequestBody UpdateTokenScopesRequest request, Authentication authentication) {
-        if (request == null || request.getScopes() == null) {
-            throw new TokenService.InvalidTokenRequestException(
-                    "scopes is required: state the marketplaces, or an empty list for every marketplace");
-        }
+        List<String> scopes = requestedScopes(request);
         return tokenService
-                .updateScopes(id, authentication.getName(), request.getScopes())
+                .updateScopes(id, authentication.getName(), scopes)
                 .map(token -> ResponseEntity.ok(view(token)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * The scopes a scope-change body asks for, null meaning every marketplace (GW_AUTH_0083, GW_AUTH_0087).
+     * Every marketplace is an explicit statement and never an empty list, so a client that built an
+     * empty list by mistake is refused instead of widening the token, and each refusal names the field
+     * to use.
+     */
+    private static List<String> requestedScopes(UpdateTokenScopesRequest request) {
+        List<String> scopes = request == null ? null : request.getScopes();
+        Boolean all = request == null ? null : request.getAllMarketplaces();
+        if (scopes != null && all != null) {
+            throw badRequest("state either `scopes` or `allMarketplaces`, not both");
+        }
+        if (all != null) {
+            if (!all) {
+                throw badRequest("`allMarketplaces` can only be true; to limit the token, list its marketplaces"
+                        + " in `scopes`");
+            }
+            return null;
+        }
+        if (scopes == null) {
+            throw badRequest("state either a non-empty `scopes` list or `allMarketplaces`: true");
+        }
+        if (scopes.isEmpty()) {
+            throw badRequest("`scopes` must not be empty: to make the token fetch every marketplace, send"
+                    + " `allMarketplaces`: true");
+        }
+        return scopes;
+    }
+
+    private static ResponseStatusException badRequest(String reason) {
+        return new ResponseStatusException(HttpStatus.BAD_REQUEST, reason);
     }
 
     @DeleteMapping("/{id}")
     @Requirements({"GW_AUTH_0009"})
     @Tag(name = "Tokens")
-    @Operation(
-            // Pinned: springdoc numbers the overloaded `revoke` handlers by an order that adding an
-            // unrelated route (the scope-change PATCH) reshuffled; an operation id is part of the
-            // contract generated clients are built from, so the published value stays.
-            operationId = "revoke_2",
-            summary = "Revoke a token",
-            description = "Immediate and permanent; audit-logged.")
+    @Operation(summary = "Revoke a token", description = "Immediate and permanent; audit-logged.")
     @ApiResponse(responseCode = "204", description = "Revoked")
     @ApiResponse(responseCode = "404", description = "No such active token of yours")
     public ResponseEntity<Void> revoke(@PathVariable long id, Authentication authentication) {

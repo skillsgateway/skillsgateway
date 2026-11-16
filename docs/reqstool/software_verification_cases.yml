@@ -5100,8 +5100,8 @@ cases:
     verification: automated-test
     description: |
       GIVEN a live personal access token that fetches two marketplaces
-      WHEN its owner narrows it to one, widens it to a third registered one and to the catalog's name, and replaces it with an empty list
-      THEN each change is returned in the token and the listing, a fetch of a marketplace no longer named is refused on the very next request as if the marketplace did not exist, an empty list means every marketplace, and an unknown name is refused 422 with the token unchanged
+      WHEN its owner narrows it to one, widens it to a third registered one and to the catalog's name, states every marketplace, and sends an empty list; and a token created with no limit is narrowed to a list
+      THEN each change is returned in the token and the listing, a fetch of a marketplace no longer named is refused on the very next request as if the marketplace did not exist, the explicit statement makes the token fetch every marketplace and a rotation afterwards keeps that, the empty list is refused 400 naming allMarketplaces with the token unchanged, and an unknown name is refused 422 with the token unchanged
     revision: "0.5.0"
 
   - id: SVC_GW_AUTH_0103
@@ -5150,8 +5150,8 @@ cases:
     verification: automated-test
     description: |
       GIVEN a personal access token and a machine credential
-      WHEN a change carries pushScopes, apiScopes on the personal route, scopes on the machine route, expiresAt or name, or omits its list
-      THEN each is refused with a client-error status naming the cause and the token is unchanged
+      WHEN a change carries pushScopes, apiScopes on the personal route, scopes on the machine route, expiresAt or name; or a personal change carries neither scopes nor allMarketplaces, both, an empty scopes list or allMarketplaces false; or a machine change omits its list
+      THEN each is refused with a client-error status naming the cause and the field to use, and the token is unchanged
     revision: "0.5.0"
 
   - id: SVC_GW_AUTH_0108
@@ -5161,7 +5161,7 @@ cases:
     description: |
       GIVEN the personal access tokens page with a token that fetches every marketplace
       WHEN its owner opens the edit control, chooses marketplaces, clears the choice, widens, and saves, with the API refusing one save
-      THEN saving is disabled with its reason stated until the choice is valid and different, an empty list is never sent for a limited choice, widening is warned about, the refusal is shown as the API states it, the list shows the new reach after saving, and in a real browser the narrowed token is refused for a marketplace it no longer names
+      THEN saving is disabled with its reason stated until the choice is valid and different, every marketplace is sent as allMarketplaces true and a limited choice as a non-empty list, never an empty one, widening is warned about, the refusal is shown as the API states it, the list shows the new reach after saving, and in a real browser the narrowed token is refused for a marketplace it no longer names
     revision: "0.5.0"
 
   - id: SVC_GW_AUTH_0109

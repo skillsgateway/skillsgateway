@@ -14,7 +14,7 @@ import {
 import {
   sameReach,
   scopeChoiceValid,
-  scopesForUpdate,
+  updateBodyFor,
   selectionFor,
   sortedNames,
   widening,
@@ -27,8 +27,8 @@ import {
  * request and nothing has to be handed out again.
  *
  * Saving stays disabled, with the reason on screen, until the choice is valid (a limited choice
- * names a marketplace: an empty list would grant every marketplace) and differs from the current
- * reach. A choice that widens is said so before it is saved. The server's refusal is shown as the
+ * names a marketplace: the API refuses an empty list) and differs from the current
+ * reach. Every marketplace is sent as `allMarketplaces: true`. A choice that widens is said so before it is saved. The server's refusal is shown as the
  * API states it; the marketplace names are not re-checked here, since its registry is
  * authoritative.
  *
@@ -40,7 +40,9 @@ export function EditTokenScopesDialog({ token, onClose }: { token: TokenView; on
   const [scope, setScope] = useState<ScopeSelection>(() => selectionFor(current));
   const hintId = useId();
 
-  const next = scopesForUpdate(scope.choice, scope.chosen);
+  const body = updateBodyFor(scope.choice, scope.chosen);
+  // The reach the choice means, as a token's own `scopes`: empty is every marketplace.
+  const next = "scopes" in body ? body.scopes : [];
   const valid = scopeChoiceValid(scope.choice, scope.chosen);
   const changed = !sameReach(current, next);
   const canSave = valid && changed && !update.isPending;
@@ -56,7 +58,7 @@ export function EditTokenScopesDialog({ token, onClose }: { token: TokenView; on
     event.preventDefault();
     if (!canSave || token.id === undefined) return;
     update.mutate(
-      { id: token.id, scopes: next },
+      { id: token.id, body },
       {
         onSuccess: () => {
           toast.success(`Reach of '${token.name}' changed`);

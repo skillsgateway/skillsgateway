@@ -97,37 +97,45 @@ token's `scopes` and `pushScopes` from `GET /tokens`.
 Change the marketplaces a live token may fetch, without changing anything else about it
 (GW_AUTH_0083, GW_AUTH_0085). Only the owner can; a token that is not live cannot be edited.
 
-**Body** — `{scopes}`, nothing else.
+**Body** — **either** `{scopes}`, a non-empty list, **or** `{allMarketplaces: true}`; nothing else.
 
 ```console
 $ curl -X PATCH localhost:8080/api/v1/tokens/1 \
     -H 'Content-Type: application/json' -d '{"scopes":["acme"]}'
+$ curl -X PATCH localhost:8080/api/v1/tokens/1 \
+    -H 'Content-Type: application/json' -d '{"allMarketplaces":true}'
 ```
 
-The list **replaces** the token's scopes and is validated exactly as at creation: every name
-must be a registered marketplace or the catalog's name, and an **empty list means every
-marketplace**, so a client that means "limited" must never send one. `scopes` is required, so a
-body without it is refused rather than read as every marketplace. Narrowing is always allowed.
-The response is the token as `GET /tokens` shows it, never a secret.
+A `scopes` list **replaces** the token's scopes and is validated exactly as at creation: every
+name must be a registered marketplace or the catalog's name. `allMarketplaces: true` makes the
+token fetch every marketplace, **however it was created**, so a token made limited can be widened
+and one made unlimited can be narrowed by a list. Every marketplace is only ever a statement on an
+edit: an **empty `scopes` list is refused**, so a client that built an empty list by mistake cannot
+widen a token by accident. (Creation is unchanged: an omitted or empty `scopes` still means every
+marketplace there.) Narrowing is always allowed. The response is the token as `GET /tokens` shows
+it, never a secret, and a token that fetches every marketplace reports an empty `scopes`.
 
-Only `scopes` changes. The secret, the expiry, the name and the publication scopes are
+Only the scopes change. The secret, the expiry, the name and the publication scopes are
 untouched, and a [rotation](#post-tokensidrotate) afterwards carries the scopes as they were
-last set. The facade resolves a token on every request, so the secret already in use follows
-the change on its next request: a marketplace the token no longer names answers exactly like one
-that does not exist. Every change is recorded on the [audit ledger](audit.md) as
-`token-scopes-changed`, with the actor and the scopes before and after, in the same transaction.
+last set, every marketplace included. The facade resolves a token on every request, so the secret
+already in use follows the change on its next request: a marketplace the token no longer names
+answers exactly like one that does not exist. Every change is recorded on the [audit
+ledger](audit.md) as `token-scopes-changed`, with the actor and the scopes before and after (every
+marketplace written in words, never as an empty array), in the same transaction.
 
-A body that carries any other field, such as `pushScopes`, `apiScopes`, `expiresAt` or `name`,
-is refused with `400` and changes nothing: publication scopes are not editable, and a
-personal token never holds API scopes.
+A body that carries any field other than `scopes` and `allMarketplaces`, such as `pushScopes`,
+`apiScopes`, `expiresAt` or `name`, is refused with `400` and changes nothing: publication scopes
+are not editable, and a personal token never holds API scopes. So is a body with neither field,
+with both, with an empty `scopes` list, or with `allMarketplaces: false`; the message names the
+field to use.
 
 | Status | Cause |
 | --- | --- |
 | 200 | Changed. |
-| 400 | The body carries a field other than `scopes`. |
+| 400 | The body carries another field; has neither `scopes` nor `allMarketplaces`, or both; an empty `scopes` list; or `allMarketplaces` false. The message names the field to use. |
 | 404 | No such token **owned by the caller**. Another user's token, a machine credential's id and a nonexistent id are indistinguishable. |
 | 409 | The token is revoked or expired. |
-| 422 | Unknown scope, or `scopes` missing. |
+| 422 | Unknown scope. |
 
 A session-derived credential's scopes can be changed the same way; its expiry cannot. No machine
 credential and no session-derived credential can call this route, as with all of

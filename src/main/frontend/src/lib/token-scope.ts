@@ -22,13 +22,17 @@ export function scopeChoiceValid(choice: ScopeChoice, chosen: readonly string[])
   return choice === "every" || chosen.length > 0;
 }
 
+/** The body of an edit request (GW_AUTH_0088): one of the two statements the API accepts. */
+export type UpdateScopesBody = { scopes: string[] } | { allMarketplaces: true };
+
 /**
- * The `scopes` of an edit request (GW_AUTH_0088). Unlike creation, the field is required, so
- * "every marketplace" is the explicit empty list; a limited choice is never sent empty (the
- * submit stays disabled until it names something, see {@link scopeChoiceValid}).
+ * The body of an edit request (GW_AUTH_0088). Every marketplace is stated as `allMarketplaces:
+ * true`: an empty `scopes` list is refused by the API on an edit, since it is not a way to say
+ * anything. A limited choice is its non-empty list (the submit stays disabled until it names
+ * something, see {@link scopeChoiceValid}).
  */
-export function scopesForUpdate(choice: ScopeChoice, chosen: readonly string[]): string[] {
-  return choice === "chosen" ? sortedNames(chosen) : [];
+export function updateBodyFor(choice: ScopeChoice, chosen: readonly string[]): UpdateScopesBody {
+  return choice === "chosen" ? { scopes: sortedNames(chosen) } : { allMarketplaces: true };
 }
 
 /** A token's own `scopes` as the picker's choice: empty is every marketplace. */

@@ -92,6 +92,11 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
         return "{\"scopes\": [%s]}".formatted(quoted(names));
     }
 
+    /** Every marketplace, stated: the only way an edit grants it. */
+    private static String everyBody() {
+        return "{\"allMarketplaces\": true}";
+    }
+
     private static String apiScopesBody(String... names) {
         return "{\"apiScopes\": [%s]}".formatted(quoted(names));
     }
@@ -148,11 +153,15 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
         assertThat(catalog.getResponse().getStatus()).isEqualTo(200);
         assertThat(row(token.id()).scopeList()).containsExactly(catalogName);
 
-        // An empty list means every marketplace, as at creation.
-        MvcResult everything = patchToken(token.id(), person(owner), scopesBody());
+        // Every marketplace is an explicit statement, never an empty list.
+        MvcResult everything = patchToken(token.id(), person(owner), everyBody());
         assertThat(everything.getResponse().getStatus()).isEqualTo(200);
         assertThat(row(token.id()).scopes()).isNull();
         assertThat(fetches(b, token.token())).isTrue();
+        MvcResult empty = patchToken(token.id(), person(owner), scopesBody());
+        assertThat(empty.getResponse().getStatus()).isEqualTo(400);
+        assertThat(empty.getResponse().getContentAsString()).contains("allMarketplaces");
+        assertThat(row(token.id()).scopes()).as("an empty list changed nothing").isNull();
 
         // A name that is no marketplace is refused as at creation, and the token is as it was.
         MvcResult unknown = patchToken(token.id(), person(owner), scopesBody(a, "no-such-marketplace"));
@@ -171,6 +180,48 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
                 .containsExactly(b);
     }
 
+    /**
+     * Every marketplace is reachable by an explicit statement on any edit, however the token was made:
+     * a token created limited is widened to it, one created unscoped is narrowed from it, and a
+     * rotation after the widening keeps it (and the facade serves the rotated secret everything).
+     */
+    @Test
+    @SVCs({"SVC_GW_AUTH_0102", "SVC_GW_AUTH_0105"})
+    void a_token_made_limited_can_be_widened_to_every_marketplace_and_one_made_unscoped_narrowed() throws Exception {
+        String a = served();
+        String b = served();
+        String owner = uniqueName("owner");
+
+        TokenService.IssuedToken limited = tokenService.create(owner, "limited", List.of(a), null);
+        assertThat(fetches(b, limited.token())).as("limited at creation").isFalse();
+        MvcResult widened = patchToken(limited.id(), person(owner), everyBody());
+        assertThat(widened.getResponse().getStatus()).isEqualTo(200);
+        assertThat(JsonPath.<List<String>>read(widened.getResponse().getContentAsString(), "$.scopes"))
+                .isEmpty();
+        assertThat(row(limited.id()).scopes()).isNull();
+        assertThat(fetches(b, limited.token()))
+                .as("widened to every marketplace")
+                .isTrue();
+
+        TokenService.IssuedToken rotated =
+                tokenService.rotate(limited.id(), owner).orElseThrow();
+        assertThat(rotated.scopes()).as("rotation keeps every marketplace").isEmpty();
+        assertThat(row(rotated.id()).scopes()).isNull();
+        assertThat(fetches(b, rotated.token())).isTrue();
+
+        TokenService.IssuedToken unscoped = tokenService.create(owner, "unscoped", List.of(), null);
+        assertThat(fetches(b, unscoped.token())).isTrue();
+        assertThat(patchToken(unscoped.id(), person(owner), scopesBody(a))
+                        .getResponse()
+                        .getStatus())
+                .isEqualTo(200);
+        assertThat(row(unscoped.id()).scopeList()).containsExactly(a);
+        assertThat(fetches(b, unscoped.token()))
+                .as("narrowed from every marketplace")
+                .isFalse();
+        assertThat(fetches(a, unscoped.token())).isTrue();
+    }
+
     // ---- GW_AUTH_0083, GW_AUTH_0084: who and what is refused ---------------------------------
 
     @Test
@@ -182,7 +233,7 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
         TokenService.IssuedToken mine = tokenService.create(owner, "mine", List.of(a), null);
 
         // Another user's token: indistinguishable from one that does not exist.
-        assertThat(patchToken(mine.id(), person(other), scopesBody())
+        assertThat(patchToken(mine.id(), person(other), everyBody())
                         .getResponse()
                         .getStatus())
                 .isEqualTo(404);
@@ -209,7 +260,7 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
         // A revoked token and an expired one are not live: 409, unchanged.
         TokenService.IssuedToken revoked = tokenService.create(owner, "revoked", List.of(a), null);
         tokenService.revoke(revoked.id(), owner);
-        assertThat(patchToken(revoked.id(), person(owner), scopesBody())
+        assertThat(patchToken(revoked.id(), person(owner), everyBody())
                         .getResponse()
                         .getStatus())
                 .isEqualTo(409);
@@ -221,7 +272,7 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
                 List.of(a),
                 Instant.now().minusSeconds(60),
                 null);
-        assertThat(patchToken(expired.id(), person(owner), scopesBody())
+        assertThat(patchToken(expired.id(), person(owner), everyBody())
                         .getResponse()
                         .getStatus())
                 .isEqualTo(409);
@@ -275,7 +326,7 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
             int personalStatus = mockMvc.perform(patch("/api/v1/tokens/{id}", mine.id())
                             .header(HttpHeaders.AUTHORIZATION, "Bearer " + secret)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(scopesBody()))
+                            .content(everyBody()))
                     .andReturn()
                     .getResponse()
                     .getStatus();
@@ -484,14 +535,16 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
         TokenService.IssuedToken token = tokenService.create(owner, "ci", List.of(a, b), null);
 
         patchToken(token.id(), person(owner), scopesBody(a));
-        patchToken(token.id(), person(owner), scopesBody());
+        patchToken(token.id(), person(owner), everyBody());
         List<Map<String, Object>> changes = entries("token-scopes-changed", token.id());
         assertThat(changes).hasSize(2);
         assertThat(changes.get(0).get("principal")).isEqualTo(owner);
         assertThat(changes.get(0).get("detail"))
                 .isEqualTo("token %d 'ci' scopes [%s, %s] -> [%s]"
                         .formatted(token.id(), a.compareTo(b) < 0 ? a : b, a.compareTo(b) < 0 ? b : a, a));
-        assertThat(changes.get(1).get("detail")).isEqualTo("token %d 'ci' scopes [%s] -> all".formatted(token.id(), a));
+        // Every marketplace is stated in words on the ledger, never as an empty array.
+        assertThat(changes.get(1).get("detail"))
+                .isEqualTo("token %d 'ci' scopes [%s] -> every marketplace".formatted(token.id(), a));
 
         // Refusals write nothing: unknown scope, not live, not the caller's, strict-body.
         patchToken(token.id(), person(owner), scopesBody("no-such-marketplace"));
@@ -523,7 +576,7 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
             });
             Future<MvcResult> second = pool.submit(() -> {
                 go.await();
-                return patchToken(contested.id(), person(owner), scopesBody());
+                return patchToken(contested.id(), person(owner), everyBody());
             });
             go.countDown();
             assertThat(first.get().getResponse().getStatus()).isEqualTo(200);
@@ -566,10 +619,20 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
                     .as(body)
                     .isEqualTo(400);
         }
-        for (String body : List.of("{}", "{\"scopes\": null}")) {
-            assertThat(patchToken(token.id(), person(owner), body).getResponse().getStatus())
-                    .as(body)
-                    .isEqualTo(422);
+        // The body states either a non-empty list or allMarketplaces: true. Neither, an empty list, both
+        // and a false allMarketplaces are refused with a 400 that names the field to use.
+        for (String body : List.of(
+                "{}",
+                "{\"scopes\": null}",
+                "{\"scopes\": []}",
+                "{\"allMarketplaces\": false}",
+                "{\"allMarketplaces\": null}",
+                "{\"allMarketplaces\": true, \"scopes\": [\"%s\"]}".formatted(a),
+                "{\"allMarketplaces\": true, \"scopes\": []}",
+                "{\"allMarketplaces\": false, \"scopes\": [\"%s\"]}".formatted(a))) {
+            MvcResult refused = patchToken(token.id(), person(owner), body);
+            assertThat(refused.getResponse().getStatus()).as(body).isEqualTo(400);
+            assertThat(refused.getResponse().getContentAsString()).as(body).contains("allMarketplaces");
         }
         AccessToken afterPersonal = row(token.id());
         assertThat(afterPersonal.scopeList()).containsExactly(a);

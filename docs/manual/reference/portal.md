@@ -1458,12 +1458,12 @@ with a `revoked` badge.
 [`PATCH /api/v1/tokens/{id}`](api/tokens.md#patch-tokensid) and changes nothing but the
 reach: the secret, expiry and name stay, and the secret already in use follows the new
 reach on its next request, so nothing has to be redistributed. **Save reach** stays
-disabled while the choice names no marketplace (a request naming none would grant every
-marketplace, so a limited choice never sends an empty list), while it is the same as the
-current reach, and while the request is in flight (*Saving…*), and a line beneath the
-choice says which. A choice that widens the token (**Every marketplace**, or a name the
-token did not have) is said so, above the button: the token fetches those marketplaces at
-once. The API's refusal, such as a marketplace removed since the list was read or a token
+disabled while the choice names no marketplace (the API refuses an empty list, so a limited choice
+that named nothing could not be sent), while it is the same as the current reach, and while the
+request is in flight (*Saving…*), and a line beneath the choice says which. **Every marketplace** is
+sent as `allMarketplaces: true`, a limited choice as its list; the two are never combined. A choice
+that widens the token (**Every marketplace**, or a name the token did not have) is said so, above the
+button: the token fetches those marketplaces at once. The API's refusal, such as a marketplace removed since the list was read or a token
 that was revoked or expired meanwhile, is shown in the dialog as the API states it. On
 success the dialog closes, a toast says *Reach of '{name}' changed*, and the list shows the
 new reach. The change is recorded on the [audit ledger](api/audit.md) with the reach before

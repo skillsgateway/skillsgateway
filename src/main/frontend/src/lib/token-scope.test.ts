@@ -1,15 +1,17 @@
 import { expect, test } from "vitest";
-import { sameReach, scopesForUpdate, selectionFor, widening } from "./token-scope";
+import { sameReach, selectionFor, updateBodyFor, widening } from "./token-scope";
 
 /**
- * The rules an edit of a token's reach turns on (GW_AUTH_0088). An empty list means every
- * marketplace, which is the one fact each function below has to keep straight.
+ * The rules an edit of a token's reach turns on (GW_AUTH_0088). A token's own empty `scopes` means
+ * every marketplace; an edit never sends one, it states `allMarketplaces`.
  *
  * @SVCs SVC_GW_AUTH_0108
  */
-test("every_marketplace_is_the_explicit_empty_list_and_a_limited_choice_is_never_sent_empty", () => {
-  expect(scopesForUpdate("every", ["a", "b"])).toEqual([]);
-  expect(scopesForUpdate("chosen", ["b", "a"])).toEqual(["a", "b"]);
+test("every_marketplace_is_stated_as_all_marketplaces_and_a_limited_choice_is_a_sorted_list", () => {
+  expect(updateBodyFor("every", ["a", "b"])).toEqual({ allMarketplaces: true });
+  expect(updateBodyFor("chosen", ["b", "a"])).toEqual({ scopes: ["a", "b"] });
+  // An empty list is not a way to say anything: it is the one body the server refuses.
+  expect(updateBodyFor("every", [])).not.toHaveProperty("scopes");
 });
 
 test("a_tokens_own_scopes_become_the_pickers_choice", () => {
