@@ -1889,6 +1889,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#automatic-approval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automatic approval
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#retention" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3090,6 +3101,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#automatic-approval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automatic approval
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#retention" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3341,7 +3363,7 @@
 </tr>
 <tr>
 <td><a href="#separation-of-duties-four-eyes"><code>skills-gateway.approval.*</code></a></td>
-<td>Separation of duties on approval: whether a reviewer may publish content they themselves supplied (<strong>records by default; enforcement is opt-in</strong>), and the <a href="#plugin-name-collisions">plugin-name collision</a> rule (<strong>on by default</strong>).</td>
+<td>Separation of duties on approval: whether a reviewer may publish content they themselves supplied (<strong>records by default; enforcement is opt-in</strong>), the <a href="#plugin-name-collisions">plugin-name collision</a> rule (<strong>on by default</strong>), and <a href="#automatic-approval">automatic approval</a> (<strong>off by default</strong>).</td>
 <td>No — all defaulted.</td>
 </tr>
 <tr>
@@ -4943,56 +4965,129 @@ else, accept a fork with a
 <a href="../../guides/waiving-findings/#plugin-name-collisions">waiver</a> rather than
 turning the rule off.</p>
 </div>
+<h2 id="automatic-approval">Automatic approval<a class="headerlink" href="#automatic-approval" title="Permanent link">&para;</a></h2>
+<p>Whether an opted-in marketplace's clean updates are approved with no person,
+and what counts as internal. Java-side defaults; nothing appears in
+<code>application.yaml</code>. What an attempt checks is described in
+<a href="../../guides/approving-snapshots/#automatic-approval">Automatic approval</a>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">approval</span><span class="p">:</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="nt">auto</span><span class="p">:</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">      </span><span class="c1"># off (default): no automatic approval takes effect. dry-run: every</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">      </span><span class="c1"># check runs and is recorded, nothing is published. on: eligible</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">      </span><span class="c1"># snapshots are approved.</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dry-run</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">      </span><span class="c1"># URL prefixes under which a marketplace is internal. Hosted marketplaces</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">      </span><span class="c1"># are internal without one.</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">      </span><span class="nt">internal-prefixes</span><span class="p">:</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://git.example.com/platform</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">      </span><span class="c1"># Unset (default): every vetter must have run. A list: only these must;</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">      </span><span class="c1"># switching any other vetter off does not stop automatic approval.</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="w">      </span><span class="nt">required-vetters</span><span class="p">:</span>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">secret-scan</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">executable-surface</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills-gateway.approval.auto.mode</code></td>
+<td>string</td>
+<td><code>off</code></td>
+<td><code>off</code>, <code>dry-run</code> or <code>on</code>. <code>off</code> is also the incident switch: it stops every attempt at once.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.approval.auto.internal-prefixes</code></td>
+<td>list</td>
+<td><code>[]</code></td>
+<td>A URL is internal when it has the prefix's scheme, host and port, and its path equals the prefix's or continues it after a <code>/</code>. <code>https://git.example.com/acme</code> never covers <code>…/acme-evil</code>. A snapshot whose fetch a redirect sent outside the registered repository is not internal, whatever its URL.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.approval.auto.required-vetters</code></td>
+<td>list</td>
+<td>unset (every vetter)</td>
+<td>The vetters whose verdict must not be <code>DISABLED</code>. Each automatic approval's ledger entry names the vetters that were switched off.</td>
+</tr>
+</tbody>
+</table>
+<p>Startup refuses three configurations, each of which would quietly widen what
+is approved:</p>
+<ul>
+<li>a prefix that does not parse;</li>
+<li>a prefix with no path on <code>github.com</code>, <code>gitlab.com</code>, <code>bitbucket.org</code> or the
+  <a href="#ingestion-external-plugin-sources"><code>external-sources.github-base-url</code></a>
+  host, which would make every user's namespace internal;</li>
+<li>an empty <code>required-vetters</code>, or a name in it that is not a configured
+  vetter, either of which would require nothing.</li>
+</ul>
+<p>Automatic approval acts only while
+<a href="#continuous-re-vetting"><code>skills-gateway.vetting.revet.enabled</code></a> is <code>true</code>,
+and re-vetting withdraws an automatically approved snapshot on a new blocking
+finding whatever <code>revet.mode</code> says. With re-vetting off, every attempt is
+skipped as <code>revet-disabled</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">A Markdown change with no finding is approved</p>
+<p>In an agent skill, Markdown is instructions. A changed <code>SKILL.md</code> that
+raises no finding passes the executable-surface check. Run <code>dry-run</code> first
+and read the would-approve entries before turning <code>on</code>.</p>
+</div>
 <hr />
 <h2 id="retention">Retention<a class="headerlink" href="#retention" title="Permanent link">&para;</a></h2>
 <p>Snapshot retention: which snapshots the gateway may delete, and when the two
 passes run. Java-side defaults; nothing appears in <code>application.yaml</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">retention</span><span class="p">:</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="c1"># OFF by default. Retention only ever deletes because an operator asked for</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="c1"># it; an upgrade never starts deleting on its own. The on-demand endpoints</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="c1"># work regardless, so a policy can be inspected before this is flipped.</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">    </span><span class="c1"># Evaluation marks (soft delete); compaction removes (hard delete). They are</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">    </span><span class="c1"># separate schedules because the restore window only means anything if the</span>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">    </span><span class="c1"># two are decoupled in time.</span>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">    </span><span class="nt">poll-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">    </span><span class="nt">compaction-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6h</span>
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>
-<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="w">    </span><span class="c1"># Snapshots considered per marketplace per pass.</span>
-<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="w">    </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span>
-<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>
-<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="w">    </span><span class="c1"># How long an abandoned publication staging ref must have been under</span>
-<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="w">    </span><span class="c1"># observation before compaction may remove it. Not a tuning knob: it is what</span>
-<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="w">    </span><span class="c1"># keeps the sweep from overtaking a publication that is still transferring</span>
-<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="w">    </span><span class="c1"># objects. Set it above your slowest publication. Zero or negative switches</span>
-<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a><span class="w">    </span><span class="c1"># the sweep off rather than sweeping everything.</span>
-<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a><span class="w">    </span><span class="nt">staging-ref-max-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">24h</span>
-<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>
-<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a><span class="w">    </span><span class="c1"># The policy every marketplace inherits.</span>
-<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="w">    </span><span class="nt">defaults</span><span class="p">:</span>
-<a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a><span class="w">      </span><span class="c1"># A snapshot still 'held' this long after ingestion is eligible.</span>
-<a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a><span class="w">      </span><span class="c1"># Zero or negative disables the criterion rather than selecting everything.</span>
-<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a><span class="w">      </span><span class="nt">held-max-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90d</span>
-<a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a>
-<a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a><span class="w">      </span><span class="c1"># Whether a held/rejected snapshot overtaken by a later approved snapshot</span>
-<a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a><span class="w">      </span><span class="c1"># of the same marketplace is eligible.</span>
-<a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a><span class="w">      </span><span class="nt">superseded</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a><span class="w">      </span><span class="nt">superseded-min-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30d</span>
-<a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a>
-<a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a><span class="w">      </span><span class="c1"># Veto, not a selector: a candidate whose SHA was fetched through the</span>
-<a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a><span class="w">      </span><span class="c1"># facade within this window is dropped from the pass.</span>
-<a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a><span class="w">      </span><span class="nt">min-idle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30d</span>
-<a id="__codelineno-12-38" name="__codelineno-12-38" href="#__codelineno-12-38"></a>
-<a id="__codelineno-12-39" name="__codelineno-12-39" href="#__codelineno-12-39"></a><span class="w">      </span><span class="c1"># How long a soft-deleted snapshot stays restorable before compaction may</span>
-<a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a><span class="w">      </span><span class="c1"># remove it. Resolved at deletion time, not at compaction time.</span>
-<a id="__codelineno-12-41" name="__codelineno-12-41" href="#__codelineno-12-41"></a><span class="w">      </span><span class="nt">restore-window</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14d</span>
-<a id="__codelineno-12-42" name="__codelineno-12-42" href="#__codelineno-12-42"></a>
-<a id="__codelineno-12-43" name="__codelineno-12-43" href="#__codelineno-12-43"></a><span class="w">    </span><span class="c1"># Per-marketplace overrides; unset fields fall back to defaults.</span>
-<a id="__codelineno-12-44" name="__codelineno-12-44" href="#__codelineno-12-44"></a><span class="w">    </span><span class="nt">marketplaces</span><span class="p">:</span>
-<a id="__codelineno-12-45" name="__codelineno-12-45" href="#__codelineno-12-45"></a><span class="w">      </span><span class="nt">acme</span><span class="p">:</span>
-<a id="__codelineno-12-46" name="__codelineno-12-46" href="#__codelineno-12-46"></a><span class="w">        </span><span class="nt">held-max-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30d</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">retention</span><span class="p">:</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="c1"># OFF by default. Retention only ever deletes because an operator asked for</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="c1"># it; an upgrade never starts deleting on its own. The on-demand endpoints</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="c1"># work regardless, so a policy can be inspected before this is flipped.</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">    </span><span class="c1"># Evaluation marks (soft delete); compaction removes (hard delete). They are</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">    </span><span class="c1"># separate schedules because the restore window only means anything if the</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">    </span><span class="c1"># two are decoupled in time.</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">    </span><span class="nt">poll-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span><span class="nt">compaction-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6h</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">    </span><span class="c1"># Snapshots considered per marketplace per pass.</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="w">    </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="w">    </span><span class="c1"># How long an abandoned publication staging ref must have been under</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="w">    </span><span class="c1"># observation before compaction may remove it. Not a tuning knob: it is what</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="w">    </span><span class="c1"># keeps the sweep from overtaking a publication that is still transferring</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="w">    </span><span class="c1"># objects. Set it above your slowest publication. Zero or negative switches</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="w">    </span><span class="c1"># the sweep off rather than sweeping everything.</span>
+<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="w">    </span><span class="nt">staging-ref-max-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">24h</span>
+<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a><span class="w">    </span><span class="c1"># The policy every marketplace inherits.</span>
+<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a><span class="w">    </span><span class="nt">defaults</span><span class="p">:</span>
+<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a><span class="w">      </span><span class="c1"># A snapshot still 'held' this long after ingestion is eligible.</span>
+<a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a><span class="w">      </span><span class="c1"># Zero or negative disables the criterion rather than selecting everything.</span>
+<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a><span class="w">      </span><span class="nt">held-max-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90d</span>
+<a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a>
+<a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a><span class="w">      </span><span class="c1"># Whether a held/rejected snapshot overtaken by a later approved snapshot</span>
+<a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a><span class="w">      </span><span class="c1"># of the same marketplace is eligible.</span>
+<a id="__codelineno-13-32" name="__codelineno-13-32" href="#__codelineno-13-32"></a><span class="w">      </span><span class="nt">superseded</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-13-33" name="__codelineno-13-33" href="#__codelineno-13-33"></a><span class="w">      </span><span class="nt">superseded-min-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30d</span>
+<a id="__codelineno-13-34" name="__codelineno-13-34" href="#__codelineno-13-34"></a>
+<a id="__codelineno-13-35" name="__codelineno-13-35" href="#__codelineno-13-35"></a><span class="w">      </span><span class="c1"># Veto, not a selector: a candidate whose SHA was fetched through the</span>
+<a id="__codelineno-13-36" name="__codelineno-13-36" href="#__codelineno-13-36"></a><span class="w">      </span><span class="c1"># facade within this window is dropped from the pass.</span>
+<a id="__codelineno-13-37" name="__codelineno-13-37" href="#__codelineno-13-37"></a><span class="w">      </span><span class="nt">min-idle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30d</span>
+<a id="__codelineno-13-38" name="__codelineno-13-38" href="#__codelineno-13-38"></a>
+<a id="__codelineno-13-39" name="__codelineno-13-39" href="#__codelineno-13-39"></a><span class="w">      </span><span class="c1"># How long a soft-deleted snapshot stays restorable before compaction may</span>
+<a id="__codelineno-13-40" name="__codelineno-13-40" href="#__codelineno-13-40"></a><span class="w">      </span><span class="c1"># remove it. Resolved at deletion time, not at compaction time.</span>
+<a id="__codelineno-13-41" name="__codelineno-13-41" href="#__codelineno-13-41"></a><span class="w">      </span><span class="nt">restore-window</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14d</span>
+<a id="__codelineno-13-42" name="__codelineno-13-42" href="#__codelineno-13-42"></a>
+<a id="__codelineno-13-43" name="__codelineno-13-43" href="#__codelineno-13-43"></a><span class="w">    </span><span class="c1"># Per-marketplace overrides; unset fields fall back to defaults.</span>
+<a id="__codelineno-13-44" name="__codelineno-13-44" href="#__codelineno-13-44"></a><span class="w">    </span><span class="nt">marketplaces</span><span class="p">:</span>
+<a id="__codelineno-13-45" name="__codelineno-13-45" href="#__codelineno-13-45"></a><span class="w">      </span><span class="nt">acme</span><span class="p">:</span>
+<a id="__codelineno-13-46" name="__codelineno-13-46" href="#__codelineno-13-46"></a><span class="w">        </span><span class="nt">held-max-age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30d</span>
 </code></pre></div>
 <table>
 <thead>
@@ -5099,24 +5194,24 @@ it.</p>
 <p>How automated ingestion behaves for marketplaces whose sync mode is
 <code>scheduled</code> or <code>webhook</code>. Java-side defaults; nothing appears in
 <code>application.yaml</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">sync</span><span class="p">:</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="c1"># Whether the scheduled polling sweep runs. ON by default, and still safe</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="c1"># on upgrade: the sweep only touches marketplaces an operator has</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="c1"># explicitly moved to the `scheduled` sync mode, so an estate of defaults</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="c1"># (all on-demand) sees no change. The inbound webhook endpoint and the</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="c1"># sync-mode endpoint work regardless.</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">    </span><span class="c1"># How often the sweep runs, and how many scheduled marketplaces one pass</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">    </span><span class="c1"># ingests — least recently attempted first, so a large estate is covered</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span><span class="c1"># in rotation rather than all at once.</span>
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">    </span><span class="nt">poll-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">    </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
-<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>
-<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="w">    </span><span class="c1"># Inbound webhook bodies larger than this are rejected with 413 before the</span>
-<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="w">    </span><span class="c1"># HMAC is computed, bounding the work an unauthenticated caller can cause.</span>
-<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="w">    </span><span class="nt">max-webhook-body-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1048576</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">sync</span><span class="p">:</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="c1"># Whether the scheduled polling sweep runs. ON by default, and still safe</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="c1"># on upgrade: the sweep only touches marketplaces an operator has</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="c1"># explicitly moved to the `scheduled` sync mode, so an estate of defaults</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span><span class="c1"># (all on-demand) sees no change. The inbound webhook endpoint and the</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">    </span><span class="c1"># sync-mode endpoint work regardless.</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">    </span><span class="c1"># How often the sweep runs, and how many scheduled marketplaces one pass</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="w">    </span><span class="c1"># ingests — least recently attempted first, so a large estate is covered</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="w">    </span><span class="c1"># in rotation rather than all at once.</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="w">    </span><span class="nt">poll-interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="w">    </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a><span class="w">    </span><span class="c1"># Inbound webhook bodies larger than this are rejected with 413 before the</span>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="w">    </span><span class="c1"># HMAC is computed, bounding the work an unauthenticated caller can cause.</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="w">    </span><span class="nt">max-webhook-body-bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1048576</span>
 </code></pre></div>
 <table>
 <thead>
@@ -5160,16 +5255,16 @@ it.</p>
 <h2 id="virtual-catalog">Virtual catalog<a class="headerlink" href="#virtual-catalog" title="Permanent link">&para;</a></h2>
 <p>The synthesized one-URL catalog of the whole served estate. Java-side defaults;
 nothing appears in <code>application.yaml</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">catalog</span><span class="p">:</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="c1"># Whether approvals and revocations rebuild the catalog, the /api/v1/catalog</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="c1"># endpoints answer, and /git/{name} serves it. Turning this off stops serving</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="c1"># the catalog but never deletes an existing catalog repo.</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">    </span><span class="c1"># The catalog's facade path (/git/{name}) and its RESERVED name: a</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">    </span><span class="c1"># marketplace cannot be registered under it.</span>
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">catalog</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">catalog</span><span class="p">:</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span><span class="c1"># Whether approvals and revocations rebuild the catalog, the /api/v1/catalog</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="c1"># endpoints answer, and /git/{name} serves it. Turning this off stops serving</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="c1"># the catalog but never deletes an existing catalog repo.</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">    </span><span class="c1"># The catalog's facade path (/git/{name}) and its RESERVED name: a</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">    </span><span class="c1"># marketplace cannot be registered under it.</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">catalog</span>
 </code></pre></div>
 <table>
 <thead>
@@ -5201,18 +5296,18 @@ nothing appears in <code>application.yaml</code>.</p>
 <h2 id="access-tokens">Access tokens<a class="headerlink" href="#access-tokens" title="Permanent link">&para;</a></h2>
 <p>Token policy (GW_AUTH_0007). Java-side default; nothing appears in
 <code>application.yaml</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">tokens</span><span class="p">:</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span><span class="c1"># The longest lifetime creation accepts. When set, a request beyond it —</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="c1"># including one with no expiry at all — is refused with 422, never</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="c1"># silently shortened. Unset (the default) accepts tokens that never</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">    </span><span class="c1"># expire, which is what every pre-cap deployment had.</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">    </span><span class="nt">max-ttl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90d</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">    </span><span class="c1"># What a session-derived credential is GRANTED (GW_AUTH_0018), as opposed to</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">    </span><span class="c1"># what a holder may ask for. Not derived from max-ttl on purpose: a</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">    </span><span class="c1"># deployment may allow year-long CI tokens and still want a credential</span>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">    </span><span class="c1"># minted from a browser session to die at the end of the working day.</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="w">    </span><span class="nt">session-ttl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8h</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span><span class="nt">tokens</span><span class="p">:</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span><span class="c1"># The longest lifetime creation accepts. When set, a request beyond it —</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">    </span><span class="c1"># including one with no expiry at all — is refused with 422, never</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span><span class="c1"># silently shortened. Unset (the default) accepts tokens that never</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">    </span><span class="c1"># expire, which is what every pre-cap deployment had.</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w">    </span><span class="nt">max-ttl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90d</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">    </span><span class="c1"># What a session-derived credential is GRANTED (GW_AUTH_0018), as opposed to</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">    </span><span class="c1"># what a holder may ask for. Not derived from max-ttl on purpose: a</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">    </span><span class="c1"># deployment may allow year-long CI tokens and still want a credential</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="w">    </span><span class="c1"># minted from a browser session to die at the end of the working day.</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="w">    </span><span class="nt">session-ttl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8h</span>
 </code></pre></div>
 <table>
 <thead>
@@ -5277,24 +5372,24 @@ deployment.</p>
 removal at the next major version — see
 <a href="../compatibility/">Compatibility and allowlists</a>.</p>
 </div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span><span class="c1"># Admins by configuration: effective without a grant row and unrevocable</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">    </span><span class="c1"># through the API — the escape hatch that survives a bad grant edit.</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin@example.com</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w">    </span><span class="c1"># Roles from the identity provider's own claims (GW_AUTH_0015.1). The claim name</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">    </span><span class="c1"># and every value are yours: on a shared app registration the values are</span>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">    </span><span class="c1"># the organisation's group ids or app-role values, not gateway role names.</span>
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">groups</span>
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="w">    </span><span class="nt">mappings</span><span class="p">:</span>
-<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8f1c0a2e-0000-0000-0000-000000000000</span>
-<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
-<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gateway-approvers-acme</span>
-<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approver</span>
-<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="w">        </span><span class="nt">marketplace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acme</span>
-<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">security-auditors</span>
-<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auditor</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span><span class="c1"># Admins by configuration: effective without a grant row and unrevocable</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span><span class="c1"># through the API — the escape hatch that survives a bad grant edit.</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">    </span><span class="nt">admins</span><span class="p">:</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin@example.com</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">    </span><span class="c1"># Roles from the identity provider's own claims (GW_AUTH_0015.1). The claim name</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">    </span><span class="c1"># and every value are yours: on a shared app registration the values are</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="w">    </span><span class="c1"># the organisation's group ids or app-role values, not gateway role names.</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">    </span><span class="nt">claim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">groups</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="w">    </span><span class="nt">mappings</span><span class="p">:</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8f1c0a2e-0000-0000-0000-000000000000</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gateway-approvers-acme</span>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approver</span>
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a><span class="w">        </span><span class="nt">marketplace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acme</span>
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">claim-value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">security-auditors</span>
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auditor</span>
 </code></pre></div>
 <table>
 <thead>
@@ -5428,64 +5523,72 @@ same event name as its API equivalent, attributed to the actor
 in the log at ERROR, on the ledger as <code>estate-reconciliation-failed</code>, and in
 the <a href="../api/estate/">reconciliation report</a> — and never prevents startup or the
 other entries.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">estate</span><span class="p">:</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span><span class="c1"># Registered through the exact same gate as POST /api/v1/marketplaces:</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span><span class="c1"># name rules, the reserved catalog name, the URL scheme allowlist.</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">    </span><span class="c1"># There is no ref key — the ingested ref is always the gateway's</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">    </span><span class="c1"># decision (the upstream default branch).</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">    </span><span class="nt">marketplaces</span><span class="p">:</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">corp-marketplace</span>
-<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/acme/skills-marketplace.git</span>
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">        </span><span class="c1"># on-demand or scheduled; applied through the same audited path as</span>
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="w">        </span><span class="c1"># PUT /api/v1/marketplaces/{name}/sync. Omit to leave the stored mode</span>
-<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="w">        </span><span class="c1"># alone. webhook mode is refused: its inbound HMAC secret is</span>
-<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="w">        </span><span class="c1"># generated and shown once, which has no declarative form.</span>
-<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="w">        </span><span class="nt">sync-mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scheduled</span>
-<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="w">      </span><span class="c1"># A gateway-hosted marketplace declares no url and is published to by</span>
-<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a><span class="w">      </span><span class="c1"># pushing (GW_FACADE_0006). Its sync mode is fixed at on-demand: the push is</span>
-<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a><span class="w">      </span><span class="c1"># its ingestion trigger. push-policy defaults to append-only.</span>
-<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">platform-skills</span>
-<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a><span class="w">        </span><span class="nt">origin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hosted</span>
-<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a><span class="w">        </span><span class="nt">push-policy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">append-only</span>
-<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a>
-<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a><span class="w">    </span><span class="c1"># The exact shape of POST /api/v1/roles: approver grants name one</span>
-<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a><span class="w">    </span><span class="c1"># marketplace that must exist at reconcile time (declared above, or</span>
-<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a><span class="w">    </span><span class="c1"># registered through the API); admin and auditor grants must not.</span>
-<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a><span class="w">    </span><span class="nt">grants</span><span class="p">:</span>
-<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">principal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">alice@example.com</span>
-<a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approver</span>
-<a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a><span class="w">        </span><span class="nt">marketplace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">corp-marketplace</span>
-<a id="__codelineno-17-29" name="__codelineno-17-29" href="#__codelineno-17-29"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">principal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">audit@example.com</span>
-<a id="__codelineno-17-30" name="__codelineno-17-30" href="#__codelineno-17-30"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auditor</span>
-<a id="__codelineno-17-31" name="__codelineno-17-31" href="#__codelineno-17-31"></a>
-<a id="__codelineno-17-32" name="__codelineno-17-32" href="#__codelineno-17-32"></a><span class="w">    </span><span class="c1"># Webhook subscribers with an OPERATOR-SUPPLIED signing secret — the</span>
-<a id="__codelineno-17-33" name="__codelineno-17-33" href="#__codelineno-17-33"></a><span class="w">    </span><span class="c1"># inversion of the API's generated show-once secret. Reference an</span>
-<a id="__codelineno-17-34" name="__codelineno-17-34" href="#__codelineno-17-34"></a><span class="w">    </span><span class="c1"># environment variable; never inline a literal in a committed file.</span>
-<a id="__codelineno-17-35" name="__codelineno-17-35" href="#__codelineno-17-35"></a><span class="w">    </span><span class="nt">webhooks</span><span class="p">:</span>
-<a id="__codelineno-17-36" name="__codelineno-17-36" href="#__codelineno-17-36"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ci-bot</span>
-<a id="__codelineno-17-37" name="__codelineno-17-37" href="#__codelineno-17-37"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://ci.example.com/hooks/skills-gateway</span>
-<a id="__codelineno-17-38" name="__codelineno-17-38" href="#__codelineno-17-38"></a><span class="w">        </span><span class="nt">events</span><span class="p">:</span><span class="w">                                 </span><span class="c1"># omit for all events</span>
-<a id="__codelineno-17-39" name="__codelineno-17-39" href="#__codelineno-17-39"></a><span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">marketplace.snapshot.approved</span>
-<a id="__codelineno-17-40" name="__codelineno-17-40" href="#__codelineno-17-40"></a><span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">marketplace.snapshot.rejected</span>
-<a id="__codelineno-17-41" name="__codelineno-17-41" href="#__codelineno-17-41"></a><span class="w">        </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${SGW_ESTATE_CI_BOT_SECRET}</span>
-<a id="__codelineno-17-42" name="__codelineno-17-42" href="#__codelineno-17-42"></a>
-<a id="__codelineno-17-43" name="__codelineno-17-43" href="#__codelineno-17-43"></a><span class="w">    </span><span class="c1"># Audit export sinks; same secret contract as webhooks.</span>
-<a id="__codelineno-17-44" name="__codelineno-17-44" href="#__codelineno-17-44"></a><span class="w">    </span><span class="nt">audit-sinks</span><span class="p">:</span>
-<a id="__codelineno-17-45" name="__codelineno-17-45" href="#__codelineno-17-45"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">siem</span>
-<a id="__codelineno-17-46" name="__codelineno-17-46" href="#__codelineno-17-46"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://siem.example.com/ingest/skills-gateway</span>
-<a id="__codelineno-17-47" name="__codelineno-17-47" href="#__codelineno-17-47"></a><span class="w">        </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${SGW_ESTATE_SIEM_SECRET}</span>
-<a id="__codelineno-17-48" name="__codelineno-17-48" href="#__codelineno-17-48"></a><span class="w">        </span><span class="nt">after</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">          </span><span class="c1"># cursor seed — applied at creation ONLY</span>
-<a id="__codelineno-17-49" name="__codelineno-17-49" href="#__codelineno-17-49"></a><span class="w">        </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
-<a id="__codelineno-17-50" name="__codelineno-17-50" href="#__codelineno-17-50"></a>
-<a id="__codelineno-17-51" name="__codelineno-17-51" href="#__codelineno-17-51"></a><span class="w">    </span><span class="c1"># CEL policy deny rules, through the same compiled, audited path as</span>
-<a id="__codelineno-17-52" name="__codelineno-17-52" href="#__codelineno-17-52"></a><span class="w">    </span><span class="c1"># POST /api/v1/policy/rules: an expression that does not compile to a</span>
-<a id="__codelineno-17-53" name="__codelineno-17-53" href="#__codelineno-17-53"></a><span class="w">    </span><span class="c1"># boolean is an isolated entry failure, never a stored rule.</span>
-<a id="__codelineno-17-54" name="__codelineno-17-54" href="#__codelineno-17-54"></a><span class="w">    </span><span class="nt">policy-rules</span><span class="p">:</span>
-<a id="__codelineno-17-55" name="__codelineno-17-55" href="#__codelineno-17-55"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">no-shell-tools</span>
-<a id="__codelineno-17-56" name="__codelineno-17-56" href="#__codelineno-17-56"></a><span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deny skills declaring shell tools</span>
-<a id="__codelineno-17-57" name="__codelineno-17-57" href="#__codelineno-17-57"></a><span class="w">        </span><span class="nt">expression</span><span class="p">:</span><span class="w"> </span><span class="s">'skills.exists(s,</span><span class="nv"> </span><span class="s">s.tools.exists(t,</span><span class="nv"> </span><span class="s">t.startsWith("Bash")))'</span>
-<a id="__codelineno-17-58" name="__codelineno-17-58" href="#__codelineno-17-58"></a><span class="w">        </span><span class="c1"># enabled defaults to true: a declared rule is declared to enforce</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">estate</span><span class="p">:</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="c1"># Registered through the exact same gate as POST /api/v1/marketplaces:</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span><span class="c1"># name rules, the reserved catalog name, the URL scheme allowlist.</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">    </span><span class="c1"># There is no ref key — the ingested ref is always the gateway's</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">    </span><span class="c1"># decision (the upstream default branch).</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">    </span><span class="nt">marketplaces</span><span class="p">:</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">corp-marketplace</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/acme/skills-marketplace.git</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">        </span><span class="c1"># on-demand or scheduled; applied through the same audited path as</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">        </span><span class="c1"># PUT /api/v1/marketplaces/{name}/sync. Omit to leave the stored mode</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="w">        </span><span class="c1"># alone. webhook mode is refused: its inbound HMAC secret is</span>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="w">        </span><span class="c1"># generated and shown once, which has no declarative form.</span>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="w">        </span><span class="nt">sync-mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scheduled</span>
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a><span class="w">      </span><span class="c1"># A gateway-hosted marketplace declares no url and is published to by</span>
+<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a><span class="w">      </span><span class="c1"># pushing (GW_FACADE_0006). Its sync mode is fixed at on-demand: the push is</span>
+<a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a><span class="w">      </span><span class="c1"># its ingestion trigger. push-policy defaults to append-only.</span>
+<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">platform-skills</span>
+<a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a><span class="w">        </span><span class="nt">origin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hosted</span>
+<a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a><span class="w">        </span><span class="c1"># Optional automatic approval. enabled: true needs a reason, an expiry</span>
+<a id="__codelineno-18-21" name="__codelineno-18-21" href="#__codelineno-18-21"></a><span class="w">        </span><span class="c1"># at most 90 days out, and an internal source (an internal prefix, or</span>
+<a id="__codelineno-18-22" name="__codelineno-18-22" href="#__codelineno-18-22"></a><span class="w">        </span><span class="c1"># hosted). An exemption is never declarable. A lapsed expires-at</span>
+<a id="__codelineno-18-23" name="__codelineno-18-23" href="#__codelineno-18-23"></a><span class="w">        </span><span class="c1"># leaves automatic approval off until this declaration changes.</span>
+<a id="__codelineno-18-24" name="__codelineno-18-24" href="#__codelineno-18-24"></a><span class="w">        </span><span class="nt">auto-approval</span><span class="p">:</span>
+<a id="__codelineno-18-25" name="__codelineno-18-25" href="#__codelineno-18-25"></a><span class="w">          </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-18-26" name="__codelineno-18-26" href="#__codelineno-18-26"></a><span class="w">          </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">our own skills, published by CI</span>
+<a id="__codelineno-18-27" name="__codelineno-18-27" href="#__codelineno-18-27"></a><span class="w">          </span><span class="nt">expires-at</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2027-01-30T00:00:00Z</span>
+<a id="__codelineno-18-28" name="__codelineno-18-28" href="#__codelineno-18-28"></a><span class="w">        </span><span class="nt">push-policy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">append-only</span>
+<a id="__codelineno-18-29" name="__codelineno-18-29" href="#__codelineno-18-29"></a>
+<a id="__codelineno-18-30" name="__codelineno-18-30" href="#__codelineno-18-30"></a><span class="w">    </span><span class="c1"># The exact shape of POST /api/v1/roles: approver grants name one</span>
+<a id="__codelineno-18-31" name="__codelineno-18-31" href="#__codelineno-18-31"></a><span class="w">    </span><span class="c1"># marketplace that must exist at reconcile time (declared above, or</span>
+<a id="__codelineno-18-32" name="__codelineno-18-32" href="#__codelineno-18-32"></a><span class="w">    </span><span class="c1"># registered through the API); admin and auditor grants must not.</span>
+<a id="__codelineno-18-33" name="__codelineno-18-33" href="#__codelineno-18-33"></a><span class="w">    </span><span class="nt">grants</span><span class="p">:</span>
+<a id="__codelineno-18-34" name="__codelineno-18-34" href="#__codelineno-18-34"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">principal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">alice@example.com</span>
+<a id="__codelineno-18-35" name="__codelineno-18-35" href="#__codelineno-18-35"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approver</span>
+<a id="__codelineno-18-36" name="__codelineno-18-36" href="#__codelineno-18-36"></a><span class="w">        </span><span class="nt">marketplace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">corp-marketplace</span>
+<a id="__codelineno-18-37" name="__codelineno-18-37" href="#__codelineno-18-37"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">principal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">audit@example.com</span>
+<a id="__codelineno-18-38" name="__codelineno-18-38" href="#__codelineno-18-38"></a><span class="w">        </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auditor</span>
+<a id="__codelineno-18-39" name="__codelineno-18-39" href="#__codelineno-18-39"></a>
+<a id="__codelineno-18-40" name="__codelineno-18-40" href="#__codelineno-18-40"></a><span class="w">    </span><span class="c1"># Webhook subscribers with an OPERATOR-SUPPLIED signing secret — the</span>
+<a id="__codelineno-18-41" name="__codelineno-18-41" href="#__codelineno-18-41"></a><span class="w">    </span><span class="c1"># inversion of the API's generated show-once secret. Reference an</span>
+<a id="__codelineno-18-42" name="__codelineno-18-42" href="#__codelineno-18-42"></a><span class="w">    </span><span class="c1"># environment variable; never inline a literal in a committed file.</span>
+<a id="__codelineno-18-43" name="__codelineno-18-43" href="#__codelineno-18-43"></a><span class="w">    </span><span class="nt">webhooks</span><span class="p">:</span>
+<a id="__codelineno-18-44" name="__codelineno-18-44" href="#__codelineno-18-44"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ci-bot</span>
+<a id="__codelineno-18-45" name="__codelineno-18-45" href="#__codelineno-18-45"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://ci.example.com/hooks/skills-gateway</span>
+<a id="__codelineno-18-46" name="__codelineno-18-46" href="#__codelineno-18-46"></a><span class="w">        </span><span class="nt">events</span><span class="p">:</span><span class="w">                                 </span><span class="c1"># omit for all events</span>
+<a id="__codelineno-18-47" name="__codelineno-18-47" href="#__codelineno-18-47"></a><span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">marketplace.snapshot.approved</span>
+<a id="__codelineno-18-48" name="__codelineno-18-48" href="#__codelineno-18-48"></a><span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">marketplace.snapshot.rejected</span>
+<a id="__codelineno-18-49" name="__codelineno-18-49" href="#__codelineno-18-49"></a><span class="w">        </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${SGW_ESTATE_CI_BOT_SECRET}</span>
+<a id="__codelineno-18-50" name="__codelineno-18-50" href="#__codelineno-18-50"></a>
+<a id="__codelineno-18-51" name="__codelineno-18-51" href="#__codelineno-18-51"></a><span class="w">    </span><span class="c1"># Audit export sinks; same secret contract as webhooks.</span>
+<a id="__codelineno-18-52" name="__codelineno-18-52" href="#__codelineno-18-52"></a><span class="w">    </span><span class="nt">audit-sinks</span><span class="p">:</span>
+<a id="__codelineno-18-53" name="__codelineno-18-53" href="#__codelineno-18-53"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">siem</span>
+<a id="__codelineno-18-54" name="__codelineno-18-54" href="#__codelineno-18-54"></a><span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://siem.example.com/ingest/skills-gateway</span>
+<a id="__codelineno-18-55" name="__codelineno-18-55" href="#__codelineno-18-55"></a><span class="w">        </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${SGW_ESTATE_SIEM_SECRET}</span>
+<a id="__codelineno-18-56" name="__codelineno-18-56" href="#__codelineno-18-56"></a><span class="w">        </span><span class="nt">after</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">          </span><span class="c1"># cursor seed — applied at creation ONLY</span>
+<a id="__codelineno-18-57" name="__codelineno-18-57" href="#__codelineno-18-57"></a><span class="w">        </span><span class="nt">batch-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
+<a id="__codelineno-18-58" name="__codelineno-18-58" href="#__codelineno-18-58"></a>
+<a id="__codelineno-18-59" name="__codelineno-18-59" href="#__codelineno-18-59"></a><span class="w">    </span><span class="c1"># CEL policy deny rules, through the same compiled, audited path as</span>
+<a id="__codelineno-18-60" name="__codelineno-18-60" href="#__codelineno-18-60"></a><span class="w">    </span><span class="c1"># POST /api/v1/policy/rules: an expression that does not compile to a</span>
+<a id="__codelineno-18-61" name="__codelineno-18-61" href="#__codelineno-18-61"></a><span class="w">    </span><span class="c1"># boolean is an isolated entry failure, never a stored rule.</span>
+<a id="__codelineno-18-62" name="__codelineno-18-62" href="#__codelineno-18-62"></a><span class="w">    </span><span class="nt">policy-rules</span><span class="p">:</span>
+<a id="__codelineno-18-63" name="__codelineno-18-63" href="#__codelineno-18-63"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">no-shell-tools</span>
+<a id="__codelineno-18-64" name="__codelineno-18-64" href="#__codelineno-18-64"></a><span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deny skills declaring shell tools</span>
+<a id="__codelineno-18-65" name="__codelineno-18-65" href="#__codelineno-18-65"></a><span class="w">        </span><span class="nt">expression</span><span class="p">:</span><span class="w"> </span><span class="s">'skills.exists(s,</span><span class="nv"> </span><span class="s">s.tools.exists(t,</span><span class="nv"> </span><span class="s">t.startsWith("Bash")))'</span>
+<a id="__codelineno-18-66" name="__codelineno-18-66" href="#__codelineno-18-66"></a><span class="w">        </span><span class="c1"># enabled defaults to true: a declared rule is declared to enforce</span>
 </code></pre></div>
 <table>
 <thead>
@@ -5520,6 +5623,30 @@ other entries.</p>
 <td>string</td>
 <td>unset (not managed)</td>
 <td><code>on-demand</code> or <code>scheduled</code>; <code>webhook</code> is refused. Unset never touches the stored mode.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.estate.marketplaces[].auto-approval.enabled</code></td>
+<td>boolean</td>
+<td>unset (not managed)</td>
+<td><code>true</code> or <code>false</code>, applied as <code>config-reconciler</code> through the same rules as <a href="../api/marketplaces/#put-marketplacesnameauto-approval"><code>PUT …/auto-approval</code></a>. <code>true</code> for a marketplace whose source is not internal, or with a missing or too-distant expiry, is an isolated entry failure. Applying <code>true</code> attempts the marketplace's newest held snapshot at once, as the API does.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.estate.marketplaces[].auto-approval.reason</code></td>
+<td>string</td>
+<td>—</td>
+<td>Required when <code>enabled</code> is <code>true</code>. A changed reason is re-applied.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.estate.marketplaces[].auto-approval.expires-at</code></td>
+<td>instant</td>
+<td>—</td>
+<td>Required when <code>enabled</code> is <code>true</code>, at most 90 days ahead when applied. A changed date is re-applied; that is how declared automatic approval is renewed.</td>
+</tr>
+<tr>
+<td><code>skills-gateway.estate.marketplaces[].auto-approval.exemption</code></td>
+<td>—</td>
+<td>—</td>
+<td>Refused: an administrator exemption is a dated judgement by a named person, made through the API or the portal. Declaring one fails the entry.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.estate.grants</code></td>
@@ -5600,9 +5727,9 @@ report and trigger endpoints in <a href="../api/estate/">Estate</a>.</p>
 <h2 id="datasource">Datasource<a class="headerlink" href="#datasource" title="Permanent link">&para;</a></h2>
 <p>Not present in <code>application.yaml</code> at all — supplied purely by environment.
 PostgreSQL is assumed.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_URL</span><span class="o">=</span>jdbc:postgresql://postgres:5432/skillsgateway
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_USERNAME</span><span class="o">=</span>skillsgateway
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_PASSWORD</span><span class="o">=</span>skillsgateway
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_URL</span><span class="o">=</span>jdbc:postgresql://postgres:5432/skillsgateway
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_USERNAME</span><span class="o">=</span>skillsgateway
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">SPRING_DATASOURCE_PASSWORD</span><span class="o">=</span>skillsgateway
 </code></pre></div>
 <p>The Helm chart exposes these as <code>postgresql.host</code> (<strong>required</strong>, no default),
 <code>postgresql.port</code> (<code>5432</code>), <code>postgresql.database</code> and <code>postgresql.username</code>
@@ -5734,11 +5861,11 @@ configured provider.</p>
 from the identity provider configured above, <strong>in addition to</strong> a personal access
 token — see <a href="../git-facade/#authentication">the facade reference</a> and
 <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0019-facade-accepts-idp-bearer-tokens.md">ADR 0019</a>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span><span class="nt">facade</span><span class="p">:</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span><span class="nt">idp-bearer</span><span class="p">:</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">      </span><span class="nt">audience</span><span class="p">:</span><span class="w"> </span><span class="c1"># unset — defaults to the OAuth2 client id</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span><span class="nt">facade</span><span class="p">:</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span><span class="nt">idp-bearer</span><span class="p">:</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">      </span><span class="nt">audience</span><span class="p">:</span><span class="w"> </span><span class="c1"># unset — defaults to the OAuth2 client id</span>
 </code></pre></div>
 <table>
 <thead>
@@ -5790,11 +5917,11 @@ that needs gateway-side revocation keeps using
 </div>
 <hr />
 <h2 id="session-cookie">Session cookie<a class="headerlink" href="#session-cookie" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="nt">server</span><span class="p">:</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span><span class="nt">servlet</span><span class="p">:</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span><span class="nt">session</span><span class="p">:</span>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">      </span><span class="nt">cookie</span><span class="p">:</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">        </span><span class="nt">same-site</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lax</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nt">server</span><span class="p">:</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">  </span><span class="nt">servlet</span><span class="p">:</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span><span class="nt">session</span><span class="p">:</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">      </span><span class="nt">cookie</span><span class="p">:</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="w">        </span><span class="nt">same-site</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lax</span>
 </code></pre></div>
 <p>Named rather than left to the browser, because Firefox and Safari apply no
 default at all: unset, the session cookie rides a cross-site request in those
@@ -5823,11 +5950,11 @@ example one written before an upgrade, counts as no session, and its holder
 signs in again.</p>
 <hr />
 <h2 id="actuator">Actuator<a class="headerlink" href="#actuator" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nt">management</span><span class="p">:</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span><span class="nt">web</span><span class="p">:</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">      </span><span class="nt">exposure</span><span class="p">:</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="w">        </span><span class="nt">include</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">health,sbom</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="nt">management</span><span class="p">:</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span><span class="nt">web</span><span class="p">:</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">      </span><span class="nt">exposure</span><span class="p">:</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">        </span><span class="nt">include</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">health,sbom</span>
 </code></pre></div>
 <p>Only two endpoints are exposed. <code>/actuator/health</code> is the <strong>only</strong>
 unauthenticated path in the application; <code>/actuator/sbom</code> serves the CycloneDX
@@ -5840,12 +5967,12 @@ both Kubernetes probes point at the bare path.</p>
 </div>
 <hr />
 <h2 id="api-documentation">API documentation<a class="headerlink" href="#api-documentation" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="nt">scalar</span><span class="p">:</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/docs</span><span class="w">        </span><span class="c1"># the Scalar UI</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/v3/api-docs</span><span class="w">  </span><span class="c1"># the OpenAPI document it renders</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">purple</span>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="w">  </span><span class="nt">with-default-fonts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="nt">scalar</span><span class="p">:</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/docs</span><span class="w">        </span><span class="c1"># the Scalar UI</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/v3/api-docs</span><span class="w">  </span><span class="c1"># the OpenAPI document it renders</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">purple</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="w">  </span><span class="nt">with-default-fonts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
 <p>Both paths sit behind the OIDC login like the rest of the web surface.</p>
 <p><code>with-default-fonts</code> is off because Scalar otherwise loads its fonts from

@@ -3413,11 +3413,11 @@ credential reaches the union of its scopes' endpoints and nothing more.</p>
 <tbody>
 <tr>
 <td><code>marketplaces:read</code></td>
-<td><code>GET /api/v1/marketplaces</code>, <code>GET /api/v1/catalog</code>, and a snapshot's <code>/content</code>, <code>/content-diff</code>, <code>/licenses</code>, <code>/provenance</code>, <code>/release-age</code></td>
+<td><code>GET /api/v1/marketplaces</code>, <code>GET /api/v1/catalog</code>, and a snapshot's <code>/content</code>, <code>/content-diff</code>, <code>/licenses</code>, <code>/provenance</code>, <code>/release-age</code>, and <code>GET /api/v1/marketplaces/{name}/auto-approval</code></td>
 </tr>
 <tr>
 <td><code>snapshots:read</code></td>
-<td>A snapshot's <code>/diff</code>, <code>/file</code>, <code>/files</code>, <code>/tree</code>, <code>/vetting</code>, <code>/fetchers</code>, <code>/four-eyes</code></td>
+<td>A snapshot's <code>/diff</code>, <code>/file</code>, <code>/files</code>, <code>/tree</code>, <code>/vetting</code>, <code>/fetchers</code>, <code>/four-eyes</code>, <code>/name-collisions</code>, <code>/auto-approval</code></td>
 </tr>
 <tr>
 <td><code>marketplaces:register</code></td>
@@ -3511,6 +3511,10 @@ of scopes and no role reaches any of these:</strong></p>
 <tr>
 <td><code>POST /api/v1/snapshots/{id}/approve</code>, <code>/reject</code></td>
 <td>Publishes or refuses content; human judgement</td>
+</tr>
+<tr>
+<td><code>PUT /api/v1/marketplaces/{name}/auto-approval</code>, <code>DELETE …/auto-approval/exemption</code>, <code>POST /api/v1/auto-approval/withdraw</code></td>
+<td>Granting automatic approval lets content publish with no person in the loop; revoking an exemption and the recall retract on the same authority</td>
 </tr>
 <tr>
 <td><code>POST /api/v1/snapshots/{id}/waivers</code>, <code>DELETE /api/v1/waivers/{id}</code></td>

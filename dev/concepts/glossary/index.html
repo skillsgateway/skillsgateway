@@ -2498,6 +2498,14 @@
 or security words with a narrower meaning here. Each entry is a definition and a
 pointer; the page it points at is where the mechanism is explained.</p>
 <dl>
+<dt><strong>Administrator exemption</strong></dt>
+<dd>A dated exception, with its own reason and an expiry of at most 90 days,
+that lets automatic approval take effect for a marketplace whose source is
+not internal. Granted by a named administrator through the API or the
+portal, never declared in the estate, and revoked when automatic approval
+is turned off. Not to be confused with a vetting override, which approves
+one blocked snapshot. See
+<a href="../../guides/approving-snapshots/#which-marketplaces-qualify">Automatic approval</a>.</dd>
 <dt><strong>Adoption report</strong></dt>
 <dd>A read-only aggregation over the fetch ledger: per marketplace, who fetched
 what, how recently, and which SHAs are still the served tip. See
@@ -2514,6 +2522,13 @@ action. No code path updates or deletes it. See
 <dd>A registered HTTP endpoint the gateway pushes ledger entries to, advancing
 its own cursor so delivery is at-least-once rather than best-effort. See
 <a href="../../guides/exporting-the-audit-ledger/#push-sinks">Exporting the audit ledger</a>.</dd>
+<dt><strong>Automatic approval</strong></dt>
+<dd>A per-marketplace setting, off by default, under which a clean update with
+an unchanged executable surface is approved with no person, as the
+<code>auto-approver</code> actor through the same approval gates. It takes effect only
+for an internal source or under an administrator exemption, needs a reason
+and an expiry, and acts only while the gateway mode is <code>on</code>. See
+<a href="../../guides/approving-snapshots/#automatic-approval">Automatic approval</a>.</dd>
 <dt><strong>BFF</strong> (backend for frontend)</dt>
 <dd>The pattern the portal uses: the application holds the OIDC tokens and the
 browser holds only a session cookie. See
@@ -2554,6 +2569,12 @@ one vetter; a built-in vetter has no connector. The word means nothing
 wider in this project — integrations to other systems are subscribers, sinks
 or mirrors. See
 <a href="../vetting/#external-connectors">External connectors</a>.</dd>
+<dt><strong>Dry run</strong></dt>
+<dd>The gateway mode <code>dry-run</code> of automatic approval: every check runs and its
+result is recorded as <code>snapshot-auto-approval-would-approve</code>, and nothing is
+published. How an adopter measures automatic approval before turning it
+on. See
+<a href="../../guides/approving-snapshots/#start-with-a-dry-run">Start with a dry run</a>.</dd>
 <dt><strong>Effective outcome</strong></dt>
 <dd>What actually gates an approval: the recorded chain run with the waivers
 active at that instant layered over it, computed on every read.
@@ -2648,13 +2669,6 @@ API and the facade URL. See
 cannot be approved however clear its verdicts are. Checked at the approval
 request, and deliberately not a vetter. See
 <a href="../../reference/configuration/#minimum-release-age">Minimum release age</a>.</dd>
-<dt><strong>Override</strong></dt>
-<dd>A per-approval act, reserved to an administrator, that approves one snapshot
-whose effective vetting outcome is blocked. A reason is mandatory; it lifts
-<strong>only</strong> the vetting gate — policy, minimum release age and four-eyes still
-decide — and it writes the distinct ledger event
-<code>snapshot-approved-over-vetting-failure</code>. See
-<a href="../../reference/api/marketplaces/#administrative-override-of-a-blocked-outcome">Administrative override of a blocked outcome</a>.</dd>
 <dt><strong>PAT</strong> (personal access token)</dt>
 <dd>The credential git clients authenticate with — <code>sgw_</code> plus 32 random bytes,
 stored only as a SHA-256 digest, shown exactly once. The same credential is
@@ -2750,6 +2764,13 @@ The industry equivalents are Harbor's scanner adapter and
 Dependency-Track's analyzer. See
 <a href="../vetting/">Vetting — the vetter chain</a> and, for adding one of your own,
 <a href="../../guides/adding-an-external-vetter/">Adding an external vetter</a>.</dd>
+<dt><strong>Vetting override</strong></dt>
+<dd>A per-approval act, reserved to an administrator, that approves one snapshot
+whose effective vetting outcome is blocked. A reason is mandatory; it lifts
+<strong>only</strong> the vetting gate — policy, minimum release age and four-eyes still
+decide — and it writes the distinct ledger event
+<code>snapshot-approved-over-vetting-failure</code>. See
+<a href="../../reference/api/marketplaces/#administrative-override-of-a-blocked-outcome">Administrative override of a blocked outcome</a>.</dd>
 <dt><strong>Violation</strong></dt>
 <dd>The reason ingestion flagged a snapshot: an external plugin source that
 admission refused, that could not be resolved, or that exceeded a resolution

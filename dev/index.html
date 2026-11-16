@@ -2674,7 +2674,10 @@ ingestion time.</p>
 </div>
 <div class="admonition abstract">
 <p class="admonition-title">Hold until approved</p>
-<p>Every snapshot starts <code>held</code>. Only an explicit human approval publishes.
+<p>Every snapshot starts <code>held</code>. Only an approval publishes: a person's, or,
+for a marketplace an administrator has opted in, an
+<a href="guides/approving-snapshots/#automatic-approval">automatic approval</a> of
+a clean update that passes the same gates.
 When upstream pushes, the new snapshot is held too and the previously
 approved one keeps serving — unchanged.</p>
 </div>

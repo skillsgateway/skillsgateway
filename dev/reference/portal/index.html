@@ -2320,6 +2320,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#automatic-approval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automatic approval
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#vetting-chain-administrators" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3292,6 +3303,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#automatic-approval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automatic approval
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#vetting-chain-administrators" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4116,7 +4138,7 @@ renders "Marketplace '{name}' not found." with a link back.</p>
 </tr>
 <tr>
 <td><strong>Settings</strong></td>
-<td>The <a href="#upstream">upstream</a> facts and, for an administrator, the <a href="#correct-the-url-administrators">URL correction</a>, the <a href="#vetting-chain-administrators">vetting chain</a> and <a href="#remove-marketplace-administrators">removal</a></td>
+<td>The <a href="#upstream">upstream</a> facts, the <a href="#automatic-approval">automatic approval</a> setting and, for an administrator, the <a href="#correct-the-url-administrators">URL correction</a>, the automatic approval form, the <a href="#vetting-chain-administrators">vetting chain</a> and <a href="#remove-marketplace-administrators">removal</a></td>
 </tr>
 </tbody>
 </table>
@@ -4172,6 +4194,44 @@ URL can no longer change, and that the marketplace can be
 marketplace the estate configuration declares has the button disabled, with
 the reason: correct the declaration and restart. The dialog calls
 <a href="../api/marketplaces/#put-marketplacesnameurl"><code>PUT /api/v1/marketplaces/{name}/url</code></a>.</p>
+<h3 id="automatic-approval">Automatic approval<a class="headerlink" href="#automatic-approval" title="Permanent link">&para;</a></h3>
+<p>On <strong>Settings</strong>, after the upstream facts, and <strong>shown to every session that
+can see the page</strong>, so automatic approval is never invisible to the people
+whose content it publishes. Fed by
+<code>GET /api/v1/marketplaces/{name}/auto-approval</code>; see
+<a href="../../guides/approving-snapshots/#automatic-approval">Automatic approval</a>.</p>
+<p>The heading carries a badge for what automatic approval does today:
+<strong>Approved automatically</strong> (automatic approval on and allowed, with the
+gateway mode <code>on</code>), <strong>Dry run: recorded, not published</strong> (the same under mode
+<code>dry-run</code>), or <strong>Not approved automatically</strong>. Beneath it, a list gives the
+<strong>Status</strong> (<em>Off</em>, or <em>On until</em> a date), <strong>Allowed because</strong> (<em>Internal
+source</em>, <em>Hosted on this gateway</em>, <em>Administrator exemption</em>, <em>Waiting for a
+second administrator</em> or <em>Not allowed</em>), the <strong>Gateway mode</strong> (<em>Off</em>, <em>Dry
+run</em> or <em>On</em>, each with what it means), who set it and when, the reason, when
+it lapses, and the active administrator exemption with its reason, author and
+date. A setting past its date is marked <strong>Lapsed</strong>. A note says what to do
+when automatic approval is on but not taking effect: renew a lapsed one, wait
+for another administrator under four-eyes, or set it again with an exemption.</p>
+<p><strong>For an administrator</strong>, a form follows:</p>
+<ul>
+<li><strong>Automatic approval</strong>: <em>Off</em> or <em>On</em>. Saving <em>Off</em> also revokes an active
+  exemption.</li>
+<li>For <em>On</em>, a <strong>Reason</strong> and a <strong>Lapses on</strong> date, from tomorrow to 90 days
+  out. Automatic approval lapses at the start of that day.</li>
+<li><strong>Add an exemption</strong>, for a marketplace outside the internal prefixes, with
+  its own <strong>Exemption reason</strong> and <strong>Exemption lapses on</strong>.</li>
+</ul>
+<p><strong>Save automatic approval</strong> is disabled until each required reason holds
+something other than whitespace and each date is in range, and reads
+<em>Saving…</em> while the request is in flight. It calls <code>PUT …/auto-approval</code>. A
+refusal from the server, such as turning automatic approval on for a
+marketplace whose source is not internal without an exemption, is shown
+beneath the form as returned, with its next step.</p>
+<p>When an exemption is active, <strong>Revoke exemption…</strong> opens a confirmation that
+states what revoking does: the exemption ends now, automatic approval that
+rests on it stops taking effect, and what is already served stays served.
+<strong>Revoke exemption</strong> calls <code>DELETE …/auto-approval/exemption</code>.</p>
+<p>If the setting cannot be loaded, the card says so with <strong>Try again</strong>.</p>
 <h3 id="vetting-chain-administrators">Vetting chain (administrators)<a class="headerlink" href="#vetting-chain-administrators" title="Permanent link">&para;</a></h3>
 <p>On <strong>Settings</strong>, <strong>shown only to a session holding the <code>admin</code> role</strong>. Fed by
 <code>GET /api/v1/marketplaces/{name}/vetting-chain</code>, which the server refuses to anyone

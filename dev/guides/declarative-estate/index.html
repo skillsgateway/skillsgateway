@@ -3001,6 +3001,20 @@ control-plane credential in a values file.</p>
 <p>Deregistration, snapshot approval, waivers — everything that retracts
 or publishes content — stays interactive and audited, and is unreachable by a
 machine credential holding every scope there is.</p>
+<p>A marketplace's <strong>automatic approval</strong> is declarable, as
+<a href="../../reference/configuration/#declarative-estate"><code>auto-approval.enabled</code>, <code>auto-approval.reason</code> and <code>auto-approval.expires-at</code></a>
+on its entry: whether its clean updates are
+<a href="../approving-snapshots/#automatic-approval">approved automatically</a> is
+standing configuration, and the review of the estate repository is its
+separation of duties. The reconciler applies it with the same rules as the
+API. It fails the entry when automatic approval is enabled for a marketplace
+whose source is not internal, or with a missing or too-distant expiry.
+Changing the reason or the date re-applies it, which is how declared automatic
+approval is renewed; a declared date that passes leaves automatic approval off
+until the declaration changes. The <strong>administrator exemption</strong> a marketplace
+outside the internal prefixes needs is not declarable, for the
+reason waivers are not: it is a dated judgement by a named person. Declaring
+one fails the entry.</p>
 <p>Identity-provider role mappings (<code>skills-gateway.roles.mappings</code>) are
 deliberately <strong>not</strong> an estate object either, for the opposite reason: they are
 already pure configuration. No endpoint creates or deletes them, there is no
