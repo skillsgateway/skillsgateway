@@ -1,6 +1,9 @@
 package dev.skillsgateway.server.admin;
 
+import dev.skillsgateway.server.approval.ApprovalRecorder;
 import dev.skillsgateway.server.approval.ApprovalService;
+import dev.skillsgateway.server.approval.AutoApprovalService;
+import dev.skillsgateway.server.approval.AutoApprovalSettingService;
 import dev.skillsgateway.server.approval.ClosureIncompleteException;
 import dev.skillsgateway.server.approval.FourEyesConflictException;
 import dev.skillsgateway.server.approval.FourEyesGate;
@@ -20,7 +23,7 @@ import dev.skillsgateway.server.approval.SelfReversalException;
 import dev.skillsgateway.server.approval.SnapshotTooYoungException;
 import dev.skillsgateway.server.approval.SnapshotWithdrawnException;
 import dev.skillsgateway.server.approval.VettingBlockedException;
-import dev.skillsgateway.server.approval.VettingOverrideRecord;
+import dev.skillsgateway.server.auth.MachineApiAuthentication;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.ingestion.IngestJobs;
 import dev.skillsgateway.server.ingestion.IngestStatus;
@@ -40,7 +43,6 @@ import dev.skillsgateway.server.policy.PolicyDeniedException;
 import dev.skillsgateway.server.roles.RoleService;
 import dev.skillsgateway.server.storage.ServedTip;
 import dev.skillsgateway.server.vetting.LicenseReportService;
-import dev.skillsgateway.server.vetting.WaiverService;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
@@ -51,8 +53,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -72,6 +77,8 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/api/v1")
 public class AdminController {
 
+    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
+
     /** The gateway ingests only the upstream default branch; this is not consumer-selectable. */
     private static final String DEFAULT_BRANCH = "main";
 
@@ -88,8 +95,10 @@ public class AdminController {
     private final LicenseReportService licenseReportService;
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
-    private final WaiverService waiverService;
+    private final ApprovalRecorder approvalRecorder;
     private final RoleService roleService;
+    private final AutoApprovalSettingService autoApprovalSettingService;
+    private final AutoApprovalService autoApprovalService;
 
     public AdminController(
             ServedTip servedTip,
@@ -105,8 +114,10 @@ public class AdminController {
             LicenseReportService licenseReportService,
             AdminAuditLogger auditLogger,
             WebhookService webhookService,
-            WaiverService waiverService,
-            RoleService roleService) {
+            ApprovalRecorder approvalRecorder,
+            RoleService roleService,
+            AutoApprovalSettingService autoApprovalSettingService,
+            AutoApprovalService autoApprovalService) {
         this.servedTip = servedTip;
         this.registrationService = registrationService;
         this.removalService = removalService;
@@ -120,8 +131,10 @@ public class AdminController {
         this.licenseReportService = licenseReportService;
         this.auditLogger = auditLogger;
         this.webhookService = webhookService;
-        this.waiverService = waiverService;
+        this.approvalRecorder = approvalRecorder;
         this.roleService = roleService;
+        this.autoApprovalSettingService = autoApprovalSettingService;
+        this.autoApprovalService = autoApprovalService;
     }
 
     @Schema(description = "Marketplace registration request")
@@ -157,7 +170,23 @@ public class AdminController {
                     description = "Must be omitted or equal the upstream default branch; the ingested ref"
                             + " is the gateway's decision, never the consumer's (GW_INGEST_0006)",
                     example = "main")
-            String ref) {}
+            String ref,
+
+            @Schema(
+                    description = "Optional automatic approval, chosen at registration (GW_APPROVAL_0044.1)."
+                            + " Turning it on needs a reason and an expiry, and an internal source: a marketplace"
+                            + " outside the internal prefixes is refused, since its exemption is granted afterwards")
+            RegistrationAutoApproval autoApproval) {}
+
+    @Schema(description = "Automatic approval chosen at registration")
+    public record RegistrationAutoApproval(
+            @Schema(description = "true or false; required") Boolean enabled,
+
+            @Schema(description = "Why; required to turn it on")
+            String reason,
+
+            @Schema(description = "When it lapses back to off; required to turn it on, at most 90 days ahead")
+            Instant expiresAt) {}
 
     @Schema(description = "A registered marketplace with its snapshots and forge metadata")
     public record MarketplaceView(
@@ -252,10 +281,50 @@ public class AdminController {
             @RequestBody RegisterMarketplaceRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
         requireDefaultBranchRef(request.ref());
+        RegistrationAutoApproval autoApproval = request.autoApproval();
+        if (autoApproval != null
+                && Boolean.TRUE.equals(autoApproval.enabled())
+                && authentication instanceof MachineApiAuthentication) {
+            // Turning automatic approval on is unreachable by every scope (MachineApiRegistry);
+            // registration is reachable, so it must not carry the grant past that table.
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "a machine credential cannot turn automatic approval on; register without it and"
+                            + " have an administrator turn it on in the portal or the API");
+        }
+        if (autoApproval != null) {
+            autoApprovalSettingService.checkRegistration(
+                    request.name(),
+                    request.url(),
+                    request.origin(),
+                    autoApproval.enabled(),
+                    autoApproval.reason(),
+                    autoApproval.expiresAt());
+        }
         MarketplaceRegistrationService.RegistrationOutcome outcome = registrationService.register(
                 request.name(), request.url(), request.origin(), request.pushPolicy(), authentication.getName());
+        List<String> warnings = outcome.warnings();
+        if (autoApproval != null && Boolean.TRUE.equals(autoApproval.enabled())) {
+            // The marketplace already exists, with its repository and webhook, so no rollback undoes
+            // it; a failed setting is reported on the registration rather than hiding it.
+            try {
+                autoApprovalSettingService.set(
+                        outcome.marketplace().name(),
+                        new AutoApprovalSettingService.SettingRequest(
+                                true, autoApproval.reason(), autoApproval.expiresAt(), null),
+                        authentication.getName());
+            } catch (RuntimeException e) {
+                log.error(
+                        "Marketplace {} registered but automatic approval was not turned on",
+                        outcome.marketplace().name(),
+                        e);
+                warnings = new ArrayList<>(warnings);
+                warnings.add("the marketplace is registered, but automatic approval was not turned on ("
+                        + e.getMessage() + "); turn it on in the portal or the API");
+            }
+        }
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(RegisteredMarketplace.of(outcome.marketplace(), outcome.warnings()));
+                .body(RegisteredMarketplace.of(outcome.marketplace(), warnings));
     }
 
     @Schema(description = "Correct an upstream marketplace's URL")
@@ -630,63 +699,8 @@ public class AdminController {
             roleService.requireApproverOfSnapshot(authentication, id);
         }
         ApprovalService.Approved approved = approvalService.approve(id, authentication.getName(), override);
-        Snapshot snapshot = approved.snapshot();
-        String marketplace = marketplaceName(snapshot.marketplaceId());
-        waiverService.recordUse(marketplace, snapshot.sha(), authentication.getName(), approved.waiversApplied());
-        // The override lands on the ledger as its own event beside snapshot-approved (GW_VETTING_0028), so
-        // the decision entry says who approved and this one says what they overrode and why — both
-        // facts kept, never one instead of the other.
-        if (approved.vettingOverride() != null) {
-            VettingOverrideRecord over = approved.vettingOverride();
-            auditLogger.record(
-                    authentication.getName(),
-                    marketplace,
-                    ApprovalService.EVENT_OVERRIDE,
-                    snapshot.sha(),
-                    "reason=%s; blockingVetters=%s; uncovered=%s"
-                            .formatted(over.reason(), over.blockingVetters(), over.uncoveredFindings()));
-        }
-        // The age at approval is on the decision's own ledger entry (GW_APPROVAL_0004.5): what the cooling-off
-        // window was worth for this snapshot is only reconstructible if the entry says how long the
-        // commit had been sitting in quarantine when someone adopted it.
-        auditLogger.record(
-                authentication.getName(),
-                marketplace,
-                "snapshot-approved",
-                snapshot.sha(),
-                "ingestion-age=" + ReleaseAgeGate.format(approved.ingestionAge()));
-        // The evidence this decision rested on was produced by a chain the marketplace no longer
-        // runs (GW_VETTING_0038.1): enabling a vetter re-runs nothing, so a snapshot at the gate can carry
-        // evidence the new vetter never produced. Recorded beside the approval, never instead of
-        // it, and never as a refusal — the reviewer owns the decision, the ledger owns the fact.
-        if (approved.chainStaleness() != null && approved.chainStaleness().stale()) {
-            auditLogger.record(
-                    authentication.getName(),
-                    marketplace,
-                    ApprovalService.EVENT_APPROVED_ON_SUPERSEDED_CHAIN,
-                    snapshot.sha(),
-                    "evidenceChain=%s; chainInForce=%s"
-                            .formatted(
-                                    approved.chainStaleness().runChain(),
-                                    approved.chainStaleness().currentChain()));
-        }
-        // Warn mode published a self-approval (GW_APPROVAL_0011). The decision entry above says who approved;
-        // this one says why that was not an independent review, and it is written beside the
-        // approval rather than instead of it so the ledger carries both facts.
-        if (!approved.fourEyesConflicts().isEmpty()) {
-            auditLogger.record(
-                    authentication.getName(),
-                    marketplace,
-                    FourEyesGate.EVENT_CONFLICT,
-                    snapshot.sha(),
-                    "mode=WARN, approved, conflicts=" + FourEyesGate.describe(approved.fourEyesConflicts()));
-        }
-        emit(
-                WebhookEvent.SNAPSHOT_APPROVED,
-                marketplaceName(snapshot.marketplaceId()),
-                snapshot,
-                authentication.getName());
-        return snapshot;
+        approvalRecorder.recordApproved(approved, authentication.getName());
+        return approved.snapshot();
     }
 
     @PostMapping("/snapshots/{id}/reject")
@@ -758,6 +772,24 @@ public class AdminController {
     public ReleaseAgeGate.Eligibility releaseAge(@PathVariable long id) {
         return approvalService
                 .releaseAge(id)
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "snapshot %d not found".formatted(id)));
+    }
+
+    @GetMapping("/snapshots/{id}/auto-approval")
+    @Requirements({"GW_APPROVAL_0044.12"})
+    @Tag(name = "Snapshots")
+    @Operation(
+            summary = "Automatic approval evaluation",
+            description = "What an automatic approval attempt would decide for this snapshot now: what allows"
+                    + " the marketplace's automatic approval, and the first check that fails or none. The same evaluation the"
+                    + " attempt makes, in every mode, so under off and dry-run it measures what on would do."
+                    + " It writes nothing. Under on, an eligible snapshot still meets every approval gate.")
+    @ApiResponse(responseCode = "200", description = "The evaluation")
+    @ApiResponse(responseCode = "404", description = "Snapshot not found")
+    public AutoApprovalService.Evaluation autoApproval(@PathVariable long id) {
+        return autoApprovalService
+                .evaluate(id)
                 .orElseThrow(
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "snapshot %d not found".formatted(id)));
     }

@@ -1339,6 +1339,9 @@ export const queuedIngest = (name: string): Schemas["IngestStatus"] => ({
   running: { stage: "queued", startedAt: new Date().toISOString(), interrupted: false },
 });
 
+/** A marketplace no one has turned automatic approval on for, on a gateway with it off. */
+export const autoApprovalOff: Schemas["AutoApprovalView"] = { enabled: false, allowedBy: "none", mode: "off" };
+
 export const handlers = [
   http.get("/api/v1/adoption", () => HttpResponse.json(marketplaceAdoption)),
   http.get("/api/v1/adoption/staleness", () => HttpResponse.json(staleIdentities)),
@@ -1392,6 +1395,7 @@ export const handlers = [
   ),
   http.get("/api/v1/marketplaces/:name/waivers", () => HttpResponse.json(waivedVetting.waivers)),
   http.get("/api/v1/marketplaces/:name/vetting-chain", () => HttpResponse.json(marketplaceChain)),
+  http.get("/api/v1/marketplaces/:name/auto-approval", () => HttpResponse.json(autoApprovalOff)),
   http.get("/api/v1/marketplaces/:name/vetting-chain-settings", () =>
     HttpResponse.json(chainSettingsDefault),
   ),

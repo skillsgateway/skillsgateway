@@ -76,7 +76,10 @@ public final class MachineApiRegistry {
                         get("/api/v1/snapshots/{id}/content-diff"),
                         get("/api/v1/snapshots/{id}/licenses"),
                         get("/api/v1/snapshots/{id}/provenance"),
-                        get("/api/v1/snapshots/{id}/release-age")));
+                        get("/api/v1/snapshots/{id}/release-age"),
+                        // Automatic approval is marketplace metadata every session already reads:
+                        // who turned it on, why, and when it lapses. Setting it stays unreachable.
+                        get("/api/v1/marketplaces/{name}/auto-approval")));
         scopes.put(
                 "snapshots:read",
                 Set.of(
@@ -95,7 +98,10 @@ public final class MachineApiRegistry {
                         // The name-collision report is the same kind of read: what an approval would
                         // meet, deciding nothing. It names incumbents' marketplaces and plugin names,
                         // which the catalog already publishes.
-                        get("/api/v1/snapshots/{id}/name-collisions")));
+                        get("/api/v1/snapshots/{id}/name-collisions"),
+                        // The automatic-approval evaluation is the same kind of read: what the
+                        // evaluator decided and which check refused, publishing nothing.
+                        get("/api/v1/snapshots/{id}/auto-approval")));
         scopes.put(
                 "marketplaces:register",
                 // Correcting the URL before the first snapshot (GW_INGEST_0066) is the registration
@@ -153,6 +159,12 @@ public final class MachineApiRegistry {
             // Publishes content; human judgement.
             post("/api/v1/snapshots/{id}/approve"),
             post("/api/v1/snapshots/{id}/reject"),
+            // Granting a marketplace automatic approval lets content publish with no person in the
+            // loop, so the grant is itself the judgement; revoking an exemption and the recall that
+            // withdraws automatic approvals retract on the same authority (GW_APPROVAL_0044).
+            put("/api/v1/marketplaces/{name}/auto-approval"),
+            delete("/api/v1/marketplaces/{name}/auto-approval/exemption"),
+            post("/api/v1/auto-approval/withdraw"),
             // Withdraws served content on knowledge no machine holds (GW_APPROVAL_0015). The reason
             // is the whole of the accountability for an act that takes one identity and no second
             // reviewer, and a credential in a pipeline cannot supply one that means anything.

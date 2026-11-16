@@ -4,6 +4,15 @@ Terms as this project uses them, in alphabetical order. Several are ordinary git
 or security words with a narrower meaning here. Each entry is a definition and a
 pointer; the page it points at is where the mechanism is explained.
 
+**Administrator exemption**
+:   A dated exception, with its own reason and an expiry of at most 90 days,
+    that lets automatic approval take effect for a marketplace whose source is
+    not internal. Granted by a named administrator through the API or the
+    portal, never declared in the estate, and revoked when automatic approval
+    is turned off. Not to be confused with a vetting override, which approves
+    one blocked snapshot. See
+    [Automatic approval](../guides/approving-snapshots.md#which-marketplaces-qualify).
+
 **Adoption report**
 :   A read-only aggregation over the fetch ledger: per marketplace, who fetched
     what, how recently, and which SHAs are still the served tip. See
@@ -23,6 +32,14 @@ pointer; the page it points at is where the mechanism is explained.
 :   A registered HTTP endpoint the gateway pushes ledger entries to, advancing
     its own cursor so delivery is at-least-once rather than best-effort. See
     [Exporting the audit ledger](../guides/exporting-the-audit-ledger.md#push-sinks).
+
+**Automatic approval**
+:   A per-marketplace setting, off by default, under which a clean update with
+    an unchanged executable surface is approved with no person, as the
+    `auto-approver` actor through the same approval gates. It takes effect only
+    for an internal source or under an administrator exemption, needs a reason
+    and an expiry, and acts only while the gateway mode is `on`. See
+    [Automatic approval](../guides/approving-snapshots.md#automatic-approval).
 
 **BFF** (backend for frontend)
 :   The pattern the portal uses: the application holds the OIDC tokens and the
@@ -71,6 +88,13 @@ pointer; the page it points at is where the mechanism is explained.
     wider in this project — integrations to other systems are subscribers, sinks
     or mirrors. See
     [External connectors](vetting.md#external-connectors).
+
+**Dry run**
+:   The gateway mode `dry-run` of automatic approval: every check runs and its
+    result is recorded as `snapshot-auto-approval-would-approve`, and nothing is
+    published. How an adopter measures automatic approval before turning it
+    on. See
+    [Start with a dry run](../guides/approving-snapshots.md#start-with-a-dry-run).
 
 **Effective outcome**
 :   What actually gates an approval: the recorded chain run with the waivers
@@ -184,14 +208,6 @@ pointer; the page it points at is where the mechanism is explained.
     request, and deliberately not a vetter. See
     [Minimum release age](../reference/configuration.md#minimum-release-age).
 
-**Override**
-:   A per-approval act, reserved to an administrator, that approves one snapshot
-    whose effective vetting outcome is blocked. A reason is mandatory; it lifts
-    **only** the vetting gate — policy, minimum release age and four-eyes still
-    decide — and it writes the distinct ledger event
-    `snapshot-approved-over-vetting-failure`. See
-    [Administrative override of a blocked outcome](../reference/api/marketplaces.md#administrative-override-of-a-blocked-outcome).
-
 **PAT** (personal access token)
 :   The credential git clients authenticate with — `sgw_` plus 32 random bytes,
     stored only as a SHA-256 digest, shown exactly once. The same credential is
@@ -304,6 +320,14 @@ pointer; the page it points at is where the mechanism is explained.
     Dependency-Track's analyzer. See
     [Vetting — the vetter chain](vetting.md) and, for adding one of your own,
     [Adding an external vetter](../guides/adding-an-external-vetter.md).
+
+**Vetting override**
+:   A per-approval act, reserved to an administrator, that approves one snapshot
+    whose effective vetting outcome is blocked. A reason is mandatory; it lifts
+    **only** the vetting gate — policy, minimum release age and four-eyes still
+    decide — and it writes the distinct ledger event
+    `snapshot-approved-over-vetting-failure`. See
+    [Administrative override of a blocked outcome](../reference/api/marketplaces.md#administrative-override-of-a-blocked-outcome).
 
 **Violation**
 :   The reason ingestion flagged a snapshot: an external plugin source that

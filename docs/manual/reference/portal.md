@@ -296,7 +296,7 @@ A marketplace is divided by what a visit is for, most frequent first:
 | **Review** (default) | What awaits a decision — the [snapshot cards](#the-card) and the decision |
 | **Snapshots** | What is served, and every earlier snapshot |
 | **Activity** | This marketplace's slice of the [audit log](#audit-log) |
-| **Settings** | The [upstream](#upstream) facts and, for an administrator, the [URL correction](#correct-the-url-administrators), the [vetting chain](#vetting-chain-administrators) and [removal](#remove-marketplace-administrators) |
+| **Settings** | The [upstream](#upstream) facts, the [automatic approval](#automatic-approval) setting and, for an administrator, the [URL correction](#correct-the-url-administrators), the automatic approval form, the [vetting chain](#vetting-chain-administrators) and [removal](#remove-marketplace-administrators) |
 
 ### Header
 
@@ -357,6 +357,50 @@ URL can no longer change, and that the marketplace can be
 marketplace the estate configuration declares has the button disabled, with
 the reason: correct the declaration and restart. The dialog calls
 [`PUT /api/v1/marketplaces/{name}/url`](api/marketplaces.md#put-marketplacesnameurl).
+
+### Automatic approval
+
+On **Settings**, after the upstream facts, and **shown to every session that
+can see the page**, so automatic approval is never invisible to the people
+whose content it publishes. Fed by
+`GET /api/v1/marketplaces/{name}/auto-approval`; see
+[Automatic approval](../guides/approving-snapshots.md#automatic-approval).
+
+The heading carries a badge for what automatic approval does today:
+**Approved automatically** (automatic approval on and allowed, with the
+gateway mode `on`), **Dry run: recorded, not published** (the same under mode
+`dry-run`), or **Not approved automatically**. Beneath it, a list gives the
+**Status** (*Off*, or *On until* a date), **Allowed because** (*Internal
+source*, *Hosted on this gateway*, *Administrator exemption*, *Waiting for a
+second administrator* or *Not allowed*), the **Gateway mode** (*Off*, *Dry
+run* or *On*, each with what it means), who set it and when, the reason, when
+it lapses, and the active administrator exemption with its reason, author and
+date. A setting past its date is marked **Lapsed**. A note says what to do
+when automatic approval is on but not taking effect: renew a lapsed one, wait
+for another administrator under four-eyes, or set it again with an exemption.
+
+**For an administrator**, a form follows:
+
+- **Automatic approval**: *Off* or *On*. Saving *Off* also revokes an active
+  exemption.
+- For *On*, a **Reason** and a **Lapses on** date, from tomorrow to 90 days
+  out. Automatic approval lapses at the start of that day.
+- **Add an exemption**, for a marketplace outside the internal prefixes, with
+  its own **Exemption reason** and **Exemption lapses on**.
+
+**Save automatic approval** is disabled until each required reason holds
+something other than whitespace and each date is in range, and reads
+*Saving…* while the request is in flight. It calls `PUT …/auto-approval`. A
+refusal from the server, such as turning automatic approval on for a
+marketplace whose source is not internal without an exemption, is shown
+beneath the form as returned, with its next step.
+
+When an exemption is active, **Revoke exemption…** opens a confirmation that
+states what revoking does: the exemption ends now, automatic approval that
+rests on it stops taking effect, and what is already served stays served.
+**Revoke exemption** calls `DELETE …/auto-approval/exemption`.
+
+If the setting cannot be loaded, the card says so with **Try again**.
 
 ### Vetting chain (administrators)
 

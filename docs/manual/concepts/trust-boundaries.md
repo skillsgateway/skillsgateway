@@ -330,6 +330,33 @@ this boundary exists to guarantee to an expression — a trust-model change,
 decided deliberately or not at all (ADR 0006 in
 [the architecture decision records](https://github.com/skillsgateway/skillsgateway/tree/main/docs/decisions)).
 
+[Automatic approval](../guides/approving-snapshots.md#automatic-approval) is
+that trust-model change, made deliberately and kept narrow
+([ADR 0023 — Automatic approval of internal marketplaces](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0023-automatic-approval-of-internal-marketplaces.md)).
+The human decision moves from each snapshot to the marketplace: an
+administrator turns automatic approval on, with a reason and an expiry of at
+most 90 days, and four-eyes applies to that grant. The grant takes effect only
+for an internal source (a configured URL prefix, or a hosted marketplace) or
+under an administrator exemption, which is a dated exception a named person
+records.
+
+What the grant allows is narrow. Only the newest snapshot is a candidate, it
+may pull in no external source, the whole chain must clear it, and its
+executable surface must be unchanged from what is served. Anything the gateway
+could not read counts as changed. It then goes through `ApprovalService` like
+any approval, as the `auto-approver` system actor, so the closure, revocation,
+policy, collision, cooling-off and four-eyes gates still run, and
+`ApprovalService` stays the sole publisher. Trust never travels from a
+marketplace to what it pulls in.
+
+Recall needs no person either. Re-vetting withdraws an automatically approved
+snapshot on new blocking evidence, whatever the deployment's re-vetting mode,
+and automatic approval refuses to act while re-vetting is off. An
+administrator can withdraw everything approved automatically since a time in
+one act, and the deployment's `mode: off` stops every attempt at once. The
+residual risk, accepted in the ADR, is an instruction-only change that raises
+no finding; a dry run is how an adopter measures it before turning it on.
+
 What *a human* can do, deliberately and audibly, is the airline-cockpit escape
 hatch (ADR 0009): an **administrator** can disconnect the automation. Two acts,
 both admin-only and both on the ledger. An administrator can **override** a

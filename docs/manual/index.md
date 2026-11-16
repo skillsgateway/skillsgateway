@@ -45,7 +45,10 @@ needs an architecture decision record, not a pull request.
 
 !!! abstract "Hold until approved"
 
-    Every snapshot starts `held`. Only an explicit human approval publishes.
+    Every snapshot starts `held`. Only an approval publishes: a person's, or,
+    for a marketplace an administrator has opted in, an
+    [automatic approval](guides/approving-snapshots.md#automatic-approval) of
+    a clean update that passes the same gates.
     When upstream pushes, the new snapshot is held too and the previously
     approved one keeps serving — unchanged.
 

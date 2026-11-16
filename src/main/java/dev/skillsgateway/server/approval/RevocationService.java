@@ -15,7 +15,9 @@ import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -143,6 +145,17 @@ public class RevocationService {
      */
     @Requirements({"GW_APPROVAL_0015", "GW_APPROVAL_0016"})
     public Revoked revoke(long snapshotId, String reason, ServeAfter serveAfter, String administrator) {
+        return revoke(snapshotId, reason, serveAfter, administrator, Set.of());
+    }
+
+    /**
+     * {@link #revoke(long, String, ServeAfter, String)}, as one of several withdrawals: a return to
+     * the previous approved snapshot skips {@code alsoWithdrawing}, so it never republishes a
+     * snapshot the same act is about to withdraw (GW_APPROVAL_0044.14).
+     */
+    @Requirements({"GW_APPROVAL_0015", "GW_APPROVAL_0016", "GW_APPROVAL_0044.14"})
+    public Revoked revoke(
+            long snapshotId, String reason, ServeAfter serveAfter, String administrator, Set<Long> alsoWithdrawing) {
         if (reason == null || reason.isBlank()) {
             throw new MissingRevocationReasonException(snapshotId);
         }
@@ -158,7 +171,7 @@ public class RevocationService {
 
         // Before the transition, so an impossible request withdraws nothing (GW_APPROVAL_0016).
         Optional<Snapshot> target = serveAfter == ServeAfter.PREVIOUS_APPROVED
-                ? snapshotRepository.previousApproved(current.marketplaceId(), snapshotId)
+                ? snapshotRepository.previousApproved(current.marketplaceId(), excluding(snapshotId, alsoWithdrawing))
                 : Optional.empty();
         if (serveAfter == ServeAfter.PREVIOUS_APPROVED && target.isEmpty()) {
             throw new RollbackUnavailableException(snapshotId, marketplace.name());
@@ -209,6 +222,12 @@ public class RevocationService {
                 Snapshot.REVOKED,
                 administrator);
         return new Revoked(revoked, stoppedServing, served);
+    }
+
+    private static Set<Long> excluding(long snapshotId, Set<Long> alsoWithdrawing) {
+        Set<Long> excluded = new HashSet<>(alsoWithdrawing);
+        excluded.add(snapshotId);
+        return excluded;
     }
 
     /** Takes the revoked snapshot off the wire, reporting a failure rather than raising it. */

@@ -168,6 +168,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auto-approval/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw every automatic approval since a time
+         * @description Revokes every live snapshot approved by auto-approver at or after since, newest decision first, each as an ordinary withdrawal with the stated reason, ledgered and announced. Snapshots a person approved are untouched. A marketplace whose served snapshot is withdrawn serves what serveAfter says: its newest approved snapshot this request does not withdraw, or nothing. A return that a marketplace cannot make refuses the whole request before anything is withdrawn. Administrator-only.
+         */
+        post: operations["withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/catalog": {
         parameters: {
             query?: never;
@@ -287,6 +307,50 @@ export interface paths {
          * @description Retires the marketplace on a stated reason. Every approved snapshot is withdrawn by administrative revocation, leaving the marketplace serving nothing, and from that moment it is not served, synced, pushed to, listed, approved or reachable by name. Its record, its snapshots, their provenance and the audit ledger are kept. The name may then be registered again, as a new marketplace that inherits nothing. Admin-only.
          */
         delete: operations["removeMarketplace"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/marketplaces/{name}/auto-approval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A marketplace's automatic approval
+         * @description Whether it is on, whether it takes effect and what allows it, who set it, why, when it lapses, the active exemption, and the gateway's mode. What allows it is computed at every read. Open to any session.
+         */
+        get: operations["autoApproval"];
+        /**
+         * Turn a marketplace's automatic approval on or off
+         * @description Off, or on with a reason and an expiry of at most 90 days. A marketplace outside the internal prefixes needs an administrator exemption, given here, with its own reason and expiry; automatic approval never outlives it. Turning it off revokes the exemption. Under four-eyes enforce, a grant by the marketplace's registrant is stored but awaits a different administrator, who confirms it by setting it again. Administrator-only.
+         */
+        put: operations["setAutoApproval"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/marketplaces/{name}/auto-approval/exemption": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke a marketplace's administrator exemption
+         * @description Ends the active exemption at once. Automatic approval that rested on it no longer takes effect. Administrator-only.
+         */
+        delete: operations["revokeExemption"];
         options?: never;
         head?: never;
         patch?: never;
@@ -702,6 +766,26 @@ export interface paths {
          * @description Publishes the snapshot to the git facade and records the reviewer identity and timestamp. The request body is optional. Held snapshots and snapshots that re-vetting revoked can be approved; a revoked one is re-published only by this fresh decision, behind the same gate, which means the violation that revoked it must have been waived or fixed first. A snapshot whose effective vetting outcome is blocked — its chain run objects and at least one blocking finding is not covered by an active waiver, including a snapshot with no chain run at all — is refused, and the problem document names both the blocking vetters and the uncovered findings. Record a scoped, expiring waiver for each of those findings and approve again; every waiver that let the approval through is written to the ledger. Alternatively an administrator — and only an administrator — may set overrideVetting with a reason to approve over the block (GW_VETTING_0028): the override lifts only the vetting gate, is written to the ledger as a distinct event with the failing verdicts, and marks the snapshot approved over a vetting failure.
          */
         post: operations["approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/snapshots/{id}/auto-approval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Automatic approval evaluation
+         * @description What an automatic approval attempt would decide for this snapshot now: what allows the marketplace's automatic approval, and the first check that fails or none. The same evaluation the attempt makes, in every mode, so under off and dry-run it measures what on would do. It writes nothing. Under on, an eligible snapshot still meets every approval gate.
+         */
+        get: operations["autoApproval_1"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1925,6 +2009,83 @@ export interface components {
             /** @description True when `total` is an estimate rather than an exact count */
             totalIsEstimate?: boolean;
         };
+        /** @description An expiring administrator exemption that lets a marketplace outside the internal prefixes be approved automatically */
+        AutoApprovalExemptionRequest: {
+            /**
+             * Format: date-time
+             * @description When the exemption lapses; required, at most 90 days ahead
+             */
+            expiresAt?: string;
+            /** @description Why this source is trusted; required */
+            reason?: string;
+        };
+        /** @description The active administrator exemption */
+        AutoApprovalExemptionView: {
+            /**
+             * Format: date-time
+             * @description When it was granted
+             */
+            createdAt?: string;
+            /** @description The administrator who granted it */
+            createdBy?: string;
+            /**
+             * Format: date-time
+             * @description When it lapses
+             */
+            expiresAt?: string;
+            /**
+             * Format: int64
+             * @description Exemption id
+             */
+            id?: number;
+            /** @description Why this source is trusted */
+            reason?: string;
+        };
+        /** @description Turn a marketplace's automatic approval on or off */
+        AutoApprovalRequest: {
+            /** @description true or false; required */
+            enabled?: boolean;
+            /** @description For a marketplace outside the internal prefixes: the exemption it rests on */
+            exemption?: components["schemas"]["AutoApprovalExemptionRequest"];
+            /**
+             * Format: date-time
+             * @description When it lapses back to off; required to turn it on, at most 90 days ahead
+             */
+            expiresAt?: string;
+            /** @description Why; required to turn it on */
+            reason?: string;
+        };
+        /** @description A marketplace's automatic approval and whether it takes effect */
+        AutoApprovalView: {
+            /**
+             * @description Why it takes effect, or none when it does not: off, lapsed, or not internal and with no exemption left. awaiting-second-administrator under four-eyes enforce, when the grantor registered the marketplace
+             * @enum {string}
+             */
+            allowedBy?: "internal-source" | "hosted" | "exemption" | "awaiting-second-administrator" | "none";
+            /** @description Whether automatic approval is turned on */
+            enabled?: boolean;
+            /** @description The active exemption, if any */
+            exemption?: components["schemas"]["AutoApprovalExemptionView"];
+            /**
+             * Format: date-time
+             * @description When it lapses back to off
+             */
+            expiresAt?: string;
+            /**
+             * @description The gateway's automatic approval mode. Automatic approval publishes only under on; under dry-run it is evaluated and recorded, and under off it does nothing
+             * @enum {string}
+             */
+            mode?: "off" | "dry-run" | "on";
+            /** @description Why */
+            reason?: string;
+            /**
+             * Format: date-time
+             * @description When it was set
+             */
+            setAt?: string;
+            /** @description Who set it last */
+            setBy?: string;
+        };
         /** @description One vetting-chain change addressed to several marketplaces */
         BulkChainChange: {
             /**
@@ -2616,6 +2777,34 @@ export interface components {
              * @description Entries updated to match the declaration
              */
             updated?: number;
+        };
+        /** @description What an automatic approval attempt would decide for a snapshot now */
+        Evaluation: {
+            /**
+             * @description Why the marketplace's automatic approval takes effect, or none
+             * @enum {string}
+             */
+            allowedBy?: "internal-source" | "hosted" | "exemption" | "awaiting-second-administrator" | "none";
+            /** @description The served commit the surface was compared with, or null when nothing is served */
+            baselineSha?: string;
+            /** @description The vetters switched off, which a relaxed required-vetters allowed */
+            disabledVetters?: string[];
+            /** @description Whether every check passes; under on, the approval gates then decide */
+            eligible?: boolean;
+            /**
+             * @description The gateway's automatic approval mode
+             * @enum {string}
+             */
+            mode?: "off" | "dry-run" | "on";
+            /** @description The first failing check, a stable code then a detail; null when eligible */
+            refusal?: string;
+            /** @description The waivers suppressing a finding in the run */
+            waiverIds?: number[];
+            /**
+             * @description The worst severity among the run's findings, or null when it has none
+             * @enum {string}
+             */
+            worstSeverity?: "info" | "low" | "medium" | "high" | "critical";
         };
         /** @description Webhook event payload */
         EventPayload: {
@@ -3518,6 +3707,8 @@ export interface components {
         };
         /** @description Marketplace registration request */
         RegisterMarketplaceRequest: {
+            /** @description Optional automatic approval, chosen at registration (GW_APPROVAL_0044.1). Turning it on needs a reason and an expiry, and an internal source: a marketplace outside the internal prefixes is refused, since its exemption is granted afterwards */
+            autoApproval?: components["schemas"]["RegistrationAutoApproval"];
             /**
              * @description Gateway-local marketplace name; it is the facade clone path /git/{name}
              * @example corp-marketplace
@@ -3589,6 +3780,18 @@ export interface components {
             url?: string;
             /** @description Non-blocking warnings about this registration, e.g. the upstream url already being registered under another marketplace name (GW_INGEST_0029) */
             warnings?: string[];
+        };
+        /** @description Automatic approval chosen at registration */
+        RegistrationAutoApproval: {
+            /** @description true or false; required */
+            enabled?: boolean;
+            /**
+             * Format: date-time
+             * @description When it lapses back to off; required to turn it on, at most 90 days ahead
+             */
+            expiresAt?: string;
+            /** @description Why; required to turn it on */
+            reason?: string;
         };
         /** @description A removed marketplace and what its removal withdrew */
         Removal: {
@@ -4527,6 +4730,34 @@ export interface components {
              */
             updatedAt?: string;
         };
+        /** @description Withdraw every automatic approval since a time */
+        WithdrawRequest: {
+            /** @description Why; recorded on each withdrawal */
+            reason?: string;
+            /**
+             * @description What a marketplace whose served snapshot is withdrawn serves afterwards: its newest approved snapshot this request does not withdraw, or nothing
+             * @enum {string}
+             */
+            serveAfter?: "previous_approved" | "nothing";
+            /**
+             * Format: date-time
+             * @description Withdraw the live snapshots approved automatically at or after this time
+             */
+            since?: string;
+        };
+        /** @description What a bulk withdrawal withdrew, newest decision first */
+        WithdrawResponse: {
+            /** @description The marketplaces whose automatic approval this request turned off, because it withdrew their automatic approvals and the next push would otherwise be approved the same way */
+            turnedOff?: string[];
+            withdrawn?: components["schemas"]["Withdrawn"][];
+        };
+        /** @description One snapshot the request withdrew */
+        Withdrawn: {
+            /** @description What its marketplace serves now, or null when it serves nothing */
+            nowServing?: components["schemas"]["Snapshot"];
+            /** @description The withdrawn snapshot */
+            snapshot?: components["schemas"]["Snapshot"];
+        };
     };
     responses: never;
     parameters: never;
@@ -4794,6 +5025,57 @@ export interface operations {
             };
         };
     };
+    withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["WithdrawRequest"];
+            };
+        };
+        responses: {
+            /** @description What was withdrawn, newest decision first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WithdrawResponse"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description A return to the previous approved snapshot was asked for and a marketplace has none; nothing was withdrawn */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No since, no reason, or no served-content choice */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     catalog: {
         parameters: {
             query?: never;
@@ -5034,6 +5316,139 @@ export interface operations {
             };
             /** @description No reason was stated */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    autoApproval: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The automatic approval */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AutoApprovalView"];
+                };
+            };
+            /** @description Named marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    setAutoApproval: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AutoApprovalRequest"];
+            };
+        };
+        responses: {
+            /** @description The automatic approval after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AutoApprovalView"];
+                };
+            };
+            /** @description No enabled; on without a reason or expiry, or for longer than allowed; an exemption without either, or for an internal marketplace */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Named marketplace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description on for a marketplace that is not internal and has no exemption; nextStep says how */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    revokeExemption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The automatic approval after the revocation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AutoApprovalView"];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Named marketplace not found, or it has no active exemption */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5891,6 +6306,37 @@ export interface operations {
             };
             /** @description An override was requested without a reason */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    autoApproval_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The evaluation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Evaluation"];
+                };
+            };
+            /** @description Snapshot not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

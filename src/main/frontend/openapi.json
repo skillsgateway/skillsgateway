@@ -148,6 +148,125 @@
         },
         "type": "object"
       },
+      "AutoApprovalExemptionRequest": {
+        "description": "An expiring administrator exemption that lets a marketplace outside the internal prefixes be approved automatically",
+        "properties": {
+          "expiresAt": {
+            "description": "When the exemption lapses; required, at most 90 days ahead",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why this source is trusted; required",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AutoApprovalExemptionView": {
+        "description": "The active administrator exemption",
+        "properties": {
+          "createdAt": {
+            "description": "When it was granted",
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "description": "The administrator who granted it",
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "When it lapses",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "Exemption id",
+            "format": "int64",
+            "type": "integer"
+          },
+          "reason": {
+            "description": "Why this source is trusted",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AutoApprovalRequest": {
+        "description": "Turn a marketplace's automatic approval on or off",
+        "properties": {
+          "enabled": {
+            "description": "true or false; required",
+            "type": "boolean"
+          },
+          "exemption": {
+            "$ref": "#/components/schemas/AutoApprovalExemptionRequest",
+            "description": "For a marketplace outside the internal prefixes: the exemption it rests on"
+          },
+          "expiresAt": {
+            "description": "When it lapses back to off; required to turn it on, at most 90 days ahead",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why; required to turn it on",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AutoApprovalView": {
+        "description": "A marketplace's automatic approval and whether it takes effect",
+        "properties": {
+          "allowedBy": {
+            "description": "Why it takes effect, or none when it does not: off, lapsed, or not internal and with no exemption left. awaiting-second-administrator under four-eyes enforce, when the grantor registered the marketplace",
+            "enum": [
+              "internal-source",
+              "hosted",
+              "exemption",
+              "awaiting-second-administrator",
+              "none"
+            ],
+            "type": "string"
+          },
+          "enabled": {
+            "description": "Whether automatic approval is turned on",
+            "type": "boolean"
+          },
+          "exemption": {
+            "$ref": "#/components/schemas/AutoApprovalExemptionView",
+            "description": "The active exemption, if any"
+          },
+          "expiresAt": {
+            "description": "When it lapses back to off",
+            "format": "date-time",
+            "type": "string"
+          },
+          "mode": {
+            "description": "The gateway's automatic approval mode. Automatic approval publishes only under on; under dry-run it is evaluated and recorded, and under off it does nothing",
+            "enum": [
+              "off",
+              "dry-run",
+              "on"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why",
+            "type": "string"
+          },
+          "setAt": {
+            "description": "When it was set",
+            "format": "date-time",
+            "type": "string"
+          },
+          "setBy": {
+            "description": "Who set it last",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "BulkChainChange": {
         "description": "One vetting-chain change addressed to several marketplaces",
         "properties": {
@@ -1246,6 +1365,70 @@
             "description": "Entries updated to match the declaration",
             "format": "int32",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Evaluation": {
+        "description": "What an automatic approval attempt would decide for a snapshot now",
+        "properties": {
+          "allowedBy": {
+            "description": "Why the marketplace's automatic approval takes effect, or none",
+            "enum": [
+              "internal-source",
+              "hosted",
+              "exemption",
+              "awaiting-second-administrator",
+              "none"
+            ],
+            "type": "string"
+          },
+          "baselineSha": {
+            "description": "The served commit the surface was compared with, or null when nothing is served",
+            "type": "string"
+          },
+          "disabledVetters": {
+            "description": "The vetters switched off, which a relaxed required-vetters allowed",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "eligible": {
+            "description": "Whether every check passes; under on, the approval gates then decide",
+            "type": "boolean"
+          },
+          "mode": {
+            "description": "The gateway's automatic approval mode",
+            "enum": [
+              "off",
+              "dry-run",
+              "on"
+            ],
+            "type": "string"
+          },
+          "refusal": {
+            "description": "The first failing check, a stable code then a detail; null when eligible",
+            "type": "string"
+          },
+          "waiverIds": {
+            "description": "The waivers suppressing a finding in the run",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "worstSeverity": {
+            "description": "The worst severity among the run's findings, or null when it has none",
+            "enum": [
+              "info",
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "type": "string"
           }
         },
         "type": "object"
@@ -2857,6 +3040,10 @@
       "RegisterMarketplaceRequest": {
         "description": "Marketplace registration request",
         "properties": {
+          "autoApproval": {
+            "$ref": "#/components/schemas/RegistrationAutoApproval",
+            "description": "Optional automatic approval, chosen at registration (GW_APPROVAL_0044.1). Turning it on needs a reason and an expiry, and an internal source: a marketplace outside the internal prefixes is refused, since its exemption is granted afterwards"
+          },
           "name": {
             "description": "Gateway-local marketplace name; it is the facade clone path /git/{name}",
             "example": "corp-marketplace",
@@ -2969,6 +3156,25 @@
               "type": "string"
             },
             "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "RegistrationAutoApproval": {
+        "description": "Automatic approval chosen at registration",
+        "properties": {
+          "enabled": {
+            "description": "true or false; required",
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "description": "When it lapses back to off; required to turn it on, at most 90 days ahead",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why; required to turn it on",
+            "type": "string"
           }
         },
         "type": "object"
@@ -4471,6 +4677,62 @@
           }
         },
         "type": "object"
+      },
+      "WithdrawRequest": {
+        "description": "Withdraw every automatic approval since a time",
+        "properties": {
+          "reason": {
+            "description": "Why; recorded on each withdrawal",
+            "type": "string"
+          },
+          "serveAfter": {
+            "description": "What a marketplace whose served snapshot is withdrawn serves afterwards: its newest approved snapshot this request does not withdraw, or nothing",
+            "enum": [
+              "previous_approved",
+              "nothing"
+            ],
+            "type": "string"
+          },
+          "since": {
+            "description": "Withdraw the live snapshots approved automatically at or after this time",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "WithdrawResponse": {
+        "description": "What a bulk withdrawal withdrew, newest decision first",
+        "properties": {
+          "turnedOff": {
+            "description": "The marketplaces whose automatic approval this request turned off, because it withdrew their automatic approvals and the next push would otherwise be approved the same way",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "withdrawn": {
+            "items": {
+              "$ref": "#/components/schemas/Withdrawn"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "Withdrawn": {
+        "description": "One snapshot the request withdrew",
+        "properties": {
+          "nowServing": {
+            "$ref": "#/components/schemas/Snapshot",
+            "description": "What its marketplace serves now, or null when it serves nothing"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/Snapshot",
+            "description": "The withdrawn snapshot"
+          }
+        },
+        "type": "object"
       }
     }
   },
@@ -4869,6 +5131,67 @@
         ]
       }
     },
+    "/api/v1/auto-approval/withdraw": {
+      "post": {
+        "description": "Revokes every live snapshot approved by auto-approver at or after since, newest decision first, each as an ordinary withdrawal with the stated reason, ledgered and announced. Snapshots a person approved are untouched. A marketplace whose served snapshot is withdrawn serves what serveAfter says: its newest approved snapshot this request does not withdraw, or nothing. A return that a marketplace cannot make refuses the whole request before anything is withdrawn. Administrator-only.",
+        "operationId": "withdraw",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithdrawRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WithdrawResponse"
+                }
+              }
+            },
+            "description": "What was withdrawn, newest decision first"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "A return to the previous approved snapshot was asked for and a marketplace has none; nothing was withdrawn"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "No since, no reason, or no served-content choice"
+          }
+        },
+        "summary": "Withdraw every automatic approval since a time",
+        "tags": [
+          "Snapshots"
+        ]
+      }
+    },
     "/api/v1/catalog": {
       "get": {
         "description": "The catalog commit the facade is serving at /git/{catalog-name}, with the marketplace and upstream commit SHA of every constituent vendored into it.",
@@ -5158,6 +5481,179 @@
           }
         },
         "summary": "Remove a marketplace",
+        "tags": [
+          "Marketplaces"
+        ]
+      }
+    },
+    "/api/v1/marketplaces/{name}/auto-approval": {
+      "get": {
+        "description": "Whether it is on, whether it takes effect and what allows it, who set it, why, when it lapses, the active exemption, and the gateway's mode. What allows it is computed at every read. Open to any session.",
+        "operationId": "autoApproval",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoApprovalView"
+                }
+              }
+            },
+            "description": "The automatic approval"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Named marketplace not found"
+          }
+        },
+        "summary": "A marketplace's automatic approval",
+        "tags": [
+          "Marketplaces"
+        ]
+      },
+      "put": {
+        "description": "Off, or on with a reason and an expiry of at most 90 days. A marketplace outside the internal prefixes needs an administrator exemption, given here, with its own reason and expiry; automatic approval never outlives it. Turning it off revokes the exemption. Under four-eyes enforce, a grant by the marketplace's registrant is stored but awaits a different administrator, who confirms it by setting it again. Administrator-only.",
+        "operationId": "setAutoApproval",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoApprovalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoApprovalView"
+                }
+              }
+            },
+            "description": "The automatic approval after the change"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "No enabled; on without a reason or expiry, or for longer than allowed; an exemption without either, or for an internal marketplace"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Named marketplace not found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "on for a marketplace that is not internal and has no exemption; nextStep says how"
+          }
+        },
+        "summary": "Turn a marketplace's automatic approval on or off",
+        "tags": [
+          "Marketplaces"
+        ]
+      }
+    },
+    "/api/v1/marketplaces/{name}/auto-approval/exemption": {
+      "delete": {
+        "description": "Ends the active exemption at once. Automatic approval that rested on it no longer takes effect. Administrator-only.",
+        "operationId": "revokeExemption",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoApprovalView"
+                }
+              }
+            },
+            "description": "The automatic approval after the revocation"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Caller does not hold the administrative role"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Named marketplace not found, or it has no active exemption"
+          }
+        },
+        "summary": "Revoke a marketplace's administrator exemption",
         "tags": [
           "Marketplaces"
         ]
@@ -6268,6 +6764,49 @@
           }
         },
         "summary": "Approve a held or revoked snapshot",
+        "tags": [
+          "Snapshots"
+        ]
+      }
+    },
+    "/api/v1/snapshots/{id}/auto-approval": {
+      "get": {
+        "description": "What an automatic approval attempt would decide for this snapshot now: what allows the marketplace's automatic approval, and the first check that fails or none. The same evaluation the attempt makes, in every mode, so under off and dry-run it measures what on would do. It writes nothing. Under on, an eligible snapshot still meets every approval gate.",
+        "operationId": "autoApproval_1",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Evaluation"
+                }
+              }
+            },
+            "description": "The evaluation"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Snapshot not found"
+          }
+        },
+        "summary": "Automatic approval evaluation",
         "tags": [
           "Snapshots"
         ]

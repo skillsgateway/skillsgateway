@@ -1,6 +1,7 @@
 package dev.skillsgateway.server.approval;
 
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.estate.EstateReconciler;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.sync.SyncService;
@@ -102,6 +103,24 @@ public class FourEyesGate {
             }
         }
         return List.copyOf(conflicts);
+    }
+
+    /**
+     * Granting a marketplace automatic approval (GW_APPROVAL_0044.4): the grantor conflicts with the
+     * marketplace's registrant, as a reviewer would.
+     *
+     * <p>The estate reconciler is exempt here and only here. Its separation of duties is the review
+     * of the estate repository, outside the gateway; adding it to {@link #NON_HUMAN_ACTORS} instead
+     * would also exempt it on approvals.
+     */
+    @Requirements({"GW_APPROVAL_0044.4"})
+    public List<FourEyesConflictException.Conflict> grantConflicts(Marketplace marketplace, String grantor) {
+        if (grantor == null || grantor.isBlank() || EstateReconciler.ACTOR.equals(grantor)) {
+            return List.of();
+        }
+        return sameIdentity(marketplace.registeredBy(), grantor)
+                ? List.of(new FourEyesConflictException.Conflict(ROLE_REGISTERED_BY, grantor, null))
+                : List.of();
     }
 
     /**

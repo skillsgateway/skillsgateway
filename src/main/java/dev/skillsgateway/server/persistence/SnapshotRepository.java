@@ -76,12 +76,47 @@ public class SnapshotRepository {
             String ingestedBy,
             SnapshotClosure closure,
             String fetchedFrom) {
+        return create(marketplaceId, sha, upstreamSha, state, violation, ingestedBy, closure, fetchedFrom, null);
+    }
+
+    /**
+     * As above, recording where a redirect moved the fetch off the registered repository, with the
+     * row, so no snapshot fetched that way exists without the record of it.
+     *
+     * @param upstreamMovedTo the first request outside the registered repository, or null
+     */
+    @Requirements({"GW_APPROVAL_0044.2"})
+    @Transactional
+    public Snapshot create(
+            long marketplaceId,
+            String sha,
+            String upstreamSha,
+            String state,
+            String violation,
+            String ingestedBy,
+            SnapshotClosure closure,
+            String fetchedFrom,
+            String upstreamMovedTo) {
         requireFetchedFromCurrentUrl(marketplaceId, fetchedFrom);
         Snapshot snapshot = insert(marketplaceId, sha, upstreamSha, state, violation, ingestedBy);
         if (closure != null && !closure.isEmpty()) {
             closures.record(snapshot.id(), closure);
         }
+        if (upstreamMovedTo != null) {
+            jdbc.sql("UPDATE snapshots SET upstream_moved_to = :movedTo WHERE id = :id")
+                    .param("movedTo", upstreamMovedTo)
+                    .param("id", snapshot.id())
+                    .update();
+        }
         return snapshot;
+    }
+
+    /** Where a redirect moved this snapshot's fetch off the registered repository, if it did. */
+    public Optional<String> upstreamMovedTo(long snapshotId) {
+        return jdbc.sql("SELECT upstream_moved_to FROM snapshots WHERE id = :id")
+                .param("id", snapshotId)
+                .query(String.class)
+                .optional();
     }
 
     /**
@@ -134,6 +169,30 @@ public class SnapshotRepository {
                 .param("sha", sha)
                 .query(Snapshot.class)
                 .optional();
+    }
+
+    /** The marketplace's newest snapshot that is not deleted, whatever its state. */
+    public Optional<Snapshot> newestLive(long marketplaceId) {
+        return jdbc.sql("SELECT * FROM snapshots WHERE marketplace_id = :marketplaceId AND deleted_at IS NULL"
+                        + " ORDER BY id DESC LIMIT 1")
+                .param("marketplaceId", marketplaceId)
+                .query(Snapshot.class)
+                .optional();
+    }
+
+    /**
+     * Stores why automatic approval last skipped the snapshot (GW_APPROVAL_0044.11).
+     *
+     * @return whether the reason changed, which is when the skip is ledgered
+     */
+    public boolean recordAutoApprovalSkip(long id, String reason) {
+        return jdbc.sql("UPDATE snapshots SET auto_approval_skip_reason = :reason"
+                                + " WHERE id = :id AND state = 'held'"
+                                + " AND auto_approval_skip_reason IS DISTINCT FROM :reason")
+                        .param("id", id)
+                        .param("reason", reason)
+                        .update()
+                == 1;
     }
 
     public List<Snapshot> listByMarketplace(long marketplaceId) {
@@ -335,14 +394,33 @@ public class SnapshotRepository {
      */
     @Requirements({"GW_APPROVAL_0016"})
     public Optional<Snapshot> previousApproved(long marketplaceId, long excludingSnapshotId) {
+        return previousApproved(marketplaceId, List.of(excludingSnapshotId));
+    }
+
+    /** The newest live approved snapshot of a marketplace that is none of {@code excluding}. */
+    public Optional<Snapshot> previousApproved(long marketplaceId, Collection<Long> excluding) {
         return jdbc.sql("SELECT * FROM snapshots WHERE marketplace_id = :marketplaceId"
-                        + " AND id <> :excluding AND state = :approved::snapshot_state AND deleted_at IS NULL"
+                        + " AND id NOT IN (:excluding) AND state = :approved::snapshot_state AND deleted_at IS NULL"
                         + " ORDER BY id DESC LIMIT 1")
                 .param("marketplaceId", marketplaceId)
-                .param("excluding", excludingSnapshotId)
+                .param("excluding", List.copyOf(excluding))
                 .param("approved", Snapshot.APPROVED)
                 .query(Snapshot.class)
                 .optional();
+    }
+
+    /**
+     * Live snapshots approved by {@code approver} at or after {@code since}, newest decision first
+     * (GW_APPROVAL_0044.14).
+     */
+    public List<Snapshot> approvedBySince(String approver, Instant since) {
+        return jdbc.sql("SELECT * FROM snapshots WHERE state = :approved::snapshot_state AND decided_by = :approver"
+                        + " AND decided_at >= :since AND deleted_at IS NULL ORDER BY decided_at DESC, id DESC")
+                .param("approved", Snapshot.APPROVED)
+                .param("approver", approver)
+                .param("since", since.atOffset(ZoneOffset.UTC))
+                .query(Snapshot.class)
+                .list();
     }
 
     /**

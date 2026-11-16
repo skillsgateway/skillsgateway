@@ -5,7 +5,6 @@ import dev.skillsgateway.server.config.SkillsGatewayProperties.UpstreamCredentia
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.net.Proxy;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -14,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.eclipse.jgit.transport.http.HttpConnection;
@@ -79,7 +77,7 @@ public class UpstreamCredentials {
     /** The credential whose prefix is the longest match for this upstream URL, if any (GW_INGEST_0050). */
     @Requirements({"GW_INGEST_0050"})
     public Optional<Selected> select(String url) {
-        Target target = Target.of(url);
+        UrlPrefix target = UrlPrefix.of(url);
         if (target == null) {
             return Optional.empty();
         }
@@ -123,7 +121,7 @@ public class UpstreamCredentials {
         } else {
             app = GitHubAppTokens.load(name, credential.githubApp(), clock);
         }
-        Target prefix = Target.of(prefixText);
+        UrlPrefix prefix = UrlPrefix.of(prefixText);
         if (prefix == null || prefix.query() != null || prefix.fragment() != null) {
             throw new IllegalStateException(name
                     + ": url-prefix must be an absolute http(s) URL with no userinfo, query, fragment, dot segments"
@@ -180,13 +178,13 @@ public class UpstreamCredentials {
 
         private final int index;
         private final String urlPrefix;
-        private final Target prefix;
+        private final UrlPrefix prefix;
         private final String token;
         private final String header;
         private final GitHubAppTokens app;
 
         private Selected(
-                int index, String urlPrefix, Target prefix, String username, String token, GitHubAppTokens app) {
+                int index, String urlPrefix, UrlPrefix prefix, String username, String token, GitHubAppTokens app) {
             this.index = index;
             this.urlPrefix = urlPrefix;
             this.prefix = prefix;
@@ -234,9 +232,9 @@ public class UpstreamCredentials {
         /** Whether this request may carry the credential (GW_INGEST_0051). */
         @Requirements({"GW_INGEST_0051"})
         boolean covers(URL url) {
-            Target target;
+            UrlPrefix target;
             try {
-                target = Target.of(url.toURI().toString());
+                target = UrlPrefix.of(url.toURI().toString());
             } catch (URISyntaxException e) {
                 return false;
             }
@@ -304,76 +302,6 @@ public class UpstreamCredentials {
         @Override
         public void setInstanceFollowRedirects(boolean followRedirects) {
             delegate.setInstanceFollowRedirects(false);
-        }
-    }
-
-    /**
-     * An http(s) URL in the canonical form a credential may be matched against, or {@code null}.
-     * A URL with userinfo, dot segments, encoded dots, slashes or backslashes has none: those are
-     * the spellings that read as inside a prefix to a comparison and outside it to a server.
-     */
-    private record Target(String scheme, String host, int port, String path, String query, String fragment) {
-
-        static Target of(String text) {
-            if (text == null) {
-                return null;
-            }
-            URI uri;
-            try {
-                uri = new URI(text);
-            } catch (URISyntaxException e) {
-                return null;
-            }
-            String scheme = uri.getScheme() == null ? null : uri.getScheme().toLowerCase(Locale.ROOT);
-            if (!"https".equals(scheme) && !"http".equals(scheme)) {
-                return null;
-            }
-            String rawPath = uri.getRawPath() == null ? "" : uri.getRawPath();
-            String lowered = rawPath.toLowerCase(Locale.ROOT);
-            if (uri.getHost() == null
-                    || uri.getRawUserInfo() != null
-                    || rawPath.contains("\\")
-                    || lowered.contains("%2e")
-                    || lowered.contains("%2f")
-                    || lowered.contains("%5c")
-                    || !uri.normalize().getRawPath().equals(rawPath)) {
-                return null;
-            }
-            int port = uri.getPort() != -1 ? uri.getPort() : "https".equals(scheme) ? 443 : 80;
-            String path = rawPath;
-            while (path.endsWith("/")) {
-                path = path.substring(0, path.length() - 1);
-            }
-            return new Target(
-                    scheme,
-                    uri.getHost().toLowerCase(Locale.ROOT),
-                    port,
-                    path,
-                    uri.getRawQuery(),
-                    uri.getRawFragment());
-        }
-
-        /** Same origin, and the path equal to this one's or below it by whole segments. */
-        boolean covers(Target other) {
-            return scheme.equals(other.scheme)
-                    && host.equals(other.host)
-                    && port == other.port
-                    && (other.path.equals(path) || other.path.startsWith(path + "/"));
-        }
-
-        /** Equal as prefixes: the query and fragment are refused at load, so they never differ. */
-        @Override
-        public boolean equals(Object o) {
-            return o instanceof Target t
-                    && scheme.equals(t.scheme)
-                    && host.equals(t.host)
-                    && port == t.port
-                    && path.equals(t.path);
-        }
-
-        @Override
-        public int hashCode() {
-            return java.util.Objects.hash(scheme, host, port, path);
         }
     }
 }

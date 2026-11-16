@@ -86,7 +86,7 @@ Register a marketplace. For an upstream marketplace, the gateway lists the
 upstream's references and resolves its default branch before it creates
 anything. It fetches no content. A hosted marketplace contacts nothing.
 
-**Body** — `{name, url?, ref?, origin?, pushPolicy?}`
+**Body** — `{name, url?, ref?, origin?, pushPolicy?, approval?}`
 
 ```console
 $ curl -X POST localhost:8080/api/v1/marketplaces \
@@ -106,11 +106,21 @@ refuses a non-fast-forward push, `allow-rewrite` permits one and records both
 tips on the ledger. See
 [Publishing first-party skills](../../guides/publishing-first-party-skills.md).
 
+`autoApproval` turns on [automatic approval](#automatic-approval) at
+registration: `{enabled, reason?, expiresAt?}`, with the rules `PUT
+/marketplaces/{name}/auto-approval` applies. It takes no exemption, because
+an exemption needs the marketplace to exist. To register a marketplace outside
+the internal prefixes with automatic approval on, register it, then turn
+automatic approval on with an exemption. If the marketplace is registered but
+the setting then fails, the response is still `201`, and `warnings` says
+automatic approval was not turned on; turn it on afterwards.
+
 | Status | Cause |
 | --- | --- |
 | 201 | Registered; returns the marketplace plus `warnings` (see below). |
-| 400 | URL scheme not allowlisted, a `url` with userinfo (a credential in the URL), `ref` present and not `main`, a hosted registration supplying a `url`, an upstream one omitting it, or a `pushPolicy` on an upstream marketplace. |
-| 409 | A live marketplace has that name. A [removed](#delete-marketplacesname) marketplace's name is free. A mistyped URL can be [corrected](#put-marketplacesnameurl) until the first snapshot. |
+| 400 | URL scheme not allowlisted, a `url` with userinfo (a credential in the URL), `ref` present and not `main`, a hosted registration supplying a `url`, an upstream one omitting it, a `pushPolicy` on an upstream marketplace, or an `autoApproval` that is enabled without a reason or an expiry, or for longer than 90 days. |
+| 403 | The caller is not an administrator, or a [machine credential](tokens.md#machine-api-credentials) sent an enabled `autoApproval`: only a person turns automatic approval on. Nothing is registered. |
+| 409 | `autoApproval` is enabled for a marketplace whose source is not internal; `nextStep` says to turn automatic approval on with an exemption after registering. Or a live marketplace has that name. A [removed](#delete-marketplacesname) marketplace's name is free. A mistyped URL can be [corrected](#put-marketplacesnameurl) until the first snapshot. |
 | 422 | Name fails `^[a-z0-9][a-z0-9_-]{0,62}$` (at most 63 characters; the reason says the name is the `/git/<name>` path clients clone), or an unknown `origin`/`pushPolicy`. |
 | 502 | The upstream could not be read, or has no default branch. Nothing was registered. The problem carries `reason`, `rootCause` and `nextStep`; see [Registering a marketplace](../../guides/registering-a-marketplace.md#what-is-validated-and-why). |
 
@@ -220,6 +230,91 @@ marketplace, no pushed lineage;
 the same commit ingested again comes back `held`, and the removal's withdrawals
 do not block approving it. See
 [Removing a marketplace](../../guides/registering-a-marketplace.md#removing-a-marketplace).
+
+---
+
+## Automatic approval
+
+Whether a marketplace's snapshots can be approved with no person. See
+[Automatic approval](../../guides/approving-snapshots.md#automatic-approval)
+for what an automatic approval checks.
+
+### `GET /marketplaces/{name}/auto-approval`
+
+Open to any session.
+
+```json
+{"enabled":true,"allowedBy":"exemption","setBy":"alice","setAt":"2026-11-10T09:00:00Z",
+ "reason":"vendor skills, audited quarterly","expiresAt":"2027-01-30T00:00:00Z",
+ "exemption":{"id":7,"reason":"vendor repository we audit quarterly","createdBy":"alice",
+              "createdAt":"2026-11-10T09:00:00Z","expiresAt":"2026-12-15T00:00:00Z"},
+ "mode":"on"}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `enabled` | Whether an administrator turned automatic approval on, as stored. A lapsed setting stays `true` here; `allowedBy` says it does not take effect. |
+| `allowedBy` | Why automatic approval takes effect, computed at every read: `internal-source` (the URL is under a [configured prefix](../configuration.md#automatic-approval)), `hosted`, or `exemption`. `awaiting-second-administrator` when four-eyes is `enforce` and the grantor registered the marketplace. `none` when automatic approval is off or has lapsed, or when the source is not internal and there is no active exemption. |
+| `setBy`, `setAt`, `reason`, `expiresAt` | Who set automatic approval, when, why, and when it lapses back to off. |
+| `exemption` | The active administrator exemption, or absent. A lapsed or revoked exemption is not returned. |
+| `mode` | The deployment's `skills-gateway.approval.auto.mode`: `off`, `dry-run` or `on`. Only `on` publishes. |
+
+| Status | Cause |
+| --- | --- |
+| 200 | The setting above. |
+| 404 | Unknown marketplace. |
+
+### `PUT /marketplaces/{name}/auto-approval`
+
+Turn automatic approval on, renew it, or turn it off. Administrator-only.
+
+**Body** — `{enabled, reason?, expiresAt?, exemption?: {reason, expiresAt}}`
+
+```console
+$ curl -X PUT localhost:8080/api/v1/marketplaces/vendor/auto-approval \
+    -H 'Content-Type: application/json' \
+    -d '{"enabled":true,"reason":"vendor skills, audited quarterly",
+         "expiresAt":"2027-01-30T00:00:00Z",
+         "exemption":{"reason":"vendor repository we audit quarterly",
+                      "expiresAt":"2026-12-15T00:00:00Z"}}'
+```
+
+- Turning it on needs a reason and an expiry in the future, at most 90 days
+  ahead. Renewal is the same call with a new reason and expiry.
+- A marketplace whose source is not internal needs `exemption`, with its own
+  reason and expiry of at most 90 days. The setting's expiry is capped at the
+  exemption's, so automatic approval never outlives it.
+- Turning it off revokes the active exemption, so turning it on again needs a
+  new one.
+- Four-eyes applies to the grant: the grantor conflicts with the
+  marketplace's registrant. Under `warn` the conflict is recorded; under
+  `enforce` the setting is stored with `allowedBy`
+  `awaiting-second-administrator` until a different administrator sets it
+  again.
+- The marketplace's newest held snapshot is attempted at once.
+
+The change is ledgered as `auto-approval-changed`, and an exemption as
+`auto-approval-exemption-granted`.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The setting after the change, as `GET` returns it. |
+| 400 | No `enabled`; turning it on without a reason or an expiry, or for longer than 90 days; an exemption without either; or an exemption for a marketplace whose source is already internal. |
+| 403 | The caller does not hold the administrative role, or signs in as `config-reconciler`, the estate reconciler's identity: a declared setting is changed in the estate. |
+| 404 | Unknown marketplace. |
+| 409 | Turning it on for a marketplace whose source is not internal, with no exemption. The problem's `nextStep` says how to proceed. |
+
+### `DELETE /marketplaces/{name}/auto-approval/exemption`
+
+End the active exemption now. Administrator-only. Automatic approval that
+rested on it stops taking effect; what is already served stays served.
+Ledgered as `auto-approval-exemption-revoked`.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The setting after the revocation. |
+| 403 | The caller does not hold the administrative role. |
+| 404 | Unknown marketplace, or it has no active exemption. |
 
 ---
 
@@ -1388,6 +1483,105 @@ Quarantine is untouched. Retention may reclaim the content but
     withdrawal with whatever
     [fleet check](../../guides/client-enforcement.md#noticing-that-something-you-already-hold-was-withdrawn)
     your estate runs.
+
+---
+
+## `POST /auto-approval/withdraw`
+
+Withdraw every snapshot approved automatically at or after a time, in one act.
+Administrator-only. Snapshots a person approved are untouched.
+
+```console
+$ curl -X POST localhost:8080/api/v1/auto-approval/withdraw \
+    -H 'Content-Type: application/json' \
+    -d '{"since":"2026-11-14T00:00:00Z","reason":"internal repository compromised",
+         "serveAfter":"PREVIOUS_APPROVED"}'
+```
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `since` | **Yes** | Every live snapshot whose automatic approval was decided at or after this instant is withdrawn. |
+| `reason` | **Yes** | Recorded on each withdrawal. |
+| `serveAfter` | **Yes** | `PREVIOUS_APPROVED` or `NOTHING`, as for [`POST /snapshots/{id}/revoke`](#post-snapshotsidrevoke). |
+
+Each withdrawal is an ordinary [revocation](#post-snapshotsidrevoke), newest
+decision first, ledgered and announced as one. Under `PREVIOUS_APPROVED`, a
+marketplace returns to its newest approved snapshot that this request does
+not also withdraw. If a marketplace whose served snapshot is withdrawn has no
+such snapshot, the whole request is refused before anything is withdrawn.
+
+```json
+{"withdrawn":[{"snapshot":{"id":42,"state":"revoked"},
+               "nowServing":{"id":31,"state":"approved"}}],
+ "turnedOff":["vendor"]}
+```
+
+`nowServing` is what the marketplace serves after the request, or `null` when
+it serves nothing. `turnedOff` names each marketplace whose automatic approval
+the request turned off. Every marketplace it withdrew from is turned off,
+because its next push would otherwise be approved the same way; each is
+ledgered as `auto-approval-changed` by the caller, and any open exemption is
+revoked. Turn it on again once the cause is fixed.
+
+| Status | Cause |
+| --- | --- |
+| 200 | What was withdrawn, newest decision first. Empty when nothing matched. |
+| 403 | The caller does not hold the administrative role. |
+| 409 | `PREVIOUS_APPROVED` was asked for and a marketplace has no approved snapshot to return to. The problem names it in `marketplace`. Nothing was withdrawn. |
+| 422 | No `since`, no `reason`, or no `serveAfter`. |
+
+---
+
+## `GET /snapshots/{id}/auto-approval`
+
+What an automatic approval attempt would decide for this snapshot now. The
+same evaluation the attempt makes, in every mode, so under `off` and `dry-run`
+it measures what `on` would do. It writes nothing.
+
+```json
+{"mode":"dry-run","allowedBy":"internal-source","eligible":false,
+ "refusal":"surface-changed: hooks/hooks.json declares a new hook",
+ "baselineSha":"9f3c…","worstSeverity":"LOW","waiverIds":[],"disabledVetters":[]}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `mode` | The deployment's mode. |
+| `allowedBy` | As on the [automatic approval setting](#get-marketplacesnameauto-approval). |
+| `eligible` | Whether every check passes. Under `on`, the approval gates still decide. |
+| `refusal` | The first failing check, as `code: detail`, or `null` when eligible. |
+| `baselineSha` | The served commit the executable surface was compared with, or `null` when nothing is served. |
+| `worstSeverity` | The worst severity among the run's findings, or `null`. |
+| `waiverIds` | The waivers suppressing a finding in the run. |
+| `disabledVetters` | The vetters switched off, which a relaxed `required-vetters` allowed. |
+
+The refusal codes, in the order they are checked:
+
+| Code | Meaning |
+| --- | --- |
+| `revet-disabled` | Re-vetting is off, so nothing would re-check what is approved. |
+| `not-allowed` | Automatic approval does not take effect for the marketplace; the detail is the `allowedBy` value. |
+| `not-held`, `not-newest` | Only the marketplace's newest snapshot, held, is a candidate. |
+| `external-source` | The snapshot pulls in an external plugin source. |
+| `no-run`, `chain-not-in-force` | Not vetted, or vetted under a chain no longer in force. |
+| `vetter-not-run` | A vetter did not finish: not reached, errored, or pending. |
+| `required-vetter-disabled`, `required-vetter-absent` | A [required vetter](../configuration.md#automatic-approval) was switched off, or is not in the chain. |
+| `blocked` | The effective vetting outcome blocks. |
+| `waived-finding-new` | A waived high or critical finding is not in the served baseline in that content. |
+| `unread-surface` | A finding says part of the executable surface could not be read. |
+| `redirected` | The fetch followed a redirect outside the registered repository, as a forge does for a transferred or renamed repository, so the registered URL does not describe the content. [Correct the URL](#put-marketplacesnameurl) or approve it yourself. |
+| `surface-changed` | The executable surface differs from the served baseline, or a path is not inert. |
+| `surface-unreadable` | The surface could not be compared at all, for example the quarantine could not be read. The snapshot stays held and the gateway logs the error. |
+
+A real attempt can also record `gate-refused` (an approval gate refused it),
+`decided-elsewhere` (a person decided it first), `approval-failed` (the
+publication or a dependency failed; the gateway logs the error), and
+`not-allowed` when automatic approval was turned off while the attempt ran.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The evaluation. |
+| 404 | Unknown snapshot. |
 
 ---
 

@@ -12,6 +12,7 @@ import dev.skillsgateway.server.policy.SnapshotFactsService;
 import dev.skillsgateway.server.storage.GitObjectTransfer;
 import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.storage.RefTransitions;
+import dev.skillsgateway.server.vetting.HeldSnapshotChanged;
 import dev.skillsgateway.server.vetting.VettingService;
 import io.github.reqstool.annotations.Requirements;
 import jakarta.annotation.PreDestroy;
@@ -36,6 +37,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
@@ -87,6 +89,7 @@ public class IngestionService {
     private final UpstreamGit upstreamGit;
     private final MarketplaceRepository marketplaceRepository;
     private final AdminAuditLogger auditLogger;
+    private final ApplicationEventPublisher events;
     private final ScheduledExecutorService heartbeats = Executors.newSingleThreadScheduledExecutor(runnable -> {
         Thread thread = new Thread(runnable, "ingest-heartbeat");
         thread.setDaemon(true);
@@ -104,7 +107,9 @@ public class IngestionService {
             GatewayMetrics metrics,
             UpstreamGit upstreamGit,
             MarketplaceRepository marketplaceRepository,
-            AdminAuditLogger auditLogger) {
+            AdminAuditLogger auditLogger,
+            ApplicationEventPublisher events) {
+        this.events = events;
         this.storage = storage;
         this.snapshotRepository = snapshotRepository;
         this.vettingService = vettingService;
@@ -149,6 +154,16 @@ public class IngestionService {
      */
     @Requirements({"GW_INGEST_0068", "GW_INGEST_0069"})
     public Snapshot ingest(Marketplace marketplace, String actor, UUID attempt) {
+        Snapshot snapshot = ingestHoldingLock(marketplace, actor, attempt);
+        // Outside the ingestion lock (GW_APPROVAL_0044): an automatic approval takes the publication
+        // lock, and holding both would order them against every other path that takes one.
+        if (Snapshot.HELD.equals(snapshot.state())) {
+            events.publishEvent(new HeldSnapshotChanged(marketplace.id(), "ingested"));
+        }
+        return snapshot;
+    }
+
+    private Snapshot ingestHoldingLock(Marketplace marketplace, String actor, UUID attempt) {
         ReentrantLock lock = ingestLocks.computeIfAbsent(marketplace.id(), id -> new ReentrantLock());
         owned.add(attempt);
         lock.lock();
@@ -234,7 +249,8 @@ public class IngestionService {
     })
     private Snapshot ingestLocked(Marketplace marketplace, String actor, Progress progress) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
-            ObjectId upstream = fetchIncoming(repo, marketplace);
+            UpstreamGit.Fetched incoming = fetchIncoming(repo, marketplace);
+            ObjectId upstream = incoming.sha();
             progress.stage(STAGE_EVALUATING_MANIFEST);
             // The manifest is decided before anything is pinned, because which commit the snapshot
             // *is* now depends on the answer: a manifest with resolved external sources is served
@@ -266,7 +282,8 @@ public class IngestionService {
                         violation,
                         actor,
                         served.closure(),
-                        marketplace.url());
+                        marketplace.url(),
+                        incoming.movedTo());
             } catch (DuplicateKeyException raced) {
                 // Belt-and-braces under the per-marketplace lock: another instance of the gateway
                 // (or a path the lock cannot see) recorded the same commit first — same content,
@@ -338,7 +355,8 @@ public class IngestionService {
      * same approval gate as fetched content.
      */
     @Requirements({"GW_INGEST_0017"})
-    private ObjectId fetchIncoming(Repository repo, Marketplace marketplace) throws GitAPIException, IOException {
+    private UpstreamGit.Fetched fetchIncoming(Repository repo, Marketplace marketplace)
+            throws GitAPIException, IOException {
         if (!marketplace.hosted()) {
             return upstreamGit.fetchDefaultBranch(repo, marketplace.url(), INCOMING_REF);
         }
@@ -350,7 +368,7 @@ public class IngestionService {
             }
             GitObjectTransfer.copy(origin, repo, lineage);
             RefTransitions.write(repo, INCOMING_REF, lineage);
-            return lineage;
+            return new UpstreamGit.Fetched(lineage, null);
         }
     }
 

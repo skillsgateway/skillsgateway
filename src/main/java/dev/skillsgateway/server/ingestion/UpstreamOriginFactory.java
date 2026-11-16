@@ -6,6 +6,7 @@ import java.net.Proxy;
 import java.net.URI;
 import java.net.URL;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.jgit.transport.http.HttpConnection;
 import org.eclipse.jgit.transport.http.HttpConnectionFactory;
 import org.eclipse.jgit.transport.http.JDKHttpConnectionFactory;
@@ -23,16 +24,23 @@ final class UpstreamOriginFactory implements HttpConnectionFactory {
     private final String scheme;
     private final String host;
     private final int port;
+    private final String repositoryPath;
     private final HttpConnectionFactory credentialed;
+    private final AtomicReference<String> movedTo;
 
-    /** {@code credentialed} attaches the selected credential, or is {@code null} for an anonymous upstream. */
-    UpstreamOriginFactory(String registeredUrl, HttpConnectionFactory credentialed) {
+    /**
+     * {@code credentialed} attaches the selected credential, or is {@code null} for an anonymous
+     * upstream; {@code movedTo} receives the first request that left the registered repository's path.
+     */
+    UpstreamOriginFactory(String registeredUrl, HttpConnectionFactory credentialed, AtomicReference<String> movedTo) {
         this.registeredUrl = registeredUrl;
         URL origin = parse(registeredUrl);
         this.scheme = origin == null ? null : origin.getProtocol().toLowerCase(Locale.ROOT);
         this.host = origin == null ? null : origin.getHost().toLowerCase(Locale.ROOT);
         this.port = origin == null ? -1 : effectivePort(origin);
+        this.repositoryPath = origin == null ? null : repositoryPath(origin.getPath());
         this.credentialed = credentialed;
+        this.movedTo = movedTo;
     }
 
     @Override
@@ -50,6 +58,14 @@ final class UpstreamOriginFactory implements HttpConnectionFactory {
             throw new IOException("a request to '%s', which leaves the origin of the registered upstream '%s'"
                     .formatted(url, registeredUrl));
         }
+        if (!withinRepository(url.getPath())) {
+            // A same-origin hop JGit may take, which a forge answers for a transferred repository: the
+            // content is someone else's, so what the registered URL says about it no longer holds.
+            movedTo.compareAndSet(
+                    null,
+                    url.getProtocol() + "://" + url.getHost() + (url.getPort() == -1 ? "" : ":" + url.getPort())
+                            + url.getPath());
+        }
         HttpConnection connection;
         if (credentialed != null) {
             connection = credentialed.create(url, proxy);
@@ -58,6 +74,19 @@ final class UpstreamOriginFactory implements HttpConnectionFactory {
         }
         connection.setInstanceFollowRedirects(false);
         return new NoFollow(connection);
+    }
+
+    /** The registered path without a trailing separator or {@code .git}: the repository's name on the forge. */
+    private static String repositoryPath(String path) {
+        String trimmed = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+        return trimmed.endsWith(".git") ? trimmed.substring(0, trimmed.length() - ".git".length()) : trimmed;
+    }
+
+    private boolean withinRepository(String path) {
+        return path.equals(repositoryPath)
+                || path.equals(repositoryPath + ".git")
+                || path.startsWith(repositoryPath + "/")
+                || path.startsWith(repositoryPath + ".git/");
     }
 
     private static URL parse(String url) {

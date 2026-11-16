@@ -2,8 +2,14 @@ package dev.skillsgateway.server.estate;
 
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.admin.MarketplaceRegistrationService;
+import dev.skillsgateway.server.approval.AutoApprovalService;
+import dev.skillsgateway.server.approval.AutoApprovalSettingService;
+import dev.skillsgateway.server.approval.AutoApprovalSettingService.SettingRequest;
+import dev.skillsgateway.server.approval.AutoApprovalSettingValidationException;
+import dev.skillsgateway.server.approval.NotInternalException;
 import dev.skillsgateway.server.audit.AuditExportService;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredAuditSink;
+import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredAutoApproval;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredGrant;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredMarketplace;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredPolicyRule;
@@ -22,6 +28,7 @@ import dev.skillsgateway.server.roles.RoleService;
 import dev.skillsgateway.server.sync.SyncService;
 import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -67,6 +74,8 @@ public class EstateReconciler {
     private final AuditExportService auditExportService;
     private final PolicyRuleService policyRuleService;
     private final AdminAuditLogger auditLogger;
+    private final AutoApprovalSettingService settingService;
+    private final AutoApprovalService autoApprovalService;
     private final AtomicReference<EstateReconciliation> lastRun = new AtomicReference<>();
 
     public EstateReconciler(
@@ -78,7 +87,11 @@ public class EstateReconciler {
             WebhookSubscriberRepository subscriberRepository,
             AuditExportService auditExportService,
             PolicyRuleService policyRuleService,
-            AdminAuditLogger auditLogger) {
+            AdminAuditLogger auditLogger,
+            AutoApprovalSettingService settingService,
+            AutoApprovalService autoApprovalService) {
+        this.settingService = settingService;
+        this.autoApprovalService = autoApprovalService;
         this.registrationService = registrationService;
         this.marketplaceRepository = marketplaceRepository;
         this.syncService = syncService;
@@ -181,11 +194,19 @@ public class EstateReconciler {
             throw validationFailure("sync-mode must be one of %s; webhook mode's inbound secret is"
                     + " generated and shown once, so it cannot be declared".formatted(DECLARABLE_SYNC_MODES));
         }
+        Optional<SettingRequest> autoApproval = autoApprovalOf(declared.autoApproval());
         Optional<Marketplace> existing = marketplaceRepository.findByName(declared.name());
         if (existing.isEmpty()) {
+            autoApproval.ifPresent(request -> asEntryFailure(() -> settingService.checkRegistration(
+                    declared.name(),
+                    declared.url(),
+                    declared.origin(),
+                    request.enabled(),
+                    request.reason(),
+                    request.expiresAt())));
             // Reported, never refused (GW_INGEST_0041): the entry converges and says why its upstream
             // could not be read; the registration service has put the same on the ledger.
-            List<String> warnings = registrationService
+            List<String> warnings = new ArrayList<>(registrationService
                     .register(
                             declared.name(),
                             declared.url(),
@@ -193,10 +214,13 @@ public class EstateReconciler {
                             declared.pushPolicy(),
                             ACTOR,
                             MarketplaceRegistrationService.Reachability.REPORT)
-                    .warnings();
+                    .warnings());
             if (mode != null && !Marketplace.SYNC_ON_DEMAND.equals(mode)) {
                 syncService.changeMode(declared.name(), mode, ACTOR);
             }
+            autoApproval
+                    .flatMap(request -> reconcileAutoApproval(declared.name(), request))
+                    .ifPresent(warnings::add);
             return Entry.created(
                     "marketplace", declared.name(), warnings.isEmpty() ? null : String.join("; ", warnings));
         }
@@ -221,9 +245,69 @@ public class EstateReconciler {
             syncService.changeMode(declared.name(), mode, ACTOR);
             changes.add("sync-mode=" + mode);
         }
+        autoApproval
+                .flatMap(request -> reconcileAutoApproval(declared.name(), request))
+                .ifPresent(changes::add);
         return changes.isEmpty()
                 ? Entry.unchanged("marketplace", declared.name())
                 : Entry.updated("marketplace", declared.name(), String.join("; ", changes));
+    }
+
+    /**
+     * Declared automatic approval as the request the API takes (GW_ESTATE_0006). An exemption is
+     * refused, not dropped: it is a dated judgement by a named administrator, never configuration.
+     */
+    @Requirements({"GW_ESTATE_0006"})
+    private static Optional<SettingRequest> autoApprovalOf(DeclaredAutoApproval declared) {
+        if (declared == null) {
+            return Optional.empty();
+        }
+        if (declared.exemption() != null && !declared.exemption().isEmpty()) {
+            throw validationFailure("an exemption cannot be declared: it is a dated judgement by a named"
+                    + " administrator, made with PUT /api/v1/marketplaces/{name}/auto-approval or in the portal");
+        }
+        if (declared.enabled() == null) {
+            throw validationFailure("auto-approval.enabled must be true or false");
+        }
+        return Optional.of(new SettingRequest(declared.enabled(), declared.reason(), declared.expiresAt(), null));
+    }
+
+    /**
+     * Applies declared automatic approval through the API's path, as {@link #ACTOR}, unless the
+     * stored setting is already it. A declared expiry that has passed is converged too, so automatic
+     * approval reads as off until the declaration changes rather than failing every run
+     * (GW_ESTATE_0006).
+     *
+     * @return what changed, or empty when converged
+     */
+    @Requirements({"GW_ESTATE_0006"})
+    private Optional<String> reconcileAutoApproval(String name, SettingRequest declared) {
+        AutoApprovalSettingService.SettingView stored = settingService.view(name);
+        boolean converged = stored.enabled() == declared.enabled()
+                && (!declared.enabled()
+                        || (declared.reason() != null
+                                && declared.reason().trim().equals(stored.reason())
+                                && declared.expiresAt() != null
+                                && declared.expiresAt()
+                                        .truncatedTo(ChronoUnit.MICROS)
+                                        .equals(stored.expiresAt())));
+        if (converged) {
+            return Optional.empty();
+        }
+        asEntryFailure(() -> settingService.setDeclared(name, declared));
+        if (declared.enabled()) {
+            autoApprovalService.attemptNewest(name, "auto-approval-declared");
+        }
+        return Optional.of("auto-approval.enabled=" + declared.enabled());
+    }
+
+    /** The automatic-approval service's refusals are this entry's failure, as the API's are its 4xx. */
+    private static void asEntryFailure(Runnable change) {
+        try {
+            change.run();
+        } catch (AutoApprovalSettingValidationException | NotInternalException refused) {
+            throw validationFailure(refused.getMessage());
+        }
     }
 
     /**

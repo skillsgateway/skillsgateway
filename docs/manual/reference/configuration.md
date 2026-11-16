@@ -11,7 +11,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`skills-gateway.webhooks.*`](#webhooks) | Outbound lifecycle-webhook dispatch: poll interval, retry budget and backoff. | No — all defaulted. |
 | [`skills-gateway.audit-export.*`](#audit-export) | Ledger export: the commit-settling lag, batch and page sizes. | No — all defaulted. |
 | [`skills-gateway.retention.*`](#retention) | Snapshot retention policies, the schedules that apply them, and the sweep of abandoned publication staging refs. **Off by default.** | No — all defaulted. |
-| [`skills-gateway.approval.*`](#separation-of-duties-four-eyes) | Separation of duties on approval: whether a reviewer may publish content they themselves supplied (**records by default; enforcement is opt-in**), and the [plugin-name collision](#plugin-name-collisions) rule (**on by default**). | No — all defaulted. |
+| [`skills-gateway.approval.*`](#separation-of-duties-four-eyes) | Separation of duties on approval: whether a reviewer may publish content they themselves supplied (**records by default; enforcement is opt-in**), the [plugin-name collision](#plugin-name-collisions) rule (**on by default**), and [automatic approval](#automatic-approval) (**off by default**). | No — all defaulted. |
 | [`skills-gateway.sync.*`](#upstream-sync) | Upstream sync: the polling sweep's schedule and batch, and the inbound webhook body bound. | No — all defaulted. |
 | [`skills-gateway.catalog.*`](#virtual-catalog) | The global virtual catalog and its reserved name. | No — all defaulted. |
 | [`skills-gateway.tokens.*`](#access-tokens) | Access-token policy: the maximum lifetime creation accepts. | No — defaulted (unlimited). |
@@ -1001,6 +1001,60 @@ described in
     [waiver](../guides/waiving-findings.md#plugin-name-collisions) rather than
     turning the rule off.
 
+## Automatic approval
+
+Whether an opted-in marketplace's clean updates are approved with no person,
+and what counts as internal. Java-side defaults; nothing appears in
+`application.yaml`. What an attempt checks is described in
+[Automatic approval](../guides/approving-snapshots.md#automatic-approval).
+
+```yaml
+skills-gateway:
+  approval:
+    auto:
+      # off (default): no automatic approval takes effect. dry-run: every
+      # check runs and is recorded, nothing is published. on: eligible
+      # snapshots are approved.
+      mode: dry-run
+      # URL prefixes under which a marketplace is internal. Hosted marketplaces
+      # are internal without one.
+      internal-prefixes:
+        - https://git.example.com/platform
+      # Unset (default): every vetter must have run. A list: only these must;
+      # switching any other vetter off does not stop automatic approval.
+      required-vetters:
+        - secret-scan
+        - executable-surface
+```
+
+| Property | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `skills-gateway.approval.auto.mode` | string | `off` | `off`, `dry-run` or `on`. `off` is also the incident switch: it stops every attempt at once. |
+| `skills-gateway.approval.auto.internal-prefixes` | list | `[]` | A URL is internal when it has the prefix's scheme, host and port, and its path equals the prefix's or continues it after a `/`. `https://git.example.com/acme` never covers `…/acme-evil`. A snapshot whose fetch a redirect sent outside the registered repository is not internal, whatever its URL. |
+| `skills-gateway.approval.auto.required-vetters` | list | unset (every vetter) | The vetters whose verdict must not be `DISABLED`. Each automatic approval's ledger entry names the vetters that were switched off. |
+
+Startup refuses three configurations, each of which would quietly widen what
+is approved:
+
+- a prefix that does not parse;
+- a prefix with no path on `github.com`, `gitlab.com`, `bitbucket.org` or the
+  [`external-sources.github-base-url`](#ingestion-external-plugin-sources)
+  host, which would make every user's namespace internal;
+- an empty `required-vetters`, or a name in it that is not a configured
+  vetter, either of which would require nothing.
+
+Automatic approval acts only while
+[`skills-gateway.vetting.revet.enabled`](#continuous-re-vetting) is `true`,
+and re-vetting withdraws an automatically approved snapshot on a new blocking
+finding whatever `revet.mode` says. With re-vetting off, every attempt is
+skipped as `revet-disabled`.
+
+!!! warning "A Markdown change with no finding is approved"
+
+    In an agent skill, Markdown is instructions. A changed `SKILL.md` that
+    raises no finding passes the executable-surface check. Run `dry-run` first
+    and read the would-approve entries before turning `on`.
+
 ---
 
 ## Retention
@@ -1360,6 +1414,14 @@ skills-gateway:
       # its ingestion trigger. push-policy defaults to append-only.
       - name: platform-skills
         origin: hosted
+        # Optional automatic approval. enabled: true needs a reason, an expiry
+        # at most 90 days out, and an internal source (an internal prefix, or
+        # hosted). An exemption is never declarable. A lapsed expires-at
+        # leaves automatic approval off until this declaration changes.
+        auto-approval:
+          enabled: true
+          reason: our own skills, published by CI
+          expires-at: 2027-01-30T00:00:00Z
         push-policy: append-only
 
     # The exact shape of POST /api/v1/roles: approver grants name one
@@ -1407,6 +1469,10 @@ skills-gateway:
 | `skills-gateway.estate.marketplaces[].name` | string | — | Same rules as the API: `^[a-z0-9][a-z0-9_-]{0,62}$` (at most 63 characters), catalog name reserved. |
 | `skills-gateway.estate.marketplaces[].url` | string | — | Scheme must be allowlisted. Immutable once registered: a differing declared URL is a reconciliation failure, never an update. |
 | `skills-gateway.estate.marketplaces[].sync-mode` | string | unset (not managed) | `on-demand` or `scheduled`; `webhook` is refused. Unset never touches the stored mode. |
+| `skills-gateway.estate.marketplaces[].auto-approval.enabled` | boolean | unset (not managed) | `true` or `false`, applied as `config-reconciler` through the same rules as [`PUT …/auto-approval`](api/marketplaces.md#put-marketplacesnameauto-approval). `true` for a marketplace whose source is not internal, or with a missing or too-distant expiry, is an isolated entry failure. Applying `true` attempts the marketplace's newest held snapshot at once, as the API does. |
+| `skills-gateway.estate.marketplaces[].auto-approval.reason` | string | — | Required when `enabled` is `true`. A changed reason is re-applied. |
+| `skills-gateway.estate.marketplaces[].auto-approval.expires-at` | instant | — | Required when `enabled` is `true`, at most 90 days ahead when applied. A changed date is re-applied; that is how declared automatic approval is renewed. |
+| `skills-gateway.estate.marketplaces[].auto-approval.exemption` | — | — | Refused: an administrator exemption is a dated judgement by a named person, made through the API or the portal. Declaring one fails the entry. |
 | `skills-gateway.estate.grants` | list | `[]` | Each entry: `principal`, `role` (`admin`/`approver`/`auditor`), `marketplace` (required for approver, forbidden otherwise). |
 | `skills-gateway.estate.webhooks` | list | `[]` | Each entry: `name`, `url`, optional `events` (a list; omitted means every event), `secret`. |
 | `skills-gateway.estate.webhooks[].secret` | string | — | Operator-supplied, minimum 16 characters, write-only. A changed value rotates the stored secret idempotently. |

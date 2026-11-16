@@ -4,11 +4,13 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import io.github.reqstool.annotations.Requirements;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.ConstructorBinding;
 import org.springframework.util.unit.DataSize;
 
 @ConfigurationProperties(prefix = "skills-gateway")
@@ -55,7 +57,7 @@ public record SkillsGatewayProperties(
             vetting = new Vetting(null, null, null, null, null, null, null, null, null);
         }
         if (approval == null) {
-            approval = new Approval(null, null);
+            approval = new Approval(null, null, null);
         }
         if (sync == null) {
             sync = new Sync(null, null, null, null);
@@ -685,8 +687,39 @@ public record SkillsGatewayProperties(
      *     declares no url, and like a url the origin is immutable after registration
      * @param pushPolicy for a hosted marketplace, {@code append-only} (the default) or
      *     {@code allow-rewrite}
+     * @param autoApproval automatic approval (GW_ESTATE_0006); null means the stored setting is not
+     *     managed and never touched
      */
-    public record DeclaredMarketplace(String name, String url, String syncMode, String origin, String pushPolicy) {}
+    public record DeclaredMarketplace(
+            String name,
+            String url,
+            String syncMode,
+            String origin,
+            String pushPolicy,
+            DeclaredAutoApproval autoApproval) {
+
+        @ConstructorBinding
+        public DeclaredMarketplace {}
+
+        public DeclaredMarketplace(String name, String url, String syncMode, String origin, String pushPolicy) {
+            this(name, url, syncMode, origin, pushPolicy, null);
+        }
+    }
+
+    /**
+     * Declared automatic approval (GW_ESTATE_0006), applied as the estate reconciler with the same
+     * checks as the API.
+     *
+     * @param enabled {@code true} or {@code false}
+     * @param reason why; required to turn it on
+     * @param expiresAt when it lapses; required to turn it on, at most 90 days after it is applied.
+     *     Past it, automatic approval is off until the declaration changes
+     * @param exemption never accepted: an administrator exemption is a dated judgement by a named
+     *     administrator, so a declaration that carries one fails its entry rather than having it
+     *     silently dropped
+     */
+    public record DeclaredAutoApproval(
+            Boolean enabled, String reason, Instant expiresAt, Map<String, String> exemption) {}
 
     /**
      * A declared role grant (GW_ESTATE_0003), the exact shape of the grants API: approver grants name one
@@ -1094,10 +1127,10 @@ public record SkillsGatewayProperties(
         /** Revoke the snapshot and stop serving it (GW_VETTING_0013). */
         ENFORCE;
 
-        /** Wire form: the lower-case name, so the published vocabulary matches every other enum's. */
+        /** Wire form: the lower-case, hyphenated name, as the configuration value is written. */
         @JsonValue
         public String wire() {
-            return name().toLowerCase(java.util.Locale.ROOT);
+            return name().toLowerCase(java.util.Locale.ROOT).replace('_', '-');
         }
     }
 
@@ -1106,7 +1139,7 @@ public record SkillsGatewayProperties(
      * name-collision rules live here; the vetting, policy and cooling-off preconditions predate them and
      * stay where they are.
      */
-    public record Approval(FourEyes fourEyes, NameCollision nameCollision) {
+    public record Approval(FourEyes fourEyes, NameCollision nameCollision, Auto auto) {
 
         public Approval {
             if (fourEyes == null) {
@@ -1115,6 +1148,58 @@ public record SkillsGatewayProperties(
             if (nameCollision == null) {
                 nameCollision = new NameCollision(null);
             }
+            if (auto == null) {
+                auto = new Auto(null, null, null);
+            }
+        }
+    }
+
+    /**
+     * Automatic approval of opted-in marketplaces (GW_APPROVAL_0044.2, GW_APPROVAL_0044.7,
+     * GW_APPROVAL_0044.12).
+     *
+     * @param mode {@code off} (the default, and the incident switch), {@code dry-run} or {@code on}
+     * @param internalPrefixes the URL prefixes under which a marketplace is internal. Empty by
+     *     default, so only hosted marketplaces are; startup refuses one that does not parse and a
+     *     host-wide one on a multi-tenant forge
+     * @param requiredVetters the vetters that must have run, rather than been switched off, for a
+     *     snapshot to be approved automatically. Null — unset, the default — requires every vetter;
+     *     startup refuses an empty list and an unknown name, which would each require nothing
+     */
+    public record Auto(AutoMode mode, List<String> internalPrefixes, List<String> requiredVetters) {
+
+        /** The property an operator sets, quoted in a skip reason so the answer is discoverable. */
+        public static final String MODE_KEY = "skills-gateway.approval.auto.mode";
+
+        public static final String INTERNAL_PREFIXES_KEY = "skills-gateway.approval.auto.internal-prefixes";
+
+        public static final String REQUIRED_VETTERS_KEY = "skills-gateway.approval.auto.required-vetters";
+
+        public Auto {
+            if (mode == null) {
+                mode = AutoMode.OFF;
+            }
+            internalPrefixes = internalPrefixes == null ? List.of() : List.copyOf(internalPrefixes);
+            requiredVetters = requiredVetters == null ? null : List.copyOf(requiredVetters);
+        }
+    }
+
+    /** What automatic approval does in a deployment (GW_APPROVAL_0044.12). */
+    public enum AutoMode {
+
+        /** No marketplace's automatic approval takes effect; nothing is evaluated for publication. The default. */
+        OFF,
+
+        /** Every check runs and its result is recorded, and nothing is published. */
+        DRY_RUN,
+
+        /** Eligible snapshots are approved. */
+        ON;
+
+        /** Wire form: the lower-case, hyphenated name, as the configuration value is written. */
+        @JsonValue
+        public String wire() {
+            return name().toLowerCase(java.util.Locale.ROOT).replace('_', '-');
         }
     }
 
@@ -1186,10 +1271,10 @@ public record SkillsGatewayProperties(
         /** Refuse the approval fail-closed; the snapshot stays held and nothing is published. */
         ENFORCE;
 
-        /** Wire form: the lower-case name, so the published vocabulary matches every other enum's. */
+        /** Wire form: the lower-case, hyphenated name, as the configuration value is written. */
         @JsonValue
         public String wire() {
-            return name().toLowerCase(java.util.Locale.ROOT);
+            return name().toLowerCase(java.util.Locale.ROOT).replace('_', '-');
         }
     }
 

@@ -138,7 +138,7 @@ public final class ManifestPolicy {
     }
 
     /** Far more plugins than a marketplace ships, and few enough to read each (GW_INGEST_0074). */
-    static final int MAX_PLUGINS = 1_000;
+    public static final int MAX_PLUGINS = 1_000;
 
     /** The violation for a source this gateway admitted and has not turned into content it serves. */
     static String unresolved(String pluginName, String cloneUrl) {

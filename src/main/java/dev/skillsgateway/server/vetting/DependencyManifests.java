@@ -50,6 +50,11 @@ final class DependencyManifests {
                 || REQUIREMENTS.matcher(InterruptibleText.of(name)).matches();
     }
 
+    /** A lockfile of any ecosystem this class knows, by file name. */
+    static boolean isLockfile(String name) {
+        return LOCKFILES.values().stream().anyMatch(names -> names.contains(name));
+    }
+
     /** The first dependency the manifest declares, or {@code null} when it declares none or cannot be read. */
     @Requirements({"GW_VETTING_0053"})
     static Declaration declaration(String path, String text) {

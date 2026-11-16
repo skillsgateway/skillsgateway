@@ -100,3 +100,8 @@ Auto-approval being decided in favour. An auto-approve path needs an
 eligibility predicate, and "no findings above low in these vetters" is the
 first thing to try. A tier would be reconsidered only if that predicate proves
 unworkable.
+
+**Decided, 2026-11-15:**
+[ADR 0023](0023-automatic-approval-of-internal-marketplaces.md) decides
+auto-approval in favour, for opted-in marketplaces, with a findings predicate
+and an unchanged-executable-surface rule rather than a tier. This ADR stands.

@@ -103,6 +103,15 @@ CREATE TABLE marketplaces (
     -- the startup reconciler does not read that choice as a lost publication; cleared by the next
     -- approval that publishes.
     serving_suspended_at TIMESTAMPTZ,
+    -- Automatic approval (GW_APPROVAL_0044.1): off unless an administrator turned it on, and then
+    -- only with who, when, why and until when. A lapsed expiry reads as off at the next attempt;
+    -- nothing transitions. What allows it is computed at each attempt, never stored here, because a
+    -- stored "internal" bit would go stale when the prefix list changes.
+    auto_approval_enabled BOOLEAN NOT NULL DEFAULT false,
+    auto_approval_set_by TEXT,
+    auto_approval_set_at TIMESTAMPTZ,
+    auto_approval_reason TEXT,
+    auto_approval_expires_at TIMESTAMPTZ,
     -- Removal (GW_INGEST_0034) retires the row rather than deleting it: snapshots restrict deletion
     -- because they are the approval history, and the ledger keeps this row's id as its referent.
     deleted_at TIMESTAMPTZ,
@@ -122,7 +131,17 @@ CREATE TABLE marketplaces (
     CONSTRAINT marketplaces_upstream_has_url CHECK (origin = 'hosted' OR url IS NOT NULL),
     -- A hosted marketplace has no upstream to poll or be notified about: its ingestion trigger is
     -- the push itself, so the sweep must never see it (GW_FACADE_0006).
-    CONSTRAINT marketplaces_hosted_is_on_demand CHECK (origin <> 'hosted' OR sync_mode = 'on-demand')
+    CONSTRAINT marketplaces_hosted_is_on_demand CHECK (origin <> 'hosted' OR sync_mode = 'on-demand'),
+    -- Automatic approval turned on with no grantor, reason or expiry cannot be represented at all,
+    -- and its expiry is at most 90 days after it was set (GW_APPROVAL_0044.1).
+    CONSTRAINT marketplaces_auto_approval_is_recorded_whole CHECK (
+        NOT auto_approval_enabled
+        OR (auto_approval_set_by IS NOT NULL AND auto_approval_set_by <> ''
+            AND auto_approval_set_at IS NOT NULL
+            AND auto_approval_reason IS NOT NULL AND auto_approval_reason <> ''
+            AND auto_approval_expires_at IS NOT NULL
+            AND auto_approval_expires_at > auto_approval_set_at
+            AND auto_approval_expires_at <= auto_approval_set_at + interval '90 days'))
 );
 
 CREATE UNIQUE INDEX uq_marketplaces_live_name ON marketplaces (name) WHERE deleted_at IS NULL;
@@ -175,6 +194,14 @@ CREATE TABLE snapshots (
     deleted_reason TEXT,
     -- When the restore window elapses and compaction may remove the row and its git storage.
     purge_after TIMESTAMPTZ,
+    -- Why the last automatic approval attempt left this snapshot held (GW_APPROVAL_0044.11). The skip is
+    -- ledgered only when this changes, so a re-vetting tick that reaches the same answer writes
+    -- nothing; deduplication never reads the ledger.
+    auto_approval_skip_reason TEXT,
+    -- The first fetch request a same-origin redirect sent outside the registered repository's path
+    -- (GW_APPROVAL_0044.2): a transferred repository's content, which the registered URL no longer
+    -- describes. Null when every request stayed on it, and for a hosted marketplace.
+    upstream_moved_to TEXT,
     UNIQUE (marketplace_id, sha)
 );
 
@@ -571,6 +598,30 @@ CREATE INDEX idx_vetting_waivers_marketplace ON vetting_waivers (marketplace_id,
 -- The sweep's only query.
 CREATE INDEX idx_vetting_waivers_expiry_sweep ON vetting_waivers (expires_at)
     WHERE expired_recorded_at IS NULL AND revoked_at IS NULL;
+
+-- The administrator exemption that lets a marketplace that is not internal be approved
+-- automatically (GW_APPROVAL_0044.3). An expiring exception a named person renews, like a waiver, and
+-- for the same reason never declarable in the estate. Expiry is decided by comparing expires_at to
+-- now; expired_recorded_at only makes its ledger entry a once-only write.
+
+CREATE TABLE auto_approval_exemptions (
+    id BIGSERIAL PRIMARY KEY,
+    marketplace_id BIGINT NOT NULL REFERENCES marketplaces (id) ON DELETE CASCADE,
+    reason TEXT NOT NULL CHECK (reason <> ''),
+    created_by TEXT NOT NULL CHECK (created_by <> ''),
+    created_at TIMESTAMPTZ NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    revoked_at TIMESTAMPTZ,
+    revoked_by TEXT,
+    expired_recorded_at TIMESTAMPTZ,
+    CHECK (expires_at > created_at AND expires_at <= created_at + interval '90 days'),
+    CHECK ((revoked_at IS NULL) = (revoked_by IS NULL))
+);
+
+-- At most one exemption per marketplace that has been neither revoked nor recorded as expired. A
+-- lapsed one is recorded as expired before a replacement is created, so it never blocks one.
+CREATE UNIQUE INDEX uq_auto_approval_exemptions_open ON auto_approval_exemptions (marketplace_id)
+    WHERE revoked_at IS NULL AND expired_recorded_at IS NULL;
 
 -- Delegated administration (GW_AUTH_0010..GW_AUTH_0013).
 --

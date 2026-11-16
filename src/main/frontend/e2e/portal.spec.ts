@@ -253,6 +253,45 @@ test("admin_removes_a_marketplace_from_its_settings", async ({ page }) => {
 });
 
 /**
+ * Automatic approval from the portal (GW_APPROVAL_0044.15): on a marketplace outside the internal
+ * prefixes, turning it on takes an administrator exemption, and revoking the exemption leaves
+ * nothing allowing it.
+ *
+ * @SVCs SVC_GW_APPROVAL_0044.15
+ */
+test("admin_turns_on_automatic_approval_with_an_exemption_and_revokes_it", async ({ page }) => {
+  await login(page, "alice");
+  await page.goto("/marketplaces");
+  const name = uniqueName("auto-approval");
+  await page.getByRole("button", { name: "Register marketplace" }).click();
+  await page.getByLabel("Name").fill(name);
+  await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
+  await submitRegister(page);
+  await expect(page.getByText(`Marketplace '${name}' registered`)).toBeVisible();
+
+  await openMarketplace(page, name);
+  await openSection(page, name, "Settings");
+  const card = page.getByRole("form", { name: "Set automatic approval" });
+  const inThirtyDays = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+  await card.getByRole("button", { name: "On", exact: true }).click();
+  await card.getByLabel("Reason", { exact: true }).fill("vendor skills, audited quarterly");
+  await card.getByLabel("Lapses on", { exact: true }).fill(inThirtyDays);
+  await card.getByRole("checkbox", { name: "Add an exemption" }).click();
+  await card.getByLabel("Exemption reason").fill("vendor repository we audit quarterly");
+  await card.getByLabel("Exemption lapses on").fill(inThirtyDays);
+  await card.getByRole("button", { name: "Save automatic approval" }).click();
+  await expect(page.getByText(`Automatic approval of '${name}' saved`)).toBeVisible();
+  await expect(page.getByText("Administrator exemption")).toBeVisible();
+
+  await page.getByRole("button", { name: "Revoke exemption…" }).click();
+  const dialog = page.getByRole("dialog", { name: `Revoke the exemption on ${name}` });
+  await dialog.getByRole("button", { name: "Revoke exemption" }).click();
+  await expect(page.getByText(`Exemption on '${name}' revoked`)).toBeVisible();
+  await expect(page.getByText("Administrator exemption")).toHaveCount(0);
+  await expect(page.getByText(/has no active exemption, so automatic approval does not take effect/)).toBeVisible();
+});
+
+/**
  * Correcting a URL from the portal (GW_INGEST_0067): the gateway's refusal is shown in the dialog,
  * an accepted URL replaces the one shown, and once something has been ingested from it the URL
  * can no longer change.

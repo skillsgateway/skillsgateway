@@ -51,3 +51,10 @@ The system SHALL implement GW_INGEST_0041.
 #### Scenario: SVC_GW_INGEST_0041
 - **WHEN** SVC_GW_INGEST_0041 is run
 - **THEN** it passes
+
+### Requirement: GW_ESTATE_0006
+The system SHALL implement GW_ESTATE_0006.
+
+#### Scenario: SVC_GW_ESTATE_0006
+- **WHEN** SVC_GW_ESTATE_0006 is run
+- **THEN** it passes
