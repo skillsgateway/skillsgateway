@@ -120,7 +120,7 @@ Annotation placement follows the reqstool conventions:
 - [x] 8.2 The Automatic approval card on `MarketplaceSettingsPage` (`@Requirements GW_APPROVAL_0044.15` in JSDoc, design D15): it shows whether automatic approval is on, why it is allowed, the grantor, reason, expiry, active exemption and gateway mode to anyone who can see Settings; an administrator turns it on, renews it or turns it off, grants the exemption for a marketplace whose source is not internal, and revokes the exemption behind a confirmation. Server refusals are shown as returned.
 - [x] 8.3 Storybook stories for each state: off; on, internal; on by exemption; awaiting a second administrator; lapsed; non-administrator view; a refused save. Verify with `pnpm test:stories`.
 - [x] 8.4 An e2e test in `e2e/portal.spec.ts` (`@SVCs SVC_GW_APPROVAL_0044.15`): an administrator turns automatic approval on with an exemption on a marketplace outside the prefixes, sees it allowed by the administrator exemption, revokes the exemption, and sees it not allowed. Verify with `pnpm e2e`.
-- [ ] 8.5 Run `/impeccable audit` and `/impeccable harden` on the Settings page, and capture before/after screenshots for the PR body (`.claude/skills/ui-screenshots`).
+- [x] 8.5 Run `/impeccable audit` and `/impeccable harden` on the Settings page, and capture before/after screenshots for the PR body (`.claude/skills/ui-screenshots`).
 
 ## 9. Documentation
 
@@ -139,4 +139,4 @@ Annotation placement follows the reqstool conventions:
 ## 10. Gates and evidence
 
 - [x] 10.1 Run every AGENTS.md gate fresh after the last code edit: `./mvnw clean verify`, `pnpm test:stories`, `pnpm e2e`, `reqstool status local -p docs/reqstool`, `openspec validate --all --strict`, `mkdocs build --strict`. Record the commands, result tails and commit SHA in `evidence.md`.
-- [ ] 10.2 `/opsx:archive` as the final commit of the PR.
+- [x] 10.2 `/opsx:archive` as the final commit of the PR.
