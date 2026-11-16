@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -113,6 +114,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             "POST /api/v1/tokens",
             "POST /api/v1/tokens/session",
             "POST /api/v1/tokens/{id}/rotate",
+            // Changing the marketplaces of your own live token (GW_AUTH_0083): no role, scoped to the owner.
+            "PATCH /api/v1/tokens/{id}",
             "DELETE /api/v1/tokens/{id}");
 
     /**
@@ -124,6 +127,8 @@ class RoleEnforcementTests extends AbstractGatewayTest {
     private static final Set<String> ALWAYS_ADMIN_MUTATIONS = Set.of(
             "POST /api/v1/tokens/machine",
             "POST /api/v1/tokens/machine/{id}/rotate",
+            // Changing a credential's API scopes (GW_AUTH_0084): admin-only like provisioning one.
+            "PATCH /api/v1/tokens/machine/{id}",
             "DELETE /api/v1/tokens/machine/{id}",
             // Revoking another principal's personal tokens (GW_AUTH_0055), admin-only like the above.
             "DELETE /api/v1/tokens/principals/{principal}");
@@ -651,6 +656,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         MockHttpServletRequestBuilder builder = switch (parts[0]) {
             case "POST" -> post(path);
             case "PUT" -> put(path);
+            case "PATCH" -> patch(path);
             case "DELETE" -> delete(path);
             case "GET" -> get(path);
             default -> throw new IllegalArgumentException(route);
@@ -660,7 +666,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // without one the walk would meet a 400 raised before any authorization check.
             builder.param("path", "plugins/hello/SKILL.md");
         }
-        if (parts[0].equals("POST") || parts[0].equals("PUT")) {
+        if (parts[0].equals("POST") || parts[0].equals("PUT") || parts[0].equals("PATCH")) {
             // A deserializable JSON body so @RequestBody binding succeeds and the request reaches
             // the authorization call — the walk must observe the require* denial, not a 400. The
             // cursor request is the one body with a primitive field, which cannot bind from {}.
