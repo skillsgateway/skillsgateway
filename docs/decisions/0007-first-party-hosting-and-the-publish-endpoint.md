@@ -1,6 +1,9 @@
 # ADR 0007 — First-party hosting: a write path, deliberately somewhere else
 
-*Accepted, 2026-08-23.*
+*Accepted, 2026-08-23. Superseded by
+[ADR 0024](0024-the-gateway-does-not-host-marketplaces.md), which is Proposed:
+the gateway no longer hosts marketplaces or accepts pushes. This record stays as
+the reasoning the removal reverses.*
 
 ## Context
 

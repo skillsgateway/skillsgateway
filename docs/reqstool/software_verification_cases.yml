@@ -76,10 +76,10 @@ cases:
     title: The git endpoints serve no repository file outside the smart protocol
     verification: automated-test
     description: |
-      GIVEN an approved snapshot served by the facade, a hosted marketplace with a pushed commit, and a credential valid for each
-      WHEN a client requests the plain-file routes of each repository — the reference list without a service, the head reference, the pack index and a commit's object path
+      GIVEN an approved snapshot served by the facade and a credential valid for it
+      WHEN a client requests the plain-file routes of the repository — the reference list without a service, the head reference, the pack index and a commit's object path
       THEN every such request is refused, and the smart protocol's reference advertisement on the same repository still answers
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_AUDIT_0001
     requirement_ids: ["GW_AUDIT_0001"]
@@ -1212,54 +1212,15 @@ cases:
       WHEN it is started with a real client id or a real provider endpoint and no expected issuer (or one that is only whitespace), with a provider and an expected issuer, with no provider and no issuer, and in the insecure development mode with no issuer
       THEN the first refuses to start with a message naming the expected-issuer setting and the configuration that showed a provider to be configured, the other three start, and in the insecure development mode a configured provider is refused by that mode's own guard rather than by this one
     revision: "0.1.0"
-  - id: SVC_GW_FACADE_0006
-    requirement_ids: ["GW_FACADE_0006"]
-    title: A hosted marketplace registers without an upstream and is never fetched from one
-    verification: automated-test
-    description: |
-      GIVEN a gateway with no marketplaces registered
-      WHEN a marketplace is registered as gateway-hosted with no clone URL, a hosted registration supplying a URL is attempted, a non-hosted registration omitting one is attempted, a change of the hosted marketplace's refresh strategy is attempted, the marketplace is described through the API, and the surfaces that report an upstream are exercised for it
-      THEN the hosted registration succeeds and creates its origin repository, the registration supplying a URL and the one omitting one are both refused, the refresh-strategy change is refused, the description names the origin, the rewrite policy and the publish location, and every surface that would have reported an upstream answers without one rather than failing
-    revision: "0.1.0"
-
-  - id: SVC_GW_FACADE_0007
-    requirement_ids: ["GW_FACADE_0007"]
-    title: Only an explicitly push-scoped token publishes, and only the single lineage, forward
-    verification: automated-test
-    description: |
-      GIVEN a hosted marketplace, a second hosted marketplace, a token scoped to push to the first, a token with fetch scopes only, a token whose fetch scope is the unscoped every-marketplace form, and a token predating push scopes
-      WHEN each token attempts a real git push of the lineage reference to the first marketplace, the push-scoped token attempts the second marketplace and a name that escapes the storage layout, the push-scoped token attempts a second branch, a tag and a reference deletion, a non-fast-forward push is attempted under each rewrite policy, and a push is attempted against the endpoint that serves approved content
-      THEN only the push-scoped token publishes to the marketplace it names, every other token is refused, the second marketplace and the escaping name answer as not found, the second branch, the tag and the deletion are refused, the non-fast-forward is refused under the default policy leaving the tip unchanged and accepted under the permissive one with both tips on the append-only ledger, and the serving endpoint refuses the push outright
-    revision: "0.1.0"
-
-  - id: SVC_GW_FACADE_0035
-    requirement_ids: ["GW_FACADE_0007"]
-    title: Only an administrator or the marketplace's approver is given a push scope
-    verification: automated-test
-    description: |
-      GIVEN two hosted marketplaces, a session holding no role, a session approving only the first, an administrator, and a session made administrator by an identity-provider claim
-      WHEN each requests a token whose push scopes name the first marketplace, the approver also requests one naming both, and the session holding no role requests a token with no push scope
-      THEN the session holding no role and the approver naming both are refused and hold no new token and no creation entry on the ledger, the approver's token for the first marketplace publishes to it, both administrators are issued the push scope, and the token with no push scope is issued as before
-    revision: "0.1.0"
-
-  - id: SVC_GW_INGEST_0017
-    requirement_ids: ["GW_INGEST_0017"]
-    title: A push is quarantined, vetted, held, and served only once approved
-    verification: automated-test
-    description: |
-      GIVEN a hosted marketplace with a push-scoped token, and fixtures carrying respectively clean content, a planted credential, and a manifest declaring a non-local plugin source
-      WHEN each fixture is pushed, the served endpoint is cloned before and after approval, and an approved snapshot is subsequently revoked
-      THEN each push produces a snapshot identified by the pushed commit SHA, the clean one is held with a passing vetting chain, the planted credential is held with findings, the non-local manifest is rejected, the clone before approval fails as it does for a marketplace that serves nothing, the clone after approval returns exactly the pushed content, and the clone after revocation fails again
-    revision: "0.1.0"
   - id: SVC_GW_AUTH_0018
     requirement_ids: ["GW_AUTH_0018"]
-    title: A session credential's life is the gateway's to set, and it can never publish
+    title: A session credential's life is the gateway's to set
     verification: automated-test
     description: |
-      GIVEN a gateway with a configured session credential lifetime, an authenticated browser session, a hosted marketplace, and a second marketplace
-      WHEN a session credential is requested, one is requested while supplying a lifetime of the caller's own, one narrowed to a single marketplace is used against another, one is used to push to the hosted marketplace, one is rotated, an ordinary access token is created alongside, and a credential from a gateway whose configured lifetime has already elapsed is presented
-      THEN every session credential expires at the configured lifetime regardless of what the caller asked for, none may publish, a narrowed one is refused the marketplace it does not name, the rotated one keeps both its deadline and its session-derived mark, the session credentials are reported as session-derived while the ordinary token is not, and the elapsed one fails authentication by comparison at use rather than by any scheduled process
-    revision: "0.1.0"
+      GIVEN a gateway with a configured session credential lifetime, an authenticated browser session, and two marketplaces
+      WHEN a session credential is requested, one is requested while supplying a lifetime of the caller's own, one narrowed to a single marketplace is used against another, one is rotated, an ordinary access token is created alongside, and a credential from a gateway whose configured lifetime has already elapsed is presented
+      THEN every session credential expires at the configured lifetime regardless of what the caller asked for, a narrowed one is refused the marketplace it does not name, the rotated one keeps both its deadline and its session-derived mark, the session credentials are reported as session-derived while the ordinary token is not, and the elapsed one fails authentication by comparison at use rather than by any scheduled process
+    revision: "0.2.0"
 
   - id: SVC_GW_API_0002
     requirement_ids: ["GW_API_0002"]
@@ -1579,18 +1540,17 @@ cases:
     verification: automated-test
     description: |
       GIVEN each supported git storage backend in turn
-      WHEN the shared storage contract suite exercises the three repository roles,
+      WHEN the shared storage contract suite exercises the two repository roles,
       publication and revocation against it
-      THEN quarantine, hosted and published are separate repositories created with the
-      head reference linked to the branch the gateway publishes on, the two
-      open-only-if-present accessors stay empty until there is something to open,
+      THEN quarantine and published are separate repositories created with the
+      head reference linked to the branch the gateway publishes on, the
+      open-only-if-present accessor stays empty until there is something to open,
       publication makes exactly the served tip and the pinned snapshot reference appear,
       revocation removes the pinned reference unconditionally and the served tip only
       while it still resolves to that snapshot, reporting true exactly when its removal
       is what stopped the marketplace serving, a reference transition the backend could
-      not apply is raised rather than reported as done, and the atomic push capability
-      is advertised identically by every backend
-    revision: "0.1.0"
+      not apply is raised rather than reported as done, and every repository's reference database performs atomic transactions
+    revision: "0.2.0"
 
   - id: SVC_GW_FACADE_0012
     requirement_ids: ["GW_FACADE_0012"]
@@ -2633,11 +2593,9 @@ cases:
       the ledger — while a removal by a non-administrator, one with no reason, one with an empty
       reason and one naming no registered marketplace are each refused and change nothing, and
       the facade refuses the removed name even where a served reference was left behind; a token
-      granted publication to the removed name loses that grant and no other, is recorded on the
-      ledger, and cannot push to a marketplace registered again under the name, while a token
       granted fetch of the name still fetches it; and the removed marketplace's vetting settings
       leave the administrative listings while their records remain
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_INGEST_0035
     requirement_ids: ["GW_INGEST_0035"]
@@ -2648,12 +2606,12 @@ cases:
       WHEN its name is registered again
       THEN the new marketplace has a different identity and serves nothing, a reference its
       predecessor left published is not served, the predecessor's approver cannot approve for
-      it, a hosted successor carries none of its predecessor's pushed lineage, the same commit
+      it, the same commit
       ingested again is held and approvable, a holder of the predecessor's content is still told
       it was revoked until the successor approves that commit, retention purging a predecessor
       snapshot leaves the successor's copy of the same commit intact, and a second live
       registration of the name is refused
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_AUTH_0047
     requirement_ids: ["GW_AUTH_0047"]
@@ -3827,9 +3785,9 @@ cases:
     verification: automated-test
     description: |
       GIVEN a name of 63 permitted characters and one of 64
-      WHEN each is registered as an upstream and as a hosted marketplace through the API, declared in the estate, fetched and pushed through the facade, asked about on the revocation-status check, and inserted into the marketplace table directly
+      WHEN each is registered through the API, declared in the estate, fetched through the facade, asked about on the revocation-status check, and inserted into the marketplace table directly
       THEN the 63-character name registers, and the 64-character name is refused at every point with nothing registered, answered not-found on the facade, answered 400 on the status check, and rejected by the database
-    revision: "0.3.0"
+    revision: "0.4.0"
 
   - id: SVC_GW_INGEST_0064
     requirement_ids: ["GW_INGEST_0064"]
@@ -3856,10 +3814,10 @@ cases:
     title: An administrator corrects an upstream marketplace's URL before its first snapshot, and every refusal changes nothing
     verification: automated-test
     description: |
-      GIVEN an upstream marketplace with no snapshot registered by one administrator, a second upstream marketplace whose URL the first one's new URL duplicates, a marketplace with a snapshot, a hosted marketplace, and a removed marketplace
-      WHEN a second administrator changes the first marketplace's URL to a readable upstream, and then URL changes are requested with a disallowed scheme, an embedded credential, an unreadable upstream, by a caller who is not an administrator, for the marketplace with a snapshot, for the hosted marketplace, for the removed marketplace and for an unknown name
-      THEN the first change is answered with the marketplace carrying the new URL, the second administrator as registrant and a duplicate-URL warning naming the other marketplace but not itself, the ledger holds one entry naming the previous and new URL with the second administrator as actor, and the next ingest fetches from the new URL; each later request is refused with the status registration uses for the same cause (403, 404, 409 for the snapshot, 400 for the hosted marketplace) and leaves the stored URL, registrant and ledger unchanged, and the unreadable upstream is answered with its reason
-    revision: "0.5.0"
+      GIVEN an upstream marketplace with no snapshot registered by one administrator, a second upstream marketplace whose URL the first one's new URL duplicates, a marketplace with a snapshot, and a removed marketplace
+      WHEN a second administrator changes the first marketplace's URL to a readable upstream, and then URL changes are requested with a disallowed scheme, an embedded credential, an unreadable upstream, by a caller who is not an administrator, for the marketplace with a snapshot, for the removed marketplace and for an unknown name
+      THEN the first change is answered with the marketplace carrying the new URL, the second administrator as registrant and a duplicate-URL warning naming the other marketplace but not itself, the ledger holds one entry naming the previous and new URL with the second administrator as actor, and the next ingest fetches from the new URL; each later request is refused with the status registration uses for the same cause (403, 404, 409 for the snapshot) and leaves the stored URL, registrant and ledger unchanged, and the unreadable upstream is answered with its reason
+    revision: "0.6.0"
 
   - id: SVC_GW_INGEST_0066.1
     requirement_ids: ["GW_INGEST_0066"]
@@ -4153,16 +4111,16 @@ cases:
 
   - id: SVC_GW_APPROVAL_0044.2
     requirement_ids: ["GW_APPROVAL_0044.2"]
-    title: Only URLs on whole path segments under a configured prefix, and hosted marketplaces, are internal, and startup refuses dangerous prefixes
+    title: Only URLs on whole path segments under a configured prefix are internal, and startup refuses dangerous prefixes
     verification: automated-test
     description: |
-      GIVEN an internal prefix for one organisation on a forge host, and a hosted marketplace
+      GIVEN an internal prefix for one organisation on a forge host
       WHEN marketplace URLs are classified for the organisation itself, a lookalike organisation, another scheme, host or port, a URL with userinfo, a URL with an encoded separator or a dot segment, and a case-shifted path segment; and the gateway is started with an unparseable prefix, a host-wide prefix on github.com, gitlab.com and bitbucket.org, and a host-wide prefix on the configured GitHub base URL host
-      THEN the organisation's URL and the hosted marketplace are internal, every other URL is not, and each dangerous configuration is refused at startup
+      THEN the organisation's URL is internal, every other URL is not, and each dangerous configuration is refused at startup
       AND GIVEN an internal marketplace whose upstream redirects the fetch to another owner's repository, or to a repository whose name only begins with the registered one
       WHEN it is ingested with automatic approval on
       THEN the snapshot stays held with the skip reason redirected
-    revision: "0.1.0"
+    revision: "0.2.0"
 
   - id: SVC_GW_APPROVAL_0044.3
     requirement_ids: ["GW_APPROVAL_0044.3"]
@@ -5056,13 +5014,13 @@ cases:
 
   - id: SVC_GW_AUTH_0098
     requirement_ids: ["GW_AUTH_0080"]
-    title: The token list says every marketplace or names the marketplaces, and the hosted marketplaces a token may publish to
+    title: The token list says every marketplace or names the marketplaces
     verification: automated-test
     description: |
-      GIVEN tokens that are unlimited, limited to one marketplace, limited to many, and one that may publish to a hosted marketplace
+      GIVEN tokens that are unlimited, limited to one marketplace, and limited to many
       WHEN the personal token list is read
-      THEN each row says in words every marketplace or names its marketplaces, a long list is shortened with the whole list one hover or read away, and the publish scope is stated only where one exists
-    revision: "0.5.0"
+      THEN each row says in words every marketplace or names its marketplaces and a long list is shortened with the whole list one hover or read away
+    revision: "0.6.0"
 
   - id: SVC_GW_AUTH_0099
     requirement_ids: ["GW_AUTH_0063"]
@@ -5172,4 +5130,42 @@ cases:
       GIVEN the System access tokens page with a live token
       WHEN an administrator opens the edit control, clears every scope, adds one, and saves, with the API refusing one save
       THEN saving is disabled with its reason stated until at least one scope is chosen and the choice differs, adding scopes is warned about with who it empowers, the refusal is shown as the API states it, and the list shows the new scopes after saving
+
+  - id: SVC_GW_AUTH_0110
+    requirement_ids: ["GW_AUTH_0090"]
+    title: The upgrade removing hosting purges every hosted marketplace and keeps every other row
+    verification: automated-test
+    description: |
+      GIVEN real databases migrated to the first schema and to the second, each holding upstream marketplaces with snapshots, access tokens of every kind some with push scopes, ledger entries, and in a second set of databases a live and a removed hosted marketplace with snapshots, vetting history, waivers, grants and ledger entries both by marketplace identity and from before identities were recorded, an upstream that reused a removed hosted name, and a hosted repository folder on disk
+      WHEN the schema upgrade is applied to each
+      THEN the databases without a hosted marketplace upgrade keeping every row and every other column and tokens keep their fetch scopes; in the others every hosted marketplace, its dependents and its ledger entries by identity are gone, no table refers to a removed identity, the unrelated marketplaces and the one that reused the name keep every row, the earlier ledger entries under the reused name are left, the hosted repository folder is unchanged, and the upgrade is never refused; the removed columns, types and constraints are gone with the url required again, and a freshly built database has the same schema as an upgraded one
+    revision: "0.6.0"
+
+  - id: SVC_GW_AUTH_0112
+    requirement_ids: ["GW_AUTH_0091"]
+    title: Only an administrator lists the former hosted repositories, and the list ends with them
+    verification: automated-test
+    description: |
+      GIVEN a former hosted repository folder, a symbolic link, a stray file and a mis-named directory beside it, an administrator, a session holding no role and a machine credential
+      WHEN each asks for the former hosted repositories, and again after the folder is deleted
+      THEN the administrator is told the folder's name, location, last commit date and short sha and nothing else, the session and the credential are refused, the folder is unchanged, and the list is empty once the folder is gone
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0113
+    requirement_ids: ["GW_AUTH_0091"]
+    title: The portal tells administrators, and only administrators
+    verification: automated-test
+    description: |
+      GIVEN former hosted repositories, none, and a session that is not an administrator
+      WHEN the Overview page is shown to each
+      THEN the administrator reads a notice naming the count and each repository with its location and no delete control, nothing is shown when there are none, and the other session makes no request for the list
+    revision: "0.5.0"
+  - id: SVC_GW_AUTH_0111
+    requirement_ids: ["GW_AUTH_0090"]
+    title: Requests, estate entries and paths that ask for hosting are refused in words
+    verification: automated-test
+    description: |
+      GIVEN a running gateway
+      WHEN a marketplace is registered asking for the hosted origin with and without a URL, with a push policy, and asking for the upstream origin, a token is created naming push scopes, an estate entry declares the hosted origin and another a push policy, and the path publishers pushed to is requested with and without credentials
+      THEN each hosted or push request is refused naming the removal, the upstream origin registers as before, the estate entries fail naming the removal, the old push path answers exactly as a path that never existed does, and no marketplace, token or estate response carries an origin, push policy, publish path or push scope
     revision: "0.5.0"
