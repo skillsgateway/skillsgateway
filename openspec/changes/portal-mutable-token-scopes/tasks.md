@@ -62,6 +62,6 @@ so no critique). Reqstool ids `GW_AUTH_0083`–`GW_AUTH_0089` and `SVC_GW_AUTH_0
 
 - [x] 12.1 `docs/manual/reference/portal.md`, `api/tokens.md`, `api/audit.md`; `mkdocs build --strict`.
 - [x] 12.2 `/impeccable audit` and `harden` on both pages; findings fixed or dismissed with a reason in the PR body.
-- [ ] 12.3 Before/after screenshots, fixture data only, left in a git-ignored folder under `.claude/worktrees/`, not uploaded.
-- [ ] 12.4 Every gate once after the last edit; `evidence.md` with commands, result tails and commit SHA.
+- [x] 12.3 Before/after screenshots, fixture data only, left in a git-ignored folder under `.claude/worktrees/`, not uploaded.
+- [x] 12.4 Every gate once after the last edit; `evidence.md` with commands, result tails and commit SHA.
 - [ ] 12.5 `/opsx:archive` as the final commit.
