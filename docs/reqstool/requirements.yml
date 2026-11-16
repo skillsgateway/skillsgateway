@@ -1710,7 +1710,7 @@ requirements:
     revision: 0.1.0
 
   - id: GW_RETENTION_0010
-    title: Administrative and publication ledger entries are never trimmed
+    title: Administrative ledger entries are never trimmed
     significance: shall
     description: "The system shall never remove an append-only audit ledger entry recording an administrative action, whatever its age and whatever the export positions permit, admitting to trimming only a closed set of facade read events so that a ledger event kind introduced later is not eligible until it is deliberately admitted."
     rationale: "The compliance-bearing half of the ledger is also its low-volume half, so exempting it costs nothing and removes the whole class of error where a retention setting quietly erases the record of who decided what. This is the principle GW_RETENTION_0008 already fixes for revocation, generalised to the whole administrative half rather than restated as a new one. The admitted set is closed rather than open because the failure modes are not symmetric: a forgotten addition grows the table, while a forgotten exclusion deletes evidence."
