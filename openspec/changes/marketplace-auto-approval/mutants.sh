@@ -258,7 +258,7 @@ run M76-lapsed-reapplied $T aLapsedDeclaredAutomaticApprovalIsOffUntilTheDeclara
 run M77-reason-not-compared $T aDeclaredAutomaticApprovalIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
   '&& declared.reason().trim().equals(stored.reason())' ''
 run M78-not-the-reconciler $T aDeclaredAutomaticApprovalIsAppliedByTheReconcilerAndAnInvalidOneFailsItsEntry "$EST" \
-  'asEntryFailure(() -> settingService.set(name, declared, ACTOR));' 'asEntryFailure(() -> settingService.set(name, declared, "root"));'
+  'asEntryFailure(() -> settingService.setDeclared(name, declared));' 'asEntryFailure(() -> settingService.set(name, declared, "root"));'
 
 # --- adversarial pass ---
 CCG=src/main/java/dev/skillsgateway/server/approval/ClosureCompletenessGate.java
@@ -289,5 +289,8 @@ run M86-failure-as-gate-refusal $T aFailureToPublishIsNotRecordedAsAGateRefusal 
 T=AutoApprovalTests
 run M87-estate-does-not-attempt $T aDeclaredAutomaticApprovalAttemptsTheHeldSnapshot "$EST" \
   'autoApprovalService.attemptNewest(name, "auto-approval-declared");' ''
+T=AutoApprovalSettingEnforceTests
+run M88-reconciler-name-by-sign-in $T aPersonSignedInUnderTheReconcilersNameCannotGrant "$POS" \
+  'if (EstateReconciler.ACTOR.equals(actor)) {' 'if (false) {'
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi

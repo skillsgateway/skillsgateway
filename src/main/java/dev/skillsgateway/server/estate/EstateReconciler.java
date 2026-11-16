@@ -294,7 +294,7 @@ public class EstateReconciler {
         if (converged) {
             return Optional.empty();
         }
-        asEntryFailure(() -> settingService.set(name, declared, ACTOR));
+        asEntryFailure(() -> settingService.setDeclared(name, declared));
         if (declared.enabled()) {
             autoApprovalService.attemptNewest(name, "auto-approval-declared");
         }

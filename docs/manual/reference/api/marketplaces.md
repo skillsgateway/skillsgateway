@@ -300,7 +300,7 @@ The change is ledgered as `auto-approval-changed`, and an exemption as
 | --- | --- |
 | 200 | The setting after the change, as `GET` returns it. |
 | 400 | No `enabled`; turning it on without a reason or an expiry, or for longer than 90 days; an exemption without either; or an exemption for a marketplace whose source is already internal. |
-| 403 | The caller does not hold the administrative role. |
+| 403 | The caller does not hold the administrative role, or signs in as `config-reconciler`, the estate reconciler's identity: a declared setting is changed in the estate. |
 | 404 | Unknown marketplace. |
 | 409 | Turning it on for a marketplace whose source is not internal, with no exemption. The problem's `nextStep` says how to proceed. |
 

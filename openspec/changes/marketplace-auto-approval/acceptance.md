@@ -420,3 +420,9 @@ Made during implementation, a correction of fact:
   next re-vetting tick. Applying a declared `enabled: true` now attempts the
   newest held snapshot, as the API does (GW_ESTATE_0006 — A marketplace's
   automatic approval is declarable in the estate).
+- R21, from the same verification: the reconciler's four-eyes exemption on
+  the grant matched the actor name `config-reconciler`, so a person signed
+  in under that name would have needed no second administrator. The
+  exemption is now reached only through the reconciler's own entry point;
+  `set` refuses that name with 403 (GW_APPROVAL_0044.4 — Granting automatic approval
+  is subject to the four-eyes rule).

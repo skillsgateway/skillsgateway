@@ -1,6 +1,7 @@
 package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -21,6 +22,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
@@ -118,6 +120,27 @@ class AutoApprovalSettingEnforceTests extends AbstractGatewayTest {
                 .andExpect(jsonPath("$.allowedBy").value("hosted"));
     }
 
+    /** The reconciler's exemption is its entry point, not its name: a person signed in under that name gets none. */
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0044.4"})
+    void aPersonSignedInUnderTheReconcilersNameCannotGrant() {
+        Marketplace marketplace = marketplaceRepository.register(
+                uniqueName("peimpostor"),
+                INTERNAL + "skills.git",
+                null,
+                Marketplace.ORIGIN_UPSTREAM,
+                Marketplace.PUSH_APPEND_ONLY,
+                EstateReconciler.ACTOR);
+
+        assertThatThrownBy(() -> settingService.set(
+                        marketplace.name(),
+                        new AutoApprovalSettingService.SettingRequest(
+                                true, "not declared anywhere", Instant.now().plus(Duration.ofDays(30)), null),
+                        EstateReconciler.ACTOR))
+                .isInstanceOf(AccessDeniedException.class);
+        assertThat(settingService.view(marketplace.name()).enabled()).isFalse();
+    }
+
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.4"})
     void theEstateReconcilersGrantNeedsNoSecondAdministrator() {
@@ -129,11 +152,10 @@ class AutoApprovalSettingEnforceTests extends AbstractGatewayTest {
                 Marketplace.PUSH_APPEND_ONLY,
                 EstateReconciler.ACTOR);
 
-        AutoApprovalSettingService.SettingView view = settingService.set(
+        AutoApprovalSettingService.SettingView view = settingService.setDeclared(
                 marketplace.name(),
                 new AutoApprovalSettingService.SettingRequest(
-                        true, "declared in the estate", Instant.now().plus(Duration.ofDays(30)), null),
-                EstateReconciler.ACTOR);
+                        true, "declared in the estate", Instant.now().plus(Duration.ofDays(30)), null));
 
         assertThat(view.allowedBy()).isEqualTo(AutoApprovalSettingService.AllowedBy.INTERNAL_SOURCE);
         assertThat(fetchLogRepository.list())

@@ -5,6 +5,7 @@ import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.approval.AutoApprovalSettingRepository.StoredExemption;
 import dev.skillsgateway.server.approval.AutoApprovalSettingRepository.StoredSetting;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
+import dev.skillsgateway.server.estate.EstateReconciler;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.vetting.WaiverService;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -225,9 +227,26 @@ public class AutoApprovalSettingService {
         return true;
     }
 
+    /** A setting declared in the estate, applied as the reconciler. */
+    @Transactional
+    @Requirements({"GW_ESTATE_0006", "GW_APPROVAL_0044.4"})
+    public SettingView setDeclared(String name, SettingRequest request) {
+        return apply(name, request, EstateReconciler.ACTOR);
+    }
+
     @Transactional
     @Requirements({"GW_APPROVAL_0044.1", "GW_APPROVAL_0044.3", "GW_APPROVAL_0044.4"})
     public SettingView set(String name, SettingRequest request, String actor) {
+        // The reconciler's grant needs no second administrator, so its name must not be reachable by sign-in.
+        if (EstateReconciler.ACTOR.equals(actor)) {
+            throw new AccessDeniedException(
+                    "'%s' is the estate reconciler's identity; declare the setting in the estate instead"
+                            .formatted(actor));
+        }
+        return apply(name, request, actor);
+    }
+
+    private SettingView apply(String name, SettingRequest request, String actor) {
         if (request == null || request.enabled() == null) {
             throw new AutoApprovalSettingValidationException("enabled is required: true or false");
         }
