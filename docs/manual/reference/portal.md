@@ -16,6 +16,7 @@ A fixed sidebar, grouped:
 | Oversight | Audit log | [`/audit`](#audit-log) — **shown to auditors and administrators** |
 | Oversight | Adoption | [`/adoption`](#adoption) — **shown to auditors and administrators** |
 | Configuration | Vetting chain | [`/vetting`](#vetting-chain-governance) — **shown only to administrators** |
+| Configuration | System access tokens | [`/configuration/tokens`](#system-access-tokens) — **shown only to administrators** |
 | Configuration | Integrations → Webhooks | [`/integrations/webhooks`](#webhooks) — **shown to auditors and administrators** |
 | Configuration | Integrations → Audit sinks | [`/integrations/sinks`](#audit-sinks) — **shown to auditors and administrators** |
 | Reference | API reference | `/docs` — the Scalar API reference, not a portal route |
@@ -39,10 +40,13 @@ count), **Snapshots**, **Activity** (auditors and administrators only) and
 **Settings** — and the current section
 is the one highlighted entry. Leaving the marketplace closes the list; it is
 read from the address, never remembered. [Snapshot contents](#snapshot-contents)
-is reached from a snapshot's card. [Access tokens](#access-tokens) is a per-user concern, not
-estate-wide navigation — it is reached from the user menu, described next, and
-from the Overview page's Access tokens card; `/tokens` remains a resolvable
-address for existing bookmarks and links.
+is reached from a snapshot's card. Each kind of token has one home.
+[Personal access tokens](#personal-access-tokens) are a per-user concern, not
+estate-wide navigation: they are reached from the **Security** entry in the user
+menu, described next, and from nowhere else; `/tokens` redirects to them, so
+existing bookmarks and links keep working.
+[System access tokens](#system-access-tokens), the credentials for pipelines and
+other services, are an administrator's setting and sit under Configuration.
 
 The sidebar footer states the running build's version — *0.3.0* — read from
 `GET /api/v1/me`. It is the build artifact's own version and nothing a
@@ -72,7 +76,7 @@ The header's breadcrumb sits opposite a menu named after the signed-in user
   on for a role sourced from configuration or from the local development
   authentication escape hatch. A session holding no role is told so, together
   with what it can still do (browse the marketplaces and their snapshots'
-  vetting, manage its own access tokens) and that anything else needs a role an
+  vetting, manage its own personal access tokens under Security) and that anything else needs a role an
   administrator grants, rather than shown an empty list. If the identity provider truncated the
   membership claim, a line says the role list may be incomplete.
 - The **theme control** — three-state, cycling **system → light → dark**: it
@@ -80,7 +84,11 @@ The header's breadcrumb sits opposite a menu named after the signed-in user
   and label state the chosen mode — a monitor for system, a sun for light, a
   moon for dark. The choice is remembered in the browser (`localStorage`);
   _system_ tracks the OS setting as it changes.
-- **Your tokens**, linking to [Access tokens](#access-tokens).
+- **Security**, opening the Security section, which for now holds one page,
+  [Personal access tokens](#personal-access-tokens). It is shown to every
+  signed-in user, whatever their roles: managing your own tokens needs no role.
+  The section exists so that other per-user security settings can join it later
+  without another change to the navigation.
 - **Sign out**, which ends the browser session and returns to a fresh login.
   Under the `skills-gateway.dev-insecure-auth` development escape hatch there is
   no session to end, so the menu states that instead of offering a control that
@@ -166,8 +174,9 @@ Roles can change while a page is open. Whenever the server refuses a request
 (`403`), the portal reads `GET /api/v1/me` again and the page follows the
 answer without a reload.
 
-Access tokens are scoped per principal server-side regardless: you only ever
-see and revoke your own.
+Personal access tokens are scoped per principal server-side regardless: you only
+ever see and revoke your own. System access tokens are the opposite: an
+administrator sees and manages every one.
 
 ---
 
@@ -175,8 +184,8 @@ see and revoke your own.
 
 **Route:** `/` · **Heading:** Gateway Overview
 
-The landing page. Three cards, each with counts derived client-side and one
-action leading elsewhere. Read-only — nothing here changes state.
+The landing page. Two cards (the second only for auditors and administrators),
+each with counts derived client-side and one action leading elsewhere. Read-only — nothing here changes state.
 
 **Marketplaces** — chips for the total marketplace count and how many snapshots
 are `held`, `approved` and `rejected` across all of them. When any snapshot is
@@ -189,10 +198,10 @@ server estimates rather than counts (see [`GET /api/v1/audit`](api/audit.md#get-
 It counts every entry: fetches, administrative actions and vetting bookkeeping.
 Action: **Open audit log**.
 
-**Access tokens** — chips for active and revoked counts. Action: **Manage
-tokens**.
+Overview carries no tokens card: personal tokens have one home, under
+[Security](#personal-access-tokens) in the user menu.
 
-Data comes from `GET /api/v1/marketplaces`, `GET /api/v1/tokens` and `GET /api/v1/audit`;
+Data comes from `GET /api/v1/marketplaces` and `GET /api/v1/audit`;
 counts are computed in the browser, as there is no summary endpoint. While the
 queries are in flight the chips show an ellipsis.
 
@@ -327,6 +336,32 @@ primary control:
   again.
 - **Connect a client** opens the [client wizard](#connect-a-client) under the
   header.
+
+### Is my client up to date?
+
+Under the header, on every section, a panel answers the question a user asks when
+their client has not picked up a plugin's newest version. It is shown to **every
+signed-in user**, whatever their roles, and is written for a reader who is not an
+approver:
+
+- **Served now** — the commit, since when it has been the served one, and who or
+  what approved it: a person, or *automatic approval*.
+- **A newer commit**, when one exists — its short SHA and how long ago it was
+  ingested, in plain terms: *awaiting approval*, *rejected* or *revoked*. For one
+  awaiting approval it says who decides: an approver of this marketplace, or an
+  administrator, and to ask your gateway administrators. It names the role, never
+  a person who holds it.
+- **The last ingest failed**, with the reason the header already shows, when the
+  newest upstream commit has not been picked up at all.
+- **Nothing is served**, and why: nothing ingested yet, no commit ever approved,
+  or a commit approved once and withdrawn since.
+- When none of the above applies: *Nothing newer is waiting*.
+
+It is built from the marketplace read, `GET /api/v1/marketplaces`, that every
+signed-in session already receives, and makes no other request. It therefore
+shows nothing a session without a role could not already read, and it never
+reads a snapshot's contents, files or findings: those stay behind the approver
+role, as the [snapshot cards](#review-and-snapshots) describe.
 
 ### Upstream
 
@@ -664,9 +699,9 @@ the header.
 Inside the wizard:
 
 1. **Personal access token** — the same show-once creation flow as the
-   [Access tokens](#access-tokens) page. The name defaults to
+   [Personal access tokens](#personal-access-tokens) page. The name defaults to
    `{marketplace}-client` and the control disables again if it is emptied or left
-   whitespace. **Expires** is a button group — 7, 30 or 90 days, or no expiry —
+   whitespace. **Expires** is a button group — 30 days, 90 days, 180 days or 1 year —
    defaulting to 30 days rather than to never; the
    gateway's own cap
    ([`skills-gateway.tokens.max-ttl`](configuration.md#access-tokens)) is not
@@ -1253,7 +1288,7 @@ as an error toast.
 On success the dialog closes and a show-once dialog opens — "This signing secret is shown exactly
 once — copy it now." — with the `whsec_…` value in a code block and a clipboard
 button that flips to a checkmark for two seconds, the same pattern as
-[Access tokens](#access-tokens).
+[Personal access tokens](#personal-access-tokens).
 
 ### Subscribers
 
@@ -1313,7 +1348,7 @@ administrator only.
 `POST /api/v1/audit/sinks`. **Add sink** stays disabled until the name matches
 `^[a-z0-9][a-z0-9_-]*$` and the target URL parses with a scheme; the scheme
 allowlist itself stays server-side. On success the dialog closes and the same show-once secret dialog opens as
-[Access tokens](#access-tokens) and [Webhooks](#webhooks).
+[Personal access tokens](#personal-access-tokens) and [Webhooks](#webhooks).
 
 ### Sinks
 
@@ -1340,23 +1375,26 @@ Empty state: "No export sinks yet."
 
 ---
 
-## Access tokens
+## Personal access tokens
 
-**Route:** `/tokens` · **Heading:** Access tokens
+**Route:** `/security/tokens` (the user menu's **Security**; `/security` and the
+earlier address `/tokens` redirect here) · **Heading:** Personal access tokens
 
-"Personal access tokens authenticate git clients against the facade. Values are
-hashed at rest and shown exactly once."
+"Personal access tokens are yours: they authenticate your git clients against the
+facade. Values are hashed at rest and shown exactly once." The page is for your
+own tokens. A token for a pipeline or another service is a [system access
+token](#system-access-tokens); an administrator is pointed there from this page.
 
 An inline form with a **Token name** field, an **Expires** choice and a **Create
 token** button posts to `POST /api/v1/tokens`. **Expires** offers the same lifetimes
-as [Connect a client](#connect-a-client) — 7, 30 or 90 days, or no expiry —
-and defaults to 30 days; a gateway whose
+as [Connect a client](#connect-a-client) — 30 days, 90 days, 180 days or 1
+year, with no choice that never expires — and defaults to 30 days; a gateway whose
 [`skills-gateway.tokens.max-ttl`](configuration.md#access-tokens) is shorter refuses
 the longer choices, and the refusal is shown beneath the form. **Create token** stays
 disabled until the name field holds a non-blank value — the name is trimmed before it
 is sent. The response opens a
 show-once dialog — "This value is shown
-exactly once — copy it now. Only a hash is stored." — with the token in a code
+exactly once and cannot be shown again — copy it now. Only a hash is stored." — with the token in a code
 block and a clipboard button that flips to a checkmark for two seconds.
 
 | Column | Contents |
@@ -1385,3 +1423,64 @@ Empty state: "No tokens yet."
 
 See [Consuming approved skills](../guides/consuming-skills.md) for using a token
 with a git client.
+
+## System access tokens
+
+**Route:** `/configuration/tokens` (Configuration, **administrators only**) ·
+**Heading:** System access tokens
+
+Credentials for pipelines and other services that call the REST API on their own,
+such as a Terraform provider or a CI job. The API calls them **machine API
+credentials**; the portal says *system access token* everywhere, and this is the
+one place the two names meet. They are not your own tokens: those are [personal
+access tokens](#personal-access-tokens), and each page says which kind it manages
+and links to the other.
+
+A session without the administrative role that opens the address is told *"This
+page needs the administrative role."*, with a line on why, and makes none of the
+reads behind the page; the server refuses each independently
+(see [Authorization](#authorization)).
+
+**Create.** An inline form posts to
+[`POST /api/v1/tokens/machine`](api/tokens.md#post-apiv1tokensmachine):
+
+- **Principal** and **Token name** — the principal is what the ledger attributes the
+  credential's actions to; it is not a person.
+- **API scopes** — a checkbox for each scope the gateway defines, read from
+  [`GET /api/v1/tokens/machine/scopes`](api/tokens.md#get-apiv1tokensmachinescopes)
+  so the list cannot drift from the server's. There is no "all" choice, and
+  hovering a scope lists the routes it reaches.
+- **Expires** — 30 days, 90 days, 180 days, 1 year or **Never**. **Nothing is
+  preselected**: the lifetime of a credential nobody will be watching is a
+  decision. *Never* is sent as an explicit `neverExpires`, never as a missing
+  expiry. A gateway that configures
+  [`skills-gateway.tokens.max-ttl`](configuration.md#access-tokens) refuses the
+  longer choices and *Never*, and the refusal is shown beneath the form as the API
+  states it, as is every other refusal (an unknown scope, no lifetime).
+
+**Create token** stays disabled until the principal, the name, at least one scope
+and a lifetime are all given. The response opens the same show-once dialog the
+personal page uses, with a warning that the value **cannot be shown again**. The
+cleartext lives only in that dialog: once it is closed it is not in the page, in
+the client's query cache, in the browser's stored state or in the address.
+
+| Column | Contents |
+| --- | --- |
+| Name, Principal | What it was called, and the principal it acts as. |
+| Owner | The person who provisioned it (`machineOwner`). |
+| Scopes | The API scopes it holds. |
+| Expires | When it stops authenticating, or **never expires**; a credential that expires within 14 days is marked *expires within 14 days*. |
+| Last used | How long ago it last authenticated, or **never**; a live credential more than a day old that has never authenticated is marked *never used*. |
+| Status | `active`, `expired` or `revoked`. |
+| Actions | **Rotate** and **Revoke**, shown only while active. |
+
+The marks are words, not colour alone, and they are the reason `lastUsedAt` exists:
+a credential nothing uses any more, and one about to stop a pipeline. They are not
+shown for a credential that can no longer authenticate.
+
+**Rotate** and **Revoke** each ask first. Rotating issues a fresh secret with the
+same principal, scopes and expiry and revokes the old one at once, so whatever uses
+it must be given the new value, which is shown in the same once-only dialog.
+Revoking is immediate and permanent. Both are audit-logged by the API.
+
+Empty state: "No system access tokens yet."

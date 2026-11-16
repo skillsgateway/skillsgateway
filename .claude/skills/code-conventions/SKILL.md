@@ -25,13 +25,13 @@ openspec validate --all --strict
 ## Java
 
 - Java 25, Spring Boot 4. Constructor injection, no Lombok, records for DTOs.
-- Persistence via `JdbcClient` + Flyway (no JPA). **Single `V1__init.sql` while
-  pre-1.0** — fold schema changes into it rather than adding a `V2__…`. No
-  compatibility is promised between versions before 1.0.0, so there is no
-  deployed database to upgrade, and every environment rebuilds from scratch.
-  Two consequences: a data-repair migration has no rows to repair and is never
-  the answer, and editing `V1` changes its checksum, so existing local databases
-  are dropped rather than migrated. This reverses at 1.0.0.
+- Persistence via `JdbcClient` + Flyway (no JPA). **A schema change is a new
+  migration** (`V<n>__<what>.sql`, after the latest), never an edit to an applied
+  one: gateways hold live data, and editing `V1` changes its checksum so Flyway
+  refuses to start on every existing database. The migration must apply to rows
+  the previous schema allowed; if it tightens a constraint or moves data, state
+  what happens to violating rows and test against them. Parallel PRs that add a
+  migration collide on the number, and the second to merge renumbers.
 - Enumerated values are native PostgreSQL enum types, never `TEXT ... CHECK (col
   IN (...))`: `CREATE TYPE <singular table>_<column> AS ENUM (...)` (the column
   name alone collides — three tables carry a `state`). Write through an explicit

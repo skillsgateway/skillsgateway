@@ -232,7 +232,8 @@ test("the_pages_behind_the_auditor_role_state_it_and_make_no_refused_read", asyn
   expect(await screen.findByRole("alert")).toHaveTextContent("This section needs the auditor role.");
   activity.unmount();
   const overview = renderWith(<OverviewPage />);
-  expect(await screen.findByText("Access tokens")).toBeInTheDocument();
+  expect(await screen.findByText("Gateway Overview")).toBeInTheDocument();
+  expect(screen.queryByText("Access tokens")).not.toBeInTheDocument();
   expect(screen.queryByText("Fetch ledger")).not.toBeInTheDocument();
   expect(screen.queryByText(/ledger entr/)).not.toBeInTheDocument();
   overview.unmount();
@@ -281,7 +282,7 @@ test("the_navigation_leaves_out_the_pages_the_session_cannot_read", async () => 
     const sections = await within(main).findByRole("list", { name: "corp-marketplace sections" });
     expect(within(sections).getByRole("link", { name: "Snapshots" })).toBeInTheDocument();
     expect(within(sections).queryByRole("link", { name: "Activity" })).not.toBeInTheDocument();
-    for (const name of ["Audit log", "Adoption", "Webhooks", "Audit sinks", "Vetting chain"]) {
+    for (const name of ["Audit log", "Adoption", "Webhooks", "Audit sinks", "Vetting chain", "System access tokens"]) {
       expect(within(main).queryByRole("link", { name })).not.toBeInTheDocument();
     }
     expect(within(main).queryByText("Oversight")).not.toBeInTheDocument();
@@ -297,6 +298,7 @@ test("the_navigation_leaves_out_the_pages_the_session_cannot_read", async () => 
     expect(within(main).getByRole("link", { name })).toBeInTheDocument();
   }
   expect(within(main).queryByRole("link", { name: "Vetting chain" })).not.toBeInTheDocument();
+  expect(within(main).queryByRole("link", { name: "System access tokens" })).not.toBeInTheDocument();
 });
 
 /**

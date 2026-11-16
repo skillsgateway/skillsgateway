@@ -63,7 +63,7 @@ Git clients authenticate with PATs, not with your portal session.
 
 === "Portal"
 
-    Open the user menu (top right) → **Your tokens** → enter a name → choose how
+    Open the user menu (top right) → **Security** → **Personal access tokens** → enter a name → choose how
     long it lasts under **Expires** (30 days unless you choose otherwise) → **Create
     token**. The value appears in a dialog with a copy button.
 

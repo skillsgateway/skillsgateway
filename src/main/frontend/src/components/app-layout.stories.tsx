@@ -53,7 +53,7 @@ export const RolesFromEverySource: Story = {
     await expect(await body.findByText("admin — from configuration")).toBeVisible();
     await expect(body.getByText("approver of corp-marketplace — granted in the portal")).toBeVisible();
     await expect(body.getByText("auditor — from your identity provider")).toBeVisible();
-    await expect(body.getByRole("menuitem", { name: "Your tokens" })).toBeVisible();
+    await expect(body.getByRole("menuitem", { name: "Security" })).toBeVisible();
     await expect(body.getByRole("menuitem", { name: "Sign out" })).toBeVisible();
   },
 };
@@ -67,7 +67,7 @@ export const NoRole: Story = {
   play: async ({ canvasElement }) => {
     const body = await open(canvasElement);
     await expect(await body.findByText(/No role\./)).toBeVisible();
-    await expect(body.getByRole("menuitem", { name: "Your tokens" })).toBeVisible();
+    await expect(body.getByRole("menuitem", { name: "Security" })).toBeVisible();
   },
 };
 

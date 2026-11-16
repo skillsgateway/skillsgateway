@@ -106,4 +106,34 @@ class MachineCredentialAdminTests extends AbstractNamedAdminsTest {
         // route to a machine role is configuration or a declared grant.
         assertThat(claimRoleMapper.rolesFrom(authentication)).isEmpty();
     }
+
+    /** GW_AUTH_0076: the scope list is the registry's, for administrators only, never for a machine. */
+    @Test
+    @SVCs({"SVC_GW_AUTH_0092"})
+    void the_scope_list_is_the_registry_for_administrators_only() throws Exception {
+        String json = mockMvc.perform(get("/api/v1/tokens/machine/scopes").with(admin()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        List<String> names = com.jayway.jsonpath.JsonPath.read(json, "$[*].scope");
+        assertThat(names)
+                .containsExactlyInAnyOrderElementsOf(dev.skillsgateway.server.auth.MachineApiRegistry.scopes());
+        assertThat(names).as("sorted, and no wildcard").isSorted().doesNotContain("*", "all", "admin");
+        List<String> routes = com.jayway.jsonpath.JsonPath.read(json, "$[?(@.scope=='estate:read')].routes[*]");
+        assertThat(routes).isNotEmpty().allMatch(route -> route.matches("[A-Z]+ /api/.*"));
+
+        mockMvc.perform(get("/api/v1/tokens/machine/scopes").with(anyone())).andExpect(status().isForbidden());
+
+        // A machine credential holding every scope still cannot read it: the path is unreachable.
+        TokenService.IssuedToken machine = tokenService.createMachineCredential(
+                uniqueName("scope-reader"),
+                "reader",
+                List.copyOf(dev.skillsgateway.server.auth.MachineApiRegistry.scopes()),
+                Instant.now().plus(10, ChronoUnit.DAYS),
+                "owner");
+        mockMvc.perform(get("/api/v1/tokens/machine/scopes")
+                        .header(org.springframework.http.HttpHeaders.AUTHORIZATION, "Bearer " + machine.token()))
+                .andExpect(status().is4xxClientError());
+    }
 }

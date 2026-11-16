@@ -389,6 +389,18 @@ deprovisioned.
 }
 ```
 
+A credential that is meant not to expire says so explicitly, in place of
+`expiresAt`:
+
+```json
+{
+  "principal": "terraform-ci",
+  "name": "platform-pipeline",
+  "apiScopes": ["marketplaces:register"],
+  "neverExpires": true
+}
+```
+
 `principal` is not a person. It is what the ledger attributes this credential's
 actions to and what a role grant names.
 
@@ -398,13 +410,16 @@ actions to and what a role grant names.
 | --- | --- |
 | An unknown or misspelled scope value | **422** — it fails loudly rather than silently never matching |
 | `"*"`, `"all"`, or an empty `apiScopes` | **422** — there is no value that grants every scope |
-| No `expiresAt` | **422** — mandatory, and never defaulted |
+| Neither `expiresAt` nor `neverExpires: true` | **422** — one of them is mandatory, and neither is ever defaulted |
+| Both `expiresAt` and `neverExpires: true` | **422** — it cannot both expire and not |
+| `neverExpires: true` while `skills-gateway.tokens.max-ttl` is set | **422** — a configured cap forbids an unlimited credential |
 | `expiresAt` beyond the cap | **422** — refused, never shortened |
 | The caller is not an admin | **403** |
 
 The cap is `skills-gateway.tokens.max-ttl` when set, and otherwise a built-in
-**90 days**; see [Configuration](../configuration.md). The cleartext is returned
-exactly once.
+**1 year**; see [Configuration](../configuration.md). The cleartext is returned
+exactly once. A rotation keeps the grant exactly, so a credential that never
+expires still does not after it is rotated.
 
 ### `GET /api/v1/tokens/machine`
 
@@ -420,6 +435,16 @@ has on a personal token: when the credential most recently authenticated
 successfully, `null` if it never has, approximate to a minute, and untouched by
 any refused attempt. It is the field that identifies a pipeline credential
 nothing runs any more.
+
+### `GET /api/v1/tokens/machine/scopes`
+
+The API scopes a machine credential may be given, sorted, each with the routes it
+reaches as `"METHOD /path"` — exactly the machine-reachability registry, so a
+client offering a choice, like the portal's
+[System access tokens](../portal.md#system-access-tokens) form, never carries a
+copy that can drift. Requires the `admin` role (`403` otherwise) and, like the
+rest of `/api/v1/tokens/**`, is unreachable by a machine credential. There is no
+wildcard entry.
 
 ### `POST /api/v1/tokens/machine/{id}/rotate`
 
@@ -444,8 +469,9 @@ refused.
 
 !!! note "The first credential is minted by a person"
 
-    `/api/v1/tokens/**` is unreachable by machine by design, so bootstrapping means
-    an administrator driving this endpoint from a browser session — once, to
-    create something with a stated expiry and named scopes, rather than
-    continuously to run a pipeline. A portal screen is what removes that step
-    properly, and is not part of this release.
+    `/api/v1/tokens/**` is unreachable by machine by design, so a first credential
+    is always created by an administrator, once, to give something a stated
+    lifetime and named scopes rather than to run a pipeline continuously. The
+    portal's [System access tokens](../portal.md#system-access-tokens) page, under
+    Configuration, is where an administrator does it: create, list, rotate and
+    revoke, with the API's own refusals shown as it states them.

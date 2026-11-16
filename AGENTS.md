@@ -85,14 +85,16 @@ The gates above ask "is this well specified?". This one asks "should this exist?
   the title and nothing more. This applies to prose only — `@Requirements` /
   `@SVCs` annotations and reqstool YAML take bare ids, as their schemas require.
 - Never weaken or delete an existing SVC test to make a change pass.
-- **The schema is one migration while the project is pre-1.0.** A schema change
-  edits `src/main/resources/db/migration/V1__init.sql`; it does not add a
-  `V2__…` behind it. There is no compatibility between versions before 1.0.0, so
-  there is no deployed database to upgrade, and a chain only buys the ordering
-  problem that parallel PRs create. Two consequences: a data-repair migration has
-  no rows to repair and so is never the answer, and editing `V1` changes its
-  checksum, so every existing database is recreated rather than migrated. This
-  reverses at 1.0.0, when `V1` freezes.
+- **A schema change is a new Flyway migration.** Gateways run in production with
+  live data, so a change adds `src/main/resources/db/migration/V<n>__<what>.sql`
+  after the latest one and never edits an applied migration: editing `V1` changes
+  its checksum and Flyway refuses to start on every existing database. The new
+  migration must apply to a database holding the previous schema's rows. When it
+  tightens a constraint or moves data, say what happens to rows that violate it,
+  and test the migration against such rows. Dropping a constraint, as `V2` does,
+  needs no repair. Parallel PRs that each add a migration collide on the number;
+  the second to merge renumbers. (Until `V1`'s users existed this file said the
+  opposite, "one migration while pre-1.0": that rule is withdrawn.)
 - Container-backed tests use **Arconia Dev Services** whenever one exists for the
   dependency. This project uses two: `arconia-dev-services-postgresql` (automatic
   in dev/test) and `arconia-dev-services-lgtm` (opt-in, Spring profile

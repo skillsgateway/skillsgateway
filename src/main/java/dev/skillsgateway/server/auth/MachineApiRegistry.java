@@ -192,6 +192,7 @@ public final class MachineApiRegistry {
             delete("/api/v1/tokens/{id}"),
             post("/api/v1/tokens/machine"),
             get("/api/v1/tokens/machine"),
+            get("/api/v1/tokens/machine/scopes"),
             post("/api/v1/tokens/machine/{id}/rotate"),
             delete("/api/v1/tokens/machine/{id}"),
             // Another principal's personal tokens (GW_AUTH_0055): revoking them is the offboarding act,

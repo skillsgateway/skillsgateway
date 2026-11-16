@@ -39,4 +39,30 @@ class TokenTtlCapTests extends AbstractCredentialLifetimeTest {
         // Rotation keeps working under the cap: same deadline, no re-validation surprise.
         assertThatCode(() -> tokenService.rotate(within.id(), "alice")).doesNotThrowAnyException();
     }
+
+    /** GW_AUTH_0077: a configured cap refuses a credential that never expires; the cap wins. */
+    @Test
+    @SVCs({"SVC_GW_AUTH_0093"})
+    void a_configured_cap_refuses_a_never_expiring_machine_credential() {
+        assertThatThrownBy(() -> tokenService.createMachineCredential(
+                        "ci", "forever", List.of("estate:read"), null, true, "admin@example.invalid"))
+                .isInstanceOf(TokenService.InvalidTokenRequestException.class);
+        // Under the 30 day cap in force here, a finite lifetime inside it still works and one beyond it does not.
+        assertThatCode(() -> tokenService.createMachineCredential(
+                        "ci",
+                        "ok",
+                        List.of("estate:read"),
+                        Instant.now().plus(Duration.ofDays(7)),
+                        false,
+                        "admin@example.invalid"))
+                .doesNotThrowAnyException();
+        assertThatThrownBy(() -> tokenService.createMachineCredential(
+                        "ci",
+                        "long",
+                        List.of("estate:read"),
+                        Instant.now().plus(Duration.ofDays(60)),
+                        false,
+                        "admin@example.invalid"))
+                .isInstanceOf(TokenService.InvalidTokenRequestException.class);
+    }
 }

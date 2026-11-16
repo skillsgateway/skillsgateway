@@ -1234,26 +1234,26 @@ skills-gateway:
 
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `skills-gateway.tokens.max-ttl` | duration | unset (unlimited for personal access tokens; **90 days** for machine API credentials) | Cap on accepted token lifetime; refusal, not clamping. |
+| `skills-gateway.tokens.max-ttl` | duration | unset (unlimited for personal access tokens; **1 year** for machine API credentials, which may also never expire) | Cap on accepted token lifetime; refusal, not clamping. |
 | `skills-gateway.tokens.session-ttl` | duration | `8h` | Lifetime granted to a session-derived credential. The caller cannot influence it. |
 
-!!! warning "A machine API credential is always capped, even with `max-ttl` unset"
+!!! warning "A machine API credential's lifetime is capped, or explicitly unlimited"
 
     A [machine API credential](api/tokens.md#machine-api-credentials) must state
-    an expiry, but "mandatory expiry" alone admits `now + 100 years` whenever no
-    cap is configured — which is the never-expiring credential in a CI variable,
-    spelled differently. Machine credentials are therefore held to a built-in
-    cap of **90 days** when `max-ttl` is unset.
+    its lifetime, and never by omission: either an `expiresAt`, or an explicit
+    `neverExpires: true`. An omitted expiry is refused, because "mandatory expiry"
+    alone admits `now + 100 years` whenever no cap is configured, which is the
+    never-expiring credential in a CI variable, spelled differently.
 
-    Ninety days is a quarter: short enough that a forgotten credential expires
-    within one planning cycle rather than outliving the service it was minted
-    for, and long enough that rotating it is a scheduled chore rather than an
-    interruption. A configured `max-ttl`, longer or shorter, always wins — and
-    that is the point. A long-lived control-plane credential should be a stated
-    choice, not the consequence of leaving a property blank.
+    With `max-ttl` unset, a credential that expires is held to a built-in cap of
+    **1 year** (it was 90 days), and one that never expires is allowed, because an
+    administrator asked for it by name. With `max-ttl` set, the configured value
+    always wins: a longer `expiresAt` is refused, and so is `neverExpires`. An
+    operator who wants no unlimited credential at all therefore sets `max-ttl`.
 
     The cap does not change personal access tokens, whose behaviour under an
-    unset `max-ttl` is exactly what it was.
+    unset `max-ttl` is exactly what it was. The portal offers them only bounded
+    lifetimes.
 
 Scopes, expiry, and rotation are described in
 [Access tokens](api/tokens.md); session-derived credentials in
@@ -1518,15 +1518,11 @@ with a `password` key).
 
 !!! info "Flyway is deliberately unconfigured"
 
-    There are no `spring.flyway.*` settings. The schema is built from a single
-    consolidated migration on startup, because every environment — including
-    Testcontainers and the e2e compose stack — builds it from scratch.
-
-    That the schema is *one* migration rather than a chain is a consequence of
-    being pre-1.0: with no compatibility promised between versions, there is no
-    deployed database to upgrade, so a schema change edits `V1__init.sql`
-    instead of adding a version behind it. At 1.0.0 that reverses — `V1` freezes
-    and changes become incremental migrations.
+    There are no `spring.flyway.*` settings. The schema is built by running the
+    migrations in `db/migration` in order on startup: an empty database (including
+    Testcontainers and the e2e compose stack) gets all of them, and an existing one
+    gets the ones it has not yet applied. An applied migration is never edited, so a
+    schema change is always a new `V<n>` file.
 
 ---
 

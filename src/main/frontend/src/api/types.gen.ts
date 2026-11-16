@@ -1193,9 +1193,29 @@ export interface paths {
         put?: never;
         /**
          * Provision a machine API credential
-         * @description Issues a non-interactive credential for the REST API, presented as `Authorization: Bearer`. It carries no fetch and no publication authority, reaches only the endpoints its named scopes allow, and can never reach an act of human judgement, a retraction of content, a role grant or this endpoint. An expiry is mandatory. The cleartext is returned exactly once. Requires the admin role.
+         * @description Issues a non-interactive credential for the REST API, presented as `Authorization: Bearer`. It carries no fetch and no publication authority, reaches only the endpoints its named scopes allow, and can never reach an act of human judgement, a retraction of content, a role grant or this endpoint. An expiry, or an explicit never-expires, is mandatory. The cleartext is returned exactly once. Requires the admin role.
          */
         post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tokens/machine/scopes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the API scopes a machine credential may hold
+         * @description Exactly the scopes the machine-reachability registry defines, sorted, each with the routes it reaches, so a client offering a choice never carries a copy that can drift. There is no wildcard. Read-only, administrator-only, and like every route under /api/v1/tokens unreachable by a machine credential.
+         */
+        get: operations["scopes"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1927,6 +1947,16 @@ export interface webhooks {
 }
 export interface components {
     schemas: {
+        /** @description An API scope a machine credential may hold, and what it reaches */
+        ApiScopeView: {
+            /** @description The routes this scope reaches, as "METHOD /path" */
+            routes?: string[];
+            /**
+             * @description The scope name, as it is given in apiScopes
+             * @example estate:read
+             */
+            scope?: string;
+        };
         /** @description Payload of the approval-pending lifecycle event */
         ApprovalPendingPayload: {
             /** @description Acting identity */
@@ -2440,14 +2470,16 @@ export interface components {
             apiScopes: string[];
             /**
              * Format: date-time
-             * @description Expiry. Mandatory and never defaulted; a lifetime beyond the cap is refused rather than shortened.
+             * @description Expiry. Either this or neverExpires: true is mandatory and neither is ever defaulted; a lifetime beyond the cap (one year unless the deployment configures one) is refused rather than shortened.
              */
-            expiresAt: string;
+            expiresAt?: string;
             /**
              * @description Human-readable credential name
              * @example platform-pipeline
              */
             name: string;
+            /** @description States, explicitly, that the credential never expires. Refused together with an expiry, and refused whenever the deployment configures a token lifetime cap. Omitting it is the same as false: an omitted expiry is refused. */
+            neverExpires?: boolean;
             /**
              * @description The principal the credential acts as. It is not a person: the ledger attributes this credential's actions to it, and role grants name it.
              * @example terraform-ci
@@ -7183,6 +7215,35 @@ export interface operations {
             };
             /** @description Unknown or empty API scope, missing expiry, or a lifetime beyond the cap */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    scopes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every scope with its routes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiScopeView"][];
+                };
+            };
+            /** @description The caller does not hold the admin role */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

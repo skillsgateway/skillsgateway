@@ -77,10 +77,16 @@ public class MachineTokenController {
             List<String> apiScopes,
 
             @Schema(
-                    description = "Expiry. Mandatory and never defaulted; a lifetime beyond the cap is"
-                            + " refused rather than shortened.",
-                    requiredMode = Schema.RequiredMode.REQUIRED)
-            Instant expiresAt) {}
+                    description = "Expiry. Either this or neverExpires: true is mandatory and neither is ever"
+                            + " defaulted; a lifetime beyond the cap (one year unless the deployment configures"
+                            + " one) is refused rather than shortened.")
+            Instant expiresAt,
+
+            @Schema(
+                    description = "States, explicitly, that the credential never expires. Refused together with"
+                            + " an expiry, and refused whenever the deployment configures a token lifetime"
+                            + " cap. Omitting it is the same as false: an omitted expiry is refused.")
+            Boolean neverExpires) {}
 
     /** Never exposes the stored hash; the cleartext is returned only at creation and rotation. */
     @Schema(description = "A machine API credential without its secret")
@@ -119,11 +125,12 @@ public class MachineTokenController {
     @Tag(name = "Tokens")
     @Operation(
             summary = "Provision a machine API credential",
-            description = "Issues a non-interactive credential for the REST API, presented as"
-                    + " `Authorization: Bearer`. It carries no fetch and no publication authority, reaches"
-                    + " only the endpoints its named scopes allow, and can never reach an act of human"
-                    + " judgement, a retraction of content, a role grant or this endpoint. An expiry is"
-                    + " mandatory. The cleartext is returned exactly once. Requires the admin role.")
+            description =
+                    "Issues a non-interactive credential for the REST API, presented as"
+                            + " `Authorization: Bearer`. It carries no fetch and no publication authority, reaches"
+                            + " only the endpoints its named scopes allow, and can never reach an act of human"
+                            + " judgement, a retraction of content, a role grant or this endpoint. An expiry, or an"
+                            + " explicit never-expires, is mandatory. The cleartext is returned exactly once. Requires the admin role.")
     @ApiResponse(responseCode = "201", description = "Issued; the only response carrying the cleartext")
     @ApiResponse(responseCode = "403", description = "The caller does not hold the admin role")
     @ApiResponse(
@@ -137,6 +144,7 @@ public class MachineTokenController {
                 request.name(),
                 request.apiScopes() == null ? List.of() : request.apiScopes(),
                 request.expiresAt(),
+                Boolean.TRUE.equals(request.neverExpires()),
                 authentication.getName());
         // The provisioning identity is the actor on this entry, and is recorded as the
         // credential's owner: there is always a responsible person, named once here rather than
@@ -162,6 +170,39 @@ public class MachineTokenController {
         roleService.requireAdmin(authentication);
         return tokenService.listMachineCredentials().stream()
                 .map(MachineTokenController::view)
+                .toList();
+    }
+
+    /** One API scope and the routes holding it reaches. */
+    @Schema(description = "An API scope a machine credential may hold, and what it reaches")
+    public record ApiScopeView(
+            @Schema(description = "The scope name, as it is given in apiScopes", example = "estate:read")
+            String scope,
+
+            @Schema(description = "The routes this scope reaches, as \"METHOD /path\"")
+            List<String> routes) {}
+
+    @GetMapping("/scopes")
+    @Requirements({"GW_AUTH_0076"})
+    @Tag(name = "Tokens")
+    @Operation(
+            summary = "List the API scopes a machine credential may hold",
+            description = "Exactly the scopes the machine-reachability registry defines, sorted, each with the"
+                    + " routes it reaches, so a client offering a choice never carries a copy that can drift."
+                    + " There is no wildcard. Read-only, administrator-only, and like every route under"
+                    + " /api/v1/tokens unreachable by a machine credential.")
+    @ApiResponse(responseCode = "200", description = "Every scope with its routes")
+    @ApiResponse(responseCode = "403", description = "The caller does not hold the admin role")
+    public List<ApiScopeView> scopes(Authentication authentication) {
+        roleService.requireAdmin(authentication);
+        return MachineApiRegistry.scopes().stream()
+                .sorted()
+                .map(scope -> new ApiScopeView(
+                        scope,
+                        MachineApiRegistry.routesOf(scope).stream()
+                                .sorted()
+                                .map(Object::toString)
+                                .toList()))
                 .toList();
     }
 

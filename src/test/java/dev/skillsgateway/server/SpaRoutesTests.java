@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
  */
 class SpaRoutesTests extends AbstractGatewayTest {
 
-    private static final Path ROUTER = Path.of("src/main/frontend/src/main.tsx");
+    private static final Path ROUTER = Path.of("src/main/frontend/src/routes.tsx");
 
     /** `{ path: "/marketplaces/:name", element: ... }` — the router's own declaration. */
     private static final Pattern ROUTE = Pattern.compile("path:\\s*\"(/[^\"]*)\"");

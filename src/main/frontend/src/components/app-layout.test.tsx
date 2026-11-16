@@ -83,7 +83,7 @@ test("tokens_are_reached_from_the_user_menu_and_not_from_the_sidebar", async () 
   ).not.toBeInTheDocument();
 
   await openMenu(user);
-  expect(await screen.findByRole("menuitem", { name: "Your tokens" })).toBeInTheDocument();
+  expect(await screen.findByRole("menuitem", { name: "Security" })).toBeInTheDocument();
 });
 
 /** Every role is named with the marketplace it is scoped to and where it came from. */
@@ -120,7 +120,7 @@ test("a_session_with_no_role_is_told_what_it_can_still_do", async () => {
   await openMenu(user);
 
   expect(await screen.findByText(/No role\./)).toBeInTheDocument();
-  expect(screen.getByRole("menuitem", { name: "Your tokens" })).toBeInTheDocument();
+  expect(screen.getByRole("menuitem", { name: "Security" })).toBeInTheDocument();
 });
 
 /** A truncated membership claim makes the list incomplete, and the menu says so. */
@@ -340,4 +340,34 @@ test("the_sidebar_groups_records_apart_from_configuration_and_nests_the_integrat
   expect(chain).toHaveAttribute("aria-current", "page");
   expect(groupOf("Vetting chain")).toBe("Configuration");
   expect(within(main).getByRole("list", { name: "Integrations" })).toBeInTheDocument();
+  // GW_AUTH_0072: system access tokens sit with the other administrator-only settings.
+  expect(groupOf("System access tokens")).toBe("Configuration");
+  expect(within(main).getByRole("link", { name: "System access tokens" })).toHaveAttribute(
+    "href",
+    "/configuration/tokens",
+  );
+});
+
+/**
+ * Personal tokens have one entry point, the user menu's Security item, for every session whatever
+ * its roles; the sidebar offers no personal-token link and no session without the administrative
+ * role is offered the system one.
+ *
+ * @SVCs SVC_GW_AUTH_0086
+ */
+test("security_is_in_the_user_menu_for_every_session_and_the_sidebar_has_no_personal_tokens_link", async () => {
+  server.use(
+    http.get("/api/v1/me", () =>
+      HttpResponse.json({ username: "nobody", roles: [], claimsTruncated: false }),
+    ),
+  );
+  const user = userEvent.setup();
+  renderLayout("/security/tokens");
+  const main = await screen.findByRole("navigation", { name: "Main" });
+  expect(within(main).queryByRole("link", { name: /tokens/i })).not.toBeInTheDocument();
+  expect(screen.getByText("Security · Personal access tokens")).toBeInTheDocument();
+
+  await openMenu(user);
+  expect(await screen.findByRole("menuitem", { name: "Security" })).toBeInTheDocument();
+  expect(screen.queryByRole("menuitem", { name: "Your tokens" })).not.toBeInTheDocument();
 });

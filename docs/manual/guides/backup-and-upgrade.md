@@ -103,16 +103,14 @@ flag. That has two consequences for a rollout:
 2. **A migration is not reversible by restarting the old image.** Roll back by
    restoring the pair, not by redeploying the previous tag.
 
-!!! warning "Before 1.0.0 there is no migration path at all"
+!!! info "Schema changes arrive as additional migrations"
 
-    Until 1.0.0 the schema is a single migration that is *edited in place*, so its
-    checksum changes between versions and Flyway refuses to start against a database
-    created by a different build. Upgrading a pre-1.0 deployment means recreating the
-    database, which means losing its state. Pre-1.0 deployments are for evaluation, and
-    this is what that means in practice.
-
-    From 1.0.0 the initial migration freezes and later changes arrive as additional
-    migrations, which is when the procedure below starts to be the whole story.
+    The schema is a chain of Flyway migrations, applied in order on startup, and an
+    applied migration is never edited, so a database created by an earlier build is
+    upgraded in place rather than recreated. A migration that tightens a constraint
+    or moves data says in its release notes what becomes of rows that violate it.
+    Take the backup first all the same: a migration is not reversible by restarting
+    the old image.
 
 ### The procedure
 

@@ -55,7 +55,7 @@ export const ServingDark: Story = {
     const body = within(canvasElement.ownerDocument.body);
     await expect(
       within(await body.findByRole("group", { name: "Expires" })).getByRole("button", {
-        name: "No expiry",
+        name: "1 year",
       }),
     ).toHaveAttribute("aria-pressed", "false");
   },
