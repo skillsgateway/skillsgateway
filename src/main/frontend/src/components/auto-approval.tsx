@@ -34,7 +34,6 @@ type Mode = NonNullable<AutoApprovalView["mode"]>;
 
 const ALLOWED_BY: Record<AllowedBy, string> = {
   "internal-source": "Internal source",
-  hosted: "Hosted on this gateway",
   exemption: "Administrator exemption",
   "awaiting-second-administrator": "Waiting for a second administrator",
   none: "Not allowed",
@@ -86,8 +85,7 @@ function lapsed(value: string | undefined): boolean {
 
 /** What the card's header says: whether this marketplace's content is published with no person today. */
 function status(view: AutoApprovalView): { label: string; variant: "default" | "secondary" | "outline" } {
-  const effective =
-    view.allowedBy === "internal-source" || view.allowedBy === "hosted" || view.allowedBy === "exemption";
+  const effective = view.allowedBy === "internal-source" || view.allowedBy === "exemption";
   if (!view.enabled || !effective) return { label: "Not approved automatically", variant: "outline" };
   if (view.mode === "on") return { label: "Approved automatically", variant: "default" };
   if (view.mode === "dry-run") return { label: "Dry run: recorded, not published", variant: "secondary" };

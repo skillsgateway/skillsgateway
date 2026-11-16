@@ -875,7 +875,7 @@ test("activity_loads_older_entries_through_the_cursor", async () => {
 
 
 /** A marketplace just registered: nothing ingested yet, so its URL may still be corrected. */
-const unsnapshotted: Schemas["MarketplaceView"] = { ...marketplace, origin: "upstream", snapshots: [] };
+const unsnapshotted: Schemas["MarketplaceView"] = { ...marketplace, snapshots: [] };
 
 /**
  * The correction is offered while nothing has been ingested; the server's refusal is shown in the

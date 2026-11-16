@@ -51,7 +51,7 @@ export const LastUsed: StoryObj<typeof TokenTable> = {
 
 /**
  * Every kind of reach the list has to say in words: every marketplace, one, many (shortened, the
- * whole list one hover or a screen-reader read away), and a token that may also publish.
+ * whole list one hover or a screen-reader read away).
  */
 export const Reach: StoryObj<typeof TokenTable> = {
   render: () => <TokenTable tokens={scopedTokenViews} onRevoke={() => {}} />,
@@ -61,9 +61,6 @@ export const Reach: StoryObj<typeof TokenTable> = {
       within(canvas.getByRole("row", { name: /unscoped-laptop/ })).getByText("every marketplace"),
     ).toBeInTheDocument();
     await expect(within(canvas.getByRole("row", { name: /ci-many/ })).getByText(/\+2 more/)).toBeInTheDocument();
-    await expect(
-      within(canvas.getByRole("row", { name: /publisher/ })).getByText("publishes to: tools-hosted"),
-    ).toBeInTheDocument();
   },
 };
 

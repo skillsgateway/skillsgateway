@@ -396,8 +396,7 @@ test("a_session_with_no_role_can_create_a_limited_token_for_marketplaces_it_can_
 
 /**
  * Reach is stated in words for every row: "every marketplace" is a sentence, not an empty cell; a
- * long list is shortened with the whole of it still readable; a publish scope appears only where
- * one exists.
+ * long list is shortened with the whole of it still readable.
  *
  * @SVCs SVC_GW_AUTH_0098
  */
@@ -408,7 +407,6 @@ test("the_list_states_each_tokens_reach_in_words", async () => {
 
   const unscoped = screen.getByRole("row", { name: /unscoped-laptop/ });
   expect(within(unscoped).getByText("every marketplace")).toBeInTheDocument();
-  expect(within(unscoped).queryByText(/publishes to/)).not.toBeInTheDocument();
 
   const one = screen.getByRole("row", { name: /ci-corp-only/ });
   expect(within(one).getByText("corp-marketplace")).toBeInTheDocument();
@@ -421,9 +419,6 @@ test("the_list_states_each_tokens_reach_in_words", async () => {
   expect(within(many).getByText("docs")).toBeInTheDocument();
   expect(within(many).getByText(/\+2 more/)).toHaveTextContent("+2 more: infra, tools");
   expect(within(many).getByTitle("corp-marketplace, data, docs, infra, tools")).toBeInTheDocument();
-
-  const publisher = screen.getByRole("row", { name: /publisher/ });
-  expect(within(publisher).getByText("publishes to: tools-hosted")).toBeInTheDocument();
 });
 
 /**

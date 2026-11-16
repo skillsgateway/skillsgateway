@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAccess, useLedgerTotal, useMarketplaces } from "@/api/queries";
+import { FormerHostedNotice } from "@/components/former-hosted-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -68,7 +69,7 @@ function ledgerEntries(
  * Gateway overview: what is registered, what awaits review, and what has been fetched. The ledger
  * card is a reader's only: for anyone else it would be a count that never resolves.
  *
- * @Requirements GW_INGEST_0007, GW_AUTH_0065
+ * @Requirements GW_INGEST_0007, GW_AUTH_0065, GW_AUTH_0091
  */
 export function OverviewPage() {
   const marketplaces = useMarketplaces();
@@ -83,6 +84,7 @@ export function OverviewPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Gateway Overview</h1>
+      <FormerHostedNotice />
       <div className="space-y-4">
         <SectionCard
           icon={<Store className="size-4" aria-hidden />}

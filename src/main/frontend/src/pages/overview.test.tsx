@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router-dom";
 import { expect, test } from "vitest";
@@ -72,4 +72,67 @@ test("overview_has_no_access_tokens_card_and_reads_no_tokens", async () => {
   expect(screen.queryByRole("link", { name: "Manage tokens" })).not.toBeInTheDocument();
   server.events.removeListener("request:start", listener);
   expect(reads).toEqual([]);
+});
+
+const FORMER = [
+  {
+    name: "corp-skills",
+    location: "/var/lib/skills-gateway/hosted/corp-skills.git",
+    lastCommitAt: "2026-10-01T09:30:00Z",
+    headSha: "3f9c2ab",
+  },
+  { name: "tools", location: "s3://bucket/gateway/hosted/tools/" },
+];
+
+/**
+ * An administrator is told, on Overview, how many repositories the removed hosting feature left in
+ * the data store and where each is, with no control that deletes one; and is told nothing when
+ * there are none.
+ *
+ * @SVCs SVC_GW_AUTH_0113
+ */
+test("an_administrator_is_told_which_former_hosted_repositories_remain", async () => {
+  server.use(http.get("/api/v1/storage/former-hosted-repositories", () => HttpResponse.json(FORMER)));
+  renderPage();
+
+  const notice = await screen.findByRole("status", { name: "Former hosted repositories" });
+  expect(notice).toHaveTextContent("This gateway no longer hosts marketplaces");
+  expect(notice).toHaveTextContent("2 repositories from the former hosting feature are still in its data store");
+  expect(notice).toHaveTextContent("corp-skills");
+  expect(notice).toHaveTextContent("/var/lib/skills-gateway/hosted/corp-skills.git");
+  expect(notice).toHaveTextContent("3f9c2ab");
+  expect(notice).toHaveTextContent("s3://bucket/gateway/hosted/tools/");
+  expect(within(notice).queryByRole("button")).not.toBeInTheDocument();
+});
+
+/** @SVCs SVC_GW_AUTH_0113 */
+test("nothing_is_shown_when_no_former_hosted_repository_remains", async () => {
+  renderPage();
+  expect(await screen.findByRole("heading", { name: "Gateway Overview" })).toBeInTheDocument();
+  expect(screen.queryByRole("status", { name: "Former hosted repositories" })).not.toBeInTheDocument();
+});
+
+/**
+ * The list is an administrator's: any other session makes no request for it.
+ *
+ * @SVCs SVC_GW_AUTH_0113
+ */
+test("a_session_without_the_administrative_role_makes_no_request_for_the_list", async () => {
+  server.use(
+    http.get("/api/v1/me", () =>
+      HttpResponse.json({ username: "ada", roles: [], claimsTruncated: false, version: "0.3.0" }),
+    ),
+  );
+  const reads: string[] = [];
+  const listener = ({ request }: { request: Request }) => {
+    const path = new URL(request.url).pathname;
+    if (path.startsWith("/api/v1/storage")) reads.push(path);
+  };
+  server.events.on("request:start", listener);
+  renderPage();
+  expect(await screen.findByRole("heading", { name: "Gateway Overview" })).toBeInTheDocument();
+  await screen.findAllByText(/marketplaces/);
+  server.events.removeListener("request:start", listener);
+  expect(reads).toEqual([]);
+  expect(screen.queryByRole("status", { name: "Former hosted repositories" })).not.toBeInTheDocument();
 });

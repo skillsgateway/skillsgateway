@@ -467,7 +467,7 @@ export function MarketplaceSettingsPage() {
             <dt className="font-medium">Registered by</dt>
             <dd>{marketplace.registeredBy ?? "—"}</dd>
           </dl>
-          {isAdmin && marketplace.origin !== "hosted" && marketplace.url ? (
+          {isAdmin && marketplace.url ? (
             <div className="mt-4">
               <EditMarketplaceUrl
                 name={marketplace.name ?? ""}

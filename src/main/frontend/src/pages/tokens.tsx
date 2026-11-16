@@ -41,15 +41,12 @@ const REACH_NAMES_SHOWN = 3;
 
 /**
  * What a token can fetch, in words (GW_AUTH_0080): "every marketplace" for an unscoped token
- * rather than an empty cell, the names for a scoped one, and the hosted marketplaces it may
- * publish to only where it has any (the API grants none by default, so "none" would be noise on
- * every row).
+ * rather than an empty cell, and the names for a scoped one.
  *
  * @Requirements GW_AUTH_0080
  */
 export function TokenReach({ token }: { token: TokenView }) {
   const scopes = sortedNames(token.scopes ?? []);
-  const pushes = sortedNames(token.pushScopes ?? []);
   const shown = scopes.slice(0, REACH_NAMES_SHOWN);
   const rest = scopes.slice(REACH_NAMES_SHOWN);
   return (
@@ -70,9 +67,6 @@ export function TokenReach({ token }: { token: TokenView }) {
           ) : null}
         </span>
       )}
-      {pushes.length > 0 ? (
-        <div className="text-xs text-muted-foreground">publishes to: {pushes.join(", ")}</div>
-      ) : null}
     </div>
   );
 }
