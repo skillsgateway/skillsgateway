@@ -8,7 +8,7 @@ cleartext-persistence check. Skills: `design-conventions`, `ui-screenshots`,
 
 ## 1. Requirements
 
-- [ ] 1.1 Add `GW_AUTH_0071` to `GW_AUTH_0078`, amend `GW_AUTH_0024`, and add `SVC_GW_AUTH_0086` to `SVC_GW_AUTH_0094` to `docs/reqstool/` (done at proposal time; verify with `reqstool status local -p docs/reqstool` after a `clean` build).
+- [x] 1.1 Add `GW_AUTH_0071` to `GW_AUTH_0078`, amend `GW_AUTH_0024`, and add `SVC_GW_AUTH_0086` to `SVC_GW_AUTH_0094` to `docs/reqstool/` (done at proposal time; verify with `reqstool status local -p docs/reqstool` after a `clean` build).
 
 ## 2. Backend: scope list (`SVC_GW_AUTH_0092`, `GW_AUTH_0076`)
 
@@ -56,6 +56,6 @@ Trust-boundary-adjacent: apply the `old-coder` discipline (tests fail first, adv
 ## 7. Docs, screenshots, gates
 
 - [x] 7.1 Update `docs/manual/reference/portal.md` (Navigation, User menu, Access tokens, new System access tokens, status view) and `docs/manual/reference/api/tokens.md` (scopes route; replace the "minted by driving the API" note). `mkdocs build --strict`.
-- [ ] 7.2 Storybook stories for the new page and panel; before/after screenshots for the PR body (`.claude/skills/ui-screenshots`; owner sees each before upload). `impeccable` audit.
-- [ ] 7.3 Run all gates once after the last edit; write `evidence.md` with commands, result tails and commit SHA.
-- [ ] 7.4 `/opsx:archive` as the final commit.
+- [x] 7.2 Storybook stories for the new page and panel; before/after screenshots for the PR body (`.claude/skills/ui-screenshots`; owner sees each before upload). `impeccable` audit.
+- [x] 7.3 Run all gates once after the last edit; write `evidence.md` with commands, result tails and commit SHA.
+- [x] 7.4 `/opsx:archive` as the final commit.
