@@ -476,22 +476,68 @@ then 6 in `DevAuthTests` and `LicensePolicyTests`, each with
 `NoHttpResponseException` from the Podman API socket. The first pair passed
 5/5 when run alone. The third run, unchanged, is the one recorded.
 
+### Review fixes (R14–R22)
+
+The review of PR #879 and the verification of its findings. Each fix's test was run failing before
+its implementation (a compile failure was followed by a behavioural failure where one could be
+shown), then passing; each has a mutant.
+
+| Revision | Test | Seen failing | Mutant |
+| --- | --- | --- | --- |
+| R14 | `SurfaceComparisonTests.aChangedConfigurationFileIsChangedEvenWhereNoReaderReadsIt` | inert | M41, M84 |
+| R15 | `MachineApiScopeTests.a_registration_credential_cannot_turn_on_automatic_approval_and_registers_nothing` | 201 | M80 |
+| R16 | `AutoApprovalTests.bulkWithdrawalTurnsAutomaticApprovalOffWhereItWithdrew` | still on | M81 |
+| R17 | `AutoApprovalServiceTests.aSurfaceThatCannotBeComparedKeepsTheSnapshotHeldUnderItsOwnReason` | `surface-changed` | M82 |
+| R18 | `RegistrationAutoApprovalTests.aSettingThatFailsAfterRegistrationIsReportedOnTheRegisteredMarketplace` | exception escaped | M83 |
+| R19 | `AutoApprovalServiceTests.theEvidenceIsCapturedBeforeTheApprovalItRecords`, `aSettingTurnedOffDuringTheAttemptPublishesNothing`, `aFailureToPublishIsNotRecordedAsAGateRefusal` | approve before view; APPROVED; `gate-refused` | M85, M86 |
+| R20 | `AutoApprovalTests.aDeclaredAutomaticApprovalAttemptsTheHeldSnapshot` | held, `not-allowed: none` | M87 |
+| R21 | `AutoApprovalSettingEnforceTests.aPersonSignedInUnderTheReconcilersNameCannotGrant` | no exception | M88 |
+| R22 | `AutoApprovalTests.anInternalUpstreamThatRedirectsOutOfItsRepositoryStaysHeld`, `aRedirectToALookalikeRepositoryStaysHeld` | the redirected content was APPROVED | M89–M92 |
+
+```text
+$ bash openspec/changes/marketplace-auto-approval/mutants.sh
+...
+M90-lookalike-within-repository killed
+M91-move-not-noticed killed
+M92-move-not-stored killed
+92 mutants run, all killed
+```
+
 ## Final run
 
-One fresh run of every gate after the last code edit, at commit `182ee9d1`.
+One fresh run of every gate after the last code edit, at commit `da04dff8`.
+
+`./mvnw clean verify` ran green except for one class. DevAuthTests could not start its database
+container: the podman API socket gave no response (`NoHttpResponseException`), which happened in
+five consecutive runs, four of them in DevAuthTests and one in RevetEnforceTests, and survived a
+restart of the podman machine. No test failed an assertion. DevAuthTests was then run on its own
+through `surefire:test`, which compiles nothing and replaces only that class's report. `pnpm verify`
+ran the UI gates and the annotation merge that the stopped Maven run never reached, and the boot jar
+was packaged with nothing to compile.
 
 ```text
 $ ./mvnw clean verify
-[INFO] Tests run: 1357, Failures: 0, Errors: 0, Skipped: 9
+[ERROR] Tests run: 1368, Failures: 0, Errors: 3, Skipped: 9
+  (DevAuthTests: Container startup failed for image postgres:18.6-alpine
+   caused by NoHttpResponseException: localhost:2375 failed to respond)
+
+$ ./mvnw -q surefire:test -Dtest=DevAuthTests
+DevAuthTests: 3 tests, 0 failures, 0 errors
+
+$ (cd src/main/frontend && pnpm verify)
+      Tests  287 passed (287)
+wrote target/reqstool/annotations-combined.yml
+
+$ ./mvnw -DskipTests package
+[INFO] Nothing to compile - all classes are up to date.
 [INFO] BUILD SUCCESS
-[INFO] Total time:  05:04 min
 
 $ (cd src/main/frontend && pnpm test:stories)
  Test Files  24 passed (24)
       Tests  133 passed (133)
 
 $ (cd src/main/frontend && pnpm e2e)
-  31 passed (1.9m)
+  31 passed (1.8m)
 
 $ reqstool status local -p docs/reqstool
 INCOMPLETE (0)
@@ -501,5 +547,8 @@ $ openspec validate --all --strict
 Totals: 30 passed, 0 failed (30 items)
 
 $ mkdocs build --strict
-INFO    -  Documentation built in 1.21 seconds
+INFO    -  Documentation built in 1.16 seconds
 ```
+
+The previous fully green `./mvnw clean verify`, before the review fixes, was at `182ee9d1`: 1357
+tests, 0 failures, 0 errors.
