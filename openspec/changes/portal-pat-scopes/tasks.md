@@ -42,6 +42,6 @@ touched pages; the wizard and personal tokens page are not new pages, so no crit
 
 - [x] 7.1 `docs/manual/reference/portal.md` (personal access tokens, Connect a client) and `api/tokens.md` (catalog name field). `mkdocs build --strict`.
 - [x] 7.2 `/impeccable audit` and `harden` on the personal tokens page and the wizard; findings fixed or dismissed with a reason in the PR body.
-- [ ] 7.3 Before/after screenshots, fixture data only, left in a folder (the owner approves every image before upload).
-- [ ] 7.4 All gates once after the last edit; `evidence.md` with commands, result tails and commit SHA.
+- [x] 7.3 Before/after screenshots, fixture data only, left in a folder (the owner approves every image before upload).
+- [x] 7.4 All gates once after the last edit; `evidence.md` with commands, result tails and commit SHA.
 - [ ] 7.5 `/opsx:archive` as the final commit.
