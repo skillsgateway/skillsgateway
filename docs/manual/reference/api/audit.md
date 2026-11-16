@@ -172,11 +172,17 @@ the acting OIDC principal.
 | `token-scopes-changed` | The owner changed the marketplaces a [personal access token may fetch](tokens.md#patch-tokensid), in the same transaction as the change. The actor is the owner. | `token {id} '{name}' scopes {before} -> {after}`, each side the sorted names in brackets, or `every marketplace` in words when the token fetches them all. |
 | `machine-credential-scopes-changed` | An administrator [changed the API scopes](tokens.md#patch-apiv1tokensmachineid) of a machine API credential, in the same transaction as the change. | `credential {id} '{name}' principal=… scopes {before} -> {after}`, each side the sorted scope names in brackets. |
 | `principal-tokens-revoked` | An administrator revoked every live personal token of a principal. | `principal=… tokens=[{id}, …]`. |
-| `ingest-failed` | An ingest attempt failed, whatever triggered it. The principal is whoever or whatever triggered it: a person, `scheduler`, `webhook`, or the pushing principal. | The reason, root cause and next step, in one line. |
+| `ingest-failed` | An ingest attempt failed, whatever triggered it. The principal is whoever or whatever triggered it: a person, `scheduler` or `webhook`. | The reason, root cause and next step, in one line. |
 | `marketplace-upstream-unreachable` | A marketplace declared in the estate was registered, or had its URL corrected, although its upstream could not be read. The principal is `config-reconciler`. | As above. |
 | `marketplace-url-changed` | An upstream marketplace's URL was [corrected](marketplaces.md#put-marketplacesnameurl) before its first snapshot. | `from=<previous> to=<new>`, plus ` credential=<prefix>` when an upstream credential applies. |
 | `marketplace-removed` | A marketplace was [removed](marketplaces.md#delete-marketplacesname). Its withdrawals follow as `snapshot-revoked` and `snapshot-unpublished`. | `withdrew {n} approved snapshot(s); reason: …`. |
-| `marketplace-push-scopes-removed` | The same removal took the name out of tokens' publication grants. Written only when a token held one. | `tokens=[{id}, …]`. |
+
+Four kinds belonged to hosted marketplaces and are **no longer written**:
+`marketplace-pushed`, `marketplace-lineage-rewritten`, `marketplace-push-ingest-failed`
+and `marketplace-push-scopes-removed`. The ledger is append-only, so entries of those
+kinds written before the removal stay, except the entries recorded under a hosted
+marketplace's own identity, which the upgrade deleted with it
+([Removing hosted marketplaces](../../guides/removing-hosted-marketplaces.md)).
 
 Reads of the ledger itself record **nothing**, deliberately: an exporter polling
 on a cursor loop would otherwise append one entry per poll, and that entry is

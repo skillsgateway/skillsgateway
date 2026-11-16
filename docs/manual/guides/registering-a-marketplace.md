@@ -5,10 +5,11 @@ to. It is the first trust boundary. It reads the upstream's list of references,
 to confirm the gateway can read it and has a default branch to pin, and it
 fetches no content.
 
-If the skills are your organisation's own and there is no upstream to point at,
-register a **hosted** marketplace instead and push to the gateway directly —
-see [Publishing first-party skills](publishing-first-party-skills.md). The rest
-of this page is about upstream marketplaces.
+If the skills are your organisation's own, keep them on a forge — GitHub, Gitea,
+GitLab — and register that repository here; a private one works through an
+[upstream credential](private-upstreams.md). The gateway does not host
+marketplaces ([ADR 0024](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0024-the-gateway-does-not-host-marketplaces.md));
+if yours did, see [Removing hosted marketplaces](removing-hosted-marketplaces.md).
 
 ## In the portal
 
@@ -256,9 +257,6 @@ carry over.
     - **Fetch grants carry over.** A token scoped to fetch `acme` fetches
       whichever marketplace is called `acme` now. That is what keeps clients
       working; revoke a token that should not reach the new one.
-    - **Publication grants do not.** Removal takes `acme` out of every token's
-      push scope, and the ledger names the tokens. A publisher of the new `acme`
-      needs a token granted on it.
     - **Approver grants do not, in either direction.** Grant again on the new
       marketplace. A grant on the new one does not reach the removed
       marketplace's snapshots or waivers, which only an administrator can open.
@@ -292,9 +290,8 @@ $ curl -X POST localhost:8080/api/v1/marketplaces \
                          "expiresAt":"2027-01-30T00:00:00Z"}}'
 ```
 
-This works only for a URL under a configured internal prefix, or a hosted
-marketplace; anything else is refused with `409` before anything is
-registered. To opt in a marketplace outside the prefixes, register it, then
+This works only for a URL under a configured internal prefix; anything else is
+refused with `409` before anything is registered. To opt in a marketplace outside the prefixes, register it, then
 turn automatic approval on with an exemption on its Settings page. Nothing is published
 automatically while the deployment's mode is `off`, which is the default. See
 [Automatic approval](approving-snapshots.md#automatic-approval).

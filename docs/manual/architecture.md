@@ -598,12 +598,11 @@ reference transitions at all — see
   built-in cap and an explicit actor type on every ledger entry; a portal
   screen for provisioning one is deferred, so the first is still minted from a
   browser session.
-- *Implemented:* first-party hosting — a marketplace the gateway hosts itself,
-  published to by authenticated git push on a separate endpoint into a separate
-  origin repository under a push scope no existing token holds, with one
-  lineage, forward-only by default, and the same quarantine, vetting and
-  approval gate as fetched content (GW_FACADE_0006–GW_INGEST_0017, ADR 0007); auto-approval
-  for trusted internal publishers stays parked per ADR 0006.
+- *Removed:* first-party hosting. A marketplace the gateway hosted itself, pushed
+  to on a separate endpoint, existed from ADR 0007 until
+  [ADR 0024 — The gateway does not host marketplaces](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0024-the-gateway-does-not-host-marketplaces.md),
+  which keeps an organisation's own skills on a forge registered as an upstream.
+  See [Removing hosted marketplaces](guides/removing-hosted-marketplaces.md).
 - *Implemented:* a pluggable git storage backend — the `GitStorage` seam with a
   JGit DFS implementation over an S3-compatible bucket beside the filesystem
   one, reference transitions made atomic by a conditional write on a

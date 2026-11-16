@@ -170,12 +170,11 @@ pointer; the page it points at is where the mechanism is explained.
     and the interfaces it reaches, and the
     [`executable-surface`](vetting.md#executable-surface) vetter flags each one.
 
-**Hosted marketplace**
-:   A marketplace whose content is pushed straight to the gateway rather than
-    fetched, so it has **no upstream** and takes no clone URL. Everything after
-    the push is unchanged: quarantined, vetted, held, and served only once
-    somebody approves it. See
-    [Publishing first-party skills](../guides/publishing-first-party-skills.md).
+**Hosted marketplace** *(removed)*
+:   A marketplace whose content was pushed straight to the gateway rather than
+    fetched. The gateway no longer hosts marketplaces: keep your own skills on a
+    forge and register that repository as an upstream. See
+    [Removing hosted marketplaces](../guides/removing-hosted-marketplaces.md).
 
 **Ingestion**
 :   Cloning an upstream default branch into quarantine and pinning the tip
@@ -197,8 +196,7 @@ pointer; the page it points at is where the mechanism is explained.
 
 **Marketplace**
 :   A registered upstream git repository — in the Claude Code sense, one
-    containing `.claude-plugin/marketplace.json` — or a hosted marketplace,
-    which has no upstream at all. Its name is its identity in the portal, the
+    containing `.claude-plugin/marketplace.json`. Its name is its identity in the portal, the
     API and the facade URL. See
     [Registering a marketplace](../guides/registering-a-marketplace.md).
 
@@ -267,10 +265,9 @@ pointer; the page it points at is where the mechanism is explained.
     [The vetter contract](vetting.md#the-vetter-contract).
 
 **Scope** (of a token)
-:   Three separate dimensions with three different empty values: `scopes`
-    (fetch through the facade), `pushScopes` (publish) and `apiScopes` (the
-    control plane). See
-    [Three scope dimensions](../reference/api/tokens.md#three-scope-dimensions-three-different-empty-values).
+:   Two separate dimensions with two different empty values: `scopes` (fetch
+    through the facade) and `apiScopes` (the control plane). See
+    [Two scope dimensions](../reference/api/tokens.md#two-scope-dimensions-two-different-empty-values).
 
 **Skill**
 :   A unit of agent capability — a `SKILL.md` directory in the open Agent Skills

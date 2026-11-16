@@ -171,16 +171,12 @@ receive-pack factory, so no `ReceivePack` can be created at all. `git push` to
 `/git/**` receives the standard "service not enabled" rejection, whatever the
 credential.
 
-There is no write-side endpoint, filter or hook **on this servlet** to
-misconfigure. This is a structural guarantee, not a policy one.
-
-The gateway does accept a push, for marketplaces it
-[hosts itself](../guides/publishing-first-party-skills.md) — on `/publish/**`,
-which is a different servlet resolving a different repository under a different
-token scope, and which cannot reach a published repository any more than this
-one can construct a `ReceivePack`. See
-[ADR 0007 — First-party hosting and the publish endpoint](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0007-first-party-hosting-and-the-publish-endpoint.md) for why the two are separate objects rather than one
-with a mode flag.
+There is no write-side endpoint, filter or hook to misconfigure, here or
+anywhere else in the gateway: nothing accepts a push. This is a structural
+guarantee, not a policy one. (A push endpoint, `/publish/**`, existed for hosted
+marketplaces until [ADR 0024 — The gateway does not host marketplaces](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0024-the-gateway-does-not-host-marketplaces.md)
+removed it; it is no longer routed and answers as any path the gateway does not
+serve.)
 
 ## Auditing
 
@@ -310,5 +306,5 @@ How to deploy the check across a fleet is in
 | 401 on every request | Token missing, mistyped, or revoked. Remember the value goes in the **password** field. |
 | 404 for a marketplace you registered | No snapshot has ever been approved, so no published repository exists. |
 | 404 with an odd name | The name failed `^[a-z0-9][a-z0-9_-]{0,62}$` — the character set, or longer than 63 characters. |
-| `git push` rejected | Expected — the facade is read-only by construction. Publishing to a hosted marketplace goes to `/publish/{name}`. |
+| `git push` rejected | Expected — the facade is read-only by construction, and the gateway accepts no push anywhere. Keep your own skills on a forge and register it as an upstream. |
 | Client keeps getting an old SHA | Also expected. The published ref moves only on approval. |

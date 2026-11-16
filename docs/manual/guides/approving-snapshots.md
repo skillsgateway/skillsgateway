@@ -646,8 +646,6 @@ Automatic approval takes effect only for an internal source:
 
 - the clone URL is under one of
   [`skills-gateway.approval.auto.internal-prefixes`](../reference/configuration.md#automatic-approval);
-- or the marketplace is [hosted](publishing-first-party-skills.md) on the
-  gateway;
 - or an administrator grants an **administrator exemption**, a dated
   exception with its own reason, for a marketplace outside the prefixes.
 

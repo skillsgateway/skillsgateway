@@ -26,9 +26,8 @@ C4Container
         Container(spa, "Admin portal", "React, Vite", "Served from the same jar at / behind OIDC")
         Container(api, "Admin API", "Spring MVC, /api/**", "Registration, ingestion, approval, provenance, tokens, ledger read")
         Container(facade, "Git facade", "JGit GitServlet, /git/**", "Read-only smart-HTTP, PAT auth, receive-pack disabled")
-        Container(publish, "Publish endpoint", "JGit GitServlet, /publish/**", "Push into a hosted marketplace's origin, PAT push scope")
         ContainerDb(db, "PostgreSQL", "Flyway, JdbcClient", "Marketplaces, snapshots, access tokens, append-only fetch_log")
-        ContainerDb(store, "Git store", "Filesystem bare repos", "hosted/, quarantine/ and published/{name}.git")
+        ContainerDb(store, "Git store", "Filesystem bare repos", "quarantine/ and published/{name}.git")
     }
 
     Rel(reviewer, spa, "Uses", "HTTPS")
@@ -239,11 +238,10 @@ the web chain, and it is **stateless**:
   browser session (GW_AUTH_0018) or deliberately provisioned, which is a different
   question from who held it.
 - Receive-pack is disabled by construction on this endpoint, so there is no
-  write path here to reject at runtime. Publication into a gateway-hosted
-  marketplace is a separate boundary — see below.
+  write path here to reject at runtime, and the gateway has no other: nothing
+  accepts a git push.
 - The endpoint speaks the smart protocol only. Plain-file ("dumb HTTP") reads
-  of `info/refs`, `HEAD` or `objects/...` are refused, on this endpoint and on
-  `/publish/**`. Every served-content control hangs off upload-pack: the
+  of `info/refs`, `HEAD` or `objects/...` are refused. Every served-content control hangs off upload-pack: the
   served-ref filter, the want policy and the fetch ledger. Withdrawal removes
   refs rather than objects, so a plain-file read would bypass all of them.
 
@@ -336,7 +334,7 @@ that trust-model change, made deliberately and kept narrow
 The human decision moves from each snapshot to the marketplace: an
 administrator turns automatic approval on, with a reason and an expiry of at
 most 90 days, and four-eyes applies to that grant. The grant takes effect only
-for an internal source (a configured URL prefix, or a hosted marketplace) or
+for an internal source (a configured URL prefix) or
 under an administrator exemption, which is a dated exception a named person
 records.
 
@@ -515,48 +513,7 @@ unknown marketplace, one not in webhook mode, a signature that did not
 verify — is the same `404`, so the endpoint reveals neither why it refused nor
 which marketplace names exist.
 
-## 5. Publication — a publisher's push becomes quarantined content
-
-A marketplace the gateway
-[hosts itself](../guides/publishing-first-party-skills.md) has no upstream: its
-content arrives by `git push` to `/publish/{name}`. That is the only write path
-the gateway has, and four things keep it from being a way around the rest of
-this page.
-
-**It is somewhere else.** A separate servlet, resolving a separate repository,
-behind a separate filter chain. `/git/**` keeps its null receive-pack factory,
-so no push can reach a published repository — not by misconfiguration, because
-there is no shared object to misconfigure ([ADR 0007 — First-party hosting and the publish endpoint](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0007-first-party-hosting-and-the-publish-endpoint.md)).
-
-**It writes to neither quarantine nor published.** A push lands in the
-marketplace's *origin* repository. Ingestion then fetches out of it into
-quarantine exactly as it fetches from an upstream URL, so quarantine keeps the
-property that only the ingestion service writes it — and the
-`refs/snapshots/<sha>` namespace that vetting and approval address content by
-stays out of any external credential's reach.
-
-**The credential is one nobody holds.** Push authority is a token scope
-separate from fetch scopes, and where an absent *fetch* scope means every
-marketplace (the compatibility rule for tokens predating scoping), an absent
-*push* scope means none. No token issued before this existed can publish, and
-no token can be granted publication to everything by omission. Only someone
-with authority over the marketplace, an administrator or its approver, can mint
-the scope; any other session asking for it is refused and gets no token. A push
-for a marketplace outside the scope answers exactly as one for a marketplace
-that does not exist.
-
-**A publisher may move one lineage, forward.** Only `refs/heads/main` may be
-updated; no ref may be deleted; history may not be rewritten unless the
-marketplace was registered saying it may — and when it may, both tips land on
-the ledger, so "the lineage under that approved snapshot was rewritten" stays
-answerable.
-
-What a push does **not** do is shorten the pipeline. The commit is quarantined,
-manifest-checked, vetted and held like anything fetched, and is served only
-after a human approves it. First-party content removes a redundant system, not
-the review.
-
-## 6. Roles — what an authenticated session may do
+## 5. Roles — what an authenticated session may do
 
 Authentication says who a session is; the role model says what it may do.
 Three roles, enforced at the REST API by an explicit authorization call at the
@@ -565,7 +522,7 @@ top of every privileged endpoint:
 | Role | Scope | Authority |
 | --- | --- | --- |
 | `admin` | global | Every operation, including managing grants. |
-| `approver` | one marketplace | Ingest, approve, reject, re-vet, waive, mint a push scope — for that marketplace only. The owning marketplace is resolved from the addressed snapshot or waiver on the server side, so a bare id cannot reach another marketplace's content. |
+| `approver` | one marketplace | Ingest, approve, reject, re-vet, waive — for that marketplace only. The owning marketplace is resolved from the addressed snapshot or waiver on the server side, so a bare id cannot reach another marketplace's content. |
 | `auditor` | global | Read the ledger, its export, the operational listings. No mutations. |
 
 Enforcement is **deny-by-default and unconditional**: a session with no role
@@ -639,7 +596,7 @@ shown exactly once at creation and cannot be recovered afterwards — not by an
 administrator, not by a database reader.
 
 **Signing secrets are stored in cleartext.** `webhook_subscribers.secret` and a
-hosted marketplace's `marketplaces.webhook_secret` are HMAC keys: signing an
+marketplace's `marketplaces.webhook_secret` are HMAC keys: signing an
 outbound delivery and verifying an inbound push both require the key itself, so a
 hash would make them useless. They are returned exactly once by the call that
 generates them and by no read endpoint afterwards, but they are readable to

@@ -228,8 +228,8 @@ described in [Declarative estate configuration](declarative-estate.md).
 
 ## Storage
 
-On the default `filesystem` backend the quarantine, the published content the
-facade serves, and any hosted marketplaces all live under the data directory —
+On the default `filesystem` backend the quarantine and the published content the
+facade serves live under the data directory —
 `/data` in the image. PostgreSQL records which snapshots exist and which are
 approved, so the volume and the database are one estate: a gateway that restarts
 onto an empty `/data` still reports its snapshots as published and can serve

@@ -33,8 +33,8 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{/*
 Git storage volume source (/data), fail-closed.
 
-There is no safe default. An emptyDir fallback loses the quarantine, published
-and hosted repositories on every pod restart while the database keeps recording
+There is no safe default. An emptyDir fallback loses the quarantine and
+published repositories on every pod restart while the database keeps recording
 those snapshots as published -- an estate the gateway can neither serve nor
 rehydrate. So the install has to say which it wants, and anything else stops the
 render rather than silently producing the lossy one.
@@ -51,10 +51,10 @@ persistentVolumeClaim:
 emptyDir: {}
 {{- else if eq $mode "none" -}}
 {{- if ne .Values.storage.backend "object-store" -}}
-{{- fail (printf "persistence.mode is \"none\" but storage.backend is %q. Keeping no volume is only correct when the bucket is the repository; on the filesystem backend it would leave the gateway with nowhere to put the quarantine, published and hosted repositories at all. Choose \"existingClaim\" or \"ephemeral\", or set storage.backend to \"object-store\"." .Values.storage.backend) -}}
+{{- fail (printf "persistence.mode is \"none\" but storage.backend is %q. Keeping no volume is only correct when the bucket is the repository; on the filesystem backend it would leave the gateway with nowhere to put the quarantine and published repositories at all. Choose \"existingClaim\" or \"ephemeral\", or set storage.backend to \"object-store\"." .Values.storage.backend) -}}
 {{- end -}}
 {{- else -}}
-{{- fail (printf "persistence.mode must be \"existingClaim\", \"ephemeral\" or \"none\" (got %q). Git storage has no safe default: with \"ephemeral\" the quarantine, published and hosted repositories live in an emptyDir and ALL of them are lost when the pod restarts, while the database still records those snapshots as published -- leaving an estate the gateway can neither serve nor rehydrate. Choose \"existingClaim\" and set persistence.existingClaim for any deployment whose content matters; choose \"ephemeral\" only for something you are willing to lose; \"none\" mounts no volume at all and is valid only on storage.backend \"object-store\", where the bucket is the repository." $mode) -}}
+{{- fail (printf "persistence.mode must be \"existingClaim\", \"ephemeral\" or \"none\" (got %q). Git storage has no safe default: with \"ephemeral\" the quarantine and published repositories live in an emptyDir and ALL of them are lost when the pod restarts, while the database still records those snapshots as published -- leaving an estate the gateway can neither serve nor rehydrate. Choose \"existingClaim\" and set persistence.existingClaim for any deployment whose content matters; choose \"ephemeral\" only for something you are willing to lose; \"none\" mounts no volume at all and is valid only on storage.backend \"object-store\", where the bucket is the repository." $mode) -}}
 {{- end -}}
 {{- end -}}
 

@@ -23,7 +23,7 @@ be recovered afterwards.
 
 Create a token for the calling principal.
 
-**Body** — `{name, scopes?, expiresAt?, pushScopes?}`
+**Body** — `{name, scopes?, expiresAt?}`
 
 ```console
 $ curl -X POST localhost:8080/api/v1/tokens \
@@ -33,8 +33,7 @@ $ curl -X POST localhost:8080/api/v1/tokens \
 
 ```json
 {"id":1,"name":"ci-runner","token":"sgw_...","createdAt":"2026-08-17T09:00:00Z",
- "scopes":["acme","catalog"],"expiresAt":"2026-12-31T00:00:00Z","rotatedFrom":null,
- "pushScopes":[]}
+ "scopes":["acme","catalog"],"expiresAt":"2026-12-31T00:00:00Z","rotatedFrom":null}
 ```
 
 `scopes` (GW_AUTH_0006) lists marketplace names the token may fetch — the
@@ -45,20 +44,13 @@ token meant. An out-of-scope fetch answers exactly like a marketplace that
 does not exist, so a scoped token is not a directory of what else the gateway
 governs.
 
-`pushScopes` (GW_FACADE_0007) lists **hosted** marketplaces the token may publish to
-through [`/publish/{name}`](../../guides/publishing-first-party-skills.md), and
-is a different grant from `scopes` in the one way that matters: omitting it
-grants **none**, not all. There is no every-marketplace push scope, so no token
-issued before publication existed can write anything and none can be granted
-publication to everything by forgetting a field. Entries are validated against
-the registered hosted marketplaces at creation. An out-of-scope push answers
-exactly like a marketplace that does not exist, as an out-of-scope fetch does.
-
-Only an administrator or an approver of a marketplace may put it in
-`pushScopes`. A request naming any marketplace the caller neither administers
-nor approves is refused with `403` and issues no token; one unauthorized name
-refuses the whole request rather than being dropped from it. A request without
-`pushScopes` needs no role, as before.
+`pushScopes` was removed with hosted marketplaces, which were the only thing it
+could name. A request that still sends a non-empty list is refused with `400`
+naming the removal, and no token is issued; an empty list is the same as none.
+A token created before the removal keeps its fetch `scopes` exactly, and
+loses only a grant nothing can use: a token that was issued only to publish is
+now an ordinary token that fetches every marketplace, so revoke such tokens
+([Removing hosted marketplaces](../../guides/removing-hosted-marketplaces.md#what-consumers-keep)).
 
 `sessionDerived` on a returned token says the credential came from
 [`POST /api/v1/tokens/session`](#post-apitokenssession) rather than from a
@@ -74,7 +66,7 @@ silently shortened.
 | Status | Cause |
 | --- | --- |
 | 201 | Issued. The `token` field appears in this response and nowhere else, ever. |
-| 403 | A push scope names a marketplace the caller neither administers nor approves. |
+| 400 | The request names `pushScopes`. Hosted marketplaces and push scopes were removed, so the request is refused rather than the field ignored; no token is issued. |
 | 422 | Unknown scope, or lifetime beyond the configured cap. |
 
 ---
@@ -85,12 +77,12 @@ The portal's [Personal access tokens](../portal.md#personal-access-tokens) page 
 [client wizard](../portal.md#connect-a-client) send `scopes` for the marketplaces a
 user ticks and send none for **Every marketplace**, the default. They never send an
 empty list for a limited choice, because an empty `scopes` grants every
-marketplace. Neither sends `pushScopes`. The catalog is offered by the `name` that
+marketplace. The catalog is offered by the `name` that
 [`GET /api/v1/catalog`](../../guides/virtual-catalog.md#provenance-and-audit)
 reports for the served revision (the configured `skills-gateway.catalog.name`, any
 signed-in caller); that read answers `404` while the catalog is disabled or has no
 revision yet, and the portal then offers no catalog entry. The token list reads each
-token's `scopes` and `pushScopes` from `GET /tokens`.
+token's `scopes` from `GET /tokens`.
 
 ## `PATCH /tokens/{id}`
 
@@ -305,13 +297,12 @@ $ curl -X POST localhost:8080/api/v1/tokens/session \
 ```json
 {"id":9,"name":"my-laptop","token":"sgw_...","createdAt":"2026-08-23T09:00:00Z",
  "scopes":[],"expiresAt":"2026-08-23T17:00:00Z","rotatedFrom":null,
- "pushScopes":[],"sessionDerived":true}
+ "sessionDerived":true}
 ```
 
 | | Session credential | Personal access token |
 | --- | --- | --- |
 | Lifetime | the gateway's, not negotiable | the caller's, capped by `max-ttl` |
-| Publication | never | `pushScopes` if granted |
 | Marked on the ledger | yes, `session-derived` | no |
 | Survives having no browser | no — it is minted from a session | yes |
 
@@ -340,14 +331,13 @@ is not a second credential type: it is an access token whose **API scope list**
 is non-empty, sharing one issue-rotate-revoke-expire lifecycle with everything
 else in this table.
 
-### Three scope dimensions, three different empty values
+### Two scope dimensions, two different empty values
 
 This is the part that is easy to get wrong, so it is stated in one place:
 
 | Dimension | Field | Empty means | Why |
 | --- | --- | --- | --- |
 | Fetch | `scopes` | every marketplace — **unless `apiScopes` is non-empty, in which case nothing** | What every pre-scoping token meant, minus the machine-credential hole |
-| Publish | `pushScopes` | nowhere | Added after scoping existed, so it never had a permissive default |
 | API | `apiScopes` | nothing | Reaching the control plane is a grant and never a baseline |
 
 A credential holding API scopes therefore reaches **no** marketplace through the

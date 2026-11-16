@@ -35,7 +35,7 @@ its ingestion, and which vetters run against it. They carry
 
 | Event | Emitted when |
 | --- | --- |
-| `marketplace.registered` | A marketplace was registered, upstream or hosted. |
+| `marketplace.registered` | A marketplace was registered. |
 | `marketplace.updated` | A registered marketplace changed. Today that is its sync mode; the detail names the new one. |
 | `marketplace.vetter_toggled` | A vetter was enabled or disabled, for one marketplace or across the gateway. |
 | `marketplace.removed` | A marketplace was [removed](registering-a-marketplace.md#removing-a-marketplace). The detail says how many approved snapshots it withdrew, never the reason; each withdrawal is also announced as `marketplace.snapshot.revoked`. |

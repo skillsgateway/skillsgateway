@@ -27,22 +27,20 @@ seam can tell which one answered.
 | --- | --- |
 | **Quarantine** | One `refs/snapshots/{sha}` per ingested commit. **Never reachable through either endpoint.** |
 | **Published** | Exactly one served ref, `refs/heads/main`, plus the `refs/snapshots/{sha}` approval pinned alongside it. Created only by approval. |
-| **Origin** *(hosted only)* | The publisher's own `refs/heads/main`, written by push and read only by ingestion. |
 
 === "`filesystem`"
 
-    Three directories of bare repositories under `skills-gateway.data-dir`:
+    Two directories of bare repositories under `skills-gateway.data-dir`:
 
     | Repository | Path |
     | --- | --- |
     | Quarantine | `{data-dir}/quarantine/{marketplace}.git` |
     | Published | `{data-dir}/published/{marketplace}.git` |
-    | Origin | `{data-dir}/hosted/{marketplace}.git` |
 
 === "`object-store`"
 
-    Three key prefixes in one bucket, which keeps the roles separate for the
-    same reason three directories do. Objects are immutable and content-named;
+    Two key prefixes in one bucket, which keeps the roles separate for the
+    same reason two directories do. Objects are immutable and content-named;
     the reference map is one small `manifest` object per repository, rewritten
     by a conditional write, and that compare-and-swap is the only serialization
     point in the system.
@@ -53,16 +51,14 @@ seam can tell which one answered.
     | `{prefix}/{role}/{marketplace}/wal/{seq}` | One immutable entry per accepted transition |
     | `{prefix}/{role}/{marketplace}/objects/pack/…` | Immutable, content-named packs, durable before anything references them |
 
-    `{role}` is `quarantine`, `published` or `hosted`. Local disk holds only a
+    `{role}` is `quarantine` or `published`. Local disk holds only a
     bounded pack cache; nothing in it is authoritative and deleting it is always
     safe.
 
 The facade resolves repositories through a method that opens only the published
 path and returns nothing unless `refs/heads/main` resolves. There is no code
-path from a facade request to the quarantine tree — nor from a
-[publish](../guides/publishing-first-party-skills.md) request to either
-quarantine or published: it resolves only the origin path, and only for a
-marketplace the gateway hosts.
+path from a facade request to the quarantine tree, and nothing else in the gateway
+accepts a push.
 
 ## Stage 1 — ingestion
 

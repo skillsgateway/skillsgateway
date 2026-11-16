@@ -201,7 +201,19 @@ Action: **Open audit log**.
 Overview carries no tokens card: personal tokens have one home, under
 [Security](#personal-access-tokens) in the user menu.
 
-Data comes from `GET /api/v1/marketplaces` and `GET /api/v1/audit`;
+**Former hosted repositories** (administrators only, temporary) — an alert above the
+cards, shown only while repositories from the removed hosting feature are still in the
+gateway's data store: *This gateway no longer hosts marketplaces. N repositories from
+the former hosting feature are still in its data store; copy each one (`git clone
+<location>`) and then delete the folder.* Each is listed with its name, its location
+(a path, or an object-store key prefix) and, where it can be read, its last commit. It
+has no delete control, it is read from storage each time so it disappears when the folders
+do, and nobody but an administrator makes the request for it. See
+[Removing hosted marketplaces](../guides/removing-hosted-marketplaces.md). Removed two minor
+releases after the release that ships `V3__remove_hosted_marketplaces`.
+
+Data comes from `GET /api/v1/marketplaces`, `GET /api/v1/audit` and, for an administrator,
+`GET /api/v1/storage/former-hosted-repositories`;
 counts are computed in the browser, as there is no summary endpoint. While the
 queries are in flight the chips show an ellipsis.
 
@@ -406,7 +418,7 @@ The heading carries a badge for what automatic approval does today:
 gateway mode `on`), **Dry run: recorded, not published** (the same under mode
 `dry-run`), or **Not approved automatically**. Beneath it, a list gives the
 **Status** (*Off*, or *On until* a date), **Allowed because** (*Internal
-source*, *Hosted on this gateway*, *Administrator exemption*, *Waiting for a
+source*, *Administrator exemption*, *Waiting for a
 second administrator* or *Not allowed*), the **Gateway mode** (*Off*, *Dry
 run* or *On*, each with what it means), who set it and when, the reason, when
 it lapses, and the active administrator exemption with its reason, author and
@@ -1417,9 +1429,7 @@ vendors every marketplace the gateway serves, and cannot fetch a marketplace's o
 address. Anyone signed in can read the list of marketplaces, so a session with no
 role can choose too, and a limit can only narrow what a token reaches. The server
 checks every name: a refusal, such as a marketplace removed after the list was read,
-is shown beneath the form as the API states it. Push scopes (the hosted marketplaces
-a token may publish to) are not offered here; they are role-gated and set through
-[the API](api/tokens.md), and the list below shows them for a token that has any.
+is shown beneath the form as the API states it.
 
 **Create token** stays
 disabled until the name field holds a non-blank value — the name is trimmed before it
@@ -1432,7 +1442,7 @@ block and a clipboard button that flips to a checkmark for two seconds.
 | Column | Contents |
 | --- | --- |
 | Name | The name you gave it. |
-| Reach | **every marketplace** for a token without a limit, otherwise the marketplaces it may fetch by name (the first three, then **+N more** with the rest readable and in the hover title). A token that may publish to hosted marketplaces adds **publishes to:** and their names; the line is absent when it may publish nowhere. |
+| Reach | **every marketplace** for a token without a limit, otherwise the marketplaces it may fetch by name (the first three, then **+N more** with the rest readable and in the hover title). |
 | Created | Creation timestamp. |
 | Last used | How long ago the token last authenticated successfully, or **never**. Hover for the exact instant. |
 | Expires | When the token stops authenticating, or **never**. |
