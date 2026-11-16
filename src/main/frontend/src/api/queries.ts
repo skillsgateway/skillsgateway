@@ -911,11 +911,36 @@ export function useTokens() {
  * page does not offer a lifetime; the setup wizard does, and omitting it means a token that
  * never expires — which is what this endpoint has always meant by an absent expiry.
  */
-export type CreateToken = { name: string; expiresAt?: string };
+export type CreateToken = {
+  name: string;
+  expiresAt?: string;
+  /** Marketplace names the token may fetch; omitted means every marketplace (GW_AUTH_0006). */
+  scopes?: string[];
+};
 
+/**
+ * The virtual catalog's configured name (GW_AUTH_0082): a valid token scope that is readable
+ * nowhere else. The read answers 404 while the catalog is disabled or has no revision yet, which
+ * is no catalog to offer, so the failure is the answer and is neither retried nor shown.
+ */
+export function useCatalogName() {
+  return useQuery({
+    queryKey: ["catalog"],
+    queryFn: () => api<components["schemas"]["CatalogInfo"]>("/api/v1/catalog"),
+    retry: false,
+    select: (info) => info.name ?? null,
+  });
+}
+
+/**
+ * `gcTime: 0`, with the caller resetting the mutation once it holds the value: TanStack Query
+ * keeps a mutation's result in its cache, and a personal token's cleartext must not outlive the
+ * dialog or wizard that shows it (GW_AUTH_0081).
+ */
 export function useCreateToken() {
   const queryClient = useQueryClient();
   return useMutation({
+    gcTime: 0,
     mutationFn: (request: CreateToken) =>
       api<IssuedToken>("/api/v1/tokens", { method: "POST", body: JSON.stringify(request) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tokens"] }),

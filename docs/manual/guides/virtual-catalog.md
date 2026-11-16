@@ -58,7 +58,8 @@ different.
 
 `GET /api/v1/catalog` returns the served revision and its constituents — the
 `(marketplace, SHA)` pairs vendored into it, which are also recorded in the
-catalog commit itself. Fetches of `/git/catalog` land on the audit ledger under
+catalog commit itself — and the catalog's configured `name`, which is also a
+valid [token scope](../reference/api/tokens.md#choosing-marketplaces-in-the-portal). Fetches of `/git/catalog` land on the audit ledger under
 the name `catalog` like any marketplace, and a manual
 `POST /api/v1/catalog/rebuild` (the on-demand repair path) is ledger-recorded with
 the acting identity and requires **admin**

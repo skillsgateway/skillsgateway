@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, within } from "storybook/test";
-import { tokenViews } from "@/test/msw-handlers";
+import { scopedTokenViews, tokenViews } from "@/test/msw-handlers";
 import { IssuedTokenDialog, TokenTable } from "./tokens";
 
 const meta = {
@@ -46,5 +46,23 @@ export const LastUsed: StoryObj<typeof TokenTable> = {
       "datetime",
       "2026-08-14T13:00:00Z",
     );
+  },
+};
+
+/**
+ * Every kind of reach the list has to say in words: every marketplace, one, many (shortened, the
+ * whole list one hover or a screen-reader read away), and a token that may also publish.
+ */
+export const Reach: StoryObj<typeof TokenTable> = {
+  render: () => <TokenTable tokens={scopedTokenViews} onRevoke={() => {}} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      within(canvas.getByRole("row", { name: /unscoped-laptop/ })).getByText("every marketplace"),
+    ).toBeInTheDocument();
+    await expect(within(canvas.getByRole("row", { name: /ci-many/ })).getByText(/\+2 more/)).toBeInTheDocument();
+    await expect(
+      within(canvas.getByRole("row", { name: /publisher/ })).getByText("publishes to: tools-hosted"),
+    ).toBeInTheDocument();
   },
 };

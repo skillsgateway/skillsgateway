@@ -79,6 +79,19 @@ silently shortened.
 
 ---
 
+### Choosing marketplaces in the portal
+
+The portal's [Personal access tokens](../portal.md#personal-access-tokens) page and
+[client wizard](../portal.md#connect-a-client) send `scopes` for the marketplaces a
+user ticks and send none for **Every marketplace**, the default. They never send an
+empty list for a limited choice, because an empty `scopes` grants every
+marketplace. Neither sends `pushScopes`. The catalog is offered by the `name` that
+[`GET /api/v1/catalog`](../../guides/virtual-catalog.md#provenance-and-audit)
+reports for the served revision (the configured `skills-gateway.catalog.name`, any
+signed-in caller); that read answers `404` while the catalog is disabled or has no
+revision yet, and the portal then offers no catalog entry. The token list reads each
+token's `scopes` and `pushScopes` from `GET /tokens`.
+
 ## `GET /tokens`
 
 List the calling principal's tokens. Never returns the hash, and never returns

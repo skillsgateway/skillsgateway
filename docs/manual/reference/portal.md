@@ -709,10 +709,19 @@ Inside the wizard:
    refused by the server and the refusal is shown beneath the field. A token
    minted here is shown in its own field, with a copy button, **only while the
    wizard stays open**; closing it drops the value, and no previously issued
-   token's value is ever shown. No command carries it. The step also says a
-   token created here is not limited to this marketplace: it fetches every marketplace the
-   gateway serves its holder, and git keeps one credential per gateway, so one
-   token serves each marketplace added from here.
+   token's value is ever shown. No command carries it. The step carries the same
+   **Marketplaces** choice as the [Personal access tokens](#personal-access-tokens)
+   page: **Every marketplace**, the default, or **Chosen marketplaces**, which
+   starts with this marketplace ticked and lets you add others. The step says what
+   the token reaches for the choice made, and says it again once the token exists,
+   from what the gateway reports: by default that the token is not limited to this
+   marketplace and fetches every marketplace the gateway serves its holder, and for
+   a limited token that it fetches only the marketplaces named and that any other is
+   answered as if it did not exist. Git keeps one credential per gateway, so the
+   default token serves each marketplace added from here, while a limited token
+   serves only those it names: add a marketplace later and the token must name it
+   too. With the limited choice and nothing ticked the button stays disabled, and
+   the step says no token is created until a marketplace is chosen.
 2. **Store the credential** — two lines for bash or zsh. The first names git's
    `store` helper for this origin only
    (`git config --global 'credential.{origin}.helper' store`), because
@@ -1390,9 +1399,32 @@ token** button posts to `POST /api/v1/tokens`. **Expires** offers the same lifet
 as [Connect a client](#connect-a-client) — 30 days, 90 days, 180 days or 1
 year, with no choice that never expires — and defaults to 30 days; a gateway whose
 [`skills-gateway.tokens.max-ttl`](configuration.md#access-tokens) is shorter refuses
-the longer choices, and the refusal is shown beneath the form. **Create token** stays
+the longer choices, and the refusal is shown beneath the form.
+
+A **Marketplaces** choice below it says which marketplaces the token may fetch.
+**Every marketplace** is the default, as it is for the API, and sends no `scopes`.
+**Chosen marketplaces** opens a **Filter marketplaces** field and a scrolling checklist
+of the registered marketplaces, plus the [virtual
+catalog](../guides/virtual-catalog.md) under its configured name while the gateway is
+serving one (read from [`GET /api/v1/catalog`](api/tokens.md#choosing-marketplaces-in-the-portal)).
+A line beneath the list says how many are chosen and names them, and survives the
+filter hiding a name; **Clear** unticks them all. The list draws at most 200 rows and
+says so when there are more, so typing in the filter is how to reach the rest; a chosen
+name the gateway no longer lists stays a row until it is unticked. If the marketplaces
+cannot be read, the failure is shown with **Try again**. The ticked names are sent as
+`scopes`. A token limited to the catalog fetches the catalog's one repository, which
+vendors every marketplace the gateway serves, and cannot fetch a marketplace's own
+address. Anyone signed in can read the list of marketplaces, so a session with no
+role can choose too, and a limit can only narrow what a token reaches. The server
+checks every name: a refusal, such as a marketplace removed after the list was read,
+is shown beneath the form as the API states it. Push scopes (the hosted marketplaces
+a token may publish to) are not offered here; they are role-gated and set through
+[the API](api/tokens.md), and the list below shows them for a token that has any.
+
+**Create token** stays
 disabled until the name field holds a non-blank value — the name is trimmed before it
-is sent. The response opens a
+is sent — and, with **Chosen marketplaces**, until at least one is ticked: a request
+naming none would grant every marketplace, so it is never sent. The response opens a
 show-once dialog — "This value is shown
 exactly once and cannot be shown again — copy it now. Only a hash is stored." — with the token in a code
 block and a clipboard button that flips to a checkmark for two seconds.
@@ -1400,6 +1432,7 @@ block and a clipboard button that flips to a checkmark for two seconds.
 | Column | Contents |
 | --- | --- |
 | Name | The name you gave it. |
+| Reach | **every marketplace** for a token without a limit, otherwise the marketplaces it may fetch by name (the first three, then **+N more** with the rest readable and in the hover title). A token that may publish to hosted marketplaces adds **publishes to:** and their names; the line is absent when it may publish nowhere. |
 | Created | Creation timestamp. |
 | Last used | How long ago the token last authenticated successfully, or **never**. Hover for the exact instant. |
 | Expires | When the token stops authenticating, or **never**. |

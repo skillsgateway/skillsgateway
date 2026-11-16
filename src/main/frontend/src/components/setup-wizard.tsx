@@ -2,6 +2,7 @@ import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCreateToken } from "@/api/queries";
+import { MarketplaceScopePicker, type ScopeSelection } from "@/components/marketplace-scope-picker";
 import { SegmentedGroup } from "@/components/segmented-group";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LIFETIME, expiryFor, LIFETIMES, type Lifetime } from "@/lib/token-lifetimes";
+import { scopeChoiceValid, scopesFor, wizardReachSentence } from "@/lib/token-scope";
 
 function CopyButton({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = useState(false);
@@ -128,7 +130,7 @@ export function HeldNotice({ marketplace }: { marketplace: string }) {
  * (the server never returns one, and this component never stores one). No command carries it:
  * the credential step reads it at a prompt.
  *
- * @Requirements GW_AUTH_0014, GW_AUTH_0043, GW_AUTH_0062, GW_AUTH_0063
+ * @Requirements GW_AUTH_0014, GW_AUTH_0043, GW_AUTH_0062, GW_AUTH_0063, GW_AUTH_0079, GW_AUTH_0081
  */
 export function SetupWizard({
   marketplace,
@@ -146,11 +148,19 @@ export function SetupWizard({
   const [name, setName] = useState(`${marketplace}-client`);
   const [lifetime, setLifetime] = useState<Lifetime>(DEFAULT_LIFETIME);
   const [cleartext, setCleartext] = useState<string | null>(null);
+  // Every marketplace by default, and not this one: git keeps one credential per gateway, so a
+  // token limited to this marketplace is the one offered for the next, which then answers as if
+  // that marketplace did not exist. Limiting is one click away, starting from this marketplace.
+  const [scope, setScope] = useState<ScopeSelection>({ choice: "every", chosen: [] });
+  // What the server says the created token may fetch: empty is every marketplace. Not the
+  // choice as it stood, so the statement after creation is the token's, not the form's.
+  const [issuedScopes, setIssuedScopes] = useState<string[]>([]);
 
   // Same rule as the tokens page it reuses: the server requires a name (NOT NULL), and a
   // whitespace-only one is no name at all.
   const trimmedName = name.trim();
-  const canCreate = trimmedName.length > 0 && !create.isPending;
+  // A limited choice that names nothing is not creatable: the API would read it as every marketplace.
+  const canCreate = trimmedName.length > 0 && scopeChoiceValid(scope.choice, scope.chosen) && !create.isPending;
 
   const origin = window.location.origin;
   const { protocol, host } = window.location;
@@ -160,11 +170,15 @@ export function SetupWizard({
     event.preventDefault();
     if (!trimmedName) return;
     create.mutate(
-      { name: trimmedName, expiresAt: expiryFor(lifetime) },
+      { name: trimmedName, expiresAt: expiryFor(lifetime), scopes: scopesFor(scope.choice, scope.chosen) },
       {
         onSuccess: (issued) => {
           setCleartext(issued.token ?? null);
+          setIssuedScopes(issued.scopes ?? []);
           setName("");
+          // The mutation would otherwise keep the cleartext for as long as this wizard stays
+          // mounted (GW_AUTH_0081); the value now lives in this component's state alone.
+          create.reset();
         },
         onError: (error) => toast.error(error.message),
       },
@@ -226,6 +240,14 @@ export function SetupWizard({
                     {create.isPending ? "Creating…" : "Create token"}
                   </Button>
                 </div>
+                <MarketplaceScopePicker
+                  value={scope}
+                  onChange={(next) => {
+                    setScope(next);
+                    create.reset();
+                  }}
+                  starting={marketplace}
+                />
                 {create.isError ? (
                   // The one rule this form cannot mirror is the server's lifetime cap, so the
                   // refusal has to be readable where the choice was made rather than only in a
@@ -243,9 +265,13 @@ export function SetupWizard({
               </>
             )}
             <p data-testid="wizard-token-reach" className="text-xs text-muted-foreground">
-              A token created here is not limited to '{marketplace}': it fetches every marketplace
-              this gateway serves you. Git keeps one credential per gateway, so the same token serves every
-              marketplace you add from here.
+              {cleartext || scopeChoiceValid(scope.choice, scope.chosen)
+                ? wizardReachSentence(
+                    cleartext ? issuedScopes : (scopesFor(scope.choice, scope.chosen) ?? []),
+                    marketplace,
+                    cleartext !== null,
+                  )
+                : "No token is created until at least one marketplace is chosen."}
             </p>
           </form>
           <div className="space-y-2">

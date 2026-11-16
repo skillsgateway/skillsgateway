@@ -45,8 +45,9 @@ read the revision. The consequence is stated plainly: the catalog is offered onl
 a revision is being served (`GET /api/v1/catalog` is 404 while disabled or not yet
 generated). A token scoped to a catalog that serves nothing would fetch nothing, so
 withholding the entry loses no working configuration. The picker marks the entry in
-words: it fetches every marketplace the catalog vendors, i.e. choosing it is not
-narrower than "every marketplace" in what it reaches, only in which path it reaches it by.
+words, because it is not a narrow choice: the catalog is one repository vendoring every
+served marketplace, so a catalog-scoped token reads all of their content through that one
+address and cannot fetch a marketplace's own address.
 
 **D3. The control.** `SegmentedGroup` (the shared two-way control) switches between
 *Every marketplace* and *Chosen marketplaces*. The second reveals a filter input and a
@@ -92,6 +93,16 @@ cannot drift. For the default it keeps the existing sentence verbatim, so
 
 **D9. Estate.** Personal tokens are API-managed runtime state (secrets) and stay
 outside `skills-gateway.estate.*`, like PATs generally; nothing here adds an object.
+
+**D10. Hardening from the `/impeccable audit` and `harden` pass** (the personal tokens page, the
+wizard and the picker; the detector reported nothing, these are the verified gaps): the
+"N chosen" line is a polite status so a screen reader hears each change; the list draws at
+most 200 rows and says so (the filter reaches the rest), instead of a virtualised list (D3);
+a chosen name the list no longer holds stays a row until unticked; a failed read of the
+marketplaces is shown with **Try again**. `/impeccable critique` is for new pages and none is
+added. Not done, with reasons: no debounce on the filter (it filters an in-memory list of
+tens), no text-size or RTL work beyond `break-all` on names (marketplace names are a
+restricted ASCII alphabet).
 
 ## Risks / Trade-offs
 

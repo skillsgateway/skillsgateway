@@ -115,3 +115,37 @@ export const TokenMinted: Story = {
     await expect(body.getByTestId("wizard-credential-config")).not.toHaveTextContent(STORY_TOKEN);
   },
 };
+
+/**
+ * The limited choice: the wizard's own marketplace is ticked, can be widened, and the statement of
+ * what the token reaches follows it. Fixture marketplaces only, answered from a stubbed fetch.
+ */
+export const LimitedToThisMarketplace: Story = {
+  args: { marketplace: "corp-marketplace", serving: true, onClose: () => {} },
+  beforeEach: () => {
+    const original = window.fetch;
+    const json = (body: unknown) =>
+      new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
+    window.fetch = async (input, init) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url.endsWith("/api/v1/marketplaces") && !init?.method) {
+        return json(
+          ["corp-marketplace", "data-tools", "docs"].map((name, index) => ({ id: index + 1, name })),
+        );
+      }
+      if (url.endsWith("/api/v1/catalog")) return json({ name: "catalog", sha: "a".repeat(40) });
+      return original(input, init);
+    };
+    return () => {
+      window.fetch = original;
+    };
+  },
+  play: async ({ canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    await userEvent.click(await body.findByRole("button", { name: "Chosen marketplaces" }));
+    await expect(await body.findByRole("checkbox", { name: "corp-marketplace" })).toBeChecked();
+    await expect(body.getByTestId("wizard-token-reach")).toHaveTextContent(
+      "A token created here fetches only 'corp-marketplace';",
+    );
+  },
+};
