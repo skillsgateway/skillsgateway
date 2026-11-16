@@ -263,6 +263,12 @@ public class AutoApprovalService {
             refusal = "revet-disabled: re-vetting is off, so nothing would re-check what is approved";
         } else if (!allowedBy.effective()) {
             refusal = "not-allowed: " + allowedBy.wire();
+        } else {
+            String movedTo = snapshotRepository.upstreamMovedTo(snapshot.id()).orElse(null);
+            if (movedTo != null) {
+                refusal = "redirected: the fetch was redirected to " + movedTo
+                        + ", outside the registered repository, so its URL does not describe this content";
+            }
         }
         if (refusal == null) {
             long newest = snapshotRepository

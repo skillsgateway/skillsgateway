@@ -426,3 +426,13 @@ Made during implementation, a correction of fact:
   exemption is now reached only through the reconciler's own entry point;
   `set` refuses that name with 403 (GW_APPROVAL_0044.4 — Granting automatic approval
   is subject to the four-eyes rule).
+- R22, a gap in design D2 found in the verification of the review of
+  PR #879, fixed with the owner's standing instruction to fix verified
+  findings: internal status was judged on the registered URL, but
+  ingestion follows a same-host redirect, which a forge sends for a
+  transferred repository, so `acme/x` could fetch `someone/x` and be
+  approved automatically. The first request that leaves the registered
+  repository's path is now recorded on the snapshot with its row
+  (`snapshots.upstream_moved_to`), and the attempt refuses it as
+  `redirected` (GW_APPROVAL_0044.2 — Internal sources are those under an
+  operator-configured URL prefix, or hosted).

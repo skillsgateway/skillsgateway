@@ -152,6 +152,12 @@ Hosted marketplaces are internal by construction: their content arrives only
 through `/publish/**`, with push scope that an administrator or that
 marketplace's approver minted.
 
+The URL is what was registered, not necessarily what was fetched: ingestion
+follows a same-host redirect, which a forge sends for a transferred or renamed
+repository. The first request that leaves the registered repository's path is
+recorded on the snapshot with its row, and the attempt refuses that snapshot as
+`redirected` (acceptance R22).
+
 Alternative considered: reusing the credential prefixes. Rejected: holding a
 credential for a URL is not trusting it.
 

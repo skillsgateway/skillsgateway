@@ -249,7 +249,8 @@ public class IngestionService {
     })
     private Snapshot ingestLocked(Marketplace marketplace, String actor, Progress progress) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
-            ObjectId upstream = fetchIncoming(repo, marketplace);
+            UpstreamGit.Fetched incoming = fetchIncoming(repo, marketplace);
+            ObjectId upstream = incoming.sha();
             progress.stage(STAGE_EVALUATING_MANIFEST);
             // The manifest is decided before anything is pinned, because which commit the snapshot
             // *is* now depends on the answer: a manifest with resolved external sources is served
@@ -281,7 +282,8 @@ public class IngestionService {
                         violation,
                         actor,
                         served.closure(),
-                        marketplace.url());
+                        marketplace.url(),
+                        incoming.movedTo());
             } catch (DuplicateKeyException raced) {
                 // Belt-and-braces under the per-marketplace lock: another instance of the gateway
                 // (or a path the lock cannot see) recorded the same commit first — same content,
@@ -353,7 +355,8 @@ public class IngestionService {
      * same approval gate as fetched content.
      */
     @Requirements({"GW_INGEST_0017"})
-    private ObjectId fetchIncoming(Repository repo, Marketplace marketplace) throws GitAPIException, IOException {
+    private UpstreamGit.Fetched fetchIncoming(Repository repo, Marketplace marketplace)
+            throws GitAPIException, IOException {
         if (!marketplace.hosted()) {
             return upstreamGit.fetchDefaultBranch(repo, marketplace.url(), INCOMING_REF);
         }
@@ -365,7 +368,7 @@ public class IngestionService {
             }
             GitObjectTransfer.copy(origin, repo, lineage);
             RefTransitions.write(repo, INCOMING_REF, lineage);
-            return lineage;
+            return new UpstreamGit.Fetched(lineage, null);
         }
     }
 

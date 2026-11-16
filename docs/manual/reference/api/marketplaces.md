@@ -1569,6 +1569,7 @@ The refusal codes, in the order they are checked:
 | `blocked` | The effective vetting outcome blocks. |
 | `waived-finding-new` | A waived high or critical finding is not in the served baseline in that content. |
 | `unread-surface` | A finding says part of the executable surface could not be read. |
+| `redirected` | The fetch followed a redirect outside the registered repository, as a forge does for a transferred or renamed repository, so the registered URL does not describe the content. [Correct the URL](#put-marketplacesnameurl) or approve it yourself. |
 | `surface-changed` | The executable surface differs from the served baseline, or a path is not inert. |
 | `surface-unreadable` | The surface could not be compared at all, for example the quarantine could not be read. The snapshot stays held and the gateway logs the error. |
 

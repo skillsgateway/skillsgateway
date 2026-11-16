@@ -292,5 +292,16 @@ run M87-estate-does-not-attempt $T aDeclaredAutomaticApprovalAttemptsTheHeldSnap
 T=AutoApprovalSettingEnforceTests
 run M88-reconciler-name-by-sign-in $T aPersonSignedInUnderTheReconcilersNameCannotGrant "$POS" \
   'if (EstateReconciler.ACTOR.equals(actor)) {' 'if (false) {'
+UOF=src/main/java/dev/skillsgateway/server/ingestion/UpstreamOriginFactory.java
+SNR=src/main/java/dev/skillsgateway/server/persistence/SnapshotRepository.java
+T=AutoApprovalTests
+run M89-redirect-not-refused $T anInternalUpstreamThatRedirectsOutOfItsRepositoryStaysHeld "$SVC" \
+  'if (movedTo != null) {' 'if (false) {'
+run M90-lookalike-within-repository $T aRedirectToALookalikeRepositoryStaysHeld "$UOF" \
+  '|| path.startsWith(repositoryPath + "/")' '|| path.startsWith(repositoryPath)'
+run M91-move-not-noticed $T anInternalUpstreamThatRedirectsOutOfItsRepositoryStaysHeld "$UOF" \
+  'if (!withinRepository(url.getPath())) {' 'if (false) {'
+run M92-move-not-stored $T anInternalUpstreamThatRedirectsOutOfItsRepositoryStaysHeld "$SNR" \
+  'if (upstreamMovedTo != null) {' 'if (false) {'
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi

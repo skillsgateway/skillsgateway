@@ -76,12 +76,47 @@ public class SnapshotRepository {
             String ingestedBy,
             SnapshotClosure closure,
             String fetchedFrom) {
+        return create(marketplaceId, sha, upstreamSha, state, violation, ingestedBy, closure, fetchedFrom, null);
+    }
+
+    /**
+     * As above, recording where a redirect moved the fetch off the registered repository, with the
+     * row, so no snapshot fetched that way exists without the record of it.
+     *
+     * @param upstreamMovedTo the first request outside the registered repository, or null
+     */
+    @Requirements({"GW_APPROVAL_0044.2"})
+    @Transactional
+    public Snapshot create(
+            long marketplaceId,
+            String sha,
+            String upstreamSha,
+            String state,
+            String violation,
+            String ingestedBy,
+            SnapshotClosure closure,
+            String fetchedFrom,
+            String upstreamMovedTo) {
         requireFetchedFromCurrentUrl(marketplaceId, fetchedFrom);
         Snapshot snapshot = insert(marketplaceId, sha, upstreamSha, state, violation, ingestedBy);
         if (closure != null && !closure.isEmpty()) {
             closures.record(snapshot.id(), closure);
         }
+        if (upstreamMovedTo != null) {
+            jdbc.sql("UPDATE snapshots SET upstream_moved_to = :movedTo WHERE id = :id")
+                    .param("movedTo", upstreamMovedTo)
+                    .param("id", snapshot.id())
+                    .update();
+        }
         return snapshot;
+    }
+
+    /** Where a redirect moved this snapshot's fetch off the registered repository, if it did. */
+    public Optional<String> upstreamMovedTo(long snapshotId) {
+        return jdbc.sql("SELECT upstream_moved_to FROM snapshots WHERE id = :id")
+                .param("id", snapshotId)
+                .query(String.class)
+                .optional();
     }
 
     /**

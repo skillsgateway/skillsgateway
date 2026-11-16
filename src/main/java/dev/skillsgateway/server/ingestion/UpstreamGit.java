@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -39,10 +40,16 @@ public class UpstreamGit {
     /** The default branch registration resolved: the ref the gateway pins (GW_INGEST_0006). */
     public record Probe(String defaultBranch, ObjectId head) {}
 
+    /**
+     * The fetched commit, and the first request that left the registered repository's path on a
+     * redirect, or {@code null} when every request stayed on it.
+     */
+    public record Fetched(ObjectId sha, String movedTo) {}
+
     /** Lists the upstream and resolves its default branch, or says why it cannot. */
     @Requirements({"GW_INGEST_0040", "GW_INGEST_0038"})
     public Probe probe(String url) {
-        Map<String, Ref> refs = read(url, access -> listRefs(url, access));
+        Map<String, Ref> refs = read(url, access -> listRefs(url, access, new AtomicReference<>()));
         String branch = defaultBranch(url, refs);
         return new Probe(branch, refs.get(Constants.HEAD).getObjectId());
     }
@@ -53,21 +60,27 @@ public class UpstreamGit {
      * by name — and when that fails too, the first error stays attached to the second.
      */
     @Requirements({"GW_INGEST_0002", "GW_INGEST_0038"})
-    public ObjectId fetchDefaultBranch(Repository repo, String url, String targetRef) {
+    public Fetched fetchDefaultBranch(Repository repo, String url, String targetRef) {
+        AtomicReference<String> movedTo = new AtomicReference<>();
         try (Git git = new Git(repo)) {
             read(url, access -> {
                 try {
-                    connect(git.fetch().setRemote(url).setRefSpecs(new RefSpec("+HEAD:" + targetRef)), url, access)
+                    connect(
+                                    git.fetch().setRemote(url).setRefSpecs(new RefSpec("+HEAD:" + targetRef)),
+                                    url,
+                                    access,
+                                    movedTo)
                             .call();
                 } catch (GitAPIException | RuntimeException first) {
                     try {
-                        String branch = defaultBranch(url, listRefs(url, access));
+                        String branch = defaultBranch(url, listRefs(url, access, movedTo));
                         connect(
                                         git.fetch()
                                                 .setRemote(url)
                                                 .setRefSpecs(new RefSpec("+" + branch + ":" + targetRef)),
                                         url,
-                                        access)
+                                        access,
+                                        movedTo)
                                 .call();
                     } catch (GitAPIException | RuntimeException second) {
                         second.addSuppressed(first);
@@ -80,7 +93,7 @@ public class UpstreamGit {
             if (sha == null) {
                 throw new UpstreamException(UpstreamFailure.noDefaultBranch("the fetch produced no commit"), null);
             }
-            return sha;
+            return new Fetched(sha, movedTo.get());
         } catch (IOException e) {
             throw new UpstreamException(translate(e, Access.NONE), e);
         }
@@ -142,8 +155,10 @@ public class UpstreamGit {
         return failure instanceof UpstreamException upstream ? upstream : new UpstreamException(translated, failure);
     }
 
-    private Map<String, Ref> listRefs(String url, Access access) throws GitAPIException {
-        return connect(Git.lsRemoteRepository().setRemote(url), url, access).callAsMap();
+    private Map<String, Ref> listRefs(String url, Access access, AtomicReference<String> movedTo)
+            throws GitAPIException {
+        return connect(Git.lsRemoteRepository().setRemote(url), url, access, movedTo)
+                .callAsMap();
     }
 
     /**
@@ -153,13 +168,15 @@ public class UpstreamGit {
      * request, credentialed or anonymous, stays on the registered URL's origin (GW_INGEST_0075).
      */
     @Requirements({"GW_INGEST_0050", "GW_INGEST_0051", "GW_INGEST_0075"})
-    private static <C extends TransportCommand<C, ?>> C connect(C command, String url, Access access) {
+    private static <C extends TransportCommand<C, ?>> C connect(
+            C command, String url, Access access, AtomicReference<String> movedTo) {
         command.setTimeout(TIMEOUT_SECONDS);
         command.setTransportConfigCallback(transport -> {
             if (transport instanceof TransportHttp http) {
                 http.setHttpConnectionFactory(new UpstreamOriginFactory(
                         url,
-                        access.selected() == null ? null : access.selected().connectionFactory(access.header())));
+                        access.selected() == null ? null : access.selected().connectionFactory(access.header()),
+                        movedTo));
             }
         });
         return command;

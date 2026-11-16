@@ -198,6 +198,10 @@ CREATE TABLE snapshots (
     -- ledgered only when this changes, so a re-vetting tick that reaches the same answer writes
     -- nothing; deduplication never reads the ledger.
     auto_approval_skip_reason TEXT,
+    -- The first fetch request a same-origin redirect sent outside the registered repository's path
+    -- (GW_APPROVAL_0044.2): a transferred repository's content, which the registered URL no longer
+    -- describes. Null when every request stayed on it, and for a hosted marketplace.
+    upstream_moved_to TEXT,
     UNIQUE (marketplace_id, sha)
 );
 

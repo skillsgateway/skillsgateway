@@ -4159,6 +4159,9 @@ cases:
       GIVEN an internal prefix for one organisation on a forge host, and a hosted marketplace
       WHEN marketplace URLs are classified for the organisation itself, a lookalike organisation, another scheme, host or port, a URL with userinfo, a URL with an encoded separator or a dot segment, and a case-shifted path segment; and the gateway is started with an unparseable prefix, a host-wide prefix on github.com, gitlab.com and bitbucket.org, and a host-wide prefix on the configured GitHub base URL host
       THEN the organisation's URL and the hosted marketplace are internal, every other URL is not, and each dangerous configuration is refused at startup
+      AND GIVEN an internal marketplace whose upstream redirects the fetch to another owner's repository, or to a repository whose name only begins with the registered one
+      WHEN it is ingested with automatic approval on
+      THEN the snapshot stays held with the skip reason redirected
     revision: "0.1.0"
 
   - id: SVC_GW_APPROVAL_0044.3

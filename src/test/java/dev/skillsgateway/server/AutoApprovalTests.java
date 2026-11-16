@@ -549,6 +549,49 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
         assertThat(settingService.view(internal).reason()).isEqualTo("recertified");
     }
 
+    /**
+     * A forge redirects a transferred repository on the same host, so a URL under the internal
+     * prefix can fetch someone else's content. That snapshot is not judged internal by its URL.
+     */
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0044.2"})
+    void anInternalUpstreamThatRedirectsOutOfItsRepositoryStaysHeld() throws Exception {
+        Marketplace marketplace = internalMarketplace("acme/" + uniqueName("skills"));
+        String outsider = "someone/" + uniqueName("skills");
+        FORGE.publish(
+                outsider,
+                Map.of(MANIFEST_PATH, DEFAULT_MANIFEST, "plugins/hello/skills/hello/SKILL.md", CONFORMANT_SKILL));
+        FORGE.redirectTo(FORGE.baseUrl() + "/" + outsider + ".git/info/refs?service=git-upload-pack", 1);
+
+        Snapshot fetched = ingestionService.ingest(marketplace, null);
+
+        assertThat(FORGE.requestedPaths()).anySatisfy(path -> assertThat(path).startsWith("/" + outsider + ".git/"));
+        assertThat(snapshotRepository.findById(fetched.id()).orElseThrow().state())
+                .isEqualTo(Snapshot.HELD);
+        assertThat(skipReason(fetched))
+                .startsWith("redirected: ")
+                .contains("/" + outsider + ".git/")
+                .doesNotContain("?service");
+    }
+
+    /** A repository whose name only begins with the registered one is another repository. */
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0044.2"})
+    void aRedirectToALookalikeRepositoryStaysHeld() throws Exception {
+        String repo = "acme/" + uniqueName("skills");
+        Marketplace marketplace = internalMarketplace(repo);
+        FORGE.publish(
+                repo + "-evil",
+                Map.of(MANIFEST_PATH, DEFAULT_MANIFEST, "plugins/hello/skills/hello/SKILL.md", CONFORMANT_SKILL));
+        FORGE.redirectTo(FORGE.baseUrl() + "/" + repo + "-evil.git/info/refs?service=git-upload-pack", 1);
+
+        Snapshot fetched = ingestionService.ingest(marketplace, null);
+
+        assertThat(snapshotRepository.findById(fetched.id()).orElseThrow().state())
+                .isEqualTo(Snapshot.HELD);
+        assertThat(skipReason(fetched)).startsWith("redirected: ");
+    }
+
     /** Declaring automatic approval attempts the held snapshot at once, as turning it on through the API does. */
     @Test
     @SVCs({"SVC_GW_ESTATE_0006", "SVC_GW_APPROVAL_0044.9"})
