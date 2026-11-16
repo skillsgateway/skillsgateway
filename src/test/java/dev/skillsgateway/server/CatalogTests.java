@@ -44,13 +44,19 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(
         properties = {
             "skills-gateway.vetting.revet.mode=enforce",
-            "skills-gateway.catalog.name=catalog",
+            "skills-gateway.catalog.name=" + CatalogTests.CATALOG,
             "skills-gateway.data-dir=target/test-git-data-catalog"
         })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class CatalogTests extends AbstractGatewayTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    /**
+     * Deliberately not the default: a name the portal could only learn from the gateway
+     * (GW_AUTH_0082) and one that a hard-coded {@code catalog} would get wrong.
+     */
+    static final String CATALOG = "gwcatalog";
 
     private static final String PLANTED_SECRET = """
             # Deployment notes
@@ -90,10 +96,10 @@ class CatalogTests extends AbstractGatewayTest {
     void an_empty_estate_serves_an_empty_catalog_not_nothing() throws Exception {
         catalogService.rebuild();
         Path clone = newWorkDir("catempty");
-        assertThat(gitClone(facadeUrl("catalog", newPat()), clone).exitCode()).isZero();
+        assertThat(gitClone(facadeUrl(CATALOG, newPat()), clone).exitCode()).isZero();
         JsonNode manifest = manifestOf(clone);
         assertThat(manifest.path("plugins")).isEmpty();
-        assertThat(manifest.path("name").asText()).isEqualTo("catalog");
+        assertThat(manifest.path("name").asText()).isEqualTo(CATALOG);
     }
 
     @Test
@@ -108,7 +114,7 @@ class CatalogTests extends AbstractGatewayTest {
 
         // No manual rebuild: the approvals put the marketplaces into the catalog on their own.
         Path clone = newWorkDir("catagg");
-        assertThat(gitClone(facadeUrl("catalog", newPat()), clone).exitCode()).isZero();
+        assertThat(gitClone(facadeUrl(CATALOG, newPat()), clone).exitCode()).isZero();
 
         String name1 = served1.marketplace().name();
         String name2 = served2.marketplace().name();
@@ -153,7 +159,7 @@ class CatalogTests extends AbstractGatewayTest {
         String pat = newPat();
 
         Path before = newWorkDir("catbefore");
-        assertThat(gitClone(facadeUrl("catalog", pat), before).exitCode()).isZero();
+        assertThat(gitClone(facadeUrl(CATALOG, pat), before).exitCode()).isZero();
         assertThat(before.resolve(doomedName)).exists();
 
         // The revocation retracts it from the catalog with no manual action.
@@ -161,7 +167,7 @@ class CatalogTests extends AbstractGatewayTest {
         assertThat(result.revoked()).isTrue();
 
         Path after = newWorkDir("catafter");
-        assertThat(gitClone(facadeUrl("catalog", pat), after).exitCode()).isZero();
+        assertThat(gitClone(facadeUrl(CATALOG, pat), after).exitCode()).isZero();
         assertThat(after.resolve(doomedName)).doesNotExist();
         assertThat(manifestOf(after).path("plugins").findValuesAsText("name"))
                 .noneMatch(name -> name.startsWith(doomedName));
@@ -173,13 +179,13 @@ class CatalogTests extends AbstractGatewayTest {
         Registered late = registerAndIngest(uniqueName("catlate"), createUpstream(DEFAULT_MANIFEST));
         approve(late.snapshot().id());
         Path grown = newWorkDir("catgrown");
-        assertThat(gitClone(facadeUrl("catalog", pat), grown).exitCode()).isZero();
+        assertThat(gitClone(facadeUrl(CATALOG, pat), grown).exitCode()).isZero();
         assertThat(grown.resolve(late.marketplace().name())).exists();
     }
 
     @Test
     @Order(4)
-    @SVCs({"SVC_GW_FACADE_0005"})
+    @SVCs({"SVC_GW_FACADE_0005", "SVC_GW_AUTH_0101"})
     void constituents_audit_manual_rebuild_and_the_reserved_name() throws Exception {
         Registered served = registerAndIngest(uniqueName("catprov"), createUpstream(DEFAULT_MANIFEST));
         approve(served.snapshot().id());
@@ -191,8 +197,11 @@ class CatalogTests extends AbstractGatewayTest {
                 .getResponse()
                 .getContentAsString();
         JsonNode info = MAPPER.readTree(catalog);
+        assertThat(info.path("name").asText())
+                .as("the served revision names the catalog, so a client can offer it as a token scope")
+                .isEqualTo(CATALOG);
         Path clone = newWorkDir("catprovclone");
-        assertThat(gitClone(facadeUrl("catalog", newPat()), clone).exitCode()).isZero();
+        assertThat(gitClone(facadeUrl(CATALOG, newPat()), clone).exitCode()).isZero();
         for (JsonNode constituent : info.path("constituents")) {
             assertThat(clone.resolve(constituent.path("marketplace").asText())).exists();
         }
@@ -203,14 +212,14 @@ class CatalogTests extends AbstractGatewayTest {
 
         // The clone is on the ledger under the catalog's name.
         assertThat(fetchLogRepository.list()).anySatisfy(entry -> {
-            assertThat(entry.get("marketplace")).isEqualTo("catalog");
+            assertThat(entry.get("marketplace")).isEqualTo(CATALOG);
             assertThat(entry.get("event")).isEqualTo("upload-pack");
         });
 
         // Manual rebuild works and is audited with the acting identity.
         mockMvc.perform(post("/api/v1/catalog/rebuild").with(oidcLogin())).andExpect(status().isOk());
         assertThat(fetchLogRepository.list()).anySatisfy(entry -> {
-            assertThat(entry.get("marketplace")).isEqualTo("catalog");
+            assertThat(entry.get("marketplace")).isEqualTo(CATALOG);
             assertThat(entry.get("event")).isEqualTo("catalog-rebuilt");
             assertThat(entry.get("principal")).isNotNull();
         });
@@ -219,7 +228,7 @@ class CatalogTests extends AbstractGatewayTest {
         mockMvc.perform(post("/api/v1/marketplaces")
                         .with(oidcLogin())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"catalog\",\"url\":\"https://example.com/x.git\"}"))
+                        .content("{\"name\":\"" + CATALOG + "\",\"url\":\"https://example.com/x.git\"}"))
                 .andExpect(status().isUnprocessableContent());
     }
 
@@ -246,7 +255,7 @@ class CatalogTests extends AbstractGatewayTest {
         approve(uncontested.snapshot().id());
 
         Path clone = newWorkDir("catcollision");
-        assertThat(gitClone(facadeUrl("catalog", newPat()), clone).exitCode()).isZero();
+        assertThat(gitClone(facadeUrl(CATALOG, newPat()), clone).exitCode()).isZero();
         List<String> published = manifestOf(clone).path("plugins").findValuesAsText("name");
 
         assertThat(published)

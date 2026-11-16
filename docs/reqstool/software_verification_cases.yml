@@ -5023,3 +5023,73 @@ cases:
       WHEN the lifetime choices are read and a token is created with the default
       THEN both offer exactly 30 days, 90 days, 180 days and one year, neither offers no expiry, and the default is 30 days
     revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0095
+    requirement_ids: ["GW_AUTH_0079"]
+    title: A personal token is created unlimited by default and limited to the marketplaces chosen
+    verification: automated-test
+    description: |
+      GIVEN the personal access token page with several registered marketplaces
+      WHEN a token is created with the default choice, and another with two marketplaces chosen
+      THEN the first request carries no scopes and the second carries exactly the two chosen names
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0096
+    requirement_ids: ["GW_AUTH_0079"]
+    title: A limited choice that names nothing cannot be submitted, the catalog is offered, and the API refusal is shown
+    verification: automated-test
+    description: |
+      GIVEN the personal access token page, with the limited choice made and many marketplaces registered
+      WHEN nothing is chosen, a filter is typed, the catalog entry is looked for, and the server refuses a scope
+      THEN creation is unavailable with a stated reason while nothing is chosen, the filter narrows the list, the catalog is offered by the name the gateway reports, and the refusal is shown verbatim beside the choice
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0097
+    requirement_ids: ["GW_AUTH_0079"]
+    title: The client wizard creates a token limited to its own marketplace on request and unlimited by default
+    verification: automated-test
+    description: |
+      GIVEN the client set-up wizard opened on a marketplace
+      WHEN a token is created with the default choice, and another after switching to the limited choice
+      THEN the first request carries no scopes, the limited choice starts with the wizard's own marketplace chosen and widenable, and the second request carries the names chosen
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0098
+    requirement_ids: ["GW_AUTH_0080"]
+    title: The token list says every marketplace or names the marketplaces, and the hosted marketplaces a token may publish to
+    verification: automated-test
+    description: |
+      GIVEN tokens that are unlimited, limited to one marketplace, limited to many, and one that may publish to a hosted marketplace
+      WHEN the personal token list is read
+      THEN each row says in words every marketplace or names its marketplaces, a long list is shortened with the whole list one hover or read away, and the publish scope is stated only where one exists
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0099
+    requirement_ids: ["GW_AUTH_0063"]
+    title: The wizard states what a token reaches for the choice made, before and after creation
+    verification: automated-test
+    description: |
+      GIVEN the client set-up wizard with the default choice, then with a limited choice, then after the token is created
+      WHEN the token step is read in each state
+      THEN it states that the token is not limited and fetches every marketplace only for the default choice, and names exactly the chosen marketplaces for a limited one, including after creation
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0100
+    requirement_ids: ["GW_AUTH_0081"]
+    title: The cleartext of a personal token is absent from the query cache after the page or wizard has taken it
+    verification: automated-test
+    description: |
+      GIVEN a personal token created from the personal access token page, and another from the client set-up wizard
+      WHEN the cleartext is shown and the creating request's record in the query cache is inspected while the page stays mounted
+      THEN the cleartext appears nowhere in the cache's mutation records, and not in the page once the dialog or wizard is closed
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0101
+    requirement_ids: ["GW_AUTH_0082"]
+    title: The served catalog revision carries the configured catalog name
+    verification: automated-test
+    description: |
+      GIVEN a gateway with a configured catalog name and a generated catalog
+      WHEN the served catalog revision is read by a signed-in caller without a role, and by an unauthenticated caller
+      THEN the revision carries the configured name, an unauthenticated caller is refused as before, and a disabled catalog still answers 404
+    revision: "0.5.0"

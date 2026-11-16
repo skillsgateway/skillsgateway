@@ -3467,6 +3467,46 @@ requirements:
     categories: ["interaction-capability", "security"]
     revision: 0.5.0
 
+  - id: GW_AUTH_0079
+    title: A personal access token can be limited to chosen marketplaces from the portal
+    significance: shall
+    description: "The portal's personal access token page and client set-up wizard shall let a user create a token that fetches every marketplace, which stays the default, or one limited to marketplaces the user chooses from the registered marketplaces and the virtual catalog's name, shall send the chosen names as the request's scopes and send none for the default, shall keep creation unavailable while the limited choice names nothing, since a request naming nothing grants every marketplace, shall let the choice be narrowed by typing when there are many marketplaces, and shall show the API's refusal of a scope as the API states it."
+    rationale: "The API has limited a token to named marketplaces since GW_AUTH_0006 but only a hand-written request could ask for it, so the people who most need a narrow credential, such as a pipeline that reads one marketplace, were left with one that reads them all, and a limited choice that silently sent no scopes would have granted the opposite of what was chosen."
+    references:
+      requirement_ids: ["GW_AUTH_0006"]
+    categories: ["interaction-capability", "security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0080
+    title: The personal token list states each token's reach
+    significance: shall
+    description: "The portal's personal access token list shall state for each token whether it fetches every marketplace or only the marketplaces it names, in words and not by an empty cell, and shall state the hosted marketplaces a token may publish to when it has any."
+    rationale: "A narrow token and a broad one looked the same in the list, so nobody could tell which credential to revoke after a leak or which to reuse."
+    references:
+      requirement_ids: ["GW_AUTH_0070"]
+    categories: ["interaction-capability", "security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0081
+    title: A personal access token's cleartext is kept nowhere once shown
+    significance: shall
+    description: "The portal shall hold the cleartext of a personal access token created from the personal access token page or the client set-up wizard only for as long as it is shown, and shall retain it nowhere else, in particular not in the client-side query cache's record of the creating request."
+    rationale: "GW_AUTH_0073 closed this for system access tokens after the creating request's result was found to outlive the dialog while the page stayed mounted; the two personal token surfaces made the same request and kept the same result."
+    references:
+      requirement_ids: ["GW_AUTH_0073"]
+    categories: ["security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0082
+    title: The gateway names its virtual catalog to any signed-in reader
+    significance: shall
+    description: "The system shall include the configured name of the virtual catalog in the served catalog revision it already reports to any signed-in caller, and shall change nothing about who may read it or when it is reported."
+    rationale: "The catalog's name is a valid token scope but is configurable and was not readable anywhere a client could see, so a scope picker could only guess it."
+    references:
+      requirement_ids: ["GW_FACADE_0005"]
+    categories: ["interaction-capability"]
+    revision: 0.5.0
+
   - id: GW_OBSERVABILITY_0005
     title: Each instance reports the background-pass turns it took and skipped
     significance: shall
@@ -3676,7 +3716,7 @@ requirements:
   - id: GW_AUTH_0063
     title: The client wizard states what a token reaches and what the ledger records
     significance: shall
-    description: "The client set-up wizard shall state, where a token is minted, that the token is not limited to the marketplace the wizard was opened from and fetches every marketplace the gateway serves its holder; and shall describe the audit ledger as recording the fetches the facade serves, without claiming that it records refused requests."
+    description: "The client set-up wizard shall state, where a token is minted, what the token reaches for the choice made: that it is not limited to the marketplace the wizard was opened from and fetches every marketplace the gateway serves its holder when no limit was chosen, and that it fetches only the marketplaces named when a limit was chosen, before and after the token is created; and shall describe the audit ledger as recording the fetches the facade serves, without claiming that it records refused requests."
     rationale: "A default name of the form <marketplace>-client reads as a scope the token does not have, and a reader told that every fetch is recorded will look on the ledger for a refused attempt that was never written."
     references:
       requirement_ids: ["GW_AUTH_0014"]

@@ -2198,6 +2198,8 @@ export interface components {
              * @description When this revision was generated
              */
             generatedAt?: string;
+            /** @description The catalog's configured name: its facade path segment, and a valid token scope (GW_AUTH_0082) */
+            name?: string;
             /** @description Catalog commit SHA */
             sha?: string;
         };
