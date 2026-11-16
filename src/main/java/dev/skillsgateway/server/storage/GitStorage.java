@@ -11,8 +11,7 @@ import org.eclipse.jgit.lib.Repository;
  * The storage seam between the gateway and its git repositories.
  *
  * <p>Quarantine holds everything ingested and is never served; published holds only approved
- * content and is all the consumer facade ever opens; a hosted marketplace additionally has an
- * origin repository that publishers push to and only ingestion reads.
+ * content and is all the consumer facade ever opens.
  *
  * <p>There are two implementations and exactly one of them is in the context, chosen by
  * {@code skills-gateway.storage.backend}: bare repositories on a filesystem, or JGit DFS over an
@@ -53,7 +52,7 @@ public interface GitStorage {
     }
 
     /**
-     * The three repository roles, named so that a caller can talk about all of them at once.
+     * The two repository roles, named so that a caller can talk about all of them at once.
      *
      * <p>Only migration needs this: everything else in the gateway knows exactly which role it
      * wants and asks for it by name, which is what keeps "quarantine is never served" a property
@@ -61,7 +60,6 @@ public interface GitStorage {
      */
     enum Role {
         QUARANTINE,
-        HOSTED,
         PUBLISHED;
 
         /** The role's own name in the layout, lowercase — a directory here, a key prefix there. */
@@ -83,24 +81,12 @@ public interface GitStorage {
     default Repository open(Role role, String marketplace) throws IOException {
         return switch (role) {
             case QUARANTINE -> quarantine(marketplace);
-            case HOSTED -> hosted(marketplace);
             case PUBLISHED -> published(marketplace);
         };
     }
 
     /** Open (creating if absent) the quarantine repository for a marketplace. */
     Repository quarantine(String marketplace) throws IOException;
-
-    /**
-     * Open (creating if absent) the origin repository of a gateway-hosted marketplace (GW_FACADE_0006):
-     * the publisher's source of record, which is neither quarantine nor published. Ingestion
-     * fetches out of it exactly as it fetches from an upstream URL, so quarantine keeps its
-     * property of having exactly one writer.
-     */
-    Repository hosted(String marketplace) throws IOException;
-
-    /** Open the origin repository only if it already exists; empty otherwise. */
-    Optional<Repository> hostedIfPresent(String marketplace) throws IOException;
 
     /** Open (creating if absent) the published repository for a marketplace. */
     Repository published(String marketplace) throws IOException;

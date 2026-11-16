@@ -48,8 +48,7 @@ class AutoApprovalSettingTests extends AbstractGatewayTest {
     }
 
     private Marketplace upstream(String prefix, String url, String registrant) {
-        return marketplaceRepository.register(
-                uniqueName(prefix), url, null, Marketplace.ORIGIN_UPSTREAM, Marketplace.PUSH_APPEND_ONLY, registrant);
+        return marketplaceRepository.register(uniqueName(prefix), url, null, registrant);
     }
 
     private static String in(Duration duration) {
@@ -178,33 +177,6 @@ class AutoApprovalSettingTests extends AbstractGatewayTest {
 
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.1"})
-    void aHostedMarketplaceCanHaveAutomaticApprovalTurnedOnAtRegistration() throws Exception {
-        String name = uniqueName("preghosted");
-        String expires = in(Duration.ofDays(14));
-
-        mockMvc.perform(post("/api/v1/marketplaces")
-                        .with(as("root"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"name": "%s", "origin": "hosted",
-                                 "autoApproval": {"enabled": true, "reason": "published by our CI", "expiresAt": "%s"}}""".formatted(name, expires)))
-                .andExpect(status().isCreated());
-
-        mockMvc.perform(get("/api/v1/marketplaces/{name}/auto-approval", name).with(as("root")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.enabled").value(true))
-                .andExpect(jsonPath("$.allowedBy").value("hosted"))
-                .andExpect(jsonPath("$.setBy").value("root"));
-        // The registrant is the grantor, so the grant conflicts; under warn it is set and recorded.
-        assertThat(ledger(name, FourEyesGate.EVENT_CONFLICT))
-                .singleElement()
-                .satisfies(entry -> assertThat(String.valueOf(entry.get("detail")))
-                        .contains(FourEyesGate.ROLE_REGISTERED_BY)
-                        .contains("on=auto-approval"));
-    }
-
-    @Test
-    @SVCs({"SVC_GW_APPROVAL_0044.1"})
     void aNonAdministratorCannotSetAutomaticApprovalAndCanReadIt() throws Exception {
         Marketplace marketplace = upstream("pnonadmin", INTERNAL + "skills.git", null);
 
@@ -221,7 +193,7 @@ class AutoApprovalSettingTests extends AbstractGatewayTest {
                         .with(as("mallory"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name": "%s", "origin": "hosted",
+                                {"name": "%s", "url": "https://git.internal.test/acme/skills.git",
                                  "autoApproval": {"enabled": true, "reason": "r", "expiresAt": "%s"}}""".formatted(uniqueName("pnonadminreg"), in(Duration.ofDays(7)))))
                 .andExpect(status().isForbidden());
         assertOff(marketplace.name());

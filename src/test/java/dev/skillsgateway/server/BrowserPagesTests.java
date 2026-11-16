@@ -69,7 +69,6 @@ class BrowserPagesTests extends AbstractGatewayTest {
         for (String path : List.of(
                 "/api/v1/no-such-thing",
                 "/git/no-such-thing",
-                "/publish/no-such-thing",
                 "/status/no-such-thing",
                 "/hooks/no-such-thing",
                 "/actuator/no-such-thing",

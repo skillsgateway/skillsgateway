@@ -135,6 +135,10 @@ class RoleEnforcementTests extends AbstractGatewayTest {
 
     /** The ledger and the operational listings: auditor-or-admin reads (GW_AUTH_0012). */
     private static final Set<String> PRIVILEGED_READS = Set.of(
+            // Where the only copy of a former hosted marketplace's source sits on the gateway's disk
+            // (GW_AUTH_0091): an administrator's notice, so admin-only and skipped by the auditor walk.
+            // Temporary, removed with FormerHostedRepositories.
+            "GET /api/v1/storage/former-hosted-repositories",
             // Admin-only rather than an auditor read: it lists control-plane credentials, and it
             // is admin-only whether or not enforcement is enabled (GW_AUTH_0023). The auditor walk
             // below skips it for the same reason it skips grant administration.
@@ -387,11 +391,12 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                     || route.equals("GET /api/v1/marketplaces/{name}/vetting-chain-settings")
                     || route.equals("GET /api/v1/vetting/global-chain")
                     || route.equals("GET /api/v1/vetting/global-chain-settings")
-                    || route.equals("GET /api/v1/mirror/drift")) {
+                    || route.equals("GET /api/v1/mirror/drift")
+                    || route.equals("GET /api/v1/storage/former-hosted-repositories")) {
                 // Grant administration (GW_AUTH_0013), the machine-credential listing (GW_AUTH_0023), the
                 // vetter settings (GW_VETTING_0029), the chain mode and order (GW_VETTING_0032,
-                // GW_VETTING_0033) and the mirror's drift report (GW_FACADE_0023) are admin-only,
-                // not auditor reads.
+                // GW_VETTING_0033), the mirror's drift report (GW_FACADE_0023) and the former hosted
+                // repositories (GW_AUTH_0091) are admin-only, not auditor reads.
                 continue;
             }
             mockMvc.perform(request(route).with(carol)).andExpect(status().isOk());

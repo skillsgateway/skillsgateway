@@ -681,12 +681,12 @@ public record SkillsGatewayProperties(
      *     immutable — a differing declared URL is a reconciliation failure, never an update
      * @param syncMode {@code on-demand} or {@code scheduled}; {@code webhook} is refused (its inbound
      *     HMAC secret is gateway-generated show-once, which has no declarative form). Null means the
-     *     stored mode is not managed and never touched. A hosted marketplace accepts only
-     *     {@code on-demand}: its ingestion trigger is the push.
-     * @param origin {@code upstream} (the default) or {@code hosted} (GW_FACADE_0006); a hosted marketplace
-     *     declares no url, and like a url the origin is immutable after registration
-     * @param pushPolicy for a hosted marketplace, {@code append-only} (the default) or
-     *     {@code allow-rewrite}
+     *     stored mode is not managed and never touched.
+     * @param origin never accepted other than as {@code upstream}, which is what every marketplace is:
+     *     hosted marketplaces were removed (GW_AUTH_0090), and an entry that declares one fails in words
+     *     rather than binding as an ignored key. The component exists to be refused
+     * @param pushPolicy never accepted: it belonged to hosted marketplaces (GW_AUTH_0090), and an entry
+     *     that declares one fails in words. The component exists to be refused
      * @param autoApproval automatic approval (GW_ESTATE_0006); null means the stored setting is not
      *     managed and never touched
      */
@@ -1157,7 +1157,7 @@ public record SkillsGatewayProperties(
      *
      * @param mode {@code off} (the default, and the incident switch), {@code dry-run} or {@code on}
      * @param internalPrefixes the URL prefixes under which a marketplace is internal. Empty by
-     *     default, so only hosted marketplaces are; startup refuses one that does not parse and a
+     *     default, so none is; startup refuses one that does not parse and a
      *     host-wide one on a multi-tenant forge
      * @param requiredVetters the vetters that must have run, rather than been switched off, for a
      *     snapshot to be approved automatically. Null — unset, the default — requires every vetter;

@@ -107,19 +107,33 @@ public final class ObjectStoreGitStorage implements GitStorage, AutoCloseable {
         return names;
     }
 
+    /**
+     * TEMPORARY (REMOVE-AFTER: two minor releases after the release that ships migration
+     * V3__remove_hosted_marketplaces, together with FormerHostedRepositories): the repositories the
+     * removed hosting feature left under this gateway's {@code hosted/} key prefix, as names. Reads one
+     * listing and writes nothing; the role no longer exists, so nothing can open them.
+     */
+    public Set<String> formerHostedMarketplaces() throws IOException {
+        String hostedPrefix = prefix + "hosted/";
+        Set<String> names = new TreeSet<>();
+        for (String key : store.list(hostedPrefix)) {
+            String rest = key.substring(hostedPrefix.length());
+            int slash = rest.indexOf('/');
+            if (slash > 0 && rest.substring(slash + 1).equals("manifest")) {
+                names.add(rest.substring(0, slash));
+            }
+        }
+        return names;
+    }
+
+    /** TEMPORARY, see {@link #formerHostedMarketplaces()}: the key prefix of one former hosted repository. */
+    public String formerHostedPrefix(String marketplace) {
+        return prefix + "hosted/" + marketplace + "/";
+    }
+
     @Override
     public Repository quarantine(String marketplace) throws IOException {
         return openOrCreate(Role.QUARANTINE, marketplace);
-    }
-
-    @Override
-    public Repository hosted(String marketplace) throws IOException {
-        return openOrCreate(Role.HOSTED, marketplace);
-    }
-
-    @Override
-    public Optional<Repository> hostedIfPresent(String marketplace) throws IOException {
-        return openIfPresent(Role.HOSTED, marketplace);
     }
 
     @Override

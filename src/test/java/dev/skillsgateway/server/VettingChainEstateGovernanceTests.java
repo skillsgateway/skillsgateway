@@ -395,12 +395,6 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
 
     private Marketplace register(String name) throws IOException, org.eclipse.jgit.api.errors.GitAPIException {
         Path upstream = createUpstream(DEFAULT_MANIFEST, Map.of());
-        return marketplaceRepository.register(
-                name,
-                upstream.toAbsolutePath().toString(),
-                null,
-                Marketplace.ORIGIN_UPSTREAM,
-                Marketplace.PUSH_APPEND_ONLY,
-                null);
+        return marketplaceRepository.register(name, upstream.toAbsolutePath().toString(), null, null);
     }
 }

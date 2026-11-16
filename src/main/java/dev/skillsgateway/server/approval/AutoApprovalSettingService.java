@@ -56,7 +56,6 @@ public class AutoApprovalSettingService {
     /** Why automatic approval takes effect, or that it does not ({@code none}). */
     public enum AllowedBy {
         INTERNAL_SOURCE,
-        HOSTED,
         EXEMPTION,
         AWAITING_SECOND_ADMINISTRATOR,
         NONE;
@@ -67,7 +66,7 @@ public class AutoApprovalSettingService {
         }
 
         public boolean effective() {
-            return this == INTERNAL_SOURCE || this == HOSTED || this == EXEMPTION;
+            return this == INTERNAL_SOURCE || this == EXEMPTION;
         }
     }
 
@@ -117,8 +116,7 @@ public class AutoApprovalSettingService {
                     description = "Why it takes effect, or none when it does not: off, lapsed, or not internal"
                             + " and with no exemption left. awaiting-second-administrator under four-eyes enforce,"
                             + " when the grantor registered the marketplace",
-                    allowableValues = {"internal-source", "hosted", "exemption", "awaiting-second-administrator", "none"
-                    })
+                    allowableValues = {"internal-source", "exemption", "awaiting-second-administrator", "none"})
             AllowedBy allowedBy,
 
             @Schema(description = "Who set it last") String setBy,
@@ -189,8 +187,7 @@ public class AutoApprovalSettingService {
      * must be complete, and the marketplace must be internal, since an exemption cannot be given there.
      */
     @Requirements({"GW_APPROVAL_0044.1"})
-    public void checkRegistration(
-            String name, String url, String origin, Boolean enabled, String reason, Instant expiresAt) {
+    public void checkRegistration(String name, String url, Boolean enabled, String reason, Instant expiresAt) {
         if (enabled == null) {
             throw new AutoApprovalSettingValidationException("autoApproval.enabled is required: true or false");
         }
@@ -198,8 +195,7 @@ public class AutoApprovalSettingService {
             return;
         }
         validateOn(reason, expiresAt, Instant.now());
-        boolean hosted = Marketplace.ORIGIN_HOSTED.equals(origin);
-        if (!hosted && !internalSources.isInternal(url)) {
+        if (!internalSources.isInternal(url)) {
             throw new NotInternalException(name);
         }
     }
@@ -387,9 +383,6 @@ public class AutoApprovalSettingService {
         if (fourEyesGate.enforcing()
                 && !fourEyesGate.grantConflicts(marketplace, stored.setBy()).isEmpty()) {
             return AllowedBy.AWAITING_SECOND_ADMINISTRATOR;
-        }
-        if (marketplace.hosted()) {
-            return AllowedBy.HOSTED;
         }
         if (internalSources.isInternal(marketplace.url())) {
             return AllowedBy.INTERNAL_SOURCE;

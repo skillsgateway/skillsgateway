@@ -29,8 +29,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Moves every repository from one storage backend to another, then proves it moved.
  *
- * <p>Offline and one-shot, deliberately. The gateway is scaled to zero, this copies quarantine,
- * hosted and published for every marketplace the <em>source</em> holds, re-reads both sides and
+ * <p>Offline and one-shot, deliberately. The gateway is scaled to zero, this copies quarantine
+ * and published for every marketplace the <em>source</em> holds, re-reads both sides and
  * compares the resolved reference sets, and refuses to report success on any disagreement. Nothing
  * is re-approved and nothing is re-ingested: the bytes move, the decisions do not.
  *

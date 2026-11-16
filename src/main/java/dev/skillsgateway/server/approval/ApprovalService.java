@@ -657,7 +657,6 @@ public class ApprovalService {
                     snapshot.id(),
                     marketplace == null ? null : marketplace.name(),
                     marketplace == null ? null : marketplace.url(),
-                    marketplace == null ? null : marketplace.origin(),
                     snapshot.upstreamSha(),
                     snapshot.sha(),
                     closureRepository.findBySnapshot(snapshot.id()).orElse(null),
@@ -676,11 +675,8 @@ public class ApprovalService {
             long snapshotId,
             String marketplace,
 
-            /** Null for a gateway-hosted marketplace, which has no upstream at all (GW_FACADE_0006). */
+            /** Null only when the marketplace record is no longer there to ask. */
             String upstreamUrl,
-
-            /** {@code upstream} or {@code hosted}: tells "no upstream" from "not recorded". */
-            String origin,
 
             @Schema(description = "The commit ingested from upstream")
             String upstreamSha,

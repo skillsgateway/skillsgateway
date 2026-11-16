@@ -226,21 +226,21 @@ class ObjectStoreBackendTests {
         ObjectStoreClient client = ObjectStoreTestSupport.client();
         ObjectStoreGitStorage storage = ObjectStoreTestSupport.storage(client, prefix);
 
-        try (Repository hosted = storage.hosted(marketplace)) {
-            ObjectId one = commit(hosted, "one");
-            ObjectId two = commit(hosted, "two");
-            ObjectId three = commit(hosted, "three");
-            long before = manifest(client, prefix, "hosted", marketplace).sequence();
+        try (Repository scratch = storage.quarantine(marketplace)) {
+            ObjectId one = commit(scratch, "one");
+            ObjectId two = commit(scratch, "two");
+            ObjectId three = commit(scratch, "three");
+            long before = manifest(client, prefix, "quarantine", marketplace).sequence();
 
             List<ReceiveCommand> commands = List.of(
                     new ReceiveCommand(ObjectId.zeroId(), one, MAIN),
                     new ReceiveCommand(ObjectId.zeroId(), two, SNAPSHOT_PREFIX + two.name()),
                     new ReceiveCommand(ObjectId.zeroId(), three, SNAPSHOT_PREFIX + three.name()));
-            execute(hosted, commands, true);
+            execute(scratch, commands, true);
 
             assertThat(commands)
                     .allSatisfy(command -> assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.OK));
-            assertThat(manifest(client, prefix, "hosted", marketplace).sequence() - before)
+            assertThat(manifest(client, prefix, "quarantine", marketplace).sequence() - before)
                     .as("three references, one transition; anything else can publish half a push")
                     .isEqualTo(1);
         }
@@ -255,23 +255,23 @@ class ObjectStoreBackendTests {
         ObjectStoreClient client = ObjectStoreTestSupport.client();
         ObjectStoreGitStorage storage = ObjectStoreTestSupport.storage(client, prefix);
 
-        try (Repository hosted = storage.hosted(marketplace)) {
-            ObjectId one = commit(hosted, "one");
-            ObjectId two = commit(hosted, "two");
-            long before = manifest(client, prefix, "hosted", marketplace).sequence();
+        try (Repository scratch = storage.quarantine(marketplace)) {
+            ObjectId one = commit(scratch, "one");
+            ObjectId two = commit(scratch, "two");
+            long before = manifest(client, prefix, "quarantine", marketplace).sequence();
 
             List<ReceiveCommand> commands = List.of(
                     new ReceiveCommand(ObjectId.zeroId(), one, MAIN),
                     // Claims a reference already exists at `one` when it does not exist at all.
                     new ReceiveCommand(one, two, SNAPSHOT_PREFIX + two.name()));
-            execute(hosted, commands, true);
+            execute(scratch, commands, true);
 
             assertThat(commands)
                     .allSatisfy(command -> assertThat(command.getResult())
                             .as("atomic means all or nothing, including the command that was fine")
                             .isEqualTo(ReceiveCommand.Result.LOCK_FAILURE));
-            assertThat(hosted.exactRef(MAIN)).isNull();
-            assertThat(manifest(client, prefix, "hosted", marketplace).sequence())
+            assertThat(scratch.exactRef(MAIN)).isNull();
+            assertThat(manifest(client, prefix, "quarantine", marketplace).sequence())
                     .as("a refused atomic push must leave the manifest untouched")
                     .isEqualTo(before);
         }

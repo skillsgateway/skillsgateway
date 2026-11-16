@@ -109,13 +109,8 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
     private Marketplace internalMarketplace(String repo) throws Exception {
         FORGE.publish(
                 repo, Map.of(MANIFEST_PATH, DEFAULT_MANIFEST, "plugins/hello/skills/hello/SKILL.md", CONFORMANT_SKILL));
-        Marketplace marketplace = marketplaceRepository.register(
-                uniqueName("auto"),
-                FORGE.baseUrl() + "/" + repo + ".git",
-                null,
-                Marketplace.ORIGIN_UPSTREAM,
-                Marketplace.PUSH_APPEND_ONLY,
-                null);
+        Marketplace marketplace =
+                marketplaceRepository.register(uniqueName("auto"), FORGE.baseUrl() + "/" + repo + ".git", null, null);
         settingService.set(
                 marketplace.name(),
                 new SettingRequest(
@@ -161,6 +156,37 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
                         .contains("grantor=root")
                         .contains("baseline=" + first.sha()));
         assertThat(ledger(marketplace, "snapshot-approved")).hasSize(2);
+    }
+
+    /**
+     * Turning it on in the registration request itself, for a marketplace under an internal prefix. It
+     * needs a readable internal upstream, which only this context's forge fixture can supply.
+     */
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0044.1"})
+    void aMarketplaceUnderAnInternalPrefixCanTurnItOnAtRegistration() throws Exception {
+        String repo = "acme/" + uniqueName("atreg");
+        FORGE.publish(
+                repo, Map.of(MANIFEST_PATH, DEFAULT_MANIFEST, "plugins/hello/skills/hello/SKILL.md", CONFORMANT_SKILL));
+        String name = uniqueName("atregmp");
+        String expires = Instant.now()
+                .plus(Duration.ofDays(14))
+                .truncatedTo(ChronoUnit.SECONDS)
+                .toString();
+
+        mockMvc.perform(post("/api/v1/marketplaces")
+                        .with(oidcLogin().idToken(token -> token.subject("root")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "%s", "url": "%s",
+                                 "autoApproval": {"enabled": true, "reason": "our own skills", "expiresAt": "%s"}}""".formatted(name, FORGE.baseUrl() + "/" + repo + ".git", expires)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/marketplaces/{name}/auto-approval", name)
+                        .with(oidcLogin().idToken(token -> token.subject("root"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.enabled").value(true))
+                .andExpect(jsonPath("$.allowedBy").value("internal-source"));
     }
 
     /** The decision entry and the one webhook a person's clean approval writes (ApprovalEvidenceTests). */
@@ -600,8 +626,7 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
         FORGE.publish(
                 repo, Map.of(MANIFEST_PATH, DEFAULT_MANIFEST, "plugins/hello/skills/hello/SKILL.md", CONFORMANT_SKILL));
         String url = FORGE.baseUrl() + "/" + repo + ".git";
-        Marketplace marketplace = marketplaceRepository.register(
-                uniqueName("estate-held"), url, null, Marketplace.ORIGIN_UPSTREAM, Marketplace.PUSH_APPEND_ONLY, null);
+        Marketplace marketplace = marketplaceRepository.register(uniqueName("estate-held"), url, null, null);
         Snapshot held = ingestionService.ingest(marketplace, null);
         assertThat(snapshotRepository.findById(held.id()).orElseThrow().state()).isEqualTo(Snapshot.HELD);
 

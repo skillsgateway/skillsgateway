@@ -2,6 +2,7 @@ package dev.skillsgateway.server.estate;
 
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.admin.MarketplaceRegistrationService;
+import dev.skillsgateway.server.admin.RemovedHosting;
 import dev.skillsgateway.server.approval.AutoApprovalService;
 import dev.skillsgateway.server.approval.AutoApprovalSettingService;
 import dev.skillsgateway.server.approval.AutoApprovalSettingService.SettingRequest;
@@ -187,8 +188,9 @@ public class EstateReconciler {
      * declared one is changed exactly where the API may change it, before the first snapshot
      * (GW_INGEST_0066), and is a failure everywhere else.
      */
-    @Requirements({"GW_ESTATE_0002", "GW_INGEST_0041", "GW_INGEST_0066"})
+    @Requirements({"GW_ESTATE_0002", "GW_INGEST_0041", "GW_INGEST_0066", "GW_AUTH_0090"})
     private Entry reconcileMarketplace(DeclaredMarketplace declared) {
+        requireNoRemovedHosting(declared);
         String mode = declared.syncMode();
         if (mode != null && !DECLARABLE_SYNC_MODES.contains(mode)) {
             throw validationFailure("sync-mode must be one of %s; webhook mode's inbound secret is"
@@ -198,22 +200,12 @@ public class EstateReconciler {
         Optional<Marketplace> existing = marketplaceRepository.findByName(declared.name());
         if (existing.isEmpty()) {
             autoApproval.ifPresent(request -> asEntryFailure(() -> settingService.checkRegistration(
-                    declared.name(),
-                    declared.url(),
-                    declared.origin(),
-                    request.enabled(),
-                    request.reason(),
-                    request.expiresAt())));
+                    declared.name(), declared.url(), request.enabled(), request.reason(), request.expiresAt())));
             // Reported, never refused (GW_INGEST_0041): the entry converges and says why its upstream
             // could not be read; the registration service has put the same on the ledger.
             List<String> warnings = new ArrayList<>(registrationService
                     .register(
-                            declared.name(),
-                            declared.url(),
-                            declared.origin(),
-                            declared.pushPolicy(),
-                            ACTOR,
-                            MarketplaceRegistrationService.Reachability.REPORT)
+                            declared.name(), declared.url(), ACTOR, MarketplaceRegistrationService.Reachability.REPORT)
                     .warnings());
             if (mode != null && !Marketplace.SYNC_ON_DEMAND.equals(mode)) {
                 syncService.changeMode(declared.name(), mode, ACTOR);
@@ -225,15 +217,9 @@ public class EstateReconciler {
                     "marketplace", declared.name(), warnings.isEmpty() ? null : String.join("; ", warnings));
         }
         Marketplace stored = existing.get();
-        String declaredOrigin = declared.origin() == null ? Marketplace.ORIGIN_UPSTREAM : declared.origin();
-        if (!declaredOrigin.equals(stored.origin())) {
-            throw validationFailure("declared origin '%s' differs from the registered '%s'; where a marketplace's"
-                            .formatted(declaredOrigin, stored.origin())
-                    + " content comes from cannot change, because its snapshots name it as their source");
-        }
         List<String> changes = new ArrayList<>();
         // Through the API's URL correction (GW_INGEST_0066), whose refusals are this entry's failure:
-        // a marketplace with a snapshot, a hosted one, and a declared null URL for an upstream one.
+        // a marketplace with a snapshot, and a declared null URL.
         if (!Objects.equals(stored.url(), declared.url())) {
             changes.add("url=" + declared.url());
             changes.addAll(registrationService
@@ -251,6 +237,21 @@ public class EstateReconciler {
         return changes.isEmpty()
                 ? Entry.unchanged("marketplace", declared.name())
                 : Entry.updated("marketplace", declared.name(), String.join("; ", changes));
+    }
+
+    /**
+     * The hosted origin and the push policy were removed (GW_AUTH_0090). The declaration keeps both keys
+     * so that an estate file that still sets them fails its entry in words, instead of binding as an
+     * ignored key and turning into a confusing missing-URL failure. {@code origin: upstream}, which
+     * was always the default, is still accepted.
+     */
+    private static void requireNoRemovedHosting(DeclaredMarketplace declared) {
+        if (declared.origin() != null && !declared.origin().isBlank() && !"upstream".equals(declared.origin())) {
+            throw validationFailure(RemovedHosting.message("the origin '" + declared.origin() + "'"));
+        }
+        if (declared.pushPolicy() != null && !declared.pushPolicy().isBlank()) {
+            throw validationFailure(RemovedHosting.message("a push policy"));
+        }
     }
 
     /**

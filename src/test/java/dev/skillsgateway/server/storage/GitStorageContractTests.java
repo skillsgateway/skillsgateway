@@ -9,10 +9,8 @@ import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.storage.objectstore.ObjectStoreTestSupport;
 import dev.skillsgateway.server.storage.objectstore.ObstructingObjectStoreClient;
 import io.github.reqstool.annotations.SVCs;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -29,9 +27,6 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.TreeFormatter;
-import org.eclipse.jgit.transport.PacketLineOut;
-import org.eclipse.jgit.transport.ReceivePack;
-import org.eclipse.jgit.transport.RefAdvertiser;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -54,14 +49,11 @@ import org.junit.jupiter.params.provider.MethodSource;
  *       revocation path that means the ledger records a marketplace as no longer serving while the
  *       revoked commit is still on the wire, so {@link #aRefusedRefTransitionIsRaisedNotSwallowed}
  *       forces the deletion to fail and requires the failure to surface.
- *   <li><b>The advertised {@code atomic} capability.</b> {@code RefDatabase} defaults
+ *   <li><b>Atomic ref transactions.</b> {@code RefDatabase} defaults
  *       {@code performsAtomicTransactions()} to {@code false} and only {@code RefDirectory} (and
- *       the reftable database) return {@code true}; {@code ReceivePack} advertises
- *       {@code CAPABILITY_ATOMIC} from that method alone. So a DFS backend that inherits the
- *       default silently stops offering atomic pushes to publishers. The server-side flag is no
- *       evidence either way — {@code ReceivePack.service()} overwrites it with
- *       {@code setAtomic(isCapabilityEnabled(CAPABILITY_ATOMIC))} — which is why
- *       {@link #theAtomicPushCapabilityIsAdvertised} reads the advertisement off the wire.
+ *       the reftable database) return {@code true}. A DFS backend that inherits the default turns
+ *       an all-or-nothing reference transition into several independent ones, which
+ *       {@link #everyRepositoryOffersAtomicRefTransactions} asks each backend about.
  * </ul>
  *
  * <p>Backends arrive as {@link Backend} parameters, so adding one is adding a line to
@@ -108,12 +100,11 @@ class GitStorageContractTests {
     @ParameterizedTest
     @MethodSource("backends")
     @SVCs({"SVC_GW_FACADE_0011"})
-    void theThreeRolesAreSeparateRepositories(Backend backend) throws IOException {
+    void theTwoRolesAreSeparateRepositories(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
 
         try (Repository quarantine = storage.quarantine(marketplace);
-                Repository hosted = storage.hosted(marketplace);
                 Repository published = storage.published(marketplace)) {
 
             ObjectId inQuarantine = commit(quarantine, "quarantined");
@@ -122,27 +113,6 @@ class GitStorageContractTests {
             assertThat(published.exactRef(SNAPSHOT_PREFIX + inQuarantine.name()))
                     .as("quarantine is never served: nothing written there may appear in published")
                     .isNull();
-            assertThat(hosted.exactRef(SNAPSHOT_PREFIX + inQuarantine.name()))
-                    .as("the publisher's origin is a third repository, not a view of quarantine")
-                    .isNull();
-        }
-    }
-
-    @ParameterizedTest
-    @MethodSource("backends")
-    @SVCs({"SVC_GW_FACADE_0011"})
-    void hostedIfPresentIsEmptyUntilTheOriginExists(Backend backend) throws IOException {
-        String marketplace = marketplace();
-        GitStorage storage = backend.storage();
-
-        assertThat(storage.hostedIfPresent(marketplace))
-                .as("an upstream marketplace has no origin repository, and asking must not create one")
-                .isEmpty();
-
-        storage.hosted(marketplace).close();
-
-        try (Repository origin = open(storage.hostedIfPresent(marketplace))) {
-            assertThat(origin).isNotNull();
         }
     }
 
@@ -185,9 +155,8 @@ class GitStorageContractTests {
         GitStorage storage = backend.storage();
 
         try (Repository quarantine = storage.quarantine(marketplace);
-                Repository hosted = storage.hosted(marketplace);
                 Repository published = storage.published(marketplace)) {
-            for (Repository repository : List.of(quarantine, hosted, published)) {
+            for (Repository repository : List.of(quarantine, published)) {
                 Ref head = repository.exactRef(Constants.HEAD);
                 assertThat(head)
                         .as("HEAD must exist on a freshly created repository")
@@ -456,43 +425,27 @@ class GitStorageContractTests {
         }
     }
 
-    // --- the advertised push capability ---------------------------------------------------------
+    // --- atomic ref transactions ----------------------------------------------------------------
 
     @ParameterizedTest
     @MethodSource("backends")
     @SVCs({"SVC_GW_FACADE_0011"})
-    void theAtomicPushCapabilityIsAdvertised(Backend backend) throws IOException {
+    void everyRepositoryOffersAtomicRefTransactions(Backend backend) throws IOException {
         String marketplace = marketplace();
         GitStorage storage = backend.storage();
 
-        try (Repository hosted = storage.hosted(marketplace)) {
-            ObjectId pushed = commit(hosted, "pushed by a publisher");
-            setRef(hosted, MAIN, pushed);
-
-            assertThat(hosted.getRefDatabase().performsAtomicTransactions())
-                    .as("the advertisement is derived from this method alone, and RefDatabase defaults it to false")
-                    .isTrue();
-            assertThat(advertisement(hosted))
-                    .as("a publisher must be offered atomic pushes on every backend, or a multi-ref"
-                            + " push silently becomes several independent ones")
-                    .contains("atomic");
+        try (Repository quarantine = storage.quarantine(marketplace);
+                Repository published = storage.published(marketplace)) {
+            for (Repository repository : List.of(quarantine, published)) {
+                assertThat(repository.getRefDatabase().performsAtomicTransactions())
+                        .as("RefDatabase defaults this to false, and a backend that inherits the default turns an"
+                                + " all-or-nothing reference transition into several independent ones")
+                        .isTrue();
+            }
         }
     }
 
     // --- helpers --------------------------------------------------------------------------------
-
-    /**
-     * Reads what a {@code receive-pack} would put on the wire. The server-side flag is set here on
-     * purpose and proves nothing: {@code ReceivePack.service()} overwrites it from what the client
-     * enabled, so only the advertisement says whether the capability was ever offered.
-     */
-    private static String advertisement(Repository repository) throws IOException {
-        ReceivePack receivePack = new ReceivePack(repository);
-        receivePack.setAtomic(true);
-        ByteArrayOutputStream wire = new ByteArrayOutputStream();
-        receivePack.sendAdvertisedRefs(new RefAdvertiser.PacketLineOutRefAdvertiser(new PacketLineOut(wire)));
-        return wire.toString(StandardCharsets.UTF_8);
-    }
 
     private static Repository open(Optional<Repository> repository) {
         return repository.orElseThrow(() -> new AssertionError("expected the repository to be present"));

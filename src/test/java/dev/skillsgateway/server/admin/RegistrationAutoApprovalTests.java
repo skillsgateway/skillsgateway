@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -69,14 +68,19 @@ class RegistrationAutoApprovalTests {
     void aSettingThatFailsAfterRegistrationIsReportedOnTheRegisteredMarketplace() {
         Marketplace registered = mock(Marketplace.class);
         when(registered.name()).thenReturn("acme");
-        when(registration.register(eq("acme"), isNull(), eq("hosted"), isNull(), eq("root")))
+        when(registration.register(eq("acme"), eq("https://forge.invalid/acme.git"), eq("root")))
                 .thenReturn(new MarketplaceRegistrationService.RegistrationOutcome(registered, List.of()));
         when(setting.set(eq("acme"), any(), anyString())).thenThrow(new IllegalStateException("database unavailable"));
         Instant expires = Instant.now().plus(7, ChronoUnit.DAYS);
 
         ResponseEntity<RegisteredMarketplace> response = controller.registerMarketplace(
                 new RegisterMarketplaceRequest(
-                        "acme", null, "hosted", null, null, new RegistrationAutoApproval(true, "our CI", expires)),
+                        "acme",
+                        "https://forge.invalid/acme.git",
+                        null,
+                        null,
+                        null,
+                        new RegistrationAutoApproval(true, "our CI", expires)),
                 new TestingAuthenticationToken("root", null));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);

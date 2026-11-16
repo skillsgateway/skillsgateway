@@ -9,34 +9,21 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * The three scope dimensions and their three different empty meanings (GW_AUTH_0020). One record now
+ * The two scope dimensions and their two different empty meanings (GW_AUTH_0020). One record
  * serves two audiences, and the next bug lives in whichever empty list somebody reads as
- * "unrestricted", so all three defaults are asserted together rather than one at a time.
+ * "unrestricted", so both defaults are asserted together rather than one at a time.
  */
 class MachineCredentialShapeTests {
 
-    private static AccessToken token(List<String> scopes, List<String> pushScopes, List<String> apiScopes) {
+    private static AccessToken token(List<String> scopes, List<String> apiScopes) {
         return new AccessToken(
-                1L,
-                "principal",
-                "name",
-                "hash",
-                Instant.now(),
-                null,
-                scopes,
-                null,
-                null,
-                pushScopes,
-                false,
-                apiScopes,
-                null,
-                null);
+                1L, "principal", "name", "hash", Instant.now(), null, scopes, null, null, false, apiScopes, null, null);
     }
 
     @Test
     @SVCs({"SVC_GW_AUTH_0020"})
     void a_credential_with_no_api_scopes_grants_no_api_reach() {
-        AccessToken existing = token(null, null, null);
+        AccessToken existing = token(null, null);
 
         assertThat(existing.apiScopeList()).isEmpty();
         assertThat(existing.machineCredential()).isFalse();
@@ -45,21 +32,18 @@ class MachineCredentialShapeTests {
         // An empty list is the same absence: it must never become a grant. The column is TEXT[] and
         // the schema now refuses cardinality 0 outright, so this state cannot reach the record from
         // the database at all — asserted here anyway, because the record is constructible in code.
-        assertThat(token(null, null, List.of()).apiScopeList()).isEmpty();
-        assertThat(token(null, null, List.of()).machineCredential()).isFalse();
+        assertThat(token(null, List.of()).apiScopeList()).isEmpty();
+        assertThat(token(null, List.of()).machineCredential()).isFalse();
     }
 
     @Test
     @SVCs({"SVC_GW_AUTH_0020"})
-    void the_three_empty_list_defaults_mean_three_different_things() {
-        AccessToken empty = token(null, null, null);
+    void the_two_empty_list_defaults_mean_two_different_things() {
+        AccessToken empty = token(null, null);
 
         assertThat(empty.permitsMarketplace("anything"))
                 .as("fetch: empty means every marketplace")
                 .isTrue();
-        assertThat(empty.permitsPushTo("anything"))
-                .as("push: empty means nowhere")
-                .isFalse();
         assertThat(empty.permitsApiScope("estate:read"))
                 .as("api: empty means nothing")
                 .isFalse();
@@ -74,7 +58,7 @@ class MachineCredentialShapeTests {
     @Test
     @SVCs({"SVC_GW_AUTH_0021"})
     void an_api_only_credential_with_an_empty_fetch_list_reaches_no_marketplace() {
-        AccessToken machine = token(null, null, List.of("marketplaces:read"));
+        AccessToken machine = token(null, List.of("marketplaces:read"));
 
         assertThat(machine.scopeList())
                 .as("a machine credential's fetch list is empty")
@@ -91,21 +75,19 @@ class MachineCredentialShapeTests {
     @Test
     @SVCs({"SVC_GW_AUTH_0006"})
     void an_ordinary_fetch_token_with_an_empty_fetch_list_still_reaches_every_marketplace() {
-        AccessToken fetchOnly = token(null, null, null);
+        AccessToken fetchOnly = token(null, null);
 
         assertThat(fetchOnly.permitsMarketplace("anything")).isTrue();
         assertThat(fetchOnly.permitsMarketplace("catalog")).isTrue();
         // And a fetch credential that also names marketplaces is unchanged either way.
-        assertThat(token(List.of("alpha"), null, null).permitsMarketplace("alpha"))
-                .isTrue();
-        assertThat(token(List.of("alpha"), null, null).permitsMarketplace("beta"))
-                .isFalse();
+        assertThat(token(List.of("alpha"), null).permitsMarketplace("alpha")).isTrue();
+        assertThat(token(List.of("alpha"), null).permitsMarketplace("beta")).isFalse();
     }
 
     @Test
     @SVCs({"SVC_GW_AUTH_0020"})
     void an_api_scope_list_is_read_as_the_named_values_and_nothing_else() {
-        AccessToken machine = token(null, null, List.of("marketplaces:read", "estate:read"));
+        AccessToken machine = token(null, List.of("marketplaces:read", "estate:read"));
 
         assertThat(machine.machineCredential()).isTrue();
         assertThat(machine.apiScopeList()).containsExactly("marketplaces:read", "estate:read");

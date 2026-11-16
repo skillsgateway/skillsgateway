@@ -9,6 +9,7 @@ export type MarketplaceView = components["schemas"]["MarketplaceView"];
 export type Snapshot = components["schemas"]["Snapshot"];
 export type Provenance = components["schemas"]["Provenance"];
 export type TokenView = components["schemas"]["TokenView"];
+export type FormerHostedRepository = components["schemas"]["FormerHostedRepository"];
 export type IssuedToken = components["schemas"]["IssuedToken"];
 export type MachineCredentialView = components["schemas"]["MachineCredentialView"];
 export type ApiScopeView = components["schemas"]["ApiScopeView"];
@@ -60,6 +61,19 @@ export function useMe() {
     queryKey: ["me"],
     queryFn: () => api<MeView>("/api/v1/me"),
     staleTime: Infinity,
+  });
+}
+
+/**
+ * TEMPORARY (REMOVE-AFTER: two minor releases after the release that ships migration
+ * V3__remove_hosted_marketplaces): the repositories the removed hosting feature left in the data
+ * store. Only an administrator may read the list, so only an administrator's session asks.
+ */
+export function useFormerHostedRepositories(enabled: boolean) {
+  return useQuery({
+    queryKey: ["storage", "former-hosted-repositories"],
+    enabled,
+    queryFn: () => api<FormerHostedRepository[]>("/api/v1/storage/former-hosted-repositories"),
   });
 }
 

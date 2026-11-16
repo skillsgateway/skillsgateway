@@ -2,15 +2,14 @@ package dev.skillsgateway.server.auth;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
+import dev.skillsgateway.server.admin.RemovedHosting;
 import dev.skillsgateway.server.persistence.AccessToken;
-import dev.skillsgateway.server.roles.RoleService;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
-import java.util.LinkedHashSet;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -36,12 +35,10 @@ public class TokenController {
     private static final String NO_MARKETPLACE = "-";
 
     private final TokenService tokenService;
-    private final RoleService roleService;
     private final AdminAuditLogger auditLogger;
 
-    public TokenController(TokenService tokenService, RoleService roleService, AdminAuditLogger auditLogger) {
+    public TokenController(TokenService tokenService, AdminAuditLogger auditLogger) {
         this.tokenService = tokenService;
-        this.roleService = roleService;
         this.auditLogger = auditLogger;
     }
 
@@ -58,10 +55,7 @@ public class TokenController {
             @Schema(description = "Expiry; omitted means never, unless a max lifetime is configured")
             Instant expiresAt,
 
-            @Schema(
-                    description = "Hosted marketplace names the token may PUBLISH to. Unlike fetch scopes,"
-                            + " omitting these grants none: there is no every-marketplace push scope.")
-            List<String> pushScopes) {}
+            @Schema(hidden = true) List<String> pushScopes) {}
 
     /** Never exposes the stored hash. */
     @Schema(description = "A token without its secret; the cleartext is only returned at creation")
@@ -81,9 +75,6 @@ public class TokenController {
 
             @Schema(description = "The token this one replaced by rotation, or null")
             Long rotatedFrom,
-
-            @Schema(description = "Hosted marketplaces this token may publish to; empty grants none")
-            List<String> pushScopes,
 
             @Schema(
                     description = "Whether the credential was derived from a browser session rather than"
@@ -177,36 +168,28 @@ public class TokenController {
     }
 
     @PostMapping
-    @Requirements({"GW_AUTH_0009", "GW_FACADE_0007"})
+    @Requirements({"GW_AUTH_0009", "GW_AUTH_0090"})
     @Tag(name = "Tokens")
     @Operation(
             summary = "Create a token",
             description = "Issues a personal access token for the git facade. Optionally scoped to named"
                     + " marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned"
-                    + " exactly once. Push scopes are separate and grant nothing by default: they name the"
-                    + " hosted marketplaces the token may publish to, and only an administrator or an"
-                    + " approver of every marketplace named may request them. Creation is audit-logged"
-                    + " with the token's name and both kinds of scope.")
+                    + " exactly once. Creation is audit-logged with the token's name and scopes. A request"
+                    + " that names push scopes is refused: the gateway no longer hosts marketplaces.")
     @ApiResponse(responseCode = "201", description = "Token issued; the only response carrying the cleartext")
-    @ApiResponse(
-            responseCode = "403",
-            description = "A push scope names a marketplace the caller neither administers nor approves")
+    @ApiResponse(responseCode = "400", description = "The request asks for push scopes, which were removed")
     @ApiResponse(responseCode = "422", description = "Unknown scope, or lifetime beyond the configured cap")
     public ResponseEntity<TokenService.IssuedToken> create(
             @RequestBody CreateTokenRequest request, Authentication authentication) {
-        List<String> pushScopes = request.pushScopes() == null ? List.of() : request.pushScopes();
-        // Publication authority comes from authority over the marketplace; one name the caller
-        // lacks refuses the whole request.
-        for (String marketplace : new LinkedHashSet<>(pushScopes)) {
-            roleService.requireApprover(authentication, marketplace);
+        if (request.pushScopes() != null && !request.pushScopes().isEmpty()) {
+            throw RemovedHosting.refusal("a token with push scopes");
         }
         TokenService.IssuedToken issued = tokenService.create(
                 authentication.getName(),
                 request.name(),
                 request.scopes() == null ? List.of() : request.scopes(),
-                request.expiresAt(),
-                pushScopes);
-        audit(authentication, "token-created", issued.id(), issued.name(), issued.scopes(), issued.pushScopes());
+                request.expiresAt());
+        audit(authentication, "token-created", issued.id(), issued.name(), issued.scopes());
         return ResponseEntity.status(HttpStatus.CREATED).body(issued);
     }
 
@@ -345,19 +328,7 @@ public class TokenController {
 
     /** Lifecycle entries carry the token's identity, name and scopes (GW_AUTH_0009). */
     private void audit(Authentication authentication, String event, long tokenId, String name, List<String> scopes) {
-        audit(authentication, event, tokenId, name, scopes, List.of());
-    }
-
-    private void audit(
-            Authentication authentication,
-            String event,
-            long tokenId,
-            String name,
-            List<String> scopes,
-            List<String> pushScopes) {
-        String detail = "token %d '%s' scopes=%s push=%s"
-                .formatted(
-                        tokenId, name, scopes.isEmpty() ? "all" : scopes, pushScopes.isEmpty() ? "none" : pushScopes);
+        String detail = "token %d '%s' scopes=%s".formatted(tokenId, name, scopes.isEmpty() ? "all" : scopes);
         auditLogger.record(authentication.getName(), NO_MARKETPLACE, event, null, detail);
     }
 
@@ -370,7 +341,6 @@ public class TokenController {
                 token.scopeList(),
                 token.expiresAt(),
                 token.rotatedFrom(),
-                token.pushScopeList(),
                 token.sessionDerived(),
                 token.apiScopeList(),
                 token.lastUsedAt());

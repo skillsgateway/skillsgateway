@@ -3,8 +3,6 @@ package dev.skillsgateway.server;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -62,13 +60,8 @@ class AutoApprovalSettingEnforceTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.4"})
     void aGrantByTheRegistrantAwaitsASecondAdministrator() throws Exception {
-        Marketplace marketplace = marketplaceRepository.register(
-                uniqueName("peawait"),
-                INTERNAL + "skills.git",
-                null,
-                Marketplace.ORIGIN_UPSTREAM,
-                Marketplace.PUSH_APPEND_ONLY,
-                "dana");
+        Marketplace marketplace =
+                marketplaceRepository.register(uniqueName("peawait"), INTERNAL + "skills.git", null, "dana");
 
         putSetting(marketplace.name(), "dana")
                 .andExpect(status().isOk())
@@ -98,39 +91,12 @@ class AutoApprovalSettingEnforceTests extends AbstractGatewayTest {
                 .andExpect(jsonPath("$.setBy").value("rachel"));
     }
 
-    @Test
-    @SVCs({"SVC_GW_APPROVAL_0044.4"})
-    void automaticApprovalTurnedOnAtRegistrationAwaitsASecondAdministrator() throws Exception {
-        String name = uniqueName("peregister");
-
-        mockMvc.perform(post("/api/v1/marketplaces")
-                        .with(as("dana"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"name": "%s", "origin": "hosted", "autoApproval": %s}""".formatted(name, on(Duration.ofDays(14)))))
-                .andExpect(status().isCreated());
-
-        mockMvc.perform(get("/api/v1/marketplaces/{name}/auto-approval", name).with(as("rachel")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.enabled").value(true))
-                .andExpect(jsonPath("$.allowedBy").value("awaiting-second-administrator"));
-
-        putSetting(name, "rachel")
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.allowedBy").value("hosted"));
-    }
-
     /** The reconciler's exemption is its entry point, not its name: a person signed in under that name gets none. */
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.4"})
     void aPersonSignedInUnderTheReconcilersNameCannotGrant() {
         Marketplace marketplace = marketplaceRepository.register(
-                uniqueName("peimpostor"),
-                INTERNAL + "skills.git",
-                null,
-                Marketplace.ORIGIN_UPSTREAM,
-                Marketplace.PUSH_APPEND_ONLY,
-                EstateReconciler.ACTOR);
+                uniqueName("peimpostor"), INTERNAL + "skills.git", null, EstateReconciler.ACTOR);
 
         assertThatThrownBy(() -> settingService.set(
                         marketplace.name(),
@@ -145,12 +111,7 @@ class AutoApprovalSettingEnforceTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_APPROVAL_0044.4"})
     void theEstateReconcilersGrantNeedsNoSecondAdministrator() {
         Marketplace marketplace = marketplaceRepository.register(
-                uniqueName("pereconciler"),
-                INTERNAL + "skills.git",
-                null,
-                Marketplace.ORIGIN_UPSTREAM,
-                Marketplace.PUSH_APPEND_ONLY,
-                EstateReconciler.ACTOR);
+                uniqueName("pereconciler"), INTERNAL + "skills.git", null, EstateReconciler.ACTOR);
 
         AutoApprovalSettingService.SettingView view = settingService.setDeclared(
                 marketplace.name(),
@@ -168,12 +129,7 @@ class AutoApprovalSettingEnforceTests extends AbstractGatewayTest {
     @SVCs({"SVC_GW_APPROVAL_0044.4"})
     void approvalsFourEyesBehaviourIsUnchangedForTheReconciler() {
         Marketplace marketplace = marketplaceRepository.register(
-                uniqueName("peapprove"),
-                INTERNAL + "skills.git",
-                null,
-                Marketplace.ORIGIN_UPSTREAM,
-                Marketplace.PUSH_APPEND_ONLY,
-                EstateReconciler.ACTOR);
+                uniqueName("peapprove"), INTERNAL + "skills.git", null, EstateReconciler.ACTOR);
         String sha = "0".repeat(40);
         Snapshot snapshot = new Snapshot(
                 1L,

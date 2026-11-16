@@ -228,12 +228,7 @@ abstract class AbstractGatewayTest {
     /** As above, with the supply-side identities the four-eyes rule reads (GW_APPROVAL_0010). */
     protected Registered registerAndIngest(String name, Path upstreamDir, String registrant, String ingestActor) {
         Marketplace marketplace = marketplaceRepository.register(
-                name,
-                upstreamDir.toAbsolutePath().toString(),
-                null,
-                Marketplace.ORIGIN_UPSTREAM,
-                Marketplace.PUSH_APPEND_ONLY,
-                registrant);
+                name, upstreamDir.toAbsolutePath().toString(), null, registrant);
         Snapshot snapshot = ingestionService.ingest(marketplace, ingestActor);
         return new Registered(marketplace, snapshot);
     }
@@ -282,12 +277,6 @@ abstract class AbstractGatewayTest {
     protected String facadeUrl(String marketplace, String pat) {
         String credentials = pat == null ? "" : "token:" + pat + "@";
         return "http://" + credentials + "127.0.0.1:" + port + "/git/" + marketplace;
-    }
-
-    /** Publish endpoint URL for a hosted marketplace (GW_FACADE_0007); a null PAT gives no credentials. */
-    protected String publishUrl(String marketplace, String pat) {
-        String credentials = pat == null ? "" : "token:" + pat + "@";
-        return "http://" + credentials + "127.0.0.1:" + port + "/publish/" + marketplace;
     }
 
     protected record GitResult(int exitCode, String output) {}

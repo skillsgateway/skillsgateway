@@ -9,8 +9,7 @@ import dev.skillsgateway.server.config.SkillsGatewayProperties;
 public class NotInternalException extends RuntimeException {
 
     public NotInternalException(String marketplace) {
-        super("marketplace '%s' is not under an internal prefix and is not hosted, so automatic approval needs an"
-                        .formatted(marketplace)
+        super("marketplace '%s' is not under an internal prefix, so automatic approval needs an".formatted(marketplace)
                 + " administrator exemption");
     }
 

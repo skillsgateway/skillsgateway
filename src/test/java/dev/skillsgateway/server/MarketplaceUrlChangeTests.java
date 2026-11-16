@@ -69,12 +69,7 @@ class MarketplaceUrlChangeTests extends AbstractGatewayTest {
 
     private Marketplace typoed(String name, String url) {
         return marketplaceRepository.register(
-                name,
-                url,
-                new ForgeMetadata("github", "acme/typo", "stale description", null),
-                Marketplace.ORIGIN_UPSTREAM,
-                Marketplace.PUSH_APPEND_ONLY,
-                "alice");
+                name, url, new ForgeMetadata("github", "acme/typo", "stale description", null), "alice");
     }
 
     private ResultActions change(String name, String url, OidcLoginRequestPostProcessor as) throws Exception {
@@ -209,21 +204,6 @@ class MarketplaceUrlChangeTests extends AbstractGatewayTest {
 
         assertUnchanged(registered.marketplace());
         assertThat(forge.requestedPaths()).noneMatch(path -> path.contains("after-snapshot"));
-    }
-
-    @Test
-    @SVCs({"SVC_GW_INGEST_0066"})
-    void a_hosted_marketplace_has_no_upstream_to_change() throws Exception {
-        String name = uniqueName("urlhosted");
-        Marketplace hosted = registrationService
-                .register(name, null, Marketplace.ORIGIN_HOSTED, null, "alice")
-                .marketplace();
-
-        change(name, createUpstream(DEFAULT_MANIFEST).toUri().toString(), root).andExpect(status().isBadRequest());
-
-        assertUnchanged(hosted);
-        assertThat(marketplaceRepository.findById(hosted.id()).orElseThrow().origin())
-                .isEqualTo(Marketplace.ORIGIN_HOSTED);
     }
 
     @Test

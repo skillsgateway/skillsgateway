@@ -12,7 +12,6 @@ import com.jayway.jsonpath.JsonPath;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
-import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.WebhookDelivery;
 import dev.skillsgateway.server.persistence.WebhookDeliveryRepository;
 import dev.skillsgateway.server.persistence.WebhookSubscriber;
@@ -602,7 +601,7 @@ class WebhookTests extends AbstractGatewayTest {
         assertThat(registeredBody).containsOnlyKeys(MARKETPLACE_PAYLOAD_FIELDS.toArray(String[]::new));
         assertThat(registeredBody.get("event")).isEqualTo(WebhookEvent.MARKETPLACE_REGISTERED);
         assertThat(registeredBody.get("marketplace")).isEqualTo(marketplace);
-        assertThat(registeredBody.get("detail")).isEqualTo("origin=" + Marketplace.ORIGIN_UPSTREAM);
+        assertThat(registeredBody.get("detail")).isEqualTo("origin=upstream");
         assertThat(String.valueOf(registeredBody.get("actor"))).isNotBlank();
         assertThat(String.valueOf(registeredBody.get("occurredAt"))).isNotBlank();
 

@@ -9,7 +9,6 @@ import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.policy.SnapshotFactsService;
-import dev.skillsgateway.server.storage.GitObjectTransfer;
 import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.storage.RefTransitions;
 import dev.skillsgateway.server.vetting.HeldSnapshotChanged;
@@ -27,8 +26,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
@@ -249,7 +246,7 @@ public class IngestionService {
     })
     private Snapshot ingestLocked(Marketplace marketplace, String actor, Progress progress) {
         try (Repository repo = storage.quarantine(marketplace.name())) {
-            UpstreamGit.Fetched incoming = fetchIncoming(repo, marketplace);
+            UpstreamGit.Fetched incoming = upstreamGit.fetchDefaultBranch(repo, marketplace.url(), INCOMING_REF);
             ObjectId upstream = incoming.sha();
             progress.stage(STAGE_EVALUATING_MANIFEST);
             // The manifest is decided before anything is pinned, because which commit the snapshot
@@ -312,7 +309,7 @@ public class IngestionService {
                     "ingestion failed for marketplace '%s': %s".formatted(marketplace.name(), e.getMessage()),
                     e.failure(),
                     e);
-        } catch (IOException | GitAPIException e) {
+        } catch (IOException e) {
             UpstreamFailure failure = UpstreamFailure.unclassified(e);
             throw new IngestionException(
                     "ingestion failed for marketplace '%s': %s".formatted(marketplace.name(), failure.describe()),
@@ -343,32 +340,6 @@ public class IngestionService {
             }
         } catch (IOException | RuntimeException cleanup) {
             failed.addSuppressed(cleanup);
-        }
-    }
-
-    /**
-     * Where the incoming commit comes from — the only thing that differs between an upstream
-     * marketplace and a gateway-hosted one (GW_INGEST_0017). A hosted marketplace's source is its own
-     * origin repository, whose objects are copied across rather than fetched by path, because an
-     * object-store origin has no path. Everything from the snapshot pin down is literally the same
-     * code, so pushed content faces the same manifest validation, the same vetting chain and the
-     * same approval gate as fetched content.
-     */
-    @Requirements({"GW_INGEST_0017"})
-    private UpstreamGit.Fetched fetchIncoming(Repository repo, Marketplace marketplace)
-            throws GitAPIException, IOException {
-        if (!marketplace.hosted()) {
-            return upstreamGit.fetchDefaultBranch(repo, marketplace.url(), INCOMING_REF);
-        }
-        try (Repository origin = storage.hosted(marketplace.name())) {
-            ObjectId lineage = origin.resolve(Marketplace.LINEAGE_REF);
-            if (lineage == null) {
-                throw new RepositoryNotFoundException(
-                        "'%s' has not been published to yet".formatted(marketplace.name()));
-            }
-            GitObjectTransfer.copy(origin, repo, lineage);
-            RefTransitions.write(repo, INCOMING_REF, lineage);
-            return new UpstreamGit.Fetched(lineage, null);
         }
     }
 

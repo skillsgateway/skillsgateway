@@ -14,7 +14,6 @@ import dev.skillsgateway.server.admin.MarketplaceRegistrationService;
 import dev.skillsgateway.server.admin.MarketplaceRemovalService;
 import dev.skillsgateway.server.admin.MissingRemovalReasonException;
 import dev.skillsgateway.server.approval.RevocationService;
-import dev.skillsgateway.server.auth.TokenService;
 import dev.skillsgateway.server.persistence.FetchLogRepository;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRemovedException;
@@ -41,9 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.transport.RefSpec;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -281,63 +278,62 @@ class MarketplaceRemovalTests extends AbstractGatewayTest {
     }
 
     /**
-     * Publication grants are cut at removal; fetch grants are kept (GW_INGEST_0034). Both are names, so
-     * the test is the one that matters: against the successor registered under the same name.
+     * The operator procedure for a marketplace that was hosted (guides/removing-hosted-marketplaces):
+     * remove it, then register the forge repository under the same name. The name is free at once, the
+     * successor is a new marketplace that starts its own history and needs its own first approval, a
+     * fetch grant to the name keeps working once that happens, and nothing of the removed record is
+     * carried over.
      */
     @Test
-    @SVCs({"SVC_GW_INGEST_0034"})
-    void removal_cuts_publication_grants_to_the_name_and_keeps_fetch_grants() throws Exception {
-        String name = uniqueName("rmpush");
-        String other = uniqueName("rmpushother");
-        registrationService.register(name, null, Marketplace.ORIGIN_HOSTED, null, "root");
-        registrationService.register(other, null, Marketplace.ORIGIN_HOSTED, null, "root");
-        TokenService.IssuedToken publisher = tokenService.create("alice", "publisher", List.of(), null, List.of(name));
-        TokenService.IssuedToken both =
-                tokenService.create("alice", "two-publisher", List.of(), null, List.of(name, other));
-        String reader =
+    @SVCs({"SVC_GW_INGEST_0034", "SVC_GW_INGEST_0035"})
+    void removal_frees_the_name_for_a_new_upstream_marketplace_and_fetch_grants_carry_over() throws Exception {
+        String name = uniqueName("rmrehome");
+        Registered before = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
+        approve(before.snapshot().id());
+        String scoped =
                 tokenService.create("alice", "reader", List.of(name), null).token();
-        Path working = publisherWorkingCopy();
-        assertThat(git(working, "push", publishUrl(name, publisher.token()), "main")
+        String unscoped =
+                tokenService.create("alice", "everyone", List.of(), null).token();
+        assertThat(gitClone(facadeUrl(name, scoped), newWorkDir("rehome-before"))
                         .exitCode())
-                .as("the publisher can push before the removal")
+                .as("the marketplace serves before it is removed")
                 .isZero();
 
-        MarketplaceRemovalService.Removal removal = removalService.remove(name, REASON, "root");
+        removalService.remove(name, REASON, "root");
 
-        assertThat(removal.pushScopeRemovedFromTokenIds()).containsExactlyInAnyOrder(publisher.id(), both.id());
-        assertThat(tokenRepository.findById(publisher.id()).orElseThrow().pushScopes())
-                .as("a grant left naming nothing is none")
-                .isNullOrEmpty();
-        assertThat(tokenRepository.findById(both.id()).orElseThrow().pushScopes())
-                .as("only the removed name is taken")
-                .containsExactly(other);
-        assertThat(ledger(name))
-                .filteredOn(e -> e.event().equals(MarketplaceRemovalService.EVENT_PUSH_SCOPES_REMOVED))
-                .singleElement()
-                .satisfies(e -> assertThat(e.detail()).contains(String.valueOf(publisher.id())));
+        assertThat(marketplaceRepository.findByName(name))
+                .as("the name is free")
+                .isEmpty();
+        assertThat(gitClone(facadeUrl(name, scoped), newWorkDir("rehome-gap")).exitCode())
+                .as("it serves nothing until the successor is approved")
+                .isNotZero();
 
         Marketplace successor = registrationService
-                .register(name, null, Marketplace.ORIGIN_HOSTED, null, "root")
+                .register(name, createUpstream(DEFAULT_MANIFEST).toUri().toString(), "root")
                 .marketplace();
-        assertThat(git(working, "push", publishUrl(name, publisher.token()), "main")
-                        .exitCode())
-                .as("the removed marketplace's publisher cannot push into its successor")
+        assertThat(successor.id()).isNotEqualTo(before.marketplace().id());
+        Snapshot first = ingestionService.ingest(successor, "alice");
+        assertThat(first.state()).as("its own first approval is still needed").isEqualTo(Snapshot.HELD);
+        assertThat(gitClone(facadeUrl(name, scoped), newWorkDir("rehome-held")).exitCode())
                 .isNotZero();
-        assertThat(git(working, "push", publishUrl(name, both.token()), "main").exitCode())
-                .isNotZero();
-        String newPublisher = tokenService
-                .create("alice", "new-publisher", List.of(), null, List.of(name))
-                .token();
-        assertThat(git(working, "push", publishUrl(name, newPublisher), "main").exitCode())
-                .as("while a publisher granted on the successor can")
-                .isZero();
 
-        List<Snapshot> pushed = snapshots.listByMarketplace(successor.id());
-        Snapshot toServe = pushed.isEmpty() ? ingestionService.ingest(successor, "alice") : pushed.getFirst();
-        approve(toServe.id());
-        assertThat(gitClone(facadeUrl(name, reader), newWorkDir("rmpush-read")).exitCode())
-                .as("the fetch grant still reads the name")
+        approve(first.id());
+
+        assertThat(gitClone(facadeUrl(name, scoped), newWorkDir("rehome-scoped"))
+                        .exitCode())
+                .as("a fetch grant to the name carries over")
                 .isZero();
+        assertThat(gitClone(facadeUrl(name, unscoped), newWorkDir("rehome-unscoped"))
+                        .exitCode())
+                .isZero();
+        assertThat(snapshots.listByMarketplace(successor.id()))
+                .as("the successor's history is its own")
+                .extracting(Snapshot::id)
+                .containsExactly(first.id());
+        assertThat(snapshots.listByMarketplace(before.marketplace().id()))
+                .as("and the old record keeps what it had")
+                .extracting(Snapshot::id)
+                .contains(before.snapshot().id());
     }
 
     /** A removed marketplace's settings leave the administrative listings; the rows stay (GW_INGEST_0034). */
@@ -445,29 +441,6 @@ class MarketplaceRemovalTests extends AbstractGatewayTest {
         assertThat(gitClone(facadeUrl(name, newPat()), newWorkDir("rmleftreuse-clone"))
                         .exitCode())
                 .isNotZero();
-    }
-
-    @Test
-    @SVCs({"SVC_GW_INGEST_0035"})
-    void a_hosted_successor_carries_none_of_its_predecessors_pushes() throws Exception {
-        String name = uniqueName("rmhosted");
-        registrationService.register(name, null, Marketplace.ORIGIN_HOSTED, null, "root");
-        Path pushed = createUpstream(DEFAULT_MANIFEST);
-        try (Repository origin = storage.hosted(name);
-                Git git = Git.wrap(origin)) {
-            git.fetch()
-                    .setRemote(pushed.toUri().toString())
-                    .setRefSpecs(new RefSpec("+refs/heads/main:" + Marketplace.LINEAGE_REF))
-                    .call();
-            assertThat(origin.exactRef(Marketplace.LINEAGE_REF)).isNotNull();
-        }
-
-        removalService.remove(name, REASON, "root");
-        registrationService.register(name, null, Marketplace.ORIGIN_HOSTED, null, "root");
-
-        try (Repository origin = storage.hosted(name)) {
-            assertThat(origin.exactRef(Marketplace.LINEAGE_REF)).isNull();
-        }
     }
 
     @Test

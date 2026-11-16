@@ -114,7 +114,7 @@ public record UpstreamFailure(String reason, String nextStep, String rootCause) 
                 NO_DEFAULT_BRANCH, "Push a commit to the upstream's default branch, then try again.", redact(detail));
     }
 
-    /** A failure that is not the upstream's answer (storage, vetting, a hosted origin never pushed). */
+    /** A failure that is not the upstream's answer (storage, vetting). */
     public static UpstreamFailure unclassified(Throwable failure) {
         return new UpstreamFailure(
                 "the ingestion could not complete",

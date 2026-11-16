@@ -101,33 +101,8 @@ public class SecurityConfig {
     }
 
     /**
-     * The publication chain (GW_FACADE_0007): the only write path the gateway has, and a sibling of the
-     * read-only facade chain rather than a mode on it. Same credential kind — PATs, stateless, no
-     * session — but authorization is the token's push scope, which no token holds by default and
-     * none can hold for every marketplace.
-     */
-    @Bean
-    @Order(2)
-    @Requirements({"GW_FACADE_0007"})
-    public SecurityFilterChain publishChain(HttpSecurity http, PatAuthenticationProvider patAuthenticationProvider)
-            throws Exception {
-        http.securityMatcher("/publish/**")
-                // No CSRF token, for the same reason as the facade chain: a PAT over
-                // Basic on every request, STATELESS, no cookie or session created or
-                // honoured. A forged cross-site request arrives unauthenticated, and
-                // would still need a token carrying push scope for this marketplace.
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationManager(new ProviderManager(patAuthenticationProvider))
-                .httpBasic(Customizer.withDefaults())
-                .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated());
-        return http.build();
-    }
-
-    /**
-     * The revocation-check chain (GW_FACADE_0031): a third sibling of the facade and publication
-     * chains, and for the same reason the publication chain is one — the credential is the facade's,
-     * the surface is not the facade's. A holder asks whether content it already fetched is still
+     * The revocation-check chain (GW_FACADE_0031): a sibling of the facade chain — the credential is the
+     * facade's, the surface is not the facade's. A holder asks whether content it already fetched is still
      * approved, so the only credential that makes sense is the one it fetched with, and both of the
      * facade's kinds are accepted: a PAT over Basic, and an identity-provider bearer token wherever
      * {@code skills-gateway.facade.idp-bearer.enabled} puts {@link IdpBearerAuthenticationProvider}
@@ -151,7 +126,7 @@ public class SecurityConfig {
             ObjectProvider<IdpBearerAuthenticationProvider> idpBearerAuthenticationProvider)
             throws Exception {
         http.securityMatcher("/status/**")
-                // No CSRF token, for the same reason as the facade and publication chains: every
+                // No CSRF token, for the same reason as the facade chain: every
                 // request authenticates itself, no session is created and no cookie is honoured,
                 // so a forged cross-site request arrives unauthenticated.
                 .csrf(csrf -> csrf.disable())
@@ -192,7 +167,7 @@ public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     /**
-     * The machine API chain (GW_AUTH_0021): a sibling of the facade and publication chains rather than
+     * The machine API chain (GW_AUTH_0021): a sibling of the facade chain rather than
      * a mode on the session chain. It matches {@code /api/**} <em>and</em> the presence of an
      * {@code Authorization: Bearer} header, so a browser request without one still falls through
      * to the session chain exactly as before and that chain is unchanged apart from its order.
@@ -223,7 +198,7 @@ public class SecurityConfig {
         http.securityMatcher(new AndRequestMatcher(
                         PathPatternRequestMatcher.withDefaults().matcher("/api/**"),
                         MachineApiAuthenticationFilter::presentsBearerCredential))
-                // No CSRF token, for the same reason as the facade and publication chains: the
+                // No CSRF token, for the same reason as the facade chain: the
                 // request is self-authenticating, STATELESS, no session is created and no cookie
                 // is honoured -- the filter refuses a request that carries one at all. This chain
                 // neither extends nor relies on the session chain's /api/** exemption.

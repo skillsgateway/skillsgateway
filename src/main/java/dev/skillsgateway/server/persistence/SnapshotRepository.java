@@ -62,7 +62,7 @@ public class SnapshotRepository {
      * with the row.
      *
      * @param closure the resolved closure, or null for a snapshot that resolved nothing
-     * @param fetchedFrom the URL the content was fetched from: null for a hosted marketplace
+     * @param fetchedFrom the URL the content was fetched from
      * @throws MarketplaceUrlChangedException if the marketplace no longer has that URL
      */
     @Requirements({"GW_APPROVAL_0010", "GW_FACADE_0009", "GW_INGEST_0030.2", "GW_INGEST_0030.3", "GW_INGEST_0066"})

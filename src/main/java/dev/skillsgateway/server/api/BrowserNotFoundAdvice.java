@@ -30,7 +30,7 @@ public class BrowserNotFoundAdvice {
 
     /** Machine surfaces keep their own refusal even when a browser asks: their formats are contracts. */
     private static final List<String> MACHINE_PREFIXES =
-            List.of("/api/", "/git/", "/publish/", "/status/", "/hooks/", "/actuator/", "/v3/");
+            List.of("/api/", "/git/", "/status/", "/hooks/", "/actuator/", "/v3/");
 
     private static final ClassPathResource PORTAL = new ClassPathResource("static/index.html");
 

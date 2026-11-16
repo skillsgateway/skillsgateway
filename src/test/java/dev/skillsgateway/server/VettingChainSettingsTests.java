@@ -395,13 +395,7 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
     }
 
     private Marketplace register(String name, Path upstream) {
-        return marketplaceRepository.register(
-                name,
-                upstream.toAbsolutePath().toString(),
-                null,
-                Marketplace.ORIGIN_UPSTREAM,
-                Marketplace.PUSH_APPEND_ONLY,
-                null);
+        return marketplaceRepository.register(name, upstream.toAbsolutePath().toString(), null, null);
     }
 
     private static Path plantedUpstream() throws Exception {

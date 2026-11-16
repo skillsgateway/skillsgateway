@@ -35,10 +35,10 @@ public class TokenRepository {
     @Requirements({"GW_AUTH_0006", "GW_AUTH_0007"})
     public AccessToken create(
             String principal, String name, String tokenHash, List<String> scopes, Instant expiresAt, Long rotatedFrom) {
-        return create(principal, name, tokenHash, scopes, expiresAt, rotatedFrom, null);
+        return create(principal, name, tokenHash, scopes, expiresAt, rotatedFrom, false);
     }
 
-    @Requirements({"GW_AUTH_0006", "GW_AUTH_0007", "GW_FACADE_0007"})
+    @Requirements({"GW_AUTH_0006", "GW_AUTH_0007", "GW_AUTH_0018"})
     public AccessToken create(
             String principal,
             String name,
@@ -46,22 +46,8 @@ public class TokenRepository {
             List<String> scopes,
             Instant expiresAt,
             Long rotatedFrom,
-            List<String> pushScopes) {
-        return create(principal, name, tokenHash, scopes, expiresAt, rotatedFrom, pushScopes, false);
-    }
-
-    @Requirements({"GW_AUTH_0006", "GW_AUTH_0007", "GW_FACADE_0007", "GW_AUTH_0018"})
-    public AccessToken create(
-            String principal,
-            String name,
-            String tokenHash,
-            List<String> scopes,
-            Instant expiresAt,
-            Long rotatedFrom,
-            List<String> pushScopes,
             boolean sessionDerived) {
-        return create(
-                principal, name, tokenHash, scopes, expiresAt, rotatedFrom, pushScopes, sessionDerived, null, null);
+        return create(principal, name, tokenHash, scopes, expiresAt, rotatedFrom, sessionDerived, null, null);
     }
 
     /**
@@ -69,7 +55,7 @@ public class TokenRepository {
      * GW_AUTH_0024). A NULL {@code apiScopes} is the pre-change meaning — no administrative reach —
      * which is what every credential that already exists keeps.
      */
-    @Requirements({"GW_AUTH_0006", "GW_AUTH_0007", "GW_FACADE_0007", "GW_AUTH_0018", "GW_AUTH_0020", "GW_AUTH_0024"})
+    @Requirements({"GW_AUTH_0006", "GW_AUTH_0007", "GW_AUTH_0018", "GW_AUTH_0020", "GW_AUTH_0024"})
     public AccessToken create(
             String principal,
             String name,
@@ -77,19 +63,17 @@ public class TokenRepository {
             List<String> scopes,
             Instant expiresAt,
             Long rotatedFrom,
-            List<String> pushScopes,
             boolean sessionDerived,
             List<String> apiScopes,
             String machineOwner) {
         return jdbc.sql("INSERT INTO access_tokens"
                         + " (principal, name, token_hash, created_at, scopes, expires_at, rotated_from,"
-                        + " push_scopes, session_derived, api_scopes, machine_owner)"
+                        + " session_derived, api_scopes, machine_owner)"
                         + " VALUES (:principal, :name, :hash, :now, :scopes::text[], :expiresAt, :rotatedFrom,"
-                        + " :pushScopes::text[], :sessionDerived, :apiScopes::text[], :machineOwner)"
+                        + " :sessionDerived, :apiScopes::text[], :machineOwner)"
                         + " RETURNING *")
                 .param("apiScopes", SqlArrays.literal(apiScopes))
                 .param("machineOwner", machineOwner)
-                .param("pushScopes", SqlArrays.literal(pushScopes))
                 .param("sessionDerived", sessionDerived)
                 .param("principal", principal)
                 .param("name", name)
@@ -171,23 +155,6 @@ public class TokenRepository {
                 .param("id", id)
                 .query(TokenRepository::map)
                 .optional();
-    }
-
-    /**
-     * Takes one marketplace name out of every token's publication grant (GW_INGEST_0034), leaving fetch
-     * grants alone. The grant is a name and a removed marketplace's name can be registered again, so a
-     * publisher's token would otherwise push into the successor. A grant left naming nothing becomes
-     * NULL, the only spelling of "none" the schema accepts.
-     *
-     * @return the ids of the tokens that lost the grant
-     */
-    @Requirements({"GW_INGEST_0034"})
-    public List<Long> removePushScope(String marketplace) {
-        return jdbc.sql("UPDATE access_tokens SET push_scopes = NULLIF(array_remove(push_scopes, :name), '{}')"
-                        + " WHERE :name = ANY(push_scopes) RETURNING id")
-                .param("name", marketplace)
-                .query(Long.class)
-                .list();
     }
 
     /** Administrative revocation: by id alone, for the reason {@link #listMachineCredentials} gives. */
@@ -335,7 +302,6 @@ public class TokenRepository {
                 SqlArrays.read(rs, "scopes"),
                 instant(rs, "expires_at"),
                 nullableLong(rs, "rotated_from"),
-                SqlArrays.read(rs, "push_scopes"),
                 rs.getBoolean("session_derived"),
                 SqlArrays.read(rs, "api_scopes"),
                 rs.getString("machine_owner"),
