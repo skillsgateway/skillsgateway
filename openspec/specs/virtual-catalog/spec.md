@@ -5,7 +5,9 @@
 One synthesized, facade-served catalog repository aggregating the currently
 served snapshot of every governed marketplace: its composition rules, its
 freshness on every publication change, and its provenance and audit story.
+
 ## Requirements
+
 ### Requirement: GW_FACADE_0003
 The system SHALL implement GW_FACADE_0003.
 
@@ -53,4 +55,11 @@ The system SHALL implement GW_FACADE_0036.
 
 #### Scenario: SVC_GW_FACADE_0038
 - **WHEN** SVC_GW_FACADE_0038 is run
+- **THEN** it passes
+
+### Requirement: GW_AUTH_0082
+The system SHALL implement GW_AUTH_0082.
+
+#### Scenario: SVC_GW_AUTH_0101
+- **WHEN** SVC_GW_AUTH_0101 is run
 - **THEN** it passes
