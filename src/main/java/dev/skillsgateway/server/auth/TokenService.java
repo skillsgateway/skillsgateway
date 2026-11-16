@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.auth;
 
+import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.AccessToken;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
@@ -18,7 +19,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TokenService {
@@ -28,15 +33,18 @@ public class TokenService {
     private final TokenRepository tokenRepository;
     private final MarketplaceRepository marketplaceRepository;
     private final SkillsGatewayProperties properties;
+    private final AdminAuditLogger auditLogger;
     private final SecureRandom random = new SecureRandom();
 
     public TokenService(
             TokenRepository tokenRepository,
             MarketplaceRepository marketplaceRepository,
-            SkillsGatewayProperties properties) {
+            SkillsGatewayProperties properties,
+            AdminAuditLogger auditLogger) {
         this.tokenRepository = tokenRepository;
         this.marketplaceRepository = marketplaceRepository;
         this.properties = properties;
+        this.auditLogger = auditLogger;
     }
 
     @Schema(description = "A freshly issued token; the only time the cleartext is ever returned")
@@ -85,6 +93,40 @@ public class TokenService {
             super(message);
         }
     }
+
+    /**
+     * A scope-change body carrying a field its route does not own (GW_AUTH_0087). Thrown while the body
+     * is read, so it surfaces as a 400 before any handler runs and before anything can change.
+     */
+    public static class UnacceptedFieldException extends RuntimeException {
+        public UnacceptedFieldException(String field, String owned) {
+            super("the field '%s' cannot be changed here: this route changes %s and nothing else"
+                    .formatted(field, owned));
+        }
+    }
+
+    /** The 400 for an unreadable body: the cause when it is an unaccepted field, otherwise a plain refusal. */
+    static ProblemDetail unreadableBody(HttpMessageNotReadableException e) {
+        for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+            if (cause instanceof UnacceptedFieldException unaccepted) {
+                return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, unaccepted.getMessage());
+            }
+        }
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Failed to read request");
+    }
+
+    /** An edit of a token that exists but is not live (revoked or expired); surfaces as 409. */
+    public static class TokenNotLiveException extends RuntimeException {
+        public TokenNotLiveException(String message) {
+            super(message);
+        }
+    }
+
+    /** Ledger events for a scope change (GW_AUTH_0086). Not tied to a marketplace; the column is NOT NULL. */
+    static final String TOKEN_SCOPES_CHANGED = "token-scopes-changed";
+
+    static final String MACHINE_SCOPES_CHANGED = "machine-credential-scopes-changed";
+    private static final String NO_MARKETPLACE = "-";
 
     public IssuedToken create(String principal, String name) {
         return create(principal, name, List.of(), null);
@@ -187,6 +229,79 @@ public class TokenService {
     }
 
     /**
+     * Replaces the marketplaces a live personal token may fetch (GW_AUTH_0083). The token is locked
+     * first, so liveness, the "before" the ledger records and the write are one consistent step
+     * (GW_AUTH_0085, GW_AUTH_0086); the entry commits with the change or neither does. Names are
+     * validated exactly as at creation and an empty list means every marketplace. Only the scopes
+     * move: the secret, expiry, name and every other attribute are untouched.
+     *
+     * @return empty when the principal has no such personal token (another user's, a machine
+     *     credential, none), which is deliberately one answer for all three
+     * @throws TokenNotLiveException when the token is revoked or expired
+     */
+    @Requirements({"GW_AUTH_0083", "GW_AUTH_0085", "GW_AUTH_0086"})
+    @Transactional
+    public Optional<AccessToken> updateScopes(long id, String principal, List<String> scopes) {
+        Optional<AccessToken> locked = tokenRepository.lockLivePersonal(id, principal);
+        if (locked.isEmpty()) {
+            if (tokenRepository.findByIdAndPrincipal(id, principal).isEmpty()) {
+                return Optional.empty();
+            }
+            throw new TokenNotLiveException(
+                    "token %d is not live; a revoked or expired token's scopes cannot be changed".formatted(id));
+        }
+        AccessToken before = locked.get();
+        AccessToken after = tokenRepository.setScopes(id, validateScopes(scopes));
+        auditLogger.record(
+                principal,
+                NO_MARKETPLACE,
+                TOKEN_SCOPES_CHANGED,
+                null,
+                "token %d '%s' scopes %s -> %s"
+                        .formatted(id, after.name(), describe(before.scopeList()), describe(after.scopeList())));
+        return Optional.of(after);
+    }
+
+    /**
+     * Replaces the API scopes of a live machine credential (GW_AUTH_0084), under every invariant of
+     * issuance: at least one scope, each known to the registry, no wildcard. Its fetch scope is not
+     * touched, and the actor is the administrator who made the change (GW_AUTH_0086).
+     */
+    @Requirements({"GW_AUTH_0084", "GW_AUTH_0085", "GW_AUTH_0086"})
+    @Transactional
+    public Optional<AccessToken> updateApiScopes(long id, List<String> apiScopes, String actor) {
+        Optional<AccessToken> locked = tokenRepository.lockLiveMachine(id);
+        if (locked.isEmpty()) {
+            if (findMachineCredential(id).isEmpty()) {
+                return Optional.empty();
+            }
+            throw new TokenNotLiveException(
+                    "credential %d is not live; a revoked or expired credential's scopes cannot be changed"
+                            .formatted(id));
+        }
+        AccessToken before = locked.get();
+        AccessToken after = tokenRepository.setApiScopes(id, validateApiScopes(apiScopes));
+        auditLogger.record(
+                actor,
+                NO_MARKETPLACE,
+                MACHINE_SCOPES_CHANGED,
+                null,
+                "credential %d '%s' principal=%s scopes %s -> %s"
+                        .formatted(
+                                id,
+                                after.name(),
+                                after.principal(),
+                                describe(before.apiScopeList()),
+                                describe(after.apiScopeList())));
+        return Optional.of(after);
+    }
+
+    /** The ledger's vocabulary for a scope list: {@code all} when empty (fetch scopes), else the sorted names. */
+    private static String describe(List<String> scopes) {
+        return scopes.isEmpty() ? "all" : scopes.stream().sorted().toList().toString();
+    }
+
+    /**
      * Rotation for a machine credential (GW_AUTH_0024): the same grant with a new secret. The identity,
      * the expiry <em>deadline</em> and all three scope dimensions carry over, and the old
      * credential is revoked before the new one is issued, so no moment has two live secrets. A
@@ -203,14 +318,17 @@ public class TokenService {
         if (found.isEmpty()) {
             return Optional.empty();
         }
-        AccessToken old = found.get();
-        if (old.revokedAt() != null
-                || (old.expiresAt() != null && !old.expiresAt().isAfter(Instant.now()))) {
+        AccessToken seen = found.get();
+        if (seen.revokedAt() != null
+                || (seen.expiresAt() != null && !seen.expiresAt().isAfter(Instant.now()))) {
             throw new TokenNotRotatableException("token %d is not live; issue a new token instead".formatted(id));
         }
-        if (!tokenRepository.revoke(id)) {
-            throw new TokenNotRotatableException("token %d is not live; issue a new token instead".formatted(id));
-        }
+        // The successor is built from the row the revocation returns, not from the one read above:
+        // an edit of the scopes that committed in between is in it (GW_AUTH_0085).
+        AccessToken old = tokenRepository
+                .revokeMachineReturning(id)
+                .orElseThrow(() -> new TokenNotRotatableException(
+                        "token %d is not live; issue a new token instead".formatted(id)));
         String secret = newSecret();
         AccessToken stored = tokenRepository.create(
                 old.principal(),
@@ -315,14 +433,17 @@ public class TokenService {
         if (found.isEmpty()) {
             return Optional.empty();
         }
-        AccessToken old = found.get();
-        if (old.revokedAt() != null
-                || (old.expiresAt() != null && !old.expiresAt().isAfter(Instant.now()))) {
+        AccessToken seen = found.get();
+        if (seen.revokedAt() != null
+                || (seen.expiresAt() != null && !seen.expiresAt().isAfter(Instant.now()))) {
             throw new TokenNotRotatableException("token %d is not live; issue a new token instead".formatted(id));
         }
-        if (!tokenRepository.revoke(id, principal)) {
-            throw new TokenNotRotatableException("token %d is not live; issue a new token instead".formatted(id));
-        }
+        // The successor is built from the row the revocation returns, not from the one read above:
+        // an edit of the scopes that committed in between is in it (GW_AUTH_0085).
+        AccessToken old = tokenRepository
+                .revokeReturning(id, principal)
+                .orElseThrow(() -> new TokenNotRotatableException(
+                        "token %d is not live; issue a new token instead".formatted(id)));
         String secret = newSecret();
         AccessToken stored = tokenRepository.create(
                 principal,

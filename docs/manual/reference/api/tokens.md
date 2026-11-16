@@ -92,6 +92,48 @@ signed-in caller); that read answers `404` while the catalog is disabled or has 
 revision yet, and the portal then offers no catalog entry. The token list reads each
 token's `scopes` and `pushScopes` from `GET /tokens`.
 
+## `PATCH /tokens/{id}`
+
+Change the marketplaces a live token may fetch, without changing anything else about it
+(GW_AUTH_0083, GW_AUTH_0085). Only the owner can; a token that is not live cannot be edited.
+
+**Body** — `{scopes}`, nothing else.
+
+```console
+$ curl -X PATCH localhost:8080/api/v1/tokens/1 \
+    -H 'Content-Type: application/json' -d '{"scopes":["acme"]}'
+```
+
+The list **replaces** the token's scopes and is validated exactly as at creation: every name
+must be a registered marketplace or the catalog's name, and an **empty list means every
+marketplace**, so a client that means "limited" must never send one. `scopes` is required, so a
+body without it is refused rather than read as every marketplace. Narrowing is always allowed.
+The response is the token as `GET /tokens` shows it, never a secret.
+
+Only `scopes` changes. The secret, the expiry, the name and the publication scopes are
+untouched, and a [rotation](#post-tokensidrotate) afterwards carries the scopes as they were
+last set. The facade resolves a token on every request, so the secret already in use follows
+the change on its next request: a marketplace the token no longer names answers exactly like one
+that does not exist. Every change is recorded on the [audit ledger](audit.md) as
+`token-scopes-changed`, with the actor and the scopes before and after, in the same transaction.
+
+A body that carries any other field, such as `pushScopes`, `apiScopes`, `expiresAt` or `name`,
+is refused with `400` and changes nothing: publication scopes are not editable, and a
+personal token never holds API scopes.
+
+| Status | Cause |
+| --- | --- |
+| 200 | Changed. |
+| 400 | The body carries a field other than `scopes`. |
+| 404 | No such token **owned by the caller**. Another user's token, a machine credential's id and a nonexistent id are indistinguishable. |
+| 409 | The token is revoked or expired. |
+| 422 | Unknown scope, or `scopes` missing. |
+
+A session-derived credential's scopes can be changed the same way; its expiry cannot. No machine
+credential and no session-derived credential can call this route, as with all of
+`/api/v1/tokens/**`. The portal's [Personal access
+tokens](../portal.md#personal-access-tokens) list offers it as **Edit reach**.
+
 ## `GET /tokens`
 
 List the calling principal's tokens. Never returns the hash, and never returns
@@ -353,7 +395,7 @@ of scopes and no role reaches any of these:**
 | `POST /api/v1/retention/evaluate`, `/compact` | Soft-deletes and permanently purges: retracts content |
 | `DELETE /api/v1/snapshots/{id}`, `POST /api/v1/snapshots/{id}/restore` | Retracts and republishes content |
 | `POST /api/v1/roles`, `DELETE /api/v1/roles/{id}` | Privilege granting; see below |
-| All of `/api/v1/tokens/**` | Credential minting, including this page's own endpoints |
+| All of `/api/v1/tokens/**` | Credential minting and editing, including this page's own endpoints |
 | `GET /api/v1/me` | A session identity page; a machine has no session |
 
 Role grants are **declarative only**: `estate.grants` already serves them with
@@ -464,6 +506,44 @@ wildcard entry.
 Same grant, new secret. The principal, name, expiry **deadline** and every one
 of the API scope values carry over, and the old credential is revoked before the
 new one is issued, so no moment has two live secrets.
+
+### `PATCH /api/v1/tokens/machine/{id}`
+
+Replaces the API scopes of a live machine credential (GW_AUTH_0084, GW_AUTH_0085). Requires
+the `admin` role.
+
+**Body** — `{apiScopes}`, nothing else.
+
+```console
+$ curl -X PATCH localhost:8080/api/v1/tokens/machine/4 \
+    -H 'Content-Type: application/json' -d '{"apiScopes":["estate:read","audit:read"]}'
+```
+
+Every rule of provisioning applies: at least one scope, each one the registry defines, no wildcard
+and nothing implied. Only the API scopes change: the principal, name, expiry, secret and the
+credential's (empty) fetch scope are untouched. A body that carries any other field, such as `scopes`,
+`pushScopes`, `expiresAt` or `neverExpires`, is refused with `400`.
+
+!!! warning "A widening reaches whoever already holds the secret"
+
+    The secret does not change, so the new scopes apply to the next request made with the existing
+    secret, wherever it has been copied. Editing in place needs the same role as provisioning a
+    credential with those scopes; the control is the ledger entry `machine-credential-scopes-changed`
+    (the administrator, the credential, the scopes before and after, written in the same transaction)
+    and the fact that no credential can call this route. Rotate the credential as well if its secret
+    may be exposed.
+
+| Status | Cause |
+| --- | --- |
+| 200 | Changed; the credential as `GET /api/v1/tokens/machine` shows it. |
+| 400 | The body carries a field other than `apiScopes`. |
+| 403 | The caller does not hold the `admin` role. |
+| 404 | No such machine credential. A personal token's id is a 404 here. |
+| 409 | The credential is revoked or expired. |
+| 422 | Unknown, wildcard or empty API scopes, or `apiScopes` missing. |
+
+A rotation after an edit carries the scopes as edited. The portal's [System access
+tokens](../portal.md#system-access-tokens) list offers it as **Edit scopes**.
 
 ### `DELETE /api/v1/tokens/machine/{id}`
 

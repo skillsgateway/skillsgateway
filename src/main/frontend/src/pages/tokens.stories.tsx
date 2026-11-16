@@ -66,3 +66,27 @@ export const Reach: StoryObj<typeof TokenTable> = {
     ).toBeInTheDocument();
   },
 };
+
+/**
+ * The list with the edit control (GW_AUTH_0088): a live token offers Edit reach beside Revoke, a
+ * revoked one and an expired one offer neither edit nor, for the revoked, revoke.
+ */
+export const Editable: StoryObj<typeof TokenTable> = {
+  render: () => (
+    <TokenTable
+      tokens={[
+        ...scopedTokenViews.slice(0, 2),
+        { ...scopedTokenViews[0]!, id: 31, name: "revoked-laptop", revokedAt: "2026-08-15T10:00:00Z" },
+        { ...scopedTokenViews[0]!, id: 32, name: "lapsed-laptop", expiresAt: "2026-08-15T10:00:00Z" },
+      ]}
+      onRevoke={() => {}}
+      onEdit={() => {}}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("button", { name: "Edit reach of token ci-corp-only" })).toBeInTheDocument();
+    await expect(canvas.queryByRole("button", { name: "Edit reach of token revoked-laptop" })).toBeNull();
+    await expect(canvas.queryByRole("button", { name: "Edit reach of token lapsed-laptop" })).toBeNull();
+  },
+};

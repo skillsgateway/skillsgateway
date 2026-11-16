@@ -1437,7 +1437,7 @@ block and a clipboard button that flips to a checkmark for two seconds.
 | Last used | How long ago the token last authenticated successfully, or **never**. Hover for the exact instant. |
 | Expires | When the token stops authenticating, or **never**. |
 | Status | `active` (primary badge), `expired` (secondary) once the expiry has passed, or `revoked` (destructive). |
-| Actions | **Revoke**, shown only while active. |
+| Actions | **Edit reach** and **Revoke**, shown only while active. |
 
 **Last used** is the column to read before revoking: it separates a token
 something still authenticates with from one nobody has used. It shows the
@@ -1451,6 +1451,23 @@ prove.
 **Revoke** calls `DELETE /api/v1/tokens/{id}` and toasts *Token '{name}' revoked*.
 It fires immediately. Revocation is recorded rather than deleted: the row stays
 with a `revoked` badge.
+
+**Edit reach** opens a dialog headed *Edit reach of '{name}'* with the same
+**Marketplaces** choice the create form uses, starting from the token's current reach
+(**Every marketplace** when it has no limit, otherwise its names ticked). Saving calls
+[`PATCH /api/v1/tokens/{id}`](api/tokens.md#patch-tokensid) and changes nothing but the
+reach: the secret, expiry and name stay, and the secret already in use follows the new
+reach on its next request, so nothing has to be redistributed. **Save reach** stays
+disabled while the choice names no marketplace (a request naming none would grant every
+marketplace, so a limited choice never sends an empty list), while it is the same as the
+current reach, and while the request is in flight (*Saving…*), and a line beneath the
+choice says which. A choice that widens the token (**Every marketplace**, or a name the
+token did not have) is said so, above the button: the token fetches those marketplaces at
+once. The API's refusal, such as a marketplace removed since the list was read or a token
+that was revoked or expired meanwhile, is shown in the dialog as the API states it. On
+success the dialog closes, a toast says *Reach of '{name}' changed*, and the list shows the
+new reach. The change is recorded on the [audit ledger](api/audit.md) with the reach before
+and after. Rotation afterwards carries the changed reach.
 
 Empty state: "No tokens yet."
 
@@ -1505,11 +1522,23 @@ the client's query cache, in the browser's stored state or in the address.
 | Expires | When it stops authenticating, or **never expires**; a credential that expires within 14 days is marked *expires within 14 days*. |
 | Last used | How long ago it last authenticated, or **never**; a live credential more than a day old that has never authenticated is marked *never used*. |
 | Status | `active`, `expired` or `revoked`. |
-| Actions | **Rotate** and **Revoke**, shown only while active. |
+| Actions | **Edit scopes**, **Rotate** and **Revoke**, shown only while active. |
 
 The marks are words, not colour alone, and they are the reason `lastUsedAt` exists:
 a credential nothing uses any more, and one about to stop a pipeline. They are not
 shown for a credential that can no longer authenticate.
+
+**Edit scopes** opens a dialog headed *Edit scopes of '{name}'* with the same scope
+checklist as the create form, starting from the scopes the token holds. Saving calls
+[`PATCH /api/v1/tokens/machine/{id}`](api/tokens.md#patch-apiv1tokensmachineid) and changes
+nothing but the scopes: the principal, expiry and secret stay. **Save scopes** stays
+disabled until at least one scope is ticked (a system access token must hold one; to remove
+them all, revoke it) and the choice differs from what the token holds, and a line beneath the
+list says which. Because the secret stays, **whoever already holds it has the new scopes on its
+next request**; when the choice adds scopes the dialog lists them and says so above the button.
+The API's refusal is shown in the dialog as it states it, the list shows the new scopes after
+saving, and the change is recorded on the [audit ledger](api/audit.md) with the scopes before
+and after and the administrator who made it.
 
 **Rotate** and **Revoke** each ask first. Rotating issues a fresh secret with the
 same principal, scopes and expiry and revokes the old one at once, so whatever uses

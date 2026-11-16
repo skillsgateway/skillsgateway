@@ -161,8 +161,20 @@ The `CHECK` is the backstop for the one invariant a bug could break, an empty `a
 **D10. Estate.** Tokens are API-managed runtime state (secrets), outside `skills-gateway.estate.*`
 like PATs generally. The change adds no object type and no grantable role.
 
-**D11. Impeccable.** Audit and harden run on both pages; findings are fixed or dismissed with a
-reason in the PR body (`/impeccable critique` is for new pages; none is added).
+**D11. Impeccable.** Audit and harden run on both pages (`/impeccable critique` is for new pages;
+none is added). The detector reported nothing on the five files. Verified gaps, fixed: the widening
+warning is a polite `role="status"` so a screen reader hears it appear; **Cancel** is disabled while a
+save is in flight, so the dialog is not dismissed under a request that will still land. Dismissed, with
+reasons: no mobile re-layout of the actions cell (the table already scrolls horizontally inside its
+container, and the buttons are the page's existing `sm` size); no debounce or virtualisation (the picker
+caps its rows and filters an in-memory list, D10 of the earlier change); no RTL or long-translation work
+beyond `wrap-anywhere` on the dialog title (the portal is English-only and names are restricted).
+
+**D12. Operation ids.** Adding two operations reshuffled springdoc's numbering of the overloaded `revoke`
+handlers in `openapi.json` (`revoke_3` became `revoke_2`, and so on): the order it numbers them in is
+not stable under an unrelated route. An operation id is part of the contract generated clients are
+built from, so the three affected handlers (tokens, system tokens, waivers) pin their published ids with
+`operationId`, and the regenerated `openapi.json` is purely additive.
 
 ## Failure model (old-coder, tier 3)
 
@@ -187,3 +199,22 @@ Known limits: widening by an administrator is not four-eyes; the ledger entry is
 - In-place widening of a system token empowers an existing secret. Deliberate; stated in the
   portal and the ledger; flagged to the owner.
 - A no-op edit writes an entry. Accepted for simplicity.
+
+## Grill and rubberduck record (settled from the code, no one to ask)
+
+- *An empty list on the personal route widens to every marketplace; is that an accident
+  waiting to happen?* Kept, because creation and the owner's brief say so. The accident is a
+  client sending `[]` by mistake, so the portal sends it only for the explicit *Every
+  marketplace* choice (D2), the API documents it, and the ledger prints `all` for the after
+  value, so a widening by accident is visible.
+- *Is a stolen browser session a way to widen?* Yes, as it already is for creating a token
+  with any scope; an edit grants nothing creation does not (D4). The ledger names the actor.
+- *Does the portal's CSRF protection cover `PATCH`?* The shared `api()` helper sends the
+  token header on every method and the server's session-bound CSRF applies to every unsafe
+  method, so `PATCH` needs no new wiring; the e2e path proves it through a real session.
+- *Stale dialog.* A dialog opened on one list and saved after another change overwrites
+  (last write wins). Accepted: the ledger holds the chain and the dialog shows the reach it
+  started from. No If-Match style precondition: it adds a field and a refusal for a
+  one-owner credential.
+- *Delta bodies (add or remove one scope)* were rejected in D1; *a second administrator
+  approving a widening* in D4, and flagged to the owner.

@@ -1300,6 +1300,84 @@ test("a_token_limited_in_the_wizard_fetches_only_its_marketplace_and_the_list_sa
 });
 
 /**
+ * A personal token's reach is changed from the list, with the same secret, and the facade follows
+ * at once: narrowed to one marketplace it is refused for the other exactly as if that one did not
+ * exist, and widened back to every marketplace it fetches both again (GW_AUTH_0083, GW_AUTH_0088).
+ * The unit tests prove the form's rules; only a real session, the real PATCH and a real git fetch
+ * prove that the credential already in use is the one that changed.
+ *
+ * @SVCs SVC_GW_AUTH_0108
+ */
+test("a_narrowed_token_is_refused_for_the_marketplace_it_no_longer_names", async ({ page }) => {
+  await login(page, "alice");
+  const origin = new URL(page.url()).origin;
+  const marketplaces = page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Marketplaces" });
+  const first = uniqueName("edita");
+  const second = uniqueName("editb");
+  for (const name of [first, second]) {
+    await marketplaces.click();
+    await page.getByRole("button", { name: "Register marketplace" }).click();
+    await page.getByLabel("Name").fill(name);
+    await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
+    await submitRegister(page);
+    await approveCard(page, await ingestOnReview(page, name));
+  }
+
+  // A token that fetches every marketplace, made on the personal tokens page.
+  const tokenName = uniqueName("editable");
+  await openTokens(page);
+  await page.getByLabel("Token name").fill(tokenName);
+  await page.getByRole("button", { name: "Create token" }).click();
+  const token = (await page.getByTestId("token-cleartext").textContent()) ?? "";
+  expect(token).toMatch(/^sgw_/);
+  await page.getByRole("button", { name: "Done" }).click();
+
+  const home = mkdtempSync(join(tmpdir(), "e2e-edit-reach-"));
+  const env = { PATH: process.env.PATH ?? "/usr/bin:/bin", HOME: home, GIT_CONFIG_NOSYSTEM: "1", GIT_TERMINAL_PROMPT: "0" };
+  const fetchOf = (name: string) => {
+    const url = new URL(`${origin}/git/${name}`);
+    url.username = "token";
+    url.password = token;
+    return spawnSync("git", ["ls-remote", url.href], { cwd: home, env, encoding: "utf8", timeout: 60_000 });
+  };
+  try {
+    expect(fetchOf(first).status).toBe(0);
+    expect(fetchOf(second).status).toBe(0);
+
+    // Narrow it to the first marketplace. Nothing can be saved before something changes.
+    const row = page.getByRole("row", { name: new RegExp(tokenName) });
+    await row.getByRole("button", { name: `Edit reach of token ${tokenName}` }).click();
+    const dialog = page.getByRole("dialog", { name: `Edit reach of '${tokenName}'` });
+    await expect(dialog.getByRole("button", { name: "Save reach" })).toBeDisabled();
+    await dialog.getByRole("button", { name: "Chosen marketplaces" }).click();
+    await expect(dialog.getByRole("button", { name: "Save reach" })).toBeDisabled();
+    await dialog.getByRole("checkbox", { name: first }).check();
+    await dialog.getByRole("button", { name: "Save reach" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(row).toContainText(first);
+    await expect(row).not.toContainText("every marketplace");
+
+    // The secret already in use now reaches the first and is told the second does not exist.
+    const inScope = fetchOf(first);
+    expect(inScope.status, inScope.stderr).toBe(0);
+    const outOfScope = fetchOf(second);
+    expect(outOfScope.status).not.toBe(0);
+    expect(outOfScope.stderr).toMatch(/not found|404/i);
+
+    // Widen it back: the dialog says so, and the second is fetched again with the same secret.
+    await row.getByRole("button", { name: `Edit reach of token ${tokenName}` }).click();
+    await dialog.getByRole("button", { name: "Every marketplace" }).click();
+    await expect(dialog.getByTestId("widening-warning")).toContainText("every marketplace");
+    await dialog.getByRole("button", { name: "Save reach" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(row).toContainText("every marketplace");
+    expect(fetchOf(second).status).toBe(0);
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+  }
+});
+
+/**
  * The reviewer's file explorer on a real held-vs-served delta: approve one commit, advance the
  * upstream fixture (modify the skill, add a file), re-ingest, and inspect the held snapshot in
  * its card's Contents tab — nested tree, inertly rendered SKILL.md, and the file's diff against

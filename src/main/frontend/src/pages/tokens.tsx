@@ -9,6 +9,7 @@ import {
   type IssuedToken,
   type TokenView,
 } from "@/api/queries";
+import { EditTokenScopesDialog } from "@/components/edit-token-scopes-dialog";
 import { IssuedTokenDialog } from "@/components/issued-token-dialog";
 import { MarketplaceScopePicker, type ScopeSelection } from "@/components/marketplace-scope-picker";
 import { SegmentedGroup } from "@/components/segmented-group";
@@ -90,10 +91,13 @@ export function TokenReach({ token }: { token: TokenView }) {
 export function TokenTable({
   tokens,
   onRevoke,
+  onEdit,
   revoking = false,
 }: {
   tokens: TokenView[];
   onRevoke: (token: TokenView) => void;
+  /** Offered for a live token only (GW_AUTH_0088); absent, the list is read-and-revoke as before. */
+  onEdit?: (token: TokenView) => void;
   revoking?: boolean;
 }) {
   return (
@@ -146,7 +150,17 @@ export function TokenTable({
                 <Badge>active</Badge>
               )}
             </TableCell>
-            <TableCell className="text-right">
+            <TableCell className="space-x-2 text-right whitespace-nowrap">
+              {onEdit && !token.revokedAt && !expired(token) ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  aria-label={`Edit reach of token ${token.name}`}
+                  onClick={() => onEdit(token)}
+                >
+                  Edit reach
+                </Button>
+              ) : null}
               {!token.revokedAt ? (
                 <Button
                   size="sm"
@@ -169,7 +183,7 @@ export function TokenTable({
 /**
  * Personal access token self-service: create with a chosen lifetime and show-once cleartext, revoke.
  *
- * @Requirements GW_AUTH_0005, GW_AUTH_0070, GW_AUTH_0071, GW_AUTH_0078, GW_AUTH_0079, GW_AUTH_0081
+ * @Requirements GW_AUTH_0005, GW_AUTH_0070, GW_AUTH_0071, GW_AUTH_0078, GW_AUTH_0079, GW_AUTH_0081, GW_AUTH_0088
  */
 export function TokensPage() {
   const tokens = useTokens();
@@ -180,6 +194,7 @@ export function TokensPage() {
   const [lifetime, setLifetime] = useState<Lifetime>(DEFAULT_LIFETIME);
   const [scope, setScope] = useState<ScopeSelection>({ choice: "every", chosen: [] });
   const [issued, setIssued] = useState<IssuedToken | null>(null);
+  const [editing, setEditing] = useState<TokenView | null>(null);
 
   // The server stores the name verbatim (NOT NULL, no further constraint), so the only
   // client-side rule is the one that keeps a blank name out of the list.
@@ -289,6 +304,7 @@ export function TokensPage() {
         <TokenTable
           tokens={tokens.data}
           revoking={revoke.isPending}
+          onEdit={setEditing}
           onRevoke={(token) =>
             revoke.mutate(token.id ?? 0, {
               onSuccess: () => toast.success(`Token '${token.name}' revoked`),
@@ -298,6 +314,7 @@ export function TokensPage() {
         />
       ) : null}
       {issued ? <IssuedTokenDialog issued={issued} onClose={() => setIssued(null)} /> : null}
+      {editing ? <EditTokenScopesDialog token={editing} onClose={() => setEditing(null)} /> : null}
     </div>
   );
 }

@@ -50,6 +50,10 @@ public final class MachineApiRegistry {
         return new Route("PUT", pattern);
     }
 
+    private static Route patch(String pattern) {
+        return new Route("PATCH", pattern);
+    }
+
     private static Route delete(String pattern) {
         return new Route("DELETE", pattern);
     }
@@ -189,11 +193,16 @@ public final class MachineApiRegistry {
             get("/api/v1/tokens"),
             post("/api/v1/tokens/session"),
             post("/api/v1/tokens/{id}/rotate"),
+            // Changing a live token's scopes (GW_AUTH_0083, GW_AUTH_0084): a credential able to widen
+            // itself, or a sibling, is the self-replicating privilege the rest of this list exists
+            // to prevent.
+            patch("/api/v1/tokens/{id}"),
             delete("/api/v1/tokens/{id}"),
             post("/api/v1/tokens/machine"),
             get("/api/v1/tokens/machine"),
             get("/api/v1/tokens/machine/scopes"),
             post("/api/v1/tokens/machine/{id}/rotate"),
+            patch("/api/v1/tokens/machine/{id}"),
             delete("/api/v1/tokens/machine/{id}"),
             // Another principal's personal tokens (GW_AUTH_0055): revoking them is the offboarding act,
             // and a credential able to do it could revoke the people who would revoke it.

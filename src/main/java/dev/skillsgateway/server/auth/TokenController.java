@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.auth;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.persistence.AccessToken;
 import dev.skillsgateway.server.roles.RoleService;
@@ -14,10 +15,12 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -97,6 +100,33 @@ public class TokenController {
                             + " never has. Recorded at most once a minute, so it is approximate to that"
                             + " bound; the audit ledger is the exact, per-request record.")
             Instant lastUsedAt) {}
+
+    /**
+     * Nothing but the list (GW_AUTH_0087). An unknown field is refused while the body is read, rather than
+     * ignored: this gateway's mapper ignores unknown properties, and {@code ignoreUnknown = false} only
+     * means "no override", so the any-setter is what refuses. A class, not a record, for that reason.
+     */
+    @Schema(description = "Scope change request: the marketplaces the token may fetch, and nothing else")
+    public static final class UpdateTokenScopesRequest {
+        private List<String> scopes;
+
+        @Schema(
+                description = "The complete list of marketplace names (the catalog's name is valid) the token"
+                        + " may fetch from now on. Required. Empty grants every marketplace, as at creation.",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        public List<String> getScopes() {
+            return scopes;
+        }
+
+        public void setScopes(List<String> scopes) {
+            this.scopes = scopes;
+        }
+
+        @JsonAnySetter
+        void refuse(String field, Object ignored) {
+            throw new TokenService.UnacceptedFieldException(field, "`scopes`");
+        }
+    }
 
     @Schema(description = "Session credential request: the lifetime is the gateway's, so there is no field for it")
     public record SessionCredentialRequest(
@@ -202,10 +232,44 @@ public class TokenController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @PatchMapping("/{id}")
+    @Requirements({"GW_AUTH_0083", "GW_AUTH_0085", "GW_AUTH_0086", "GW_AUTH_0087"})
+    @Tag(name = "Tokens")
+    @Operation(
+            summary = "Change the marketplaces a token fetches",
+            description = "Replaces the marketplaces one of your live tokens may fetch. Narrowing is always"
+                    + " allowed; every name is validated exactly as at creation, and an empty list grants every"
+                    + " marketplace. Only the scopes change: the secret, expiry, name and publication scopes are"
+                    + " untouched, and a later rotation carries the scopes as changed here. The body carries"
+                    + " `scopes` and nothing else; any other field is refused. Audit-logged with the scopes"
+                    + " before and after.")
+    @ApiResponse(responseCode = "200", description = "Changed; the token as it now stands, never a secret")
+    @ApiResponse(responseCode = "400", description = "The body carries a field other than `scopes`")
+    @ApiResponse(responseCode = "404", description = "No such token of yours")
+    @ApiResponse(responseCode = "409", description = "The token is revoked or expired")
+    @ApiResponse(responseCode = "422", description = "Unknown scope, or `scopes` missing")
+    public ResponseEntity<TokenView> updateScopes(
+            @PathVariable long id, @RequestBody UpdateTokenScopesRequest request, Authentication authentication) {
+        if (request == null || request.getScopes() == null) {
+            throw new TokenService.InvalidTokenRequestException(
+                    "scopes is required: state the marketplaces, or an empty list for every marketplace");
+        }
+        return tokenService
+                .updateScopes(id, authentication.getName(), request.getScopes())
+                .map(token -> ResponseEntity.ok(view(token)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @DeleteMapping("/{id}")
     @Requirements({"GW_AUTH_0009"})
     @Tag(name = "Tokens")
-    @Operation(summary = "Revoke a token", description = "Immediate and permanent; audit-logged.")
+    @Operation(
+            // Pinned: springdoc numbers the overloaded `revoke` handlers by an order that adding an
+            // unrelated route (the scope-change PATCH) reshuffled; an operation id is part of the
+            // contract generated clients are built from, so the published value stays.
+            operationId = "revoke_2",
+            summary = "Revoke a token",
+            description = "Immediate and permanent; audit-logged.")
     @ApiResponse(responseCode = "204", description = "Revoked")
     @ApiResponse(responseCode = "404", description = "No such active token of yours")
     public ResponseEntity<Void> revoke(@PathVariable long id, Authentication authentication) {
@@ -273,6 +337,17 @@ public class TokenController {
     @ExceptionHandler(TokenService.InvalidTokenRequestException.class)
     public ProblemDetail invalidRequest(TokenService.InvalidTokenRequestException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
+    }
+
+    /** A body naming a field the route does not own says so (GW_AUTH_0087); any other unreadable body is a plain 400. */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail unreadable(HttpMessageNotReadableException e) {
+        return TokenService.unreadableBody(e);
+    }
+
+    @ExceptionHandler(TokenService.TokenNotLiveException.class)
+    public ProblemDetail notLive(TokenService.TokenNotLiveException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
     }
 
     @ExceptionHandler(TokenService.TokenNotRotatableException.class)

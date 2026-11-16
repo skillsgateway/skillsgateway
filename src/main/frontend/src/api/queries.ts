@@ -947,6 +947,21 @@ export function useCreateToken() {
   });
 }
 
+/**
+ * Changes the marketplaces a live personal token may fetch (GW_AUTH_0088). The body is `scopes` and
+ * nothing else; an empty list means every marketplace, so a caller never passes one for a limited
+ * choice. The response is the token, never a secret, so nothing sensitive is held by the
+ * mutation; the list is refetched, not seeded from it.
+ */
+export function useUpdateTokenScopes() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, scopes }: { id: number; scopes: string[] }) =>
+      api<TokenView>(`/api/v1/tokens/${id}`, { method: "PATCH", body: JSON.stringify({ scopes }) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tokens"] }),
+  });
+}
+
 export function useRevokeToken() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -1008,6 +1023,19 @@ export function useRotateMachineToken() {
   return useMutation({
     gcTime: 0,
     mutationFn: (id: number) => api<IssuedToken>(`/api/v1/tokens/machine/${id}/rotate`, { method: "POST" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["machine-tokens"] }),
+  });
+}
+
+/** Changes the API scopes of a live system access token (GW_AUTH_0089); administrators only, server-side. */
+export function useUpdateMachineTokenScopes() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, apiScopes }: { id: number; apiScopes: string[] }) =>
+      api<MachineCredentialView>(`/api/v1/tokens/machine/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ apiScopes }),
+      }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["machine-tokens"] }),
   });
 }

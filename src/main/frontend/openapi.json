@@ -4204,6 +4204,25 @@
         },
         "type": "object"
       },
+      "UpdateApiScopesRequest": {
+        "description": "API scope change request: the scopes the credential holds, and nothing else",
+        "properties": {
+          "apiScopes": {
+            "description": "The complete list of API scopes the credential holds from now on. Required, at least one, each known to the registry; there is no wildcard.",
+            "example": [
+              "estate:read"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "apiScopes"
+        ],
+        "type": "object"
+      },
       "UpdateRuleRequest": {
         "description": "Policy rule update request; the name is the path",
         "properties": {
@@ -4220,6 +4239,22 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "UpdateTokenScopesRequest": {
+        "description": "Scope change request: the marketplaces the token may fetch, and nothing else",
+        "properties": {
+          "scopes": {
+            "description": "The complete list of marketplace names (the catalog's name is valid) the token may fetch from now on. Required. Empty grants every marketplace, as at creation.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "scopes"
+        ],
         "type": "object"
       },
       "UpstreamFailure": {
@@ -8093,6 +8128,97 @@
         "tags": [
           "Tokens"
         ]
+      },
+      "patch": {
+        "description": "Replaces the API scopes of a live credential, under every rule of provisioning: at least one scope, each one the registry defines, no wildcard. Only the API scopes change: the secret, expiry, name, principal and fetch scope are untouched, so whoever holds the existing secret has the new scopes on its next request. Requires the admin role, is unreachable by any credential, and is audit-logged with the scopes before and after. The body carries `apiScopes` and nothing else; any other field is refused.",
+        "operationId": "updateApiScopes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApiScopesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MachineCredentialView"
+                }
+              }
+            },
+            "description": "Changed; the credential as it now stands, never a secret"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "The body carries a field other than `apiScopes`"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "The caller does not hold the admin role"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "No such machine credential"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "The credential is revoked or expired"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Unknown, wildcard or empty API scopes, or `apiScopes` missing"
+          }
+        },
+        "summary": "Change the API scopes of a machine API credential",
+        "tags": [
+          "Tokens"
+        ]
       }
     },
     "/api/v1/tokens/machine/{id}/rotate": {
@@ -8316,6 +8442,87 @@
           }
         },
         "summary": "Revoke a token",
+        "tags": [
+          "Tokens"
+        ]
+      },
+      "patch": {
+        "description": "Replaces the marketplaces one of your live tokens may fetch. Narrowing is always allowed; every name is validated exactly as at creation, and an empty list grants every marketplace. Only the scopes change: the secret, expiry, name and publication scopes are untouched, and a later rotation carries the scopes as changed here. The body carries `scopes` and nothing else; any other field is refused. Audit-logged with the scopes before and after.",
+        "operationId": "updateScopes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTokenScopesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenView"
+                }
+              }
+            },
+            "description": "Changed; the token as it now stands, never a secret"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "The body carries a field other than `scopes`"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "No such token of yours"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "The token is revoked or expired"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Unknown scope, or `scopes` missing"
+          }
+        },
+        "summary": "Change the marketplaces a token fetches",
         "tags": [
           "Tokens"
         ]

@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.auth;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.persistence.AccessToken;
 import dev.skillsgateway.server.roles.RoleService;
@@ -13,10 +14,12 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -206,6 +209,60 @@ public class MachineTokenController {
                 .toList();
     }
 
+    /** Nothing but the list (GW_AUTH_0087); see {@link TokenController.UpdateTokenScopesRequest} for why a class. */
+    @Schema(description = "API scope change request: the scopes the credential holds, and nothing else")
+    public static final class UpdateApiScopesRequest {
+        private List<String> apiScopes;
+
+        @Schema(
+                description = "The complete list of API scopes the credential holds from now on. Required, at"
+                        + " least one, each known to the registry; there is no wildcard.",
+                example = "[\"estate:read\"]",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        public List<String> getApiScopes() {
+            return apiScopes;
+        }
+
+        public void setApiScopes(List<String> apiScopes) {
+            this.apiScopes = apiScopes;
+        }
+
+        @JsonAnySetter
+        void refuse(String field, Object ignored) {
+            throw new TokenService.UnacceptedFieldException(field, "`apiScopes`");
+        }
+    }
+
+    @PatchMapping("/{id}")
+    @Requirements({"GW_AUTH_0084", "GW_AUTH_0085", "GW_AUTH_0086", "GW_AUTH_0087"})
+    @Tag(name = "Tokens")
+    @Operation(
+            summary = "Change the API scopes of a machine API credential",
+            description = "Replaces the API scopes of a live credential, under every rule of provisioning: at"
+                    + " least one scope, each one the registry defines, no wildcard. Only the API scopes change:"
+                    + " the secret, expiry, name, principal and fetch scope are untouched, so whoever holds the"
+                    + " existing secret has the new scopes on its next request. Requires the admin role, is"
+                    + " unreachable by any credential, and is audit-logged with the scopes before and after. The"
+                    + " body carries `apiScopes` and nothing else; any other field is refused.")
+    @ApiResponse(responseCode = "200", description = "Changed; the credential as it now stands, never a secret")
+    @ApiResponse(responseCode = "400", description = "The body carries a field other than `apiScopes`")
+    @ApiResponse(responseCode = "403", description = "The caller does not hold the admin role")
+    @ApiResponse(responseCode = "404", description = "No such machine credential")
+    @ApiResponse(responseCode = "409", description = "The credential is revoked or expired")
+    @ApiResponse(responseCode = "422", description = "Unknown, wildcard or empty API scopes, or `apiScopes` missing")
+    public ResponseEntity<MachineCredentialView> updateApiScopes(
+            @PathVariable long id, @RequestBody UpdateApiScopesRequest request, Authentication authentication) {
+        roleService.requireAdmin(authentication);
+        if (request == null || request.getApiScopes() == null) {
+            throw new TokenService.InvalidTokenRequestException(
+                    "apiScopes is required: a machine credential must name at least one API scope");
+        }
+        return tokenService
+                .updateApiScopes(id, request.getApiScopes(), authentication.getName())
+                .map(token -> ResponseEntity.ok(view(token)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @PostMapping("/{id}/rotate")
     @Requirements({"GW_AUTH_0008", "GW_AUTH_0024"})
     @Tag(name = "Tokens")
@@ -233,6 +290,8 @@ public class MachineTokenController {
     @Requirements({"GW_AUTH_0024"})
     @Tag(name = "Tokens")
     @Operation(
+            // Pinned at its published value; see TokenController#revoke.
+            operationId = "revoke_3",
             summary = "Revoke a machine API credential",
             description = "Immediate and permanent, checked at authentication time rather than swept, so it"
                     + " takes effect on the credential's very next request. Audit-logged.")
@@ -268,6 +327,17 @@ public class MachineTokenController {
     @ExceptionHandler(TokenService.InvalidTokenRequestException.class)
     public ProblemDetail invalidRequest(TokenService.InvalidTokenRequestException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
+    }
+
+    /** A body naming a field the route does not own says so (GW_AUTH_0087); any other unreadable body is a plain 400. */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail unreadable(HttpMessageNotReadableException e) {
+        return TokenService.unreadableBody(e);
+    }
+
+    @ExceptionHandler(TokenService.TokenNotLiveException.class)
+    public ProblemDetail notLive(TokenService.TokenNotLiveException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
     }
 
     @ExceptionHandler(TokenService.TokenNotRotatableException.class)

@@ -1239,7 +1239,11 @@ export interface paths {
         delete: operations["revoke_3"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Change the API scopes of a machine API credential
+         * @description Replaces the API scopes of a live credential, under every rule of provisioning: at least one scope, each one the registry defines, no wildcard. Only the API scopes change: the secret, expiry, name, principal and fetch scope are untouched, so whoever holds the existing secret has the new scopes on its next request. Requires the admin role, is unreachable by any credential, and is audit-logged with the scopes before and after. The body carries `apiScopes` and nothing else; any other field is refused.
+         */
+        patch: operations["updateApiScopes"];
         trace?: never;
     };
     "/api/v1/tokens/machine/{id}/rotate": {
@@ -1323,7 +1327,11 @@ export interface paths {
         delete: operations["revoke_2"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Change the marketplaces a token fetches
+         * @description Replaces the marketplaces one of your live tokens may fetch. Narrowing is always allowed; every name is validated exactly as at creation, and an empty list grants every marketplace. Only the scopes change: the secret, expiry, name and publication scopes are untouched, and a later rotation carries the scopes as changed here. The body carries `scopes` and nothing else; any other field is refused. Audit-logged with the scopes before and after.
+         */
+        patch: operations["updateScopes"];
         trace?: never;
     };
     "/api/v1/tokens/{id}/rotate": {
@@ -4455,6 +4463,16 @@ export interface components {
             /** @description Commit SHA the facade delivered */
             sha?: string;
         };
+        /** @description API scope change request: the scopes the credential holds, and nothing else */
+        UpdateApiScopesRequest: {
+            /**
+             * @description The complete list of API scopes the credential holds from now on. Required, at least one, each known to the registry; there is no wildcard.
+             * @example [
+             *       "estate:read"
+             *     ]
+             */
+            apiScopes: string[];
+        };
         /** @description Policy rule update request; the name is the path */
         UpdateRuleRequest: {
             /** @description What the rule prohibits */
@@ -4463,6 +4481,11 @@ export interface components {
             enabled?: boolean;
             /** @description CEL expression; must compile to a boolean */
             expression?: string;
+        };
+        /** @description Scope change request: the marketplaces the token may fetch, and nothing else */
+        UpdateTokenScopesRequest: {
+            /** @description The complete list of marketplace names (the catalog's name is valid) the token may fetch from now on. Required. Empty grants every marketplace, as at creation. */
+            scopes: string[];
         };
         UpstreamFailure: {
             nextStep?: string;
@@ -7293,6 +7316,77 @@ export interface operations {
             };
         };
     };
+    updateApiScopes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateApiScopesRequest"];
+            };
+        };
+        responses: {
+            /** @description Changed; the credential as it now stands, never a secret */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MachineCredentialView"];
+                };
+            };
+            /** @description The body carries a field other than `apiScopes` */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The caller does not hold the admin role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No such machine credential */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The credential is revoked or expired */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unknown, wildcard or empty API scopes, or `apiScopes` missing */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     rotate_1: {
         parameters: {
             query?: never;
@@ -7457,6 +7551,68 @@ export interface operations {
             };
             /** @description No such active token of yours */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    updateScopes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTokenScopesRequest"];
+            };
+        };
+        responses: {
+            /** @description Changed; the token as it now stands, never a secret */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TokenView"];
+                };
+            };
+            /** @description The body carries a field other than `scopes` */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No such token of yours */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The token is revoked or expired */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unknown scope, or `scopes` missing */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
