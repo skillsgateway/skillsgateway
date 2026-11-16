@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 
 /**
  * The show-once reveal of a token's cleartext, shared by personal and system access tokens so the
@@ -55,8 +54,15 @@ export function IssuedTokenDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor="token-cleartext-box">{kind}</Label>
-          <div id="token-cleartext-box" className="flex items-center gap-2 rounded-md border bg-muted p-3">
+          {/* A label for a box that holds text, not a form control: named by reference instead. */}
+          <p id="token-cleartext-label" className="text-sm font-medium">
+            {kind}
+          </p>
+          <div
+            role="group"
+            aria-labelledby="token-cleartext-label"
+            className="flex items-center gap-2 rounded-md border bg-muted p-3"
+          >
             <code data-testid="token-cleartext" className="flex-1 break-all text-sm">
               {issued.token}
             </code>

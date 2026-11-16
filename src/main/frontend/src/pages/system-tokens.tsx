@@ -216,10 +216,16 @@ function SystemTokens() {
               >
                 <Checkbox
                   aria-label={scope.scope}
+                  aria-describedby={`scope-routes-${scope.scope}`}
                   checked={chosen.has(scope.scope ?? "")}
                   onCheckedChange={(checked) => toggle(scope.scope ?? "", Boolean(checked))}
                 />
                 {scope.scope}
+                {/* The routes a scope reaches, for assistive technology and for the hover title:
+                    a tooltip alone is out of reach of a keyboard or a touch screen. */}
+                <span id={`scope-routes-${scope.scope}`} className="sr-only">
+                  Reaches {(scope.routes ?? []).join(", ")}
+                </span>
               </label>
             ))}
           </div>
@@ -370,7 +376,9 @@ export function SystemTokenTable({
                   <Timestamp
                     value={token.expiresAt}
                     absent="never expires"
-                    className={token.expiresAt ? undefined : "text-muted-foreground"}
+                    // A credential that never lapses is the riskiest state in the list: said at
+                    // full weight, not greyed out like an absent value.
+                    className={token.expiresAt ? undefined : "font-medium"}
                   />
                   {marks.expiringSoon ? (
                     <div>
@@ -381,17 +389,17 @@ export function SystemTokenTable({
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
-                  <Timestamp
-                    value={token.lastUsedAt}
-                    relative
-                    absent="never"
-                    className={token.lastUsedAt ? undefined : "text-muted-foreground"}
-                  />
                   {marks.neverUsed ? (
-                    <div>
-                      <Badge variant="secondary">never used</Badge>
-                    </div>
-                  ) : null}
+                    // The mark is the statement: a plain "never" above it would say it twice.
+                    <Badge variant="secondary">never used</Badge>
+                  ) : (
+                    <Timestamp
+                      value={token.lastUsedAt}
+                      relative
+                      absent="never"
+                      className={token.lastUsedAt ? undefined : "text-muted-foreground"}
+                    />
+                  )}
                 </div>
               </TableCell>
               <TableCell>

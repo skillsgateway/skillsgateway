@@ -120,6 +120,10 @@ test("create_needs_a_chosen_lifetime_offers_the_registrys_scopes_and_no_all", as
     "marketplaces:register",
   ]);
   expect(screen.queryByRole("checkbox", { name: /^(all|\*)$/i })).not.toBeInTheDocument();
+  // What a scope reaches is available to a keyboard and a screen reader, not only on hover.
+  expect(screen.getByRole("checkbox", { name: "estate:read" })).toHaveAccessibleDescription(
+    "Reaches GET /api/v1/estate",
+  );
 
   await user.type(screen.getByLabelText("Principal"), "terraform-ci");
   await user.type(screen.getByLabelText("Token name"), "platform-pipeline");
@@ -257,8 +261,12 @@ test("credentials_near_expiry_or_never_used_are_marked_in_words", async () => {
   renderPage();
   const forgotten = await screen.findByRole("row", { name: /old-job/ });
   expect(within(forgotten).getByText("never used")).toBeInTheDocument();
+  // One statement, not "never" over "never used".
+  expect(within(forgotten).queryByText("never")).not.toBeInTheDocument();
   const forever = screen.getByRole("row", { name: /forever/ });
   expect(within(forever).getByText("never expires")).toBeInTheDocument();
+  // The riskiest state in the list is not greyed out like an absent value.
+  expect(within(forever).getByText("never expires")).not.toHaveClass("text-muted-foreground");
   expect(within(forever).queryByText("never used")).not.toBeInTheDocument();
   const busy = screen.getByRole("row", { name: /platform-pipeline/ });
   expect(within(busy).queryByText(/never used|expires within/)).not.toBeInTheDocument();
