@@ -43,12 +43,15 @@ export const Marks: StoryObj<typeof SystemTokenTable> = {
     <SystemTokenTable
       tokens={[...machineViews, expiringSoon, revoked]}
       now={NOW}
+      onEdit={() => {}}
       onRotate={() => {}}
       onRevoke={() => {}}
     />
   ),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    // A live credential can have its scopes edited (GW_AUTH_0089); a revoked one cannot.
+    await expect(canvas.getByRole("button", { name: "Edit scopes of token platform-pipeline" })).toBeInTheDocument();
     await expect(
       within(canvas.getByRole("row", { name: /nightly/ })).getByText("expires within 14 days"),
     ).toBeInTheDocument();
@@ -61,6 +64,7 @@ export const Marks: StoryObj<typeof SystemTokenTable> = {
     // A revoked credential offers nothing to act on and carries no marks.
     const dead = canvas.getByRole("row", { name: /retired-job/ });
     await expect(within(dead).queryByRole("button")).not.toBeInTheDocument();
+    await expect(canvas.queryByRole("button", { name: "Edit scopes of token retired-job" })).toBeNull();
     await expect(within(dead).getByText("revoked")).toBeInTheDocument();
   },
 };

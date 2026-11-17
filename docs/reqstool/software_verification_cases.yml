@@ -5093,3 +5093,83 @@ cases:
       WHEN the served catalog revision is read by a signed-in caller without a role, and by an unauthenticated caller
       THEN the revision carries the configured name, an unauthenticated caller is refused as before, and a disabled catalog still answers 404
     revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0102
+    requirement_ids: ["GW_AUTH_0083"]
+    title: A personal access token's marketplaces can be narrowed, widened and reset, and the facade follows at once
+    verification: automated-test
+    description: |
+      GIVEN a live personal access token that fetches two marketplaces
+      WHEN its owner narrows it to one, widens it to a third registered one and to the catalog's name, states every marketplace, and sends an empty list; and a token created with no limit is narrowed to a list
+      THEN each change is returned in the token and the listing, a fetch of a marketplace no longer named is refused on the very next request as if the marketplace did not exist, the explicit statement makes the token fetch every marketplace and a rotation afterwards keeps that, the empty list is refused 400 naming allMarketplaces with the token unchanged, and an unknown name is refused 422 with the token unchanged
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0103
+    requirement_ids: ["GW_AUTH_0083", "GW_AUTH_0084"]
+    title: The scope-change routes refuse the callers and tokens they must refuse
+    verification: automated-test
+    description: |
+      GIVEN another user's token, a machine credential's id, a revoked token, an expired token, an ordinary session, a machine credential holding every scope and a session-derived credential
+      WHEN each is used with the scope-change routes as the wrong caller or against the wrong target
+      THEN another user's token and a machine credential's id on the personal route answer 404, a revoked or expired token answers 409, a session without the administrator role answers 403 on the machine route, no bearer credential of either kind reaches either route, and nothing changed in any case
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0104
+    requirement_ids: ["GW_AUTH_0084"]
+    title: A system access token's API scopes are replaced under every invariant of the machine model
+    verification: automated-test
+    description: |
+      GIVEN a live machine credential
+      WHEN an administrator replaces its API scopes with a narrower list, a wider one, an empty list, an unknown name and a wildcard
+      THEN the valid lists are stored and shown, the empty list, the unknown name and the wildcard are refused 422 with the credential unchanged, its marketplace scopes stay empty, and it still authenticates on the machine API with exactly the new scopes
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0105
+    requirement_ids: ["GW_AUTH_0085"]
+    title: A scope change touches nothing else and a rotation carries the edited scopes, including when they race
+    verification: automated-test
+    description: |
+      GIVEN a live personal access token and a live machine credential
+      WHEN their scopes are changed, then each is rotated, and a change and a rotation of the same token are run concurrently many times
+      THEN the secret, expiry, name, principal, owner and other scope dimensions are unchanged by the change, the rotated successor carries the edited scopes, no change reported as saved is absent from the successor, and a change to the rotated predecessor is refused 409
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0106
+    requirement_ids: ["GW_AUTH_0086"]
+    title: A scope change writes one ledger entry with actor, token, before and after, and a refusal writes none
+    verification: automated-test
+    description: |
+      GIVEN a personal access token and a machine credential, and two concurrent changes of one token
+      WHEN their scopes are changed, a change is refused, and the two concurrent changes complete
+      THEN each change appends one entry naming the actor, the token and the scopes before and after, a refused change appends none, and the concurrent entries form a chain in which one's after is the other's before
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0107
+    requirement_ids: ["GW_AUTH_0087"]
+    title: A scope-change request with any other field, or without the list, is refused and changes nothing
+    verification: automated-test
+    description: |
+      GIVEN a personal access token and a machine credential
+      WHEN a change carries pushScopes, apiScopes on the personal route, scopes on the machine route, expiresAt or name; or a personal change carries neither scopes nor allMarketplaces, both, an empty scopes list or allMarketplaces false; or a machine change omits its list
+      THEN each is refused with a client-error status naming the cause and the field to use, and the token is unchanged
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0108
+    requirement_ids: ["GW_AUTH_0088"]
+    title: The personal token list edits a token's marketplaces under the form rules and the token is then refused elsewhere
+    verification: automated-test
+    description: |
+      GIVEN the personal access tokens page with a token that fetches every marketplace
+      WHEN its owner opens the edit control, chooses marketplaces, clears the choice, widens, and saves, with the API refusing one save
+      THEN saving is disabled with its reason stated until the choice is valid and different, every marketplace is sent as allMarketplaces true and a limited choice as a non-empty list, never an empty one, widening is warned about, the refusal is shown as the API states it, the list shows the new reach after saving, and in a real browser the narrowed token is refused for a marketplace it no longer names
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0109
+    requirement_ids: ["GW_AUTH_0089"]
+    title: The system access tokens page edits a token's scopes under the create form's rules
+    verification: automated-test
+    description: |
+      GIVEN the System access tokens page with a live token
+      WHEN an administrator opens the edit control, clears every scope, adds one, and saves, with the API refusing one save
+      THEN saving is disabled with its reason stated until at least one scope is chosen and the choice differs, adding scopes is warned about with who it empowers, the refusal is shown as the API states it, and the list shows the new scopes after saving
+    revision: "0.5.0"

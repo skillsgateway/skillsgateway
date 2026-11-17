@@ -224,6 +224,88 @@ public class TokenRepository {
                 .update();
     }
 
+    /**
+     * Locks a <em>live</em> personal token of the principal for the rest of the transaction
+     * (GW_AUTH_0083, GW_AUTH_0085). Live and locked in one statement, so what the caller then reads as
+     * the token's current scopes is what the row holds when it writes: a concurrent revoke or
+     * rotation either finishes first, and the row no longer qualifies, or waits for the commit.
+     */
+    @Requirements({"GW_AUTH_0083", "GW_AUTH_0085"})
+    public Optional<AccessToken> lockLivePersonal(long id, String principal) {
+        return jdbc.sql("SELECT * FROM access_tokens WHERE id = :id AND principal = :principal"
+                        + " AND api_scopes IS NULL AND revoked_at IS NULL"
+                        + " AND (expires_at IS NULL OR expires_at > :now) FOR UPDATE")
+                .param("id", id)
+                .param("principal", principal)
+                .param("now", OffsetDateTime.now())
+                .query(TokenRepository::map)
+                .optional();
+    }
+
+    /** As {@link #lockLivePersonal}, for a machine credential: by id alone, as every administrative path is. */
+    @Requirements({"GW_AUTH_0084", "GW_AUTH_0085"})
+    public Optional<AccessToken> lockLiveMachine(long id) {
+        return jdbc.sql("SELECT * FROM access_tokens WHERE id = :id AND api_scopes IS NOT NULL"
+                        + " AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at > :now) FOR UPDATE")
+                .param("id", id)
+                .param("now", OffsetDateTime.now())
+                .query(TokenRepository::map)
+                .optional();
+    }
+
+    /**
+     * Replaces the fetch scopes and nothing else (GW_AUTH_0085). {@code null} is the only spelling of
+     * every marketplace; the schema refuses an empty array.
+     */
+    @Requirements({"GW_AUTH_0083", "GW_AUTH_0085"})
+    public AccessToken setScopes(long id, List<String> scopes) {
+        return jdbc.sql("UPDATE access_tokens SET scopes = :scopes::text[] WHERE id = :id RETURNING *")
+                .param("scopes", SqlArrays.literal(scopes))
+                .param("id", id)
+                .query(TokenRepository::map)
+                .single();
+    }
+
+    /** Replaces the API scopes and nothing else; the schema refuses an empty array (GW_AUTH_0084, GW_AUTH_0085). */
+    @Requirements({"GW_AUTH_0084", "GW_AUTH_0085"})
+    public AccessToken setApiScopes(long id, List<String> apiScopes) {
+        return jdbc.sql("UPDATE access_tokens SET api_scopes = :apiScopes::text[] WHERE id = :id RETURNING *")
+                .param("apiScopes", SqlArrays.literal(apiScopes))
+                .param("id", id)
+                .query(TokenRepository::map)
+                .single();
+    }
+
+    /**
+     * Revokes a live personal token and returns the row <em>as it was when it was revoked</em>
+     * (GW_AUTH_0085). A single {@code UPDATE ... RETURNING}: when an edit of the same token holds the
+     * row, this waits for its commit and then revokes, and returns, the edited row. Rotation builds
+     * the successor from this row and not from one it read earlier, which is what keeps an edit
+     * reported as saved from being lost from the credential that replaces the token.
+     */
+    @Requirements({"GW_AUTH_0057", "GW_AUTH_0085"})
+    public Optional<AccessToken> revokeReturning(long id, String principal) {
+        return jdbc.sql("UPDATE access_tokens SET revoked_at = :now"
+                        + " WHERE id = :id AND principal = :principal AND api_scopes IS NULL"
+                        + " AND revoked_at IS NULL RETURNING *")
+                .param("now", OffsetDateTime.now())
+                .param("id", id)
+                .param("principal", principal)
+                .query(TokenRepository::map)
+                .optional();
+    }
+
+    /** As {@link #revokeReturning(long, String)}, for a machine credential, by id alone. */
+    @Requirements({"GW_AUTH_0024", "GW_AUTH_0085"})
+    public Optional<AccessToken> revokeMachineReturning(long id) {
+        return jdbc.sql("UPDATE access_tokens SET revoked_at = :now"
+                        + " WHERE id = :id AND api_scopes IS NOT NULL AND revoked_at IS NULL RETURNING *")
+                .param("now", OffsetDateTime.now())
+                .param("id", id)
+                .query(TokenRepository::map)
+                .optional();
+    }
+
     @Requirements({"GW_AUTH_0057"})
     public boolean revoke(long id, String principal) {
         return jdbc.sql("UPDATE access_tokens SET revoked_at = :now"

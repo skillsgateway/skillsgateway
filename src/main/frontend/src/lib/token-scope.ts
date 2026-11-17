@@ -22,6 +22,45 @@ export function scopeChoiceValid(choice: ScopeChoice, chosen: readonly string[])
   return choice === "every" || chosen.length > 0;
 }
 
+/** The body of an edit request (GW_AUTH_0088): one of the two statements the API accepts. */
+export type UpdateScopesBody = { scopes: string[] } | { allMarketplaces: true };
+
+/**
+ * The body of an edit request (GW_AUTH_0088). Every marketplace is stated as `allMarketplaces:
+ * true`: an empty `scopes` list is refused by the API on an edit, since it is not a way to say
+ * anything. A limited choice is its non-empty list (the submit stays disabled until it names
+ * something, see {@link scopeChoiceValid}).
+ */
+export function updateBodyFor(choice: ScopeChoice, chosen: readonly string[]): UpdateScopesBody {
+  return choice === "chosen" ? { scopes: sortedNames(chosen) } : { allMarketplaces: true };
+}
+
+/** A token's own `scopes` as the picker's choice: empty is every marketplace. */
+export function selectionFor(scopes: readonly string[] | undefined): { choice: ScopeChoice; chosen: string[] } {
+  const names = sortedNames(scopes ?? []);
+  return names.length === 0 ? { choice: "every", chosen: [] } : { choice: "chosen", chosen: names };
+}
+
+/** Whether two token `scopes` lists reach the same marketplaces (empty is every marketplace). */
+export function sameReach(a: readonly string[], b: readonly string[]): boolean {
+  const left = sortedNames([...new Set(a)]);
+  const right = sortedNames([...new Set(b)]);
+  return left.length === right.length && left.every((name, index) => name === right[index]);
+}
+
+/**
+ * What an edit adds to a token's reach, or null when it adds nothing (GW_AUTH_0088). `"every"` when
+ * a limited token becomes unlimited; the names that were not there otherwise. Empty means every
+ * marketplace on both sides, so nothing can be added to a token that already fetches them all.
+ */
+export function widening(before: readonly string[], after: readonly string[]): "every" | string[] | null {
+  if (before.length === 0) return null;
+  if (after.length === 0) return "every";
+  const had = new Set(before);
+  const added = sortedNames(after.filter((name) => !had.has(name)));
+  return added.length > 0 ? added : null;
+}
+
 /** The names, in the one order every surface shows them. */
 export function sortedNames(names: readonly string[]): string[] {
   return [...names].sort((a, b) => a.localeCompare(b));

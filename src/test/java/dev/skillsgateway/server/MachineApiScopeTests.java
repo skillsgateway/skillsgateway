@@ -3,6 +3,7 @@ package dev.skillsgateway.server;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -71,10 +72,13 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
             case "GET" -> get(path);
             case "POST" -> post(path);
             case "PUT" -> put(path);
+            case "PATCH" -> patch(path);
             case "DELETE" -> delete(path);
             default -> throw new IllegalArgumentException(route.toString());
         };
-        if (route.method().equals("POST") || route.method().equals("PUT")) {
+        if (route.method().equals("POST")
+                || route.method().equals("PUT")
+                || route.method().equals("PATCH")) {
             builder.contentType(MediaType.APPLICATION_JSON).content(path.endsWith("/cursor") ? "{\"after\": 0}" : "{}");
         }
         return builder.header(HttpHeaders.AUTHORIZATION, "Bearer " + secret);

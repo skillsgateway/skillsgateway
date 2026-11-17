@@ -3,20 +3,20 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
   useCreateMachineToken,
-  useMachineScopes,
   useMachineTokens,
   useRevokeMachineToken,
   useRotateMachineToken,
   type IssuedToken,
   type MachineCredentialView,
 } from "@/api/queries";
+import { ApiScopeChecklist } from "@/components/api-scope-checklist";
+import { EditSystemTokenScopesDialog } from "@/components/edit-system-token-scopes-dialog";
 import { IssuedTokenDialog } from "@/components/issued-token-dialog";
 import { RoleGate } from "@/components/role-required";
 import { SegmentedGroup } from "@/components/segmented-group";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -73,11 +73,10 @@ type Issued = { issued: IssuedToken; verb: "created" | "rotated" };
  * Create, list, rotate and revoke system access tokens — the portal's face on the API's machine
  * API credential endpoints, with the API's own refusals shown as it states them.
  *
- * @Requirements GW_AUTH_0072, GW_AUTH_0073, GW_AUTH_0074, GW_AUTH_0077
+ * @Requirements GW_AUTH_0072, GW_AUTH_0073, GW_AUTH_0074, GW_AUTH_0077, GW_AUTH_0089
  */
 function SystemTokens() {
   const tokens = useMachineTokens();
-  const scopes = useMachineScopes();
   const create = useCreateMachineToken();
   const rotate = useRotateMachineToken();
   const revoke = useRevokeMachineToken();
@@ -89,6 +88,7 @@ function SystemTokens() {
   const [lifetime, setLifetime] = useState<SystemLifetime | "">("");
   const [issued, setIssued] = useState<Issued | null>(null);
   const [confirm, setConfirm] = useState<Confirm | null>(null);
+  const [editing, setEditing] = useState<MachineCredentialView | null>(null);
 
   const canCreate =
     principal.trim() !== "" &&
@@ -199,41 +199,7 @@ function SystemTokens() {
           </div>
         </div>
 
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium">API scopes</legend>
-          {scopes.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : null}
-          {scopes.isError ? (
-            <p role="alert" className="text-sm text-destructive">
-              {scopes.error.message}
-            </p>
-          ) : null}
-          <div className="grid max-h-56 gap-1 overflow-y-auto rounded-md border p-2 sm:grid-cols-2">
-            {(scopes.data ?? []).map((scope) => (
-              <label
-                key={scope.scope}
-                className="flex items-center gap-2 font-mono text-xs"
-                title={(scope.routes ?? []).join("\n")}
-              >
-                <Checkbox
-                  aria-label={scope.scope}
-                  aria-describedby={`scope-routes-${scope.scope}`}
-                  checked={chosen.has(scope.scope ?? "")}
-                  onCheckedChange={(checked) => toggle(scope.scope ?? "", Boolean(checked))}
-                />
-                {scope.scope}
-                {/* The routes a scope reaches, for assistive technology and for the hover title:
-                    a tooltip alone is out of reach of a keyboard or a touch screen. */}
-                <span id={`scope-routes-${scope.scope}`} className="sr-only">
-                  Reaches {(scope.routes ?? []).join(", ")}
-                </span>
-              </label>
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            There is no “all” choice: each scope is granted by name, and hovering one lists the
-            routes it reaches.
-          </p>
-        </fieldset>
+        <ApiScopeChecklist chosen={chosen} onToggle={toggle} />
 
         <div className="flex flex-wrap items-end gap-3">
           <SegmentedGroup<SystemLifetime | "">
@@ -276,6 +242,7 @@ function SystemTokens() {
         <SystemTokenTable
           tokens={tokens.data}
           busy={rotate.isPending || revoke.isPending}
+          onEdit={setEditing}
           onRotate={(token) => setConfirm({ action: "rotate", token })}
           onRevoke={(token) => setConfirm({ action: "revoke", token })}
         />
@@ -309,6 +276,8 @@ function SystemTokens() {
         </Dialog>
       ) : null}
 
+      {editing ? <EditSystemTokenScopesDialog token={editing} onClose={() => setEditing(null)} /> : null}
+
       {issued ? (
         <IssuedTokenDialog
           issued={issued.issued}
@@ -330,12 +299,15 @@ function SystemTokens() {
  */
 export function SystemTokenTable({
   tokens,
+  onEdit,
   onRotate,
   onRevoke,
   busy = false,
   now,
 }: {
   tokens: MachineCredentialView[];
+  /** Offered for a live token only (GW_AUTH_0089). */
+  onEdit?: (token: MachineCredentialView) => void;
   onRotate: (token: MachineCredentialView) => void;
   onRevoke: (token: MachineCredentialView) => void;
   busy?: boolean;
@@ -414,6 +386,17 @@ export function SystemTokenTable({
               <TableCell className="space-x-2 text-right whitespace-nowrap">
                 {state === "active" ? (
                   <>
+                    {onEdit ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        aria-label={`Edit scopes of token ${token.name}`}
+                        onClick={() => onEdit(token)}
+                        disabled={busy}
+                      >
+                        Edit scopes
+                      </Button>
+                    ) : null}
                     <Button
                       size="sm"
                       variant="outline"

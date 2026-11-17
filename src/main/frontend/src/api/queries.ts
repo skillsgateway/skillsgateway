@@ -3,6 +3,7 @@ import { api } from "./client";
 import type { components } from "./types.gen";
 import { accessOf, type Access } from "@/lib/access";
 import { isDecidable, newestFirst } from "@/lib/snapshot-roles";
+import type { UpdateScopesBody } from "@/lib/token-scope";
 
 export type MarketplaceView = components["schemas"]["MarketplaceView"];
 export type Snapshot = components["schemas"]["Snapshot"];
@@ -947,6 +948,20 @@ export function useCreateToken() {
   });
 }
 
+/**
+ * Changes the marketplaces a live personal token may fetch (GW_AUTH_0088). The body is either a
+ * non-empty `scopes` list or `allMarketplaces: true`, never an empty list. The response is the token, never a secret, so nothing sensitive is held by the
+ * mutation; the list is refetched, not seeded from it.
+ */
+export function useUpdateTokenScopes() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: UpdateScopesBody }) =>
+      api<TokenView>(`/api/v1/tokens/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tokens"] }),
+  });
+}
+
 export function useRevokeToken() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -1008,6 +1023,19 @@ export function useRotateMachineToken() {
   return useMutation({
     gcTime: 0,
     mutationFn: (id: number) => api<IssuedToken>(`/api/v1/tokens/machine/${id}/rotate`, { method: "POST" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["machine-tokens"] }),
+  });
+}
+
+/** Changes the API scopes of a live system access token (GW_AUTH_0089); administrators only, server-side. */
+export function useUpdateMachineTokenScopes() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, apiScopes }: { id: number; apiScopes: string[] }) =>
+      api<MachineCredentialView>(`/api/v1/tokens/machine/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ apiScopes }),
+      }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["machine-tokens"] }),
   });
 }

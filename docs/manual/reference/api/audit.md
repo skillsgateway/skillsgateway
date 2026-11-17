@@ -169,6 +169,8 @@ the acting OIDC principal.
 | `machine-credential-created` | A machine API credential was provisioned. The actor is the administrator who provisioned it; the credential's own actions are recorded under its own principal. | `credential {id} '{name}' scopes=…; expires=…`. |
 | `machine-credential-rotated` | A machine API credential got a new secret with an identical grant. | As above. |
 | `machine-credential-revoked` | A machine API credential was revoked. | `credential {id} '{name}' principal=…`. |
+| `token-scopes-changed` | The owner changed the marketplaces a [personal access token may fetch](tokens.md#patch-tokensid), in the same transaction as the change. The actor is the owner. | `token {id} '{name}' scopes {before} -> {after}`, each side the sorted names in brackets, or `every marketplace` in words when the token fetches them all. |
+| `machine-credential-scopes-changed` | An administrator [changed the API scopes](tokens.md#patch-apiv1tokensmachineid) of a machine API credential, in the same transaction as the change. | `credential {id} '{name}' principal=… scopes {before} -> {after}`, each side the sorted scope names in brackets. |
 | `principal-tokens-revoked` | An administrator revoked every live personal token of a principal. | `principal=… tokens=[{id}, …]`. |
 | `ingest-failed` | An ingest attempt failed, whatever triggered it. The principal is whoever or whatever triggered it: a person, `scheduler`, `webhook`, or the pushing principal. | The reason, root cause and next step, in one line. |
 | `marketplace-upstream-unreachable` | A marketplace declared in the estate was registered, or had its URL corrected, although its upstream could not be read. The principal is `config-reconciler`. | As above. |

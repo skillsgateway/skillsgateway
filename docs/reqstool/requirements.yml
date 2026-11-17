@@ -3507,6 +3507,76 @@ requirements:
     categories: ["interaction-capability"]
     revision: 0.5.0
 
+  - id: GW_AUTH_0083
+    title: The owner of a personal access token can change the marketplaces it fetches while it is live
+    significance: shall
+    description: "The system shall let the owner of a live personal access token, one that is neither revoked nor expired, replace the list of marketplaces it may fetch, validating every name exactly as at creation, taking either a non-empty list or an explicit statement that the token fetches every marketplace, whichever way the token was created, and refusing an empty list, a request with neither, a request with both and a request that states every marketplace as false, each with a message that names the field to use; shall apply a change to the facade's next request; and shall refuse, without changing anything, a token that is not the caller's, a token that is revoked or expired, and a name that is neither a registered marketplace nor the catalog's name."
+    rationale: "A token's reach was fixed when it was made, so narrowing a pipeline's credential, or widening it for one more marketplace, meant minting a new secret, redistributing it and revoking the old one. The marketplaces a token fetches are a restriction the owner already chooses freely at creation, so letting the owner revise the choice grants nothing creation does not. Every marketplace is only ever stated on an edit and never read from an empty list, because an empty list is what a client builds by mistake and an edit made by mistake must not widen a token."
+    references:
+      requirement_ids: ["GW_AUTH_0006"]
+    categories: ["interaction-capability", "security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0084
+    title: An administrator can change the API scopes of a live system access token
+    significance: shall
+    description: "The system shall let an administrator replace the API scopes of a live machine credential, checking every name against the machine-reachability registry, refusing an empty list, an unknown name and any wildcard, never touching the credential's marketplace scopes, and never reaching a personal access token through the same route; shall refuse a caller who is not an administrator, a credential that is revoked or expired, and an id that names no machine credential; and shall keep the route unreachable by any machine credential and by any session-derived credential."
+    rationale: "A pipeline's authority changes over its life, and the only way to change a credential's scopes was to mint a new one. Widening a credential in place hands new authority to whoever already holds its secret, so the route is as reserved as provisioning one, is audited with before and after, and can never be exercised by a credential."
+    references:
+      requirement_ids: ["GW_AUTH_0020", "GW_AUTH_0024"]
+    categories: ["security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0085
+    title: Changing a token's scopes changes nothing else about it
+    significance: shall
+    description: "The system shall, when it changes a token's scopes, leave its secret, its expiry, its name, its principal, its owner, its other scope dimensions and its last-use record exactly as they were, shall make a later rotation carry the scopes as last changed even when the change and the rotation race, and shall refuse a change to a token whose rotation has revoked it."
+    rationale: "A scope edit that touched the expiry would extend a credential's life by the back door, and a rotation that copied the scopes it read before a concurrent edit would silently undo an edit that was reported as saved."
+    references:
+      requirement_ids: ["GW_AUTH_0008"]
+    categories: ["security", "reliability"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0086
+    title: Every change of a token's scopes is recorded on the ledger with before and after
+    significance: shall
+    description: "The system shall append to the audit ledger, in the same transaction as the change, one entry for every change of a token's scopes naming the acting identity, the token and the scopes before and after, and shall record nothing for a change it refused."
+    rationale: "Changing a credential's reach changes what a leaked secret can do, so the record of who widened what, and from what, is what an incident review starts from; an entry written separately from the change could be missing for a change that happened."
+    references:
+      requirement_ids: ["GW_AUDIT_0002", "GW_AUTH_0009"]
+    categories: ["security", "functional-suitability"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0087
+    title: The scope-change routes accept the scope list and nothing else
+    significance: shall
+    description: "The system shall refuse, with a status that names the cause and without changing anything, a scope-change request that carries any field other than the one scope list its route owns, in particular a push scope, an API scope on a personal access token, a marketplace scope on a machine credential, an expiry or a name, and a request that omits the list."
+    rationale: "A route that silently ignored an extra field would let a caller believe they had changed a grant they had not, and one that accepted it would let a scope edit change the dimensions an edit was never meant to reach."
+    references:
+      requirement_ids: ["GW_AUTH_0020"]
+    categories: ["security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0088
+    title: A user can change the marketplaces of a personal access token from the portal
+    significance: shall
+    description: "The portal's personal access token list shall offer, for each live token, a control that opens the same marketplace choice the token forms use, starting from the token's current reach; shall keep saving unavailable, with the reason stated, until the choice names a marketplace or is every marketplace and differs from the current reach; shall send every marketplace as an explicit statement and a limited choice as a non-empty list, never an empty list and never both; shall warn before saving a choice that widens the token; shall show the API's refusal as the API states it; and shall show the new reach in the list once saved."
+    rationale: "The API change is of no use to the people who need it unless they can reach it without a hand-written request, and a limited choice that named nothing would have been an empty list, which the API refuses on an edit because it is not a way to state every marketplace."
+    references:
+      requirement_ids: ["GW_AUTH_0079", "GW_AUTH_0083"]
+    categories: ["interaction-capability", "security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0089
+    title: An administrator can change the scopes of a system access token from the portal
+    significance: shall
+    description: "The portal's System access tokens page shall offer, for each live token, a control that opens the scope choice the create form uses, starting from the token's current scopes; shall keep saving unavailable, with the reason stated, until at least one scope is chosen and the choice differs from the current scopes; shall warn before saving a choice that adds scopes, saying that the holder of the existing secret gets them at once; shall show the API's refusal as the API states it; and shall show the new scopes in the list once saved."
+    rationale: "Without a control the endpoint is a hand-written request again, and a widening that does not say who it empowers hides the one property that distinguishes editing a credential from minting another."
+    references:
+      requirement_ids: ["GW_AUTH_0072", "GW_AUTH_0084"]
+    categories: ["interaction-capability", "security"]
+    revision: 0.5.0
+
   - id: GW_OBSERVABILITY_0005
     title: Each instance reports the background-pass turns it took and skipped
     significance: shall
