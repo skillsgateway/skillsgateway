@@ -1239,6 +1239,67 @@ test("the_wizard_commands_store_the_credential_and_clone_on_a_clean_client", asy
 });
 
 /**
+ * A token limited in the wizard to its own marketplace fetches that marketplace and is answered
+ * for another exactly as if that one did not exist, and the token list states the limit
+ * (GW_AUTH_0079, GW_AUTH_0080). Enforcement is the server's and unchanged: this proves the portal
+ * really asks for it.
+ *
+ * @SVCs SVC_GW_AUTH_0097, SVC_GW_AUTH_0098
+ */
+test("a_token_limited_in_the_wizard_fetches_only_its_marketplace_and_the_list_says_so", async ({ page }) => {
+  await login(page, "alice");
+  const origin = new URL(page.url()).origin;
+  const marketplaces = page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Marketplaces" });
+  const first = uniqueName("scopea");
+  const second = uniqueName("scopeb");
+  for (const name of [first, second]) {
+    await marketplaces.click();
+    await page.getByRole("button", { name: "Register marketplace" }).click();
+    await page.getByLabel("Name").fill(name);
+    await page.getByLabel("Clone URL").fill(process.env.E2E_UPSTREAM_URL ?? "file:///tmp/e2e-upstream");
+    await submitRegister(page);
+    await approveCard(page, await ingestOnReview(page, name));
+  }
+
+  // Open the wizard on the first marketplace and limit the token to it.
+  await marketplaces.click();
+  await page.getByRole("link", { name: first, exact: true }).click();
+  await page.getByRole("button", { name: "Connect a client" }).click();
+  await page.getByRole("button", { name: "Chosen marketplaces" }).click();
+  await expect(page.getByRole("checkbox", { name: first })).toBeChecked();
+  await expect(page.getByTestId("wizard-token-reach")).toContainText(`fetches only '${first}'`);
+  await page.getByRole("button", { name: "Create token" }).click();
+  const token = (await page.getByTestId("wizard-token-value").textContent()) ?? "";
+  expect(token).toMatch(/^sgw_/);
+  await expect(page.getByTestId("wizard-token-reach")).toContainText(`The token created here fetches only '${first}'`);
+
+  const home = mkdtempSync(join(tmpdir(), "e2e-scoped-client-"));
+  const env = { PATH: process.env.PATH ?? "/usr/bin:/bin", HOME: home, GIT_CONFIG_NOSYSTEM: "1", GIT_TERMINAL_PROMPT: "0" };
+  const authed = (name: string) => {
+    const url = new URL(`${origin}/git/${name}`);
+    url.username = "token";
+    url.password = token;
+    return url.href;
+  };
+  try {
+    const inScope = spawnSync("git", ["ls-remote", authed(first)], { cwd: home, env, encoding: "utf8", timeout: 60_000 });
+    expect(inScope.status, inScope.stderr).toBe(0);
+    const outOfScope = spawnSync("git", ["ls-remote", authed(second)], { cwd: home, env, encoding: "utf8", timeout: 60_000 });
+    expect(outOfScope.status).not.toBe(0);
+    expect(outOfScope.stderr).toMatch(/not found|404/i);
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+  }
+
+  // The list says what the token reaches, in words, and says "every marketplace" for the others.
+  await page.getByRole("button", { name: "Done" }).click();
+  await page.goto("/security/tokens");
+  const row = page.getByRole("row", { name: new RegExp(`${first}-client`) });
+  await expect(row).toContainText(first);
+  await expect(row).not.toContainText("every marketplace");
+});
+
+/**
  * The reviewer's file explorer on a real held-vs-served delta: approve one commit, advance the
  * upstream fixture (modify the skill, add a file), re-ingest, and inspect the held snapshot in
  * its card's Contents tab — nested tree, inertly rendered SKILL.md, and the file's diff against

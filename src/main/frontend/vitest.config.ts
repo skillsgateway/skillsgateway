@@ -33,6 +33,21 @@ export default defineConfig({
       }
     }, {
       extends: true,
+      // Dependencies that only some stories import. Left to Vite's on-demand discovery, a cold
+      // cache (every CI run) finds them while tests are already running, re-optimizes, reloads the
+      // page under a running file and fails it ("Vite unexpectedly reloaded a test", see #103).
+      // Listing them makes the first optimization pass complete. Vite names any new late arrival
+      // in its log, so extend this list from that message when a story adds a dependency.
+      optimizeDeps: {
+        include: [
+          "@base-ui/react/separator",
+          "@base-ui/react/tabs",
+          "@hookform/resolvers/zod",
+          "@tanstack/react-table",
+          "react-hook-form",
+          "zod"
+        ]
+      },
       plugins: [
       // The plugin will run tests for the stories defined in your Storybook config
       // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest

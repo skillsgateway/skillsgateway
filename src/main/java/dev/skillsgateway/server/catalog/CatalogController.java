@@ -31,7 +31,7 @@ public class CatalogController {
     }
 
     @GetMapping("/catalog")
-    @Requirements({"GW_FACADE_0005"})
+    @Requirements({"GW_FACADE_0005", "GW_AUTH_0082"})
     @Tag(name = "Catalog")
     @Operation(
             summary = "The served catalog revision",

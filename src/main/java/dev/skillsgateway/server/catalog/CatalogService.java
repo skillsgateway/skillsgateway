@@ -102,6 +102,11 @@ public class CatalogService {
 
     @Schema(description = "The catalog revision the facade is serving")
     public record CatalogInfo(
+            @Schema(
+                    description = "The catalog's configured name: its facade path segment, and a valid token"
+                            + " scope (GW_AUTH_0082)")
+            String name,
+
             @Schema(description = "Catalog commit SHA") String sha,
 
             @Schema(description = "When this revision was generated")
@@ -202,7 +207,7 @@ public class CatalogService {
                     if (commit.isPresent()) {
                         pruneInternalRefs(catalog);
                         announce(collisions);
-                        return new CatalogInfo(commit.get().name(), Instant.now(), constituents, collisions);
+                        return new CatalogInfo(name(), commit.get().name(), Instant.now(), constituents, collisions);
                     }
                     if (attempt >= MAX_REBUILD_ATTEMPTS) {
                         throw new IOException(
@@ -251,7 +256,7 @@ public class CatalogService {
                     .map(parts -> new Collision(parts[0], List.of(parts[1].split(","))))
                     .toList();
             return Optional.of(new CatalogInfo(
-                    tip.name(), Instant.ofEpochSecond(commit.getCommitTime()), constituents, collisions));
+                    name(), tip.name(), Instant.ofEpochSecond(commit.getCommitTime()), constituents, collisions));
         }
     }
 

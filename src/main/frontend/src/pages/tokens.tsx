@@ -10,6 +10,7 @@ import {
   type TokenView,
 } from "@/api/queries";
 import { IssuedTokenDialog } from "@/components/issued-token-dialog";
+import { MarketplaceScopePicker, type ScopeSelection } from "@/components/marketplace-scope-picker";
 import { SegmentedGroup } from "@/components/segmented-group";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
@@ -25,12 +26,54 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DEFAULT_LIFETIME, expiryFor, LIFETIMES, type Lifetime } from "@/lib/token-lifetimes";
+import { scopeChoiceValid, scopesFor, sortedNames } from "@/lib/token-scope";
 
 export { IssuedTokenDialog };
 
 /** An expiry in the past: the server no longer accepts the token, though it is still listed. */
 function expired(token: TokenView): boolean {
   return token.expiresAt !== undefined && token.expiresAt !== null && Date.parse(token.expiresAt) <= Date.now();
+}
+
+/** How many marketplace names a row shows before the rest are summarised; the whole list stays readable. */
+const REACH_NAMES_SHOWN = 3;
+
+/**
+ * What a token can fetch, in words (GW_AUTH_0080): "every marketplace" for an unscoped token
+ * rather than an empty cell, the names for a scoped one, and the hosted marketplaces it may
+ * publish to only where it has any (the API grants none by default, so "none" would be noise on
+ * every row).
+ *
+ * @Requirements GW_AUTH_0080
+ */
+export function TokenReach({ token }: { token: TokenView }) {
+  const scopes = sortedNames(token.scopes ?? []);
+  const pushes = sortedNames(token.pushScopes ?? []);
+  const shown = scopes.slice(0, REACH_NAMES_SHOWN);
+  const rest = scopes.slice(REACH_NAMES_SHOWN);
+  return (
+    <div className="space-y-1">
+      {scopes.length === 0 ? (
+        <span className="text-muted-foreground">every marketplace</span>
+      ) : (
+        <span className="flex flex-wrap items-center gap-1" title={scopes.join(", ")}>
+          {shown.map((name) => (
+            <span key={name} className="rounded-md border bg-muted px-2 py-0.5 font-mono text-xs break-all">
+              {name}
+            </span>
+          ))}
+          {rest.length > 0 ? (
+            <span className="text-xs text-muted-foreground">
+              +{rest.length} more<span className="sr-only">: {rest.join(", ")}</span>
+            </span>
+          ) : null}
+        </span>
+      )}
+      {pushes.length > 0 ? (
+        <div className="text-xs text-muted-foreground">publishes to: {pushes.join(", ")}</div>
+      ) : null}
+    </div>
+  );
 }
 
 /**
@@ -42,7 +85,7 @@ function expired(token: TokenView): boolean {
  * authenticated with is a fact worth reading, not an absent value — and the same for a token that
  * never expires.
  *
- * @Requirements GW_AUTH_0031, GW_AUTH_0070
+ * @Requirements GW_AUTH_0031, GW_AUTH_0070, GW_AUTH_0080
  */
 export function TokenTable({
   tokens,
@@ -58,6 +101,7 @@ export function TokenTable({
       <TableHeader>
         <TableRow>
           <TableHead>Name</TableHead>
+          <TableHead>Reach</TableHead>
           <TableHead>Created</TableHead>
           <TableHead>Last used</TableHead>
           <TableHead>Expires</TableHead>
@@ -73,6 +117,9 @@ export function TokenTable({
               <span className="block max-w-64 truncate" title={token.name}>
                 {token.name}
               </span>
+            </TableCell>
+            <TableCell>
+              <TokenReach token={token} />
             </TableCell>
             <TableCell><Timestamp value={token.createdAt} /></TableCell>
             <TableCell>
@@ -122,7 +169,7 @@ export function TokenTable({
 /**
  * Personal access token self-service: create with a chosen lifetime and show-once cleartext, revoke.
  *
- * @Requirements GW_AUTH_0005, GW_AUTH_0070, GW_AUTH_0071, GW_AUTH_0078
+ * @Requirements GW_AUTH_0005, GW_AUTH_0070, GW_AUTH_0071, GW_AUTH_0078, GW_AUTH_0079, GW_AUTH_0081
  */
 export function TokensPage() {
   const tokens = useTokens();
@@ -131,12 +178,14 @@ export function TokensPage() {
   const revoke = useRevokeToken();
   const [name, setName] = useState("");
   const [lifetime, setLifetime] = useState<Lifetime>(DEFAULT_LIFETIME);
+  const [scope, setScope] = useState<ScopeSelection>({ choice: "every", chosen: [] });
   const [issued, setIssued] = useState<IssuedToken | null>(null);
 
   // The server stores the name verbatim (NOT NULL, no further constraint), so the only
   // client-side rule is the one that keeps a blank name out of the list.
   const trimmedName = name.trim();
-  const canCreate = trimmedName.length > 0 && !create.isPending;
+  // A limited choice that names nothing is not creatable: the API would read it as every marketplace.
+  const canCreate = trimmedName.length > 0 && scopeChoiceValid(scope.choice, scope.chosen) && !create.isPending;
 
   const onCreate = (event: React.FormEvent) => {
     event.preventDefault();
@@ -144,12 +193,19 @@ export function TokensPage() {
       toast.error("Token name is required");
       return;
     }
-    create.mutate({ name: trimmedName, expiresAt: expiryFor(lifetime) }, {
-      onSuccess: (token) => {
-        setIssued(token);
-        setName("");
+    create.mutate(
+      { name: trimmedName, expiresAt: expiryFor(lifetime), scopes: scopesFor(scope.choice, scope.chosen) },
+      {
+        onSuccess: (token) => {
+          setIssued(token);
+          setName("");
+          // While this page stays mounted its observer keeps the mutation's result, cleartext
+          // included, and `gcTime` only counts once the observer lets go: release it now that
+          // the dialog holds the value (GW_AUTH_0081).
+          create.reset();
+        },
       },
-    });
+    );
   };
 
   return (
@@ -200,10 +256,17 @@ export function TokensPage() {
             {create.isPending ? "Creating…" : "Create token"}
           </Button>
         </div>
+        <MarketplaceScopePicker
+          value={scope}
+          onChange={(next) => {
+            setScope(next);
+            create.reset();
+          }}
+        />
         <p id="token-name-hint" className="text-xs text-muted-foreground">
           A name is required — it identifies the token in this list. The lifetime defaults to 30
           days and is never unlimited; this gateway may cap it lower, in which case a longer choice
-          is refused.
+          is refused. Which marketplaces it fetches is chosen below.
         </p>
         {create.isError ? (
           // The server's lifetime cap is the one rule this form cannot mirror, so its refusal stays

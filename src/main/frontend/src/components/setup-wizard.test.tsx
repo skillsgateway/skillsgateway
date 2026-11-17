@@ -1,10 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { expect, test } from "vitest";
 import { Button } from "@/components/ui/button";
+import { marketplace } from "@/test/msw-handlers";
+import { server } from "@/test/msw-server";
+import { http, HttpResponse } from "msw";
 import { SetupWizard } from "./setup-wizard";
+
+/** Kept so a test can look in the cache the mounted wizard leaves behind. */
+let queryClient: QueryClient;
 
 /** The wizard as the detail page hosts it: unmounted when closed, so its state cannot survive. */
 function Host({ serving = true }: { serving?: boolean }) {
@@ -24,7 +30,7 @@ function Host({ serving = true }: { serving?: boolean }) {
 }
 
 function renderWizard(serving = true) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
       <Host serving={serving} />
@@ -214,4 +220,148 @@ test("a_minted_token_is_shown_only_while_the_wizard_is_open", async () => {
   await screen.findByTestId("wizard-credential-config");
   expect(screen.queryByTestId("wizard-token-value")).not.toBeInTheDocument();
   expect(screen.queryByText(/sgw_cleartext_shown_once/)).not.toBeInTheDocument();
+});
+
+type Posted = { name?: string; scopes?: string[] };
+
+/** Records the create requests and answers each with a token holding the scopes it asked for. */
+function recordPosts(): Posted[] {
+  const posted: Posted[] = [];
+  server.use(
+    http.get("/api/v1/marketplaces", () =>
+      HttpResponse.json([
+        { ...marketplace, id: 1, name: "corp-marketplace" },
+        { ...marketplace, id: 2, name: "tools" },
+      ]),
+    ),
+    http.post("/api/v1/tokens", async ({ request }) => {
+      const body = (await request.json()) as Posted;
+      posted.push(body);
+      return HttpResponse.json(
+        { id: 9, name: body.name, token: "sgw_cleartext_shown_once", scopes: body.scopes ?? [] },
+        { status: 201 },
+      );
+    }),
+  );
+  return posted;
+}
+
+/**
+ * The default is every marketplace and sends no scopes; switching to the limited choice starts
+ * from the marketplace the wizard was opened on, which can be widened (GW_AUTH_0079).
+ *
+ * @SVCs SVC_GW_AUTH_0097
+ */
+test("the_wizard_creates_an_unlimited_token_by_default_and_a_limited_one_starting_from_its_own_marketplace", async () => {
+  const posted = recordPosts();
+  const user = userEvent.setup();
+  renderWizard();
+  await user.click(screen.getByRole("button", { name: "Connect a client" }));
+  const choice = within(await screen.findByRole("group", { name: "Marketplaces" }));
+  expect(choice.getByRole("button", { name: "Every marketplace" })).toHaveAttribute("aria-pressed", "true");
+  await user.click(screen.getByRole("button", { name: "Create token" }));
+  await screen.findByTestId("wizard-token-value");
+  expect(posted).toHaveLength(1);
+  expect(posted[0]).not.toHaveProperty("scopes");
+
+  // A second wizard, limited: its own marketplace is already ticked, and tools is added.
+  await user.click(screen.getByRole("button", { name: "Done" }));
+  await user.click(screen.getByRole("button", { name: "Connect a client" }));
+  await user.click(await screen.findByRole("button", { name: "Chosen marketplaces" }));
+  expect(await screen.findByRole("checkbox", { name: "corp-marketplace" })).toBeChecked();
+  await user.click(screen.getByRole("checkbox", { name: "tools" }));
+  await user.click(screen.getByRole("button", { name: "Create token" }));
+  await screen.findByTestId("wizard-token-value");
+  expect(posted[1]!.scopes).toEqual(["corp-marketplace", "tools"]);
+});
+
+/**
+ * The statement of what the token reaches is true for whatever was chosen, before the token is
+ * made and after, and after it is the server's account of the token (GW_AUTH_0063).
+ *
+ * @SVCs SVC_GW_AUTH_0099
+ */
+test("the_reach_statement_follows_the_choice_before_and_after_the_token_is_created", async () => {
+  recordPosts();
+  const user = userEvent.setup();
+  renderWizard();
+  await user.click(screen.getByRole("button", { name: "Connect a client" }));
+  const reach = await screen.findByTestId("wizard-token-reach");
+  expect(reach).toHaveTextContent("A token created here is not limited to 'corp-marketplace'");
+
+  await user.click(screen.getByRole("button", { name: "Chosen marketplaces" }));
+  await user.click(await screen.findByRole("checkbox", { name: "tools" }));
+  expect(reach).toHaveTextContent("A token created here fetches only 'corp-marketplace', 'tools';");
+  expect(reach).not.toHaveTextContent("not limited");
+  expect(reach).toHaveTextContent(/one credential per gateway/);
+
+  // Nothing chosen: nothing is created, and the text does not claim a reach for a token that
+  // cannot exist.
+  await user.click(screen.getByRole("checkbox", { name: "tools" }));
+  await user.click(screen.getByRole("checkbox", { name: "corp-marketplace" }));
+  expect(reach).toHaveTextContent("No token is created until at least one marketplace is chosen.");
+  expect(screen.getByRole("button", { name: "Create token" })).toBeDisabled();
+
+  await user.click(screen.getByRole("checkbox", { name: "tools" }));
+  await user.click(screen.getByRole("button", { name: "Create token" }));
+  await screen.findByTestId("wizard-token-value");
+  expect(screen.getByTestId("wizard-token-reach")).toHaveTextContent(
+    "The token created here fetches only 'tools';",
+  );
+});
+
+/**
+ * @SVCs SVC_GW_AUTH_0099
+ */
+test("an_unlimited_token_is_described_as_unlimited_after_it_is_created", async () => {
+  recordPosts();
+  const user = userEvent.setup();
+  renderWizard();
+  await user.click(screen.getByRole("button", { name: "Connect a client" }));
+  await user.click(await screen.findByRole("button", { name: "Create token" }));
+  await screen.findByTestId("wizard-token-value");
+  expect(screen.getByTestId("wizard-token-reach")).toHaveTextContent(
+    "The token created here is not limited to 'corp-marketplace'",
+  );
+});
+
+/**
+ * The cleartext is in the wizard's own field and in no cache entry, with the wizard still mounted
+ * (GW_AUTH_0081).
+ *
+ * @SVCs SVC_GW_AUTH_0100
+ */
+test("the_wizards_cleartext_is_not_left_in_the_mutation_cache", async () => {
+  const user = userEvent.setup();
+  renderWizard();
+  await user.click(screen.getByRole("button", { name: "Connect a client" }));
+  await user.click(await screen.findByRole("button", { name: "Create token" }));
+  expect(await screen.findByTestId("wizard-token-value")).toHaveTextContent("sgw_cleartext_shown_once");
+  await waitFor(() => expect(queryClient.getMutationCache().getAll()).toEqual([]));
+  expect(JSON.stringify(queryClient.getQueryCache().getAll().map((query) => query.state.data))).not.toContain(
+    "sgw_cleartext_shown_once",
+  );
+  expect(screen.getByTestId("wizard-token-value")).toHaveTextContent("sgw_cleartext_shown_once");
+});
+
+/**
+ * Hardening: the wizard's own marketplace is ticked on switching even when the list read does not
+ * hold it (removed, or not yet listed), and stays a row that can be unticked.
+ *
+ * @SVCs SVC_GW_AUTH_0097
+ */
+test("the_wizards_own_marketplace_stays_a_row_that_can_be_unticked_even_if_the_list_lacks_it", async () => {
+  server.use(
+    http.get("/api/v1/marketplaces", () => HttpResponse.json([{ ...marketplace, id: 2, name: "tools" }])),
+  );
+  const user = userEvent.setup();
+  renderWizard();
+  await user.click(screen.getByRole("button", { name: "Connect a client" }));
+  await user.click(await screen.findByRole("button", { name: "Chosen marketplaces" }));
+  const own = await screen.findByRole("checkbox", { name: "corp-marketplace" });
+  expect(own).toBeChecked();
+  await user.click(own);
+  // Unticked, a name the list does not hold has no reason to stay as a row.
+  expect(screen.queryByRole("checkbox", { name: "corp-marketplace" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Create token" })).toBeDisabled();
 });

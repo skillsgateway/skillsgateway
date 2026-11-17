@@ -157,6 +157,38 @@ export const tokenViews: Schemas["TokenView"][] = [
   },
 ];
 
+/**
+ * Tokens with each reach worth seeing in the list's Reach column: every marketplace, one, many
+ * (more than the row shows), and one that may also publish to a hosted marketplace.
+ */
+export const scopedTokenViews: Schemas["TokenView"][] = [
+  { ...tokenViews[0]!, id: 21, name: "unscoped-laptop" },
+  { ...tokenViews[0]!, id: 22, name: "ci-corp-only", scopes: ["corp-marketplace"] },
+  {
+    ...tokenViews[0]!,
+    id: 23,
+    name: "ci-many",
+    scopes: ["tools", "corp-marketplace", "data", "docs", "infra"],
+  },
+  {
+    ...tokenViews[0]!,
+    id: 24,
+    name: "publisher",
+    scopes: ["corp-marketplace"],
+    pushScopes: ["tools-hosted"],
+  },
+];
+
+/** `count` marketplaces named `market-001`…, for a list longer than anyone reads. */
+export function manyMarketplaces(count: number): Schemas["MarketplaceView"][] {
+  return Array.from({ length: count }, (_, index) => ({
+    ...marketplace,
+    id: 100 + index,
+    name: `market-${String(index + 1).padStart(3, "0")}`,
+    snapshots: [],
+  }));
+}
+
 /** The scopes an administrator may choose from; the registry's, never a client-side copy. */
 export const machineScopes: Schemas["ApiScopeView"][] = [
   { scope: "estate:read", routes: ["GET /api/v1/estate"] },
@@ -1533,6 +1565,15 @@ export const handlers = [
   }),
   http.get("/api/v1/snapshots/:id/diff", ({ request }) =>
     HttpResponse.json(diffPage(snapshotDiff, request)),
+  ),
+  http.get("/api/v1/catalog", () =>
+    HttpResponse.json<Schemas["CatalogInfo"]>({
+      name: "catalog",
+      sha: "0123456789abcdef0123456789abcdef01234567",
+      generatedAt: "2026-08-14T09:30:00Z",
+      constituents: [],
+      collisions: [],
+    }),
   ),
   http.get("/api/v1/tokens", () => HttpResponse.json<Schemas["TokenView"][]>(tokenViews)),
   http.post("/api/v1/tokens", () => HttpResponse.json(issuedToken, { status: 201 })),
