@@ -1031,7 +1031,7 @@ skills-gateway:
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `skills-gateway.approval.auto.mode` | string | `off` | `off`, `dry-run` or `on`. `off` is also the incident switch: it stops every attempt at once. |
-| `skills-gateway.approval.auto.internal-prefixes` | list | `[]` | A URL is internal when it has the prefix's scheme, host and port, and its path equals the prefix's or continues it after a `/`. `https://git.example.com/acme` never covers `…/acme-evil`. A snapshot whose fetch a redirect sent outside the registered repository is not internal, whatever its URL. |
+| `skills-gateway.approval.auto.internal-prefixes` | list | `[]` | A URL is internal when it has the prefix's scheme, host and port, and its path equals the prefix's or continues it after a `/`. `https://git.example.com/acme` never covers `…/acme-evil` or `…/acme2`, however the sibling's name continues. A trailing slash on the prefix makes no difference. A snapshot whose fetch a redirect sent outside the registered repository is not internal, whatever its URL. |
 | `skills-gateway.approval.auto.required-vetters` | list | unset (every vetter) | The vetters whose verdict must not be `DISABLED`. Each automatic approval's ledger entry names the vetters that were switched off. |
 
 Startup refuses three configurations, each of which would quietly widen what
