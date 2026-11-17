@@ -2695,7 +2695,8 @@ different.</p>
 <h2 id="provenance-and-audit">Provenance and audit<a class="headerlink" href="#provenance-and-audit" title="Permanent link">&para;</a></h2>
 <p><code>GET /api/v1/catalog</code> returns the served revision and its constituents — the
 <code>(marketplace, SHA)</code> pairs vendored into it, which are also recorded in the
-catalog commit itself. Fetches of <code>/git/catalog</code> land on the audit ledger under
+catalog commit itself — and the catalog's configured <code>name</code>, which is also a
+valid <a href="../../reference/api/tokens/#choosing-marketplaces-in-the-portal">token scope</a>. Fetches of <code>/git/catalog</code> land on the audit ledger under
 the name <code>catalog</code> like any marketplace, and a manual
 <code>POST /api/v1/catalog/rebuild</code> (the on-demand repair path) is ledger-recorded with
 the acting identity and requires <strong>admin</strong>

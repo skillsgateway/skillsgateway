@@ -1852,6 +1852,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="POST /tokens">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choosing-marketplaces-in-the-portal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing marketplaces in the portal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2795,6 +2812,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="POST /tokens">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choosing-marketplaces-in-the-portal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing marketplaces in the portal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3137,6 +3171,17 @@ silently shortened.</p>
 </tbody>
 </table>
 <hr />
+<h3 id="choosing-marketplaces-in-the-portal">Choosing marketplaces in the portal<a class="headerlink" href="#choosing-marketplaces-in-the-portal" title="Permanent link">&para;</a></h3>
+<p>The portal's <a href="../../portal/#personal-access-tokens">Personal access tokens</a> page and
+<a href="../../portal/#connect-a-client">client wizard</a> send <code>scopes</code> for the marketplaces a
+user ticks and send none for <strong>Every marketplace</strong>, the default. They never send an
+empty list for a limited choice, because an empty <code>scopes</code> grants every
+marketplace. Neither sends <code>pushScopes</code>. The catalog is offered by the <code>name</code> that
+<a href="../../../guides/virtual-catalog/#provenance-and-audit"><code>GET /api/v1/catalog</code></a>
+reports for the served revision (the configured <code>skills-gateway.catalog.name</code>, any
+signed-in caller); that read answers <code>404</code> while the catalog is disabled or has no
+revision yet, and the portal then offers no catalog entry. The token list reads each
+token's <code>scopes</code> and <code>pushScopes</code> from <code>GET /tokens</code>.</p>
 <h2 id="get-tokens"><code>GET /tokens</code><a class="headerlink" href="#get-tokens" title="Permanent link">&para;</a></h2>
 <p>List the calling principal's tokens. Never returns the hash, and never returns
 another user's tokens.</p>
