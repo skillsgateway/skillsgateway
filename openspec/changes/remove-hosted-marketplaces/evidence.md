@@ -239,3 +239,39 @@ and one upgraded from either version have the same schema, as does the applicati
 is the operator procedure's last step: after the removal the name is free, a new upstream registers under it
 and ingests, its snapshot is held until its own first approval, fetch grants to the name serve it once
 approved, and the old record keeps its own snapshots.
+
+## Rebased onto the final stack (#896 at f03e5790), and what was re-run
+
+The branch was rebased with `git rebase --onto f03e5790 8fd5c921`, so it now sits on #896
+(`feat/portal-mutable-token-scopes`, which carries #889 and #893 in their final form). The SHAs quoted
+earlier in this file are from before the rebase. After it:
+
+- One real conflict, `docs/reqstool/software_verification_cases.yml` (both sides appended at the end of the
+  file); both lists were kept and the join repaired. Everything else, including `TokenController`,
+  `TokenService`, `TokenRepository`, `AccessToken`, the token pages, `msw-handlers`, `tokens.md`,
+  `portal.md`, `audit.md` and `openapi.json`/`types.gen.ts`, merged without conflict; the contract was
+  regenerated from the served document and came out identical.
+- What #896 added that still spoke of hosting was removed: the push-scope fixtures and assertions in
+  `TokenScopeEditTests` (a `pushScopes` field is now just an unknown field there, refused by the strict
+  body like any other), the examples naming `pushScopes` in `tokens.md`, one reqstool verification case's
+  wording (`SVC_GW_AUTH_0107`), and, found while looking, the removal confirmation's line saying tokens lose
+  a grant to publish (`remove-marketplace.tsx`, `portal.md`, and the test that matched the wording).
+- The rebase also dropped a `revision:` line from `SVC_GW_AUTH_0109` in the joined file, which `reqstool`
+  refused ("'revision' is a required property"); restored.
+
+Re-run on the rebased tree (code under test: commit `b12787e5`; `7360eea8` only restores the reqstool line):
+
+```text
+./mvnw clean verify     Tests run: 1359, Failures: 0, Errors: 0, Skipped: 9 · BUILD SUCCESS · 03:41 min
+pnpm test:stories       Test Files 30 passed (30) · Tests 154 passed (154)
+openspec validate --all --strict   Totals: 30 passed, 0 failed
+mkdocs build --strict   Documentation built
+reqstool status local -p docs/reqstool   421/422 complete · 1 incomplete · FAIL
+```
+
+The first `clean verify` after the rebase failed in the UI gate on one test that matched the removal
+confirmation's old wording; it was fixed (`b12787e5`) and the run above is the second. The one incomplete
+requirement is `GW_AUTH_0088`, whose verification is a Playwright test: it reads "automated test missing"
+because `pnpm e2e` was not run in this session. The final stack run of `pnpm e2e`, `reqstool`, `openspec`,
+`mkdocs` and the upgrade rehearsal is done by the parent session on the stack as pushed, and supersedes
+this paragraph.
