@@ -2044,6 +2044,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#get-apiv1tokensmachinescopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/v1/tokens/machine/scopes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#post-apiv1tokensmachineidrotate" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2976,6 +2987,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#get-apiv1tokensmachinescopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/v1/tokens/machine/scopes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#post-apiv1tokensmachineidrotate" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3578,6 +3600,15 @@ deprovisioned.</p>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-11-01T00:00:00Z"</span>
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="p">}</span>
 </code></pre></div>
+<p>A credential that is meant not to expire says so explicitly, in place of
+<code>expiresAt</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">"principal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"terraform-ci"</span><span class="p">,</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"platform-pipeline"</span><span class="p">,</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="nt">"apiScopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"marketplaces:register"</span><span class="p">],</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span><span class="nt">"neverExpires"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="p">}</span>
+</code></pre></div>
 <p><code>principal</code> is not a person. It is what the ledger attributes this credential's
 actions to and what a role grant names.</p>
 <p><strong>Everything here is a refusal rather than a default:</strong></p>
@@ -3598,8 +3629,16 @@ actions to and what a role grant names.</p>
 <td><strong>422</strong> — there is no value that grants every scope</td>
 </tr>
 <tr>
-<td>No <code>expiresAt</code></td>
-<td><strong>422</strong> — mandatory, and never defaulted</td>
+<td>Neither <code>expiresAt</code> nor <code>neverExpires: true</code></td>
+<td><strong>422</strong> — one of them is mandatory, and neither is ever defaulted</td>
+</tr>
+<tr>
+<td>Both <code>expiresAt</code> and <code>neverExpires: true</code></td>
+<td><strong>422</strong> — it cannot both expire and not</td>
+</tr>
+<tr>
+<td><code>neverExpires: true</code> while <code>skills-gateway.tokens.max-ttl</code> is set</td>
+<td><strong>422</strong> — a configured cap forbids an unlimited credential</td>
 </tr>
 <tr>
 <td><code>expiresAt</code> beyond the cap</td>
@@ -3612,8 +3651,9 @@ actions to and what a role grant names.</p>
 </tbody>
 </table>
 <p>The cap is <code>skills-gateway.tokens.max-ttl</code> when set, and otherwise a built-in
-<strong>90 days</strong>; see <a href="../../configuration/">Configuration</a>. The cleartext is returned
-exactly once.</p>
+<strong>1 year</strong>; see <a href="../../configuration/">Configuration</a>. The cleartext is returned
+exactly once. A rotation keeps the grant exactly, so a credential that never
+expires still does not after it is rotated.</p>
 <h3 id="get-apiv1tokensmachine"><code>GET /api/v1/tokens/machine</code><a class="headerlink" href="#get-apiv1tokensmachine" title="Permanent link">&para;</a></h3>
 <p>Every machine credential, whoever provisioned it, never a secret. Deliberately
 not scoped to the caller: a machine credential's principal is not an identity
@@ -3626,6 +3666,14 @@ has on a personal token: when the credential most recently authenticated
 successfully, <code>null</code> if it never has, approximate to a minute, and untouched by
 any refused attempt. It is the field that identifies a pipeline credential
 nothing runs any more.</p>
+<h3 id="get-apiv1tokensmachinescopes"><code>GET /api/v1/tokens/machine/scopes</code><a class="headerlink" href="#get-apiv1tokensmachinescopes" title="Permanent link">&para;</a></h3>
+<p>The API scopes a machine credential may be given, sorted, each with the routes it
+reaches as <code>"METHOD /path"</code> — exactly the machine-reachability registry, so a
+client offering a choice, like the portal's
+<a href="../../portal/#system-access-tokens">System access tokens</a> form, never carries a
+copy that can drift. Requires the <code>admin</code> role (<code>403</code> otherwise) and, like the
+rest of <code>/api/v1/tokens/**</code>, is unreachable by a machine credential. There is no
+wildcard entry.</p>
 <h3 id="post-apiv1tokensmachineidrotate"><code>POST /api/v1/tokens/machine/{id}/rotate</code><a class="headerlink" href="#post-apiv1tokensmachineidrotate" title="Permanent link">&para;</a></h3>
 <p>Same grant, new secret. The principal, name, expiry <strong>deadline</strong> and every one
 of the API scope values carry over, and the old credential is revoked before the
@@ -3634,18 +3682,19 @@ new one is issued, so no moment has two live secrets.</p>
 <p>Revokes it. Checked at authentication time rather than swept, so it takes effect
 on the credential's very next request.</p>
 <h3 id="using-one">Using one<a class="headerlink" href="#using-one" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$SKILLS_GATEWAY_TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">     </span>https://gateway.example.com/api/v1/estate
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$SKILLS_GATEWAY_TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">     </span>https://gateway.example.com/api/v1/estate
 </code></pre></div>
 <p>Send no cookie. See <a href="../">REST API</a> for why a request carrying both is
 refused.</p>
 <div class="admonition note">
 <p class="admonition-title">The first credential is minted by a person</p>
-<p><code>/api/v1/tokens/**</code> is unreachable by machine by design, so bootstrapping means
-an administrator driving this endpoint from a browser session — once, to
-create something with a stated expiry and named scopes, rather than
-continuously to run a pipeline. A portal screen is what removes that step
-properly, and is not part of this release.</p>
+<p><code>/api/v1/tokens/**</code> is unreachable by machine by design, so a first credential
+is always created by an administrator, once, to give something a stated
+lifetime and named scopes rather than to run a pipeline continuously. The
+portal's <a href="../../portal/#system-access-tokens">System access tokens</a> page, under
+Configuration, is where an administrator does it: create, list, rotate and
+revoke, with the API's own refusals shown as it states them.</p>
 </div>
 
 

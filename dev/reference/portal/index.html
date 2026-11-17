@@ -2292,6 +2292,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#is-my-client-up-to-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Is my client up to date?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#upstream" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2752,10 +2763,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#access-tokens" class="md-nav__link">
+  <a href="#personal-access-tokens" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Access tokens
+        Personal access tokens
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system-access-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System access tokens
       
     </span>
   </a>
@@ -3275,6 +3297,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#is-my-client-up-to-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Is my client up to date?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#upstream" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3735,10 +3768,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#access-tokens" class="md-nav__link">
+  <a href="#personal-access-tokens" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Access tokens
+        Personal access tokens
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system-access-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System access tokens
       
     </span>
   </a>
@@ -3817,6 +3861,11 @@ session cookie is its only credential.</p>
 </tr>
 <tr>
 <td>Configuration</td>
+<td>System access tokens</td>
+<td><a href="#system-access-tokens"><code>/configuration/tokens</code></a> — <strong>shown only to administrators</strong></td>
+</tr>
+<tr>
+<td>Configuration</td>
 <td>Integrations → Webhooks</td>
 <td><a href="#webhooks"><code>/integrations/webhooks</code></a> — <strong>shown to auditors and administrators</strong></td>
 </tr>
@@ -3857,10 +3906,13 @@ count), <strong>Snapshots</strong>, <strong>Activity</strong> (auditors and admi
 <strong>Settings</strong> — and the current section
 is the one highlighted entry. Leaving the marketplace closes the list; it is
 read from the address, never remembered. <a href="#snapshot-contents">Snapshot contents</a>
-is reached from a snapshot's card. <a href="#access-tokens">Access tokens</a> is a per-user concern, not
-estate-wide navigation — it is reached from the user menu, described next, and
-from the Overview page's Access tokens card; <code>/tokens</code> remains a resolvable
-address for existing bookmarks and links.</p>
+is reached from a snapshot's card. Each kind of token has one home.
+<a href="#personal-access-tokens">Personal access tokens</a> are a per-user concern, not
+estate-wide navigation: they are reached from the <strong>Security</strong> entry in the user
+menu, described next, and from nowhere else; <code>/tokens</code> redirects to them, so
+existing bookmarks and links keep working.
+<a href="#system-access-tokens">System access tokens</a>, the credentials for pipelines and
+other services, are an administrator's setting and sit under Configuration.</p>
 <p>The sidebar footer states the running build's version — <em>0.3.0</em> — read from
 <code>GET /api/v1/me</code>. It is the build artifact's own version and nothing a
 deployment can set, so it cannot claim to be a version it is not; a gateway run
@@ -3885,7 +3937,7 @@ address it returns to, so the address you copy is the one you were sent.</p>
   on for a role sourced from configuration or from the local development
   authentication escape hatch. A session holding no role is told so, together
   with what it can still do (browse the marketplaces and their snapshots'
-  vetting, manage its own access tokens) and that anything else needs a role an
+  vetting, manage its own personal access tokens under Security) and that anything else needs a role an
   administrator grants, rather than shown an empty list. If the identity provider truncated the
   membership claim, a line says the role list may be incomplete.</li>
 <li>The <strong>theme control</strong> — three-state, cycling <strong>system → light → dark</strong>: it
@@ -3893,7 +3945,11 @@ address it returns to, so the address you copy is the one you were sent.</p>
   and label state the chosen mode — a monitor for system, a sun for light, a
   moon for dark. The choice is remembered in the browser (<code>localStorage</code>);
   <em>system</em> tracks the OS setting as it changes.</li>
-<li><strong>Your tokens</strong>, linking to <a href="#access-tokens">Access tokens</a>.</li>
+<li><strong>Security</strong>, opening the Security section, which for now holds one page,
+  <a href="#personal-access-tokens">Personal access tokens</a>. It is shown to every
+  signed-in user, whatever their roles: managing your own tokens needs no role.
+  The section exists so that other per-user security settings can join it later
+  without another change to the navigation.</li>
 <li><strong>Sign out</strong>, which ends the browser session and returns to a fresh login.
   Under the <code>skills-gateway.dev-insecure-auth</code> development escape hatch there is
   no session to end, so the menu states that instead of offering a control that
@@ -3987,13 +4043,14 @@ are plain text rather than links into it.</p>
 <p>Roles can change while a page is open. Whenever the server refuses a request
 (<code>403</code>), the portal reads <code>GET /api/v1/me</code> again and the page follows the
 answer without a reload.</p>
-<p>Access tokens are scoped per principal server-side regardless: you only ever
-see and revoke your own.</p>
+<p>Personal access tokens are scoped per principal server-side regardless: you only
+ever see and revoke your own. System access tokens are the opposite: an
+administrator sees and manages every one.</p>
 <hr />
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p><strong>Route:</strong> <code>/</code> · <strong>Heading:</strong> Gateway Overview</p>
-<p>The landing page. Three cards, each with counts derived client-side and one
-action leading elsewhere. Read-only — nothing here changes state.</p>
+<p>The landing page. Two cards (the second only for auditors and administrators),
+each with counts derived client-side and one action leading elsewhere. Read-only — nothing here changes state.</p>
 <p><strong>Marketplaces</strong> — chips for the total marketplace count and how many snapshots
 are <code>held</code>, <code>approved</code> and <code>rejected</code> across all of them. When any snapshot is
 held, a secondary badge reads <em>"{n} awaiting review"</em> and links to the
@@ -4003,9 +4060,9 @@ entries"</em>, or <em>"about {n} ledger entries"</em> once the ledger is large e
 server estimates rather than counts (see <a href="../api/audit/#get-apiv1audit"><code>GET /api/v1/audit</code></a>).
 It counts every entry: fetches, administrative actions and vetting bookkeeping.
 Action: <strong>Open audit log</strong>.</p>
-<p><strong>Access tokens</strong> — chips for active and revoked counts. Action: <strong>Manage
-tokens</strong>.</p>
-<p>Data comes from <code>GET /api/v1/marketplaces</code>, <code>GET /api/v1/tokens</code> and <code>GET /api/v1/audit</code>;
+<p>Overview carries no tokens card: personal tokens have one home, under
+<a href="#personal-access-tokens">Security</a> in the user menu.</p>
+<p>Data comes from <code>GET /api/v1/marketplaces</code> and <code>GET /api/v1/audit</code>;
 counts are computed in the browser, as there is no summary endpoint. While the
 queries are in flight the chips show an ellipsis.</p>
 <hr />
@@ -4169,6 +4226,30 @@ primary control:</p>
 <li><strong>Connect a client</strong> opens the <a href="#connect-a-client">client wizard</a> under the
   header.</li>
 </ul>
+<h3 id="is-my-client-up-to-date">Is my client up to date?<a class="headerlink" href="#is-my-client-up-to-date" title="Permanent link">&para;</a></h3>
+<p>Under the header, on every section, a panel answers the question a user asks when
+their client has not picked up a plugin's newest version. It is shown to <strong>every
+signed-in user</strong>, whatever their roles, and is written for a reader who is not an
+approver:</p>
+<ul>
+<li><strong>Served now</strong> — the commit, since when it has been the served one, and who or
+  what approved it: a person, or <em>automatic approval</em>.</li>
+<li><strong>A newer commit</strong>, when one exists — its short SHA and how long ago it was
+  ingested, in plain terms: <em>awaiting approval</em>, <em>rejected</em> or <em>revoked</em>. For one
+  awaiting approval it says who decides: an approver of this marketplace, or an
+  administrator, and to ask your gateway administrators. It names the role, never
+  a person who holds it.</li>
+<li><strong>The last ingest failed</strong>, with the reason the header already shows, when the
+  newest upstream commit has not been picked up at all.</li>
+<li><strong>Nothing is served</strong>, and why: nothing ingested yet, no commit ever approved,
+  or a commit approved once and withdrawn since.</li>
+<li>When none of the above applies: <em>Nothing newer is waiting</em>.</li>
+</ul>
+<p>It is built from the marketplace read, <code>GET /api/v1/marketplaces</code>, that every
+signed-in session already receives, and makes no other request. It therefore
+shows nothing a session without a role could not already read, and it never
+reads a snapshot's contents, files or findings: those stay behind the approver
+role, as the <a href="#review-and-snapshots">snapshot cards</a> describe.</p>
 <h3 id="upstream">Upstream<a class="headerlink" href="#upstream" title="Permanent link">&para;</a></h3>
 <p>On <strong>Settings</strong>. Forge metadata captured at registration, best effort: <strong>Clone
 URL</strong>, <strong>Forge</strong>, <strong>Project</strong>, <strong>Description</strong>, <strong>Last upstream update</strong>,
@@ -4507,9 +4588,9 @@ the header.</p>
 <p>Inside the wizard:</p>
 <ol>
 <li><strong>Personal access token</strong> — the same show-once creation flow as the
-   <a href="#access-tokens">Access tokens</a> page. The name defaults to
+   <a href="#personal-access-tokens">Personal access tokens</a> page. The name defaults to
    <code>{marketplace}-client</code> and the control disables again if it is emptied or left
-   whitespace. <strong>Expires</strong> is a button group — 7, 30 or 90 days, or no expiry —
+   whitespace. <strong>Expires</strong> is a button group — 30 days, 90 days, 180 days or 1 year —
    defaulting to 30 days rather than to never; the
    gateway's own cap
    (<a href="../configuration/#access-tokens"><code>skills-gateway.tokens.max-ttl</code></a>) is not
@@ -5182,7 +5263,7 @@ as an error toast.</p>
 <p>On success the dialog closes and a show-once dialog opens — "This signing secret is shown exactly
 once — copy it now." — with the <code>whsec_…</code> value in a code block and a clipboard
 button that flips to a checkmark for two seconds, the same pattern as
-<a href="#access-tokens">Access tokens</a>.</p>
+<a href="#personal-access-tokens">Personal access tokens</a>.</p>
 <h3 id="subscribers">Subscribers<a class="headerlink" href="#subscribers" title="Permanent link">&para;</a></h3>
 <p>The lifecycle subscribers. An audit sink's delivery channel — a subscriber the
 API marks with <code>auditSink</code> — is listed with its sink on <a href="#audit-sinks">Audit sinks</a>
@@ -5274,7 +5355,7 @@ administrator only.</p>
 <code>POST /api/v1/audit/sinks</code>. <strong>Add sink</strong> stays disabled until the name matches
 <code>^[a-z0-9][a-z0-9_-]*$</code> and the target URL parses with a scheme; the scheme
 allowlist itself stays server-side. On success the dialog closes and the same show-once secret dialog opens as
-<a href="#access-tokens">Access tokens</a> and <a href="#webhooks">Webhooks</a>.</p>
+<a href="#personal-access-tokens">Personal access tokens</a> and <a href="#webhooks">Webhooks</a>.</p>
 <h3 id="sinks">Sinks<a class="headerlink" href="#sinks" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -5319,20 +5400,23 @@ channel with it, and toasts <em>Sink '{name}' deleted</em>.</p>
 <a href="#webhooks">Webhooks</a> page rather than here, marked as the sink's.</p>
 <p>Empty state: "No export sinks yet."</p>
 <hr />
-<h2 id="access-tokens">Access tokens<a class="headerlink" href="#access-tokens" title="Permanent link">&para;</a></h2>
-<p><strong>Route:</strong> <code>/tokens</code> · <strong>Heading:</strong> Access tokens</p>
-<p>"Personal access tokens authenticate git clients against the facade. Values are
-hashed at rest and shown exactly once."</p>
+<h2 id="personal-access-tokens">Personal access tokens<a class="headerlink" href="#personal-access-tokens" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/security/tokens</code> (the user menu's <strong>Security</strong>; <code>/security</code> and the
+earlier address <code>/tokens</code> redirect here) · <strong>Heading:</strong> Personal access tokens</p>
+<p>"Personal access tokens are yours: they authenticate your git clients against the
+facade. Values are hashed at rest and shown exactly once." The page is for your
+own tokens. A token for a pipeline or another service is a <a href="#system-access-tokens">system access
+token</a>; an administrator is pointed there from this page.</p>
 <p>An inline form with a <strong>Token name</strong> field, an <strong>Expires</strong> choice and a <strong>Create
 token</strong> button posts to <code>POST /api/v1/tokens</code>. <strong>Expires</strong> offers the same lifetimes
-as <a href="#connect-a-client">Connect a client</a> — 7, 30 or 90 days, or no expiry —
-and defaults to 30 days; a gateway whose
+as <a href="#connect-a-client">Connect a client</a> — 30 days, 90 days, 180 days or 1
+year, with no choice that never expires — and defaults to 30 days; a gateway whose
 <a href="../configuration/#access-tokens"><code>skills-gateway.tokens.max-ttl</code></a> is shorter refuses
 the longer choices, and the refusal is shown beneath the form. <strong>Create token</strong> stays
 disabled until the name field holds a non-blank value — the name is trimmed before it
 is sent. The response opens a
 show-once dialog — "This value is shown
-exactly once — copy it now. Only a hash is stored." — with the token in a code
+exactly once and cannot be shown again — copy it now. Only a hash is stored." — with the token in a code
 block and a clipboard button that flips to a checkmark for two seconds.</p>
 <table>
 <thead>
@@ -5382,6 +5466,87 @@ with a <code>revoked</code> badge.</p>
 <p>Empty state: "No tokens yet."</p>
 <p>See <a href="../../guides/consuming-skills/">Consuming approved skills</a> for using a token
 with a git client.</p>
+<h2 id="system-access-tokens">System access tokens<a class="headerlink" href="#system-access-tokens" title="Permanent link">&para;</a></h2>
+<p><strong>Route:</strong> <code>/configuration/tokens</code> (Configuration, <strong>administrators only</strong>) ·
+<strong>Heading:</strong> System access tokens</p>
+<p>Credentials for pipelines and other services that call the REST API on their own,
+such as a Terraform provider or a CI job. The API calls them <strong>machine API
+credentials</strong>; the portal says <em>system access token</em> everywhere, and this is the
+one place the two names meet. They are not your own tokens: those are <a href="#personal-access-tokens">personal
+access tokens</a>, and each page says which kind it manages
+and links to the other.</p>
+<p>A session without the administrative role that opens the address is told <em>"This
+page needs the administrative role."</em>, with a line on why, and makes none of the
+reads behind the page; the server refuses each independently
+(see <a href="#authorization">Authorization</a>).</p>
+<p><strong>Create.</strong> An inline form posts to
+<a href="../api/tokens/#post-apiv1tokensmachine"><code>POST /api/v1/tokens/machine</code></a>:</p>
+<ul>
+<li><strong>Principal</strong> and <strong>Token name</strong> — the principal is what the ledger attributes the
+  credential's actions to; it is not a person.</li>
+<li><strong>API scopes</strong> — a checkbox for each scope the gateway defines, read from
+  <a href="../api/tokens/#get-apiv1tokensmachinescopes"><code>GET /api/v1/tokens/machine/scopes</code></a>
+  so the list cannot drift from the server's. There is no "all" choice, and
+  hovering a scope lists the routes it reaches.</li>
+<li><strong>Expires</strong> — 30 days, 90 days, 180 days, 1 year or <strong>Never</strong>. <strong>Nothing is
+  preselected</strong>: the lifetime of a credential nobody will be watching is a
+  decision. <em>Never</em> is sent as an explicit <code>neverExpires</code>, never as a missing
+  expiry. A gateway that configures
+  <a href="../configuration/#access-tokens"><code>skills-gateway.tokens.max-ttl</code></a> refuses the
+  longer choices and <em>Never</em>, and the refusal is shown beneath the form as the API
+  states it, as is every other refusal (an unknown scope, no lifetime).</li>
+</ul>
+<p><strong>Create token</strong> stays disabled until the principal, the name, at least one scope
+and a lifetime are all given. The response opens the same show-once dialog the
+personal page uses, with a warning that the value <strong>cannot be shown again</strong>. The
+cleartext lives only in that dialog: once it is closed it is not in the page, in
+the client's query cache, in the browser's stored state or in the address.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name, Principal</td>
+<td>What it was called, and the principal it acts as.</td>
+</tr>
+<tr>
+<td>Owner</td>
+<td>The person who provisioned it (<code>machineOwner</code>).</td>
+</tr>
+<tr>
+<td>Scopes</td>
+<td>The API scopes it holds.</td>
+</tr>
+<tr>
+<td>Expires</td>
+<td>When it stops authenticating, or <strong>never expires</strong>; a credential that expires within 14 days is marked <em>expires within 14 days</em>.</td>
+</tr>
+<tr>
+<td>Last used</td>
+<td>How long ago it last authenticated, or <strong>never</strong>; a live credential more than a day old that has never authenticated is marked <em>never used</em>.</td>
+</tr>
+<tr>
+<td>Status</td>
+<td><code>active</code>, <code>expired</code> or <code>revoked</code>.</td>
+</tr>
+<tr>
+<td>Actions</td>
+<td><strong>Rotate</strong> and <strong>Revoke</strong>, shown only while active.</td>
+</tr>
+</tbody>
+</table>
+<p>The marks are words, not colour alone, and they are the reason <code>lastUsedAt</code> exists:
+a credential nothing uses any more, and one about to stop a pipeline. They are not
+shown for a credential that can no longer authenticate.</p>
+<p><strong>Rotate</strong> and <strong>Revoke</strong> each ask first. Rotating issues a fresh secret with the
+same principal, scopes and expiry and revokes the old one at once, so whatever uses
+it must be given the new value, which is shown in the same once-only dialog.
+Revoking is immediate and permanent. Both are audit-logged by the API.</p>
+<p>Empty state: "No system access tokens yet."</p>
 
 
 
