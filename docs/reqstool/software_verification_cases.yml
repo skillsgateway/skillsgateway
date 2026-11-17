@@ -4933,3 +4933,93 @@ cases:
       THEN the page states it needs the administrative role and points to a snapshot's vetting
       report, not to a marketplace's chain
     revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0086
+    requirement_ids: ["GW_AUTH_0071"]
+    title: The user menu offers Security, Overview offers no tokens card and the old address redirects
+    verification: automated-test
+    description: |
+      GIVEN a session with no role
+      WHEN the user menu is opened, Overview is read and /tokens is visited
+      THEN the menu has a Security entry reaching Personal access tokens, Overview has no tokens card and /tokens lands on the Security page
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0087
+    requirement_ids: ["GW_AUTH_0072"]
+    title: Only an administrator is offered and shown the System access tokens page
+    verification: automated-test
+    description: |
+      GIVEN sessions holding admin, approver, auditor and no role
+      WHEN each opens the navigation and the page address
+      THEN only the administrator sees the item and the page, and the others get the portal's administrator-role statement at the address
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0088
+    requirement_ids: ["GW_AUTH_0072"]
+    title: An administrator creates, rotates and revokes a system access token and the API's refusals are shown
+    verification: automated-test
+    description: |
+      GIVEN the System access tokens page as an administrator
+      WHEN a token is created, rotated and revoked, and creation is tried with an unknown scope, no expiry and an expiry beyond the cap
+      THEN each action reaches its endpoint after its confirmation, the scopes offer no all choice, and each refusal is shown as the API states it
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0089
+    requirement_ids: ["GW_AUTH_0073"]
+    title: A created or rotated token's cleartext appears once and is retained nowhere
+    verification: automated-test
+    description: |
+      GIVEN a system access token just created
+      WHEN its dialog is closed
+      THEN the cleartext is absent from the page, the query cache, localStorage, sessionStorage and the address
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0090
+    requirement_ids: ["GW_AUTH_0074"]
+    title: Credentials near expiry or never used are marked
+    verification: automated-test
+    description: |
+      GIVEN credentials expiring in 13 and 15 days, and never-used ones older and younger than a day
+      WHEN the list is read
+      THEN the 13-day and the older never-used ones are marked in words and the others are not
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0091
+    requirement_ids: ["GW_AUTH_0075"]
+    title: A role-less user is told what a marketplace serves, what waits and why
+    verification: automated-test
+    description: |
+      GIVEN marketplace payloads that are awaiting approval, rejected, revoked, failed to ingest, up to date, never approved and withdrawn
+      WHEN each is read as a session with no role
+      THEN each states what is served and what is newer in plain terms, names the deciding role but no person, and no snapshot content is requested
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0092
+    requirement_ids: ["GW_AUTH_0076"]
+    title: The scope list is administrator-only and equals the registry
+    verification: automated-test
+    description: |
+      GIVEN the scope list route
+      WHEN an administrator, an approver and a machine credential call it
+      THEN the administrator gets exactly the registry's scopes with their routes and the others are refused
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0093
+    requirement_ids: ["GW_AUTH_0077"]
+    title: A never-expiring machine credential needs the explicit choice and no configured cap
+    verification: automated-test
+    description: |
+      GIVEN a deployment with no cap and one with a configured cap
+      WHEN a credential is requested with an expiry, with neither expiry nor the never choice, and with the never choice, and a never-expiring one is rotated
+      THEN the request with neither is refused, the never choice is accepted only without a configured cap, an expiry beyond one year is refused without a configured cap, and the rotated credential still has no expiry
+    revision: "0.5.0"
+
+  - id: SVC_GW_AUTH_0094
+    requirement_ids: ["GW_AUTH_0078"]
+    title: Personal token lifetimes are 30, 90, 180 days and a year, and never is not offered
+    verification: automated-test
+    description: |
+      GIVEN the personal access token page and the client set-up wizard
+      WHEN the lifetime choices are read and a token is created with the default
+      THEN both offer exactly 30 days, 90 days, 180 days and one year, neither offers no expiry, and the default is 30 days
+    revision: "0.5.0"

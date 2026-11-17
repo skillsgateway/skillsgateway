@@ -7,7 +7,9 @@ scopes enforced at the facade, expiry decided at authentication time, rotation
 that changes the secret without changing the grant, per-token attribution on
 the fetch ledger, and credentials derived from a browser session whose lifetime
 the gateway sets rather than the holder.
+
 ## Requirements
+
 ### Requirement: GW_AUTH_0006
 The system SHALL implement GW_AUTH_0006.
 
@@ -69,4 +71,18 @@ The system SHALL implement GW_AUTH_0057.
 
 #### Scenario: SVC_GW_AUTH_0057
 - **WHEN** SVC_GW_AUTH_0057 is run
+- **THEN** it passes
+
+### Requirement: GW_AUTH_0076
+The system SHALL implement GW_AUTH_0076.
+
+#### Scenario: SVC_GW_AUTH_0092
+- **WHEN** SVC_GW_AUTH_0092 is run
+- **THEN** it passes
+
+### Requirement: GW_AUTH_0077
+The system SHALL implement GW_AUTH_0077.
+
+#### Scenario: SVC_GW_AUTH_0093
+- **WHEN** SVC_GW_AUTH_0093 is run
 - **THEN** it passes

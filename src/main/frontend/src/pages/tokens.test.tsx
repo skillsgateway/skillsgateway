@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
+import { MemoryRouter } from "react-router-dom";
 import { expect, test } from "vitest";
 import { server } from "@/test/msw-server";
 import { TokensPage } from "./tokens";
@@ -10,7 +11,9 @@ function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <TokensPage />
+      <MemoryRouter>
+        <TokensPage />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }
@@ -87,7 +90,7 @@ test("a_failed_token_read_renders_the_servers_reason", async () => {
  * The page offers the wizard's lifetimes with the wizard's default, posts the chosen one, and
  * lists every token's expiry — never, a date, or expired.
  *
- * @SVCs SVC_GW_AUTH_0084
+ * @SVCs SVC_GW_AUTH_0084, SVC_GW_AUTH_0094
  */
 test("tokens_are_created_with_a_chosen_lifetime_and_listed_with_their_expiry", async () => {
   server.use(
@@ -117,11 +120,18 @@ test("tokens_are_created_with_a_chosen_lifetime_and_listed_with_their_expiry", a
 
   const expires = screen.getByRole("group", { name: "Expires" });
   expect(within(expires).getByRole("button", { name: "30 days" })).toHaveAttribute("aria-pressed", "true");
-  for (const label of ["7 days", "90 days", "No expiry"]) {
+  for (const label of ["90 days", "180 days", "1 year"]) {
     expect(within(expires).getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "false");
   }
+  // GW_AUTH_0078: exactly these four, and no way to choose a token that never expires.
+  expect(within(expires).getAllByRole("button").map((button) => button.textContent)).toEqual([
+    "30 days",
+    "90 days",
+    "180 days",
+    "1 year",
+  ]);
 
-  await user.click(within(expires).getByRole("button", { name: "7 days" }));
+  await user.click(within(expires).getByRole("button", { name: "180 days" }));
   await user.type(screen.getByLabelText("Token name"), "ci-runner");
   const before = Date.now();
   await user.click(screen.getByRole("button", { name: "Create token" }));
@@ -130,8 +140,8 @@ test("tokens_are_created_with_a_chosen_lifetime_and_listed_with_their_expiry", a
   expect(posted).toHaveLength(1);
   expect(posted[0]!.name).toBe("ci-runner");
   const ahead = Date.parse(posted[0]!.expiresAt ?? "") - before;
-  expect(ahead).toBeGreaterThan(7 * 86_400_000 - 60_000);
-  expect(ahead).toBeLessThan(7 * 86_400_000 + 60_000);
+  expect(ahead).toBeGreaterThan(180 * 86_400_000 - 60_000);
+  expect(ahead).toBeLessThan(180 * 86_400_000 + 60_000);
 });
 
 /** A refused lifetime is stated beside the choice, and choosing another clears it. */
@@ -151,4 +161,33 @@ test("a_refused_lifetime_is_stated_beside_the_choice_until_another_is_chosen", a
 
   await user.click(screen.getByRole("button", { name: "30 days" }));
   expect(screen.queryByText(/maximum token lifetime/)).not.toBeInTheDocument();
+});
+
+/**
+ * The two kinds of token are told apart: an administrator is pointed at the system tokens page, a
+ * session without the role is not told about a page it cannot open.
+ *
+ * @SVCs SVC_GW_AUTH_0087
+ */
+test("only_an_administrator_is_pointed_at_system_access_tokens", async () => {
+  server.use(
+    http.get("/api/v1/me", () =>
+      HttpResponse.json({ username: "bob", roles: [], claimsTruncated: false }),
+    ),
+  );
+  const plain = renderPage();
+  expect(await screen.findByRole("heading", { name: "Personal access tokens" })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "system access token" })).not.toBeInTheDocument();
+  plain.unmount();
+
+  server.use(
+    http.get("/api/v1/me", () =>
+      HttpResponse.json({ username: "ada", roles: [{ role: "admin", source: "config" }], claimsTruncated: false }),
+    ),
+  );
+  renderPage();
+  expect(await screen.findByRole("link", { name: "system access token" })).toHaveAttribute(
+    "href",
+    "/configuration/tokens",
+  );
 });

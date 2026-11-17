@@ -152,7 +152,7 @@ public class TokenService {
      *       something that cannot do what the caller asked for.
      *   <li>An expiry is required and is never defaulted, and a lifetime beyond the cap is
      *       refused rather than clamped — the posture GW_AUTH_0007 already takes. The cap applies even
-     *       when the deployment configures none; see {@code Tokens.DEFAULT_MACHINE_MAX_TTL}.
+     *       when the deployment configures none (one year; GW_AUTH_0077); see {@code Tokens.DEFAULT_MACHINE_MAX_TTL}.
      *   <li>A session-derived credential can never hold administrative scope. It is minted from a
      *       browser session with a lifetime the holder did not choose, for fetching; letting one
      *       carry control-plane authority would launder a session into a standing credential.
@@ -161,8 +161,25 @@ public class TokenService {
     @Requirements({"GW_AUTH_0020", "GW_AUTH_0021", "GW_AUTH_0024"})
     public IssuedToken createMachineCredential(
             String principal, String name, List<String> apiScopes, Instant expiresAt, String owner) {
+        return createMachineCredential(principal, name, apiScopes, expiresAt, false, owner);
+    }
+
+    /**
+     * As above, with the one way to issue a machine credential that never expires (GW_AUTH_0077):
+     * {@code neverExpires} stated explicitly, with no expiry beside it, and no lifetime cap
+     * configured. An omitted expiry is still refused, so a missing field can never produce a
+     * standing credential; only a request that says so can.
+     */
+    @Requirements({"GW_AUTH_0020", "GW_AUTH_0021", "GW_AUTH_0024", "GW_AUTH_0077"})
+    public IssuedToken createMachineCredential(
+            String principal,
+            String name,
+            List<String> apiScopes,
+            Instant expiresAt,
+            boolean neverExpires,
+            String owner) {
         List<String> storedApiScopes = validateApiScopes(apiScopes);
-        validateMachineTtl(expiresAt);
+        validateMachineTtl(expiresAt, neverExpires);
         String secret = newSecret();
         AccessToken stored = tokenRepository.create(
                 principal, name, sha256Hex(secret), null, expiresAt, null, null, false, storedApiScopes, owner);
@@ -250,10 +267,23 @@ public class TokenService {
         return List.copyOf(new LinkedHashSet<>(apiScopes));
     }
 
-    @Requirements({"GW_AUTH_0024"})
-    private void validateMachineTtl(Instant expiresAt) {
+    @Requirements({"GW_AUTH_0024", "GW_AUTH_0077"})
+    private void validateMachineTtl(Instant expiresAt, boolean neverExpires) {
+        if (neverExpires) {
+            if (expiresAt != null) {
+                throw new InvalidTokenRequestException(
+                        "a machine credential cannot both expire and never expire; state one of them");
+            }
+            if (properties.tokens().maxTtl() != null) {
+                throw new InvalidTokenRequestException(
+                        "this gateway caps token lifetime at %s, so a machine credential that never expires is refused"
+                                .formatted(properties.tokens().maxTtl()));
+            }
+            return;
+        }
         if (expiresAt == null) {
-            throw new InvalidTokenRequestException("a machine credential must state an expiry; it is never defaulted");
+            throw new InvalidTokenRequestException(
+                    "a machine credential must state an expiry or that it never expires; it is never defaulted");
         }
         Duration cap = properties.tokens().machineMaxTtl();
         if (expiresAt.isAfter(Instant.now().plus(cap))) {

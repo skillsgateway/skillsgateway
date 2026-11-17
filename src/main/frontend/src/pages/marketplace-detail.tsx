@@ -40,6 +40,7 @@ import { MarketplaceVettingChain } from "@/components/marketplace-vetting-chain"
 import { AutoApproval } from "@/components/auto-approval";
 import { EditMarketplaceUrl } from "@/components/edit-marketplace-url";
 import { RemoveMarketplace } from "@/components/remove-marketplace";
+import { MarketplaceStatus } from "@/components/marketplace-status";
 import { SetupWizard } from "@/components/setup-wizard";
 import { RoleGate } from "@/components/role-required";
 import { SnapshotCard, SnapshotLine } from "@/components/snapshot-card";
@@ -637,6 +638,8 @@ export function MarketplaceLayout() {
           onClose={() => setWizardOpen(false)}
         />
       ) : null}
+      {/* GW_AUTH_0075: for everyone signed in, whatever their roles; built from this payload only. */}
+      <MarketplaceStatus marketplace={marketplace} />
       <Outlet context={context} />
     </div>
     </MarketplaceRightsContext.Provider>

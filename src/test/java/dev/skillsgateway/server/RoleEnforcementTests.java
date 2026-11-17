@@ -134,6 +134,9 @@ class RoleEnforcementTests extends AbstractGatewayTest {
             // is admin-only whether or not enforcement is enabled (GW_AUTH_0023). The auditor walk
             // below skips it for the same reason it skips grant administration.
             "GET /api/v1/tokens/machine",
+            // The scopes a machine credential may be given (GW_AUTH_0076): admin-only for the same
+            // reason, and skipped by the auditor walk likewise.
+            "GET /api/v1/tokens/machine/scopes",
             // Another principal's personal tokens (GW_AUTH_0055): admin-only, skipped by the auditor walk.
             "GET /api/v1/tokens/principals/{principal}",
             "GET /api/v1/audit",
@@ -371,6 +374,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
         for (String route : PRIVILEGED_READS) {
             if (route.equals("GET /api/v1/roles")
                     || route.equals("GET /api/v1/tokens/machine")
+                    || route.equals("GET /api/v1/tokens/machine/scopes")
                     || route.equals("GET /api/v1/tokens/principals/{principal}")
                     || route.equals("GET /api/v1/vetting/vetter-toggles")
                     || route.equals("GET /api/v1/vetting/chain-settings")

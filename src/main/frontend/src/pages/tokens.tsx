@@ -1,25 +1,19 @@
-import { Check, Copy } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
   useCreateToken,
+  useIsAdmin,
   useRevokeToken,
   useTokens,
   type IssuedToken,
   type TokenView,
 } from "@/api/queries";
+import { IssuedTokenDialog } from "@/components/issued-token-dialog";
 import { SegmentedGroup } from "@/components/segmented-group";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -32,49 +26,7 @@ import {
 } from "@/components/ui/table";
 import { DEFAULT_LIFETIME, expiryFor, LIFETIMES, type Lifetime } from "@/lib/token-lifetimes";
 
-export function IssuedTokenDialog({ issued, onClose }: { issued: IssuedToken; onClose: () => void }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(issued.token ?? "");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("Could not access the clipboard");
-    }
-  };
-  return (
-    <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="wrap-anywhere">Token '{issued.name}' created</DialogTitle>
-          <DialogDescription>
-            This value is shown exactly once — copy it now. Only a hash is stored.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-2">
-          <Label htmlFor="token-cleartext-box">Personal access token</Label>
-          <div id="token-cleartext-box" className="flex items-center gap-2 rounded-md border bg-muted p-3">
-            <code data-testid="token-cleartext" className="flex-1 break-all text-sm">
-              {issued.token}
-            </code>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Copy token to clipboard"
-              onClick={() => void copy()}
-            >
-              {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
-            </Button>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button onClick={onClose}>Done</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
+export { IssuedTokenDialog };
 
 /** An expiry in the past: the server no longer accepts the token, though it is still listed. */
 function expired(token: TokenView): boolean {
@@ -170,10 +122,11 @@ export function TokenTable({
 /**
  * Personal access token self-service: create with a chosen lifetime and show-once cleartext, revoke.
  *
- * @Requirements GW_AUTH_0005, GW_AUTH_0070
+ * @Requirements GW_AUTH_0005, GW_AUTH_0070, GW_AUTH_0071, GW_AUTH_0078
  */
 export function TokensPage() {
   const tokens = useTokens();
+  const isAdmin = useIsAdmin();
   const create = useCreateToken();
   const revoke = useRevokeToken();
   const [name, setName] = useState("");
@@ -202,11 +155,23 @@ export function TokensPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Access tokens</h1>
+        <h1 className="text-2xl font-semibold">Personal access tokens</h1>
         <p className="text-sm text-muted-foreground">
-          Personal access tokens authenticate git clients against the facade. Values are hashed at
-          rest and shown exactly once.
+          Personal access tokens are yours: they authenticate your git clients against the facade.
+          Values are hashed at rest and shown exactly once.
         </p>
+        {isAdmin ? (
+          <p className="text-sm text-muted-foreground">
+            Looking for a token for a pipeline or another service? That is a{" "}
+            <Link
+              to="/configuration/tokens"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              system access token
+            </Link>
+            , managed under Configuration.
+          </p>
+        ) : null}
       </div>
       <form onSubmit={onCreate} className="space-y-2">
         <div className="flex flex-wrap items-end gap-3">
@@ -237,7 +202,8 @@ export function TokensPage() {
         </div>
         <p id="token-name-hint" className="text-xs text-muted-foreground">
           A name is required — it identifies the token in this list. The lifetime defaults to 30
-          days; this gateway may cap it lower, in which case a longer choice is refused.
+          days and is never unlimited; this gateway may cap it lower, in which case a longer choice
+          is refused.
         </p>
         {create.isError ? (
           // The server's lifetime cap is the one rule this form cannot mirror, so its refusal stays

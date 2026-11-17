@@ -9,6 +9,8 @@ export type Snapshot = components["schemas"]["Snapshot"];
 export type Provenance = components["schemas"]["Provenance"];
 export type TokenView = components["schemas"]["TokenView"];
 export type IssuedToken = components["schemas"]["IssuedToken"];
+export type MachineCredentialView = components["schemas"]["MachineCredentialView"];
+export type ApiScopeView = components["schemas"]["ApiScopeView"];
 export type SubscriberView = components["schemas"]["SubscriberView"];
 export type CreatedSubscriber = components["schemas"]["CreatedSubscriber"];
 export type WebhookDelivery = components["schemas"]["WebhookDelivery"];
@@ -925,6 +927,71 @@ export function useRevokeToken() {
   return useMutation({
     mutationFn: (id: number) => api<void>(`/api/v1/tokens/${id}`, { method: "DELETE" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tokens"] }),
+  });
+}
+
+/**
+ * System access tokens — the API's machine API credentials (GW_AUTH_0072). Administrator-only on
+ * the server; the page that calls these sits behind the same role, so a session without it never
+ * makes the read.
+ */
+export function useMachineTokens(enabled = true) {
+  return useQuery({
+    queryKey: ["machine-tokens"],
+    queryFn: () => api<MachineCredentialView[]>("/api/v1/tokens/machine"),
+    enabled,
+  });
+}
+
+/** The scopes the registry defines; the create form offers exactly these (GW_AUTH_0076). */
+export function useMachineScopes(enabled = true) {
+  return useQuery({
+    queryKey: ["machine-token-scopes"],
+    queryFn: () => api<ApiScopeView[]>("/api/v1/tokens/machine/scopes"),
+    enabled,
+    staleTime: Infinity,
+  });
+}
+
+/**
+ * A system access token request: a date, or the explicit `neverExpires` — never both and never
+ * neither, which the API refuses (GW_AUTH_0077).
+ */
+export type CreateMachineToken = {
+  principal: string;
+  name: string;
+  apiScopes: string[];
+} & ({ expiresAt: string; neverExpires?: undefined } | { neverExpires: true; expiresAt?: undefined });
+
+/**
+ * `gcTime: 0` on the two mutations that return a cleartext: TanStack Query keeps a mutation's
+ * result in its cache, and the secret must not outlive the dialog that shows it
+ * (GW_AUTH_0073). The list is refetched, never seeded from the response.
+ */
+export function useCreateMachineToken() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    gcTime: 0,
+    mutationFn: (request: CreateMachineToken) =>
+      api<IssuedToken>("/api/v1/tokens/machine", { method: "POST", body: JSON.stringify(request) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["machine-tokens"] }),
+  });
+}
+
+export function useRotateMachineToken() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    gcTime: 0,
+    mutationFn: (id: number) => api<IssuedToken>(`/api/v1/tokens/machine/${id}/rotate`, { method: "POST" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["machine-tokens"] }),
+  });
+}
+
+export function useRevokeMachineToken() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api<void>(`/api/v1/tokens/machine/${id}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["machine-tokens"] }),
   });
 }
 

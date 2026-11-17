@@ -46,11 +46,11 @@ async function openUserMenu(page: Page) {
   await page.getByRole("button", { name: /Signed in as/ }).click();
 }
 
-/** Personal tokens are a per-user surface: the way in is the user menu, not the navigation. */
+/** Personal tokens are a per-user surface: the way in is the user menu's Security, not the navigation. */
 async function openTokens(page: Page) {
   await openUserMenu(page);
-  await page.getByRole("menuitem", { name: "Your tokens" }).click();
-  await expect(page.getByRole("heading", { name: "Access tokens" })).toBeVisible();
+  await page.getByRole("menuitem", { name: "Security" }).click();
+  await expect(page.getByRole("heading", { name: "Personal access tokens" })).toBeVisible();
 }
 
 function uniqueName(prefix: string) {
@@ -129,6 +129,9 @@ const PORTAL_ROUTES = [
   "/vetting",
   "/adoption",
   "/tokens",
+  "/security",
+  "/security/tokens",
+  "/configuration/tokens",
   "/integrations",
   "/integrations/webhooks",
   "/integrations/sinks",
@@ -392,7 +395,7 @@ test("the_user_menu_names_the_session_and_each_role_with_its_source", async ({ p
   await expect(menu).toContainText("alice");
   await expect(menu).toContainText("admin — from your identity provider");
   // It reports; it does not gate. Nothing here is hidden or disabled by role.
-  await expect(menu.getByRole("menuitem", { name: "Your tokens" })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Security" })).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: /Theme:/ })).toBeVisible();
 
   // Escape closes the menu and returns focus to its trigger.
@@ -409,14 +412,54 @@ test("the_user_menu_names_the_session_and_each_role_with_its_source", async ({ p
  */
 test("tokens_are_reached_from_the_user_menu_and_the_route_still_resolves", async ({ page }) => {
   await login(page, "alice");
-  await expect(
-    page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Access tokens" }),
-  ).toHaveCount(0);
+  // Personal tokens have no sidebar entry; an administrator's sidebar carries the *system* ones.
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await expect(nav.getByRole("link", { name: "Access tokens", exact: true })).toHaveCount(0);
+  await expect(nav.getByRole("link", { name: "Personal access tokens" })).toHaveCount(0);
 
   await openTokens(page);
 
   await page.goto("/tokens");
-  await expect(page.getByRole("heading", { name: "Access tokens" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Personal access tokens" })).toBeVisible();
+  await expect(page).toHaveURL(/\/security\/tokens$/);
+});
+
+/**
+ * An administrator mints, rotates and revokes a system access token through the portal against the
+ * real API, and the cleartext appears once.
+ *
+ * @SVCs SVC_GW_AUTH_0088
+ */
+test("an_administrator_creates_rotates_and_revokes_a_system_access_token", async ({ page }) => {
+  await login(page, "alice");
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "System access tokens" }).click();
+  await expect(page.getByRole("heading", { name: "System access tokens" })).toBeVisible();
+
+  const name = uniqueName("e2e-system");
+  await page.getByLabel("Principal").fill(`principal-${name}`);
+  await page.getByLabel("Token name").fill(name);
+  await page.getByRole("checkbox", { name: "estate:read" }).click();
+  await page.getByRole("group", { name: "Expires" }).getByRole("button", { name: "1 year" }).click();
+  await page.getByRole("button", { name: "Create token" }).click();
+
+  const cleartext = page.getByTestId("token-cleartext");
+  await expect(cleartext).toHaveText(/\S+/);
+  const secret = (await cleartext.textContent()) ?? "";
+  await page.getByRole("button", { name: "Done" }).click();
+  await expect(page.getByTestId("token-cleartext")).toHaveCount(0);
+  await expect(page.locator("body")).not.toContainText(secret);
+
+  const row = page.getByRole("row", { name: new RegExp(name) });
+  await expect(row).toBeVisible();
+  await row.getByRole("button", { name: `Rotate token ${name}` }).click();
+  await page.getByRole("button", { name: "Rotate token", exact: true }).click();
+  await expect(page.getByTestId("token-cleartext")).not.toHaveText(secret);
+  await page.getByRole("button", { name: "Done" }).click();
+
+  const live = page.getByRole("row", { name: new RegExp(name) }).filter({ hasText: "active" });
+  await live.getByRole("button", { name: `Revoke token ${name}` }).click();
+  await page.getByRole("button", { name: "Revoke token", exact: true }).click();
+  await expect(page.getByText(`Token '${name}' revoked`)).toBeVisible();
 });
 
 /**

@@ -1189,9 +1189,9 @@ requirements:
     revision: 0.2.0
 
   - id: GW_AUTH_0024
-    title: A machine credential must expire and is administered centrally
+    title: A machine credential states its lifetime and is administered centrally
     significance: shall
-    description: The system shall refuse to issue a machine credential without an expiry and shall refuse rather than shorten one whose requested lifetime exceeds the applicable cap, applying a built-in cap when the deployment configures none; shall preserve on rotation the credential's identity, its expiry deadline and all of its scope dimensions while leaving no moment at which two of its secrets are live; and shall offer an administrator a listing and a revocation path covering machine credentials regardless of which identity provisioned them, without widening the listing through which a person sees their own credentials.
+    description: The system shall refuse to issue a machine credential that states neither an expiry nor an explicit choice that it never expires, shall refuse rather than shorten one whose requested lifetime exceeds the applicable cap, applying a built-in cap of one year when the deployment configures none, and shall refuse a never-expiring one whenever the deployment configures a cap; shall preserve on rotation the credential's identity, its expiry deadline and all of its scope dimensions while leaving no moment at which two of its secrets are live; and shall offer an administrator a listing and a revocation path covering machine credentials regardless of which identity provisioned them, without widening the listing through which a person sees their own credentials.
     rationale: A never-expiring credential sitting in a continuous-integration variable is the failure mode this capability would otherwise introduce, and a mandatory expiry that leans on an absent cap admits a hundred-year lifetime, which is the same thing spelled differently; a long-lived control-plane credential should be a stated choice rather than the consequence of leaving a property blank. A rotation that silently widened or dropped a scope would be the worst defect this capability could have. Credentials scoped to the identity that created them would be invisible to everyone else, so nobody could revoke one during an incident — which is precisely when someone must.
     categories: ["security", "reliability"]
     revision: 0.1.0
@@ -3382,6 +3382,88 @@ requirements:
     rationale: "The page minted only tokens that never expire while the wizard defaulted to thirty days, so the bounded choice depended on which form a user happened to use, and nothing on the page said when a credential would stop working."
     references:
       requirement_ids: ["GW_AUTH_0005"]
+    categories: ["interaction-capability", "security"]
+    revision: 0.5.0
+
+
+  - id: GW_AUTH_0071
+    title: Personal access tokens have one home, the Security section of the user menu
+    significance: shall
+    description: "The portal shall reach a user's own personal access tokens from exactly one place, a Security section opened from the user menu and visible to every signed-in user whatever their roles, shall not offer them from the Overview page, and shall keep the former address resolving to the new one."
+    rationale: "Personal tokens were offered from the user menu and from an Overview card, so there were two homes for one thing, and a section rather than a single link lets other per-user security settings join without another navigation change."
+    references:
+      requirement_ids: ["GW_AUTH_0070"]
+    categories: ["interaction-capability"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0072
+    title: System access tokens are managed by administrators from a Configuration page
+    significance: shall
+    description: "The portal shall offer administrators, and no other session, a System access tokens page under Configuration that lists machine API credentials without any secret, creates one from the documented scopes with no all-scopes choice and a required lifetime chosen from 30 days, 90 days, 180 days, one year or never, with none preselected, and rotates and revokes one after a confirmation, shall refuse to a session without the administrator role at that address with the portal's role statement, shall pass on the API's refusals unchanged, and shall say on it and on the personal tokens page which kind of token each manages and link to the other."
+    rationale: "A machine credential could only be minted by calling the API by hand from a browser session, and two kinds of token behind similar pages invite an administrator to mint one where they meant the other."
+    references:
+      requirement_ids: ["GW_AUTH_0024"]
+    categories: ["interaction-capability", "security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0073
+    title: A system access token's cleartext is shown once and kept nowhere
+    significance: shall
+    description: "The portal shall show the cleartext of a system access token created or rotated from it once, with a copy control and a statement that it cannot be shown again, and shall retain it nowhere afterwards: not in the page, the client-side query cache, the browser's stored state or the address."
+    rationale: "The cleartext is the only copy; anything that outlives the dialog that shows it is a second place a credential can be read from."
+    references:
+      requirement_ids: ["GW_AUTH_0024"]
+    categories: ["security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0074
+    title: System access tokens close to expiry or never used are marked
+    significance: shall
+    description: "The System access tokens page shall mark in words each credential that expires within fourteen days and each credential older than a day that has never authenticated."
+    rationale: "Last-used time exists to find credentials nothing uses any more, and an expiring one is an outage waiting for a date; neither is visible in a table of dates."
+    references:
+      requirement_ids: ["GW_AUTH_0024"]
+    categories: ["interaction-capability"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0075
+    title: Any signed-in user can see why a marketplace is not serving the newest commit
+    significance: shall
+    description: "The portal shall show every signed-in user, on a marketplace, what is served now and since when and by whom or automatically, whether a newer commit exists and whether it is awaiting approval, rejected, revoked or failed to ingest with the reason, who decides a held one by role and without naming any person, and why nothing is served, using only what that session may already read."
+    rationale: "A user whose client lacks the newest version had nowhere to learn that it is waiting for a decision, and the pieces that answer it were framed for approvers."
+    references:
+      requirement_ids: ["GW_AUTH_0001"]
+    categories: ["interaction-capability"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0076
+    title: An administrator can read the API scopes a system access token may hold
+    significance: shall
+    description: "The system shall give an administrator, and no other caller and no machine credential, a read-only list of the API scopes a machine credential may be given and the routes each reaches, exactly as the machine-reachability registry defines them."
+    rationale: "A form that offers scopes needs the real list; a copy of it in the client would drift the first time a scope is added."
+    references:
+      requirement_ids: ["GW_AUTH_0024"]
+    categories: ["security", "interaction-capability"]
+    revision: 0.5.0
+
+
+  - id: GW_AUTH_0077
+    title: A machine credential may be given no expiry only by an explicit choice, and its built-in cap is one year
+    significance: shall
+    description: "The system shall issue a machine credential that never expires only when the request states that choice explicitly and the deployment configures no token lifetime cap, shall keep refusing a request that states neither an expiry nor that choice, shall preserve a never-expiring credential's lack of expiry on rotation, and shall hold a machine credential with an expiry to a built-in cap of one year where the deployment configures none."
+    rationale: "Operators of long-lived integrations asked for credentials that do not lapse, as comparable repository and observability products allow. A never-expiring credential stays a stated choice rather than the consequence of an omitted field, and an operator who configures a cap keeps the last word."
+    references:
+      requirement_ids: ["GW_AUTH_0024"]
+    categories: ["security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0078
+    title: Personal access tokens are offered 30 days, 90 days, 180 days or one year
+    significance: shall
+    description: "The portal shall offer, on the personal access token page and in the client set-up wizard alike, the lifetimes 30 days, 90 days, 180 days and one year, defaulting to 30 days, and shall offer no choice that never expires."
+    rationale: "A personal token minted to get a laptop working is the one most likely to be forgotten; a bounded choice that reaches a year covers long-running personal use without a standing grant nobody decided to make."
+    references:
+      requirement_ids: ["GW_AUTH_0070"]
     categories: ["interaction-capability", "security"]
     revision: 0.5.0
 

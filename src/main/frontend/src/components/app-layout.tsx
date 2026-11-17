@@ -8,6 +8,7 @@ import {
   Moon,
   ScrollText,
   ShieldCheck,
+  Lock,
   Store,
   Sun,
   TrendingUp,
@@ -78,6 +79,10 @@ const groups: { label: string; items: NavItem[] }[] = [
       // neither they nor their values are shown to approvers or auditors. Hiding the entry is a
       // courtesy — the server refuses every read behind it independently.
       { to: "/vetting", label: "Vetting chain", icon: ShieldCheck, needs: "admin" },
+      // Admin-only: a system access token outlives the session that minted it and acts with the
+      // scopes it was given. Personal tokens are under the user menu's Security, not here
+      // (GW_AUTH_0071, GW_AUTH_0072).
+      { to: "/configuration/tokens", label: "System access tokens", icon: KeyRound, needs: "admin" },
       {
         to: "/integrations",
         label: "Integrations",
@@ -227,7 +232,8 @@ function breadcrumb(pathname: string): string {
   if (pathname.startsWith("/audit")) return "Audit log";
   if (pathname.startsWith("/vetting")) return "Vetting chain";
   if (pathname.startsWith("/adoption")) return "Adoption";
-  if (pathname.startsWith("/tokens")) return "Access tokens";
+  if (pathname.startsWith("/security")) return "Security · Personal access tokens";
+  if (pathname.startsWith("/configuration/tokens")) return "System access tokens";
   if (pathname.startsWith("/integrations/sinks")) return "Integrations · Audit sinks";
   if (pathname.startsWith("/integrations") || pathname.startsWith("/webhooks")) {
     return "Integrations · Webhooks";
@@ -336,7 +342,7 @@ function RolesSection({ me }: { me: MeView }) {
       {roles.length === 0 ? (
         <p className="px-1.5 pb-1 text-xs text-muted-foreground">
           No role. You can browse the marketplaces and their snapshots' vetting, and manage your
-          own access tokens. Anything else needs a role an administrator grants.
+          own personal access tokens under Security. Anything else needs a role an administrator grants.
         </p>
       ) : (
         // A list element would be a child `menu` does not allow (axe: aria-required-children),
@@ -370,12 +376,12 @@ function RolesSection({ me }: { me: MeView }) {
 export function UserMenuView({
   me,
   isError = false,
-  onTokens,
+  onSecurity,
   onSignOut = signOut,
 }: {
   me?: MeView;
   isError?: boolean;
-  onTokens?: () => void;
+  onSecurity?: () => void;
   onSignOut?: () => void | Promise<void>;
 }) {
   const [signingOut, setSigningOut] = useState(false);
@@ -418,9 +424,9 @@ export function UserMenuView({
         <RolesSection me={me} />
         <DropdownMenuSeparator />
         <ThemeItem />
-        <DropdownMenuItem onClick={onTokens}>
-          <KeyRound className="size-4" aria-hidden />
-          <span>Your tokens</span>
+        <DropdownMenuItem onClick={onSecurity}>
+          <Lock className="size-4" aria-hidden />
+          <span>Security</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         {devInsecureAuth ? (
@@ -454,12 +460,12 @@ export function UserMenuView({
   );
 }
 
-/** The shell's instance of the menu: the session read, and routing for "Your tokens". */
+/** The shell's instance of the menu: the session read, and routing for "Security". */
 function UserMenu() {
   const me = useMe();
   const navigate = useNavigate();
   return (
-    <UserMenuView me={me.data} isError={me.isError} onTokens={() => void navigate("/tokens")} />
+    <UserMenuView me={me.data} isError={me.isError} onSecurity={() => void navigate("/security")} />
   );
 }
 

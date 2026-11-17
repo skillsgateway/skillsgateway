@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import { useAccess, useLedgerTotal, useMarketplaces, useTokens } from "@/api/queries";
+import { useAccess, useLedgerTotal, useMarketplaces } from "@/api/queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { KeyRound, ScrollText, Store } from "lucide-react";
+import { ScrollText, Store } from "lucide-react";
 
 function Chip({ children }: { children: React.ReactNode }) {
   return (
@@ -72,7 +72,6 @@ function ledgerEntries(
  */
 export function OverviewPage() {
   const marketplaces = useMarketplaces();
-  const tokens = useTokens();
   const { isAuditor } = useAccess();
   const ledger = useLedgerTotal(isAuditor);
 
@@ -80,7 +79,6 @@ export function OverviewPage() {
   const held = snapshots.filter((s) => s.state === "held").length;
   const approved = snapshots.filter((s) => s.state === "approved").length;
   const rejected = snapshots.filter((s) => s.state === "rejected").length;
-  const activeTokens = (tokens.data ?? []).filter((t) => !t.revokedAt).length;
 
   return (
     <div className="space-y-6">
@@ -112,19 +110,6 @@ export function OverviewPage() {
             }
           />
         ) : null}
-        <SectionCard
-          icon={<KeyRound className="size-4" aria-hidden />}
-          title="Access tokens"
-          chips={
-            <>
-              <Chip>{activeTokens} active</Chip>
-              <Chip>{(tokens.data?.length ?? 0) - activeTokens} revoked</Chip>
-            </>
-          }
-          action={
-            <Button variant="outline" render={<Link to="/tokens">Manage tokens</Link>} />
-          }
-        />
       </div>
     </div>
   );

@@ -144,13 +144,15 @@ test("create_token_is_disabled_until_the_name_is_non_blank", async () => {
   expect(createButton).toBeEnabled();
 });
 
+/** @SVCs SVC_GW_AUTH_0094 */
 test("the_lifetime_defaults_to_a_bounded_value_rather_than_to_never_expiring", async () => {
   const user = userEvent.setup();
   renderWizard();
   await user.click(screen.getByRole("button", { name: "Connect a client" }));
   const group = within(await screen.findByRole("group", { name: "Expires" }));
   expect(group.getByRole("button", { name: "30 days" })).toHaveAttribute("aria-pressed", "true");
-  expect(group.getByRole("button", { name: "No expiry" })).toHaveAttribute("aria-pressed", "false");
+  expect(group.queryByRole("button", { name: "No expiry" })).not.toBeInTheDocument();
+  expect(group.getByRole("button", { name: "1 year" })).toHaveAttribute("aria-pressed", "false");
 });
 
 test("choosing_a_lifetime_moves_the_pressed_state_to_it", async () => {
@@ -158,8 +160,8 @@ test("choosing_a_lifetime_moves_the_pressed_state_to_it", async () => {
   renderWizard();
   await user.click(screen.getByRole("button", { name: "Connect a client" }));
   const group = within(await screen.findByRole("group", { name: "Expires" }));
-  await user.click(group.getByRole("button", { name: "7 days" }));
-  expect(group.getByRole("button", { name: "7 days" })).toHaveAttribute("aria-pressed", "true");
+  await user.click(group.getByRole("button", { name: "180 days" }));
+  expect(group.getByRole("button", { name: "180 days" })).toHaveAttribute("aria-pressed", "true");
   expect(group.getByRole("button", { name: "30 days" })).toHaveAttribute("aria-pressed", "false");
   // The choice is a choice, not a submit: the form must still be waiting for "Create token".
   expect(screen.queryByText(/Token created/)).not.toBeInTheDocument();

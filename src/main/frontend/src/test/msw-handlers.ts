@@ -157,6 +157,52 @@ export const tokenViews: Schemas["TokenView"][] = [
   },
 ];
 
+/** The scopes an administrator may choose from; the registry's, never a client-side copy. */
+export const machineScopes: Schemas["ApiScopeView"][] = [
+  { scope: "estate:read", routes: ["GET /api/v1/estate"] },
+  { scope: "marketplaces:read", routes: ["GET /api/v1/marketplaces", "GET /api/v1/catalog"] },
+  { scope: "marketplaces:register", routes: ["POST /api/v1/marketplaces"] },
+];
+
+export const machineIssued: Schemas["IssuedToken"] = {
+  id: 21,
+  name: "platform-pipeline",
+  token: "sgw_system_cleartext_shown_once",
+  createdAt: "2026-08-14T10:00:00Z",
+};
+
+/** One of each shape the list has to say something about; dates are far from "now" except where a mark needs it. */
+export const machineViews: Schemas["MachineCredentialView"][] = [
+  {
+    id: 21,
+    principal: "terraform-ci",
+    name: "platform-pipeline",
+    createdAt: "2026-01-01T10:00:00Z",
+    expiresAt: "2099-01-01T00:00:00Z",
+    apiScopes: ["estate:read"],
+    machineOwner: "ada",
+    lastUsedAt: "2026-08-14T13:00:00Z",
+  },
+  {
+    id: 22,
+    principal: "forgotten-job",
+    name: "old-job",
+    createdAt: "2026-01-01T10:00:00Z",
+    expiresAt: "2099-01-01T00:00:00Z",
+    apiScopes: ["marketplaces:read"],
+    machineOwner: "ada",
+  },
+  {
+    id: 23,
+    principal: "forever-sync",
+    name: "forever",
+    createdAt: "2026-08-14T10:00:00Z",
+    apiScopes: ["marketplaces:register"],
+    machineOwner: "ada",
+    lastUsedAt: "2026-08-14T13:00:00Z",
+  },
+];
+
 export const subscriber: Schemas["SubscriberView"] = {
   id: 3,
   name: "ci-bot",
@@ -1490,6 +1536,11 @@ export const handlers = [
   ),
   http.get("/api/v1/tokens", () => HttpResponse.json<Schemas["TokenView"][]>(tokenViews)),
   http.post("/api/v1/tokens", () => HttpResponse.json(issuedToken, { status: 201 })),
+  http.get("/api/v1/tokens/machine", () => HttpResponse.json(machineViews)),
+  http.get("/api/v1/tokens/machine/scopes", () => HttpResponse.json(machineScopes)),
+  http.post("/api/v1/tokens/machine", () => HttpResponse.json(machineIssued, { status: 201 })),
+  http.post("/api/v1/tokens/machine/:id/rotate", () => HttpResponse.json(machineIssued)),
+  http.delete("/api/v1/tokens/machine/:id", () => new HttpResponse(null, { status: 204 })),
   http.get("/api/v1/audit", ({ request }) =>
     HttpResponse.json(auditPage(ledgerEntries, new URL(request.url))),
   ),

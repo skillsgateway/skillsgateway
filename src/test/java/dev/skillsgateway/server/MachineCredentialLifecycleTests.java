@@ -140,6 +140,83 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
                 .andExpect(status().isCreated());
     }
 
+    private String neverBody(String principal, boolean never, String expiresAt) {
+        return "{\"principal\": \"%s\", \"name\": \"pipeline\", \"apiScopes\": [\"estate:read\"], \"neverExpires\": %s, \"expiresAt\": %s}"
+                .formatted(principal, never, expiresAt == null ? "null" : "\"" + expiresAt + "\"");
+    }
+
+    /**
+     * GW_AUTH_0077: never is a stated choice. Neither an expiry nor the choice stays refused (see
+     * {@code issuance_without_an_expiry_is_refused_and_never_defaulted}); the choice together with
+     * an expiry contradicts itself and is refused too.
+     */
+    @Test
+    @SVCs({"SVC_GW_AUTH_0093"})
+    void a_never_expiring_credential_needs_the_explicit_choice_and_rotates_without_gaining_an_expiry()
+            throws Exception {
+        String principal = uniqueName("never");
+        String body = mockMvc.perform(post("/api/v1/tokens/machine")
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(neverBody(principal, true, null)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long id = MAPPER.readTree(body).get("id").asLong();
+        assertThat(tokenService.findMachineCredential(id).orElseThrow().expiresAt())
+                .isNull();
+
+        // The choice and a date together say two things: refused, not resolved in either's favour.
+        mockMvc.perform(post("/api/v1/tokens/machine")
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(neverBody(uniqueName("both"), true, soon().toString())))
+                .andExpect(status().isUnprocessableEntity());
+        // Explicitly false and no expiry is the omitted-expiry case, still refused.
+        mockMvc.perform(post("/api/v1/tokens/machine")
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(neverBody(uniqueName("notnever"), false, null)))
+                .andExpect(status().isUnprocessableEntity());
+
+        // Rotation keeps exactly the grant: still no expiry, old secret dead, new one live.
+        TokenService.IssuedToken original = tokenService.createMachineCredential(
+                uniqueName("never-rot"), "p", List.of("estate:read"), null, true, "admin@example.invalid");
+        TokenService.IssuedToken rotated =
+                tokenService.rotateMachineCredential(original.id()).orElseThrow();
+        assertThat(tokenService
+                        .findMachineCredential(rotated.id())
+                        .orElseThrow()
+                        .expiresAt())
+                .isNull();
+        assertThat(tokenService.authenticate(original.token())).isEmpty();
+        assertThat(tokenService.authenticate(rotated.token())).isPresent();
+    }
+
+    /** GW_AUTH_0077: the built-in cap for a credential that does expire is one year. */
+    @Test
+    @SVCs({"SVC_GW_AUTH_0093"})
+    void the_built_in_cap_is_one_year() throws Exception {
+        assertThat(SkillsGatewayProperties.Tokens.DEFAULT_MACHINE_MAX_TTL).isEqualTo(java.time.Duration.ofDays(365));
+        mockMvc.perform(post("/api/v1/tokens/machine")
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createBody(
+                                uniqueName("y2"),
+                                List.of("estate:read"),
+                                Instant.now().plus(366, ChronoUnit.DAYS).toString())))
+                .andExpect(status().isUnprocessableEntity());
+        mockMvc.perform(post("/api/v1/tokens/machine")
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createBody(
+                                uniqueName("y1"),
+                                List.of("estate:read"),
+                                Instant.now().plus(364, ChronoUnit.DAYS).toString())))
+                .andExpect(status().isCreated());
+    }
+
     @Test
     @SVCs({"SVC_GW_AUTH_0021"})
     void a_session_derived_credential_can_never_hold_an_api_scope() {

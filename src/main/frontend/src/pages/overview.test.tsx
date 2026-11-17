@@ -52,3 +52,24 @@ test("an_estimated_total_reads_as_about", async () => {
 
   expect(await screen.findByText("about 2,500,000 ledger entries")).toBeInTheDocument();
 });
+
+/**
+ * Personal tokens have one home, the user menu's Security entry, so Overview offers none and makes
+ * no read of the token list.
+ *
+ * @SVCs SVC_GW_AUTH_0086
+ */
+test("overview_has_no_access_tokens_card_and_reads_no_tokens", async () => {
+  const reads: string[] = [];
+  const listener = ({ request }: { request: Request }) => {
+    const path = new URL(request.url).pathname;
+    if (path.startsWith("/api/v1/tokens")) reads.push(path);
+  };
+  server.events.on("request:start", listener);
+  renderPage();
+  expect(await screen.findByRole("heading", { name: "Gateway Overview" })).toBeInTheDocument();
+  expect(screen.queryByText("Access tokens")).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Manage tokens" })).not.toBeInTheDocument();
+  server.events.removeListener("request:start", listener);
+  expect(reads).toEqual([]);
+});
