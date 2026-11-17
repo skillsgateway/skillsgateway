@@ -41,13 +41,15 @@ concurrent pair of "add x" and "remove x" has no ambiguity to explain. The respo
 token's view (`TokenView`, `MachineCredentialView`), never a secret. Both are additive
 within the major.
 
-**D2. The list is required, and an empty personal list means every marketplace.** A
-missing `scopes` is 422 ("state the list; an empty list means every marketplace"). An
-empty list on the personal route widens to every marketplace, exactly as at creation. The
-portal never sends `[]` for a limited choice (`GW_AUTH_0088`); it sends `[]` only for the
-explicit *Every marketplace* choice, which is why `lib/token-scope.ts` gets a second
-function, `scopesForUpdate`, rather than reusing `scopesFor` (whose `undefined` for "every"
-would be a missing field here). On the machine route an empty list is 422, as at creation.
+**D2. (Revised, see the last section.) Every marketplace is stated, never read from an empty
+list.** The personal body takes either a non-empty `scopes` list or `allMarketplaces: true`,
+whichever way the token was created. An empty list, a body with neither, a body with both and
+`allMarketplaces: false` are each refused **400**, with a message naming the field to use.
+Creation is unchanged (omitted or empty still means every marketplace there). The portal sends
+`allMarketplaces: true` for its *Every marketplace* choice and a non-empty list otherwise
+(`GW_AUTH_0088`), which is why `lib/token-scope.ts` gets `updateBodyFor` rather than reusing
+`scopesFor`. On the machine route an empty list is 422, as at creation. *(As first built, an
+empty personal list meant every marketplace, as at creation, and the portal sent `[]` for it.)*
 
 **D3. Strict bodies: unknown fields are 400.** The request records carry
 `@JsonIgnoreProperties(ignoreUnknown = false)`, so a body naming `pushScopes`, `apiScopes`
@@ -122,8 +124,8 @@ the existing split between `token-*` and `machine-credential-*`):
 | `token-scopes-changed` | the owner | `token {id} '{name}' scopes {before} -> {after}` |
 | `machine-credential-scopes-changed` | the administrator | `credential {id} '{name}' principal={p} scopes {before} -> {after}` |
 
-Lists print as `all` for an empty fetch list (the ledger's existing vocabulary for tokens)
-and as the sorted names otherwise. A no-op edit (same list) is still recorded: the owner
+Lists print as `every marketplace` in words for a token that fetches them all (never an empty
+array, and not the creation entry's `all`) and as the sorted names otherwise. A no-op edit (same list) is still recorded: the owner
 asked for it, a conditional entry is one more branch that could be wrong, and the entry shows
 `before` equal `after`.
 
@@ -170,11 +172,11 @@ container, and the buttons are the page's existing `sm` size); no debounce or vi
 caps its rows and filters an in-memory list, D10 of the earlier change); no RTL or long-translation work
 beyond `wrap-anywhere` on the dialog title (the portal is English-only and names are restricted).
 
-**D12. Operation ids.** Adding two operations reshuffled springdoc's numbering of the overloaded `revoke`
-handlers in `openapi.json` (`revoke_3` became `revoke_2`, and so on): the order it numbers them in is
-not stable under an unrelated route. An operation id is part of the contract generated clients are
-built from, so the three affected handlers (tokens, system tokens, waivers) pin their published ids with
-`operationId`, and the regenerated `openapi.json` is purely additive.
+**D12. Operation ids (revised: not pinned).** Adding two operations reshuffled springdoc's numbering of
+the overloaded `revoke` handlers in `openapi.json` (`revoke_3` became `revoke_2`, `revoke_2` became
+`revoke_1`, `revoke_1` became `revoke_3`). They were first pinned to their published values; the
+owner decided to let them renumber. oasdiff classifies each as info (`api-operation-id-removed`), so
+the gate passes; nothing in the repository names an operation id outside the generated types.
 
 ## Failure model (old-coder, tier 3)
 
@@ -183,7 +185,7 @@ built from, so the three affected handlers (tokens, system tokens, waivers) pin 
 | A caller edits a token that is not theirs | owner-scoped statement, 404 | `SVC_GW_AUTH_0103` |
 | A personal route edits a machine credential, or the reverse | `api_scopes IS NULL` / `IS NOT NULL` in the statement | `SVC_GW_AUTH_0103`, `0107` |
 | A credential edits credentials | both routes unreachable, registry test, bearer attempt | `SVC_GW_AUTH_0103` |
-| An empty list silently grants everything | machine: 422; personal: empty is the stated, documented, tested every-marketplace; portal never sends it for a limited choice | `SVC_GW_AUTH_0102`, `0104`, `0108` |
+| An empty list silently grants everything | machine: 422; personal: an empty list is 400 and every marketplace is only `allMarketplaces: true`; portal never sends an empty list | `SVC_GW_AUTH_0102`, `0104`, `0107`, `0108` |
 | An edit resurrects or alters a dead token | liveness is part of the statement | `SVC_GW_AUTH_0103` |
 | Edit and rotate race, edit lost | revoke returns the row; successor built from it | `SVC_GW_AUTH_0105` |
 | Concurrent edits give a ledger that cannot be replayed | `FOR UPDATE`, before read in the statement | `SVC_GW_AUTH_0106` |
@@ -203,10 +205,9 @@ Known limits: widening by an administrator is not four-eyes; the ledger entry is
 ## Grill and rubberduck record (settled from the code, no one to ask)
 
 - *An empty list on the personal route widens to every marketplace; is that an accident
-  waiting to happen?* Kept, because creation and the owner's brief say so. The accident is a
-  client sending `[]` by mistake, so the portal sends it only for the explicit *Every
-  marketplace* choice (D2), the API documents it, and the ledger prints `all` for the after
-  value, so a widening by accident is visible.
+  waiting to happen?* It was kept at first, because creation and the brief said so, and the
+  owner then decided against it: an empty list is refused and every marketplace is stated as
+  `allMarketplaces: true` (D2, and the last section).
 - *Is a stolen browser session a way to widen?* Yes, as it already is for creating a token
   with any scope; an edit grants nothing creation does not (D4). The ledger names the actor.
 - *Does the portal's CSRF protection cover `PATCH`?* The shared `api()` helper sends the
@@ -218,3 +219,33 @@ Known limits: widening by an administrator is not four-eyes; the ledger entry is
   one-owner credential.
 - *Delta bodies (add or remove one scope)* were rejected in D1; *a second administrator
   approving a widening* in D4, and flagged to the owner.
+
+## Revision after the owner's decisions
+
+The owner reviewed the decisions flagged in the pull request. Four stand as built: widening a
+system access token needs only the administrator role; session-derived credentials are editable
+like any personal token; a no-op edit is still audited; the last write wins between concurrent
+edits. Two changed the work:
+
+1. **Every marketplace is an explicit statement on a personal edit.** The owner wants a user to be
+   able to make a token reach every marketplace on any edit, however it was created, as a
+   statement and never as an empty list. The body takes **either** a non-empty `scopes` list
+   **or** `allMarketplaces: true`. An empty list, neither, both, and `allMarketplaces: false` are
+   refused 400 with a message naming the field to use (the check runs before the token is looked
+   up, so it never reveals whether a token exists). Creation is unchanged. The ledger writes
+   `every marketplace` in words on either side of an edit, never an empty array. `TokenService.updateScopes`
+   now takes `null` for every marketplace and refuses an empty list as defence in depth. The
+   portal's edit control sends `allMarketplaces: true` for *Every marketplace* and a non-empty list
+   otherwise (`updateBodyFor`); nothing a user sees changed. Reqstool text for `GW_AUTH_0083`, `GW_AUTH_0088`
+   and `SVC_GW_AUTH_0102`, `0107`, `0108` was reworded to match. Tests first: five of the eight
+   `TokenScopeEditTests` failed on the first run (the new field was refused as unknown, the empty list
+   was accepted), and two portal tests failed on the old body shape; a limited token widened to every
+   marketplace, an unscoped token narrowed, and a rotation after the widening keeping it are covered.
+2. **The four `revoke` operation ids are not pinned.** They renumber (D12). The contract check was run
+   the way `.github/workflows/api-contract.yml` runs it: `oasdiff breaking <merge-base openapi.json>
+   src/main/frontend/openapi.json --fail-on ERR` from the repository root, which reads `.oasdiff.yaml`.
+   Result: no breaking change (`oasdiff changelog`: 0 error, 0 warning, 5 info: two endpoints added,
+   three operation ids replaced). The workflow therefore ends at "The contract change is additive",
+   and neither the label nor `!` in the title is needed. The gate reads no version: it diffs every
+   pull request against its merge base whatever the latest tag is, so how `compatibility.md` dates the
+   start of the promise does not change this result.

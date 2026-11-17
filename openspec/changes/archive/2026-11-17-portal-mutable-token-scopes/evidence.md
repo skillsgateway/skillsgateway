@@ -1,10 +1,54 @@
 # Evidence: portal-mutable-token-scopes
 
 One final fresh run of every gate after the last code edit, on commit
-`01371d53` (`test(auth): classify the two scope-change routes in the deny-by-default walk`,
-on top of `68d34428`, `feat(portal): let a token's scopes be edited after creation`; the only later
-changes are this file, the task checkboxes and the archive). Run 2026-11-17, in the change's own
-worktree. Stacked on `portal-pat-scopes` (#893) at `8fd5c921`, unchanged throughout.
+`40fff80d` (`feat(portal): state every marketplace on a token edit instead of an empty list`, the
+revision after the owner's decisions, on top of `01371d53`, `68d34428` and the proposal; the only later
+changes are this file and the archived design and proposal). Run 2026-11-17, in the change's own
+worktree. Stacked on `portal-pat-scopes` (#893) at `8fd5c921`, unchanged throughout. The first run of
+the original design, on `01371d53`, passed every gate too (1379 tests); the tails below are from the
+revised run, which replaces it.
+
+## Revision after the owner's decisions
+
+Two decisions changed the work (the design's last section): every marketplace on a personal edit is
+`allMarketplaces: true` and never an empty list, and the four renumbered `revoke` operation ids are no
+longer pinned.
+
+Tests were changed first and watched failing for the right reason: on the unchanged code, 5 of the 8
+`TokenScopeEditTests` failed (`allMarketplaces` was refused as an unknown field: `expected: 200 but was:
+400`; the empty list, which used to widen, was accepted: `expected: 400`; the strict-body cases `{}`,
+`{"scopes": null}` answered 422, not 400), and two portal tests failed
+(`updateBodyFor is not a function`; `expected { id: 22, body: { scopes: [] } } to deeply equal { id: 22,
+body: { allMarketplaces: true } }`). They pass after the change. Added coverage: a token created limited
+widened to every marketplace, one created unscoped narrowed, and a rotation after the widening keeping it
+(the facade serving the rotated secret both); the adversarial bodies now include both fields, neither,
+an empty list, `allMarketplaces: false`, `null`s, another user's token, a machine credential's id, and a
+revoked or expired token (the last four use a valid body, so the 404 and 409 are what is tested).
+
+Mutants for the new rule, each applied, the suite run, the file restored from a byte copy: N1 both
+fields accepted, N2 `allMarketplaces: false` accepted, N3 an empty list passed through, N4 the ledger
+writing `[]` for every marketplace, and a portal mutant sending `{ scopes: [] }` for *Every
+marketplace*: all five killed.
+
+The contract check, run as `.github/workflows/api-contract.yml` runs it (oasdiff 1.37.0 installed with
+Homebrew for this run; from the repository root, so `.oasdiff.yaml` and its severity file apply; baseline
+the `openapi.json` at the merge base with `feat/portal-pat-scopes`, `8fd5c921`):
+
+```
+$ oasdiff breaking baseline-openapi.json src/main/frontend/openapi.json --fail-on ERR
+No breaking changes to report, but the specs are different.
+oasdiff-exit=0
+$ oasdiff changelog baseline-openapi.json src/main/frontend/openapi.json
+5 changes: 0 error, 0 warning, 5 info
+  [api-operation-id-removed] DELETE /api/v1/tokens/machine/{id}: `revoke_3` removed and replaced with `revoke_2`
+  [endpoint-added]           PATCH  /api/v1/tokens/machine/{id}
+  [api-operation-id-removed] DELETE /api/v1/tokens/{id}: `revoke_2` removed and replaced with `revoke_1`
+  [endpoint-added]           PATCH  /api/v1/tokens/{id}
+  [api-operation-id-removed] DELETE /api/v1/waivers/{id}: `revoke_1` removed and replaced with `revoke_3`
+```
+
+The workflow's second step reads only whether that step failed, so it ends at "The contract change is
+additive"; no label and no `!` in the title is needed. The workflow reads no version.
 
 Tier: 3 of `.claude/skills/old-coder` (token authority). Spec approval: not obtained (autonomous
 run); the spec (`proposal.md`, `design.md`, the delta specs and the reqstool cases) is what the owner
@@ -66,16 +110,16 @@ are each exercised by a test above). The independent-verifier option is not used
 ```
 [INFO] Test Files  46 passed (46)
 [INFO]       Tests  345 passed (345)
-[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0 -- in dev.skillsgateway.server.TokenScopeEditTests
-[INFO] Tests run: 1379, Failures: 0, Errors: 0, Skipped: 9
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0 -- in dev.skillsgateway.server.TokenScopeEditTests
+[INFO] Tests run: 1380, Failures: 0, Errors: 0, Skipped: 9
 [INFO] BUILD SUCCESS
 exit 0
 ```
 
-(1372 before this change, plus the seven in `TokenScopeEditTests`.) `OpenApiContractTests` is in this
+(1372 before this change, plus the eight in `TokenScopeEditTests`.) `OpenApiContractTests` is in this
 run and green: the committed `openapi.json` is the served document, and its diff against the parent
-branch has no removed line, so the breaking-change gate sees an additive change (the overloaded
-`revoke` operations pin their published ids, design D12).
+branch carries no breaking change (the three renumbered `revoke` operation ids are info-level and are
+not pinned, design D12; oasdiff result in the revision section above).
 
 ## `pnpm test:stories` (in `src/main/frontend`)
 

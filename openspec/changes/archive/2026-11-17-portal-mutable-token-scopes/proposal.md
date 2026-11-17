@@ -15,11 +15,13 @@ leave credentials broader than needed because narrowing them is a chore.
 
 ## What Changes
 
-- **Personal access tokens: `PATCH /api/v1/tokens/{id}`**, body `{ "scopes": [...] }`.
+- **Personal access tokens: `PATCH /api/v1/tokens/{id}`**, body either `{ "scopes": [...] }`
+  (non-empty) or `{ "allMarketplaces": true }`.
   The owner replaces the marketplaces the token may fetch while it is live (neither
   revoked nor expired). Narrowing is always allowed; every name is validated exactly as
-  at creation (a registered marketplace, or the catalog's name); an empty list means
-  every marketplace, as at creation. `scopes` must be stated.
+  at creation (a registered marketplace, or the catalog's name). Every marketplace is
+  only ever stated: an empty list, neither field, both, or `allMarketplaces: false` are
+  refused 400 (revised after the owner's decisions; see the design).
 - **System access tokens: `PATCH /api/v1/tokens/machine/{id}`**, body
   `{ "apiScopes": [...] }`. An administrator replaces the API scopes of a live
   credential, under every invariant of the model: at least one scope, each checked
