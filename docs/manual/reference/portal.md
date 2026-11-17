@@ -511,8 +511,8 @@ saved yet.
 On **Settings**, last, and **shown only to a session holding the `admin`
 role**. **Remove _name_…** opens a confirmation titled with the marketplace's
 name. The confirmation states what removal does: every approved snapshot is
-withdrawn, so the facade serves nothing under the name; tokens lose their grant
-to publish to it and keep their grant to fetch it; the record, the snapshots and
+withdrawn, so the facade serves nothing under the name; tokens keep their grant to
+fetch it; the record, the snapshots and
 the ledger are kept; and the name can be registered again as a new marketplace.
 It also asks for a **Reason**, which is recorded on the removal and on each
 withdrawal. **Remove _name_** is disabled until the reason holds something

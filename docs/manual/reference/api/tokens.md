@@ -115,9 +115,9 @@ answers exactly like one that does not exist. Every change is recorded on the [a
 ledger](audit.md) as `token-scopes-changed`, with the actor and the scopes before and after (every
 marketplace written in words, never as an empty array), in the same transaction.
 
-A body that carries any field other than `scopes` and `allMarketplaces`, such as `pushScopes`,
-`apiScopes`, `expiresAt` or `name`, is refused with `400` and changes nothing: publication scopes
-are not editable, and a personal token never holds API scopes. So is a body with neither field,
+A body that carries any field other than `scopes` and `allMarketplaces`, such as `apiScopes`,
+`expiresAt` or `name`, is refused with `400` and changes nothing: a personal token never holds API
+scopes. So is a body with neither field,
 with both, with an empty `scopes` list, or with `allMarketplaces: false`; the message names the
 field to use.
 
@@ -520,7 +520,7 @@ $ curl -X PATCH localhost:8080/api/v1/tokens/machine/4 \
 Every rule of provisioning applies: at least one scope, each one the registry defines, no wildcard
 and nothing implied. Only the API scopes change: the principal, name, expiry, secret and the
 credential's (empty) fetch scope are untouched. A body that carries any other field, such as `scopes`,
-`pushScopes`, `expiresAt` or `neverExpires`, is refused with `400`.
+`expiresAt` or `neverExpires`, is refused with `400`.
 
 !!! warning "A widening reaches whoever already holds the secret"
 
