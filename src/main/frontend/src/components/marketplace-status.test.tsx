@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import type { MarketplaceView, Snapshot } from "@/api/queries";
 import { MarketplaceStatus } from "./marketplace-status";
@@ -37,7 +37,9 @@ test("up_to_date_says_what_is_served_since_when_and_by_whom", () => {
   const served = screen.getByTestId("status-served");
   expect(served).toHaveTextContent("Served now: 111111111111");
   expect(served).toHaveTextContent("approved by ada");
-  expect(within(served).getByText(/ago|in /)).toBeInTheDocument();
+  // "Since when" is the machine-readable instant, not the relative wording: that wording depends on
+  // today's date ("6 days ago", then "last week" from the seventh day on) and this fixture is fixed.
+  expect(served.querySelector("time")).toHaveAttribute("datetime", FIRST.decidedAt);
   expect(screen.getByTestId("status-up-to-date")).toBeInTheDocument();
   expect(screen.queryByTestId("status-newer")).not.toBeInTheDocument();
 });
