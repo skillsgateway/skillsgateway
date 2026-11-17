@@ -90,7 +90,7 @@ the part that matters for a security product:
   (the API, estate and path refusals); `GW_AUTH_0091 — Administrators are told
   which former hosted repositories remain`, with `SVC_GW_AUTH_0112` (the route)
   and `SVC_GW_AUTH_0113` (the portal notice).
-- **ADR 0024** (Proposed) supersedes ADR 0007; ADR 0007 is marked superseded.
+- **ADR 0024** (Proposed when written, accepted by the owner on 2026-11-17) supersedes ADR 0007; ADR 0007 is marked superseded.
 - A new operator procedure (after the upgrade: copy each listed repository, push it
   to a forge, register it as an upstream under the old name, approve it, delete the
   folder; before it, optionally avoid the gap) in `docs/manual/guides/`, and the

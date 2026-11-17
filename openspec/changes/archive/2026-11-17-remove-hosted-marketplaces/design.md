@@ -342,4 +342,4 @@ and `/impeccable audit` apply; the guide is linked from the banner.
    the prefix and ships as a major. This change declares the break and does not
    move the prefix (nothing replaces what is removed); applying the
    `BREAKING CONTRACT` label is the owner's act.
-5. **Acceptance of ADR 0024**, which supersedes ADR 0007. It is Proposed.
+5. **Acceptance of ADR 0024**, which supersedes ADR 0007. Accepted by the owner on 2026-11-17 (it was Proposed when this change was written).
