@@ -5482,7 +5482,7 @@ block and a clipboard button that flips to a checkmark for two seconds.</p>
 </tr>
 <tr>
 <td>Actions</td>
-<td><strong>Revoke</strong>, shown only while active.</td>
+<td><strong>Edit reach</strong> and <strong>Revoke</strong>, shown only while active.</td>
 </tr>
 </tbody>
 </table>
@@ -5497,6 +5497,22 @@ prove.</p>
 <p><strong>Revoke</strong> calls <code>DELETE /api/v1/tokens/{id}</code> and toasts <em>Token '{name}' revoked</em>.
 It fires immediately. Revocation is recorded rather than deleted: the row stays
 with a <code>revoked</code> badge.</p>
+<p><strong>Edit reach</strong> opens a dialog headed <em>Edit reach of '{name}'</em> with the same
+<strong>Marketplaces</strong> choice the create form uses, starting from the token's current reach
+(<strong>Every marketplace</strong> when it has no limit, otherwise its names ticked). Saving calls
+<a href="../api/tokens/#patch-tokensid"><code>PATCH /api/v1/tokens/{id}</code></a> and changes nothing but the
+reach: the secret, expiry and name stay, and the secret already in use follows the new
+reach on its next request, so nothing has to be redistributed. <strong>Save reach</strong> stays
+disabled while the choice names no marketplace (the API refuses an empty list, so a limited choice
+that named nothing could not be sent), while it is the same as the current reach, and while the
+request is in flight (<em>Saving…</em>), and a line beneath the choice says which. <strong>Every marketplace</strong> is
+sent as <code>allMarketplaces: true</code>, a limited choice as its list; the two are never combined. A choice
+that widens the token (<strong>Every marketplace</strong>, or a name the token did not have) is said so, above the
+button: the token fetches those marketplaces at once. The API's refusal, such as a marketplace removed since the list was read or a token
+that was revoked or expired meanwhile, is shown in the dialog as the API states it. On
+success the dialog closes, a toast says <em>Reach of '{name}' changed</em>, and the list shows the
+new reach. The change is recorded on the <a href="../api/audit/">audit ledger</a> with the reach before
+and after. Rotation afterwards carries the changed reach.</p>
 <p>Empty state: "No tokens yet."</p>
 <p>See <a href="../../guides/consuming-skills/">Consuming approved skills</a> for using a token
 with a git client.</p>
@@ -5569,13 +5585,24 @@ the client's query cache, in the browser's stored state or in the address.</p>
 </tr>
 <tr>
 <td>Actions</td>
-<td><strong>Rotate</strong> and <strong>Revoke</strong>, shown only while active.</td>
+<td><strong>Edit scopes</strong>, <strong>Rotate</strong> and <strong>Revoke</strong>, shown only while active.</td>
 </tr>
 </tbody>
 </table>
 <p>The marks are words, not colour alone, and they are the reason <code>lastUsedAt</code> exists:
 a credential nothing uses any more, and one about to stop a pipeline. They are not
 shown for a credential that can no longer authenticate.</p>
+<p><strong>Edit scopes</strong> opens a dialog headed <em>Edit scopes of '{name}'</em> with the same scope
+checklist as the create form, starting from the scopes the token holds. Saving calls
+<a href="../api/tokens/#patch-apiv1tokensmachineid"><code>PATCH /api/v1/tokens/machine/{id}</code></a> and changes
+nothing but the scopes: the principal, expiry and secret stay. <strong>Save scopes</strong> stays
+disabled until at least one scope is ticked (a system access token must hold one; to remove
+them all, revoke it) and the choice differs from what the token holds, and a line beneath the
+list says which. Because the secret stays, <strong>whoever already holds it has the new scopes on its
+next request</strong>; when the choice adds scopes the dialog lists them and says so above the button.
+The API's refusal is shown in the dialog as it states it, the list shows the new scopes after
+saving, and the change is recorded on the <a href="../api/audit/">audit ledger</a> with the scopes before
+and after and the administrator who made it.</p>
 <p><strong>Rotate</strong> and <strong>Revoke</strong> each ask first. Rotating issues a fresh secret with the
 same principal, scopes and expiry and revokes the old one at once, so whatever uses
 it must be given the new value, which is shown in the same once-only dialog.

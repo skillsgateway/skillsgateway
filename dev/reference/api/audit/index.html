@@ -2951,6 +2951,16 @@ the acting OIDC principal.</p>
 <td><code>credential {id} '{name}' principal=…</code>.</td>
 </tr>
 <tr>
+<td><code>token-scopes-changed</code></td>
+<td>The owner changed the marketplaces a <a href="../tokens/#patch-tokensid">personal access token may fetch</a>, in the same transaction as the change. The actor is the owner.</td>
+<td><code>token {id} '{name}' scopes {before} -&gt; {after}</code>, each side the sorted names in brackets, or <code>every marketplace</code> in words when the token fetches them all.</td>
+</tr>
+<tr>
+<td><code>machine-credential-scopes-changed</code></td>
+<td>An administrator <a href="../tokens/#patch-apiv1tokensmachineid">changed the API scopes</a> of a machine API credential, in the same transaction as the change.</td>
+<td><code>credential {id} '{name}' principal=… scopes {before} -&gt; {after}</code>, each side the sorted scope names in brackets.</td>
+</tr>
+<tr>
 <td><code>principal-tokens-revoked</code></td>
 <td>An administrator revoked every live personal token of a principal.</td>
 <td><code>principal=… tokens=[{id}, …]</code>.</td>

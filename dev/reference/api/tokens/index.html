@@ -1872,6 +1872,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#patch-tokensid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PATCH /tokens/{id}
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#get-tokens" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2076,6 +2087,17 @@
     <span class="md-ellipsis">
       
         POST /api/v1/tokens/machine/{id}/rotate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patch-apiv1tokensmachineid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PATCH /api/v1/tokens/machine/{id}
       
     </span>
   </a>
@@ -2832,6 +2854,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#patch-tokensid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PATCH /tokens/{id}
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#get-tokens" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3043,6 +3076,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#patch-apiv1tokensmachineid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PATCH /api/v1/tokens/machine/{id}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#delete-apiv1tokensmachineid" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3182,12 +3226,75 @@ reports for the served revision (the configured <code>skills-gateway.catalog.nam
 signed-in caller); that read answers <code>404</code> while the catalog is disabled or has no
 revision yet, and the portal then offers no catalog entry. The token list reads each
 token's <code>scopes</code> and <code>pushScopes</code> from <code>GET /tokens</code>.</p>
+<h2 id="patch-tokensid"><code>PATCH /tokens/{id}</code><a class="headerlink" href="#patch-tokensid" title="Permanent link">&para;</a></h2>
+<p>Change the marketplaces a live token may fetch, without changing anything else about it
+(GW_AUTH_0083, GW_AUTH_0085). Only the owner can; a token that is not live cannot be edited.</p>
+<p><strong>Body</strong> — <strong>either</strong> <code>{scopes}</code>, a non-empty list, <strong>or</strong> <code>{allMarketplaces: true}</code>; nothing else.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </span>localhost:8080/api/v1/tokens/1<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"scopes":["acme"]}'</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </span>localhost:8080/api/v1/tokens/1<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"allMarketplaces":true}'</span>
+</code></pre></div>
+<p>A <code>scopes</code> list <strong>replaces</strong> the token's scopes and is validated exactly as at creation: every
+name must be a registered marketplace or the catalog's name. <code>allMarketplaces: true</code> makes the
+token fetch every marketplace, <strong>however it was created</strong>, so a token made limited can be widened
+and one made unlimited can be narrowed by a list. Every marketplace is only ever a statement on an
+edit: an <strong>empty <code>scopes</code> list is refused</strong>, so a client that built an empty list by mistake cannot
+widen a token by accident. (Creation is unchanged: an omitted or empty <code>scopes</code> still means every
+marketplace there.) Narrowing is always allowed. The response is the token as <code>GET /tokens</code> shows
+it, never a secret, and a token that fetches every marketplace reports an empty <code>scopes</code>.</p>
+<p>Only the scopes change. The secret, the expiry, the name and the publication scopes are
+untouched, and a <a href="#post-tokensidrotate">rotation</a> afterwards carries the scopes as they were
+last set, every marketplace included. The facade resolves a token on every request, so the secret
+already in use follows the change on its next request: a marketplace the token no longer names
+answers exactly like one that does not exist. Every change is recorded on the <a href="../audit/">audit
+ledger</a> as <code>token-scopes-changed</code>, with the actor and the scopes before and after (every
+marketplace written in words, never as an empty array), in the same transaction.</p>
+<p>A body that carries any field other than <code>scopes</code> and <code>allMarketplaces</code>, such as <code>pushScopes</code>,
+<code>apiScopes</code>, <code>expiresAt</code> or <code>name</code>, is refused with <code>400</code> and changes nothing: publication scopes
+are not editable, and a personal token never holds API scopes. So is a body with neither field,
+with both, with an empty <code>scopes</code> list, or with <code>allMarketplaces: false</code>; the message names the
+field to use.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>Changed.</td>
+</tr>
+<tr>
+<td>400</td>
+<td>The body carries another field; has neither <code>scopes</code> nor <code>allMarketplaces</code>, or both; an empty <code>scopes</code> list; or <code>allMarketplaces</code> false. The message names the field to use.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>No such token <strong>owned by the caller</strong>. Another user's token, a machine credential's id and a nonexistent id are indistinguishable.</td>
+</tr>
+<tr>
+<td>409</td>
+<td>The token is revoked or expired.</td>
+</tr>
+<tr>
+<td>422</td>
+<td>Unknown scope.</td>
+</tr>
+</tbody>
+</table>
+<p>A session-derived credential's scopes can be changed the same way; its expiry cannot. No machine
+credential and no session-derived credential can call this route, as with all of
+<code>/api/v1/tokens/**</code>. The portal's <a href="../../portal/#personal-access-tokens">Personal access
+tokens</a> list offers it as <strong>Edit reach</strong>.</p>
 <h2 id="get-tokens"><code>GET /tokens</code><a class="headerlink" href="#get-tokens" title="Permanent link">&para;</a></h2>
 <p>List the calling principal's tokens. Never returns the hash, and never returns
 another user's tokens.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"revokedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">"scopes"</span><span class="p">:[],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">"lastUsedAt"</span><span class="p">:</span><span class="s2">"2026-09-16T08:41:00Z"</span><span class="p">}]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">[{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span><span class="nt">"revokedAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">"scopes"</span><span class="p">:[],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">"lastUsedAt"</span><span class="p">:</span><span class="s2">"2026-09-16T08:41:00Z"</span><span class="p">}]</span>
 </code></pre></div>
 <p>A non-null <code>revokedAt</code> means the token no longer authenticates. Revoked tokens
 are retained rather than deleted, so the record of what existed survives.</p>
@@ -3275,7 +3382,7 @@ An unknown principal lists nothing. Machine credentials are listed under
 <p>Revokes every live personal access token and session credential of the
 principal, effective on each one's next request. Machine credentials are left
 alone; revoke those one by one under <code>/api/v1/tokens/machine</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"revokedTokenIds"</span><span class="p">:[</span><span class="mi">3</span><span class="p">,</span><span class="mi">9</span><span class="p">]}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span><span class="nt">"principal"</span><span class="p">:</span><span class="s2">"alice@example.com"</span><span class="p">,</span><span class="nt">"revokedTokenIds"</span><span class="p">:[</span><span class="mi">3</span><span class="p">,</span><span class="mi">9</span><span class="p">]}</span>
 </code></pre></div>
 <p>The revocation is recorded on the ledger as <code>principal-tokens-revoked</code>, with
 the ids it revoked, including when there were none.</p>
@@ -3305,8 +3412,8 @@ push alike), and the same
 expiry deadline — records which token it replaced (<code>rotatedFrom</code>), and revokes
 the old token <em>before</em> the new one is issued: a failure between the two steps
 leaves no live secret, never two.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"ci-runner"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-12-31T00:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"ci-runner"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-12-31T00:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3333,7 +3440,7 @@ leaves no live secret, never two.</p>
 <hr />
 <h2 id="using-a-token">Using a token<a class="headerlink" href="#using-a-token" title="Permanent link">&para;</a></h2>
 <p>The facade reads only the password field of HTTP Basic; the username is ignored.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>git<span class="w"> </span>ls-remote<span class="w"> </span>https://token:sgw_...@skills.corp.example/git/acme
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>git<span class="w"> </span>ls-remote<span class="w"> </span>https://token:sgw_...@skills.corp.example/git/acme
 </code></pre></div>
 <p>See <a href="../../../guides/consuming-skills/">Consuming approved skills</a> for credential
 helper setup.</p>
@@ -3354,12 +3461,12 @@ not have to create a second, standing credential in order to fetch.</p>
 (8 hours by default) and a caller who sends <code>expiresAt</code> anyway does not get it —
 a credential whose life the holder chooses is a personal access token reached
 through another URL.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/tokens/session<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"name":"my-laptop"}'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/tokens/session<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"name":"my-laptop"}'</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-23T09:00:00Z"</span><span class="p">,</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-08-23T17:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w"> </span><span class="nt">"pushScopes"</span><span class="p">:[],</span><span class="nt">"sessionDerived"</span><span class="p">:</span><span class="kc">true</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-23T09:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-08-23T17:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w"> </span><span class="nt">"pushScopes"</span><span class="p">:[],</span><span class="nt">"sessionDerived"</span><span class="p">:</span><span class="kc">true</span><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3601,7 +3708,7 @@ of scopes and no role reaches any of these:</strong></p>
 </tr>
 <tr>
 <td>All of <code>/api/v1/tokens/**</code></td>
-<td>Credential minting, including this page's own endpoints</td>
+<td>Credential minting and editing, including this page's own endpoints</td>
 </tr>
 <tr>
 <td><code>GET /api/v1/me</code></td>
@@ -3638,21 +3745,21 @@ none.</p>
 session that created it, and without that requirement any user who completed a
 login could mint one that keeps working after their own account is
 deprovisioned.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">"principal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"terraform-ci"</span><span class="p">,</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"platform-pipeline"</span><span class="p">,</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nt">"apiScopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"marketplaces:register"</span><span class="p">,</span><span class="w"> </span><span class="s2">"estate:read"</span><span class="p">],</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-11-01T00:00:00Z"</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="p">}</span>
-</code></pre></div>
-<p>A credential that is meant not to expire says so explicitly, in place of
-<code>expiresAt</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">"principal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"terraform-ci"</span><span class="p">,</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"platform-pipeline"</span><span class="p">,</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="nt">"apiScopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"marketplaces:register"</span><span class="p">],</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span><span class="nt">"neverExpires"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="nt">"apiScopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"marketplaces:register"</span><span class="p">,</span><span class="w"> </span><span class="s2">"estate:read"</span><span class="p">],</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-11-01T00:00:00Z"</span>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="p">}</span>
+</code></pre></div>
+<p>A credential that is meant not to expire says so explicitly, in place of
+<code>expiresAt</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">{</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">"principal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"terraform-ci"</span><span class="p">,</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"platform-pipeline"</span><span class="p">,</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span><span class="nt">"apiScopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"marketplaces:register"</span><span class="p">],</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span><span class="nt">"neverExpires"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="p">}</span>
 </code></pre></div>
 <p><code>principal</code> is not a person. It is what the ledger attributes this credential's
 actions to and what a role grant names.</p>
@@ -3723,12 +3830,68 @@ wildcard entry.</p>
 <p>Same grant, new secret. The principal, name, expiry <strong>deadline</strong> and every one
 of the API scope values carry over, and the old credential is revoked before the
 new one is issued, so no moment has two live secrets.</p>
+<h3 id="patch-apiv1tokensmachineid"><code>PATCH /api/v1/tokens/machine/{id}</code><a class="headerlink" href="#patch-apiv1tokensmachineid" title="Permanent link">&para;</a></h3>
+<p>Replaces the API scopes of a live machine credential (GW_AUTH_0084, GW_AUTH_0085). Requires
+the <code>admin</code> role.</p>
+<p><strong>Body</strong> — <code>{apiScopes}</code>, nothing else.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </span>localhost:8080/api/v1/tokens/machine/4<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"apiScopes":["estate:read","audit:read"]}'</span>
+</code></pre></div>
+<p>Every rule of provisioning applies: at least one scope, each one the registry defines, no wildcard
+and nothing implied. Only the API scopes change: the principal, name, expiry, secret and the
+credential's (empty) fetch scope are untouched. A body that carries any other field, such as <code>scopes</code>,
+<code>pushScopes</code>, <code>expiresAt</code> or <code>neverExpires</code>, is refused with <code>400</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">A widening reaches whoever already holds the secret</p>
+<p>The secret does not change, so the new scopes apply to the next request made with the existing
+secret, wherever it has been copied. Editing in place needs the same role as provisioning a
+credential with those scopes; the control is the ledger entry <code>machine-credential-scopes-changed</code>
+(the administrator, the credential, the scopes before and after, written in the same transaction)
+and the fact that no credential can call this route. Rotate the credential as well if its secret
+may be exposed.</p>
+</div>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>Changed; the credential as <code>GET /api/v1/tokens/machine</code> shows it.</td>
+</tr>
+<tr>
+<td>400</td>
+<td>The body carries a field other than <code>apiScopes</code>.</td>
+</tr>
+<tr>
+<td>403</td>
+<td>The caller does not hold the <code>admin</code> role.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>No such machine credential. A personal token's id is a 404 here.</td>
+</tr>
+<tr>
+<td>409</td>
+<td>The credential is revoked or expired.</td>
+</tr>
+<tr>
+<td>422</td>
+<td>Unknown, wildcard or empty API scopes, or <code>apiScopes</code> missing.</td>
+</tr>
+</tbody>
+</table>
+<p>A rotation after an edit carries the scopes as edited. The portal's <a href="../../portal/#system-access-tokens">System access
+tokens</a> list offers it as <strong>Edit scopes</strong>.</p>
 <h3 id="delete-apiv1tokensmachineid"><code>DELETE /api/v1/tokens/machine/{id}</code><a class="headerlink" href="#delete-apiv1tokensmachineid" title="Permanent link">&para;</a></h3>
 <p>Revokes it. Checked at authentication time rather than swept, so it takes effect
 on the credential's very next request.</p>
 <h3 id="using-one">Using one<a class="headerlink" href="#using-one" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$SKILLS_GATEWAY_TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">     </span>https://gateway.example.com/api/v1/estate
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$SKILLS_GATEWAY_TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">     </span>https://gateway.example.com/api/v1/estate
 </code></pre></div>
 <p>Send no cookie. See <a href="../">REST API</a> for why a request carrying both is
 refused.</p>
