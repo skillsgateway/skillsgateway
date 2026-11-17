@@ -476,6 +476,8 @@
       
         
       
+        
+      
     
     
     
@@ -990,6 +992,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../removing-hosted-marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../exporting-the-audit-ledger/" class="md-nav__link">
         
   
@@ -1108,8 +1138,6 @@
       
         
       
-        
-      
     
     
     
@@ -1195,34 +1223,6 @@
     
   
     Reading a private upstream
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../publishing-first-party-skills/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
   
 
     
@@ -3127,8 +3127,8 @@ webhook secret or an audit-sink credential belongs in an environment variable
 sourced from your platform's secret manager, referenced from the declaration as
 described in <a href="../declarative-estate/">Declarative estate configuration</a>.</p>
 <h2 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">&para;</a></h2>
-<p>On the default <code>filesystem</code> backend the quarantine, the published content the
-facade serves, and any hosted marketplaces all live under the data directory —
+<p>On the default <code>filesystem</code> backend the quarantine and the published content the
+facade serves live under the data directory —
 <code>/data</code> in the image. PostgreSQL records which snapshots exist and which are
 approved, so the volume and the database are one estate: a gateway that restarts
 onto an empty <code>/data</code> still reports its snapshots as published and can serve

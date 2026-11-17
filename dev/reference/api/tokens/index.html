@@ -472,6 +472,8 @@
       
         
       
+        
+      
     
     
     
@@ -773,6 +775,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/removing-hosted-marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/exporting-the-audit-ledger/" class="md-nav__link">
         
   
@@ -891,8 +921,6 @@
       
         
       
-        
-      
     
     
     
@@ -978,34 +1006,6 @@
     
   
     Reading a private upstream
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/publishing-first-party-skills/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
   
 
     
@@ -2006,10 +2006,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#three-scope-dimensions-three-different-empty-values" class="md-nav__link">
+  <a href="#two-scope-dimensions-two-different-empty-values" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Three scope dimensions, three different empty values
+        Two scope dimensions, two different empty values
       
     </span>
   </a>
@@ -2988,10 +2988,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#three-scope-dimensions-three-different-empty-values" class="md-nav__link">
+  <a href="#two-scope-dimensions-two-different-empty-values" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Three scope dimensions, three different empty values
+        Two scope dimensions, two different empty values
       
     </span>
   </a>
@@ -3154,14 +3154,13 @@ be recovered afterwards.</p>
 <hr />
 <h2 id="post-tokens"><code>POST /tokens</code><a class="headerlink" href="#post-tokens" title="Permanent link">&para;</a></h2>
 <p>Create a token for the calling principal.</p>
-<p><strong>Body</strong> — <code>{name, scopes?, expiresAt?, pushScopes?}</code></p>
+<p><strong>Body</strong> — <code>{name, scopes?, expiresAt?}</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/tokens<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name":"ci-runner","scopes":["acme","catalog"],"expiresAt":"2026-12-31T00:00:00Z"}'</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"ci-runner"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-17T09:00:00Z"</span><span class="p">,</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">,</span><span class="s2">"catalog"</span><span class="p">],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-12-31T00:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"pushScopes"</span><span class="p">:[]}</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[</span><span class="s2">"acme"</span><span class="p">,</span><span class="s2">"catalog"</span><span class="p">],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-12-31T00:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">}</span>
 </code></pre></div>
 <p><code>scopes</code> (GW_AUTH_0006) lists marketplace names the token may fetch — the
 <a href="../../../guides/virtual-catalog/">virtual catalog</a>'s name is a valid entry —
@@ -3170,19 +3169,13 @@ Empty or omitted grants every marketplace, which is what every pre-scoping
 token meant. An out-of-scope fetch answers exactly like a marketplace that
 does not exist, so a scoped token is not a directory of what else the gateway
 governs.</p>
-<p><code>pushScopes</code> (GW_FACADE_0007) lists <strong>hosted</strong> marketplaces the token may publish to
-through <a href="../../../guides/publishing-first-party-skills/"><code>/publish/{name}</code></a>, and
-is a different grant from <code>scopes</code> in the one way that matters: omitting it
-grants <strong>none</strong>, not all. There is no every-marketplace push scope, so no token
-issued before publication existed can write anything and none can be granted
-publication to everything by forgetting a field. Entries are validated against
-the registered hosted marketplaces at creation. An out-of-scope push answers
-exactly like a marketplace that does not exist, as an out-of-scope fetch does.</p>
-<p>Only an administrator or an approver of a marketplace may put it in
-<code>pushScopes</code>. A request naming any marketplace the caller neither administers
-nor approves is refused with <code>403</code> and issues no token; one unauthorized name
-refuses the whole request rather than being dropped from it. A request without
-<code>pushScopes</code> needs no role, as before.</p>
+<p><code>pushScopes</code> was removed with hosted marketplaces, which were the only thing it
+could name. A request that still sends a non-empty list is refused with <code>400</code>
+naming the removal, and no token is issued; an empty list is the same as none.
+A token created before the removal keeps its fetch <code>scopes</code> exactly, and
+loses only a grant nothing can use: a token that was issued only to publish is
+now an ordinary token that fetches every marketplace, so revoke such tokens
+(<a href="../../../guides/removing-hosted-marketplaces/#what-consumers-keep">Removing hosted marketplaces</a>).</p>
 <p><code>sessionDerived</code> on a returned token says the credential came from
 <a href="#post-apitokenssession"><code>POST /api/v1/tokens/session</code></a> rather than from a
 deliberate provisioning.</p>
@@ -3205,8 +3198,8 @@ silently shortened.</p>
 <td>Issued. The <code>token</code> field appears in this response and nowhere else, ever.</td>
 </tr>
 <tr>
-<td>403</td>
-<td>A push scope names a marketplace the caller neither administers nor approves.</td>
+<td>400</td>
+<td>The request names <code>pushScopes</code>. Hosted marketplaces and push scopes were removed, so the request is refused rather than the field ignored; no token is issued.</td>
 </tr>
 <tr>
 <td>422</td>
@@ -3220,12 +3213,12 @@ silently shortened.</p>
 <a href="../../portal/#connect-a-client">client wizard</a> send <code>scopes</code> for the marketplaces a
 user ticks and send none for <strong>Every marketplace</strong>, the default. They never send an
 empty list for a limited choice, because an empty <code>scopes</code> grants every
-marketplace. Neither sends <code>pushScopes</code>. The catalog is offered by the <code>name</code> that
+marketplace. The catalog is offered by the <code>name</code> that
 <a href="../../../guides/virtual-catalog/#provenance-and-audit"><code>GET /api/v1/catalog</code></a>
 reports for the served revision (the configured <code>skills-gateway.catalog.name</code>, any
 signed-in caller); that read answers <code>404</code> while the catalog is disabled or has no
 revision yet, and the portal then offers no catalog entry. The token list reads each
-token's <code>scopes</code> and <code>pushScopes</code> from <code>GET /tokens</code>.</p>
+token's <code>scopes</code> from <code>GET /tokens</code>.</p>
 <h2 id="patch-tokensid"><code>PATCH /tokens/{id}</code><a class="headerlink" href="#patch-tokensid" title="Permanent link">&para;</a></h2>
 <p>Change the marketplaces a live token may fetch, without changing anything else about it
 (GW_AUTH_0083, GW_AUTH_0085). Only the owner can; a token that is not live cannot be edited.</p>
@@ -3250,9 +3243,9 @@ already in use follows the change on its next request: a marketplace the token n
 answers exactly like one that does not exist. Every change is recorded on the <a href="../audit/">audit
 ledger</a> as <code>token-scopes-changed</code>, with the actor and the scopes before and after (every
 marketplace written in words, never as an empty array), in the same transaction.</p>
-<p>A body that carries any field other than <code>scopes</code> and <code>allMarketplaces</code>, such as <code>pushScopes</code>,
-<code>apiScopes</code>, <code>expiresAt</code> or <code>name</code>, is refused with <code>400</code> and changes nothing: publication scopes
-are not editable, and a personal token never holds API scopes. So is a body with neither field,
+<p>A body that carries any field other than <code>scopes</code> and <code>allMarketplaces</code>, such as <code>apiScopes</code>,
+<code>expiresAt</code> or <code>name</code>, is refused with <code>400</code> and changes nothing: a personal token never holds API
+scopes. So is a body with neither field,
 with both, with an empty <code>scopes</code> list, or with <code>allMarketplaces: false</code>; the message names the
 field to use.</p>
 <table>
@@ -3466,7 +3459,7 @@ through another URL.</p>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"my-laptop"</span><span class="p">,</span><span class="nt">"token"</span><span class="p">:</span><span class="s2">"sgw_..."</span><span class="p">,</span><span class="nt">"createdAt"</span><span class="p">:</span><span class="s2">"2026-08-23T09:00:00Z"</span><span class="p">,</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:[],</span><span class="nt">"expiresAt"</span><span class="p">:</span><span class="s2">"2026-08-23T17:00:00Z"</span><span class="p">,</span><span class="nt">"rotatedFrom"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w"> </span><span class="nt">"pushScopes"</span><span class="p">:[],</span><span class="nt">"sessionDerived"</span><span class="p">:</span><span class="kc">true</span><span class="p">}</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w"> </span><span class="nt">"sessionDerived"</span><span class="p">:</span><span class="kc">true</span><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -3481,11 +3474,6 @@ through another URL.</p>
 <td>Lifetime</td>
 <td>the gateway's, not negotiable</td>
 <td>the caller's, capped by <code>max-ttl</code></td>
-</tr>
-<tr>
-<td>Publication</td>
-<td>never</td>
-<td><code>pushScopes</code> if granted</td>
 </tr>
 <tr>
 <td>Marked on the ledger</td>
@@ -3536,7 +3524,7 @@ lifetime.</p>
 is not a second credential type: it is an access token whose <strong>API scope list</strong>
 is non-empty, sharing one issue-rotate-revoke-expire lifecycle with everything
 else in this table.</p>
-<h3 id="three-scope-dimensions-three-different-empty-values">Three scope dimensions, three different empty values<a class="headerlink" href="#three-scope-dimensions-three-different-empty-values" title="Permanent link">&para;</a></h3>
+<h3 id="two-scope-dimensions-two-different-empty-values">Two scope dimensions, two different empty values<a class="headerlink" href="#two-scope-dimensions-two-different-empty-values" title="Permanent link">&para;</a></h3>
 <p>This is the part that is easy to get wrong, so it is stated in one place:</p>
 <table>
 <thead>
@@ -3553,12 +3541,6 @@ else in this table.</p>
 <td><code>scopes</code></td>
 <td>every marketplace — <strong>unless <code>apiScopes</code> is non-empty, in which case nothing</strong></td>
 <td>What every pre-scoping token meant, minus the machine-credential hole</td>
-</tr>
-<tr>
-<td>Publish</td>
-<td><code>pushScopes</code></td>
-<td>nowhere</td>
-<td>Added after scoping existed, so it never had a permissive default</td>
 </tr>
 <tr>
 <td>API</td>
@@ -3840,7 +3822,7 @@ the <code>admin</code> role.</p>
 <p>Every rule of provisioning applies: at least one scope, each one the registry defines, no wildcard
 and nothing implied. Only the API scopes change: the principal, name, expiry, secret and the
 credential's (empty) fetch scope are untouched. A body that carries any other field, such as <code>scopes</code>,
-<code>pushScopes</code>, <code>expiresAt</code> or <code>neverExpires</code>, is refused with <code>400</code>.</p>
+<code>expiresAt</code> or <code>neverExpires</code>, is refused with <code>400</code>.</p>
 <div class="admonition warning">
 <p class="admonition-title">A widening reaches whoever already holds the secret</p>
 <p>The secret does not change, so the new scopes apply to the next request made with the existing

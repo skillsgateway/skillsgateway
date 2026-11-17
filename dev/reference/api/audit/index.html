@@ -472,6 +472,8 @@
       
         
       
+        
+      
     
     
     
@@ -773,6 +775,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/removing-hosted-marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/exporting-the-audit-ledger/" class="md-nav__link">
         
   
@@ -891,8 +921,6 @@
       
         
       
-        
-      
     
     
     
@@ -978,34 +1006,6 @@
     
   
     Reading a private upstream
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/publishing-first-party-skills/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
   
 
     
@@ -2967,7 +2967,7 @@ the acting OIDC principal.</p>
 </tr>
 <tr>
 <td><code>ingest-failed</code></td>
-<td>An ingest attempt failed, whatever triggered it. The principal is whoever or whatever triggered it: a person, <code>scheduler</code>, <code>webhook</code>, or the pushing principal.</td>
+<td>An ingest attempt failed, whatever triggered it. The principal is whoever or whatever triggered it: a person, <code>scheduler</code> or <code>webhook</code>.</td>
 <td>The reason, root cause and next step, in one line.</td>
 </tr>
 <tr>
@@ -2985,13 +2985,14 @@ the acting OIDC principal.</p>
 <td>A marketplace was <a href="../marketplaces/#delete-marketplacesname">removed</a>. Its withdrawals follow as <code>snapshot-revoked</code> and <code>snapshot-unpublished</code>.</td>
 <td><code>withdrew {n} approved snapshot(s); reason: …</code>.</td>
 </tr>
-<tr>
-<td><code>marketplace-push-scopes-removed</code></td>
-<td>The same removal took the name out of tokens' publication grants. Written only when a token held one.</td>
-<td><code>tokens=[{id}, …]</code>.</td>
-</tr>
 </tbody>
 </table>
+<p>Four kinds belonged to hosted marketplaces and are <strong>no longer written</strong>:
+<code>marketplace-pushed</code>, <code>marketplace-lineage-rewritten</code>, <code>marketplace-push-ingest-failed</code>
+and <code>marketplace-push-scopes-removed</code>. The ledger is append-only, so entries of those
+kinds written before the removal stay, except the entries recorded under a hosted
+marketplace's own identity, which the upgrade deleted with it
+(<a href="../../../guides/removing-hosted-marketplaces/">Removing hosted marketplaces</a>).</p>
 <p>Reads of the ledger itself record <strong>nothing</strong>, deliberately: an exporter polling
 on a cursor loop would otherwise append one entry per poll, and that entry is
 itself new content to export.</p>

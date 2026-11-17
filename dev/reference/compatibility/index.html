@@ -472,6 +472,8 @@
       
         
       
+        
+      
     
     
     
@@ -773,6 +775,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/removing-hosted-marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
         
   
@@ -891,8 +921,6 @@
       
         
       
-        
-      
     
     
     
@@ -978,34 +1006,6 @@
     
   
     Reading a private upstream
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
   
 
     
@@ -2921,7 +2921,7 @@ has a top-level <code>_plugins</code>; an external plugin whose name is not
 </tr>
 <tr>
 <td>Anything attempting <code>git push</code> to <code>/git/**</code></td>
-<td>Rejected by construction. (A hosted marketplace is published to on <code>/publish/**</code>, a separate endpoint.)</td>
+<td>Rejected by construction, and the gateway accepts a push nowhere.</td>
 </tr>
 </tbody>
 </table>
@@ -3008,6 +3008,33 @@ to live in. A subscriber's stored filter was rewritten by a migration, so no
 operator action was needed; a receiver matching on the name it was given has
 to be updated. This was a declared break under the rules below, and it is the
 kind of change that costs a major release once the contract is frozen.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Hosted marketplaces were removed</p>
+<p>The gateway no longer hosts marketplaces
+(<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0024-the-gateway-does-not-host-marketplaces.md">ADR 0024</a>,
+Proposed). This is a declared break under the rules below, and it takes out:</p>
+<ul>
+<li><code>origin</code>, <code>pushPolicy</code> and <code>publishPath</code> from every marketplace schema, and
+  <code>pushScopeRemovedFromTokenIds</code> from the removal response;</li>
+<li><code>pushScopes</code> from the token schemas and the create-token request — a request that
+  still names push scopes, or asks to register <code>origin: "hosted"</code> or a <code>pushPolicy</code>, is
+  refused with <code>400</code> naming the removal, not ignored;</li>
+<li><code>hosted</code> from the auto-approval <code>allowedBy</code> enum, and <code>origin</code> from a snapshot's
+  provenance;</li>
+<li><code>/publish/**</code>, which is no longer routed;</li>
+<li><code>skills-gateway.estate.marketplaces[].origin: hosted</code> and <code>push-policy</code>, which fail
+  their entry naming the removal (an estate key, covered by review and this note, not by
+  oasdiff);</li>
+<li>the database's record of every hosted marketplace: migration <code>V3</code> <strong>deletes</strong> them,
+  live or removed, with their history and ledger entries, and leaves their repositories
+  on disk. See <a href="../../guides/removing-hosted-marketplaces/">Removing hosted marketplaces</a>.</li>
+</ul>
+<p>The marketplace registration ledger and webhook detail keep <code>origin=upstream</code>, unchanged,
+because the webhook's <code>detail</code> is a required field. The promise above binds from 1.0.0 and
+the latest release is 0.8.0, so nothing was versioned or moved to a new prefix; the pull
+request declares the break in its title and leaves the <code>⚠️ BREAKING CONTRACT</code> label to the
+owner.</p>
 </div>
 <div class="admonition warning">
 <p class="admonition-title">Ingest became a job, before 1.0</p>

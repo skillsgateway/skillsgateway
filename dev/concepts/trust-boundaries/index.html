@@ -472,6 +472,8 @@
       
         
       
+        
+      
     
     
     
@@ -773,6 +775,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/removing-hosted-marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
         
   
@@ -891,8 +921,6 @@
       
         
       
-        
-      
     
     
     
@@ -978,34 +1006,6 @@
     
   
     Reading a private upstream
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
   
 
     
@@ -2532,21 +2532,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-publication-a-publishers-push-becomes-quarantined-content" class="md-nav__link">
+  <a href="#5-roles-what-an-authenticated-session-may-do" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Publication — a publisher's push becomes quarantined content
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-roles-what-an-authenticated-session-may-do" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Roles — what an authenticated session may do
+        5. Roles — what an authenticated session may do
       
     </span>
   </a>
@@ -2756,21 +2745,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-publication-a-publishers-push-becomes-quarantined-content" class="md-nav__link">
+  <a href="#5-roles-what-an-authenticated-session-may-do" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Publication — a publisher's push becomes quarantined content
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-roles-what-an-authenticated-session-may-do" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Roles — what an authenticated session may do
+        5. Roles — what an authenticated session may do
       
     </span>
   </a>
@@ -2870,9 +2848,8 @@ happy-path coverage.</p>
         Container(spa, "Admin portal", "React, Vite", "Served from the same jar at / behind OIDC")
         Container(api, "Admin API", "Spring MVC, /api/**", "Registration, ingestion, approval, provenance, tokens, ledger read")
         Container(facade, "Git facade", "JGit GitServlet, /git/**", "Read-only smart-HTTP, PAT auth, receive-pack disabled")
-        Container(publish, "Publish endpoint", "JGit GitServlet, /publish/**", "Push into a hosted marketplace's origin, PAT push scope")
         ContainerDb(db, "PostgreSQL", "Flyway, JdbcClient", "Marketplaces, snapshots, access tokens, append-only fetch_log")
-        ContainerDb(store, "Git store", "Filesystem bare repos", "hosted/, quarantine/ and published/{name}.git")
+        ContainerDb(store, "Git store", "Filesystem bare repos", "quarantine/ and published/{name}.git")
     }
 
     Rel(reviewer, spa, "Uses", "HTTPS")
@@ -3089,11 +3066,10 @@ the web chain, and it is <strong>stateless</strong>:</p>
   browser session (GW_AUTH_0018) or deliberately provisioned, which is a different
   question from who held it.</li>
 <li>Receive-pack is disabled by construction on this endpoint, so there is no
-  write path here to reject at runtime. Publication into a gateway-hosted
-  marketplace is a separate boundary — see below.</li>
+  write path here to reject at runtime, and the gateway has no other: nothing
+  accepts a git push.</li>
 <li>The endpoint speaks the smart protocol only. Plain-file ("dumb HTTP") reads
-  of <code>info/refs</code>, <code>HEAD</code> or <code>objects/...</code> are refused, on this endpoint and on
-  <code>/publish/**</code>. Every served-content control hangs off upload-pack: the
+  of <code>info/refs</code>, <code>HEAD</code> or <code>objects/...</code> are refused. Every served-content control hangs off upload-pack: the
   served-ref filter, the want policy and the fetch ledger. Withdrawal removes
   refs rather than objects, so a plain-file read would bypass all of them.</li>
 </ul>
@@ -3175,7 +3151,7 @@ that trust-model change, made deliberately and kept narrow
 The human decision moves from each snapshot to the marketplace: an
 administrator turns automatic approval on, with a reason and an expiry of at
 most 90 days, and four-eyes applies to that grant. The grant takes effect only
-for an internal source (a configured URL prefix, or a hosted marketplace) or
+for an internal source (a configured URL prefix) or
 under an administrator exemption, which is a dated exception a named person
 records.</p>
 <p>What the grant allows is narrow. Only the newest snapshot is a candidate, it
@@ -3328,41 +3304,7 @@ bounded before the marketplace is looked up, and every other refusal — an
 unknown marketplace, one not in webhook mode, a signature that did not
 verify — is the same <code>404</code>, so the endpoint reveals neither why it refused nor
 which marketplace names exist.</p>
-<h2 id="5-publication-a-publishers-push-becomes-quarantined-content">5. Publication — a publisher's push becomes quarantined content<a class="headerlink" href="#5-publication-a-publishers-push-becomes-quarantined-content" title="Permanent link">&para;</a></h2>
-<p>A marketplace the gateway
-<a href="../../guides/publishing-first-party-skills/">hosts itself</a> has no upstream: its
-content arrives by <code>git push</code> to <code>/publish/{name}</code>. That is the only write path
-the gateway has, and four things keep it from being a way around the rest of
-this page.</p>
-<p><strong>It is somewhere else.</strong> A separate servlet, resolving a separate repository,
-behind a separate filter chain. <code>/git/**</code> keeps its null receive-pack factory,
-so no push can reach a published repository — not by misconfiguration, because
-there is no shared object to misconfigure (<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0007-first-party-hosting-and-the-publish-endpoint.md">ADR 0007 — First-party hosting and the publish endpoint</a>).</p>
-<p><strong>It writes to neither quarantine nor published.</strong> A push lands in the
-marketplace's <em>origin</em> repository. Ingestion then fetches out of it into
-quarantine exactly as it fetches from an upstream URL, so quarantine keeps the
-property that only the ingestion service writes it — and the
-<code>refs/snapshots/&lt;sha&gt;</code> namespace that vetting and approval address content by
-stays out of any external credential's reach.</p>
-<p><strong>The credential is one nobody holds.</strong> Push authority is a token scope
-separate from fetch scopes, and where an absent <em>fetch</em> scope means every
-marketplace (the compatibility rule for tokens predating scoping), an absent
-<em>push</em> scope means none. No token issued before this existed can publish, and
-no token can be granted publication to everything by omission. Only someone
-with authority over the marketplace, an administrator or its approver, can mint
-the scope; any other session asking for it is refused and gets no token. A push
-for a marketplace outside the scope answers exactly as one for a marketplace
-that does not exist.</p>
-<p><strong>A publisher may move one lineage, forward.</strong> Only <code>refs/heads/main</code> may be
-updated; no ref may be deleted; history may not be rewritten unless the
-marketplace was registered saying it may — and when it may, both tips land on
-the ledger, so "the lineage under that approved snapshot was rewritten" stays
-answerable.</p>
-<p>What a push does <strong>not</strong> do is shorten the pipeline. The commit is quarantined,
-manifest-checked, vetted and held like anything fetched, and is served only
-after a human approves it. First-party content removes a redundant system, not
-the review.</p>
-<h2 id="6-roles-what-an-authenticated-session-may-do">6. Roles — what an authenticated session may do<a class="headerlink" href="#6-roles-what-an-authenticated-session-may-do" title="Permanent link">&para;</a></h2>
+<h2 id="5-roles-what-an-authenticated-session-may-do">5. Roles — what an authenticated session may do<a class="headerlink" href="#5-roles-what-an-authenticated-session-may-do" title="Permanent link">&para;</a></h2>
 <p>Authentication says who a session is; the role model says what it may do.
 Three roles, enforced at the REST API by an explicit authorization call at the
 top of every privileged endpoint:</p>
@@ -3383,7 +3325,7 @@ top of every privileged endpoint:</p>
 <tr>
 <td><code>approver</code></td>
 <td>one marketplace</td>
-<td>Ingest, approve, reject, re-vet, waive, mint a push scope — for that marketplace only. The owning marketplace is resolved from the addressed snapshot or waiver on the server side, so a bare id cannot reach another marketplace's content.</td>
+<td>Ingest, approve, reject, re-vet, waive — for that marketplace only. The owning marketplace is resolved from the addressed snapshot or waiver on the server side, so a bare id cannot reach another marketplace's content.</td>
 </tr>
 <tr>
 <td><code>auditor</code></td>
@@ -3451,7 +3393,7 @@ client sent and comparing, so the gateway never needs the cleartext again. It is
 shown exactly once at creation and cannot be recovered afterwards — not by an
 administrator, not by a database reader.</p>
 <p><strong>Signing secrets are stored in cleartext.</strong> <code>webhook_subscribers.secret</code> and a
-hosted marketplace's <code>marketplaces.webhook_secret</code> are HMAC keys: signing an
+marketplace's <code>marketplaces.webhook_secret</code> are HMAC keys: signing an
 outbound delivery and verifying an inbound push both require the key itself, so a
 hash would make them useless. They are returned exactly once by the call that
 generates them and by no read endpoint afterwards, but they are readable to

@@ -472,6 +472,8 @@
       
         
       
+        
+      
     
     
     
@@ -773,6 +775,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/removing-hosted-marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
         
   
@@ -891,8 +921,6 @@
       
         
       
-        
-      
     
     
     
@@ -978,34 +1006,6 @@
     
   
     Reading a private upstream
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
   
 
     
@@ -2637,12 +2637,11 @@ where it hooks engine events such as <code>tool.call</code> and reaches programs
 files and models through <code>$</code>. The inventory lists each one with its events
 and the interfaces it reaches, and the
 <a href="../vetting/#executable-surface"><code>executable-surface</code></a> vetter flags each one.</dd>
-<dt><strong>Hosted marketplace</strong></dt>
-<dd>A marketplace whose content is pushed straight to the gateway rather than
-fetched, so it has <strong>no upstream</strong> and takes no clone URL. Everything after
-the push is unchanged: quarantined, vetted, held, and served only once
-somebody approves it. See
-<a href="../../guides/publishing-first-party-skills/">Publishing first-party skills</a>.</dd>
+<dt><strong>Hosted marketplace</strong> <em>(removed)</em></dt>
+<dd>A marketplace whose content was pushed straight to the gateway rather than
+fetched. The gateway no longer hosts marketplaces: keep your own skills on a
+forge and register that repository as an upstream. See
+<a href="../../guides/removing-hosted-marketplaces/">Removing hosted marketplaces</a>.</dd>
 <dt><strong>Ingestion</strong></dt>
 <dd>Cloning an upstream default branch into quarantine and pinning the tip
 commit as <code>refs/snapshots/{sha}</code>. Explicit by default; see <em>Sync mode</em> for
@@ -2660,8 +2659,7 @@ issue-rotate-revoke-expire lifecycle as every other token. See
 <a href="../../reference/api/tokens/#machine-api-credentials">Machine API credentials</a>.</dd>
 <dt><strong>Marketplace</strong></dt>
 <dd>A registered upstream git repository — in the Claude Code sense, one
-containing <code>.claude-plugin/marketplace.json</code> — or a hosted marketplace,
-which has no upstream at all. Its name is its identity in the portal, the
+containing <code>.claude-plugin/marketplace.json</code>. Its name is its identity in the portal, the
 API and the facade URL. See
 <a href="../../guides/registering-a-marketplace/">Registering a marketplace</a>.</dd>
 <dt><strong>Minimum release age</strong></dt>
@@ -2718,10 +2716,9 @@ the vetter contract rather than a display string, and is unrelated to a
 <em>policy rule</em>. See
 <a href="../vetting/#the-vetter-contract">The vetter contract</a>.</dd>
 <dt><strong>Scope</strong> (of a token)</dt>
-<dd>Three separate dimensions with three different empty values: <code>scopes</code>
-(fetch through the facade), <code>pushScopes</code> (publish) and <code>apiScopes</code> (the
-control plane). See
-<a href="../../reference/api/tokens/#three-scope-dimensions-three-different-empty-values">Three scope dimensions</a>.</dd>
+<dd>Two separate dimensions with two different empty values: <code>scopes</code> (fetch
+through the facade) and <code>apiScopes</code> (the control plane). See
+<a href="../../reference/api/tokens/#two-scope-dimensions-two-different-empty-values">Two scope dimensions</a>.</dd>
 <dt><strong>Skill</strong></dt>
 <dd>A unit of agent capability — a <code>SKILL.md</code> directory in the open Agent Skills
 format, or a component of a Claude Code plugin. See

@@ -474,6 +474,8 @@
       
         
       
+        
+      
     
     
     
@@ -775,6 +777,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../removing-hosted-marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../exporting-the-audit-ledger/" class="md-nav__link">
         
   
@@ -870,8 +900,6 @@
   
     
     
-      
-        
       
         
       
@@ -1161,34 +1189,6 @@
     
   
     Reading a private upstream
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../publishing-first-party-skills/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
   
 
     
@@ -2809,10 +2809,11 @@
 to. It is the first trust boundary. It reads the upstream's list of references,
 to confirm the gateway can read it and has a default branch to pin, and it
 fetches no content.</p>
-<p>If the skills are your organisation's own and there is no upstream to point at,
-register a <strong>hosted</strong> marketplace instead and push to the gateway directly —
-see <a href="../publishing-first-party-skills/">Publishing first-party skills</a>. The rest
-of this page is about upstream marketplaces.</p>
+<p>If the skills are your organisation's own, keep them on a forge — GitHub, Gitea,
+GitLab — and register that repository here; a private one works through an
+<a href="../private-upstreams/">upstream credential</a>. The gateway does not host
+marketplaces (<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0024-the-gateway-does-not-host-marketplaces.md">ADR 0024</a>);
+if yours did, see <a href="../removing-hosted-marketplaces/">Removing hosted marketplaces</a>.</p>
 <h2 id="in-the-portal">In the portal<a class="headerlink" href="#in-the-portal" title="Permanent link">&para;</a></h2>
 <p><strong>Marketplaces</strong> → <strong>Register marketplace</strong>. The dialog states the constraint up
 front: "The gateway ingests the upstream default branch; the ref is not
@@ -3077,9 +3078,6 @@ carry over.</p>
 <li><strong>Fetch grants carry over.</strong> A token scoped to fetch <code>acme</code> fetches
   whichever marketplace is called <code>acme</code> now. That is what keeps clients
   working; revoke a token that should not reach the new one.</li>
-<li><strong>Publication grants do not.</strong> Removal takes <code>acme</code> out of every token's
-  push scope, and the ledger names the tokens. A publisher of the new <code>acme</code>
-  needs a token granted on it.</li>
 <li><strong>Approver grants do not, in either direction.</strong> Grant again on the new
   marketplace. A grant on the new one does not reach the removed
   marketplace's snapshots or waivers, which only an administrator can open.</li>
@@ -3106,9 +3104,8 @@ no person. Registration takes an optional <code>autoApproval</code>:</p>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="go">         "autoApproval":{"enabled":true,"reason":"our own skills",</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="go">                         "expiresAt":"2027-01-30T00:00:00Z"}}'</span>
 </code></pre></div>
-<p>This works only for a URL under a configured internal prefix, or a hosted
-marketplace; anything else is refused with <code>409</code> before anything is
-registered. To opt in a marketplace outside the prefixes, register it, then
+<p>This works only for a URL under a configured internal prefix; anything else is
+refused with <code>409</code> before anything is registered. To opt in a marketplace outside the prefixes, register it, then
 turn automatic approval on with an exemption on its Settings page. Nothing is published
 automatically while the deployment's mode is <code>off</code>, which is the default. See
 <a href="../approving-snapshots/#automatic-approval">Automatic approval</a>.</p>

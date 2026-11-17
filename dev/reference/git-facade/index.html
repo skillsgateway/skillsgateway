@@ -472,6 +472,8 @@
       
         
       
+        
+      
     
     
     
@@ -773,6 +775,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/removing-hosted-marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
         
   
@@ -891,8 +921,6 @@
       
         
       
-        
-      
     
     
     
@@ -978,34 +1006,6 @@
     
   
     Reading a private upstream
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
   
 
     
@@ -2987,15 +2987,12 @@ leaves the marketplace serving.</p>
 receive-pack factory, so no <code>ReceivePack</code> can be created at all. <code>git push</code> to
 <code>/git/**</code> receives the standard "service not enabled" rejection, whatever the
 credential.</p>
-<p>There is no write-side endpoint, filter or hook <strong>on this servlet</strong> to
-misconfigure. This is a structural guarantee, not a policy one.</p>
-<p>The gateway does accept a push, for marketplaces it
-<a href="../../guides/publishing-first-party-skills/">hosts itself</a> — on <code>/publish/**</code>,
-which is a different servlet resolving a different repository under a different
-token scope, and which cannot reach a published repository any more than this
-one can construct a <code>ReceivePack</code>. See
-<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0007-first-party-hosting-and-the-publish-endpoint.md">ADR 0007 — First-party hosting and the publish endpoint</a> for why the two are separate objects rather than one
-with a mode flag.</p>
+<p>There is no write-side endpoint, filter or hook to misconfigure, here or
+anywhere else in the gateway: nothing accepts a push. This is a structural
+guarantee, not a policy one. (A push endpoint, <code>/publish/**</code>, existed for hosted
+marketplaces until <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0024-the-gateway-does-not-host-marketplaces.md">ADR 0024 — The gateway does not host marketplaces</a>
+removed it; it is no longer routed and answers as any path the gateway does not
+serve.)</p>
 <h2 id="auditing">Auditing<a class="headerlink" href="#auditing" title="Permanent link">&para;</a></h2>
 <p>Two hooks append to the ledger:</p>
 <table>
@@ -3179,7 +3176,7 @@ in and that some are still holding withdrawn content.</p>
 </tr>
 <tr>
 <td><code>git push</code> rejected</td>
-<td>Expected — the facade is read-only by construction. Publishing to a hosted marketplace goes to <code>/publish/{name}</code>.</td>
+<td>Expected — the facade is read-only by construction, and the gateway accepts no push anywhere. Keep your own skills on a forge and register it as an upstream.</td>
 </tr>
 <tr>
 <td>Client keeps getting an old SHA</td>

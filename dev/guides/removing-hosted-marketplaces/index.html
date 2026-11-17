@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://skillsgateway.dev/dev/guides/publishing-first-party-skills/">
+        <link rel="canonical" href="https://skillsgateway.dev/dev/guides/removing-hosted-marketplaces/">
       
       
-        <link rel="prev" href="../private-upstreams/">
+        <link rel="prev" href="../backup-and-upgrade/">
       
       
-        <link rel="next" href="../upstream-sync/">
+        <link rel="next" href="../exporting-the-audit-ledger/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Publishing first-party skills - Skills Gateway</title>
+        <title>Removing hosted marketplaces - Skills Gateway</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#publishing-first-party-skills" class="md-skip">
+        <a href="#removing-hosted-marketplaces" class="md-skip">
           Skip to content
         </a>
       
@@ -119,7 +119,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Publishing first-party skills
+              Removing hosted marketplaces
             
           </span>
         </div>
@@ -445,8 +445,10 @@
                 
   
   
+    
   
   
+  
     
     
       
@@ -474,17 +476,19 @@
       
         
       
+        
+      
     
     
     
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" checked>
         
           
           <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
@@ -505,7 +509,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3_1">
             <span class="md-nav__icon md-icon"></span>
             
@@ -772,6 +776,147 @@
                 
   
   
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#before-the-upgrade-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Before the upgrade (optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#after-the-upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        After the upgrade
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-consumers-keep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What consumers keep
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#an-estate-file-that-still-declares-origin-hosted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An estate file that still declares origin: hosted
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-left-on-disk-and-when-you-may-delete-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is left on disk, and when you may delete it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
   
   
     <li class="md-nav__item">
@@ -864,14 +1009,10 @@
                 
   
   
-    
   
   
-  
     
     
-      
-        
       
         
       
@@ -903,11 +1044,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
         
           
           <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
@@ -928,7 +1069,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -990,175 +1131,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#step-1-register-the-marketplace" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 1 — register the marketplace
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-2-mint-a-push-scoped-token" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 2 — mint a push-scoped token
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-3-push" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 3 — push
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Step 3 — push">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-a-push-may-do" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What a push may do
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#if-you-really-do-need-to-rewrite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        If you really do need to rewrite
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-4-approve-it" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 4 — approve it
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#declaring-one-in-the-estate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Declaring one in the estate
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-this-is-not" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What this is not
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2610,10 +2582,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#step-1-register-the-marketplace" class="md-nav__link">
+  <a href="#before-the-upgrade-optional" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 1 — register the marketplace
+        Before the upgrade (optional)
       
     </span>
   </a>
@@ -2621,10 +2593,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-mint-a-push-scoped-token" class="md-nav__link">
+  <a href="#after-the-upgrade" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 2 — mint a push-scoped token
+        After the upgrade
       
     </span>
   </a>
@@ -2632,49 +2604,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-3-push" class="md-nav__link">
+  <a href="#what-consumers-keep" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 3 — push
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Step 3 — push">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-a-push-may-do" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What a push may do
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#if-you-really-do-need-to-rewrite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        If you really do need to rewrite
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-4-approve-it" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 4 — approve it
+        What consumers keep
       
     </span>
   </a>
@@ -2682,10 +2615,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#declaring-one-in-the-estate" class="md-nav__link">
+  <a href="#an-estate-file-that-still-declares-origin-hosted" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Declaring one in the estate
+        An estate file that still declares origin: hosted
       
     </span>
   </a>
@@ -2693,10 +2626,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-this-is-not" class="md-nav__link">
+  <a href="#what-is-left-on-disk-and-when-you-may-delete-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What this is not
+        What is left on disk, and when you may delete it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why
       
     </span>
   </a>
@@ -2720,7 +2664,7 @@
 
 
   
-    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/publishing-first-party-skills.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/skillsgateway/skillsgateway/edit/main/docs/manual/guides/removing-hosted-marketplaces.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2728,166 +2672,139 @@
   
 
 
-<h1 id="publishing-first-party-skills">Publishing first-party skills<a class="headerlink" href="#publishing-first-party-skills" title="Permanent link">&para;</a></h1>
-<p>Most marketplaces the gateway governs live somewhere else and are fetched. A
-<strong>hosted</strong> marketplace is the other kind: your organisation's own skills, pushed
-straight to the gateway, with no forge repository standing in the middle purely
-so there is something to pull from.</p>
-<p>What does <em>not</em> change is everything after the push. A pushed commit is
-quarantined, manifest-checked, vetted and held exactly like fetched content, and
-is served only once somebody approves it. Content your organisation wrote is
-exactly as capable of carrying a planted credential or a prompt injection as
-content it did not.</p>
-<h2 id="step-1-register-the-marketplace">Step 1 — register the marketplace<a class="headerlink" href="#step-1-register-the-marketplace" title="Permanent link">&para;</a></h2>
-<p>A hosted marketplace takes no clone URL, because there is nothing to clone from:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/marketplaces<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name": "platform-skills", "origin": "hosted"}'</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"platform-skills"</span><span class="p">,</span><span class="w"> </span><span class="nt">"url"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="nt">"origin"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hosted"</span><span class="p">,</span><span class="w"> </span><span class="nt">"pushPolicy"</span><span class="p">:</span><span class="w"> </span><span class="s2">"append-only"</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w"> </span><span class="nt">"publishPath"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/publish/platform-skills"</span><span class="p">}</span>
-</code></pre></div>
-<p>Supplying a <code>url</code> for a hosted marketplace is refused rather than ignored — the
-two are mutually exclusive, and a silently unused field is how a marketplace
-ends up with an upstream nobody meant to give it. The origin repository is
-created here, so you can push the moment this returns.</p>
-<div class="admonition note">
-<p class="admonition-title">The origin is immutable</p>
-<p>A marketplace is hosted or upstream at registration and stays that way, for
-the same reason an upstream URL is fixed once it has a snapshot: changing it
-would swap the supply chain under snapshots that were already ingested.</p>
-</div>
-<h2 id="step-2-mint-a-push-scoped-token">Step 2 — mint a push-scoped token<a class="headerlink" href="#step-2-mint-a-push-scoped-token" title="Permanent link">&para;</a></h2>
-<p>Publication authority is <strong>not</strong> fetch authority. It is a separate scope, it
-has no "all marketplaces" form, and only an administrator or an
-<a href="../../reference/api/roles/">approver</a> of the marketplace can mint it. Any other
-caller is refused with <code>403</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/tokens<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name": "platform-skills-ci", "pushScopes": ["platform-skills"]}'</span>
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>Fetch scopes</th>
-<th>Push scopes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Omitted means</td>
-<td>every marketplace</td>
-<td><strong>none</strong></td>
-</tr>
-<tr>
-<td>Wildcard exists</td>
-<td>yes, by omission</td>
-<td>no</td>
-</tr>
-<tr>
-<td>Names</td>
-<td>any marketplace, or the catalog</td>
-<td>hosted marketplaces only</td>
-</tr>
-</tbody>
-</table>
-<p>That asymmetry is deliberate. Every token that existed before publication did
-can publish nothing, and no token can be granted publication to everything by
-forgetting a field.</p>
-<p>The cleartext is returned exactly once, as with any
-<a href="../../reference/api/tokens/">access token</a>.</p>
-<h2 id="step-3-push">Step 3 — push<a class="headerlink" href="#step-3-push" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>gateway<span class="w"> </span>https://token:<span class="nv">$TOKEN</span>@gateway.example.com/publish/platform-skills
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="gp">$ </span>git<span class="w"> </span>push<span class="w"> </span>gateway<span class="w"> </span>main
-</code></pre></div>
-<p>The repository you push must look like any other skill marketplace: a
-<code>.claude-plugin/marketplace.json</code> whose plugin sources are relative paths inside
-the repository. See <a href="../registering-a-marketplace/">Registering a marketplace</a>
-for what the manifest is checked against — a hosted marketplace faces the same
-check, and a manifest declaring a non-local source lands <code>rejected</code> just as it
-would from an upstream.</p>
-<p>You can <code>git clone</code> the same URL to bootstrap a new machine or a CI checkout;
-the same push scope authorizes it. What you are cloning is your own source of
-record, not the served marketplace.</p>
-<h3 id="what-a-push-may-do">What a push may do<a class="headerlink" href="#what-a-push-may-do" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Rule</th>
-<th>Why</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Only <code>refs/heads/main</code></td>
-<td>One marketplace, one history — the same single-lineage guarantee the gateway enforces on an upstream's default branch. A second branch or a tag is refused.</td>
-</tr>
-<tr>
-<td>No ref deletions</td>
-<td>Snapshots were taken from that lineage.</td>
-</tr>
-<tr>
-<td>Fast-forward only, by default</td>
-<td>A rewrite changes what a reviewer approved from.</td>
-</tr>
-</tbody>
-</table>
-<p>A rejected push says why:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a> ! [remote rejected] main -&gt; main (only refs/heads/main may be published; a marketplace has one lineage)
-</code></pre></div>
-<h3 id="if-you-really-do-need-to-rewrite">If you really do need to rewrite<a class="headerlink" href="#if-you-really-do-need-to-rewrite" title="Permanent link">&para;</a></h3>
-<p>Register the marketplace with <code>"pushPolicy": "allow-rewrite"</code>. Then a
-<code>git push --force</code> succeeds — and writes a <code>marketplace-lineage-rewritten</code> entry
-to the <a href="../../concepts/snapshots-and-ledger/">audit ledger</a> naming both the old
-and the new tip.</p>
-<p>Be clear about what you are trading. Approved snapshots keep their content
-regardless: they are pinned by SHA, and a rewrite cannot alter bytes that are
-already pinned. What a rewrite destroys is the <strong>lineage</strong> — the answer to "what
-history was this approved out of". Under <code>allow-rewrite</code> that answer lives only
-on the ledger.</p>
-<h2 id="step-4-approve-it">Step 4 — approve it<a class="headerlink" href="#step-4-approve-it" title="Permanent link">&para;</a></h2>
-<p>The push ingests itself. Within moments there is a <code>held</code> snapshot at the
-commit you pushed, with a vetting chain run against it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span>localhost:8080/api/v1/marketplaces<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.[] | select(.name=="platform-skills") | .snapshots'</span>
-</code></pre></div>
-<p>From here it is the ordinary flow — review the findings, waive what you accept,
-approve. See <a href="../approving-snapshots/">Approving snapshots</a>. Until then the
-facade does not serve the marketplace at all, exactly as for held upstream
-content.</p>
-<div class="admonition warning">
-<p class="admonition-title">There is no fast path</p>
-<p>There is deliberately no auto-approval for trusted internal publishers, not
-even for content the organisation wrote itself. Removing the human from the
-gate is a product decision that has been made once already, in the negative
-— see <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0006-embedded-cel-for-policy-rules.md">ADR 0006 — Embedded CEL for policy rules</a> — and it is not something a
-hosting feature gets to decide as a side effect.</p>
-</div>
-<h2 id="declaring-one-in-the-estate">Declaring one in the estate<a class="headerlink" href="#declaring-one-in-the-estate" title="Permanent link">&para;</a></h2>
-<p>A hosted marketplace is declarable like any other
-(<a href="../declarative-estate/">Declarative estate</a>):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">skills-gateway</span><span class="p">:</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">estate</span><span class="p">:</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nt">marketplaces</span><span class="p">:</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">platform-skills</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">        </span><span class="nt">origin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hosted</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">        </span><span class="nt">push-policy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">append-only</span>
-</code></pre></div>
-<p>No <code>url</code>, and no <code>sync-mode</code> other than <code>on-demand</code>: a hosted marketplace has no
-upstream to poll or be notified about, and its ingestion trigger is the push
-itself. Asking for a different sync mode is refused.</p>
-<p>Push scopes on tokens stay API-only, for the same reason tokens themselves do:
-they are user-owned credentials whose secret is shown exactly once.</p>
-<h2 id="what-this-is-not">What this is not<a class="headerlink" href="#what-this-is-not" title="Permanent link">&para;</a></h2>
+<h1 id="removing-hosted-marketplaces">Removing hosted marketplaces<a class="headerlink" href="#removing-hosted-marketplaces" title="Permanent link">&para;</a></h1>
+<p>The gateway no longer hosts marketplaces. An organisation that writes its own skills keeps
+them on a forge — GitHub, Gitea, GitLab — and registers that repository as an
+<a href="../registering-a-marketplace/">upstream</a>, with an
+<a href="../private-upstreams/">upstream credential</a> if it is private. This page is for an operator
+whose gateway <strong>held hosted marketplaces</strong> (registered with <code>origin: "hosted"</code>, pushed to on
+<code>/publish/{name}</code>) and is upgrading past the release that removed them. If you never
+registered one, nothing here applies.</p>
+<div class="admonition danger">
+<p class="admonition-title">Upgrading deletes the gateway's record of every hosted marketplace</p>
+<p>The schema migration that removes hosting (<code>V3__remove_hosted_marketplaces</code>) <strong>purges
+every hosted marketplace, live or already removed, with everything that depends on it</strong>:
+its snapshots, approvals, vetting runs and findings, waivers, exemptions, role grants and
+settings, and the audit-ledger entries recorded under its marketplace id. The project is
+in beta, and this was decided in favour of a clean schema.</p>
 <ul>
-<li><strong>Not a general git host.</strong> One branch, no tags, no pull requests, no issues.
-  It is an ingestion point that happens to speak git.</li>
-<li><strong>Not a way around review.</strong> Same quarantine, same vetters, same approval.</li>
-<li><strong>Not a mirror target.</strong> Pushing content the gateway could have fetched works,
-  but you lose the upstream's provenance for no gain. Register it as an upstream
-  marketplace instead.</li>
+<li><strong>Those marketplaces stop being served at the moment of the upgrade.</strong> A clone of
+  <code>/git/{name}</code> answers as it does for any name the gateway does not know.</li>
+<li><strong>Their history is gone.</strong> If the audit ledger is evidence you must keep, export it
+  <em>before</em> upgrading (<a href="../exporting-the-audit-ledger/">Exporting the audit ledger</a>);
+  entries already exported to a SIEM stay there.</li>
+<li><strong>The repositories are not touched.</strong> Each hosted marketplace's bare repository, at
+  <code>{data-dir}/hosted/{name}.git</code> or under the object store's <code>hosted/</code> prefix, stays
+  exactly where it is. It is the <strong>only copy</strong> of that publisher's source, and it is not
+  in the database. Do not delete it until you have copied it.</li>
+<li><strong>There is no way back</strong> except restoring the database and storage pair you backed up
+  (<a href="../backup-and-upgrade/">Backing up, restoring and upgrading</a>).</li>
 </ul>
+<p>Names that a <em>later</em> upstream marketplace reused keep all of that marketplace's own
+history: the purge is by marketplace id, never by name alone.</p>
+</div>
+<h2 id="before-the-upgrade-optional">Before the upgrade (optional)<a class="headerlink" href="#before-the-upgrade-optional" title="Permanent link">&para;</a></h2>
+<p>You can prepare, and one preparation avoids an outage.</p>
+<ol>
+<li><strong>Export the ledger</strong> if you need it, as above.</li>
+<li>
+<p><strong>Export each repository.</strong> On the old version, clone it with a token that carries a push
+   scope for it. This works on both storage backends:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>https://x:<span class="nv">$PUSH_TOKEN</span>@gateway.example.com/publish/platform-skills<span class="w"> </span>platform-skills
+</code></pre></div>
+<p>On the filesystem backend you can instead clone the bare repository from disk:
+<code>git clone {data-dir}/hosted/platform-skills.git</code>. <strong>On the object-store backend there is
+no path to clone from</strong>, and the new version cannot open those repositories at all, so
+clone through <code>/publish</code> <em>before</em> upgrading.
+3. <strong>Avoid the gap.</strong> After the upgrade a hosted marketplace serves nothing until its forge
+   replacement has an approved snapshot. To have none, push the clone to a forge now,
+   register that repository on the <strong>old or new</strong> version under a <em>temporary</em> name, approve
+   its first snapshot, and re-point consumers at the temporary name before upgrading. Or
+   accept the gap and follow the next section.</p>
+</li>
+</ol>
+<h2 id="after-the-upgrade">After the upgrade<a class="headerlink" href="#after-the-upgrade" title="Permanent link">&para;</a></h2>
+<p>The portal's <strong>Overview</strong> page shows administrators a notice while repositories remain: <em>This
+gateway no longer hosts marketplaces. N repositories from the former hosting feature are
+still in its data store; copy each one (<code>git clone &lt;location&gt;</code>) and then delete the folder.</em>
+It lists each repository with its name, its location (a path, or an object-store key prefix),
+and, on the filesystem backend, its last commit. The same list is <code>GET
+/api/v1/storage/former-hosted-repositories</code> (administrators only). It carries no delete
+button: you copy and delete the folders yourself. It is read from storage each time, so it
+disappears the moment the last folder does.</p>
+<p>For each repository listed:</p>
+<ol>
+<li>
+<p><strong>Copy it.</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>/var/lib/skills-gateway/hosted/platform-skills.git<span class="w"> </span>platform-skills
+</code></pre></div>
+</li>
+<li>
+<p><strong>Push it to a forge.</strong> Create the repository there, then:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>platform-skills
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="gp">$ </span>git<span class="w"> </span>push<span class="w"> </span>--mirror<span class="w"> </span>https://git.example.com/acme/platform-skills.git
+</code></pre></div>
+<p>The gateway ingests a repository's default branch, which for a clone of a hosted
+repository is <code>main</code>.
+3. <strong>Register the forge repository as an upstream under the old name.</strong> The name is free: the
+   purge removed the marketplace that held it.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/marketplaces<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name": "platform-skills", "url": "https://git.example.com/acme/platform-skills.git"}'</span>
+</code></pre></div>
+<p>A private repository needs an <a href="../private-upstreams/">upstream credential</a> first.
+4. <strong>Ingest it and approve its first snapshot.</strong> It is a new marketplace with a history of its
+   own: the old snapshots, approvals and ledger entries are gone and are not carried over, so
+   the first snapshot is held like any other and needs its own approval
+   (<a href="../approving-snapshots/">Approving and rejecting snapshots</a>).
+5. <strong>Delete the folder</strong> (<code>{data-dir}/hosted/platform-skills.git</code>, or the object-store
+   prefix) once you have verified the forge copy. The notice shrinks and goes.</p>
+</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Consumers see an outage between the upgrade and step 4</p>
+<p>Until the replacement's first snapshot is approved, <code>/git/platform-skills</code> answers 404,
+and <code>marketplace add</code> and <code>git clone</code> fail. Only the preparation above avoids it.</p>
+</div>
+<h2 id="what-consumers-keep">What consumers keep<a class="headerlink" href="#what-consumers-keep" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Remotes and URLs.</strong> A clone or <code>marketplace add</code> URL under <code>/git/{name}</code> keeps the same
+  shape; once the replacement is approved the same URL serves it.</li>
+<li><strong>Fetch tokens.</strong> Every token keeps the fetch scopes it had.</li>
+<li><strong>Push-only tokens become ordinary fetch tokens.</strong> The push scope is dropped with its
+  column, and a token without fetch scopes fetches <strong>every</strong> marketplace (that is what an
+  unscoped token means). If you issued a token only to publish, it is now an unscoped fetch
+  token: <strong>revoke it</strong> (<a href="../../reference/api/tokens/">the token API</a>). The gateway has no
+  endpoint that accepts a push any more.</li>
+</ul>
+<h2 id="an-estate-file-that-still-declares-origin-hosted">An estate file that still declares <code>origin: hosted</code><a class="headerlink" href="#an-estate-file-that-still-declares-origin-hosted" title="Permanent link">&para;</a></h2>
+<p>A <a href="../declarative-estate/">declarative estate</a> entry that sets <code>origin: hosted</code>, or any
+<code>push-policy</code>, fails with a message naming the removal:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>hosted marketplaces were removed: the origin 'hosted' is no longer supported. Keep the skills
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>on a forge and register that repository as an upstream (see the guide removing-hosted-marketplaces)
+</code></pre></div>
+<p>Delete <code>origin</code> and <code>push-policy</code> from the entry and give it the forge repository's <code>url</code>.
+<code>origin: upstream</code> is still accepted, and means what every marketplace now is.</p>
+<h2 id="what-is-left-on-disk-and-when-you-may-delete-it">What is left on disk, and when you may delete it<a class="headerlink" href="#what-is-left-on-disk-and-when-you-may-delete-it" title="Permanent link">&para;</a></h2>
+<p>SQL cannot touch a directory, so the migration leaves every hosted repository where it was:
+<code>{data-dir}/hosted/*.git</code> on the filesystem backend, the <code>hosted/</code> key prefix of the gateway's
+own prefix on the object-store backend. They are not read by anything else in the gateway, and
+<strong>you may delete them as soon as you have a copy you trust</strong>. Until then keep them in your
+backups. On the object-store backend the notice lists names and the key prefix only; copy
+what you need with the storage tooling you provisioned the bucket with, or clone through
+<code>/publish</code> on the old version before upgrading, as above.</p>
+<div class="admonition note">
+<p class="admonition-title">The notice is temporary</p>
+<p>The route, the banner and this paragraph are removed under one condition:
+<strong>REMOVE-AFTER: two minor releases after the release that ships migration
+V3__remove_hosted_marketplaces.</strong> After that the gateway does not tell you which folders
+remain, and the directories are still yours to delete.</p>
+</div>
+<h2 id="why">Why<a class="headerlink" href="#why" title="Permanent link">&para;</a></h2>
+<p><a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0024-the-gateway-does-not-host-marketplaces.md">ADR 0024 — The gateway does not host marketplaces</a>
+records the reasoning, and
+<a href="../../reference/compatibility/#the-api-contract">the compatibility page</a> records what this
+change took out of the API.</p>
 
 
 

@@ -472,6 +472,8 @@
       
         
       
+        
+      
     
     
     
@@ -773,6 +775,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/removing-hosted-marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
         
   
@@ -891,8 +921,6 @@
       
         
       
-        
-      
     
     
     
@@ -978,34 +1006,6 @@
     
   
     Reading a private upstream
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
   
 
     
@@ -3000,16 +3000,12 @@ seam can tell which one answered.</p>
 <td><strong>Published</strong></td>
 <td>Exactly one served ref, <code>refs/heads/main</code>, plus the <code>refs/snapshots/{sha}</code> approval pinned alongside it. Created only by approval.</td>
 </tr>
-<tr>
-<td><strong>Origin</strong> <em>(hosted only)</em></td>
-<td>The publisher's own <code>refs/heads/main</code>, written by push and read only by ingestion.</td>
-</tr>
 </tbody>
 </table>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1"><code>filesystem</code></label><label for="__tabbed_1_2"><code>object-store</code></label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<p>Three directories of bare repositories under <code>skills-gateway.data-dir</code>:</p>
+<p>Two directories of bare repositories under <code>skills-gateway.data-dir</code>:</p>
 <table>
 <thead>
 <tr>
@@ -3026,16 +3022,12 @@ seam can tell which one answered.</p>
 <td>Published</td>
 <td><code>{data-dir}/published/{marketplace}.git</code></td>
 </tr>
-<tr>
-<td>Origin</td>
-<td><code>{data-dir}/hosted/{marketplace}.git</code></td>
-</tr>
 </tbody>
 </table>
 </div>
 <div class="tabbed-block">
-<p>Three key prefixes in one bucket, which keeps the roles separate for the
-same reason three directories do. Objects are immutable and content-named;
+<p>Two key prefixes in one bucket, which keeps the roles separate for the
+same reason two directories do. Objects are immutable and content-named;
 the reference map is one small <code>manifest</code> object per repository, rewritten
 by a conditional write, and that compare-and-swap is the only serialization
 point in the system.</p>
@@ -3061,7 +3053,7 @@ point in the system.</p>
 </tr>
 </tbody>
 </table>
-<p><code>{role}</code> is <code>quarantine</code>, <code>published</code> or <code>hosted</code>. Local disk holds only a
+<p><code>{role}</code> is <code>quarantine</code> or <code>published</code>. Local disk holds only a
 bounded pack cache; nothing in it is authoritative and deleting it is always
 safe.</p>
 </div>
@@ -3069,10 +3061,8 @@ safe.</p>
 </div>
 <p>The facade resolves repositories through a method that opens only the published
 path and returns nothing unless <code>refs/heads/main</code> resolves. There is no code
-path from a facade request to the quarantine tree — nor from a
-<a href="../../guides/publishing-first-party-skills/">publish</a> request to either
-quarantine or published: it resolves only the origin path, and only for a
-marketplace the gateway hosts.</p>
+path from a facade request to the quarantine tree, and nothing else in the gateway
+accepts a push.</p>
 <h2 id="stage-1-ingestion">Stage 1 — ingestion<a class="headerlink" href="#stage-1-ingestion" title="Permanent link">&para;</a></h2>
 <p>Ingestion has three triggers, chosen per marketplace as its <strong>sync mode</strong>: an
 operator's explicit call (<code>on-demand</code>, the default), the gateway's own polling

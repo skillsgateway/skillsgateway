@@ -474,6 +474,8 @@
       
         
       
+        
+      
     
     
     
@@ -775,6 +777,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../removing-hosted-marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../exporting-the-audit-ledger/" class="md-nav__link">
         
   
@@ -893,8 +923,6 @@
       
         
       
-        
-      
     
     
     
@@ -980,34 +1008,6 @@
     
   
     Reading a private upstream
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../publishing-first-party-skills/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
   
 
     
@@ -3142,7 +3142,7 @@ relative to the working directory. In the container image it is <code>/data</cod
 <div class="admonition warning">
 <p class="admonition-title">Storage durability is a decision, and the chart makes you state it</p>
 <p>The chart has no default <code>persistence.mode</code>. <code>ephemeral</code> is an <code>emptyDir</code>
-and loses the quarantine, published and hosted repositories on every pod
+and loses the quarantine and published repositories on every pod
 restart; <code>existingClaim</code> binds a durable volume; <code>none</code> keeps no volume at
 all and is accepted only on the object-store backend. See
 <a href="../storage-backends/">Choosing and migrating the storage backend</a>.</p>

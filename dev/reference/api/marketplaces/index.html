@@ -472,6 +472,8 @@
       
         
       
+        
+      
     
     
     
@@ -773,6 +775,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/removing-hosted-marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/exporting-the-audit-ledger/" class="md-nav__link">
         
   
@@ -891,8 +921,6 @@
       
         
       
-        
-      
     
     
     
@@ -978,34 +1006,6 @@
     
   
     Reading a private upstream
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../guides/publishing-first-party-skills/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
   
 
     
@@ -2485,6 +2485,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#get-storageformer-hosted-repositories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /storage/former-hosted-repositories
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3877,6 +3888,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#get-storageformer-hosted-repositories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /storage/former-hosted-repositories
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3970,38 +3992,19 @@ re-vetting found. See
 <h2 id="post-marketplaces"><code>POST /marketplaces</code><a class="headerlink" href="#post-marketplaces" title="Permanent link">&para;</a></h2>
 <p>Register a marketplace. For an upstream marketplace, the gateway lists the
 upstream's references and resolves its default branch before it creates
-anything. It fetches no content. A hosted marketplace contacts nothing.</p>
-<p><strong>Body</strong> — <code>{name, url?, ref?, origin?, pushPolicy?, approval?}</code></p>
+anything. It fetches no content.</p>
+<p><strong>Body</strong> — <code>{name, url, ref?, autoApproval?}</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>localhost:8080/api/v1/marketplaces<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"name":"acme","url":"https://github.com/acme/skills.git"}'</span>
 </code></pre></div>
-<p><code>origin</code> decides where the content comes from:</p>
-<table>
-<thead>
-<tr>
-<th><code>origin</code></th>
-<th><code>url</code></th>
-<th>Content arrives by</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>upstream</code> (default)</td>
-<td>required</td>
-<td>the gateway fetching the upstream default branch</td>
-</tr>
-<tr>
-<td><code>hosted</code></td>
-<td>must be absent</td>
-<td>a publisher pushing to <code>/publish/{name}</code></td>
-</tr>
-</tbody>
-</table>
-<p><code>pushPolicy</code> applies to a hosted marketplace only: <code>append-only</code> (the default)
-refuses a non-fast-forward push, <code>allow-rewrite</code> permits one and records both
-tips on the ledger. See
-<a href="../../../guides/publishing-first-party-skills/">Publishing first-party skills</a>.</p>
+<p><code>origin</code> and <code>pushPolicy</code> belonged to hosted marketplaces and were removed from the
+request and from every response (<code>origin</code>, <code>pushPolicy</code> and <code>publishPath</code>). A
+request that asks for the hosted origin or sends a <code>pushPolicy</code> is refused with
+<code>400</code> and a message naming the removal, rather than registering an upstream
+marketplace the caller did not ask for; <code>"origin": "upstream"</code>, which every
+marketplace now is, is still accepted and ignored. See
+<a href="../../../guides/removing-hosted-marketplaces/">Removing hosted marketplaces</a>.</p>
 <p><code>autoApproval</code> turns on <a href="#automatic-approval">automatic approval</a> at
 registration: <code>{enabled, reason?, expiresAt?}</code>, with the rules <code>PUT
 /marketplaces/{name}/auto-approval</code> applies. It takes no exemption, because
@@ -4024,7 +4027,7 @@ automatic approval was not turned on; turn it on afterwards.</p>
 </tr>
 <tr>
 <td>400</td>
-<td>URL scheme not allowlisted, a <code>url</code> with userinfo (a credential in the URL), <code>ref</code> present and not <code>main</code>, a hosted registration supplying a <code>url</code>, an upstream one omitting it, a <code>pushPolicy</code> on an upstream marketplace, or an <code>autoApproval</code> that is enabled without a reason or an expiry, or for longer than 90 days.</td>
+<td>URL scheme not allowlisted, a <code>url</code> with userinfo (a credential in the URL), <code>ref</code> present and not <code>main</code>, no <code>url</code>, a request for the removed hosted origin or for a <code>pushPolicy</code> (the answer names the removal), or an <code>autoApproval</code> that is enabled without a reason or an expiry, or for longer than 90 days.</td>
 </tr>
 <tr>
 <td>403</td>
@@ -4036,7 +4039,7 @@ automatic approval was not turned on; turn it on afterwards.</p>
 </tr>
 <tr>
 <td>422</td>
-<td>Name fails <code>^[a-z0-9][a-z0-9_-]{0,62}$</code> (at most 63 characters; the reason says the name is the <code>/git/&lt;name&gt;</code> path clients clone), or an unknown <code>origin</code>/<code>pushPolicy</code>.</td>
+<td>Name fails <code>^[a-z0-9][a-z0-9_-]{0,62}$</code> (at most 63 characters; the reason says the name is the <code>/git/&lt;name&gt;</code> path clients clone), .</td>
 </tr>
 <tr>
 <td>502</td>
@@ -4090,7 +4093,7 @@ the stored one is answered <code>200</code> as it stands, and nothing is recorde
 </tr>
 <tr>
 <td>400</td>
-<td>URL scheme not allowlisted, a credential in the URL, no URL, or a hosted marketplace (it has no upstream).</td>
+<td>URL scheme not allowlisted, a credential in the URL, or no URL.</td>
 </tr>
 <tr>
 <td>403</td>
@@ -4124,19 +4127,17 @@ it was being ingested</em> and records nothing; ingest again.</p>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span>-d<span class="w"> </span><span class="s1">'{"reason":"upstream moved to https://git.example.com/acme/skills.git"}'</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acme"</span><span class="p">,</span><span class="nt">"removedAt"</span><span class="p">:</span><span class="s2">"2026-09-23T10:00:00Z"</span><span class="p">,</span><span class="nt">"removedBy"</span><span class="p">:</span><span class="s2">"dana"</span><span class="p">,</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w"> </span><span class="nt">"withdrawnSnapshotIds"</span><span class="p">:[</span><span class="mi">42</span><span class="p">],</span><span class="nt">"pushScopeRemovedFromTokenIds"</span><span class="p">:[</span><span class="mi">7</span><span class="p">]}</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w"> </span><span class="nt">"withdrawnSnapshotIds"</span><span class="p">:[</span><span class="mi">42</span><span class="p">]}</span>
 </code></pre></div>
 <p>Removal is a retirement, not a delete. Every approved snapshot is withdrawn by
 <a href="../../../guides/approving-snapshots/#withdrawing-content-you-have-already-approved">administrative revocation</a> with the reason
 <code>marketplace removed: &lt;reason&gt;</code>, serving nothing afterwards, so each withdrawal
 is on the ledger, announced as <code>marketplace.snapshot.revoked</code>, and answered
 <code>revoked</code> by <a href="../../git-facade/#checking-content-you-already-hold"><code>POST /status/v1/snapshots</code></a>.
-From then on the marketplace is not served, synced, pushed to, listed, approved
+From then on the marketplace is not served, synced, listed, approved
 or reachable on any <code>/marketplaces/{name}/…</code> route. Its record, its snapshots,
 their provenance and content reads by snapshot id, and the ledger are kept.</p>
-<p>Every access token granted to <strong>publish</strong> to the name loses that grant, and only
-that one: <code>pushScopeRemovedFromTokenIds</code> lists them, and the ledger records it as
-<code>marketplace-push-scopes-removed</code>. Grants to <strong>fetch</strong> the name are kept. The
+<p>Grants to <strong>fetch</strong> the name are kept. The
 marketplace's vetter toggles and chain settings stay in the database but leave
 <code>GET /vetting/vetter-toggles</code> and <code>GET /vetting/chain-settings</code>.</p>
 <table>
@@ -4149,7 +4150,7 @@ marketplace's vetter toggles and chain settings stay in the database but leave
 <tbody>
 <tr>
 <td>200</td>
-<td>Removed; returns the marketplace's id, when and by whom, the snapshots withdrawn, and the tokens that lost a publication grant.</td>
+<td>Removed; returns the marketplace's id, when and by whom, the snapshots withdrawn, .</td>
 </tr>
 <tr>
 <td>403</td>
@@ -4167,8 +4168,7 @@ marketplace's vetter toggles and chain settings stay in the database but leave
 </table>
 <p><strong>The name is free again.</strong> Registering it creates a new marketplace with a new
 id that serves nothing until one of its own snapshots is approved. It inherits
-no approval, no approver grant, no publication grant and, for a hosted
-marketplace, no pushed lineage;
+no approval and no approver grant;
 the same commit ingested again comes back <code>held</code>, and the removal's withdrawals
 do not block approving it. See
 <a href="../../../guides/registering-a-marketplace/#removing-a-marketplace">Removing a marketplace</a>.</p>
@@ -4199,7 +4199,7 @@ for what an automatic approval checks.</p>
 </tr>
 <tr>
 <td><code>allowedBy</code></td>
-<td>Why automatic approval takes effect, computed at every read: <code>internal-source</code> (the URL is under a <a href="../../configuration/#automatic-approval">configured prefix</a>), <code>hosted</code>, or <code>exemption</code>. <code>awaiting-second-administrator</code> when four-eyes is <code>enforce</code> and the grantor registered the marketplace. <code>none</code> when automatic approval is off or has lapsed, or when the source is not internal and there is no active exemption.</td>
+<td>Why automatic approval takes effect, computed at every read: <code>internal-source</code> (the URL is under a <a href="../../configuration/#automatic-approval">configured prefix</a>) or <code>exemption</code>. <code>awaiting-second-administrator</code> when four-eyes is <code>enforce</code> and the grantor registered the marketplace. <code>none</code> when automatic approval is off or has lapsed, or when the source is not internal and there is no active exemption.</td>
 </tr>
 <tr>
 <td><code>setBy</code>, <code>setAt</code>, <code>reason</code>, <code>expiresAt</code></td>
@@ -4325,9 +4325,7 @@ the portal's primary query; there is no per-marketplace endpoint.</p>
 <hr />
 <h2 id="post-marketplacesnameingest"><code>POST /marketplaces/{name}/ingest</code><a class="headerlink" href="#post-marketplacesnameingest" title="Permanent link">&para;</a></h2>
 <p>Start an ingest: clone the source's default branch into quarantine, pin the tip
-commit as <code>refs/snapshots/{sha}</code>, and record a snapshot in state <code>held</code>. For a
-hosted marketplace the source is its own origin repository, and a push already
-does this — the endpoint stays available to re-ingest.</p>
+commit as <code>refs/snapshots/{sha}</code>, and record a snapshot in state <code>held</code>.</p>
 <p>The request answers at once, before anything is fetched, and the ingest runs on
 the gateway (GW_INGEST_0068 — An on-demand ingest runs as a job whose progress can be followed). Follow it at the
 <code>Location</code> it returns, the status endpoint below.</p>
@@ -6393,6 +6391,44 @@ is every snapshot of a gateway that has not enabled external sources.</p>
 <p><strong>200</strong> · <strong>404</strong> unknown snapshot.</p>
 <p>Every action on this page also appends an entry to the
 <a href="../audit/">audit ledger</a> carrying the acting principal.</p>
+<hr />
+<h2 id="get-storageformer-hosted-repositories"><code>GET /storage/former-hosted-repositories</code><a class="headerlink" href="#get-storageformer-hosted-repositories" title="Permanent link">&para;</a></h2>
+<p><strong>Temporary, administrators only.</strong> The repositories of the removed hosted-marketplace
+feature that are still in the gateway's data store: the upgrade that removed hosting
+deleted the database's record of those marketplaces and left their repositories, each the
+only copy of a publisher's source. The list is read from storage on every request, so it is
+empty when there is nothing and ends when the folders do. It never writes or deletes.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a><span class="gp">$ </span>curl<span class="w"> </span>localhost:8080/api/v1/storage/former-hosted-repositories
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a><span class="p">[{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"platform-skills"</span><span class="p">,</span>
+<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a><span class="w">  </span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"/var/lib/skills-gateway/hosted/platform-skills.git"</span><span class="p">,</span>
+<a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a><span class="w">  </span><span class="nt">"lastCommitAt"</span><span class="p">:</span><span class="s2">"2026-10-01T09:30:00Z"</span><span class="p">,</span><span class="nt">"headSha"</span><span class="p">:</span><span class="s2">"3f9c2ab"</span><span class="p">}]</span>
+</code></pre></div>
+<p>On the filesystem backend only the direct children of <code>{data-dir}/hosted</code> that are
+directories, not symbolic links, and are named <code>&lt;marketplace-name&gt;.git</code> are listed; a stray
+file, a link and anything else is ignored. <code>lastCommitAt</code> and <code>headSha</code> come from the head of
+<code>main</code> and are <code>null</code> when it cannot be read. On the object-store backend <code>location</code> is the
+key prefix, and the last commit is always <code>null</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>The remaining repositories, possibly none.</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Not an administrator. A machine credential cannot reach this route at all.</td>
+</tr>
+</tbody>
+</table>
+<p>Removed two minor releases after the release that ships <code>V3__remove_hosted_marketplaces</code>.
+See <a href="../../../guides/removing-hosted-marketplaces/">Removing hosted marketplaces</a>.</p>
 
 
 

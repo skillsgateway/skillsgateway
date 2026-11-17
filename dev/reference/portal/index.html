@@ -472,6 +472,8 @@
       
         
       
+        
+      
     
     
     
@@ -773,6 +775,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/removing-hosted-marketplaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removing hosted marketplaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/exporting-the-audit-ledger/" class="md-nav__link">
         
   
@@ -891,8 +921,6 @@
       
         
       
-        
-      
     
     
     
@@ -978,34 +1006,6 @@
     
   
     Reading a private upstream
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/publishing-first-party-skills/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publishing first-party skills
   
 
     
@@ -4062,7 +4062,18 @@ It counts every entry: fetches, administrative actions and vetting bookkeeping.
 Action: <strong>Open audit log</strong>.</p>
 <p>Overview carries no tokens card: personal tokens have one home, under
 <a href="#personal-access-tokens">Security</a> in the user menu.</p>
-<p>Data comes from <code>GET /api/v1/marketplaces</code> and <code>GET /api/v1/audit</code>;
+<p><strong>Former hosted repositories</strong> (administrators only, temporary) — an alert above the
+cards, shown only while repositories from the removed hosting feature are still in the
+gateway's data store: <em>This gateway no longer hosts marketplaces. N repositories from
+the former hosting feature are still in its data store; copy each one (<code>git clone
+&lt;location&gt;</code>) and then delete the folder.</em> Each is listed with its name, its location
+(a path, or an object-store key prefix) and, where it can be read, its last commit. It
+has no delete control, it is read from storage each time so it disappears when the folders
+do, and nobody but an administrator makes the request for it. See
+<a href="../../guides/removing-hosted-marketplaces/">Removing hosted marketplaces</a>. Removed two minor
+releases after the release that ships <code>V3__remove_hosted_marketplaces</code>.</p>
+<p>Data comes from <code>GET /api/v1/marketplaces</code>, <code>GET /api/v1/audit</code> and, for an administrator,
+<code>GET /api/v1/storage/former-hosted-repositories</code>;
 counts are computed in the browser, as there is no summary endpoint. While the
 queries are in flight the chips show an ellipsis.</p>
 <hr />
@@ -4286,7 +4297,7 @@ whose content it publishes. Fed by
 gateway mode <code>on</code>), <strong>Dry run: recorded, not published</strong> (the same under mode
 <code>dry-run</code>), or <strong>Not approved automatically</strong>. Beneath it, a list gives the
 <strong>Status</strong> (<em>Off</em>, or <em>On until</em> a date), <strong>Allowed because</strong> (<em>Internal
-source</em>, <em>Hosted on this gateway</em>, <em>Administrator exemption</em>, <em>Waiting for a
+source</em>, <em>Administrator exemption</em>, <em>Waiting for a
 second administrator</em> or <em>Not allowed</em>), the <strong>Gateway mode</strong> (<em>Off</em>, <em>Dry
 run</em> or <em>On</em>, each with what it means), who set it and when, the reason, when
 it lapses, and the active administrator exemption with its reason, author and
@@ -4362,8 +4373,8 @@ saved yet.</p>
 <p>On <strong>Settings</strong>, last, and <strong>shown only to a session holding the <code>admin</code>
 role</strong>. <strong>Remove <em>name</em>…</strong> opens a confirmation titled with the marketplace's
 name. The confirmation states what removal does: every approved snapshot is
-withdrawn, so the facade serves nothing under the name; tokens lose their grant
-to publish to it and keep their grant to fetch it; the record, the snapshots and
+withdrawn, so the facade serves nothing under the name; tokens keep their grant to
+fetch it; the record, the snapshots and
 the ledger are kept; and the name can be registered again as a new marketplace.
 It also asks for a <strong>Reason</strong>, which is recorded on the removal and on each
 withdrawal. <strong>Remove <em>name</em></strong> is disabled until the reason holds something
@@ -5438,9 +5449,7 @@ vendors every marketplace the gateway serves, and cannot fetch a marketplace's o
 address. Anyone signed in can read the list of marketplaces, so a session with no
 role can choose too, and a limit can only narrow what a token reaches. The server
 checks every name: a refusal, such as a marketplace removed after the list was read,
-is shown beneath the form as the API states it. Push scopes (the hosted marketplaces
-a token may publish to) are not offered here; they are role-gated and set through
-<a href="../api/tokens/">the API</a>, and the list below shows them for a token that has any.</p>
+is shown beneath the form as the API states it.</p>
 <p><strong>Create token</strong> stays
 disabled until the name field holds a non-blank value — the name is trimmed before it
 is sent — and, with <strong>Chosen marketplaces</strong>, until at least one is ticked: a request
@@ -5462,7 +5471,7 @@ block and a clipboard button that flips to a checkmark for two seconds.</p>
 </tr>
 <tr>
 <td>Reach</td>
-<td><strong>every marketplace</strong> for a token without a limit, otherwise the marketplaces it may fetch by name (the first three, then <strong>+N more</strong> with the rest readable and in the hover title). A token that may publish to hosted marketplaces adds <strong>publishes to:</strong> and their names; the line is absent when it may publish nowhere.</td>
+<td><strong>every marketplace</strong> for a token without a limit, otherwise the marketplaces it may fetch by name (the first three, then <strong>+N more</strong> with the rest readable and in the hover title).</td>
 </tr>
 <tr>
 <td>Created</td>
