@@ -1,9 +1,7 @@
 # ADR 0024 — The gateway does not host marketplaces
 
-*Proposed, 2026-11-16. Supersedes
-[ADR 0007](0007-first-party-hosting-and-the-publish-endpoint.md) in full. Until
-the owner accepts it, ADR 0007 is the recorded decision and the change that
-carries this ADR is a proposal to reverse it.*
+*Accepted, 2026-11-17. Supersedes
+[ADR 0007](0007-first-party-hosting-and-the-publish-endpoint.md) in full.*
 
 ## Context
 
