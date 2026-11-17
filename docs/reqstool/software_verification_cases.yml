@@ -5130,6 +5130,7 @@ cases:
       GIVEN the System access tokens page with a live token
       WHEN an administrator opens the edit control, clears every scope, adds one, and saves, with the API refusing one save
       THEN saving is disabled with its reason stated until at least one scope is chosen and the choice differs, adding scopes is warned about with who it empowers, the refusal is shown as the API states it, and the list shows the new scopes after saving
+    revision: "0.5.0"
 
   - id: SVC_GW_AUTH_0110
     requirement_ids: ["GW_AUTH_0090"]
@@ -5160,6 +5161,7 @@ cases:
       WHEN the Overview page is shown to each
       THEN the administrator reads a notice naming the count and each repository with its location and no delete control, nothing is shown when there are none, and the other session makes no request for the list
     revision: "0.5.0"
+
   - id: SVC_GW_AUTH_0111
     requirement_ids: ["GW_AUTH_0090"]
     title: Requests, estate entries and paths that ask for hosting are refused in words
