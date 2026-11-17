@@ -131,7 +131,9 @@ test("the_queue_shows_waiting_and_findings_and_orders_by_either_column", async (
   await waitFor(() => expect(within(zeta!).getByText("3")).toBeInTheDocument());
   await waitFor(() => expect(within(alpha!).getByText("0")).toBeInTheDocument());
   const stamp = within(zeta!).getByTitle(/2026-09-03T00:00:00Z/);
-  expect(stamp.textContent).toMatch(/ago/);
+  // Relative wording moves with today's date ("2 months ago", later "last year"): any of them is a
+  // relative reading, and the exact instant is already asserted through the title above.
+  expect(stamp.textContent).toMatch(/ago|last /);
 
   // Oldest first: what has waited longest leads.
   await user.click(within(ingested).getByRole("button", { name: "Ingested" }));

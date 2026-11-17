@@ -1,23 +1,17 @@
 package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.catalog.CatalogService;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.ingestion.ExternalSourceResolver;
-import dev.skillsgateway.server.ingestion.IngestionService;
 import dev.skillsgateway.server.ingestion.ManifestPolicy;
 import dev.skillsgateway.server.ingestion.ManifestRewriter;
 import dev.skillsgateway.server.ingestion.UpstreamGit;
 import dev.skillsgateway.server.observability.GatewayMetrics;
-import dev.skillsgateway.server.persistence.Marketplace;
-import dev.skillsgateway.server.persistence.Snapshot;
-import dev.skillsgateway.server.policy.SnapshotFactsService;
 import dev.skillsgateway.server.storage.GitStorage;
 import dev.skillsgateway.server.storage.objectstore.ObjectStoreTestSupport;
-import dev.skillsgateway.server.vetting.VettingService;
 import io.github.reqstool.annotations.SVCs;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -45,8 +39,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  * The two services that copy objects between repositories the gateway holds open, on both backends.
  *
  * <p>Both used to fetch by {@code getDirectory().getAbsolutePath()}, which is null for an
- * object-store repository, so on that backend the catalog never rebuilt and a hosted marketplace
- * never ingested. Each service is constructed over the backend under test with the context's own
+ * object-store repository, so on that backend the catalog never rebuilt and an approval never
+ * published. Each service is constructed over the backend under test with the context's own
  * collaborators; only the vetting chain and the facts recorder are stubbed, because they read the
  * context's filesystem storage and are not what these cases are about.
  */
@@ -139,45 +133,6 @@ class StorageSeamServicesTests extends AbstractGatewayTest {
             assertThat(catalog.getRefDatabase().getRefsByPrefix("refs/catalog/"))
                     .as("no scaffolding reference is left behind")
                     .isEmpty();
-        }
-    }
-
-    // a hosted marketplace ingests its pushed lineage on either backend
-    @ParameterizedTest
-    @MethodSource("backends")
-    @SVCs({"SVC_GW_INGEST_0017"})
-    void aHostedMarketplaceIngestsItsLineageOnEitherBackend(Backend backend) throws Exception {
-        String name = uniqueName("seam-hosted");
-        Marketplace marketplace = marketplaceRepository.register(
-                name, null, null, Marketplace.ORIGIN_HOSTED, Marketplace.PUSH_APPEND_ONLY, null);
-        ObjectId lineage;
-        try (Repository origin = backend.storage().hosted(name)) {
-            lineage = commitMarketplace(origin);
-            setRef(origin, Marketplace.LINEAGE_REF, lineage);
-        }
-        IngestionService ingestion = new IngestionService(
-                backend.storage(),
-                snapshotRepository,
-                mock(VettingService.class),
-                manifestPolicy,
-                externalSourceResolver,
-                manifestRewriter,
-                mock(SnapshotFactsService.class),
-                metrics,
-                upstreamGit,
-                marketplaceRepository,
-                auditLogger,
-                event -> {});
-
-        Snapshot snapshot = ingestion.ingest(marketplace, "alice");
-
-        assertThat(snapshot.sha()).isEqualTo(lineage.name());
-        assertThat(snapshot.state()).isEqualTo(Snapshot.HELD);
-        try (Repository quarantine = backend.storage().quarantine(name)) {
-            assertThat(quarantine.resolve("refs/snapshots/" + lineage.name()))
-                    .as("the snapshot is pinned in quarantine")
-                    .isEqualTo(lineage);
-            assertThat(quarantine.getObjectDatabase().has(lineage)).isTrue();
         }
     }
 

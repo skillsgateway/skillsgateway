@@ -20,8 +20,8 @@ import org.eclipse.jgit.revwalk.RevObject;
  * directory — {@code getDirectory()} returns {@code null} — so on the object-store backend that
  * expression raises {@code NullPointerException} before publication reaches the reference update at
  * all. Nothing detected it because no test drove approval on that backend. Transfer therefore
- * cannot be path-based, and this is the one mechanism both backends share. The catalog rebuild and
- * hosted ingestion copy through it for the same reason.
+ * cannot be path-based, and this is the one mechanism both backends share. The catalog rebuild copies
+ * through it for the same reason.
  *
  * <p>Objects the destination already holds are skipped, so the first publication of a marketplace
  * pays for its history and every later one pays only for what changed.

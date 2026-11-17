@@ -283,7 +283,7 @@ export interface paths {
         put?: never;
         /**
          * Register a marketplace
-         * @description Registers a git skill marketplace. An upstream marketplace (the default) names a clone URL whose scheme must be on the configured allowlist (default http/https); the ingested ref is set by the gateway (the upstream default branch) and cannot be overridden. A hosted marketplace takes no URL at all and is published to by pushing to /publish/{name}.
+         * @description Registers a git skill marketplace. An upstream marketplace (the default) names a clone URL whose scheme must be on the configured allowlist (default http/https); the ingested ref is set by the gateway (the upstream default branch) and cannot be overridden. The gateway does not host marketplaces: a request for the hosted origin or a push policy is refused.
          */
         post: operations["registerMarketplace"];
         delete?: never;
@@ -491,7 +491,7 @@ export interface paths {
          * A marketplace's vetting waivers
          * @description Every waiver recorded for the marketplace, newest first, active and lapsed alike. A lapsed or revoked waiver is kept and returned with active=false: the record of what was once accepted, by whom and until when is part of the audit trail.
          */
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1154,6 +1154,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/storage/former-hosted-repositories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Repositories left by the removed hosted-marketplace feature
+         * @description The repositories of the removed hosted-marketplace feature that are still in the gateway's data store, read from storage on each request, so the list ends when the folders do. Each is the only copy of a publisher's source: copy it (`git clone <location>`) and delete the folder yourself; the gateway never deletes one. An empty list when there is nothing. Temporary: removed two minor releases after the release that ships the migration that removed hosting. Administrator only.
+         */
+        get: operations["list_6"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tokens": {
         parameters: {
             query?: never;
@@ -1169,7 +1189,7 @@ export interface paths {
         put?: never;
         /**
          * Create a token
-         * @description Issues a personal access token for the git facade. Optionally scoped to named marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned exactly once. Push scopes are separate and grant nothing by default: they name the hosted marketplaces the token may publish to, and only an administrator or an approver of every marketplace named may request them. Creation is audit-logged with the token's name and both kinds of scope.
+         * @description Issues a personal access token for the git facade. Optionally scoped to named marketplaces (unscoped grants all) and optionally expiring; the cleartext is returned exactly once. Creation is audit-logged with the token's name and scopes. A request that names push scopes is refused: the gateway no longer hosts marketplaces.
          */
         post: operations["create_1"];
         delete?: never;
@@ -2099,7 +2119,7 @@ export interface components {
              * @description Why it takes effect, or none when it does not: off, lapsed, or not internal and with no exemption left. awaiting-second-administrator under four-eyes enforce, when the grantor registered the marketplace
              * @enum {string}
              */
-            allowedBy?: "internal-source" | "hosted" | "exemption" | "awaiting-second-administrator" | "none";
+            allowedBy?: "internal-source" | "exemption" | "awaiting-second-administrator" | "none";
             /** @description Whether automatic approval is turned on */
             enabled?: boolean;
             /** @description The active exemption, if any */
@@ -2571,8 +2591,6 @@ export interface components {
              * @example ci-runner
              */
             name?: string;
-            /** @description Hosted marketplace names the token may PUBLISH to. Unlike fetch scopes, omitting these grants none: there is no every-marketplace push scope. */
-            pushScopes?: string[];
             /** @description Marketplace names (the catalog's name is valid) the token may fetch; empty or omitted grants every marketplace */
             scopes?: string[];
         };
@@ -2826,7 +2844,7 @@ export interface components {
              * @description Why the marketplace's automatic approval takes effect, or none
              * @enum {string}
              */
-            allowedBy?: "internal-source" | "hosted" | "exemption" | "awaiting-second-administrator" | "none";
+            allowedBy?: "internal-source" | "exemption" | "awaiting-second-administrator" | "none";
             /** @description The served commit the surface was compared with, or null when nothing is served */
             baselineSha?: string;
             /** @description The vetters switched off, which a relaxed required-vetters allowed */
@@ -3020,6 +3038,20 @@ export interface components {
              */
             severity?: "info" | "low" | "medium" | "high" | "critical";
         };
+        /** @description A repository from the removed hosted-marketplace feature that is still in the data store */
+        FormerHostedRepository: {
+            /** @description The first seven characters of that commit; null as for lastCommitAt */
+            headSha?: string;
+            /**
+             * Format: date-time
+             * @description When the commit at the head of its main branch was made; null where it cannot be read cheaply, and always null on the object-store backend
+             */
+            lastCommitAt?: string;
+            /** @description Where it is: an absolute path on the filesystem backend, or the object-store key prefix on the object-store backend */
+            location?: string;
+            /** @description The marketplace name it was published under */
+            name?: string;
+        };
         /** @description Whether the four-eyes rule would refuse this reviewer's approval of this snapshot */
         FourEyesCheck: {
             /** @description The supply-side acts this reviewer performed on this snapshot */
@@ -3111,8 +3143,6 @@ export interface components {
             machineOwner?: string;
             /** @description Token name */
             name?: string;
-            /** @description Hosted marketplaces this token may publish to; empty grants none */
-            pushScopes?: string[];
             /**
              * Format: int64
              * @description The token this one replaced by rotation, or null
@@ -3225,7 +3255,7 @@ export interface components {
              */
             rotatedFrom?: number;
         };
-        /** @description A registered marketplace, fetched from an upstream or hosted by the gateway */
+        /** @description A registered marketplace, fetched from an upstream */
         Marketplace: {
             /** Format: date-time */
             createdAt?: string;
@@ -3260,16 +3290,6 @@ export interface components {
              */
             lastSyncAt?: string;
             name?: string;
-            /**
-             * @description Where the content comes from: fetched from an upstream clone URL, or pushed by the organisation into a gateway-owned origin repository
-             * @enum {string}
-             */
-            origin?: "upstream" | "hosted";
-            /**
-             * @description Whether a hosted marketplace's publisher may rewrite its lineage; meaningless for an upstream marketplace
-             * @enum {string}
-             */
-            pushPolicy?: "append-only" | "allow-rewrite";
             /** @description Identity that registered the marketplace, or null for one registered before the registrant was recorded */
             registeredBy?: string;
             /**
@@ -3282,7 +3302,7 @@ export interface components {
              * @description Last upstream update as reported by the forge
              */
             upstreamUpdatedAt?: string;
-            /** @description Upstream clone URL; null for a gateway-hosted marketplace */
+            /** @description Upstream clone URL */
             url?: string;
         };
         /** @description Adoption of one marketplace over the report window */
@@ -3359,18 +3379,6 @@ export interface components {
             lastIngestSnapshotId?: number;
             /** @description Gateway-local name (also the facade clone path) */
             name?: string;
-            /**
-             * @description Where the content comes from
-             * @enum {string}
-             */
-            origin?: "upstream" | "hosted";
-            /** @description Path publishers push a hosted marketplace to; null for an upstream one */
-            publishPath?: string;
-            /**
-             * @description Whether a hosted marketplace's publisher may rewrite its lineage
-             * @enum {string}
-             */
-            pushPolicy?: "append-only" | "allow-rewrite";
             /** @description Identity that registered the marketplace, or null when it was not recorded */
             registeredBy?: string;
             /** @description Commit the facade is serving for this marketplace right now, read from the published repository's served reference (GW_INGEST_0033). Null when the marketplace serves nothing — which is not the same as having no approved snapshot: a retraction leaves approved records behind while the facade serves none of them. */
@@ -3387,7 +3395,7 @@ export interface components {
              * @description Last upstream update as reported by the forge
              */
             upstreamUpdatedAt?: string;
-            /** @description Upstream clone URL; null for a gateway-hosted marketplace */
+            /** @description Upstream clone URL */
             url?: string;
         };
         /** @description The authenticated browser session's identity and effective roles */
@@ -3729,7 +3737,6 @@ export interface components {
             /** Format: date-time */
             ingestedAt?: string;
             marketplace?: string;
-            origin?: string;
             /**
              * Format: date-time
              * @description When re-vetting revoked the snapshot, or null
@@ -3756,17 +3763,6 @@ export interface components {
              * @example corp-marketplace
              */
             name?: string;
-            /**
-             * @description Where the content comes from: 'upstream' (the default) fetches the clone URL; 'hosted' takes no URL and gives the marketplace a gateway-owned origin repository that publishers push to
-             * @example upstream
-             * @enum {string}
-             */
-            origin?: "upstream" | "hosted";
-            /**
-             * @description For a hosted marketplace, whether its publisher may rewrite the lineage. Defaults to append-only, which refuses a non-fast-forward push.
-             * @enum {string}
-             */
-            pushPolicy?: "append-only" | "allow-rewrite";
             /**
              * @description Must be omitted or equal the upstream default branch; the ingested ref is the gateway's decision, never the consumer's (GW_INGEST_0006)
              * @example main
@@ -3796,16 +3792,6 @@ export interface components {
              */
             lastSyncAt?: string;
             name?: string;
-            /**
-             * @description Where the content comes from
-             * @enum {string}
-             */
-            origin?: "upstream" | "hosted";
-            /**
-             * @description Whether a hosted marketplace's publisher may rewrite its lineage
-             * @enum {string}
-             */
-            pushPolicy?: "append-only" | "allow-rewrite";
             /** @description Identity that registered the marketplace, or null when it was not recorded */
             registeredBy?: string;
             /**
@@ -3818,7 +3804,7 @@ export interface components {
              * @description Last upstream update as reported by the forge
              */
             upstreamUpdatedAt?: string;
-            /** @description Upstream clone URL; null for a gateway-hosted marketplace */
+            /** @description Upstream clone URL */
             url?: string;
             /** @description Non-blocking warnings about this registration, e.g. the upstream url already being registered under another marketplace name (GW_INGEST_0029) */
             warnings?: string[];
@@ -3844,8 +3830,6 @@ export interface components {
             id?: number;
             /** @description Its name, which may now be registered again */
             name?: string;
-            /** @description Tokens that lost their grant to publish to this name. Fetch grants are kept, so clients keep working if the name is registered again */
-            pushScopeRemovedFromTokenIds?: number[];
             /**
              * Format: date-time
              * @description When the removal was recorded
@@ -4355,8 +4339,6 @@ export interface components {
             lastUsedAt?: string;
             /** @description Token name */
             name?: string;
-            /** @description Hosted marketplaces this token may publish to; empty grants none */
-            pushScopes?: string[];
             /**
              * Format: date-time
              * @description Revocation time, or null while active
@@ -5293,7 +5275,7 @@ export interface operations {
                     "*/*": components["schemas"]["RegisteredMarketplace"];
                 };
             };
-            /** @description Disallowed URL scheme, or a ref other than the default branch */
+            /** @description Disallowed URL scheme, a ref other than the default branch, or a request for the hosted origin or a push policy, which were removed */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -5680,7 +5662,7 @@ export interface operations {
                     "*/*": components["schemas"]["RegisteredMarketplace"];
                 };
             };
-            /** @description Disallowed URL scheme, a credential in the URL, or a hosted marketplace */
+            /** @description Disallowed URL scheme, or a credential in the URL */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -5807,7 +5789,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -7118,6 +7100,35 @@ export interface operations {
             };
         };
     };
+    list_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The remaining repositories, possibly none */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FormerHostedRepository"][];
+                };
+            };
+            /** @description Caller does not hold the administrative role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     list_1: {
         parameters: {
             query?: never;
@@ -7160,8 +7171,8 @@ export interface operations {
                     "*/*": components["schemas"]["IssuedToken"];
                 };
             };
-            /** @description A push scope names a marketplace the caller neither administers nor approves */
-            403: {
+            /** @description The request asks for push scopes, which were removed */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };

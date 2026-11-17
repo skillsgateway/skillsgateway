@@ -84,9 +84,9 @@ re-vetting found. See
 
 Register a marketplace. For an upstream marketplace, the gateway lists the
 upstream's references and resolves its default branch before it creates
-anything. It fetches no content. A hosted marketplace contacts nothing.
+anything. It fetches no content.
 
-**Body** — `{name, url?, ref?, origin?, pushPolicy?, approval?}`
+**Body** — `{name, url, ref?, autoApproval?}`
 
 ```console
 $ curl -X POST localhost:8080/api/v1/marketplaces \
@@ -94,17 +94,13 @@ $ curl -X POST localhost:8080/api/v1/marketplaces \
     -d '{"name":"acme","url":"https://github.com/acme/skills.git"}'
 ```
 
-`origin` decides where the content comes from:
-
-| `origin` | `url` | Content arrives by |
-| --- | --- | --- |
-| `upstream` (default) | required | the gateway fetching the upstream default branch |
-| `hosted` | must be absent | a publisher pushing to `/publish/{name}` |
-
-`pushPolicy` applies to a hosted marketplace only: `append-only` (the default)
-refuses a non-fast-forward push, `allow-rewrite` permits one and records both
-tips on the ledger. See
-[Publishing first-party skills](../../guides/publishing-first-party-skills.md).
+`origin` and `pushPolicy` belonged to hosted marketplaces and were removed from the
+request and from every response (`origin`, `pushPolicy` and `publishPath`). A
+request that asks for the hosted origin or sends a `pushPolicy` is refused with
+`400` and a message naming the removal, rather than registering an upstream
+marketplace the caller did not ask for; `"origin": "upstream"`, which every
+marketplace now is, is still accepted and ignored. See
+[Removing hosted marketplaces](../../guides/removing-hosted-marketplaces.md).
 
 `autoApproval` turns on [automatic approval](#automatic-approval) at
 registration: `{enabled, reason?, expiresAt?}`, with the rules `PUT
@@ -118,10 +114,10 @@ automatic approval was not turned on; turn it on afterwards.
 | Status | Cause |
 | --- | --- |
 | 201 | Registered; returns the marketplace plus `warnings` (see below). |
-| 400 | URL scheme not allowlisted, a `url` with userinfo (a credential in the URL), `ref` present and not `main`, a hosted registration supplying a `url`, an upstream one omitting it, a `pushPolicy` on an upstream marketplace, or an `autoApproval` that is enabled without a reason or an expiry, or for longer than 90 days. |
+| 400 | URL scheme not allowlisted, a `url` with userinfo (a credential in the URL), `ref` present and not `main`, no `url`, a request for the removed hosted origin or for a `pushPolicy` (the answer names the removal), or an `autoApproval` that is enabled without a reason or an expiry, or for longer than 90 days. |
 | 403 | The caller is not an administrator, or a [machine credential](tokens.md#machine-api-credentials) sent an enabled `autoApproval`: only a person turns automatic approval on. Nothing is registered. |
 | 409 | `autoApproval` is enabled for a marketplace whose source is not internal; `nextStep` says to turn automatic approval on with an exemption after registering. Or a live marketplace has that name. A [removed](#delete-marketplacesname) marketplace's name is free. A mistyped URL can be [corrected](#put-marketplacesnameurl) until the first snapshot. |
-| 422 | Name fails `^[a-z0-9][a-z0-9_-]{0,62}$` (at most 63 characters; the reason says the name is the `/git/<name>` path clients clone), or an unknown `origin`/`pushPolicy`. |
+| 422 | Name fails `^[a-z0-9][a-z0-9_-]{0,62}$` (at most 63 characters; the reason says the name is the `/git/<name>` path clients clone), . |
 | 502 | The upstream could not be read, or has no default branch. Nothing was registered. The problem carries `reason`, `rootCause` and `nextStep`; see [Registering a marketplace](../../guides/registering-a-marketplace.md#what-is-validated-and-why). |
 
 The upstream is read only after every other check has passed, so a request
@@ -170,7 +166,7 @@ the stored one is answered `200` as it stands, and nothing is recorded.
 | Status | Cause |
 | --- | --- |
 | 200 | Changed, or already the URL given. |
-| 400 | URL scheme not allowlisted, a credential in the URL, no URL, or a hosted marketplace (it has no upstream). |
+| 400 | URL scheme not allowlisted, a credential in the URL, or no URL. |
 | 403 | Not an administrator. |
 | 404 | No live marketplace has that name. |
 | 409 | The marketplace has a snapshot, in any state. Its URL is the source of record for that snapshot; [remove it](#delete-marketplacesname) and register again instead. |
@@ -198,7 +194,7 @@ $ curl -X DELETE localhost:8080/api/v1/marketplaces/acme \
 
 ```json
 {"id":1,"name":"acme","removedAt":"2026-09-23T10:00:00Z","removedBy":"dana",
- "withdrawnSnapshotIds":[42],"pushScopeRemovedFromTokenIds":[7]}
+ "withdrawnSnapshotIds":[42]}
 ```
 
 Removal is a retirement, not a delete. Every approved snapshot is withdrawn by
@@ -206,27 +202,24 @@ Removal is a retirement, not a delete. Every approved snapshot is withdrawn by
 `marketplace removed: <reason>`, serving nothing afterwards, so each withdrawal
 is on the ledger, announced as `marketplace.snapshot.revoked`, and answered
 `revoked` by [`POST /status/v1/snapshots`](../git-facade.md#checking-content-you-already-hold).
-From then on the marketplace is not served, synced, pushed to, listed, approved
+From then on the marketplace is not served, synced, listed, approved
 or reachable on any `/marketplaces/{name}/…` route. Its record, its snapshots,
 their provenance and content reads by snapshot id, and the ledger are kept.
 
-Every access token granted to **publish** to the name loses that grant, and only
-that one: `pushScopeRemovedFromTokenIds` lists them, and the ledger records it as
-`marketplace-push-scopes-removed`. Grants to **fetch** the name are kept. The
+Grants to **fetch** the name are kept. The
 marketplace's vetter toggles and chain settings stay in the database but leave
 `GET /vetting/vetter-toggles` and `GET /vetting/chain-settings`.
 
 | Status | Cause |
 | --- | --- |
-| 200 | Removed; returns the marketplace's id, when and by whom, the snapshots withdrawn, and the tokens that lost a publication grant. |
+| 200 | Removed; returns the marketplace's id, when and by whom, the snapshots withdrawn, . |
 | 403 | Not an administrator. |
 | 404 | No live marketplace has that name — including one already removed. |
 | 422 | No reason, or an empty one. |
 
 **The name is free again.** Registering it creates a new marketplace with a new
 id that serves nothing until one of its own snapshots is approved. It inherits
-no approval, no approver grant, no publication grant and, for a hosted
-marketplace, no pushed lineage;
+no approval and no approver grant;
 the same commit ingested again comes back `held`, and the removal's withdrawals
 do not block approving it. See
 [Removing a marketplace](../../guides/registering-a-marketplace.md#removing-a-marketplace).
@@ -254,7 +247,7 @@ Open to any session.
 | Field | Meaning |
 | --- | --- |
 | `enabled` | Whether an administrator turned automatic approval on, as stored. A lapsed setting stays `true` here; `allowedBy` says it does not take effect. |
-| `allowedBy` | Why automatic approval takes effect, computed at every read: `internal-source` (the URL is under a [configured prefix](../configuration.md#automatic-approval)), `hosted`, or `exemption`. `awaiting-second-administrator` when four-eyes is `enforce` and the grantor registered the marketplace. `none` when automatic approval is off or has lapsed, or when the source is not internal and there is no active exemption. |
+| `allowedBy` | Why automatic approval takes effect, computed at every read: `internal-source` (the URL is under a [configured prefix](../configuration.md#automatic-approval)) or `exemption`. `awaiting-second-administrator` when four-eyes is `enforce` and the grantor registered the marketplace. `none` when automatic approval is off or has lapsed, or when the source is not internal and there is no active exemption. |
 | `setBy`, `setAt`, `reason`, `expiresAt` | Who set automatic approval, when, why, and when it lapses back to off. |
 | `exemption` | The active administrator exemption, or absent. A lapsed or revoked exemption is not returned. |
 | `mode` | The deployment's `skills-gateway.approval.auto.mode`: `off`, `dry-run` or `on`. Only `on` publishes. |
@@ -331,9 +324,7 @@ the portal's primary query; there is no per-marketplace endpoint.
 ## `POST /marketplaces/{name}/ingest`
 
 Start an ingest: clone the source's default branch into quarantine, pin the tip
-commit as `refs/snapshots/{sha}`, and record a snapshot in state `held`. For a
-hosted marketplace the source is its own origin repository, and a push already
-does this — the endpoint stays available to re-ingest.
+commit as `refs/snapshots/{sha}`, and record a snapshot in state `held`.
 
 The request answers at once, before anything is fetched, and the ingest runs on
 the gateway (GW_INGEST_0068 — An on-demand ingest runs as a job whose progress can be followed). Follow it at the
@@ -1724,3 +1715,37 @@ is every snapshot of a gateway that has not enabled external sources.
 
 Every action on this page also appends an entry to the
 [audit ledger](audit.md) carrying the acting principal.
+
+---
+
+## `GET /storage/former-hosted-repositories`
+
+**Temporary, administrators only.** The repositories of the removed hosted-marketplace
+feature that are still in the gateway's data store: the upgrade that removed hosting
+deleted the database's record of those marketplaces and left their repositories, each the
+only copy of a publisher's source. The list is read from storage on every request, so it is
+empty when there is nothing and ends when the folders do. It never writes or deletes.
+
+```console
+$ curl localhost:8080/api/v1/storage/former-hosted-repositories
+```
+
+```json
+[{"name":"platform-skills",
+  "location":"/var/lib/skills-gateway/hosted/platform-skills.git",
+  "lastCommitAt":"2026-10-01T09:30:00Z","headSha":"3f9c2ab"}]
+```
+
+On the filesystem backend only the direct children of `{data-dir}/hosted` that are
+directories, not symbolic links, and are named `<marketplace-name>.git` are listed; a stray
+file, a link and anything else is ignored. `lastCommitAt` and `headSha` come from the head of
+`main` and are `null` when it cannot be read. On the object-store backend `location` is the
+key prefix, and the last commit is always `null`.
+
+| Status | Cause |
+| --- | --- |
+| 200 | The remaining repositories, possibly none. |
+| 403 | Not an administrator. A machine credential cannot reach this route at all. |
+
+Removed two minor releases after the release that ships `V3__remove_hosted_marketplaces`.
+See [Removing hosted marketplaces](../../guides/removing-hosted-marketplaces.md).

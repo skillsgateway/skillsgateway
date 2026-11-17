@@ -383,12 +383,7 @@ class ExternalSourceResolutionTests extends AbstractExternalSourceTest {
         FORGE.publish("acme/tools", Map.of("skills/tool/SKILL.md", "# Tool\n"));
         Path upstream = createUpstream(manifestWithExternal("acme/tools"));
         Marketplace marketplace = marketplaceRepository.register(
-                uniqueName("res"),
-                upstream.toAbsolutePath().toString(),
-                null,
-                Marketplace.ORIGIN_UPSTREAM,
-                Marketplace.PUSH_APPEND_ONLY,
-                null);
+                uniqueName("res"), upstream.toAbsolutePath().toString(), null, null);
 
         ExecutorService pool = Executors.newFixedThreadPool(2);
         try {

@@ -5,7 +5,9 @@
 Serving approved snapshots as read-only git repositories over smart-HTTP for
 unmodified git clients, exposing only approved content and audit-logging
 every fetch.
+
 ## Requirements
+
 ### Requirement: GW_FACADE_0001
 The system SHALL implement GW_FACADE_0001.
 
@@ -29,17 +31,6 @@ The system SHALL implement GW_AUDIT_0001.
 
 #### Scenario: SVC_GW_AUDIT_0001
 - **WHEN** SVC_GW_AUDIT_0001 is run
-- **THEN** it passes
-
-### Requirement: GW_FACADE_0007
-The system SHALL implement GW_FACADE_0007.
-
-#### Scenario: SVC_GW_FACADE_0007
-- **WHEN** SVC_GW_FACADE_0007 is run
-- **THEN** it passes
-
-#### Scenario: SVC_GW_FACADE_0035
-- **WHEN** SVC_GW_FACADE_0035 is run
 - **THEN** it passes
 
 ### Requirement: GW_FACADE_0016
@@ -83,4 +74,3 @@ The system SHALL implement GW_FACADE_0034.
 #### Scenario: SVC_GW_FACADE_0034
 - **WHEN** SVC_GW_FACADE_0034 is run
 - **THEN** it passes
-

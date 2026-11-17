@@ -234,7 +234,6 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
                 null,
                 soon(),
                 null,
-                null,
                 true,
                 List.of("estate:read"),
                 "admin@example.invalid");
@@ -266,10 +265,9 @@ class MachineCredentialLifecycleTests extends AbstractNamedAdminsTest {
                     .isTrue();
         }
         assertThat(stored.apiScopeList()).as("and added nothing").containsExactlyInAnyOrderElementsOf(scopes);
-        // Fetch and push stay empty: rotation cannot turn a control-plane credential into a
+        // Fetch stays empty: rotation cannot turn a control-plane credential into a
         // content credential either.
         assertThat(stored.scopeList()).isEmpty();
-        assertThat(stored.pushScopeList()).isEmpty();
 
         // The old secret is dead before the new one is returned: no moment has two live secrets.
         assertThat(tokenService.authenticate(original.token())).isEmpty();

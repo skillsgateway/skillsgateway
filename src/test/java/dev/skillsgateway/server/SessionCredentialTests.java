@@ -8,17 +8,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.jayway.jsonpath.JsonPath;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
-import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.storage.GitStorage;
 import io.github.reqstool.annotations.SVCs;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -74,9 +68,6 @@ class SessionCredentialTests extends AbstractGatewayTest {
     void a_session_credential_is_marked_and_an_ordinary_token_is_not() throws Exception {
         String session = mint("{\"name\":\"laptop\"}");
         assertThat(JsonPath.<Boolean>read(session, "$.sessionDerived")).isTrue();
-        assertThat(JsonPath.<java.util.List<String>>read(session, "$.pushScopes"))
-                .as("a session credential never carries publication authority")
-                .isEmpty();
 
         String standing = mockMvc.perform(post("/api/v1/tokens")
                         .with(oidcLogin())
@@ -114,35 +105,6 @@ class SessionCredentialTests extends AbstractGatewayTest {
         assertThat(gitClone(facadeUrl(other.marketplace().name(), token), newWorkDir("out"))
                         .exitCode())
                 .as("a marketplace it does not name")
-                .isNotZero();
-    }
-
-    @Test
-    @SVCs({"SVC_GW_AUTH_0018"})
-    void it_cannot_publish_to_a_hosted_marketplace() throws Exception {
-        String hosted = uniqueName("sessionpush");
-        marketplaceRepository.register(
-                hosted, null, null, Marketplace.ORIGIN_HOSTED, Marketplace.PUSH_APPEND_ONLY, null);
-        try (Repository ignored = storage.hosted(hosted)) {
-            assertThat(ignored.getDirectory()).exists();
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-
-        String token = JsonPath.read(mint("{\"name\":\"laptop\"}"), "$.token");
-
-        Path working = newWorkDir("publisher");
-        git(working, "init", "--initial-branch=main");
-        git(working, "config", "user.email", "p@example.com");
-        git(working, "config", "user.name", "P");
-        Files.createDirectories(working.resolve(".claude-plugin"));
-        Files.writeString(working.resolve(MANIFEST_PATH), DEFAULT_MANIFEST, StandardCharsets.UTF_8);
-        git(working, "add", "-A");
-        git(working, "-c", "commit.gpgsign=false", "commit", "-q", "-m", "attempt");
-
-        GitResult push = git(working, "push", publishUrl(hosted, token), "main");
-        assertThat(push.exitCode())
-                .as("a credential nobody deliberately provisioned cannot publish")
                 .isNotZero();
     }
 

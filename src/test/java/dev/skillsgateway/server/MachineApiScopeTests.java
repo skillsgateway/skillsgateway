@@ -288,6 +288,7 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
     void a_registration_credential_cannot_turn_on_automatic_approval_and_registers_nothing() throws Exception {
         String registrar = credential(List.of("marketplaces:register")).token();
         String name = uniqueName("mgrant");
+        String url = createUpstream(DEFAULT_MANIFEST).toUri().toString();
         String expires = Instant.now()
                 .plus(7, ChronoUnit.DAYS)
                 .truncatedTo(ChronoUnit.SECONDS)
@@ -297,8 +298,8 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + registrar)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name": "%s", "origin": "hosted",
-                                 "autoApproval": {"enabled": true, "reason": "pipeline", "expiresAt": "%s"}}""".formatted(name, expires)))
+                                {"name": "%s", "url": "%s",
+                                 "autoApproval": {"enabled": true, "reason": "pipeline", "expiresAt": "%s"}}""".formatted(name, url, expires)))
                 .andExpect(status().is(FORBIDDEN));
         assertThat(marketplaceRepository.findByName(name)).isEmpty();
 
@@ -306,7 +307,7 @@ class MachineApiScopeTests extends AbstractNamedAdminsTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + registrar)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name": "%s", "origin": "hosted"}""".formatted(name)))
+                                {"name": "%s", "url": "%s"}""".formatted(name, url)))
                 .andExpect(status().isCreated());
         assertThat(settingService.view(name).enabled()).isFalse();
     }

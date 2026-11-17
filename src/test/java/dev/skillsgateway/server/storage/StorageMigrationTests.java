@@ -63,7 +63,7 @@ class StorageMigrationTests {
         assertThat(report.verified())
                 .as("a copy the migration itself could not verify must not report success: %s", refusalOf(report))
                 .isTrue();
-        assertThat(report.repositories()).hasSize(3);
+        assertThat(report.repositories()).hasSize(2);
         for (GitStorage.Role role : GitStorage.Role.values()) {
             String marketplace = seeded.get(role);
             assertThat(target.marketplaces(role))
@@ -240,7 +240,6 @@ class StorageMigrationTests {
         assertThat(target.marketplaces(GitStorage.Role.PUBLISHED))
                 .as("a marketplace with nothing published must not gain an empty published repository")
                 .isEmpty();
-        assertThat(target.marketplaces(GitStorage.Role.HOSTED)).isEmpty();
     }
 
     // --- fixtures ---------------------------------------------------------------------------
@@ -388,16 +387,6 @@ class StorageMigrationTests {
         @Override
         public Repository quarantine(String marketplace) throws IOException {
             return open(Role.QUARANTINE, marketplace);
-        }
-
-        @Override
-        public Repository hosted(String marketplace) throws IOException {
-            return open(Role.HOSTED, marketplace);
-        }
-
-        @Override
-        public Optional<Repository> hostedIfPresent(String marketplace) throws IOException {
-            return delegate.hostedIfPresent(marketplace);
         }
 
         @Override

@@ -330,8 +330,6 @@ class ExternalConnectorRegistrationTests {
                 "https://example.invalid/marketplace.git",
                 Instant.now(),
                 "root",
-                Marketplace.ORIGIN_UPSTREAM,
-                Marketplace.PUSH_APPEND_ONLY,
                 null,
                 null,
                 null,

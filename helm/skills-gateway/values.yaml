@@ -123,7 +123,7 @@ oidc:
   # tenant boundary, and the gateway refuses to start without it.
   issuer: ""
 
-# Git storage (/data): the quarantine, published and hosted repositories.
+# Git storage (/data): the quarantine and published repositories.
 #
 # There is deliberately NO default. Losing /data while PostgreSQL still records
 # those snapshots as published leaves an estate the gateway can neither serve

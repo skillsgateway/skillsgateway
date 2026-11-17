@@ -6,7 +6,9 @@ Registering skill marketplaces — fetched from an upstream, or hosted by the
 gateway itself and published to by push — and ingesting them into held,
 SHA-identified quarantine snapshots, enforcing that all plugin sources are
 local to the marketplace repository.
+
 ## Requirements
+
 ### Requirement: GW_INGEST_0001
 The system SHALL implement GW_INGEST_0001.
 
@@ -54,20 +56,6 @@ The system SHALL implement GW_INGEST_0009.
 
 #### Scenario: SVC_GW_INGEST_0009
 - **WHEN** SVC_GW_INGEST_0009 is run
-- **THEN** it passes
-
-### Requirement: GW_FACADE_0006
-The system SHALL implement GW_FACADE_0006.
-
-#### Scenario: SVC_GW_FACADE_0006
-- **WHEN** SVC_GW_FACADE_0006 is run
-- **THEN** it passes
-
-### Requirement: GW_INGEST_0017
-The system SHALL implement GW_INGEST_0017.
-
-#### Scenario: SVC_GW_INGEST_0017
-- **WHEN** SVC_GW_INGEST_0017 is run
 - **THEN** it passes
 
 ### Requirement: GW_INGEST_0018
@@ -314,7 +302,6 @@ The system SHALL implement GW_INGEST_0031.
 #### Scenario: SVC_GW_INGEST_0031
 - **WHEN** SVC_GW_INGEST_0031 is run
 - **THEN** it passes
-
 
 ### Requirement: GW_INGEST_0033
 The system SHALL implement GW_INGEST_0033.
@@ -570,4 +557,15 @@ The system SHALL implement GW_INGEST_0076.
 
 #### Scenario: SVC_GW_INGEST_0076
 - **WHEN** SVC_GW_INGEST_0076 is run
+- **THEN** it passes
+
+### Requirement: GW_AUTH_0090
+The system SHALL implement GW_AUTH_0090.
+
+#### Scenario: SVC_GW_AUTH_0110
+- **WHEN** SVC_GW_AUTH_0110 is run
+- **THEN** it passes
+
+#### Scenario: SVC_GW_AUTH_0111
+- **WHEN** SVC_GW_AUTH_0111 is run
 - **THEN** it passes

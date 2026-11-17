@@ -952,30 +952,6 @@ requirements:
     categories: ["security"]
     revision: 0.2.0
 
-  - id: GW_FACADE_0006
-    title: Gateway-hosted marketplace origin
-    significance: shall
-    description: The system shall allow an administrator to register a marketplace that the gateway itself hosts — accepting no clone URL for it, refusing a registration that supplies one, and refusing as before a non-hosted registration that omits one — shall create for it a gateway-owned origin repository that is neither the quarantine area nor the served area, shall never fetch such a marketplace from any external location, shall keep its refresh strategy fixed at on-demand and refuse to change it, and shall report the marketplace's origin, its history-rewrite policy and the location publishers push to wherever it describes the marketplace.
-    rationale: An organisation that authors its own skills should not have to stand up a repository elsewhere purely to give the gateway something to pull from, and then govern the same content twice; giving the gateway its own origin removes the second system without giving the served area a writer, and fixing the refresh strategy keeps a scheduled sweep from trying to fetch an upstream that does not exist.
-    categories: ["functional-suitability"]
-    revision: 0.1.0
-
-  - id: GW_FACADE_0007
-    title: Authenticated publication over a separate write endpoint
-    significance: shall
-    description: The system shall accept authenticated git pushes into a hosted marketplace's origin repository over an endpoint separate from the one that serves approved content, shall authorize such a push only by a token scope granted explicitly per marketplace with no form of that scope meaning every marketplace, shall grant such a scope only to a requester who is an administrator or an approver of that marketplace and otherwise refuse the request and issue no token, shall answer a push for a marketplace outside the token's scope indistinguishably from one that does not exist, shall accept an update only to the marketplace's single lineage reference and refuse every other reference, shall refuse every reference deletion, shall refuse an update that is not a fast-forward unless the marketplace's policy permits rewriting and shall append the old and new tip to the append-only ledger when it does, and shall continue to accept no push whatsoever on the endpoint that serves approved content.
-    rationale: A write path into a product whose serving surface is read-only by construction earns its trust only by being somewhere else — a different endpoint, a different repository, and a credential nobody holds by default and only someone with authority over the marketplace can be given — so no existing token and no existing route gains a capability. Refusing everything but the one lineage reference keeps the single-history guarantee that makes a snapshot's provenance meaningful, and a rewrite that is permitted must at least be answerable afterwards.
-    categories: ["security", "functional-suitability"]
-    revision: 0.2.0
-
-  - id: GW_INGEST_0017
-    title: Pushed content traverses the unchanged pipeline
-    significance: shall
-    description: The system shall ingest a commit pushed to a hosted marketplace into the quarantine area, identify it by its commit SHA, validate its manifest, vet it and hold it exactly as it does content fetched from an upstream, and shall not serve it until it has been explicitly approved.
-    rationale: The value of first-party hosting is that it removes a redundant system, not that it removes review; content the organisation wrote is exactly as capable of carrying a planted credential or a prompt injection as content it did not, and a publisher who could also serve would make the approval gate optional.
-    categories: ["security", "functional-suitability"]
-    revision: 0.1.0
-
   - id: GW_AUTH_0018
     title: Session-derived short-lived git credentials
     significance: shall
@@ -1116,11 +1092,11 @@ requirements:
   - id: GW_FACADE_0008
     title: Deliberate storage durability choice
     significance: shall
-    description: The deployment chart shall require every installation to state explicitly whether the gateway's git storage is durable or ephemeral, shall refuse to render when that statement is absent or unrecognised, shall refuse to render when durable storage is chosen without naming the volume claim that provides it, and shall state in the refusal that ephemeral storage loses all quarantined, published and hosted repository content when the pod restarts.
+    description: The deployment chart shall require every installation to state explicitly whether the gateway's git storage is durable or ephemeral, shall refuse to render when that statement is absent or unrecognised, shall refuse to render when durable storage is chosen without naming the volume claim that provides it, and shall state in the refusal that ephemeral storage loses all quarantined and published repository content when the pod restarts.
     rationale: The repositories on disk and the snapshot rows in the database are two halves of one estate, and only one half survives a pod restart onto ephemeral storage; the gateway then records content as published that it can neither serve nor rebuild, with no rehydration path. A silent fallback makes that outcome the reward for forgetting a value, so the choice has to be made in the open and the consequence stated where the choice is made.
     categories: ["reliability", "interaction-capability"]
     implementation: configuration
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_RELEASE_0005
     title: Deployable chart surface
@@ -1207,10 +1183,10 @@ requirements:
   - id: GW_FACADE_0011
     title: Reference transitions are the same on every storage backend
     significance: shall
-    description: The system shall keep the quarantine, hosted and published roles of a repository separate on every storage backend it supports, shall create each repository with its head reference resolving to the branch it publishes on, shall put a snapshot on the wire and take it off again through the same reference transitions with the same observable outcome whichever backend holds the repositories, shall apply each such transition as a single all-or-nothing change that a concurrent writer can neither lose nor observe half of, shall raise a reference transition that did not take effect rather than reporting it as done, and shall advertise the same push capabilities to a publisher on every backend.
+    description: The system shall keep the quarantine and published roles of a repository separate on every storage backend it supports, shall create each repository with its head reference resolving to the branch it publishes on, shall put a snapshot on the wire and take it off again through the same reference transitions with the same observable outcome whichever backend holds the repositories, shall apply each such transition as a single all-or-nothing change that a concurrent writer can neither lose nor observe half of, shall raise a reference transition that did not take effect rather than reporting it as done.
     rationale: The published repository is the only surface the gateway serves and approval is the only thing permitted to write it, so a backend that lost, resurrected or half-applied a reference transition would break the single guarantee the product rests on — and would break it invisibly, because nothing above the storage seam can tell which backend answered. A deletion whose result is discarded is that defect wearing a success — revocation reports the marketplace stopped serving while the revoked commit is still fetchable. Making the observable outcome a property of the seam rather than of whichever backend is configured is also what lets a second backend be added without re-earning the trust the first one has, since the same contract is what both are held to.
     categories: ["reliability", "security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_FACADE_0012
     title: The storage backend reports its own contention, levels and reachability
@@ -1734,14 +1710,14 @@ requirements:
     revision: 0.1.0
 
   - id: GW_RETENTION_0010
-    title: Administrative and publication ledger entries are never trimmed
+    title: Administrative ledger entries are never trimmed
     significance: shall
-    description: "The system shall never remove an append-only audit ledger entry recording an administrative action or a first-party publication, whatever its age and whatever the export positions permit, admitting to trimming only a closed set of facade read events so that a ledger event kind introduced later is not eligible until it is deliberately admitted."
+    description: "The system shall never remove an append-only audit ledger entry recording an administrative action, whatever its age and whatever the export positions permit, admitting to trimming only a closed set of facade read events so that a ledger event kind introduced later is not eligible until it is deliberately admitted."
     rationale: "The compliance-bearing half of the ledger is also its low-volume half, so exempting it costs nothing and removes the whole class of error where a retention setting quietly erases the record of who decided what. This is the principle GW_RETENTION_0008 already fixes for revocation, generalised to the whole administrative half rather than restated as a new one. The admitted set is closed rather than open because the failure modes are not symmetric: a forgotten addition grows the table, while a forgotten exclusion deletes evidence."
     references:
       requirement_ids: ["GW_RETENTION_0008"]
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_RETENTION_0011
     title: Delivered and failed webhook deliveries are removed after a bounded age
@@ -1854,22 +1830,22 @@ requirements:
   - id: GW_INGEST_0034
     title: Administrative marketplace removal
     significance: shall
-    description: "The system shall let an administrator remove a registered marketplace on a stated, non-empty reason. It shall withdraw every approved snapshot of that marketplace by administrative revocation, leaving the marketplace serving nothing, and shall append the removal, with the acting identity, the time and the reason, to the append-only audit ledger. It shall remove the marketplace's name from every access token's grant to publish to it, shall keep every grant to fetch it, and shall append the tokens that lost a publication grant to the audit ledger. It shall keep the marketplace's record, its snapshots, their provenance, their ledger entries and its per-marketplace settings, and shall show none of those settings in an administrative listing. From the moment of removal it shall not serve the marketplace through the git facade, sync or ingest it, accept a push to it, approve any of its snapshots, list it, or accept it on any route addressed by marketplace name. It shall refuse a removal requested by a caller who is not an administrator, one that states no reason or an empty reason, and one naming no registered marketplace, and a refused removal shall change nothing."
+    description: "The system shall let an administrator remove a registered marketplace on a stated, non-empty reason. It shall withdraw every approved snapshot of that marketplace by administrative revocation, leaving the marketplace serving nothing, and shall append the removal, with the acting identity, the time and the reason, to the append-only audit ledger. It shall keep every access token's grant to fetch it. It shall keep the marketplace's record, its snapshots, their provenance, their ledger entries and its per-marketplace settings, and shall show none of those settings in an administrative listing. From the moment of removal it shall not serve the marketplace through the git facade, sync or ingest it, approve any of its snapshots, list it, or accept it on any route addressed by marketplace name. It shall refuse a removal requested by a caller who is not an administrator, one that states no reason or an empty reason, and one naming no registered marketplace, and a refused removal shall change nothing."
     references:
       requirement_ids: ["GW_APPROVAL_0015"]
-    rationale: "Nothing could remove a marketplace, so one registered by mistake, one whose upstream was abandoned and one whose upstream moved were all permanent rows the sync sweep kept polling. A hard delete is refused by the schema, and should be: the snapshots are the approval history, which is the compliance record, so removal is a retirement that behaves like removal. It must stop serving rather than merely hide, and withdrawing approved content is what administrative revocation already does correctly, so removal is built from it rather than beside it — which is also what makes a client that holds the content told it was withdrawn through the channel it already polls. The reason is mandatory because each withdrawal requires one, and because removal takes one administrator and no second reviewer: like revocation it only ever withdraws. Refusing approval from the moment of removal is what keeps a decision racing the removal from publishing under a marketplace that no longer exists. Token grants name marketplaces, so they outlive the marketplace and reach any successor of the same name: keeping the fetch grant is what lets clients go on working when the name comes back, while a publication grant is supply-side authority over content, and a publisher of the removed marketplace has none over whatever is registered next. Its settings stay because they are the record of how its snapshots were vetted, and leave the listings because they govern nothing any more."
+    rationale: "Nothing could remove a marketplace, so one registered by mistake, one whose upstream was abandoned and one whose upstream moved were all permanent rows the sync sweep kept polling. A hard delete is refused by the schema, and should be: the snapshots are the approval history, which is the compliance record, so removal is a retirement that behaves like removal. It must stop serving rather than merely hide, and withdrawing approved content is what administrative revocation already does correctly, so removal is built from it rather than beside it — which is also what makes a client that holds the content told it was withdrawn through the channel it already polls. The reason is mandatory because each withdrawal requires one, and because removal takes one administrator and no second reviewer: like revocation it only ever withdraws. Refusing approval from the moment of removal is what keeps a decision racing the removal from publishing under a marketplace that no longer exists. Token grants name marketplaces, so they outlive the marketplace and reach any successor of the same name: keeping the fetch grant is what lets clients go on working when the name comes back. Its settings stay because they are the record of how its snapshots were vetted, and leave the listings because they govern nothing any more."
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_INGEST_0035
     title: Reuse of a removed marketplace's name
     significance: shall
-    description: "The system shall accept the registration of a name whose previous marketplace was removed, as a new marketplace with an identity of its own. The new marketplace shall serve nothing until one of its own snapshots is approved, and shall inherit none of its predecessor's served content, approvals, approver grants, publication grants or, for a marketplace hosted by the gateway, pushed content. The predecessor's withdrawals shall not refuse the approval of the same commit ingested by the new marketplace. The system shall keep answering, for content its predecessor served, that the content was withdrawn, unless the new marketplace has itself approved that commit. It shall continue to refuse a second live marketplace of one name."
+    description: "The system shall accept the registration of a name whose previous marketplace was removed, as a new marketplace with an identity of its own. The new marketplace shall serve nothing until one of its own snapshots is approved, and shall inherit none of its predecessor's served content, approvals or approver grants. The predecessor's withdrawals shall not refuse the approval of the same commit ingested by the new marketplace. The system shall keep answering, for content its predecessor served, that the content was withdrawn, unless the new marketplace has itself approved that commit. It shall continue to refuse a second live marketplace of one name."
     references:
       requirement_ids: ["GW_INGEST_0034", "GW_FACADE_0031"]
     rationale: "The name is the facade clone path, so re-registering an upstream that moved under a new name breaks every client that already cloned it; removal is useful for that case only if the name can come back. Coming back must not mean resurrecting: the predecessor's approvals were decisions about a different upstream, and serving or authorising anything on their strength would be the supply-chain swap an immutable URL exists to prevent. A withdrawal made because the marketplace was removed is not a verdict on the content, so it does not follow the commit into the new marketplace, where the content faces the approval gate afresh."
     categories: ["security", "functional-suitability"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_APPROVAL_0018
     title: An approval control is presented only below the evidence it rests on
@@ -1962,10 +1938,10 @@ requirements:
   - id: GW_FACADE_0020
     title: Read-only forge mirror of approved content
     significance: shall
-    description: "The system shall be able to push a copy of the content it serves for a configured marketplace to an external git repository, and shall default that capability to disabled so that a deployment carrying no mirror configuration performs no outbound push at all. When it is enabled the system shall push only content that is approved and currently served, shall never push quarantined content or the origin repository of a gateway-hosted marketplace, shall refuse at startup a mirror URL whose scheme is outside the same URL scheme allowlist that governs marketplace registration, shall take the mirror credential from configuration rather than from any stored or committed material, and shall not disclose that credential in a log record, an API response or a ledger entry."
-    rationale: "ADR 0008 settled that the embedded facade remains the canonical, audited, enforced serving surface; a forge copy exists only so people can browse and search approved content with the tools a forge is genuinely better at. That makes the mirror an outbound integration and nothing else, which is why it is off unless an operator turns it on: an upgrade must not start pushing an organisation's content anywhere. Pushing only served content is the same boundary the facade enforces — the quarantine repository holds unreviewed content and a hosted origin holds whatever a publisher last pushed, so mirroring either would put content on a forge that no reviewer ever approved and that the approval gate exists to withhold. The outbound URL is the gateway dereferencing an operator-supplied address, exactly as registration is, so one scheme allowlist governs both rather than two policies drifting apart. And a forge push credential is a standing write credential to somebody else's system: keeping it in configuration and out of every record the gateway emits is what stops it leaking through the audit trail the gateway exists to produce."
+    description: "The system shall be able to push a copy of the content it serves for a configured marketplace to an external git repository, and shall default that capability to disabled so that a deployment carrying no mirror configuration performs no outbound push at all. When it is enabled the system shall push only content that is approved and currently served, shall never push quarantined content, shall refuse at startup a mirror URL whose scheme is outside the same URL scheme allowlist that governs marketplace registration, shall take the mirror credential from configuration rather than from any stored or committed material, and shall not disclose that credential in a log record, an API response or a ledger entry."
+    rationale: "ADR 0008 settled that the embedded facade remains the canonical, audited, enforced serving surface; a forge copy exists only so people can browse and search approved content with the tools a forge is genuinely better at. That makes the mirror an outbound integration and nothing else, which is why it is off unless an operator turns it on: an upgrade must not start pushing an organisation's content anywhere. Pushing only served content is the same boundary the facade enforces — the quarantine repository holds unreviewed content, so mirroring it would put content on a forge that no reviewer ever approved and that the approval gate exists to withhold. The outbound URL is the gateway dereferencing an operator-supplied address, exactly as registration is, so one scheme allowlist governs both rather than two policies drifting apart. And a forge push credential is a standing write credential to somebody else's system: keeping it in configuration and out of every record the gateway emits is what stops it leaking through the audit trail the gateway exists to produce."
     categories: ["functional-suitability", "security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_FACADE_0021
     title: The mirror is never an enforcement path
@@ -2656,12 +2632,12 @@ requirements:
   - id: GW_INGEST_0063
     title: Marketplace names are one bounded facade path segment
     significance: shall
-    description: "The system shall accept as a marketplace name only 1 to 63 characters drawn from lowercase letters, digits, hyphen and underscore and starting with a letter or digit, for a marketplace fetched from an upstream and for one the gateway hosts alike, and shall apply the same rule wherever a marketplace name is accepted: registration through the administrative API, a declared estate, the stored marketplace record, and the marketplace segment of every git facade path and of the revocation-status check."
+    description: "The system shall accept as a marketplace name only 1 to 63 characters drawn from lowercase letters, digits, hyphen and underscore and starting with a letter or digit, and shall apply the same rule wherever a marketplace name is accepted: registration through the administrative API, a declared estate, the stored marketplace record, and the marketplace segment of every git facade path and of the revocation-status check."
     references:
-      requirement_ids: ["GW_INGEST_0001", "GW_ESTATE_0002", "GW_FACADE_0006"]
+      requirement_ids: ["GW_INGEST_0001", "GW_ESTATE_0002"]
     rationale: "The name is the only identifier a marketplace has, and it is the path segment clients clone from, /git/<name>; a rule that admits a name the facade would not serve, or a facade that serves a name registration refuses, is the drift a single rule exists to prevent. The bound follows a DNS label's 63 characters: long enough for any real name, short enough to stay usable in a clone URL, a log line and the portal's navigation, and a definite answer where the rule previously had none."
     categories: ["security", "interaction-capability"]
-    revision: 0.3.0
+    revision: 0.4.0
 
   - id: GW_INGEST_0064
     title: A refused marketplace name says it is the clone path
@@ -2686,12 +2662,12 @@ requirements:
   - id: GW_INGEST_0066
     title: An administrator can correct an upstream marketplace's URL until its first snapshot
     significance: shall
-    description: "The system shall let an administrator replace the URL of a registered upstream marketplace while no snapshot of that marketplace exists in any state. It shall pass the new URL through the same URL validations and duplicate-URL warning as registration, excluding the marketplace itself from the duplicate comparison, and shall then read the upstream as registration does, refusing the change when the upstream cannot be read. It shall record the administrator who made the change as the marketplace's registrant, shall resolve the forge metadata again for the new URL, and shall append the change, with the acting identity and the previous and new URL, to the append-only audit ledger. It shall refuse the change for a hosted marketplace, for a marketplace with any snapshot, for a caller who is not an administrator, and for a name that no live marketplace has, and a refused change shall change nothing. It shall not record a snapshot whose content was fetched from a URL other than the marketplace's URL at the moment the snapshot is recorded."
+    description: "The system shall let an administrator replace the URL of a registered upstream marketplace while no snapshot of that marketplace exists in any state. It shall pass the new URL through the same URL validations and duplicate-URL warning as registration, excluding the marketplace itself from the duplicate comparison, and shall then read the upstream as registration does, refusing the change when the upstream cannot be read. It shall record the administrator who made the change as the marketplace's registrant, shall resolve the forge metadata again for the new URL, and shall append the change, with the acting identity and the previous and new URL, to the append-only audit ledger. It shall refuse the change for a marketplace with any snapshot, for a caller who is not an administrator, and for a name that no live marketplace has, and a refused change shall change nothing. It shall not record a snapshot whose content was fetched from a URL other than the marketplace's URL at the moment the snapshot is recorded."
     references:
       requirement_ids: ["GW_INGEST_0001", "GW_INGEST_0005", "GW_INGEST_0029", "GW_INGEST_0040", "GW_INGEST_0054", "GW_APPROVAL_0010"]
     rationale: "A URL mistyped at registration could only be corrected by removing the marketplace on a stated reason and registering it again. Until the first snapshot the URL is the source of nothing, so correcting it in place loses no provenance; from the first snapshot on, a snapshot's source is read from its marketplace, so the URL must stay what that content came from and removal remains the path. The new URL is a registration decision and faces registration's checks. The person who chose the upstream now in effect is the one the separation-of-duties rule must keep from approving its content, so the editor becomes the registrant. An ingestion that fetched from the previous URL and records its snapshot after the change would attribute that content to the new URL, which is why recording a snapshot is conditional on the URL it was fetched from."
     categories: ["security", "functional-suitability"]
-    revision: 0.5.0
+    revision: 0.6.0
 
   - id: GW_INGEST_0067
     title: Correcting a marketplace's URL from the portal
@@ -2916,14 +2892,14 @@ requirements:
     revision: 0.1.0
 
   - id: GW_APPROVAL_0044.2
-    title: Internal sources are those under an operator-configured URL prefix, or hosted
+    title: Internal sources are those under an operator-configured URL prefix
     significance: shall
-    description: "The system shall treat a marketplace as internal when its origin is hosted, or when its URL falls under an operator-configured URL prefix — the same scheme, host and port, and a path equal to the prefix or continuing it after a path separator — and shall treat as not internal a URL carrying userinfo, an encoded separator or a dot segment, and a URL whose path differs from the prefix only in case; shall refuse to start on a prefix that does not parse, or on a prefix with no path segment whose host is github.com, gitlab.com, bitbucket.org or the configured GitHub base URL host; and shall determine whether a marketplace is internal at each attempt rather than store it; and shall not treat as internal a snapshot whose fetch a redirect sent outside the registered repository's path."
+    description: "The system shall treat a marketplace as internal when its URL falls under an operator-configured URL prefix — the same scheme, host and port, and a path equal to the prefix or continuing it after a path separator — and shall treat as not internal a URL carrying userinfo, an encoded separator or a dot segment, and a URL whose path differs from the prefix only in case; shall refuse to start on a prefix that does not parse, or on a prefix with no path segment whose host is github.com, gitlab.com, bitbucket.org or the configured GitHub base URL host; and shall determine whether a marketplace is internal at each attempt rather than store it; and shall not treat as internal a snapshot whose fetch a redirect sent outside the registered repository's path."
     references:
       requirement_ids: ["GW_APPROVAL_0044"]
-    rationale: "Internal has to be the operator's statement, not a marketplace's claim about itself. Matching on whole path segments keeps acme from covering acme-evil, and the refusals of userinfo, encoded separators and dot segments close the ways a URL can look internal and fetch from elsewhere. A host-wide prefix on a multi-tenant forge would make every user's namespace internal, so startup refuses it. A hosted marketplace's content arrives only through publication with a push scope an administrator or its approver minted. A stored flag would go stale when the prefix list changes, and a stale trusted bit fails open. A forge redirects a transferred or renamed repository on the same host, so the registered URL can fetch content that is no longer under it."
+    rationale: "Internal has to be the operator's statement, not a marketplace's claim about itself. Matching on whole path segments keeps acme from covering acme-evil, and the refusals of userinfo, encoded separators and dot segments close the ways a URL can look internal and fetch from elsewhere. A host-wide prefix on a multi-tenant forge would make every user's namespace internal, so startup refuses it. A stored flag would go stale when the prefix list changes, and a stale trusted bit fails open. A forge redirects a transferred or renamed repository on the same host, so the registered URL can fetch content that is no longer under it."
     categories: ["security"]
-    revision: 0.1.0
+    revision: 0.2.0
 
   - id: GW_APPROVAL_0044.3
     title: Automatic approval of a marketplace outside the internal prefixes needs an expiring administrator exemption
@@ -3238,10 +3214,10 @@ requirements:
   - id: GW_INGEST_0070
     title: A snapshot whose tree holds a symbolic link or a submodule entry is rejected
     significance: shall
-    description: "The system shall record rejected, carrying a violation naming the entry's path and kind, a snapshot whose served tree — the upstream commit, a hosted push, or a composite with grafted external content — holds any entry other than a regular or executable file, including a symbolic link and a submodule entry, and shall hold one whose tree holds only regular and executable files as before."
+    description: "The system shall record rejected, carrying a violation naming the entry's path and kind, a snapshot whose served tree — the upstream commit or a composite with grafted external content — holds any entry other than a regular or executable file, including a symbolic link and a submodule entry, and shall hold one whose tree holds only regular and executable files as before."
     rationale: "Vetting reads each file's bytes at the path it appears under, but a git client checks a symbolic link out as a link to wherever it points and a submodule as another repository, so the content a reviewer was shown and the content a consumer installs could differ. Refusing those entries keeps what was vetted and what is served the same set of bytes."
     categories: ["security"]
-    revision: 0.5.0
+    revision: 0.6.0
 
   - id: GW_INGEST_0071
     title: Frontmatter hooks are read only within a bounded size
@@ -3480,12 +3456,12 @@ requirements:
   - id: GW_AUTH_0080
     title: The personal token list states each token's reach
     significance: shall
-    description: "The portal's personal access token list shall state for each token whether it fetches every marketplace or only the marketplaces it names, in words and not by an empty cell, and shall state the hosted marketplaces a token may publish to when it has any."
+    description: "The portal's personal access token list shall state for each token whether it fetches every marketplace or only the marketplaces it names, in words and not by an empty cell."
     rationale: "A narrow token and a broad one looked the same in the list, so nobody could tell which credential to revoke after a leak or which to reuse."
     references:
       requirement_ids: ["GW_AUTH_0070"]
     categories: ["interaction-capability", "security"]
-    revision: 0.5.0
+    revision: 0.6.0
 
   - id: GW_AUTH_0081
     title: A personal access token's cleartext is kept nowhere once shown
@@ -3821,4 +3797,20 @@ requirements:
     references:
       requirement_ids: ["GW_AUTH_0028"]
     categories: ["interaction-capability", "security"]
+    revision: 0.5.0
+
+  - id: GW_AUTH_0090
+    title: The removed hosting surface is refused, never silently reinterpreted
+    significance: shall
+    description: "The system shall, when the schema is upgraded to remove gateway-hosted marketplaces, delete every hosted marketplace and everything that depends on it and every ledger entry recorded under its marketplace identity, shall leave the ledger entries of a marketplace that reused a removed name and every other marketplace untouched, shall leave every hosted repository in storage untouched, and shall not refuse the upgrade. It shall refuse a marketplace registration that asks for the hosted origin or a push policy, a token request that names push scopes, and an estate marketplace entry that declares the hosted origin or a push policy, each with a refusal that names the removal, and shall route nothing at the path publishers used to push to, so that it answers as any path the gateway does not serve. It shall keep every access token's fetch scopes through the upgrade."
+    rationale: "Hosting is gone, so its records go with it: a schema that kept them would keep the exception it was built around. Deleting by marketplace identity and never by name alone is what keeps a successor that reused a removed name from losing its own history, and leaving the repositories alone is what keeps the only copy of a publisher's source out of a migration's reach. Removed fields that were merely ignored would turn a request for hosting into a registration that silently is not hosted, a request for a push token into a token that cannot push, and an estate file into a confusing missing-URL failure; each is a reversal of what the caller stated, so each is refused in words. Tokens lose only a grant nothing can use any longer, never a fetch scope."
+    categories: ["security", "functional-suitability"]
+    revision: 0.6.0
+
+  - id: GW_AUTH_0091
+    title: Administrators are told which former hosted repositories remain
+    significance: shall
+    description: "The system shall let an administrator, and no one else, list the repositories of the former hosted-marketplace feature that are still in its storage, shall answer an empty list when there are none, shall refuse the listing to every other session and to every machine credential, shall derive the list from storage on each request so that it ends when the repositories do, shall list only direct non-link directories under the former hosting location whose names follow the marketplace name rule, shall never write to or delete any of them, and shall show administrators in the portal a notice naming each remaining repository, its location and, where it can be read, its last commit, with no control that deletes anything and no request made for anyone else. This requirement is temporary and is removed with the notice."
+    rationale: "The upgrade deletes the database's record of hosted marketplaces and leaves their repositories, which are the only copy of each publisher's source; an administrator who is not told where they are cannot copy them before someone tidies the data directory. The list is read rather than stored so that nothing has to be cleaned up afterwards, and it offers no delete so that no click removes a source of record."
+    categories: ["functional-suitability", "interaction-capability"]
     revision: 0.5.0

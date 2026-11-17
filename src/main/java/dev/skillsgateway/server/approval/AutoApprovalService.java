@@ -112,8 +112,7 @@ public class AutoApprovalService {
 
             @Schema(
                     description = "Why the marketplace's automatic approval takes effect, or none",
-                    allowableValues = {"internal-source", "hosted", "exemption", "awaiting-second-administrator", "none"
-                    })
+                    allowableValues = {"internal-source", "exemption", "awaiting-second-administrator", "none"})
             String allowedBy,
 
             @Schema(description = "Whether every check passes; under on, the approval gates then decide")

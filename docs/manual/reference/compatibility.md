@@ -100,7 +100,7 @@ The facade is plain read-only git smart-HTTP, so anything that clones works.
 | Claude Code (`claude plugin marketplace add`) | The primary target. |
 | Copilot / Cursor (open Agent Skills `SKILL.md` repositories) | Works — the facade serves a git repository. |
 | CI pipelines, bare `git clone` | Works with a PAT. |
-| Anything attempting `git push` to `/git/**` | Rejected by construction. (A hosted marketplace is published to on `/publish/**`, a separate endpoint.) |
+| Anything attempting `git push` to `/git/**` | Rejected by construction, and the gateway accepts a push nowhere. |
 
 ## Enforcement mechanisms
 
@@ -175,6 +175,33 @@ grow too.
     operator action was needed; a receiver matching on the name it was given has
     to be updated. This was a declared break under the rules below, and it is the
     kind of change that costs a major release once the contract is frozen.
+
+!!! warning "Hosted marketplaces were removed"
+
+    The gateway no longer hosts marketplaces
+    ([ADR 0024](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0024-the-gateway-does-not-host-marketplaces.md),
+    Proposed). This is a declared break under the rules below, and it takes out:
+
+    - `origin`, `pushPolicy` and `publishPath` from every marketplace schema, and
+      `pushScopeRemovedFromTokenIds` from the removal response;
+    - `pushScopes` from the token schemas and the create-token request — a request that
+      still names push scopes, or asks to register `origin: "hosted"` or a `pushPolicy`, is
+      refused with `400` naming the removal, not ignored;
+    - `hosted` from the auto-approval `allowedBy` enum, and `origin` from a snapshot's
+      provenance;
+    - `/publish/**`, which is no longer routed;
+    - `skills-gateway.estate.marketplaces[].origin: hosted` and `push-policy`, which fail
+      their entry naming the removal (an estate key, covered by review and this note, not by
+      oasdiff);
+    - the database's record of every hosted marketplace: migration `V3` **deletes** them,
+      live or removed, with their history and ledger entries, and leaves their repositories
+      on disk. See [Removing hosted marketplaces](../guides/removing-hosted-marketplaces.md).
+
+    The marketplace registration ledger and webhook detail keep `origin=upstream`, unchanged,
+    because the webhook's `detail` is a required field. The promise above binds from 1.0.0 and
+    the latest release is 0.8.0, so nothing was versioned or moved to a new prefix; the pull
+    request declares the break in its title and leaves the `⚠️ BREAKING CONTRACT` label to the
+    owner.
 
 !!! warning "Ingest became a job, before 1.0"
 

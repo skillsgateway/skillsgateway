@@ -37,7 +37,7 @@ $ curl -X POST localhost:8080/api/v1/tokens/session \
 
 ```json
 {"id":1,"name":"my-laptop","token":"sgw_...","expiresAt":"2026-08-23T17:00:00Z",
- "sessionDerived":true,"pushScopes":[]}
+ "sessionDerived":true}
 ```
 
 The gateway sets the lifetime —
@@ -262,9 +262,7 @@ to named marketplaces, create a scoped token through the API.
 Exactly one branch, `main`, at the approved SHA. Unapproved snapshots do not
 exist on this remote, and pushing here is impossible — receive-pack is disabled
 by construction on the facade, so `git push` gets a "service not enabled"
-rejection. (Publishing to a marketplace the gateway hosts is a different
-endpoint and a different credential; see
-[Publishing first-party skills](publishing-first-party-skills.md).)
+rejection, and the gateway accepts no push anywhere.
 
 The served SHA changes only when a reviewer approves a new snapshot. Upstream
 movement alone never changes what you receive.

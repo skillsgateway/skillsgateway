@@ -170,7 +170,7 @@ relative to the working directory. In the container image it is `/data`.
 !!! warning "Storage durability is a decision, and the chart makes you state it"
 
     The chart has no default `persistence.mode`. `ephemeral` is an `emptyDir`
-    and loses the quarantine, published and hosted repositories on every pod
+    and loses the quarantine and published repositories on every pod
     restart; `existingClaim` binds a durable volume; `none` keeps no volume at
     all and is accepted only on the object-store backend. See
     [Choosing and migrating the storage backend](storage-backends.md).

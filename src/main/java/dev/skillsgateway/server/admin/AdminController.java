@@ -152,19 +152,9 @@ public class AdminController {
                     example = "https://github.com/acme/skills-marketplace.git")
             String url,
 
-            @Schema(
-                    description = "Where the content comes from: 'upstream' (the default) fetches the clone URL;"
-                            + " 'hosted' takes no URL and gives the marketplace a gateway-owned origin repository"
-                            + " that publishers push to",
-                    allowableValues = {"upstream", "hosted"},
-                    example = "upstream")
-            String origin,
+            @Schema(hidden = true) String origin,
 
-            @Schema(
-                    description = "For a hosted marketplace, whether its publisher may rewrite the lineage."
-                            + " Defaults to append-only, which refuses a non-fast-forward push.",
-                    allowableValues = {"append-only", "allow-rewrite"})
-            String pushPolicy,
+            @Schema(hidden = true) String pushPolicy,
 
             @Schema(
                     description = "Must be omitted or equal the upstream default branch; the ingested ref"
@@ -195,26 +185,12 @@ public class AdminController {
             @Schema(description = "Gateway-local name (also the facade clone path)")
             String name,
 
-            @Schema(description = "Upstream clone URL; null for a gateway-hosted marketplace")
-            String url,
+            @Schema(description = "Upstream clone URL") String url,
 
             @Schema(description = "Registration time") Instant createdAt,
 
             @Schema(description = "Identity that registered the marketplace, or null when it was not recorded")
             String registeredBy,
-
-            @Schema(
-                    description = "Where the content comes from",
-                    allowableValues = {"upstream", "hosted"})
-            String origin,
-
-            @Schema(
-                    description = "Whether a hosted marketplace's publisher may rewrite its lineage",
-                    allowableValues = {"append-only", "allow-rewrite"})
-            String pushPolicy,
-
-            @Schema(description = "Path publishers push a hosted marketplace to; null for an upstream one")
-            String publishPath,
 
             @Schema(
                     description = "Commit the facade is serving for this marketplace right now, read from the"
@@ -267,10 +243,13 @@ public class AdminController {
             summary = "Register a marketplace",
             description = "Registers a git skill marketplace. An upstream marketplace (the default) names a clone"
                     + " URL whose scheme must be on the configured allowlist (default http/https); the ingested"
-                    + " ref is set by the gateway (the upstream default branch) and cannot be overridden. A hosted"
-                    + " marketplace takes no URL at all and is published to by pushing to /publish/{name}.")
+                    + " ref is set by the gateway (the upstream default branch) and cannot be overridden. The gateway"
+                    + " does not host marketplaces: a request for the hosted origin or a push policy is refused.")
     @ApiResponse(responseCode = "201", description = "Marketplace registered")
-    @ApiResponse(responseCode = "400", description = "Disallowed URL scheme, or a ref other than the default branch")
+    @ApiResponse(
+            responseCode = "400",
+            description = "Disallowed URL scheme, a ref other than the default branch, or a request for the hosted"
+                    + " origin or a push policy, which were removed")
     @ApiResponse(responseCode = "409", description = "A marketplace with that name already exists")
     @ApiResponse(responseCode = "422", description = "Invalid marketplace name")
     @ApiResponse(
@@ -281,6 +260,7 @@ public class AdminController {
             @RequestBody RegisterMarketplaceRequest request, Authentication authentication) {
         roleService.requireAdmin(authentication);
         requireDefaultBranchRef(request.ref());
+        requireNoRemovedHosting(request);
         RegistrationAutoApproval autoApproval = request.autoApproval();
         if (autoApproval != null
                 && Boolean.TRUE.equals(autoApproval.enabled())
@@ -296,13 +276,12 @@ public class AdminController {
             autoApprovalSettingService.checkRegistration(
                     request.name(),
                     request.url(),
-                    request.origin(),
                     autoApproval.enabled(),
                     autoApproval.reason(),
                     autoApproval.expiresAt());
         }
-        MarketplaceRegistrationService.RegistrationOutcome outcome = registrationService.register(
-                request.name(), request.url(), request.origin(), request.pushPolicy(), authentication.getName());
+        MarketplaceRegistrationService.RegistrationOutcome outcome =
+                registrationService.register(request.name(), request.url(), authentication.getName());
         List<String> warnings = outcome.warnings();
         if (autoApproval != null && Boolean.TRUE.equals(autoApproval.enabled())) {
             // The marketplace already exists, with its repository and webhook, so no rollback undoes
@@ -345,9 +324,7 @@ public class AdminController {
                     + " snapshot exists the URL is its source of record: remove the marketplace and register it"
                     + " again instead. An unchanged URL is answered as it stands. Admin-only.")
     @ApiResponse(responseCode = "200", description = "URL changed, or already the one given")
-    @ApiResponse(
-            responseCode = "400",
-            description = "Disallowed URL scheme, a credential in the URL, or a hosted marketplace")
+    @ApiResponse(responseCode = "400", description = "Disallowed URL scheme, or a credential in the URL")
     @ApiResponse(responseCode = "403", description = "Caller does not hold the administrative role")
     @ApiResponse(responseCode = "404", description = "No registered marketplace has that name")
     @ApiResponse(responseCode = "409", description = "The marketplace has a snapshot; its URL can no longer change")
@@ -419,23 +396,12 @@ public class AdminController {
             long id,
             String name,
 
-            @Schema(description = "Upstream clone URL; null for a gateway-hosted marketplace")
-            String url,
+            @Schema(description = "Upstream clone URL") String url,
 
             Instant createdAt,
 
             @Schema(description = "Identity that registered the marketplace, or null when it was not recorded")
             String registeredBy,
-
-            @Schema(
-                    description = "Where the content comes from",
-                    allowableValues = {"upstream", "hosted"})
-            String origin,
-
-            @Schema(
-                    description = "Whether a hosted marketplace's publisher may rewrite its lineage",
-                    allowableValues = {"append-only", "allow-rewrite"})
-            String pushPolicy,
 
             @Schema(description = "Detected forge (github, gitlab, bitbucket, azure-devops, gitea) or null")
             String forge,
@@ -469,8 +435,6 @@ public class AdminController {
                     marketplace.url(),
                     marketplace.createdAt(),
                     marketplace.registeredBy(),
-                    marketplace.origin(),
-                    marketplace.pushPolicy(),
                     marketplace.forge(),
                     marketplace.forgeProject(),
                     marketplace.description(),
@@ -531,6 +495,20 @@ public class AdminController {
 
     /** The ingested ref is the gateway's decision (upstream default branch), never the consumer's. */
     @Requirements({"GW_INGEST_0006"})
+    /**
+     * The hosted origin and the push policy were removed (GW_AUTH_0090): a request for either is refused
+     * in words rather than registering an upstream marketplace the caller did not ask for. The
+     * upstream origin, which was always the default, is still accepted.
+     */
+    private static void requireNoRemovedHosting(RegisterMarketplaceRequest request) {
+        if (request.origin() != null && !request.origin().isBlank() && !"upstream".equals(request.origin())) {
+            throw RemovedHosting.refusal("the origin '" + request.origin() + "'");
+        }
+        if (request.pushPolicy() != null && !request.pushPolicy().isBlank()) {
+            throw RemovedHosting.refusal("a push policy");
+        }
+    }
+
     private void requireDefaultBranchRef(String ref) {
         if (ref != null && !DEFAULT_BRANCH.equals(ref)) {
             throw new ResponseStatusException(
@@ -558,9 +536,6 @@ public class AdminController {
                         marketplace.url(),
                         marketplace.createdAt(),
                         marketplace.registeredBy(),
-                        marketplace.origin(),
-                        marketplace.pushPolicy(),
-                        marketplace.hosted() ? "/publish/" + marketplace.name() : null,
                         servedTip.of(marketplace.name()).orElse(null),
                         marketplace.forge(),
                         marketplace.forgeProject(),

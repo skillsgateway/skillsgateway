@@ -115,7 +115,6 @@ class AutoApprovalServiceTests {
         marketplace = mock(Marketplace.class);
         when(marketplace.id()).thenReturn(MARKETPLACE);
         when(marketplace.name()).thenReturn("m");
-        when(marketplace.hosted()).thenReturn(true);
 
         when(properties.approval().auto().mode()).thenReturn(AutoMode.ON);
         when(properties.vetting().revet().enabled()).thenReturn(true);
@@ -123,12 +122,12 @@ class AutoApprovalServiceTests {
         when(snapshots.newestLive(MARKETPLACE)).thenReturn(Optional.of(held));
         when(snapshots.recordAutoApprovalSkip(anyLong(), anyString())).thenReturn(true);
         when(marketplaces.findById(MARKETPLACE)).thenReturn(Optional.of(marketplace));
-        when(setting.resolveForAttempt(marketplace)).thenReturn(AllowedBy.HOSTED);
-        when(setting.effectiveAllowedBy(marketplace)).thenReturn(AllowedBy.HOSTED);
+        when(setting.resolveForAttempt(marketplace)).thenReturn(AllowedBy.INTERNAL_SOURCE);
+        when(setting.effectiveAllowedBy(marketplace)).thenReturn(AllowedBy.INTERNAL_SOURCE);
         when(setting.view("m"))
                 .thenReturn(new AutoApprovalSettingService.SettingView(
                         true,
-                        AllowedBy.HOSTED,
+                        AllowedBy.INTERNAL_SOURCE,
                         "root",
                         Instant.now(),
                         "r",
@@ -223,7 +222,8 @@ class AutoApprovalServiceTests {
                         eq("m"),
                         eq(AutoApprovalService.EVENT_APPROVED),
                         eq(held.sha()),
-                        startsWith("allowedBy=hosted; grantor=root; chain=c; baseline=none; worst=none; waivers=[]"));
+                        startsWith(
+                                "allowedBy=internal-source ?; grantor=root; chain=c; baseline=none; worst=none; waivers=[]"));
     }
 
     @Test

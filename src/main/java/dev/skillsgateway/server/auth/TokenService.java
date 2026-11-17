@@ -66,9 +66,6 @@ public class TokenService {
             @Schema(description = "The token this one replaced by rotation, or null")
             Long rotatedFrom,
 
-            @Schema(description = "Hosted marketplaces this token may publish to; empty grants none")
-            List<String> pushScopes,
-
             @Schema(description = "Whether this credential was derived from a browser session (GW_AUTH_0018)")
             boolean sessionDerived,
 
@@ -143,24 +140,10 @@ public class TokenService {
      */
     @Requirements({"GW_AUTH_0004", "GW_AUTH_0006", "GW_AUTH_0007"})
     public IssuedToken create(String principal, String name, List<String> scopes, Instant expiresAt) {
-        return create(principal, name, scopes, expiresAt, List.of());
-    }
-
-    /**
-     * As above, plus push scopes (GW_FACADE_0007). A push scope must name a registered <em>hosted</em>
-     * marketplace: the catalog is generated, an upstream marketplace's content comes from its
-     * upstream, and neither can be published to — so naming one is a mistake worth failing at
-     * issue time rather than a grant that could never match.
-     */
-    @Requirements({"GW_AUTH_0004", "GW_AUTH_0006", "GW_AUTH_0007", "GW_FACADE_0007"})
-    public IssuedToken create(
-            String principal, String name, List<String> scopes, Instant expiresAt, List<String> pushScopes) {
         List<String> storedScopes = validateScopes(scopes);
-        List<String> storedPushScopes = validatePushScopes(pushScopes);
         validateTtl(expiresAt);
         String secret = newSecret();
-        AccessToken stored = tokenRepository.create(
-                principal, name, sha256Hex(secret), storedScopes, expiresAt, null, storedPushScopes);
+        AccessToken stored = tokenRepository.create(principal, name, sha256Hex(secret), storedScopes, expiresAt, null);
         return issued(stored, secret);
     }
 
@@ -168,7 +151,6 @@ public class TokenService {
      * A git credential derived from the caller's browser session (GW_AUTH_0018). The lifetime is the
      * gateway's, taken from configuration: there is no parameter for it, because a credential
      * whose life the holder can choose is a personal access token reached through another URL.
-     * No push scopes, ever — publishing is done with something somebody provisioned on purpose.
      */
     @Requirements({"GW_AUTH_0018"})
     public IssuedToken createSessionCredential(String principal, String name, List<String> scopes) {
@@ -176,7 +158,7 @@ public class TokenService {
         Instant expiresAt = Instant.now().plus(properties.tokens().sessionTtl());
         String secret = newSecret();
         AccessToken stored =
-                tokenRepository.create(principal, name, sha256Hex(secret), storedScopes, expiresAt, null, null, true);
+                tokenRepository.create(principal, name, sha256Hex(secret), storedScopes, expiresAt, null, true);
         return issued(stored, secret);
     }
 
@@ -224,7 +206,7 @@ public class TokenService {
         validateMachineTtl(expiresAt, neverExpires);
         String secret = newSecret();
         AccessToken stored = tokenRepository.create(
-                principal, name, sha256Hex(secret), null, expiresAt, null, null, false, storedApiScopes, owner);
+                principal, name, sha256Hex(secret), null, expiresAt, null, false, storedApiScopes, owner);
         return issued(stored, secret);
     }
 
@@ -311,7 +293,7 @@ public class TokenService {
 
     /**
      * Rotation for a machine credential (GW_AUTH_0024): the same grant with a new secret. The identity,
-     * the expiry <em>deadline</em> and all three scope dimensions carry over, and the old
+     * the expiry <em>deadline</em> and both scope dimensions carry over, and the old
      * credential is revoked before the new one is issued, so no moment has two live secrets. A
      * rotation that silently widened or dropped an administrative scope would be the worst defect
      * this feature could have, which is why the test asserts it per scope value.
@@ -345,7 +327,6 @@ public class TokenService {
                 old.scopes(),
                 old.expiresAt(),
                 id,
-                old.pushScopes(),
                 old.sessionDerived(),
                 old.apiScopes(),
                 old.machineOwner());
@@ -460,10 +441,9 @@ public class TokenService {
                 old.scopes(),
                 old.expiresAt(),
                 id,
-                // Rotation changes the secret and nothing else (GW_AUTH_0008): push scopes, the expiry
-                // deadline, and the session-derived mark all carry over — so a rotation can
+                // Rotation changes the secret and nothing else (GW_AUTH_0008): the expiry
+                // deadline and the session-derived mark carry over — so a rotation can
                 // neither widen a grant nor launder a session credential into a standing one.
-                old.pushScopes(),
                 old.sessionDerived());
         return Optional.of(issued(stored, secret));
     }
@@ -518,24 +498,6 @@ public class TokenService {
         return List.copyOf(new LinkedHashSet<>(scopes));
     }
 
-    @Requirements({"GW_FACADE_0007"})
-    private List<String> validatePushScopes(List<String> pushScopes) {
-        if (pushScopes == null || pushScopes.isEmpty()) {
-            return null;
-        }
-        Set<String> hosted = new LinkedHashSet<>();
-        marketplaceRepository.list().stream()
-                .filter(dev.skillsgateway.server.persistence.Marketplace::hosted)
-                .forEach(marketplace -> hosted.add(marketplace.name()));
-        for (String scope : pushScopes) {
-            if (!hosted.contains(scope)) {
-                throw new InvalidTokenRequestException(
-                        "unknown push scope '%s': push scopes name registered hosted marketplaces".formatted(scope));
-            }
-        }
-        return List.copyOf(new LinkedHashSet<>(pushScopes));
-    }
-
     private void validateTtl(Instant expiresAt) {
         var maxTtl = properties.tokens().maxTtl();
         if (maxTtl == null) {
@@ -556,7 +518,6 @@ public class TokenService {
                 stored.scopeList(),
                 stored.expiresAt(),
                 stored.rotatedFrom(),
-                stored.pushScopeList(),
                 stored.sessionDerived(),
                 stored.apiScopeList(),
                 stored.machineOwner());

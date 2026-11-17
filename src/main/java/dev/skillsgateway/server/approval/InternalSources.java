@@ -41,10 +41,9 @@ public class InternalSources {
         this.configured = List.copyOf(configured);
     }
 
-    /** Hosted marketplaces are internal by construction: only a minted push scope can write them. */
     @Requirements({"GW_APPROVAL_0044.2"})
     public boolean isInternal(Marketplace marketplace) {
-        return marketplace.hosted() || isInternal(marketplace.url());
+        return isInternal(marketplace.url());
     }
 
     @Requirements({"GW_APPROVAL_0044.2"})

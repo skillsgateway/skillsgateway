@@ -84,7 +84,7 @@ public final class WebhookEvent {
      */
     public static final String SNAPSHOT_APPROVAL_PENDING = "marketplace.snapshot.approval_pending";
 
-    /** An upstream or hosted marketplace was registered (GW_WEBHOOK_0009). */
+    /** A marketplace was registered (GW_WEBHOOK_0009). */
     public static final String MARKETPLACE_REGISTERED = "marketplace.registered";
 
     /**

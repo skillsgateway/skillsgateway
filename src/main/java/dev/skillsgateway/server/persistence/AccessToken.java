@@ -18,7 +18,6 @@ public record AccessToken(
         List<String> scopes,
         Instant expiresAt,
         Long rotatedFrom,
-        List<String> pushScopes,
         boolean sessionDerived,
         List<String> apiScopes,
         String machineOwner,
@@ -51,37 +50,19 @@ public record AccessToken(
         return scopeList.contains(marketplace);
     }
 
-    /** The push scope list; empty means this token may push nowhere (GW_FACADE_0007). */
-    public List<String> pushScopeList() {
-        return pushScopes == null ? List.of() : pushScopes;
-    }
-
-    /**
-     * Whether this token may push to the named hosted marketplace (GW_FACADE_0007). Deliberately the
-     * opposite default from {@link #permitsMarketplace}: no push scopes means none, so every
-     * token that predates publication — and every token whose fetch scope is the
-     * every-marketplace form — can write nothing.
-     */
-    public boolean permitsPushTo(String marketplace) {
-        return pushScopeList().contains(marketplace);
-    }
-
     /**
      * The administrative scope list; empty means this token reaches no {@code /api/**} endpoint
      * at all (GW_AUTH_0020).
      *
-     * <p>All three of this record's scope dimensions have an empty value, and all three mean
-     * something different. Stated together, because reading any one of them as "unrestricted" is
-     * where the next defect lives:
+     * <p>This record's scope dimensions have an empty value, and the two mean something different.
+     * Stated together, because reading either as "unrestricted" is where the next defect lives:
      *
      * <ul>
      *   <li><b>fetch</b> ({@code scopes}) — empty means <em>every marketplace</em>, which is what
      *       every pre-scoping token meant, <em>unless</em> {@code apiScopes} is non-empty, in
      *       which case it means nothing. See {@link #permitsMarketplace}.
-     *   <li><b>push</b> ({@code pushScopes}) — empty means <em>nowhere</em>. It was added after
-     *       scoping existed, so it never had a permissive default.
-     *   <li><b>API</b> ({@code apiScopes}) — empty means <em>nothing</em>, deliberately the push
-     *       default rather than the fetch one: reaching the control plane is a grant and never a
+     *   <li><b>API</b> ({@code apiScopes}) — empty means <em>nothing</em>, deliberately the
+     *       reverse of the fetch one: reaching the control plane is a grant and never a
      *       baseline, so a fetch token must not become a machine credential by omission.
      * </ul>
      */
@@ -92,7 +73,7 @@ public record AccessToken(
     /**
      * Whether this is a machine API credential (GW_AUTH_0020) — exactly when it holds at least one
      * administrative scope. There is no separate credential type and no flag: one record carries
-     * all three dimensions, and each chain asks only the dimension it owns.
+     * both dimensions, and each chain asks only the dimension it owns.
      */
     public boolean machineCredential() {
         return !apiScopeList().isEmpty();

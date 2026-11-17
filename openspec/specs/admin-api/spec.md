@@ -4,7 +4,9 @@
 
 The administrative HTTP interface for registering marketplaces, listing
 snapshots and their states, and approving or rejecting held snapshots.
+
 ## Requirements
+
 ### Requirement: GW_AUTH_0001
 The system SHALL implement GW_AUTH_0001.
 
@@ -59,4 +61,15 @@ The system SHALL implement GW_AUDIT_0010.
 
 #### Scenario: SVC_GW_AUDIT_0010
 - **WHEN** SVC_GW_AUDIT_0010 is run
+- **THEN** it passes
+
+### Requirement: GW_AUTH_0091
+The system SHALL implement GW_AUTH_0091.
+
+#### Scenario: SVC_GW_AUTH_0112
+- **WHEN** SVC_GW_AUTH_0112 is run
+- **THEN** it passes
+
+#### Scenario: SVC_GW_AUTH_0113
+- **WHEN** SVC_GW_AUTH_0113 is run
 - **THEN** it passes

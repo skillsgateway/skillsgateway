@@ -93,9 +93,9 @@ class AuthTests extends AbstractGatewayTest {
         List<Map<String, Object>> entries = JsonPath.read(listBody, "$[?(@.id == " + id + ")]");
         assertThat(entries).hasSize(1);
         // Closed enumeration on purpose: a leaked hash or secret would fail this, and any new
-        // field must be added here deliberately. scopes/expiresAt/rotatedFrom joined in GW_AUTH_0006-66,
-        // pushScopes in GW_FACADE_0007 and sessionDerived in GW_AUTH_0018 — both facts about the grant, and
-        // neither a secret. apiScopes joined in GW_AUTH_0020: on a personal access token it is always
+        // field must be added here deliberately. scopes/expiresAt/rotatedFrom joined in GW_AUTH_0006-66
+        // and sessionDerived in GW_AUTH_0018 — both facts about the grant, and neither a secret. apiScopes joined in
+        // GW_AUTH_0020: on a personal access token it is always
         // empty, and asserting its presence here is what would catch it silently becoming
         // populated on a credential nobody provisioned as a machine one. lastUsedAt joined in
         // GW_AUTH_0031: an observation about the credential, never a secret, and the field an operator
@@ -109,7 +109,6 @@ class AuthTests extends AbstractGatewayTest {
                         "scopes",
                         "expiresAt",
                         "rotatedFrom",
-                        "pushScopes",
                         "sessionDerived",
                         "apiScopes",
                         "lastUsedAt");

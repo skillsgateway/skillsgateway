@@ -11,7 +11,6 @@ import dev.skillsgateway.server.config.SkillsGatewayProperties.DeclaredMarketpla
 import dev.skillsgateway.server.config.SkillsGatewayProperties.Estate;
 import dev.skillsgateway.server.estate.EstateReconciler;
 import dev.skillsgateway.server.estate.EstateReconciliation;
-import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceName;
 import io.github.reqstool.annotations.SVCs;
 import java.net.URI;
@@ -51,17 +50,13 @@ class MarketplaceNameRuleTests extends AbstractGatewayTest {
 
     @Test
     @SVCs({"SVC_GW_INGEST_0063"})
-    void a_63_character_name_registers_as_an_upstream_and_as_a_hosted_marketplace() throws Exception {
+    void a_63_character_name_registers() throws Exception {
         String upstream = nameOf(63);
         mockMvc.perform(register("{\"name\":\"%s\",\"url\":\"%s\"}"
                         .formatted(upstream, createUpstream(DEFAULT_MANIFEST).toUri())))
                 .andExpect(status().isCreated());
-        String hosted = nameOf(63);
-        mockMvc.perform(register("{\"name\":\"%s\",\"origin\":\"hosted\"}".formatted(hosted)))
-                .andExpect(status().isCreated());
 
         assertThat(marketplaceRepository.findByName(upstream)).isPresent();
-        assertThat(marketplaceRepository.findByName(hosted)).isPresent();
     }
 
     @Test
@@ -73,19 +68,14 @@ class MarketplaceNameRuleTests extends AbstractGatewayTest {
                 .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("1 to 63")))
                 .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString(REASON)));
-        String hosted = nameOf(64);
-        mockMvc.perform(register("{\"name\":\"%s\",\"origin\":\"hosted\"}".formatted(hosted)))
-                .andExpect(status().isUnprocessableContent())
-                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString(REASON)));
 
         assertThat(marketplaceRepository.findByName(upstream)).isEmpty();
-        assertThat(marketplaceRepository.findByName(hosted)).isEmpty();
     }
 
     @Test
     @SVCs({"SVC_GW_INGEST_0064"})
     void a_name_of_the_wrong_characters_is_refused_with_the_same_reason() throws Exception {
-        mockMvc.perform(register("{\"name\":\"Bad-Name\",\"origin\":\"hosted\"}"))
+        mockMvc.perform(register("{\"name\":\"Bad-Name\",\"url\":\"https://example.invalid/x.git\"}"))
                 .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString(REASON)));
     }
@@ -117,13 +107,8 @@ class MarketplaceNameRuleTests extends AbstractGatewayTest {
     @Test
     @SVCs({"SVC_GW_INGEST_0063"})
     void the_marketplace_table_refuses_a_64_character_name_from_any_write_path() {
-        assertThatThrownBy(() -> marketplaceRepository.register(
-                        nameOf(64),
-                        "https://example.invalid/m.git",
-                        null,
-                        Marketplace.ORIGIN_UPSTREAM,
-                        Marketplace.PUSH_APPEND_ONLY,
-                        null))
+        assertThatThrownBy(
+                        () -> marketplaceRepository.register(nameOf(64), "https://example.invalid/m.git", null, null))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -138,8 +123,6 @@ class MarketplaceNameRuleTests extends AbstractGatewayTest {
         String tooLong = nameOf(64);
 
         assertThat(get(facadeUrl(tooLong, null) + "/info/refs?service=git-upload-pack", pat))
-                .isEqualTo(404);
-        assertThat(get(publishUrl(tooLong, null) + "/info/refs?service=git-receive-pack", pat))
                 .isEqualTo(404);
         mockMvc.perform(post("/status/v1/snapshots")
                         .header(HttpHeaders.AUTHORIZATION, basic(pat))

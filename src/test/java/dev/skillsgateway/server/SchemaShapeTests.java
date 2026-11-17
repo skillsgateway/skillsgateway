@@ -85,21 +85,6 @@ class SchemaShapeTests extends AbstractGatewayTest {
     }
 
     @Test
-    @SVCs({"SVC_GW_FACADE_0007"})
-    void an_empty_push_scope_array_is_refused_and_null_still_means_no_push() {
-        AccessToken token = tokenRepository.create("shape-push", uniqueName("tok"), uniqueName("hash"));
-
-        assertThatThrownBy(() -> jdbc.sql("UPDATE access_tokens SET push_scopes = '{}' WHERE id = :id")
-                        .param("id", token.id())
-                        .update())
-                .isInstanceOf(DataAccessException.class)
-                .hasMessageContaining("scope_lists_are_never_empty");
-
-        assertThat(tokenRepository.findById(token.id()).orElseThrow().permitsPushTo("anything"))
-                .isFalse();
-    }
-
-    @Test
     @SVCs({"SVC_GW_WEBHOOK_0001"})
     void an_empty_event_filter_is_refused_rather_than_subscribing_to_nothing() {
         WebhookSubscriber subscriber = webhookSubscriberRepository.create(

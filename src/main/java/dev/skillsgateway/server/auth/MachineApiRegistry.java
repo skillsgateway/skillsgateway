@@ -160,6 +160,9 @@ public final class MachineApiRegistry {
      * an entry here is a decision, and moving one out of this table is a security change.
      */
     private static final Set<Route> UNREACHABLE = Set.of(
+            // Where the only copy of a publisher's source is, on the gateway's own disk: an administrator's
+            // notice, not a pipeline's concern. Temporary, removed with FormerHostedRepositories.
+            get("/api/v1/storage/former-hosted-repositories"),
             // Publishes content; human judgement.
             post("/api/v1/snapshots/{id}/approve"),
             post("/api/v1/snapshots/{id}/reject"),

@@ -171,9 +171,8 @@ should you ever need to bypass the derivation.
 
 ## Storage
 
-The gateway keeps three sets of repositories on disk under `/data`: the
-quarantine, the published content the facade serves, and hosted first-party
-marketplaces. PostgreSQL records which snapshots exist and which are approved.
+The gateway keeps two sets of repositories on disk under `/data`: the
+quarantine and the published content the facade serves. PostgreSQL records which snapshots exist and which are approved.
 
 Those two halves are one estate, and only one of them survives a restart onto an
 empty volume. A gateway that comes back with an empty `/data` still reports its

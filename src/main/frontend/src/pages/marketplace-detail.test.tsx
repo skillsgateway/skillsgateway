@@ -715,7 +715,7 @@ test("an_admin_removes_the_marketplace_from_settings_on_a_stated_reason", async 
 
   const dialog = await screen.findByRole("dialog", { name: "Remove corp-marketplace" });
   expect(within(dialog).getByText(/serves nothing under this name/)).toBeInTheDocument();
-  expect(within(dialog).getByText(/grants to fetch it are kept/)).toBeInTheDocument();
+  expect(within(dialog).getByText(/Grants to fetch it are kept/)).toBeInTheDocument();
   expect(within(dialog).getByText(/registered again, as a new marketplace/)).toBeInTheDocument();
   const confirm = within(dialog).getByRole("button", { name: "Remove corp-marketplace" });
   const reason = within(dialog).getByLabelText("Reason");
@@ -875,7 +875,7 @@ test("activity_loads_older_entries_through_the_cursor", async () => {
 
 
 /** A marketplace just registered: nothing ingested yet, so its URL may still be corrected. */
-const unsnapshotted: Schemas["MarketplaceView"] = { ...marketplace, origin: "upstream", snapshots: [] };
+const unsnapshotted: Schemas["MarketplaceView"] = { ...marketplace, snapshots: [] };
 
 /**
  * The correction is offered while nothing has been ingested; the server's refusal is shown in the

@@ -65,7 +65,7 @@ export function RemoveMarketplaceDialog({ name, onClose }: { name: string; onClo
           </DialogHeader>
           <ul className="list-disc space-y-1 pl-5 text-sm">
             <li>Every approved snapshot is withdrawn, so the git facade serves nothing under this name.</li>
-            <li>Tokens lose their grant to publish to it; grants to fetch it are kept.</li>
+            <li>Grants to fetch it are kept, so tokens named for it work again if the name is registered.</li>
             <li>Its record, its snapshots and the audit ledger are kept.</li>
             <li>The name can then be registered again, as a new marketplace that inherits nothing.</li>
           </ul>

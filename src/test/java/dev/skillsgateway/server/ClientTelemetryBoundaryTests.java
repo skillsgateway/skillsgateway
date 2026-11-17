@@ -41,9 +41,9 @@ class ClientTelemetryBoundaryTests extends AbstractGatewayTest {
 
     /**
      * The servlets that may be mounted: Spring's dispatcher, whose routes are walked above, the
-     * read-only facade and the gateway-hosted publish path.
+     * read-only facade.
      */
-    private static final Set<String> SERVLET_MAPPINGS = Set.of("/", "/git/*", "/publish/*");
+    private static final Set<String> SERVLET_MAPPINGS = Set.of("/", "/git/*");
 
     private static final List<String> OTLP_PATHS = List.of("/v1/metrics", "/v1/logs", "/v1/traces");
 

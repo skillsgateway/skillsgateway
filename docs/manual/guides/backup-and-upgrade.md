@@ -103,6 +103,14 @@ flag. That has two consequences for a rollout:
 2. **A migration is not reversible by restarting the old image.** Roll back by
    restoring the pair, not by redeploying the previous tag.
 
+!!! danger "The release that removed hosted marketplaces deletes data on upgrade"
+
+    Migration `V3__remove_hosted_marketplaces` purges every hosted marketplace and its
+    history from the database, and those marketplaces stop being served. It touches no
+    repository on disk. If your gateway ever registered a marketplace with
+    `origin: "hosted"`, read [Removing hosted marketplaces](removing-hosted-marketplaces.md)
+    *before* upgrading, and take the backup above.
+
 !!! info "Schema changes arrive as additional migrations"
 
     The schema is a chain of Flyway migrations, applied in order on startup, and an

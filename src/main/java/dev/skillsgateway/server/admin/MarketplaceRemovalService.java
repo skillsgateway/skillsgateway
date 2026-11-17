@@ -6,7 +6,6 @@ import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
-import dev.skillsgateway.server.persistence.TokenRepository;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
@@ -20,7 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Removing a marketplace (GW_INGEST_0034): a retirement that behaves like removal. The row, its
- * snapshots and the ledger stay; the marketplace stops being served, synced, pushed to, listed and
+ * snapshots and the ledger stay; the marketplace stops being served, synced, listed and
  * decided on.
  *
  * <p>Withdrawal goes through {@link RevocationService}, one approved snapshot at a time, rather than
@@ -34,9 +33,6 @@ public class MarketplaceRemovalService {
     /** Ledger event for the removal itself; each withdrawal it makes has its own entries. */
     public static final String EVENT_REMOVED = "marketplace-removed";
 
-    /** Ledger event for the publication grants a removal takes away. */
-    public static final String EVENT_PUSH_SCOPES_REMOVED = "marketplace-push-scopes-removed";
-
     /** Prefixed to the administrator's reason on every withdrawal a removal makes. */
     public static final String WITHDRAWAL_REASON_PREFIX = "marketplace removed: ";
 
@@ -45,21 +41,18 @@ public class MarketplaceRemovalService {
     private final RevocationService revocationService;
     private final AdminAuditLogger auditLogger;
     private final WebhookService webhookService;
-    private final TokenRepository tokenRepository;
 
     public MarketplaceRemovalService(
             MarketplaceRepository marketplaceRepository,
             SnapshotRepository snapshotRepository,
             RevocationService revocationService,
             AdminAuditLogger auditLogger,
-            WebhookService webhookService,
-            TokenRepository tokenRepository) {
+            WebhookService webhookService) {
         this.marketplaceRepository = marketplaceRepository;
         this.snapshotRepository = snapshotRepository;
         this.revocationService = revocationService;
         this.auditLogger = auditLogger;
         this.webhookService = webhookService;
-        this.tokenRepository = tokenRepository;
     }
 
     @Schema(description = "A removed marketplace and what its removal withdrew")
@@ -77,12 +70,7 @@ public class MarketplaceRemovalService {
             String removedBy,
 
             @Schema(description = "Approved snapshots the removal withdrew")
-            List<Long> withdrawnSnapshotIds,
-
-            @Schema(
-                    description = "Tokens that lost their grant to publish to this name. Fetch grants are kept,"
-                            + " so clients keep working if the name is registered again")
-            List<Long> pushScopeRemovedFromTokenIds) {}
+            List<Long> withdrawnSnapshotIds) {}
 
     /**
      * @throws MissingRemovalReasonException if the reason is absent or blank — before anything is read
@@ -99,13 +87,6 @@ public class MarketplaceRemovalService {
         Instant removedAt = marketplaceRepository
                 .retire(marketplace.id(), administrator, stated)
                 .orElseThrow(() -> notFound(name));
-
-        // Before the withdrawals: a publication grant is a name, and nothing about this marketplace
-        // should still be able to publish under it — least of all into a successor.
-        List<Long> unscoped = tokenRepository.removePushScope(marketplace.name());
-        if (!unscoped.isEmpty()) {
-            auditLogger.record(administrator, marketplace, EVENT_PUSH_SCOPES_REMOVED, null, "tokens=" + unscoped);
-        }
 
         List<Long> withdrawn = new ArrayList<>();
         for (Snapshot snapshot : snapshotRepository.approvedByMarketplace(marketplace.id())) {
@@ -125,13 +106,7 @@ public class MarketplaceRemovalService {
         auditLogger.record(administrator, marketplace, EVENT_REMOVED, null, summary + "; reason: " + stated);
         // No reason on the event: a webhook target is authorised by a URL allowlist, not an identity.
         webhookService.emitMarketplace(WebhookEvent.MARKETPLACE_REMOVED, marketplace.name(), administrator, summary);
-        return new Removal(
-                marketplace.id(),
-                marketplace.name(),
-                removedAt,
-                administrator,
-                List.copyOf(withdrawn),
-                List.copyOf(unscoped));
+        return new Removal(marketplace.id(), marketplace.name(), removedAt, administrator, List.copyOf(withdrawn));
     }
 
     private static ResponseStatusException notFound(String name) {

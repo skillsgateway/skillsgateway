@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import dev.skillsgateway.server.auth.MachineApiRegistry;
 import dev.skillsgateway.server.auth.TokenService;
-import dev.skillsgateway.server.persistence.Marketplace;
 import io.github.reqstool.annotations.SVCs;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -92,21 +91,6 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
 
     @Test
     @SVCs({"SVC_GW_AUTH_0021"})
-    void a_push_scoped_token_reaches_no_api_endpoint() throws Exception {
-        String name = uniqueName("hosted");
-        marketplaceRepository.register(name, null, null, Marketplace.ORIGIN_HOSTED, "append-only", null);
-        TokenService.IssuedToken pusher = tokenService.create("alice", "pusher", List.of(), null, List.of(name));
-        assertThat(tokenService.authenticate(pusher.token()).orElseThrow().permitsPushTo(name))
-                .isTrue();
-
-        for (MockHttpServletRequestBuilder route : everyReachableRouteAsGet()) {
-            mockMvc.perform(bearer(route, pusher.token())).andExpect(status().isUnauthorized());
-        }
-        reachesTheApi(machineCredential(List.of("marketplaces:read")));
-    }
-
-    @Test
-    @SVCs({"SVC_GW_AUTH_0021"})
     void a_session_derived_credential_reaches_no_api_endpoint() throws Exception {
         TokenService.IssuedToken session = tokenService.createSessionCredential("alice", "laptop", List.of());
 
@@ -118,7 +102,7 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
 
     @Test
     @SVCs({"SVC_GW_AUTH_0021"})
-    void an_api_only_credential_is_refused_by_the_facade_and_the_publication_chain() throws Exception {
+    void an_api_only_credential_is_refused_by_the_facade() throws Exception {
         String name = uniqueName("facade");
         Registered registered = registerAndIngest(name, createUpstream(DEFAULT_MANIFEST));
         approve(registered.snapshot().id());
@@ -128,20 +112,6 @@ class MachineCredentialNegativeTests extends AbstractGatewayTest {
         // scope list, which for any other token would mean every marketplace.
         GitResult clone = gitClone(facadeUrl(name, machine.token()), newWorkDir("machine-clone"));
         assertThat(clone.exitCode()).as(clone.output()).isNotZero();
-
-        // And the publication chain, which asks the push dimension, refuses it too. A hosted
-        // marketplace, so the path genuinely exists and the refusal is about the credential: the
-        // publication chain answers 404 rather than 403 on purpose, so a caller without push
-        // scope cannot enumerate which hosted marketplaces there are.
-        String hosted = uniqueName("hosted");
-        marketplaceRepository.register(hosted, null, null, Marketplace.ORIGIN_HOSTED, "append-only", null);
-        assertThat(tokenService.authenticate(machine.token()).orElseThrow().permitsPushTo(hosted))
-                .as("API scope confers no publication authority")
-                .isFalse();
-        mockMvc.perform(get("/publish/{name}/info/refs", hosted)
-                        .header(HttpHeaders.AUTHORIZATION, basic(machine.token()))
-                        .param("service", "git-receive-pack"))
-                .andExpect(status().isNotFound());
     }
 
     @Test

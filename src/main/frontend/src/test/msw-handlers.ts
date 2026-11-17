@@ -22,7 +22,6 @@ export const heldSnapshot: Schemas["Snapshot"] = {
 export const compositeProvenance: Schemas["Provenance"] = {
   snapshotId: heldSnapshot.id,
   marketplace: "corp-marketplace",
-  origin: "upstream",
   upstreamUrl: "https://github.com/corp/marketplace.git",
   upstreamSha: "3f9c2ab3f9c2ab3f9c2ab3f9c2ab3f9c2ab3f9c2",
   sha: heldSnapshot.sha,
@@ -138,7 +137,6 @@ export const tokenViews: Schemas["TokenView"][] = [
     createdAt: "2026-08-14T10:00:00Z",
     expiresAt: "2099-09-13T10:00:00Z",
     scopes: [],
-    pushScopes: [],
     sessionDerived: false,
     apiScopes: [],
     lastUsedAt: "2026-08-14T13:00:00Z",
@@ -151,7 +149,6 @@ export const tokenViews: Schemas["TokenView"][] = [
     createdAt: "2026-08-14T10:00:00Z",
     expiresAt: "2099-09-13T10:00:00Z",
     scopes: [],
-    pushScopes: [],
     sessionDerived: false,
     apiScopes: [],
   },
@@ -159,7 +156,7 @@ export const tokenViews: Schemas["TokenView"][] = [
 
 /**
  * Tokens with each reach worth seeing in the list's Reach column: every marketplace, one, many
- * (more than the row shows), and one that may also publish to a hosted marketplace.
+ * (more than the row shows).
  */
 export const scopedTokenViews: Schemas["TokenView"][] = [
   { ...tokenViews[0]!, id: 21, name: "unscoped-laptop" },
@@ -169,13 +166,6 @@ export const scopedTokenViews: Schemas["TokenView"][] = [
     id: 23,
     name: "ci-many",
     scopes: ["tools", "corp-marketplace", "data", "docs", "infra"],
-  },
-  {
-    ...tokenViews[0]!,
-    id: 24,
-    name: "publisher",
-    scopes: ["corp-marketplace"],
-    pushScopes: ["tools-hosted"],
   },
 ];
 
@@ -1421,6 +1411,10 @@ export const queuedIngest = (name: string): Schemas["IngestStatus"] => ({
 export const autoApprovalOff: Schemas["AutoApprovalView"] = { enabled: false, allowedBy: "none", mode: "off" };
 
 export const handlers = [
+  // Nothing left over from the removed hosting feature, unless a test says otherwise.
+  http.get("/api/v1/storage/former-hosted-repositories", () =>
+    HttpResponse.json<Schemas["FormerHostedRepository"][]>([]),
+  ),
   http.get("/api/v1/adoption", () => HttpResponse.json(marketplaceAdoption)),
   http.get("/api/v1/adoption/staleness", () => HttpResponse.json(staleIdentities)),
   http.get("/api/v1/adoption/presence", () => HttpResponse.json(presenceReport)),
@@ -1454,7 +1448,6 @@ export const handlers = [
       removedAt: "2026-09-25T10:00:00Z",
       removedBy: "alice",
       withdrawnSnapshotIds: [3],
-      pushScopeRemovedFromTokenIds: [],
     }),
   ),
   http.get("/api/v1/estate", () => HttpResponse.json(estateReport)),

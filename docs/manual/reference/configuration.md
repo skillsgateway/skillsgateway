@@ -37,11 +37,12 @@ The application's own namespace. Only `data-dir` appears in
 
 ```yaml
 skills-gateway:
-  # Root of local storage. On the filesystem backend three subdirectories are
+  # Root of local storage. On the filesystem backend two subdirectories are
   # created beneath it:
   #   {data-dir}/quarantine/{marketplace}.git   — never served
   #   {data-dir}/published/{marketplace}.git    — what the facade reads
-  #   {data-dir}/hosted/{marketplace}.git       — a hosted marketplace's origin
+  # A {data-dir}/hosted/ left by the removed hosting feature is never read or
+  # written; see guides/removing-hosted-marketplaces.
   # On the object-store backend the repositories are in the bucket and this
   # holds only the local pack cache, which is never authoritative.
   # The container image sets SKILLSGATEWAY_DATADIR=/data instead.
@@ -1016,8 +1017,8 @@ skills-gateway:
       # check runs and is recorded, nothing is published. on: eligible
       # snapshots are approved.
       mode: dry-run
-      # URL prefixes under which a marketplace is internal. Hosted marketplaces
-      # are internal without one.
+      # URL prefixes under which a marketplace is internal. Empty by default, so
+      # no marketplace is internal until one is named.
       internal-prefixes:
         - https://git.example.com/platform
       # Unset (default): every vetter must have run. A list: only these must;
@@ -1409,14 +1410,13 @@ skills-gateway:
         # alone. webhook mode is refused: its inbound HMAC secret is
         # generated and shown once, which has no declarative form.
         sync-mode: scheduled
-      # A gateway-hosted marketplace declares no url and is published to by
-      # pushing (GW_FACADE_0006). Its sync mode is fixed at on-demand: the push is
-      # its ingestion trigger. push-policy defaults to append-only.
+      # Hosting was removed: an entry that declares origin: hosted or a
+      # push-policy fails naming the removal (origin: upstream is accepted).
       - name: platform-skills
-        origin: hosted
+        url: https://git.example.com/platform/skills.git
         # Optional automatic approval. enabled: true needs a reason, an expiry
-        # at most 90 days out, and an internal source (an internal prefix, or
-        # hosted). An exemption is never declarable. A lapsed expires-at
+        # at most 90 days out, and an internal source (an internal prefix). An
+        # exemption is never declarable. A lapsed expires-at
         # leaves automatic approval off until this declaration changes.
         auto-approval:
           enabled: true

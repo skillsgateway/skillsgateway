@@ -45,9 +45,6 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
 
     /** Every converted column, its type, and the labels the type must carry, in declared order. */
     private static final List<EnumColumn> COLUMNS = List.of(
-            new EnumColumn("marketplaces", "origin", "marketplace_origin", List.of("upstream", "hosted")),
-            new EnumColumn(
-                    "marketplaces", "push_policy", "marketplace_push_policy", List.of("append-only", "allow-rewrite")),
             new EnumColumn(
                     "marketplaces", "sync_mode", "marketplace_sync_mode", List.of("on-demand", "scheduled", "webhook")),
             new EnumColumn("snapshots", "state", "snapshot_state", List.of("held", "approved", "rejected", "revoked")),
@@ -134,23 +131,10 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
 
     @Test
     @SVCs({"SVC_GW_FACADE_0009"})
-    void a_marketplace_origin_push_policy_and_sync_mode_round_trip() {
-        Marketplace upstream = marketplaceRepository.register(
-                uniqueName("enum-up"),
-                "file:///upstream",
-                null,
-                Marketplace.ORIGIN_UPSTREAM,
-                Marketplace.PUSH_APPEND_ONLY,
-                null);
-        assertThat(upstream.origin()).isEqualTo(Marketplace.ORIGIN_UPSTREAM);
-        assertThat(upstream.pushPolicy()).isEqualTo(Marketplace.PUSH_APPEND_ONLY);
+    void a_marketplace_sync_mode_round_trips() {
+        Marketplace upstream = marketplaceRepository.register(uniqueName("enum-up"), "file:///upstream", null, null);
         // The column DEFAULT survives the conversion: nothing named the sync mode here.
         assertThat(upstream.syncMode()).isEqualTo(Marketplace.SYNC_ON_DEMAND);
-
-        Marketplace hosted = marketplaceRepository.register(
-                uniqueName("enum-host"), null, null, Marketplace.ORIGIN_HOSTED, Marketplace.PUSH_ALLOW_REWRITE, null);
-        assertThat(hosted.origin()).isEqualTo(Marketplace.ORIGIN_HOSTED);
-        assertThat(hosted.pushPolicy()).isEqualTo(Marketplace.PUSH_ALLOW_REWRITE);
 
         for (String mode : List.of(Marketplace.SYNC_SCHEDULED, Marketplace.SYNC_WEBHOOK, Marketplace.SYNC_ON_DEMAND)) {
             assertThat(marketplaceRepository
@@ -164,11 +148,6 @@ class NativeEnumColumnTests extends AbstractGatewayTest {
                             .syncMode())
                     .isEqualTo(mode);
         }
-
-        // The table-level constraint that reads both enum columns still holds (GW_FACADE_0006).
-        assertThatThrownBy(() -> marketplaceRepository.updateSyncMode(hosted.name(), Marketplace.SYNC_SCHEDULED, null))
-                .isInstanceOf(DataAccessException.class)
-                .hasMessageContaining("marketplaces_hosted_is_on_demand");
     }
 
     @Test

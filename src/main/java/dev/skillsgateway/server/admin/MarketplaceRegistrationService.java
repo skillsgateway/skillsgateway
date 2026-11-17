@@ -11,7 +11,6 @@ import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.persistence.SnapshotRepository;
 import dev.skillsgateway.server.storage.GitStorage;
-import dev.skillsgateway.server.storage.RefTransitions;
 import dev.skillsgateway.server.webhook.WebhookEvent;
 import dev.skillsgateway.server.webhook.WebhookService;
 import io.github.reqstool.annotations.Requirements;
@@ -20,10 +19,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
-import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -48,6 +44,13 @@ public class MarketplaceRegistrationService {
     public static final String EVENT_URL_CHANGED = "marketplace-url-changed";
 
     /**
+     * What a registration's ledger entry and lifecycle event say first. The key survives from when a
+     * marketplace could be hosted: receivers and the ledger's readers matched on it, and the lifecycle
+     * event's detail is a required field.
+     */
+    private static final String REGISTERED_DETAIL = "origin=upstream";
+
+    /**
      * What an unreadable upstream does to a registration (GW_INGEST_0040, GW_INGEST_0041): an
      * administrator at the API is refused and can correct the URL; a declaration converged at
      * startup is registered and reported, so the estate does not depend on the network's weather.
@@ -56,11 +59,6 @@ public class MarketplaceRegistrationService {
         REFUSE,
         REPORT
     }
-
-    private static final Set<String> ORIGINS = Set.of(Marketplace.ORIGIN_UPSTREAM, Marketplace.ORIGIN_HOSTED);
-
-    private static final Set<String> PUSH_POLICIES =
-            Set.of(Marketplace.PUSH_APPEND_ONLY, Marketplace.PUSH_ALLOW_REWRITE);
 
     private final MarketplaceRepository marketplaceRepository;
     private final SkillsGatewayProperties properties;
@@ -100,22 +98,9 @@ public class MarketplaceRegistrationService {
      * Validates, registers, and appends the ledger entry with the acting identity. Statuses match
      * the API contract; a non-HTTP caller (the estate reconciler) reports the reason instead.
      */
-    @Requirements({"GW_INGEST_0001"})
-    public RegistrationOutcome register(String name, String url, String actor) {
-        return register(name, url, Marketplace.ORIGIN_UPSTREAM, null, actor);
-    }
-
-    /**
-     * Validates, registers, and appends the ledger entry with the acting identity. Statuses match
-     * the API contract; a non-HTTP caller (the estate reconciler) reports the reason instead.
-     *
-     * <p>A hosted marketplace (GW_FACADE_0006) has no upstream, so the scheme allowlist has nothing to
-     * check and a supplied URL is a contradiction rather than an unused field; its origin
-     * repository is created here so a publisher can push the moment registration returns.
-     */
     @Requirements({"GW_INGEST_0001", "GW_INGEST_0040"})
-    public RegistrationOutcome register(String name, String url, String origin, String pushPolicy, String actor) {
-        return register(name, url, origin, pushPolicy, actor, Reachability.REFUSE);
+    public RegistrationOutcome register(String name, String url, String actor) {
+        return register(name, url, actor, Reachability.REFUSE);
     }
 
     /**
@@ -125,7 +110,6 @@ public class MarketplaceRegistrationService {
     @Requirements({
         "GW_INGEST_0001",
         "GW_APPROVAL_0010",
-        "GW_FACADE_0006",
         "GW_WEBHOOK_0009",
         "GW_INGEST_0040",
         "GW_INGEST_0041",
@@ -134,52 +118,32 @@ public class MarketplaceRegistrationService {
         "GW_INGEST_0063",
         "GW_INGEST_0064"
     })
-    public RegistrationOutcome register(
-            String name, String url, String origin, String pushPolicy, String actor, Reachability reachability) {
+    public RegistrationOutcome register(String name, String url, String actor, Reachability reachability) {
         if (!MarketplaceName.isValid(name)) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, MarketplaceName.RULE);
         }
         requireNotReservedName(name);
-        String resolvedOrigin = origin == null || origin.isBlank() ? Marketplace.ORIGIN_UPSTREAM : origin;
-        if (!ORIGINS.contains(resolvedOrigin)) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_CONTENT, "origin must be one of %s".formatted(ORIGINS));
-        }
-        boolean hosted = Marketplace.ORIGIN_HOSTED.equals(resolvedOrigin);
-        String resolvedPolicy = requirePushPolicy(pushPolicy, hosted);
-        List<String> warnings = List.of();
-        if (hosted) {
-            if (url != null && !url.isBlank()) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST, "a hosted marketplace has no upstream url; it is pushed to");
-            }
-        } else {
-            requireAllowlistedScheme(url);
-            requireNoUserinfo(url);
-            warnings = duplicateUrlWarnings(url, name);
-        }
+        requireAllowlistedScheme(url);
+        requireNoUserinfo(url);
+        List<String> warnings = duplicateUrlWarnings(url, name);
         if (marketplaceRepository.findByName(name).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "marketplace '%s' already exists".formatted(name));
         }
-        UpstreamException unreadable = hosted ? null : readUpstream(name, url, reachability);
-        startFromNothing(name, hosted);
+        UpstreamException unreadable = readUpstream(name, url, reachability);
+        startFromNothing(name);
         Marketplace marketplace = marketplaceRepository.register(
                 name,
                 url,
-                hosted ? null : forgeMetadataService.resolve(url).orElse(null),
-                resolvedOrigin,
-                resolvedPolicy,
+                forgeMetadataService.resolve(url).orElse(null),
                 // The registrant is a column, not only a ledger row (GW_APPROVAL_0010): the four-eyes rule
                 // reads it when this marketplace's snapshots are approved.
                 actor);
-        if (hosted) {
-            createOriginRepository(marketplace.name());
-        }
-        auditLogger.record(
-                actor, marketplace.name(), "marketplace-registered", null, registrationDetail(resolvedOrigin, url));
+        auditLogger.record(actor, marketplace.name(), "marketplace-registered", null, registrationDetail(url));
         warnings = withUnreachable(actor, marketplace, warnings, unreadable);
+        // The detail keeps its one value: the field is required on every delivery, and a receiver that
+        // matched on it should not find it changed. Every marketplace now comes from an upstream.
         webhookService.emitMarketplace(
-                WebhookEvent.MARKETPLACE_REGISTERED, marketplace.name(), actor, "origin=" + resolvedOrigin);
+                WebhookEvent.MARKETPLACE_REGISTERED, marketplace.name(), actor, REGISTERED_DETAIL);
         return new RegistrationOutcome(marketplace, warnings);
     }
 
@@ -198,10 +162,6 @@ public class MarketplaceRegistrationService {
     })
     public RegistrationOutcome changeUrl(String name, String url, String actor, Reachability reachability) {
         Marketplace current = marketplaceRepository.findByName(name).orElseThrow(() -> notFound(name));
-        if (current.hosted()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "a hosted marketplace has no upstream url; it is pushed to");
-        }
         if (marketplaceRepository.hasSnapshot(current.id())) {
             throw snapshotExists(name);
         }
@@ -285,24 +245,14 @@ public class MarketplaceRegistrationService {
      * A name that belonged to a removed marketplace comes back empty (GW_INGEST_0035). Storage is keyed
      * by name, so before the new row exists: every predecessor snapshot's served references are removed
      * — removal already did this through revocation, and this is what keeps a reference a failed
-     * unpublish left behind from being served under the successor — and a hosted successor's origin
-     * loses its predecessor's lineage, so it neither ingests the old pushes nor refuses its own first
-     * push as a rewrite. Quarantine is left alone: its pins are the predecessor's evidence.
+     * unpublish left behind from being served under the successor. Quarantine is left alone: its pins are the predecessor's evidence.
      */
     @Requirements({"GW_INGEST_0035"})
-    private void startFromNothing(String name, boolean hosted) {
+    private void startFromNothing(String name) {
         try {
             for (Marketplace predecessor : marketplaceRepository.retiredByName(name)) {
                 for (Snapshot snapshot : snapshotRepository.listByMarketplace(predecessor.id())) {
                     storage.unpublish(name, snapshot.sha());
-                }
-            }
-            if (hosted) {
-                Optional<Repository> origin = storage.hostedIfPresent(name);
-                if (origin.isPresent()) {
-                    try (Repository repository = origin.get()) {
-                        RefTransitions.delete(repository, Marketplace.LINEAGE_REF);
-                    }
                 }
             }
         } catch (IOException e) {
@@ -332,50 +282,14 @@ public class MarketplaceRegistrationService {
                 .toList();
     }
 
-    /** A push policy is a hosted marketplace's decision; an upstream one has no lineage to rewrite. */
-    @Requirements({"GW_FACADE_0006"})
-    private String requirePushPolicy(String pushPolicy, boolean hosted) {
-        if (pushPolicy == null || pushPolicy.isBlank()) {
-            return Marketplace.PUSH_APPEND_ONLY;
-        }
-        if (!hosted) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "a push policy applies only to a hosted marketplace");
-        }
-        if (!PUSH_POLICIES.contains(pushPolicy)) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_CONTENT, "pushPolicy must be one of %s".formatted(PUSH_POLICIES));
-        }
-        return pushPolicy;
-    }
-
-    /**
-     * Created at registration rather than on first push, so the publish endpoint never has to
-     * decide whether an unknown marketplace means "not registered" or "not pushed to yet" — it
-     * answers not-found for both, and the answer is the same either way.
-     */
-    @Requirements({"GW_FACADE_0006"})
-    private void createOriginRepository(String name) {
-        try (Repository ignored = storage.hosted(name)) {
-            // Opening creates it; nothing else to do.
-        } catch (IOException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "could not create the origin repository", e);
-        }
-    }
-
     /**
      * The ledger names the credential prefix an upstream was read with, and whether it is a GitHub App,
      * never its token (GW_INGEST_0055, GW_INGEST_0062): the token's scope is the limit on what a
      * registration can pull in.
      */
     @Requirements({"GW_INGEST_0055", "GW_INGEST_0062"})
-    private String registrationDetail(String origin, String url) {
-        String detail = "origin=" + origin;
-        if (Marketplace.ORIGIN_HOSTED.equals(origin)) {
-            return detail;
-        }
-        return detail + credentialDetail(url);
+    private String registrationDetail(String url) {
+        return REGISTERED_DETAIL + credentialDetail(url);
     }
 
     @Requirements({"GW_INGEST_0055", "GW_INGEST_0062"})

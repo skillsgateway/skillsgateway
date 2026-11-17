@@ -23,15 +23,13 @@ class InternalSourcesTests {
         return new InternalSources(List.of(prefixes), GITHUB);
     }
 
-    private static Marketplace marketplace(String url, String origin) {
+    private static Marketplace marketplace(String url) {
         return new Marketplace(
                 1L,
                 "m",
                 url,
                 Instant.EPOCH,
                 "alice",
-                origin,
-                Marketplace.PUSH_APPEND_ONLY,
                 null,
                 null,
                 null,
@@ -46,33 +44,29 @@ class InternalSourcesTests {
 
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.2"})
-    void aUrlUnderAnOrganisationPrefixIsInternalAndSoIsAHostedMarketplace() {
+    void aUrlUnderAnOrganisationPrefixIsInternal() {
         InternalSources sources = sources("https://github.com/acme");
 
         assertThat(sources.isInternal("https://github.com/acme/skills.git")).isTrue();
         assertThat(sources.isInternal("https://github.com/acme")).isTrue();
         assertThat(sources.isInternal("https://github.com/acme/")).isTrue();
-        assertThat(sources.isInternal(marketplace("https://github.com/acme/skills.git", Marketplace.ORIGIN_UPSTREAM)))
-                .isTrue();
-        assertThat(sources.isInternal(marketplace(null, Marketplace.ORIGIN_HOSTED)))
+        assertThat(sources.isInternal(marketplace("https://github.com/acme/skills.git")))
                 .isTrue();
     }
 
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.2"})
-    void withNoPrefixConfiguredOnlyAHostedMarketplaceIsInternal() {
+    void withNoPrefixConfiguredNothingIsInternal() {
         InternalSources sources = sources();
 
-        assertThat(sources.isInternal(marketplace("https://github.com/acme/skills.git", Marketplace.ORIGIN_UPSTREAM)))
+        assertThat(sources.isInternal(marketplace("https://github.com/acme/skills.git")))
                 .isFalse();
-        assertThat(sources.isInternal(marketplace(null, Marketplace.ORIGIN_HOSTED)))
-                .isTrue();
     }
 
     @Test
     @SVCs({"SVC_GW_APPROVAL_0044.2"})
     void anUpstreamMarketplaceWithoutAUrlIsNotInternal() {
-        assertThat(sources("https://github.com/acme").isInternal(marketplace(null, Marketplace.ORIGIN_UPSTREAM)))
+        assertThat(sources("https://github.com/acme").isInternal(marketplace(null)))
                 .isFalse();
     }
 

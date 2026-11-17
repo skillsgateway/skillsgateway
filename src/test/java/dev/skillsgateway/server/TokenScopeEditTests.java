@@ -306,7 +306,6 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
                 null,
                 Instant.now().minusSeconds(60),
                 null,
-                null,
                 false,
                 List.of("estate:read"),
                 "root");
@@ -399,15 +398,9 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
         String b = served();
         String owner = uniqueName("owner");
 
-        // A personal token with a push grant and an expiry, and a session-derived one.
+        // A personal token with an expiry, and a session-derived one.
         AccessToken personal = tokenRepository.create(
-                owner,
-                "ci",
-                "hash-" + uniqueName("p"),
-                List.of(a, b),
-                soon().truncatedTo(ChronoUnit.MILLIS),
-                null,
-                List.of("hosted-x"));
+                owner, "ci", "hash-" + uniqueName("p"), List.of(a, b), soon().truncatedTo(ChronoUnit.MILLIS), null);
         AccessToken beforePersonal = row(personal.id());
         assertThat(patchToken(personal.id(), person(owner), scopesBody(a))
                         .getResponse()
@@ -435,7 +428,6 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
         TokenService.IssuedToken rotated =
                 tokenService.rotate(personal.id(), owner).orElseThrow();
         assertThat(rotated.scopes()).containsExactly(a);
-        assertThat(rotated.pushScopes()).containsExactly("hosted-x");
         assertThat(rotated.expiresAt()).isEqualTo(beforePersonal.expiresAt());
         // The predecessor is revoked by the rotation, so an edit of it is refused.
         assertThat(patchToken(personal.id(), person(owner), scopesBody(b))
@@ -549,7 +541,7 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
         // Refusals write nothing: unknown scope, not live, not the caller's, strict-body.
         patchToken(token.id(), person(owner), scopesBody("no-such-marketplace"));
         patchToken(token.id(), person(uniqueName("other")), scopesBody(a));
-        patchToken(token.id(), person(owner), "{\"scopes\": [], \"pushScopes\": [\"x\"]}");
+        patchToken(token.id(), person(owner), "{\"scopes\": [], \"extra\": [\"x\"]}");
         assertThat(entries("token-scopes-changed", token.id())).hasSize(2);
 
         String pipeline = uniqueName("pipe");
@@ -608,8 +600,8 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
         String owner = uniqueName("owner");
         TokenService.IssuedToken token = tokenService.create(owner, "ci", List.of(a), null);
         List<String> extras = List.of(
-                "{\"scopes\": [\"%s\"], \"pushScopes\": [\"hosted-x\"]}".formatted(a),
-                "{\"pushScopes\": [\"hosted-x\"]}",
+                "{\"scopes\": [\"%s\"], \"extra\": [\"x\"]}".formatted(a),
+                "{\"extra\": [\"x\"]}",
                 "{\"scopes\": [\"%s\"], \"apiScopes\": [\"estate:read\"]}".formatted(a),
                 "{\"apiScopes\": [\"estate:read\"]}",
                 "{\"scopes\": [\"%s\"], \"expiresAt\": \"2099-01-01T00:00:00Z\"}".formatted(a),
@@ -636,7 +628,6 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
         }
         AccessToken afterPersonal = row(token.id());
         assertThat(afterPersonal.scopeList()).containsExactly(a);
-        assertThat(afterPersonal.pushScopes()).isNull();
         assertThat(afterPersonal.apiScopes()).isNull();
         assertThat(afterPersonal.name()).isEqualTo("ci");
         assertThat(afterPersonal.expiresAt()).isNull();
@@ -649,7 +640,7 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
                 "{\"scopes\": [\"%s\"]}".formatted(a),
                 "{\"apiScopes\": [\"audit:read\"], \"expiresAt\": \"2099-01-01T00:00:00Z\"}",
                 "{\"apiScopes\": [\"audit:read\"], \"neverExpires\": true}",
-                "{\"apiScopes\": [\"audit:read\"], \"pushScopes\": [\"hosted-x\"]}",
+                "{\"apiScopes\": [\"audit:read\"], \"extra\": [\"x\"]}",
                 "{\"apiScopes\": [\"audit:read\"], \"principal\": \"someone-else\"}")) {
             assertThat(patchMachine(cred.id(), admin(), body).getResponse().getStatus())
                     .as(body)
@@ -663,7 +654,6 @@ class TokenScopeEditTests extends AbstractNamedAdminsTest {
         AccessToken afterCred = row(cred.id());
         assertThat(afterCred.apiScopeList()).containsExactly("estate:read");
         assertThat(afterCred.scopes()).isNull();
-        assertThat(afterCred.pushScopes()).isNull();
         assertThat(afterCred.expiresAt()).isEqualTo(expires);
         assertThat(afterCred.principal()).isEqualTo(pipeline);
     }

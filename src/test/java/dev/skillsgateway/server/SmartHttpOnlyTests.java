@@ -2,7 +2,6 @@ package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.storage.GitStorage;
 import io.github.reqstool.annotations.SVCs;
@@ -11,11 +10,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
-import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -76,32 +72,5 @@ class SmartHttpOnlyTests extends AbstractGatewayTest {
         approve(registered.snapshot().id());
 
         assertSmartOnly("git", name + ".git", registered.snapshot().sha(), newPat());
-    }
-
-    @Test
-    @SVCs({"SVC_GW_FACADE_0036"})
-    void the_publish_endpoint_serves_no_repository_file_outside_the_smart_protocol() throws Exception {
-        String name = uniqueName("smartpub");
-        marketplaceRepository.register(name, null, null, Marketplace.ORIGIN_HOSTED, Marketplace.PUSH_APPEND_ONLY, null);
-        try (Repository ignored = storage.hosted(name)) {
-            // creates the origin
-        }
-        String pat = tokenService
-                .create("alice", "publisher", List.of(), null, List.of(name))
-                .token();
-        Path working = newWorkDir("smartpub");
-        git(working, "init", "--initial-branch=main");
-        git(working, "config", "user.email", "publisher@example.com");
-        git(working, "config", "user.name", "Publisher");
-        Files.createDirectories(working.resolve(".claude-plugin"));
-        Files.writeString(working.resolve(MANIFEST_PATH), DEFAULT_MANIFEST, StandardCharsets.UTF_8);
-        Files.createDirectories(working.resolve("plugins/hello/skills/hello"));
-        Files.writeString(working.resolve("plugins/hello/skills/hello/SKILL.md"), "# Hello skill\n");
-        git(working, "add", "-A");
-        git(working, "-c", "commit.gpgsign=false", "commit", "-q", "-m", "first-party content");
-        GitResult push = git(working, "push", publishUrl(name, pat), "main");
-        assertThat(push.exitCode()).as(push.output()).isZero();
-
-        assertSmartOnly("publish", name, headSha(working), pat);
     }
 }
