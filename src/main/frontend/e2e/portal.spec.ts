@@ -451,13 +451,15 @@ test("an_administrator_creates_rotates_and_revokes_a_system_access_token", async
 
   const row = page.getByRole("row", { name: new RegExp(name) });
   await expect(row).toBeVisible();
-  await row.getByRole("button", { name: `Rotate token ${name}` }).click();
+  await row.getByRole("button", { name: `Actions for token ${name}` }).click();
+  await page.getByRole("menuitem", { name: "Rotate…" }).click();
   await page.getByRole("button", { name: "Rotate token", exact: true }).click();
   await expect(page.getByTestId("token-cleartext")).not.toHaveText(secret);
   await page.getByRole("button", { name: "Done" }).click();
 
   const live = page.getByRole("row", { name: new RegExp(name) }).filter({ hasText: "active" });
-  await live.getByRole("button", { name: `Revoke token ${name}` }).click();
+  await live.getByRole("button", { name: `Actions for token ${name}` }).click();
+  await page.getByRole("menuitem", { name: "Revoke…" }).click();
   await page.getByRole("button", { name: "Revoke token", exact: true }).click();
   await expect(page.getByText(`Token '${name}' revoked`)).toBeVisible();
 });

@@ -54,7 +54,8 @@ function statefulCredentials(): Patched[] {
 }
 
 async function openEdit(user: ReturnType<typeof userEvent.setup>, name: string) {
-  await user.click(await screen.findByRole("button", { name: `Edit scopes of token ${name}` }));
+  await user.click(await screen.findByRole("button", { name: `Actions for token ${name}` }));
+  await user.click(await screen.findByRole("menuitem", { name: "Edit scopes…" }));
   return screen.findByRole("dialog", { name: `Edit scopes of '${name}'` });
 }
 
@@ -149,7 +150,8 @@ test("only_a_live_system_token_offers_the_edit_control", async () => {
     ),
   );
   renderPage();
-  expect(await screen.findByRole("button", { name: "Edit scopes of token live-job" })).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Edit scopes of token revoked-job" })).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Edit scopes of token lapsed-job" })).not.toBeInTheDocument();
+  // Only a live credential has an actions menu, and so only it can have its scopes edited.
+  expect(await screen.findByRole("button", { name: "Actions for token live-job" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Actions for token revoked-job" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Actions for token lapsed-job" })).not.toBeInTheDocument();
 });

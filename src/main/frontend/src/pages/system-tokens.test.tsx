@@ -202,12 +202,14 @@ test("rotate_and_revoke_each_ask_first_and_reach_their_endpoint_only_when_confir
   const { queryClient } = renderPage();
   const row = await screen.findByRole("row", { name: /platform-pipeline/ });
 
-  await user.click(within(row).getByRole("button", { name: "Rotate token platform-pipeline" }));
+  await user.click(within(row).getByRole("button", { name: "Actions for token platform-pipeline" }));
+  await user.click(await screen.findByRole("menuitem", { name: "Rotate…" }));
   expect(calls).toEqual([]);
   await user.click(screen.getByRole("button", { name: "Cancel" }));
   expect(calls).toEqual([]);
 
-  await user.click(within(row).getByRole("button", { name: "Rotate token platform-pipeline" }));
+  await user.click(within(row).getByRole("button", { name: "Actions for token platform-pipeline" }));
+  await user.click(await screen.findByRole("menuitem", { name: "Rotate…" }));
   await user.click(screen.getByRole("button", { name: "Rotate token" }));
   expect(await screen.findByTestId("token-cleartext")).toHaveTextContent("sgw_rotated_secret");
   expect(calls).toEqual(["rotate 21"]);
@@ -216,7 +218,8 @@ test("rotate_and_revoke_each_ask_first_and_reach_their_endpoint_only_when_confir
   await waitFor(() => expect(queryClient.getMutationCache().getAll()).toEqual([]));
   expect(document.body.textContent).not.toContain("sgw_rotated_secret");
 
-  await user.click(within(row).getByRole("button", { name: "Revoke token platform-pipeline" }));
+  await user.click(within(row).getByRole("button", { name: "Actions for token platform-pipeline" }));
+  await user.click(await screen.findByRole("menuitem", { name: "Revoke…" }));
   expect(calls).toEqual(["rotate 21"]);
   await user.click(screen.getByRole("button", { name: "Revoke token" }));
   await waitFor(() => expect(calls).toEqual(["rotate 21", "revoke 21"]));

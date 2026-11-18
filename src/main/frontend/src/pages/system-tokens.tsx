@@ -1,3 +1,4 @@
+import { Ellipsis } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -17,6 +18,13 @@ import { SegmentedGroup } from "@/components/segmented-group";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -385,39 +393,30 @@ export function SystemTokenTable({
               </TableCell>
               <TableCell className="text-right">
                 {state === "active" ? (
-                  // Wraps rather than widening the row: the table scrolls sideways inside its
-                  // container, and an action pushed past the edge (Revoke is last) is invisible.
-                  <div className="flex flex-wrap justify-end gap-2">
-                    {onEdit ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        aria-label={`Edit scopes of token ${token.name}`}
-                        onClick={() => onEdit(token)}
-                        disabled={busy}
-                      >
-                        Edit scopes
-                      </Button>
-                    ) : null}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      aria-label={`Rotate token ${token.name}`}
-                      onClick={() => onRotate(token)}
-                      disabled={busy}
-                    >
-                      Rotate
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      aria-label={`Revoke token ${token.name}`}
-                      onClick={() => onRevoke(token)}
-                      disabled={busy}
-                    >
-                      Revoke
-                    </Button>
-                  </div>
+                  // One trigger instead of three buttons: the cell stays a fixed width whatever the
+                  // row holds, so no action can be pushed past the edge of the scrolling container.
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          aria-label={`Actions for token ${token.name}`}
+                          disabled={busy}
+                        >
+                          <Ellipsis className="size-4" aria-hidden />
+                        </Button>
+                      }
+                    />
+                    <DropdownMenuContent align="end">
+                      {onEdit ? <DropdownMenuItem onClick={() => onEdit(token)}>Edit scopes…</DropdownMenuItem> : null}
+                      <DropdownMenuItem onClick={() => onRotate(token)}>Rotate…</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem variant="destructive" onClick={() => onRevoke(token)}>
+                        Revoke…
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : null}
               </TableCell>
             </TableRow>
