@@ -6,3 +6,10 @@ allowBuilds:
 # had elapsed, to close three js-yaml advisories.
 minimumReleaseAgeExclude:
   - '@reqstool/reqstool-typescript-tags@0.3.0'
+# GHSA for minimatch "denial of service via globparts amplification": every
+# release from 7.0.0 up to 11.0.1 is affected and 10.x has no fix. The 10.x copies
+# come from build tooling (glob via the Storybook docgen plugin, ts-morph via the
+# shadcn CLI) that pins ^10; lift them to the fixed major. 5.x is outside the
+# affected range and is left alone.
+overrides:
+  'minimatch@>=7.0.0 <11.0.1': ^11.0.1
