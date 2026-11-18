@@ -50,8 +50,8 @@ export const Marks: StoryObj<typeof SystemTokenTable> = {
   ),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    // A live credential can have its scopes edited (GW_AUTH_0089); a revoked one cannot.
-    await expect(canvas.getByRole("button", { name: "Edit scopes of token platform-pipeline" })).toBeInTheDocument();
+    // A live credential has an actions menu, where its scopes can be edited (GW_AUTH_0089); a revoked one has none.
+    await expect(canvas.getByRole("button", { name: "Actions for token platform-pipeline" })).toBeInTheDocument();
     await expect(
       within(canvas.getByRole("row", { name: /nightly/ })).getByText("expires within 14 days"),
     ).toBeInTheDocument();
@@ -64,7 +64,38 @@ export const Marks: StoryObj<typeof SystemTokenTable> = {
     // A revoked credential offers nothing to act on and carries no marks.
     const dead = canvas.getByRole("row", { name: /retired-job/ });
     await expect(within(dead).queryByRole("button")).not.toBeInTheDocument();
-    await expect(canvas.queryByRole("button", { name: "Edit scopes of token retired-job" })).toBeNull();
+    await expect(canvas.queryByRole("button", { name: "Actions for token retired-job" })).toBeNull();
     await expect(within(dead).getByText("revoked")).toBeInTheDocument();
   },
+};
+
+/**
+ * The row that clipped Revoke: a long owner address beside a principal and the actions column, in a
+ * container narrower than the table wants. The table scrolls sideways inside its container, so an
+ * action past the edge is simply not there. Visual only: the story test project renders without
+ * the app's CSS, so no assertion here could see it.
+ */
+export const NarrowContainer: StoryObj<typeof SystemTokenTable> = {
+  render: () => (
+    <div style={{ width: 900 }}>
+      <SystemTokenTable
+        tokens={[
+          {
+            id: 31,
+            principal: "release-pipeline",
+            name: "release-pipeline",
+            createdAt: "2026-08-15T09:00:00Z",
+            expiresAt: "2027-11-17T22:10:00Z",
+            apiScopes: ["marketplaces:read"],
+            machineOwner: "platform.engineering.team@example.com",
+            lastUsedAt: "2026-08-15T09:55:00Z",
+          },
+        ]}
+        now={NOW}
+        onEdit={() => {}}
+        onRotate={() => {}}
+        onRevoke={() => {}}
+      />
+    </div>
+  ),
 };

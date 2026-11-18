@@ -1,3 +1,4 @@
+import { Ellipsis } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -17,6 +18,13 @@ import { SegmentedGroup } from "@/components/segmented-group";
 import { Timestamp } from "@/components/timestamp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -338,12 +346,12 @@ export function SystemTokenTable({
                   {token.name}
                 </span>
               </TableCell>
-              <TableCell className="font-mono text-xs">{token.principal}</TableCell>
-              <TableCell>{token.machineOwner}</TableCell>
-              <TableCell className="max-w-64 font-mono text-xs break-words">
+              <TableCell className="font-mono text-xs whitespace-normal wrap-anywhere">{token.principal}</TableCell>
+              <TableCell className="whitespace-normal wrap-anywhere">{token.machineOwner}</TableCell>
+              <TableCell className="max-w-64 font-mono text-xs whitespace-normal break-words">
                 {(token.apiScopes ?? []).join(", ")}
               </TableCell>
-              <TableCell>
+              <TableCell className="whitespace-normal">
                 <div className="space-y-1">
                   <Timestamp
                     value={token.expiresAt}
@@ -359,7 +367,7 @@ export function SystemTokenTable({
                   ) : null}
                 </div>
               </TableCell>
-              <TableCell>
+              <TableCell className="whitespace-normal">
                 <div className="space-y-1">
                   {marks.neverUsed ? (
                     // The mark is the statement: a plain "never" above it would say it twice.
@@ -383,39 +391,32 @@ export function SystemTokenTable({
                   <Badge>active</Badge>
                 )}
               </TableCell>
-              <TableCell className="space-x-2 text-right whitespace-nowrap">
+              <TableCell className="text-right">
                 {state === "active" ? (
-                  <>
-                    {onEdit ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        aria-label={`Edit scopes of token ${token.name}`}
-                        onClick={() => onEdit(token)}
-                        disabled={busy}
-                      >
-                        Edit scopes
-                      </Button>
-                    ) : null}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      aria-label={`Rotate token ${token.name}`}
-                      onClick={() => onRotate(token)}
-                      disabled={busy}
-                    >
-                      Rotate
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      aria-label={`Revoke token ${token.name}`}
-                      onClick={() => onRevoke(token)}
-                      disabled={busy}
-                    >
-                      Revoke
-                    </Button>
-                  </>
+                  // One trigger instead of three buttons: the cell stays a fixed width whatever the
+                  // row holds, so no action can be pushed past the edge of the scrolling container.
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          aria-label={`Actions for token ${token.name}`}
+                          disabled={busy}
+                        >
+                          <Ellipsis className="size-4" aria-hidden />
+                        </Button>
+                      }
+                    />
+                    <DropdownMenuContent align="end">
+                      {onEdit ? <DropdownMenuItem onClick={() => onEdit(token)}>Edit scopes…</DropdownMenuItem> : null}
+                      <DropdownMenuItem onClick={() => onRotate(token)}>Rotate…</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem variant="destructive" onClick={() => onRevoke(token)}>
+                        Revoke…
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : null}
               </TableCell>
             </TableRow>
