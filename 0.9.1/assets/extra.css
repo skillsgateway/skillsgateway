@@ -1,0 +1,25 @@
+/* Fonts for the diagram-design SVGs (docs/diagrams/*.mmd → assets/diagrams/*.svg).
+   Inline SVGs inherit page-loaded fonts; these families are used nowhere else. */
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap");
+
+/* Theme-switched inline diagrams: the light variant shows under the default
+   scheme, the dark variant under slate. Wide diagrams scroll in place. */
+.dd-diagram {
+  overflow-x: auto;
+  margin: 1em 0;
+}
+.dd-diagram svg {
+  display: block;
+  width: 100%;
+  min-width: 720px;
+  height: auto;
+}
+.dd-dark {
+  display: none;
+}
+[data-md-color-scheme="slate"] .dd-light {
+  display: none;
+}
+[data-md-color-scheme="slate"] .dd-dark {
+  display: block;
+}
