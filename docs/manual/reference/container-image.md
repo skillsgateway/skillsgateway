@@ -61,6 +61,15 @@ ceiling is a quarter of the container's limit; the heap that matters here is the
 one JGit packs a large upstream repository in, and a quarter of the limit is less
 than the previous artifact had.
 
+It also sets `-XX:-UseBASE64Intrinsics`, which turns off the JIT's hand-written
+Base64 decoder. On x86-64 CPUs with AVX-512 VBMI (Intel Ice Lake and later, AMD
+Zen 4 and later), that decoder has an out-of-bounds write
+(CVE-2026-114938). The git facade base64-decodes the HTTP Basic `Authorization`
+header before it checks the credential, so an unauthenticated request can reach
+the decoder. The flag does nothing on `linux/arm64`. It stays until the bundled
+JDK is a fixed release (25.0.5.1 or later). If you run an older image on x86-64,
+set `JAVA_TOOL_OPTIONS=-XX:-UseBASE64Intrinsics` and recreate the container.
+
 ## Tags
 
 | Tag | Meaning |
