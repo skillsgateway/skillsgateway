@@ -5128,7 +5128,7 @@ and what counts as internal. Java-side defaults; nothing appears in
 <td><code>skills-gateway.approval.auto.internal-prefixes</code></td>
 <td>list</td>
 <td><code>[]</code></td>
-<td>A URL is internal when it has the prefix's scheme, host and port, and its path equals the prefix's or continues it after a <code>/</code>. <code>https://git.example.com/acme</code> never covers <code>…/acme-evil</code>. A snapshot whose fetch a redirect sent outside the registered repository is not internal, whatever its URL.</td>
+<td>A URL is internal when it has the prefix's scheme, host and port, and its path equals the prefix's or continues it after a <code>/</code>. <code>https://git.example.com/acme</code> never covers <code>…/acme-evil</code> or <code>…/acme2</code>, however the sibling's name continues. A trailing slash on the prefix makes no difference. A snapshot whose fetch a redirect sent outside the registered repository is not internal, whatever its URL.</td>
 </tr>
 <tr>
 <td><code>skills-gateway.approval.auto.required-vetters</code></td>
