@@ -12,4 +12,4 @@ minimumReleaseAgeExclude:
 # shadcn CLI) that pins ^10; lift them to the fixed major. 5.x is outside the
 # affected range and is left alone.
 overrides:
-  'minimatch@>=7.0.0 <11.0.1': ^11.0.1
+  'minimatch@>=7.0.0 <11.0.1': 11.0.9
