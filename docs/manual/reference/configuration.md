@@ -28,6 +28,52 @@ There are **no validation annotations** anywhere in the properties record. Every
 field is nullable and its default is applied in the constructor, which means
 omitting a whole block and omitting individual keys behave identically.
 
+### Configuration or the portal
+
+The gateway reads every key on this page once, at startup. A change takes
+effect on the next restart, and no key can be changed from the portal or the
+REST API. What an administrator changes while the gateway runs is stored in
+the database instead:
+
+| Changed in the portal or the API, stored in the database | Changed only here, by whoever deploys the gateway |
+| --- | --- |
+| Marketplaces, with their sync mode, [automatic approval](../guides/approving-snapshots.md#automatic-approval) and administrator exemption; role grants; policy rules; waivers; webhook subscribers; audit sinks; access tokens; whether each vetter runs, the chain mode and the chain order | Everything on this page |
+
+A key and a row never decide the same thing, so for almost everything there is
+no precedence to work out. The three places where they meet:
+
+- **The [declarative estate](#declarative-estate)** writes rows the API also
+  writes. A declared field is applied again at each reconciliation, and a
+  field it does not declare stays as the API left it; see
+  [What stays interactive, and drift](../guides/declarative-estate.md#what-stays-interactive-and-drift).
+- **[Administrators named in `roles.admins`](#delegated-administration)** hold
+  the role whatever the stored grants say. Grants add to the list; no API call
+  revokes a configured administrator.
+- **Vetter settings** made in the portal apply on top of the
+  [configured chain](#vetting): a marketplace's setting wins over the global
+  one, which wins over the configured default.
+
+Some keys are kept out of the portal on purpose. They set the limits of what
+an administrator may do, and a limit an administrator could edit would not
+limit them. Changing one changes the deployment, and is reviewed wherever the
+deployment's configuration is reviewed:
+
+| Key | What an administrator could do if it were editable |
+| --- | --- |
+| [`allowed-url-schemes`](#skills-gateway) | Register a marketplace over a scheme the operator has not allowed. |
+| [`ingestion.external-sources.*`](#ingestion-external-plugin-sources) | Let a manifest pull plugins from anywhere. |
+| [`approval.four-eyes.mode`](#separation-of-duties-four-eyes), [`approval.name-collision.enabled`](#plugin-name-collisions) | Switch off the check that stops them publishing their own content, or a lookalike plugin. |
+| [`approval.auto.mode`, `approval.auto.internal-prefixes`, `approval.auto.required-vetters`](#automatic-approval) | Declare any repository internal and have it approved with no person, skipping the dated [administrator exemption](../guides/approving-snapshots.md#which-marketplaces-qualify). |
+| [`vetting.revet.*`](#continuous-re-vetting) | Stop the re-checks that automatic approval depends on. |
+| [`roles.*`](#delegated-administration) | Make administrators that no API call can remove. |
+| [`tokens.*`](#access-tokens) | Issue longer-lived credentials than the operator allows. |
+| [`facade.idp-bearer.*`](#identity-provider-bearer-tokens-on-the-facade) | Change what the git facade accepts as a credential. |
+| [`dev-insecure-auth`](#skills-gateway) | Turn authentication off. |
+
+The other blocks (dispatch, export, retention and sync schedules, storage, the
+datasource, OIDC) are operational and needed before the gateway serves
+anything, so they are configuration too.
+
 ---
 
 ## `skills-gateway`
@@ -1031,8 +1077,18 @@ skills-gateway:
 | Property | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `skills-gateway.approval.auto.mode` | string | `off` | `off`, `dry-run` or `on`. `off` is also the incident switch: it stops every attempt at once. |
-| `skills-gateway.approval.auto.internal-prefixes` | list | `[]` | A URL is internal when it has the prefix's scheme, host and port, and its path equals the prefix's or continues it after a `/`. `https://git.example.com/acme` never covers `…/acme-evil`. A snapshot whose fetch a redirect sent outside the registered repository is not internal, whatever its URL. |
+| `skills-gateway.approval.auto.internal-prefixes` | list | `[]` | A URL is internal when it has the prefix's scheme, host and port, and its path equals the prefix's or continues it after a `/`. `https://git.example.com/acme` never covers `…/acme-evil` or `…/acme2`, however the sibling's name continues. A trailing slash on the prefix makes no difference. A snapshot whose fetch a redirect sent outside the registered repository is not internal, whatever its URL. |
 | `skills-gateway.approval.auto.required-vetters` | list | unset (every vetter) | The vetters whose verdict must not be `DISABLED`. Each automatic approval's ledger entry names the vetters that were switched off. |
+
+None of the three can be set from the portal. Which sources count as internal
+is the operator's statement
+([ADR 0023 — Automatic approval of internal marketplaces](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0023-automatic-approval-of-internal-marketplaces.md)):
+an administrator turns automatic approval on for a marketplace inside those
+prefixes, and needs a dated, named administrator exemption for one outside
+them. If the prefixes were editable in the portal, an administrator could skip
+the exemption by declaring the repository internal. Adding a prefix is a
+configuration change and a restart; see
+[Configuration or the portal](#configuration-or-the-portal).
 
 Startup refuses three configurations, each of which would quietly widen what
 is approved:

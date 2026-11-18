@@ -636,8 +636,12 @@ at this exact upstream commit and said no.
 
 A marketplace your organisation owns can have its clean updates approved with
 no person. This is opt-in twice: the gateway's mode, and each
-marketplace's **automatic approval** setting. Both default to off, so nothing changes
-until an administrator sets them. The decision and its accepted risk are
+marketplace's **automatic approval** setting. Both default to off. The
+gateway's mode, like the list of internal prefixes, is
+[configuration](../reference/configuration.md#automatic-approval) set by
+whoever deploys the gateway and cannot be changed from the portal. An
+administrator turns automatic approval on for each marketplace, and it takes
+effect only while the gateway's mode is not `off`. The decision and its accepted risk are
 [ADR 0023 — Automatic approval of internal marketplaces](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0023-automatic-approval-of-internal-marketplaces.md).
 
 ### Which marketplaces qualify

@@ -426,6 +426,13 @@ date. A setting past its date is marked **Lapsed**. A note says what to do
 when automatic approval is on but not taking effect: renew a lapsed one, wait
 for another administrator under four-eyes, or set it again with an exemption.
 
+The card shows the gateway mode and whether the source is internal, but
+cannot change either. Both come from
+[configuration](configuration.md#automatic-approval)
+(`skills-gateway.approval.auto.mode` and `…internal-prefixes`), set by
+whoever deploys the gateway. A marketplace outside the prefixes takes an
+exemption here, or a prefix added there and a restart.
+
 **For an administrator**, a form follows:
 
 - **Automatic approval**: *Off* or *On*. Saving *Off* also revokes an active

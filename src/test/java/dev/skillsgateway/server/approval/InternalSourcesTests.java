@@ -84,6 +84,58 @@ class InternalSourcesTests {
     @SVCs({"SVC_GW_APPROVAL_0044.2"})
     @ValueSource(
             strings = {
+                "https://github.com/acme-evil",
+                "https://github.com/acme-evil/skills.git",
+                "https://github.com/acme2",
+                "https://github.com/acme2/skills.git",
+                "https://github.com/acmeevil",
+                "https://github.com/acmeevil/skills.git",
+                "https://github.com/acme.evil",
+                "https://github.com/acme.evil/skills.git"
+            })
+    void aSiblingWhoseNameExtendsThePrefixIsNotInternalWhicheverWayThePrefixIsSpelled(String url) {
+        assertThat(sources("https://github.com/acme").isInternal(url)).isFalse();
+        assertThat(sources("https://github.com/acme/").isInternal(url)).isFalse();
+    }
+
+    @ParameterizedTest
+    @SVCs({"SVC_GW_APPROVAL_0044.2"})
+    @ValueSource(
+            strings = {
+                "https://github.com/acme",
+                "https://github.com/acme/",
+                "https://github.com/acme/skills.git",
+                "https://github.com/acme/team/skills.git",
+                "https://github.com/acme-evil/skills.git",
+                "https://github.com/acme2",
+                "https://github.com/acm",
+                "https://github.com/",
+                "https://github.com",
+                "https://gitlab.com/acme/skills.git",
+                "http://github.com/acme/skills.git"
+            })
+    void aTrailingSlashOnThePrefixMakesNoDifference(String url) {
+        InternalSources bare = sources("https://github.com/acme");
+        InternalSources slashed = sources("https://github.com/acme/");
+
+        assertThat(slashed.isInternal(url)).isEqualTo(bare.isInternal(url));
+    }
+
+    @Test
+    @SVCs({"SVC_GW_APPROVAL_0044.2"})
+    void evidenceNamesThePrefixAsConfigured() {
+        assertThat(sources("https://github.com/acme").matchingPrefix("https://github.com/acme/skills.git"))
+                .contains("https://github.com/acme");
+        assertThat(sources("https://github.com/acme/").matchingPrefix("https://github.com/acme/skills.git"))
+                .contains("https://github.com/acme/");
+        assertThat(sources("https://github.com/acme/").matchingPrefix("https://github.com/acme-evil/skills.git"))
+                .isEmpty();
+    }
+
+    @ParameterizedTest
+    @SVCs({"SVC_GW_APPROVAL_0044.2"})
+    @ValueSource(
+            strings = {
                 "http://github.com/acme/skills.git",
                 "ssh://github.com/acme/skills.git",
                 "https://github.com.evil.example/acme/skills.git",
@@ -162,6 +214,7 @@ class InternalSourcesTests {
                 "https://GITHUB.com",
                 "https://github.com:443",
                 "https://gitlab.com",
+                "https://gitlab.com/",
                 "https://bitbucket.org/",
                 "http://github.com"
             })
