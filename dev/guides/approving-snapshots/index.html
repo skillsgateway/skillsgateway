@@ -3841,8 +3841,12 @@ at this exact upstream commit and said no.</p>
 <h2 id="automatic-approval">Automatic approval<a class="headerlink" href="#automatic-approval" title="Permanent link">&para;</a></h2>
 <p>A marketplace your organisation owns can have its clean updates approved with
 no person. This is opt-in twice: the gateway's mode, and each
-marketplace's <strong>automatic approval</strong> setting. Both default to off, so nothing changes
-until an administrator sets them. The decision and its accepted risk are
+marketplace's <strong>automatic approval</strong> setting. Both default to off. The
+gateway's mode, like the list of internal prefixes, is
+<a href="../../reference/configuration/#automatic-approval">configuration</a> set by
+whoever deploys the gateway and cannot be changed from the portal. An
+administrator turns automatic approval on for each marketplace, and it takes
+effect only while the gateway's mode is not <code>off</code>. The decision and its accepted risk are
 <a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0023-automatic-approval-of-internal-marketplaces.md">ADR 0023 — Automatic approval of internal marketplaces</a>.</p>
 <h3 id="which-marketplaces-qualify">Which marketplaces qualify<a class="headerlink" href="#which-marketplaces-qualify" title="Permanent link">&para;</a></h3>
 <p>Automatic approval takes effect only for an internal source:</p>

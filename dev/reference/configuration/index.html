@@ -1703,6 +1703,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-or-the-portal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration or the portal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2915,6 +2932,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-or-the-portal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration or the portal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3426,6 +3460,92 @@
 <p>There are <strong>no validation annotations</strong> anywhere in the properties record. Every
 field is nullable and its default is applied in the constructor, which means
 omitting a whole block and omitting individual keys behave identically.</p>
+<h3 id="configuration-or-the-portal">Configuration or the portal<a class="headerlink" href="#configuration-or-the-portal" title="Permanent link">&para;</a></h3>
+<p>The gateway reads every key on this page once, at startup. A change takes
+effect on the next restart, and no key can be changed from the portal or the
+REST API. What an administrator changes while the gateway runs is stored in
+the database instead:</p>
+<table>
+<thead>
+<tr>
+<th>Changed in the portal or the API, stored in the database</th>
+<th>Changed only here, by whoever deploys the gateway</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Marketplaces, with their sync mode, <a href="../../guides/approving-snapshots/#automatic-approval">automatic approval</a> and administrator exemption; role grants; policy rules; waivers; webhook subscribers; audit sinks; access tokens; whether each vetter runs, the chain mode and the chain order</td>
+<td>Everything on this page</td>
+</tr>
+</tbody>
+</table>
+<p>A key and a row never decide the same thing, so for almost everything there is
+no precedence to work out. The three places where they meet:</p>
+<ul>
+<li><strong>The <a href="#declarative-estate">declarative estate</a></strong> writes rows the API also
+  writes. A declared field is applied again at each reconciliation, and a
+  field it does not declare stays as the API left it; see
+  <a href="../../guides/declarative-estate/#what-stays-interactive-and-drift">What stays interactive, and drift</a>.</li>
+<li><strong><a href="#delegated-administration">Administrators named in <code>roles.admins</code></a></strong> hold
+  the role whatever the stored grants say. Grants add to the list; no API call
+  revokes a configured administrator.</li>
+<li><strong>Vetter settings</strong> made in the portal apply on top of the
+  <a href="#vetting">configured chain</a>: a marketplace's setting wins over the global
+  one, which wins over the configured default.</li>
+</ul>
+<p>Some keys are kept out of the portal on purpose. They set the limits of what
+an administrator may do, and a limit an administrator could edit would not
+limit them. Changing one changes the deployment, and is reviewed wherever the
+deployment's configuration is reviewed:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>What an administrator could do if it were editable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#skills-gateway"><code>allowed-url-schemes</code></a></td>
+<td>Register a marketplace over a scheme the operator has not allowed.</td>
+</tr>
+<tr>
+<td><a href="#ingestion-external-plugin-sources"><code>ingestion.external-sources.*</code></a></td>
+<td>Let a manifest pull plugins from anywhere.</td>
+</tr>
+<tr>
+<td><a href="#separation-of-duties-four-eyes"><code>approval.four-eyes.mode</code></a>, <a href="#plugin-name-collisions"><code>approval.name-collision.enabled</code></a></td>
+<td>Switch off the check that stops them publishing their own content, or a lookalike plugin.</td>
+</tr>
+<tr>
+<td><a href="#automatic-approval"><code>approval.auto.mode</code>, <code>approval.auto.internal-prefixes</code>, <code>approval.auto.required-vetters</code></a></td>
+<td>Declare any repository internal and have it approved with no person, skipping the dated <a href="../../guides/approving-snapshots/#which-marketplaces-qualify">administrator exemption</a>.</td>
+</tr>
+<tr>
+<td><a href="#continuous-re-vetting"><code>vetting.revet.*</code></a></td>
+<td>Stop the re-checks that automatic approval depends on.</td>
+</tr>
+<tr>
+<td><a href="#delegated-administration"><code>roles.*</code></a></td>
+<td>Make administrators that no API call can remove.</td>
+</tr>
+<tr>
+<td><a href="#access-tokens"><code>tokens.*</code></a></td>
+<td>Issue longer-lived credentials than the operator allows.</td>
+</tr>
+<tr>
+<td><a href="#identity-provider-bearer-tokens-on-the-facade"><code>facade.idp-bearer.*</code></a></td>
+<td>Change what the git facade accepts as a credential.</td>
+</tr>
+<tr>
+<td><a href="#skills-gateway"><code>dev-insecure-auth</code></a></td>
+<td>Turn authentication off.</td>
+</tr>
+</tbody>
+</table>
+<p>The other blocks (dispatch, export, retention and sync schedules, storage, the
+datasource, OIDC) are operational and needed before the gateway serves
+anything, so they are configuration too.</p>
 <hr />
 <h2 id="skills-gateway"><code>skills-gateway</code><a class="headerlink" href="#skills-gateway" title="Permanent link">&para;</a></h2>
 <p>The application's own namespace. Only <code>data-dir</code> appears in
@@ -5018,6 +5138,15 @@ and what counts as internal. Java-side defaults; nothing appears in
 </tr>
 </tbody>
 </table>
+<p>None of the three can be set from the portal. Which sources count as internal
+is the operator's statement
+(<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0023-automatic-approval-of-internal-marketplaces.md">ADR 0023 — Automatic approval of internal marketplaces</a>):
+an administrator turns automatic approval on for a marketplace inside those
+prefixes, and needs a dated, named administrator exemption for one outside
+them. If the prefixes were editable in the portal, an administrator could skip
+the exemption by declaring the repository internal. Adding a prefix is a
+configuration change and a restart; see
+<a href="#configuration-or-the-portal">Configuration or the portal</a>.</p>
 <p>Startup refuses three configurations, each of which would quietly widen what
 is approved:</p>
 <ul>
