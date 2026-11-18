@@ -338,12 +338,12 @@ export function SystemTokenTable({
                   {token.name}
                 </span>
               </TableCell>
-              <TableCell className="font-mono text-xs">{token.principal}</TableCell>
-              <TableCell>{token.machineOwner}</TableCell>
-              <TableCell className="max-w-64 font-mono text-xs break-words">
+              <TableCell className="font-mono text-xs whitespace-normal wrap-anywhere">{token.principal}</TableCell>
+              <TableCell className="whitespace-normal wrap-anywhere">{token.machineOwner}</TableCell>
+              <TableCell className="max-w-64 font-mono text-xs whitespace-normal break-words">
                 {(token.apiScopes ?? []).join(", ")}
               </TableCell>
-              <TableCell>
+              <TableCell className="whitespace-normal">
                 <div className="space-y-1">
                   <Timestamp
                     value={token.expiresAt}
@@ -359,7 +359,7 @@ export function SystemTokenTable({
                   ) : null}
                 </div>
               </TableCell>
-              <TableCell>
+              <TableCell className="whitespace-normal">
                 <div className="space-y-1">
                   {marks.neverUsed ? (
                     // The mark is the statement: a plain "never" above it would say it twice.
@@ -383,9 +383,11 @@ export function SystemTokenTable({
                   <Badge>active</Badge>
                 )}
               </TableCell>
-              <TableCell className="space-x-2 text-right whitespace-nowrap">
+              <TableCell className="text-right">
                 {state === "active" ? (
-                  <>
+                  // Wraps rather than widening the row: the table scrolls sideways inside its
+                  // container, and an action pushed past the edge (Revoke is last) is invisible.
+                  <div className="flex flex-wrap justify-end gap-2">
                     {onEdit ? (
                       <Button
                         size="sm"
@@ -415,7 +417,7 @@ export function SystemTokenTable({
                     >
                       Revoke
                     </Button>
-                  </>
+                  </div>
                 ) : null}
               </TableCell>
             </TableRow>

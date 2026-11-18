@@ -68,3 +68,34 @@ export const Marks: StoryObj<typeof SystemTokenTable> = {
     await expect(within(dead).getByText("revoked")).toBeInTheDocument();
   },
 };
+
+/**
+ * The row that clipped Revoke: a long owner address beside a principal and three actions, in a
+ * container narrower than the table wants. The table scrolls sideways inside its container, so an
+ * action past the edge is simply not there. Visual only: the story test project renders without
+ * the app's CSS, so no assertion here could see it.
+ */
+export const NarrowContainer: StoryObj<typeof SystemTokenTable> = {
+  render: () => (
+    <div style={{ width: 900 }}>
+      <SystemTokenTable
+        tokens={[
+          {
+            id: 31,
+            principal: "release-pipeline",
+            name: "release-pipeline",
+            createdAt: "2026-08-15T09:00:00Z",
+            expiresAt: "2027-11-17T22:10:00Z",
+            apiScopes: ["marketplaces:read"],
+            machineOwner: "platform.engineering.team@example.com",
+            lastUsedAt: "2026-08-15T09:55:00Z",
+          },
+        ]}
+        now={NOW}
+        onEdit={() => {}}
+        onRotate={() => {}}
+        onRevoke={() => {}}
+      />
+    </div>
+  ),
+};
