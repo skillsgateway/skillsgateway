@@ -62,4 +62,11 @@ EXPOSE 8080
 # leaving the default would have made the heap available to JGit while it packs a
 # large upstream repository a third of what the previous artifact had. 75% keeps
 # the headroom the measurements in ADR 0012 were taken against.
-ENTRYPOINT ["/opt/java/bin/java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/skills-gateway-server.jar"]
+#
+# -XX:-UseBASE64Intrinsics turns off the JIT's hand-written Base64 decoder, which
+# has an out-of-bounds write on x86-64 CPUs with AVX-512 VBMI (CVE-2026-114938,
+# "Java4Shell"). The git facade base64-decodes the HTTP Basic Authorization
+# header of unauthenticated requests, so the decoder is reachable before login.
+# The flag is harmless on arm64; keep it until the runtime stage's JDK is a
+# fixed release (25.0.5.1 or later).
+ENTRYPOINT ["/opt/java/bin/java", "-XX:MaxRAMPercentage=75.0", "-XX:-UseBASE64Intrinsics", "-jar", "/app/skills-gateway-server.jar"]
