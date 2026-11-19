@@ -10,8 +10,8 @@
   [Running the gates on Podman](docs/manual/guides/local-development.md#running-the-gates-on-podman)
 - `git`, `gh`
 - reqstool CLI (`pipx install reqstool` — see `.github/workflows/ci.yml` for the
-  currently pinned version) and OpenSpec CLI (`npm i -g @fission-ai/openspec@1.17.0`,
-  the version CI pins; it needs Node 22.12 or later)
+  currently pinned version) and OpenSpec CLI (`npm i -g @fission-ai/openspec`;
+  `.github/workflows/ci.yml` pins the version, and it needs Node 22.12 or later)
 - Node/pnpm are provisioned by the Maven build; for UI development enable
   corepack (`corepack enable pnpm`)
 - The vendored Impeccable design skill runs a native engine through
@@ -118,9 +118,9 @@ OpenSpec gates.
 `clean` matters for the reqstool gate: incremental compilation truncates the
 generated annotation files. The list is an ordered sequence, not a set:
 `reqstool status` reads the portal suites' JUnit output from
-`src/main/frontend/test-results/`, so it must run after `pnpm e2e`. It also
-**exits 0 even when it prints FAIL** — read its last line rather than its exit
-code.
+`src/main/frontend/test-results/`, so it must run after `pnpm e2e`. It **exits 0
+even when it prints FAIL** — read its last line, or add `--check-all-reqs-met`
+before `local` (CI does) to get a nonzero exit when a requirement is unmet.
 
 ### Flaky suites
 

@@ -30,6 +30,17 @@
       depNameTemplate: "node",
       datasourceTemplate: "node-version",
     },
+    // Tools the workflows install from a `run:` step, which no built-in manager
+    // reads. The version lives in a workflow env var under a
+    // `# renovate: datasource=<ds> depName=<name>` comment.
+    {
+      customType: "regex",
+      description: "CLI versions pinned in workflow env vars",
+      managerFilePatterns: ["/^\\.github/workflows/[^/]+\\.ya?ml$/"],
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s*[A-Z][A-Z0-9_]*_VERSION: (?<currentValue>\\S+)",
+      ],
+    },
   ],
 
   packageRules: [

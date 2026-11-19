@@ -219,6 +219,14 @@ jobs:
     name: Traceability & spec gates
     runs-on: ubuntu-latest
     needs: [gates, e2e]
+    # The two CLIs these gates install from `run:` steps, which Renovate's
+    # built-in managers do not read; the customManagers entry in
+    # .github/renovate.json5 matches the `# renovate:` comment above each.
+    env:
+      # renovate: datasource=pypi depName=reqstool
+      REQSTOOL_VERSION: 1.0.1
+      # renovate: datasource=npm depName=@fission-ai/openspec
+      OPENSPEC_VERSION: 2.1.0
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -247,18 +255,17 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.reqstool-venv
-          key: reqstool-0.12.0-${{ runner.os }}-py${{ steps.python.outputs.python-version }}
+          key: reqstool-${{ env.REQSTOOL_VERSION }}-${{ runner.os }}-py${{ steps.python.outputs.python-version }}
 
       - name: Install reqstool CLI
         if: steps.reqstool-cache.outputs.cache-hit != 'true'
         run: |
           python -m venv ~/.reqstool-venv
-          ~/.reqstool-venv/bin/pip install reqstool==0.12.0
+          ~/.reqstool-venv/bin/pip install reqstool=="$REQSTOOL_VERSION"
 
       - name: Requirements traceability gate (backend + portal results)
         run: |
-          ~/.reqstool-venv/bin/reqstool status local -p docs/reqstool | tee reqstool-status.txt
-          grep -q '· PASS$' reqstool-status.txt
+          ~/.reqstool-venv/bin/reqstool status --check-all-reqs-met local -p docs/reqstool
 
       # The OpenSpec CLI package requires Node >= 22.12.0 from 1.16 on.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -266,7 +273,7 @@ jobs:
           node-version: '26.13.1'
 
       - name: Install OpenSpec CLI
-        run: npm install -g @fission-ai/openspec@1.17.0
+        run: npm install -g "@fission-ai/openspec@$OPENSPEC_VERSION"
 
       - name: OpenSpec validation gate
         run: openspec validate --all --strict
