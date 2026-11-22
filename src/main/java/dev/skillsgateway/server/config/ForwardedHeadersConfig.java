@@ -5,6 +5,8 @@ import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.tomcat.autoconfigure.TomcatServerProperties;
+import org.springframework.boot.web.server.ForwardedRequestHeaders;
+import org.springframework.boot.web.server.autoconfigure.ForwardedHeaderStrategy;
 import org.springframework.boot.web.server.autoconfigure.ServerProperties;
 import org.springframework.boot.web.server.autoconfigure.servlet.ForwardedHeaderFilterCustomizer;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -25,7 +27,7 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
  *
  * <p>Declaring the registration here, unconditionally, compiles it in on every packaging. Whether
  * it does anything is decided at runtime from the same property, so the operator-facing contract
- * stays Spring's own ({@code none}, {@code native}, {@code framework}) and does not depend on how
+ * stays Spring's own and does not depend on how
  * the artifact was built. The released artifact is a JVM container now (ADR 0012), where the
  * condition would have been evaluated at runtime anyway; this stays because the property of not
  * depending on that is worth more than the line it costs. Boot's own registration backs off when one
@@ -33,6 +35,14 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
  * ({@code @ConditionalOnMissingFilterBean}), so the JVM never carries two. The {@code native}
  * strategy needs no help: Tomcat's {@code RemoteIpValve} is installed by a customizer that reads
  * the property at runtime.
+ *
+ * <p>Since Boot 4.2 the setting is {@code server.request.header.forwarded.strategy} ({@code none},
+ * {@code web-server}, {@code framework}), with {@code server.forward-headers-strategy} kept as a
+ * deprecated alias ({@code native} meaning {@code web-server}). Both are read here, as Boot reads
+ * them, and the filter is built as Boot 4.2 builds its own: {@code
+ * server.request.header.forwarded.naming} picks the header family ({@code x-forwarded} by default,
+ * or RFC 7239 {@code Forwarded}) and {@code X-Forwarded-Prefix} is honoured only when {@code
+ * server.request.header.forwarded.use-prefix} is set.
  *
  * <p>The default stays off. The gateway cannot tell a proxy's header from a client's, so trusting
  * one is the operator's decision, made where the proxy is.
@@ -52,7 +62,11 @@ public class ForwardedHeadersConfig {
             ServerProperties serverProperties,
             TomcatServerProperties tomcatServerProperties,
             ObjectProvider<ForwardedHeaderFilterCustomizer> customizers) {
-        ForwardedHeaderFilter filter = new ForwardedHeaderFilter();
+        ServerProperties.Request.Header.Forwarded forwarded =
+                serverProperties.getRequest().getHeader().getForwarded();
+        ForwardedHeaderFilter filter =
+                new ForwardedHeaderFilter(forwarded.getNaming() == ForwardedRequestHeaders.Naming.RFC_7239);
+        filter.setUseForwardedPrefix(forwarded.isUsePrefix());
         // Boot applies this from a *second* bean, tomcatForwardedHeaderFilterCustomizer, which
         // carries the same @ConditionalOnProperty and would be frozen out alongside the filter by
         // anything that evaluates it early. Taking over a bean from auto-configuration means
@@ -61,7 +75,7 @@ public class ForwardedHeadersConfig {
         // Read at runtime, never written as a literal: a constant here would freeze at build time
         // a value Boot resolves at runtime -- this very defect one layer down, surfacing as subtly
         // wrong Location headers rather than a failed login.
-        filter.setRelativeRedirects(tomcatServerProperties.isUseRelativeRedirects());
+        filter.setRelativeRedirects(tomcatServerProperties.getServlet().isUseRelativeRedirects());
         // Boot's documented extension point, kept working now that its registration is ours.
         customizers.orderedStream().forEach(customizer -> customizer.customize(filter));
 
@@ -69,8 +83,30 @@ public class ForwardedHeadersConfig {
         // Where Boot places it: ahead of everything, on every dispatch that can build a URL.
         registration.setDispatcherTypes(DispatcherType.REQUEST, DispatcherType.ASYNC, DispatcherType.ERROR);
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
-        registration.setEnabled(
-                serverProperties.getForwardHeadersStrategy() == ServerProperties.ForwardHeadersStrategy.FRAMEWORK);
+        registration.setEnabled(strategy(serverProperties) == ForwardedHeaderStrategy.FRAMEWORK);
         return registration;
+    }
+
+    /**
+     * The strategy in force: the Boot 4.2 property, else the deprecated one it replaced. Boot's own
+     * resolver is package-private, so this is its rule restated; setting both is refused at startup
+     * by Boot's {@code @ConditionalOnForwardedHeaderStrategy} before this bean is built.
+     */
+    @SuppressWarnings("removal")
+    static ForwardedHeaderStrategy strategy(ServerProperties serverProperties) {
+        ForwardedHeaderStrategy strategy =
+                serverProperties.getRequest().getHeader().getForwarded().getStrategy();
+        if (strategy != null) {
+            return strategy;
+        }
+        ServerProperties.ForwardHeadersStrategy deprecated = serverProperties.getForwardHeadersStrategy();
+        if (deprecated == null) {
+            return null;
+        }
+        return switch (deprecated) {
+            case NATIVE -> ForwardedHeaderStrategy.WEB_SERVER;
+            case FRAMEWORK -> ForwardedHeaderStrategy.FRAMEWORK;
+            case NONE -> ForwardedHeaderStrategy.NONE;
+        };
     }
 }

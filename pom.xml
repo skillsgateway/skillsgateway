@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.2</version>
+        <version>4.2.0</version>
         <relativePath/>
     </parent>
 
@@ -235,7 +235,7 @@
              `optional` is what keeps these off a consumer's classpath and out of the
              packaged jar (spring-boot:repackage defaults includeOptional=false). Plain
              `spring-boot:run` still sees them, which is how the dev services start
-             without -Dspring-boot.run.useTestClasspath=true. -->
+             without -Dspring-boot.run.testClasspath=all. -->
         <!-- Testcontainers via Arconia Dev Services: Postgres auto-starts in dev/test. -->
         <dependency>
             <groupId>io.arconia</groupId>

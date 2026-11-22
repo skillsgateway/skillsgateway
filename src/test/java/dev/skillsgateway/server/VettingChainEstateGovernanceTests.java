@@ -178,12 +178,12 @@ class VettingChainEstateGovernanceTests extends AbstractGatewayTest {
         // An unknown vetter, an unknown mode, an unknown action and an empty selection are all
         // knowable without touching a marketplace, so none of them may reach one.
         bulk(body(name, "set-vetter", "\"vetter\": \"does-not-exist\", \"enabled\": false"))
-                .andExpect(status().isUnprocessableEntity());
-        bulk(body(name, "set-mode", "\"mode\": \"whenever\"")).andExpect(status().isUnprocessableEntity());
-        bulk(body(name, "burn-it-down", null)).andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
+        bulk(body(name, "set-mode", "\"mode\": \"whenever\"")).andExpect(status().isUnprocessableContent());
+        bulk(body(name, "burn-it-down", null)).andExpect(status().isUnprocessableContent());
         bulk("{\"marketplaces\": [], \"action\": \"set-mode\", \"mode\": \"run-all\"}")
-                .andExpect(status().isUnprocessableEntity());
-        bulk(body(name, "clear", "\"clear\": []")).andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
+        bulk(body(name, "clear", "\"clear\": []")).andExpect(status().isUnprocessableContent());
 
         assertThat(allChainEntries(name)).isEqualTo(before);
         mockMvc.perform(get("/api/v1/marketplaces/{name}/vetting-chain-settings", name)

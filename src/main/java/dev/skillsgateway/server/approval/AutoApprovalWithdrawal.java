@@ -148,6 +148,6 @@ public class AutoApprovalWithdrawal {
     }
 
     private static ResponseStatusException unprocessable(String message) {
-        return new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, message);
+        return new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, message);
     }
 }

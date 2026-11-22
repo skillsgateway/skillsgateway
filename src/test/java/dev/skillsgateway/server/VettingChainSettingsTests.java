@@ -255,22 +255,22 @@ class VettingChainSettingsTests extends AbstractGatewayTest {
                         root,
                         "{\"vetters\": [\"secret-scan\", \"no-such-vetter\"], \"marketplace\": \"%s\"}"
                                 .formatted(name)))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
         mockMvc.perform(putJson(
                         "/api/v1/vetting/chain-order",
                         root,
                         "{\"vetters\": [\"secret-scan\", \"secret-scan\"], \"marketplace\": \"%s\"}".formatted(name)))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
         mockMvc.perform(putJson(
                         "/api/v1/vetting/chain-order",
                         root,
                         "{\"vetters\": [], \"marketplace\": \"%s\"}".formatted(name)))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
 
         // An unknown mode, and an omitted one.
         mockMvc.perform(putJson("/api/v1/vetting/chain-mode", root, "{\"mode\": \"stop-eventually\"}"))
-                .andExpect(status().isUnprocessableEntity());
-        mockMvc.perform(putJson("/api/v1/vetting/chain-mode", root, "{}")).andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
+        mockMvc.perform(putJson("/api/v1/vetting/chain-mode", root, "{}")).andExpect(status().isUnprocessableContent());
 
         // An unknown marketplace, for both.
         mockMvc.perform(putJson(

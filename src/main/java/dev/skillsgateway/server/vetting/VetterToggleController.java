@@ -163,7 +163,7 @@ public class VetterToggleController {
         roleService.requireAdmin(authentication);
         if (request == null || request.enabled() == null) {
             throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_ENTITY, "the 'enabled' field is required (true or false)");
+                    HttpStatus.UNPROCESSABLE_CONTENT, "the 'enabled' field is required (true or false)");
         }
         return toggleService.set(
                 name, request.marketplace(), request.enabled(), request.reason(), authentication.getName());

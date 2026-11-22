@@ -210,6 +210,6 @@ public class VettingChainBulkService {
     }
 
     private static ResponseStatusException unprocessable(String message) {
-        return new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, message);
+        return new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, message);
     }
 }
