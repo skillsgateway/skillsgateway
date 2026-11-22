@@ -94,6 +94,11 @@ Worth knowing before you open a PR:
   admin repo, or the next sync deletes it and the escape hatch becomes
   unreachable.
 
+- **CodeRabbit reviews every non-draft PR.** Its review is advisory: it never
+  requests changes and does not count as the maintainer approval. Its comments
+  are review threads, so they must be resolved like any other; reply in the
+  thread when one is wrong. Configuration: `.coderabbit.yaml`.
+
 ## Gates — all must pass
 
 ```bash
