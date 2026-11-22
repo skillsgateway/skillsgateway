@@ -1,7 +1,6 @@
 package dev.skillsgateway.server.approval;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skillsgateway.server.config.Json;
 import dev.skillsgateway.server.ingestion.ManifestRewriter;
 import dev.skillsgateway.server.ingestion.SnapshotClosure;
 import dev.skillsgateway.server.persistence.Marketplace;
@@ -20,6 +19,8 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * The closure-completeness assertion (GW_APPROVAL_0013): before a snapshot is approved, its recorded
@@ -43,7 +44,7 @@ public class ClosureCompletenessGate {
 
     private static final String MANIFEST_PATH = ".claude-plugin/marketplace.json";
     private static final String SOURCE_PREFIX = "./" + ManifestRewriter.GRAFT_DIR + "/";
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = Json.MAPPER;
 
     private final GitStorage storage;
     private final SnapshotClosureRepository closures;
@@ -131,23 +132,23 @@ public class ClosureCompletenessGate {
                 problems.add("the pinned commit has no " + MANIFEST_PATH);
                 return grafted;
             }
-            JsonNode root =
-                    MAPPER.readTree(repository.open(manifest.getObjectId(0)).getBytes());
+            byte[] manifestBytes = repository.open(manifest.getObjectId(0)).getBytes();
+            JsonNode root = Json.io(() -> MAPPER.readTree(manifestBytes));
             JsonNode plugins = root.get("plugins");
             if (plugins == null || !plugins.isArray()) {
                 return grafted;
             }
             for (JsonNode plugin : plugins) {
                 JsonNode source = plugin.get("source");
-                if (source == null || !source.isTextual() || !source.asText().startsWith(SOURCE_PREFIX)) {
+                if (source == null || !source.isString() || !source.asString("").startsWith(SOURCE_PREFIX)) {
                     continue;
                 }
-                String path = source.asText().substring(2);
+                String path = source.asString("").substring(2);
                 while (path.endsWith("/")) {
                     path = path.substring(0, path.length() - 1);
                 }
                 JsonNode name = plugin.get("name");
-                grafted.put(path, name == null || !name.isTextual() ? "" : name.asText());
+                grafted.put(path, name == null || !name.isString() ? "" : name.asString(""));
             }
         }
         return grafted;

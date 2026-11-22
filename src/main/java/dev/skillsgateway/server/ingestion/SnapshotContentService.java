@@ -1,6 +1,5 @@
 package dev.skillsgateway.server.ingestion;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
@@ -26,6 +25,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Read-only inventory of what a snapshot contains (GW_INGEST_0008): the plugins its manifest declares and
@@ -281,10 +281,10 @@ public class SnapshotContentService {
         int readable = Math.min(entries.size(), ManifestPolicy.MAX_PLUGINS);
         for (int i = 0; i < readable; i++) {
             JsonNode plugin = entries.get(i);
-            String name = plugin.path("name").asText(null);
-            String description = plugin.path("description").asText(null);
+            String name = plugin.path("name").asString(null);
+            String description = plugin.path("description").asString(null);
             String source =
-                    plugin.path("source").isTextual() ? plugin.get("source").asText() : null;
+                    plugin.path("source").isString() ? plugin.get("source").asString("") : null;
             List<SkillInfo> skills =
                     source == null || !listedRoots.add(normalize(source)) ? List.of() : skills(skillFiles, source);
             String root = PluginComponents.normalizeRoot(source);

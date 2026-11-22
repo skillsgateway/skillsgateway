@@ -1,11 +1,12 @@
 package dev.skillsgateway.server.storage.objectstore;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skillsgateway.server.config.Json;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * One repository's manifest, read, cached, and swapped by compare-and-swap.
@@ -38,7 +39,7 @@ public final class ManifestStore {
     /** How many times a losing writer re-reads and retries before giving up. */
     static final int MAX_ATTEMPTS = 8;
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = Json.MAPPER;
 
     /** A manifest together with the version token a conditional write must present to replace it. */
     public record Snapshot(RepositoryManifest manifest, String etag) {}

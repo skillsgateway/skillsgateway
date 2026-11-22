@@ -2,10 +2,11 @@ package dev.skillsgateway.server.ingestion;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.reqstool.annotations.SVCs;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The typed source model (GW_INGEST_0019) as the pure, total function it is — no database, no Spring
@@ -20,7 +21,7 @@ import org.junit.jupiter.api.Test;
  */
 class PluginSourceTests {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
     private static final String GITHUB = "https://github.com";
 
     private static PluginSource parse(String json) {

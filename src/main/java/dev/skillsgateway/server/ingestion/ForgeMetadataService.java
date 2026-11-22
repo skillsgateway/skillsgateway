@@ -1,7 +1,6 @@
 package dev.skillsgateway.server.ingestion;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skillsgateway.server.config.Json;
 import dev.skillsgateway.server.persistence.MarketplaceRepository.ForgeMetadata;
 import io.github.reqstool.annotations.Requirements;
 import java.io.InputStream;
@@ -19,6 +18,8 @@ import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Best-effort forge metadata at registration (GW_INGEST_0009): project name, description, and last
@@ -32,7 +33,7 @@ public class ForgeMetadataService {
 
     private static final Logger log = LoggerFactory.getLogger(ForgeMetadataService.class);
     private static final Duration TIMEOUT = Duration.ofSeconds(3);
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = Json.MAPPER;
 
     /** A repository metadata document is a few kilobytes; nothing a forge sends past this is read. */
     static final int MAX_RESPONSE_BYTES = 1024 * 1024;
@@ -181,7 +182,7 @@ public class ForgeMetadataService {
             return null;
         }
         JsonNode node = body.at(pointer);
-        return node.isTextual() ? node.asText() : null;
+        return node.isString() ? node.asString("") : null;
     }
 
     private static Instant parseInstant(String value) {

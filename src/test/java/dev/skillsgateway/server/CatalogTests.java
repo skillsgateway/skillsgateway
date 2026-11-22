@@ -6,8 +6,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.approval.RevocationService;
 import dev.skillsgateway.server.catalog.CatalogService;
 import dev.skillsgateway.server.vetting.RevetService;
@@ -27,6 +25,9 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The global virtual catalog (GW_FACADE_0003–GW_FACADE_0005): composition from the served estate, freshness on
@@ -50,7 +51,7 @@ import org.springframework.test.context.TestPropertySource;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class CatalogTests extends AbstractGatewayTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
 
     /**
      * Deliberately not the default: a name the portal could only learn from the gateway
@@ -99,7 +100,7 @@ class CatalogTests extends AbstractGatewayTest {
         assertThat(gitClone(facadeUrl(CATALOG, newPat()), clone).exitCode()).isZero();
         JsonNode manifest = manifestOf(clone);
         assertThat(manifest.path("plugins")).isEmpty();
-        assertThat(manifest.path("name").asText()).isEqualTo(CATALOG);
+        assertThat(manifest.path("name").asString()).isEqualTo(CATALOG);
     }
 
     @Test
@@ -125,13 +126,13 @@ class CatalogTests extends AbstractGatewayTest {
         assertThat(clone.resolve(heldOnly.marketplace().name())).doesNotExist();
 
         JsonNode manifest = manifestOf(clone);
-        List<String> names = manifest.path("plugins").findValuesAsText("name");
+        List<String> names = manifest.path("plugins").findValuesAsString("name");
         assertThat(names).contains(name1 + "-hello", name2 + "-hello");
         assertThat(names)
                 .noneMatch(name -> name.startsWith(heldOnly.marketplace().name()));
         for (JsonNode plugin : manifest.path("plugins")) {
-            String owner = plugin.path("name").asText().replaceAll("-hello$", "");
-            assertThat(plugin.path("source").asText()).isEqualTo("./" + owner + "/plugins/hello");
+            String owner = plugin.path("name").asString().replaceAll("-hello$", "");
+            assertThat(plugin.path("source").asString()).isEqualTo("./" + owner + "/plugins/hello");
         }
     }
 
@@ -169,7 +170,7 @@ class CatalogTests extends AbstractGatewayTest {
         Path after = newWorkDir("catafter");
         assertThat(gitClone(facadeUrl(CATALOG, pat), after).exitCode()).isZero();
         assertThat(after.resolve(doomedName)).doesNotExist();
-        assertThat(manifestOf(after).path("plugins").findValuesAsText("name"))
+        assertThat(manifestOf(after).path("plugins").findValuesAsString("name"))
                 .noneMatch(name -> name.startsWith(doomedName));
 
         // Parentless history: the revoked constituent is unreachable from every advertised ref.
@@ -197,17 +198,18 @@ class CatalogTests extends AbstractGatewayTest {
                 .getResponse()
                 .getContentAsString();
         JsonNode info = MAPPER.readTree(catalog);
-        assertThat(info.path("name").asText())
+        assertThat(info.path("name").asString())
                 .as("the served revision names the catalog, so a client can offer it as a token scope")
                 .isEqualTo(CATALOG);
         Path clone = newWorkDir("catprovclone");
         assertThat(gitClone(facadeUrl(CATALOG, newPat()), clone).exitCode()).isZero();
         for (JsonNode constituent : info.path("constituents")) {
-            assertThat(clone.resolve(constituent.path("marketplace").asText())).exists();
+            assertThat(clone.resolve(constituent.path("marketplace").asString()))
+                    .exists();
         }
-        assertThat(info.path("constituents").findValuesAsText("marketplace"))
+        assertThat(info.path("constituents").findValuesAsString("marketplace"))
                 .contains(served.marketplace().name());
-        assertThat(info.path("constituents").findValuesAsText("sha"))
+        assertThat(info.path("constituents").findValuesAsString("sha"))
                 .contains(served.snapshot().sha());
 
         // The clone is on the ledger under the catalog's name.
@@ -256,7 +258,7 @@ class CatalogTests extends AbstractGatewayTest {
 
         Path clone = newWorkDir("catcollision");
         assertThat(gitClone(facadeUrl(CATALOG, newPat()), clone).exitCode()).isZero();
-        List<String> published = manifestOf(clone).path("plugins").findValuesAsText("name");
+        List<String> published = manifestOf(clone).path("plugins").findValuesAsString("name");
 
         assertThat(published)
                 .as("neither claimant gets it: omitting a name is legitimate, substituting content is not")
@@ -273,9 +275,9 @@ class CatalogTests extends AbstractGatewayTest {
                 .getResponse()
                 .getContentAsString());
         assertThat(info.path("collisions")).anySatisfy(collision -> {
-            assertThat(collision.path("name").asText()).isEqualTo(contested);
+            assertThat(collision.path("name").asString()).isEqualTo(contested);
             assertThat(collision.path("marketplaces"))
-                    .extracting(JsonNode::asText)
+                    .extracting(JsonNode::asString)
                     .containsExactly(plain, prefixed);
         });
 

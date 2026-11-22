@@ -1,8 +1,7 @@
 package dev.skillsgateway.server.ingestion;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
+import dev.skillsgateway.server.config.Json;
 import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
@@ -37,6 +36,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class IngestionService {
@@ -56,7 +57,7 @@ public class IngestionService {
 
     public static final Duration HEARTBEAT_STALE = Duration.ofSeconds(60);
 
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final ObjectMapper JSON = Json.MAPPER;
 
     private static final String INCOMING_REF = "refs/quarantine/incoming";
     private static final String MANIFEST_PATH = ".claude-plugin/marketplace.json";
@@ -465,7 +466,7 @@ public class IngestionService {
     private static String failureJson(UpstreamFailure failure) {
         try {
             return JSON.writeValueAsString(failure);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException(e);
         }
     }

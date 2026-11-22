@@ -5,14 +5,15 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.approval.RevocationService;
 import dev.skillsgateway.server.persistence.Snapshot;
 import io.github.reqstool.annotations.SVCs;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The marketplace read names the commit its facade serves (GW_INGEST_0033) — as a fact read from
@@ -32,7 +33,7 @@ class ServedCommitTests extends AbstractGatewayTest {
     @Autowired
     private RevocationService revocationService;
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
 
     private JsonNode marketplace(String name) throws Exception {
         String body = mockMvc.perform(
@@ -42,7 +43,7 @@ class ServedCommitTests extends AbstractGatewayTest {
                 .getResponse()
                 .getContentAsString();
         for (JsonNode node : MAPPER.readTree(body)) {
-            if (name.equals(node.get("name").asText())) {
+            if (name.equals(node.get("name").asString())) {
                 return node;
             }
         }
@@ -65,7 +66,7 @@ class ServedCommitTests extends AbstractGatewayTest {
         Registered registered = registerAndIngest(uniqueName("serving"), createUpstream(DEFAULT_MANIFEST));
         Snapshot approved = approve(registered.snapshot().id());
 
-        assertThat(marketplace(registered.marketplace().name()).get("servedSha").asText())
+        assertThat(marketplace(registered.marketplace().name()).get("servedSha").asString())
                 .isEqualTo(approved.sha());
     }
 

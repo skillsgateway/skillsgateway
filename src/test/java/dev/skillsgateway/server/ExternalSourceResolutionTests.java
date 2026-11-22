@@ -2,8 +2,6 @@ package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.ingestion.SnapshotContentService;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.Snapshot;
@@ -27,6 +25,9 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * External plugin source resolution end to end (GW_INGEST_0023, GW_INGEST_0024, GW_INGEST_0025, GW_INGEST_0026, GW_INGEST_0027),
@@ -45,7 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 class ExternalSourceResolutionTests extends AbstractExternalSourceTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
 
     @Autowired
     private SnapshotContentService contentService;
@@ -73,8 +74,8 @@ class ExternalSourceResolutionTests extends AbstractExternalSourceTest {
         assertThat(snapshot.sha()).isNotEqualTo(upstreamHead);
 
         JsonNode manifest = MAPPER.readTree(servedFile(registered.marketplace(), snapshot.sha(), MANIFEST_PATH));
-        assertThat(manifest.get("plugins").get(1).get("source").asText()).isEqualTo("./_plugins/tools");
-        assertThat(manifest.get("plugins").get(0).get("source").asText()).isEqualTo("./plugins/hello");
+        assertThat(manifest.get("plugins").get(1).get("source").asString()).isEqualTo("./_plugins/tools");
+        assertThat(manifest.get("plugins").get(0).get("source").asString()).isEqualTo("./plugins/hello");
         // Nothing a client dereferences leaves the gateway.
         assertThat(manifest.toString()).doesNotContain(FORGE.baseUrl());
 

@@ -1,21 +1,22 @@
 package dev.skillsgateway.server.ingestion;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import dev.skillsgateway.server.config.Json;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import io.github.reqstool.annotations.Requirements;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 /** Fail-closed policy over the marketplace manifest: any parse or shape doubt is a violation. */
 @Component
 public final class ManifestPolicy {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = Json.MAPPER;
     private static final String MANIFEST = ".claude-plugin/marketplace.json";
 
     private final ExternalSourceAdmission admission;
@@ -100,7 +101,7 @@ public final class ManifestPolicy {
         JsonNode root;
         try {
             root = MAPPER.readTree(manifestBytes);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             return rejected(MANIFEST + " is not valid JSON");
         }
         if (root == null || !root.isObject()) {
@@ -121,7 +122,7 @@ public final class ManifestPolicy {
             if (!plugin.isObject()) {
                 return rejected("plugin entry is not a JSON object");
             }
-            String name = plugin.path("name").isTextual() ? plugin.get("name").asText() : "<unnamed>";
+            String name = plugin.path("name").isString() ? plugin.get("name").asString("") : "<unnamed>";
             switch (admission.decide(PluginSource.parse(plugin.get("source")), name, admitted.size())) {
                 case ExternalSourceAdmission.Decision.Local ignored -> {
                     /* resolves inside the served snapshot already */

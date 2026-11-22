@@ -288,7 +288,7 @@ public class ExecutableSurfaceVetter implements Vetter {
             var entries = manifest.root().path("plugins");
             for (int i = 0; i < entries.size(); i++) {
                 var source = entries.get(i).path("source");
-                String root = source.isTextual() ? PluginComponents.normalizeRoot(source.asText()) : null;
+                String root = source.isString() ? PluginComponents.normalizeRoot(source.asString("")) : null;
                 if (root != null) {
                     roots.putIfAbsent(root, "/plugins/" + i);
                 }
