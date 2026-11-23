@@ -1,11 +1,10 @@
 # Evidence: vet-repeated-source-entries
 
-Source state: `abd56202` (tree `0063a1a0`), after CodeRabbit's two reviews of
-#950 and on top of `main` at `9e057a35` (Jimisola merged `main` into the branch).
+Source state: `0f5d366e` (tree `6f986662`; `91520ecf` only re-points two
+mutants), after CodeRabbit's three reviews of #950 and on top of `main` at
+`b1b1de23`, merged into the branch.
 Every result below is from one fresh run after that last code edit, on
-2026-11-23. The mutants ran first; `clean verify` was rerun on the same commit
-after the container's Docker daemon died mid-run (698 context errors, no
-assertion failures). Earlier full runs, on `6e26adda` (before #933) and `925243f7`
+2026-11-23. Earlier full runs, on `6e26adda` (before #933) and `925243f7`
 (after it), were also green.
 
 Tier: trust boundary (vetting). Spec approval: not obtained before coding.
@@ -29,6 +28,8 @@ not performed. Both are declared downgrades.
 | SVC_GW_VETTING_0080: a hook two roots reach is followed from each | `ExecutableSurfaceVetterTests.aHookTwoRootsReachIsFollowedFromEachRoot` | yes: no `runtime-fetch-exec` at `go.sh` |
 | SVC_GW_VETTING_0080: a script two roots' hook reaches is followed from each root | `ExecutableSurfaceVetterTests.aScriptTwoRootsReachIsFollowedFromEachRoot` | yes: no `runtime-fetch-exec` at `go.sh`; killed by M10 |
 | SVC_GW_VETTING_0080: a script two roots' MCP server reaches is followed from each root | `ExecutableSurfaceVetterTests.aScriptAServerTwoRootsReachLaunchesIsFollowedFromEachRoot` | yes: no `mcp-fetch-exec` at `go.sh`; killed by M11 |
+| SVC_GW_VETTING_0048: a file first reached at the depth limit is followed when a shorter chain reaches it | `ExecutableSurfaceVetterTests.aFileFirstReachedAtTheDepthLimitIsFollowedWhenAShorterChainReachesIt` | yes, on this branch and on `main`: no `runtime-fetch-exec` at `p/fetch.sh`; killed by M12 |
+| SVC_GW_VETTING_0049: a binary a script mentions is still reported when a hook runs it | `ExecutableSurfaceVetterTests.aBinaryAScriptMentionsIsStillReportedWhenAHookRunsIt` | yes, on this branch and on `main`: no `hook-target-unscanned` at `p/bin/engine`; killed by M13 |
 | Invariant: existing SVC tests unchanged | full suite below | — |
 
 ## Review findings (CodeRabbit), and what changed
@@ -52,6 +53,15 @@ One more finding on the re-review of `c5265358`:
    first root only. Reproduced for a hook and an MCP server, then fixed: the
    traversal is keyed by kind, root and path. Pinned by M10 and M11.
 
+And one on the third review, of `1f410e9b`:
+
+5. Major, real, and already on `main`. A file first reached at the depth
+   limit was recorded but not followed, so a later hook running it directly
+   did not have what it launches scanned. `follow` now keeps the shallowest
+   depth per key and traverses again from a shorter one. The same
+   first-reach-wins shape hid a binary a hook runs once a script had read it
+   as data; it is reported now. Pinned by M12 and M13.
+
 ## A spec change made during the work, and why
 
 The first design also changed `SurfaceComparison`. Its test, a first
@@ -66,12 +76,12 @@ and proposal, design and tasks were revised to say why.
 
 | Layer | Command | Result |
 |---|---|---|
-| Java suite, UI gate, Spotless, Checkstyle, SBOM, jar | `./mvnw clean verify` | `Tests run: 1404, Failures: 0, Errors: 0, Skipped: 9` · UI `Test Files 46 passed (46)` · `Tests 348 passed (348)` · `BUILD SUCCESS` · `Total time: 09:17 min` |
+| Java suite, UI gate, Spotless, Checkstyle, SBOM, jar | `./mvnw clean verify` | `Tests run: 1406, Failures: 0, Errors: 0, Skipped: 9` · UI `Test Files 46 passed (46)` · `Tests 348 passed (348)` · `BUILD SUCCESS` · `Total time: 10:15 min` |
 | Requirements traceability (backend results only) | `reqstool status local -p docs/reqstool` | `378/422 complete · 44 incomplete · FAIL`; every incomplete id is a portal e2e case (`automated test missing` without the Playwright results); `GW_VETTING_0047` complete. The full gate runs in CI's Traceability job with the e2e results |
 | Storybook story tests, e2e | not run locally | no file under `src/main/frontend/` changed; CI runs both |
 | OpenSpec | `openspec validate --all --strict` | `Totals: 29 passed, 0 failed (29 items)` (one fewer: this change is archived) |
-| Docs | `mkdocs build --strict` | `Documentation built in 1.94 seconds` |
-| Mutation | `openspec/changes/archive/2026-11-23-vet-repeated-source-entries/mutants.sh` | `11 mutants run, all killed` |
+| Docs | `mkdocs build --strict` | `Documentation built in 1.86 seconds` |
+| Mutation | `openspec/changes/archive/2026-11-23-vet-repeated-source-entries/mutants.sh` | `13 mutants run, all killed` |
 | Mutation runner negative control | `ONLY=M99 mutants.sh` | `no mutant selected`, exit 5 |
 | Supply chain | no dependency added or changed | — |
 
@@ -87,5 +97,7 @@ M8-plain-entry-only-when-first killed
 M9-modules-not-cached killed
 M10-launch-chain-deduplicated-across-roots killed
 M11-server-launch-chain-deduplicated-across-roots killed
-11 mutants run, all killed
+M12-first-depth-wins killed
+M13-rerun-binary-unreported killed
+13 mutants run, all killed
 ```

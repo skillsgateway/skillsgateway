@@ -41,6 +41,13 @@ root or as a module's, is traversed again without a second scan, so its
 findings and the launched-file count stay as they were. CodeRabbit found the
 path-only key on its second review; two tests reproduced it before the fix.
 
+The traversal also keeps the shallowest depth it reached each key at, and
+traverses again when a shorter chain reaches it: a file first reached at
+`MAX_DEPTH` is scanned but not followed, and a hook that runs it directly must
+still have what it launches scanned. A binary a script only mentions is read
+silently, so when a hook later runs it, it is reported then. Both gaps were on
+`main` already; CodeRabbit's third review found the first.
+
 ### The surface comparison stays as it is
 
 `SurfaceComparison` builds its roots the same first-entry way, but it cannot be
