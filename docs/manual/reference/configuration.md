@@ -1783,6 +1783,8 @@ itself with one. Moving `path` moves that exception with it. See
 | Property | Environment variable | Default | Values |
 | --- | --- | --- | --- |
 | `server.forward-headers-strategy` | `SERVER_FORWARDHEADERSSTRATEGY` | _(unset)_ | `native`, `framework`, `none` |
+| `server.request.header.forwarded.naming` | `SERVER_REQUEST_HEADER_FORWARDED_NAMING` | `x-forwarded` | `x-forwarded`, `rfc-7239` |
+| `server.request.header.forwarded.use-prefix` | `SERVER_REQUEST_HEADER_FORWARDED_USEPREFIX` | `false` | `true`, `false` |
 
 The gateway serves plain HTTP and terminates no TLS, so the request it sees
 names its own host and port over `http`. Every URL it builds from the request —
@@ -1794,7 +1796,7 @@ with Spring Boot's own meanings:
 | Value | Effect |
 | --- | --- |
 | `native` | Tomcat's `RemoteIpValve`: the headers are honoured only from a peer whose address is in `server.tomcat.remoteip.internal-proxies` — by default the private ranges `10/8`, `172.16/12`, `192.168/16`, `100.64/10`, loopback and their IPv6 counterparts. `X-Forwarded-For` also replaces the remote address the fetch ledger records. Recommended. |
-| `framework` | Spring's `ForwardedHeaderFilter`: the headers, `X-Forwarded-Prefix` and RFC 7239 `Forwarded` are honoured from any peer. The remote address is left as the proxy's. |
+| `framework` | Spring's `ForwardedHeaderFilter`: the headers are honoured from any peer. One family is read, `X-Forwarded-*` by default or RFC 7239 `Forwarded` with `naming: rfc-7239`; `X-Forwarded-Prefix` only with `use-prefix: true`. The remote address is left as the proxy's. |
 | `none` | The headers are ignored. |
 | _(unset)_ | `native` when Spring Boot detects a container platform from the environment (Kubernetes and ECS among them), otherwise `none`. |
 
@@ -1805,6 +1807,11 @@ belongs where the proxy's address is inside the internal ranges. The Helm chart
 sets `native` through its `forwardHeadersStrategy` value; other runtimes set
 the variable — see
 [Running behind a proxy](../guides/deploying-without-kubernetes.md#running-behind-a-proxy).
+
+Spring Boot 4.2 renamed the strategy to `server.request.header.forwarded.strategy`
+(values `web-server`, `framework`, `none`, where `web-server` is the old
+`native`). The gateway accepts either name; setting both refuses to start. The
+old name is deprecated in Spring Boot and still what the Helm chart sets.
 
 The OIDC redirect URI the gateway sends is built from the request's host unless
 `SGW_OIDC_REDIRECT_URI` fixes it. Register the exact redirect URI or URIs with

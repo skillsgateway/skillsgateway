@@ -1,7 +1,7 @@
 # Opt-in local observability.
 #
 #   ./mvnw spring-boot:run -Dspring-boot.run.profiles=observability \
-#                          -Dspring-boot.run.useTestClasspath=true
+#                          -Dspring-boot.run.testClasspath=all
 #
 # Starts the Grafana LGTM stack (grafana/otel-lgtm: OpenTelemetry Collector, Loki,
 # Tempo, Prometheus, Grafana) as an Arconia dev service and exports traces, metrics

@@ -6,8 +6,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.approval.VettingBlockedException;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.Snapshot;
@@ -25,6 +23,9 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Verification of the configured license policy (GW_VETTING_0020) and its surfacing on the report endpoint
@@ -39,7 +40,7 @@ import org.springframework.test.context.TestPropertySource;
         })
 class LicensePolicyTests extends AbstractGatewayTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
 
     @Autowired
     private VettingRepository vettingRepository;
@@ -150,8 +151,8 @@ class LicensePolicyTests extends AbstractGatewayTest {
         JsonNode report = MAPPER.readTree(body);
 
         JsonNode entry = report.path("licenses").get(0);
-        assertThat(entry.path("spdxId").asText()).isEqualTo("AGPL-3.0");
-        assertThat(entry.path("evaluation").asText()).isEqualTo("banned");
+        assertThat(entry.path("spdxId").asString()).isEqualTo("AGPL-3.0");
+        assertThat(entry.path("evaluation").asString()).isEqualTo("banned");
         assertThat(MAPPER.convertValue(report.path("allowed"), List.class)).containsExactly("MIT", "Apache-2.0");
         assertThat(MAPPER.convertValue(report.path("banned"), List.class)).containsExactly("AGPL-3.0");
     }

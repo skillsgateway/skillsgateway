@@ -3,9 +3,6 @@ package dev.skillsgateway.server;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.skillsgateway.server.approval.ApprovalService;
 import dev.skillsgateway.server.approval.ClosureIncompleteException;
 import dev.skillsgateway.server.persistence.Snapshot;
@@ -29,6 +26,10 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * The closure-completeness gate (GW_APPROVAL_0013). Nothing in the gateway can produce an incomplete
@@ -40,7 +41,7 @@ import org.junit.jupiter.api.Test;
 class ClosureCompletenessTests extends AbstractExternalSourceTest {
 
     private static final String REFUSED = "snapshot-approval-refused";
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
 
     @Test
     @SVCs({"SVC_GW_APPROVAL_0013"})

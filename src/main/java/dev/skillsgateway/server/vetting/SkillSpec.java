@@ -1,7 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skillsgateway.server.config.Json;
 import dev.skillsgateway.server.policy.SkillFrontmatter;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
@@ -18,6 +17,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.core.io.ClassPathResource;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * The Agent Skills SKILL.md specification this gateway validates against (GW_INGEST_0028), read from a
@@ -34,7 +36,7 @@ final class SkillSpec {
 
     static final String RESOURCE = "vetting/agentskills-2026-08-04.json";
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = Json.MAPPER;
 
     /** Rule ids, stable because a scoped waiver is written against them. */
     static final String FRONTMATTER_MISSING = "skill-frontmatter-missing";
@@ -77,9 +79,9 @@ final class SkillSpec {
             List<Field> fields = new ArrayList<>();
             for (JsonNode field : root.path("fields")) {
                 fields.add(new Field(
-                        field.path("name").asText(),
+                        field.path("name").asString(""),
                         field.path("required").asBoolean(false),
-                        field.path("type").asText("string"),
+                        field.path("type").asString("string"),
                         field.hasNonNull("maxLength") ? field.get("maxLength").asInt() : null,
                         field.path("lowercase").asBoolean(false),
                         field.path("alphanumericOrHyphen").asBoolean(false),
@@ -90,8 +92,8 @@ final class SkillSpec {
             if (fields.isEmpty()) {
                 throw new IllegalStateException("vendored specification %s declares no fields".formatted(RESOURCE));
             }
-            return new SkillSpec(root.path("version").asText(), fields);
-        } catch (IOException e) {
+            return new SkillSpec(root.path("version").asString(""), fields);
+        } catch (IOException | JacksonException e) {
             // The specification ships inside the jar; missing it is a broken build, not a runtime state.
             throw new IllegalStateException("vendored specification %s is unreadable".formatted(RESOURCE), e);
         }

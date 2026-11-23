@@ -73,7 +73,7 @@ run M3-hooks-counted-per-read vetting.ExecutableSurfaceVetterTests aHookInTheSou
 run M4-entry-limit-ignored ingestion.PluginComponentsTests a_later_entry_over_a_seen_root_is_read_when_it_declares_components "$PC" \
   'int read = Math.min(entries.size(), limit);' 'int read = entries.size();'
 run M5-json-not-cached ingestion.PluginComponentsTests a_shared_cache_reads_each_frontmatter_once_and_every_plugin_still_gets_its_hooks_and_problems "$PC" \
-  'Json read = cache.json.computeIfAbsent(path + "\0" + declares, key -> parseJson(path, declares));' 'Json read = parseJson(path, declares);'
+  'JsonFile read = cache.json.computeIfAbsent(path + "\0" + declares, key -> parseJson(path, declares));' 'JsonFile read = parseJson(path, declares);'
 run M6-no-plugin-cap-finding vetting.PluginRootBoundTests a_manifest_with_more_plugins_than_the_bound_fails_closed "$EV" \
   'if (entries > ManifestPolicy.MAX_PLUGINS) {' 'if (false) {'
 

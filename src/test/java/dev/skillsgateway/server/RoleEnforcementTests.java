@@ -10,8 +10,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.vetting.Waiver;
 import dev.skillsgateway.server.vetting.WaiverScope;
 import dev.skillsgateway.server.vetting.WaiverService;
@@ -33,6 +31,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Role enforcement (GW_AUTH_0010–GW_AUTH_0013, GW_AUTH_0025): its own context — and therefore its own database —
@@ -43,7 +44,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @TestPropertySource(properties = {"skills-gateway.roles.admins=root"})
 class RoleEnforcementTests extends AbstractGatewayTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
 
     @Autowired
     private WaiverService waiverService;
@@ -602,7 +603,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                 .getResponse()
                 .getContentAsString();
         for (JsonNode grantRow : MAPPER.readTree(allGrants)) {
-            assertThat(grantRow.get("principal").asText()).isNotEqualTo("root");
+            assertThat(grantRow.get("principal").asString()).isNotEqualTo("root");
         }
     }
 
@@ -726,7 +727,7 @@ class RoleEnforcementTests extends AbstractGatewayTest {
                     .andReturn()
                     .getResponse()
                     .getContentAsString();
-            assertThat(MAPPER.readTree(created).get("principal").asText()).isEqualTo(principal);
+            assertThat(MAPPER.readTree(created).get("principal").asString()).isEqualTo(principal);
             mockMvc.perform(get("/api/v1/me").with(oidcLogin().idToken(token -> token.subject(principal))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.roles[0].role").value("auditor"));

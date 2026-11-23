@@ -1,6 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skillsgateway.server.config.Json;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * The connector that turns an external endpoint into a {@link Vetter} in the chain — an LLM
@@ -69,7 +70,7 @@ public class ExternalVettingConnector implements Vetter {
     private final ExternalConnectorProperties props;
     private final Duration readTimeout;
     private final RestClient restClient;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = Json.MAPPER;
 
     /**
      * @param chainTimeout {@code skills-gateway.vetting.timeout}, the read timeout of a connector

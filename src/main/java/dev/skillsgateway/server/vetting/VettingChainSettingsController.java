@@ -179,13 +179,13 @@ public class VettingChainSettingsController {
         roleService.requireAdmin(authentication);
         if (request == null || request.mode() == null || request.mode().isBlank()) {
             throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_ENTITY, "the 'mode' field is required (run-all or stop-after-fail)");
+                    HttpStatus.UNPROCESSABLE_CONTENT, "the 'mode' field is required (run-all or stop-after-fail)");
         }
         ChainMode mode;
         try {
             mode = ChainMode.of(request.mode());
         } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
         }
         return settingsService.setMode(mode, request.marketplace(), request.reason(), authentication.getName());
     }

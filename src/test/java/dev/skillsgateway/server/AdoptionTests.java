@@ -6,8 +6,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.adoption.SnapshotContentResolver;
 import dev.skillsgateway.server.approval.VettingBlockedException;
 import dev.skillsgateway.server.observability.GatewayMetrics;
@@ -41,6 +39,9 @@ import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Adoption, staleness and presence reporting off the fetch ledger (GW_OBSERVABILITY_0001, GW_OBSERVABILITY_0002,
@@ -53,7 +54,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 // "auditor", declared once for the whole family in AbstractNamedAdminsTest.
 class AdoptionTests extends AbstractNamedAdminsTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
 
     /** The shapes VettingTests plants: a formed AWS key id and a PEM header, belonging to nobody. */
     private static final String PLANTED_SECRETS = """
@@ -100,11 +101,11 @@ class AdoptionTests extends AbstractNamedAdminsTest {
         JsonNode windowed = marketplaceEntry(adoption("/api/v1/adoption?days=30"), name);
         assertThat(windowed.get("fetches").asLong()).isEqualTo(2);
         assertThat(windowed.get("identities").asLong()).isEqualTo(2);
-        assertThat(windowed.get("servedSha").asText()).isEqualTo(sha);
-        assertThat(windowed.get("lastFetch").asText()).isNotEmpty();
+        assertThat(windowed.get("servedSha").asString()).isEqualTo(sha);
+        assertThat(windowed.get("lastFetch").asString()).isNotEmpty();
         JsonNode breakdown = windowed.get("snapshots");
         assertThat(breakdown).hasSize(1);
-        assertThat(breakdown.get(0).get("sha").asText()).isEqualTo(sha);
+        assertThat(breakdown.get(0).get("sha").asString()).isEqualTo(sha);
         assertThat(breakdown.get(0).get("fetches").asLong()).isEqualTo(2);
         assertThat(breakdown.get(0).get("identities").asLong()).isEqualTo(2);
         assertThat(breakdown.get(0).get("current").asBoolean()).isTrue();
@@ -135,17 +136,17 @@ class AdoptionTests extends AbstractNamedAdminsTest {
         List<JsonNode> stale = stalenessOf(name);
         assertThat(stale).hasSize(1);
         JsonNode entry = stale.get(0);
-        assertThat(entry.get("principal").asText()).isEqualTo(alice);
-        assertThat(entry.get("sha").asText()).isEqualTo(v1);
-        assertThat(entry.get("servedSha").asText()).isEqualTo(v2);
-        assertThat(entry.get("lastFetch").asText()).isNotEmpty();
+        assertThat(entry.get("principal").asString()).isEqualTo(alice);
+        assertThat(entry.get("sha").asString()).isEqualTo(v1);
+        assertThat(entry.get("servedSha").asString()).isEqualTo(v2);
+        assertThat(entry.get("lastFetch").asString()).isNotEmpty();
 
         // The marketplace stops serving entirely: every holder of its content is now stale, and
         // there is no tip to diverge from — that is what a retraction leaves behind.
         assertThat(gitStorage.unpublish(name, v2)).isTrue();
         List<JsonNode> afterRetraction = stalenessOf(name);
         assertThat(afterRetraction)
-                .extracting(node -> node.get("principal").asText())
+                .extracting(node -> node.get("principal").asString())
                 .containsExactlyInAnyOrder(alice, bob);
         for (JsonNode holder : afterRetraction) {
             assertThat(holder.get("servedSha").isNull()).isTrue();
@@ -247,33 +248,33 @@ class AdoptionTests extends AbstractNamedAdminsTest {
 
         JsonNode report = adoption("/api/v1/adoption/presence");
         JsonNode hello = skillEntry(report, name, "hello");
-        assertThat(hello.get("plugin").asText()).isEqualTo("hello");
-        assertThat(hello.get("path").asText()).isEqualTo("plugins/hello/skills/hello/SKILL.md");
+        assertThat(hello.get("plugin").asString()).isEqualTo("hello");
+        assertThat(hello.get("path").asString()).isEqualTo("plugins/hello/skills/hello/SKILL.md");
         assertThat(hello.get("identitiesHolding").asLong()).isEqualTo(2);
         assertThat(hello.get("snapshotsDelivering").asInt()).isEqualTo(2);
-        assertThat(hello.get("firstDelivered").asText()).isNotEmpty();
+        assertThat(hello.get("firstDelivered").asString()).isNotEmpty();
         assertThat(hello.get("snapshots"))
-                .extracting(node -> node.get("sha").asText())
+                .extracting(node -> node.get("sha").asString())
                 .containsExactlyInAnyOrder(v1, v2);
 
         JsonNode extra = skillEntry(report, name, "extra");
         assertThat(extra.get("identitiesHolding").asLong()).isEqualTo(1);
         assertThat(extra.get("snapshotsDelivering").asInt()).isEqualTo(1);
-        assertThat(extra.get("snapshots").get(0).get("sha").asText()).isEqualTo(v2);
+        assertThat(extra.get("snapshots").get(0).get("sha").asString()).isEqualTo(v2);
         assertThat(extra.get("snapshots").get(0).get("current").asBoolean()).isTrue();
 
         assertThat(skillsOf(report, name))
-                .extracting(node -> node.get("skill").asText())
+                .extracting(node -> node.get("skill").asString())
                 .containsExactlyInAnyOrder("hello", "extra");
 
         List<JsonNode> unresolved = new ArrayList<>();
         for (JsonNode entry : report.get("unresolved")) {
-            if (name.equals(entry.get("marketplace").asText())) {
+            if (name.equals(entry.get("marketplace").asString())) {
                 unresolved.add(entry);
             }
         }
         assertThat(unresolved)
-                .extracting(node -> node.get("sha").asText())
+                .extracting(node -> node.get("sha").asString())
                 .containsExactlyInAnyOrder(reclaimed, broken);
         for (JsonNode entry : unresolved) {
             assertThat(entry.get("identitiesHolding").asLong()).isEqualTo(1);
@@ -284,7 +285,7 @@ class AdoptionTests extends AbstractNamedAdminsTest {
         double missesBefore = cacheCount("miss");
         String future = Instant.now().plus(Duration.ofDays(1)).toString();
         JsonNode bounded = adoption("/api/v1/adoption/presence?since=" + future);
-        assertThat(bounded.get("since").asText()).isNotEmpty();
+        assertThat(bounded.get("since").asString()).isNotEmpty();
         assertThat(skillEntry(bounded, name, "hello").get("identitiesHolding").asLong())
                 .isZero();
 
@@ -340,15 +341,17 @@ class AdoptionTests extends AbstractNamedAdminsTest {
         clone(name, uniqueName("bob"));
 
         JsonNode report = adoption("/api/v1/adoption/presence");
-        assertThat(report.get("measure").asText()).isEqualTo("presence");
-        assertThat(report.get("statement").asText()).contains("not invocation").contains("whole snapshot");
+        assertThat(report.get("measure").asString()).isEqualTo("presence");
+        assertThat(report.get("statement").asString())
+                .contains("not invocation")
+                .contains("whole snapshot");
         assertThat(report.get("since").isNull()).isTrue();
 
         List<JsonNode> skills = skillsOf(report, name);
         assertThat(skills).hasSize(2);
         for (JsonNode skill : skills) {
             assertThat(skill.get("identitiesHolding").asLong()).isEqualTo(2);
-            assertThat(skill.get("snapshots").get(0).get("sha").asText()).isEqualTo(sha);
+            assertThat(skill.get("snapshots").get(0).get("sha").asString()).isEqualTo(sha);
             assertThat(skill.get("snapshots").get(0).get("identitiesHolding").asLong())
                     .isEqualTo(2);
             // Named for what it is: nothing in a skill row may read as a usage measure.
@@ -377,7 +380,7 @@ class AdoptionTests extends AbstractNamedAdminsTest {
 
     private static JsonNode marketplaceEntry(JsonNode report, String marketplace) {
         for (JsonNode entry : report) {
-            if (marketplace.equals(entry.get("marketplace").asText())) {
+            if (marketplace.equals(entry.get("marketplace").asString())) {
                 return entry;
             }
         }
@@ -388,7 +391,7 @@ class AdoptionTests extends AbstractNamedAdminsTest {
     private List<JsonNode> stalenessOf(String marketplace) throws Exception {
         List<JsonNode> entries = new ArrayList<>();
         for (JsonNode entry : adoption("/api/v1/adoption/staleness")) {
-            if (marketplace.equals(entry.get("marketplace").asText())) {
+            if (marketplace.equals(entry.get("marketplace").asString())) {
                 entries.add(entry);
             }
         }
@@ -458,7 +461,7 @@ class AdoptionTests extends AbstractNamedAdminsTest {
     private static List<JsonNode> skillsOf(JsonNode report, String marketplace) {
         List<JsonNode> skills = new ArrayList<>();
         for (JsonNode entry : report.get("skills")) {
-            if (marketplace.equals(entry.get("marketplace").asText())) {
+            if (marketplace.equals(entry.get("marketplace").asString())) {
                 skills.add(entry);
             }
         }
@@ -467,7 +470,7 @@ class AdoptionTests extends AbstractNamedAdminsTest {
 
     private static JsonNode skillEntry(JsonNode report, String marketplace, String skill) {
         return skillsOf(report, marketplace).stream()
-                .filter(entry -> skill.equals(entry.get("skill").asText()))
+                .filter(entry -> skill.equals(entry.get("skill").asString()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("skill %s/%s not in %s".formatted(marketplace, skill, report)));
     }

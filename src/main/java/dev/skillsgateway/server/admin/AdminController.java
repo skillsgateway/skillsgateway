@@ -378,7 +378,7 @@ public class AdminController {
     /** A removal with no stated reason (GW_INGEST_0034). */
     @ExceptionHandler(MissingRemovalReasonException.class)
     public ProblemDetail missingRemovalReason(MissingRemovalReasonException e) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
         problem.setTitle("Removing a marketplace requires a reason");
         return problem;
     }
@@ -912,7 +912,7 @@ public class AdminController {
      */
     @ExceptionHandler(MissingRevocationReasonException.class)
     public ProblemDetail missingRevocationReason(MissingRevocationReasonException e) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
         problem.setTitle("Withdrawing a snapshot requires a reason");
         return problem;
     }
@@ -920,7 +920,7 @@ public class AdminController {
     /** A withdrawal that did not say what the marketplace serves afterwards (GW_APPROVAL_0016). */
     @ExceptionHandler(MissingServeAfterChoiceException.class)
     public ProblemDetail missingServeAfter(MissingServeAfterChoiceException e) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
         problem.setTitle("A withdrawal must say what the marketplace serves afterwards");
         problem.setProperty("choices", java.util.List.of("previous_approved", "nothing"));
         return problem;
@@ -974,7 +974,7 @@ public class AdminController {
     /** A reversal with no stated reason (GW_APPROVAL_0017). */
     @ExceptionHandler(MissingReversalReasonException.class)
     public ProblemDetail missingReversalReason(MissingReversalReasonException e) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
         problem.setTitle("Reversing a withdrawal requires a reason");
         return problem;
     }
@@ -1021,7 +1021,7 @@ public class AdminController {
      */
     @ExceptionHandler(MissingOverrideReasonException.class)
     public ProblemDetail missingOverrideReason(MissingOverrideReasonException e) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
         problem.setTitle("A vetting override requires a reason");
         return problem;
     }

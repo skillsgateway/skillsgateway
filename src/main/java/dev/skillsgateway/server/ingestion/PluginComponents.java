@@ -1,9 +1,6 @@
 package dev.skillsgateway.server.ingestion;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skillsgateway.server.config.Json;
 import dev.skillsgateway.server.policy.SkillFrontmatter;
 import io.github.reqstool.annotations.Requirements;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,6 +20,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.stream.StreamSupport;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * The one reading of the Claude Code plugin layout (GW_INGEST_0045): which commands, agents, hooks,
@@ -38,7 +40,7 @@ import java.util.stream.StreamSupport;
  */
 public final class PluginComponents {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = Json.MAPPER;
     private static final String PLUGIN_JSON = ".claude-plugin/plugin.json";
 
     private PluginComponents() {}
@@ -63,14 +65,14 @@ public final class PluginComponents {
     public static final class Cache {
 
         private final Map<String, Frontmatter> frontmatter = new HashMap<>();
-        private final Map<String, Json> json = new HashMap<>();
+        private final Map<String, JsonFile> json = new HashMap<>();
     }
 
     /** One file's frontmatter hooks, or the problem that kept them from being read. */
     private record Frontmatter(List<Hook> hooks, Problem problem) {}
 
     /** One JSON declaration file, or the problem that kept it from being read; both null when absent. */
-    private record Json(Manifest parsed, Problem problem) {}
+    private record JsonFile(Manifest parsed, Problem problem) {}
 
     /** The keys a marketplace entry can declare components under: every key {@link #read} reads from an entry. */
     static final List<String> ENTRY_COMPONENT_KEYS =
@@ -94,7 +96,7 @@ public final class PluginComponents {
         for (int i = 0; i < read; i++) {
             JsonNode entry = entries.get(i);
             JsonNode source = entry.path("source");
-            String root = source.isTextual() ? normalizeRoot(source.asText()) : null;
+            String root = source.isString() ? normalizeRoot(source.asString("")) : null;
             if (root == null) {
                 continue;
             }
@@ -209,18 +211,20 @@ public final class PluginComponents {
 
         public static Manifest parse(String path, byte[] content) throws IOException {
             Map<String, Integer> lines = new HashMap<>();
-            try (JsonParser parser = MAPPER.getFactory().createParser(content)) {
+            try (JsonParser parser = MAPPER.createParser(content)) {
                 JsonToken token;
                 while ((token = parser.nextToken()) != null) {
-                    if (token == JsonToken.FIELD_NAME || token.isStructEnd()) {
+                    if (token == JsonToken.PROPERTY_NAME || token.isStructEnd()) {
                         continue;
                     }
                     lines.putIfAbsent(
-                            parser.getParsingContext().pathAsPointer().toString(),
+                            parser.streamReadContext().pathAsPointer().toString(),
                             parser.currentTokenLocation().getLineNr());
                 }
+            } catch (JacksonException e) {
+                throw new IOException(e.getMessage(), e);
             }
-            JsonNode root = MAPPER.readTree(content);
+            JsonNode root = Json.io(() -> MAPPER.readTree(content));
             if (root == null) {
                 throw new IOException("empty document");
             }
@@ -393,18 +397,18 @@ public final class PluginComponents {
                 return null;
             }
             // Memoized per tree (GW_INGEST_0074): one root read under many entries parses each file once.
-            Json read = cache.json.computeIfAbsent(path + "\0" + declares, key -> parseJson(path, declares));
+            JsonFile read = cache.json.computeIfAbsent(path + "\0" + declares, key -> parseJson(path, declares));
             if (read.problem() != null) {
                 problems.add(read.problem());
             }
             return read.parsed();
         }
 
-        private Json parseJson(String path, String declares) {
+        private JsonFile parseJson(String path, String declares) {
             try {
                 byte[] content = files.read(path);
                 if (content == null) {
-                    return new Json(
+                    return new JsonFile(
                             null,
                             new Problem(path, "over the scan size limit, so its " + declares + " could not be read"));
                 }
@@ -412,9 +416,9 @@ public final class PluginComponents {
                 if (!parsed.root().isObject()) {
                     throw new IOException("not a JSON object");
                 }
-                return new Json(parsed, null);
+                return new JsonFile(parsed, null);
             } catch (IOException | RuntimeException e) {
-                return new Json(
+                return new JsonFile(
                         null,
                         new Problem(
                                 path, "not valid JSON, so its " + declares + " could not be read: " + firstLine(e)));
@@ -423,18 +427,18 @@ public final class PluginComponents {
 
         /** A command or agent path, array of paths, or command object map. */
         void componentPaths(JsonNode value, Manifest doc, String pointer, List<Component> out) {
-            if (value.isTextual()) {
-                componentPath(value.asText(), out);
+            if (value.isString()) {
+                componentPath(value.asString(""), out);
             } else if (value.isArray()) {
                 for (JsonNode item : value) {
-                    if (item.isTextual()) {
-                        componentPath(item.asText(), out);
+                    if (item.isString()) {
+                        componentPath(item.asString(""), out);
                     }
                 }
             } else if (value.isObject()) {
-                value.fields().forEachRemaining(field -> {
+                value.properties().iterator().forEachRemaining(field -> {
                     JsonNode source = field.getValue().path("source");
-                    String path = source.isTextual() ? resolve(root, source.asText()) : null;
+                    String path = source.isString() ? resolve(root, source.asString("")) : null;
                     if (path != null && exists(path)) {
                         out.add(new Component(field.getKey(), path));
                     } else if (field.getValue().has("content")) {
@@ -470,8 +474,8 @@ public final class PluginComponents {
 
         /** A plugin.json or marketplace-entry {@code hooks} value: a path, an inline object, or an array of both. */
         void hookDeclaration(JsonNode value, Manifest doc, String pointer, List<Hook> out) {
-            if (value.isTextual()) {
-                String path = resolve(root, value.asText());
+            if (value.isString()) {
+                String path = resolve(root, value.asString(""));
                 Manifest file = json(path, "hooks");
                 if (file != null) {
                     hooks(
@@ -499,7 +503,7 @@ public final class PluginComponents {
             boolean wrapped = value.has("hooks") || value.has("modules");
             JsonNode events = wrapped ? MAPPER.createObjectNode() : value;
             String base = pointer;
-            Iterator<Map.Entry<String, JsonNode>> fields = value.fields();
+            Iterator<Map.Entry<String, JsonNode>> fields = value.properties().iterator();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> field = fields.next();
                 JsonNode v = field.getValue();
@@ -507,8 +511,8 @@ public final class PluginComponents {
                     case "hooks" -> v.isObject();
                     case "modules" ->
                         v.isArray()
-                                && StreamSupport.stream(v.spliterator(), false).allMatch(JsonNode::isTextual);
-                    case "description" -> v.isTextual();
+                                && StreamSupport.stream(v.spliterator(), false).allMatch(JsonNode::isString);
+                    case "description" -> v.isString();
                     default -> !wrapped && matcherGroups(v);
                 };
                 if (!recognised) {
@@ -519,7 +523,7 @@ public final class PluginComponents {
                 events = value.get("hooks");
                 base = pointer + "/hooks";
                 String hooksPointer = base;
-                events.fields().forEachRemaining(event -> {
+                events.properties().iterator().forEachRemaining(event -> {
                     if (!matcherGroups(event.getValue())) {
                         unrecognised(event.getKey(), doc, hooksPointer);
                     }
@@ -530,8 +534,8 @@ public final class PluginComponents {
             JsonNode declared = value.path("modules");
             if (declared.isArray()) {
                 for (int i = 0; i < declared.size(); i++) {
-                    if (declared.get(i).isTextual()) {
-                        module(declared.get(i).asText(), directory, doc.locate(pointer + "/modules/" + i));
+                    if (declared.get(i).isString()) {
+                        module(declared.get(i).asString(""), directory, doc.locate(pointer + "/modules/" + i));
                     }
                 }
             }
@@ -575,20 +579,20 @@ public final class PluginComponents {
             if (!events.isObject()) {
                 return;
             }
-            events.fields().forEachRemaining(event -> {
+            events.properties().iterator().forEachRemaining(event -> {
                 JsonNode groups = event.getValue();
                 if (!groups.isArray()) {
                     return;
                 }
                 for (int g = 0; g < groups.size(); g++) {
                     JsonNode group = groups.get(g);
-                    String matcher = group.path("matcher").isTextual()
-                            ? group.get("matcher").asText()
+                    String matcher = group.path("matcher").isString()
+                            ? group.get("matcher").asString("")
                             : null;
                     JsonNode handlers = group.path("hooks");
                     for (int h = 0; h < handlers.size(); h++) {
                         JsonNode handler = handlers.get(h);
-                        String type = handler.path("type").asText("command");
+                        String type = handler.path("type").asString("command");
                         String field = decisiveField(type);
                         String pointer = "/%s/%d/hooks/%d/%s".formatted(escape(event.getKey()), g, h, field);
                         out.add(new Hook(
@@ -607,8 +611,8 @@ public final class PluginComponents {
 
         void mcpDeclaration(
                 JsonNode value, Manifest doc, String pointer, List<Component> out, List<McpCommand> commands) {
-            if (value.isTextual()) {
-                String declared = value.asText();
+            if (value.isString()) {
+                String declared = value.asString("");
                 if (declared.endsWith(".json")) {
                     Manifest file = json(resolve(root, declared), "MCP servers");
                     if (file != null) {
@@ -631,18 +635,18 @@ public final class PluginComponents {
         @Requirements({"GW_VETTING_0050"})
         private void mcpServers(
                 JsonNode servers, Manifest doc, String pointer, List<Component> out, List<McpCommand> commands) {
-            servers.fieldNames().forEachRemaining(name -> {
+            servers.propertyNames().iterator().forEachRemaining(name -> {
                 String at = pointer + "/" + escape(name);
                 out.add(new Component(name, doc.locate(at)));
                 JsonNode server = servers.get(name);
-                String type = server.path("type").asText("stdio");
-                if ("stdio".equals(type) && server.path("command").isTextual()) {
+                String type = server.path("type").asString("stdio");
+                if ("stdio".equals(type) && server.path("command").isString()) {
                     List<String> args = new ArrayList<>();
-                    server.path("args").forEach(arg -> args.add(arg.asText()));
+                    server.path("args").forEach(arg -> args.add(arg.asString("")));
                     commands.add(new McpCommand(
                             name,
                             doc.locate(at + "/command"),
-                            server.get("command").asText(),
+                            server.get("command").asString(""),
                             List.copyOf(args)));
                 }
             });
@@ -650,8 +654,8 @@ public final class PluginComponents {
 
         /** A plugin.json or marketplace-entry {@code lspServers} value: a path, an inline map, or an array of both. */
         void lspDeclaration(JsonNode value, Manifest doc, String pointer, Lsp out) {
-            if (value.isTextual()) {
-                Manifest file = json(resolve(root, value.asText()), "LSP servers");
+            if (value.isString()) {
+                Manifest file = json(resolve(root, value.asString("")), "LSP servers");
                 if (file != null) {
                     lspServers(file.root(), file, "", out);
                 }
@@ -670,14 +674,14 @@ public final class PluginComponents {
          */
         @Requirements({"GW_INGEST_0045", "GW_VETTING_0055"})
         private void lspServers(JsonNode servers, Manifest doc, String pointer, Lsp out) {
-            servers.fieldNames().forEachRemaining(name -> {
+            servers.propertyNames().iterator().forEachRemaining(name -> {
                 JsonNode server = servers.get(name);
-                if (!server.path("command").isTextual()) {
+                if (!server.path("command").isString()) {
                     return;
                 }
                 String at = pointer + "/" + escape(name);
                 List<String> args = new ArrayList<>();
-                server.path("args").forEach(arg -> args.add(arg.asText()));
+                server.path("args").forEach(arg -> args.add(arg.asString("")));
                 out.servers().put(name, new Component(name, doc.locate(at)));
                 out.commands()
                         .put(
@@ -685,7 +689,7 @@ public final class PluginComponents {
                                 new McpCommand(
                                         name,
                                         doc.locate(at + "/command"),
-                                        server.get("command").asText(),
+                                        server.get("command").asString(""),
                                         List.copyOf(args)));
             });
         }
@@ -699,10 +703,11 @@ public final class PluginComponents {
                     continue;
                 }
                 JsonNode skills = declaring.path("skills");
-                Iterator<JsonNode> items =
-                        skills.isArray() ? skills.elements() : List.of(skills).iterator();
+                Iterator<JsonNode> items = skills.isArray()
+                        ? skills.values().iterator()
+                        : List.of(skills).iterator();
                 items.forEachRemaining(item -> {
-                    String directory = item.isTextual() ? resolve(root, item.asText()) : null;
+                    String directory = item.isString() ? resolve(root, item.asString("")) : null;
                     if (directory != null && !directories.contains(directory)) {
                         directories.add(directory);
                     }
@@ -845,12 +850,12 @@ public final class PluginComponents {
     /** What a handler runs, as one line a reviewer reads: exec form joins {@code command} and {@code args}. */
     private static String runs(String type, JsonNode handler) {
         return switch (type) {
-            case "http" -> handler.path("url").asText(null);
+            case "http" -> handler.path("url").asString(null);
             case "mcp_tool" ->
-                handler.path("server").asText("") + " " + handler.path("tool").asText("");
-            case "prompt", "agent" -> handler.path("prompt").asText(null);
+                handler.path("server").asString("") + " " + handler.path("tool").asString("");
+            case "prompt", "agent" -> handler.path("prompt").asString(null);
             default -> {
-                String command = handler.path("command").asText(null);
+                String command = handler.path("command").asString(null);
                 JsonNode args = handler.path("args");
                 if (command == null || !args.isArray() || args.isEmpty()) {
                     yield command;
@@ -858,7 +863,7 @@ public final class PluginComponents {
                 List<String> parts = new ArrayList<>();
                 parts.add(command);
                 StreamSupport.stream(args.spliterator(), false)
-                        .map(JsonNode::asText)
+                        .map(JsonNode::asString)
                         .forEach(parts::add);
                 yield String.join(" ", parts);
             }

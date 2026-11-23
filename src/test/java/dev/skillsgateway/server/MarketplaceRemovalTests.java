@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.admin.MarketplaceRegistrationService;
 import dev.skillsgateway.server.admin.MarketplaceRemovalService;
 import dev.skillsgateway.server.admin.MissingRemovalReasonException;
@@ -46,6 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Removing a marketplace and reusing its name (GW_INGEST_0034, GW_INGEST_0035, GW_AUDIT_0009,
@@ -553,7 +553,7 @@ class MarketplaceRemovalTests extends AbstractGatewayTest {
                 .satisfies(d -> assertThat(d.event()).isEqualTo(WebhookEvent.MARKETPLACE_REMOVED));
         @SuppressWarnings("unchecked")
         Map<String, Object> body =
-                new ObjectMapper().readValue(delivered.getFirst().payload(), Map.class);
+                new JsonMapper().readValue(delivered.getFirst().payload(), Map.class);
         assertThat(body).containsOnlyKeys("event", "occurredAt", "marketplace", "actor", "detail");
         assertThat(body.get("marketplace")).isEqualTo(name);
         assertThat(body.get("actor")).isEqualTo("root");
@@ -569,8 +569,8 @@ class MarketplaceRemovalTests extends AbstractGatewayTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        com.fasterxml.jackson.databind.JsonNode node = new ObjectMapper().readTree(body);
-        com.fasterxml.jackson.databind.JsonNode rows = field == null ? node : node.get(field);
+        tools.jackson.databind.JsonNode node = new JsonMapper().readTree(body);
+        tools.jackson.databind.JsonNode rows = field == null ? node : node.get(field);
         List<Long> ids = new java.util.ArrayList<>();
         rows.forEach(row -> {
             if (!row.get("marketplaceId").isNull()) {

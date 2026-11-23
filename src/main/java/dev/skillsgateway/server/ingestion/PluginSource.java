@@ -1,7 +1,7 @@
 package dev.skillsgateway.server.ingestion;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.github.reqstool.annotations.Requirements;
+import tools.jackson.databind.JsonNode;
 
 /**
  * A marketplace manifest's plugin {@code source}, parsed into the form it declares (GW_INGEST_0019).
@@ -165,17 +165,17 @@ public sealed interface PluginSource {
         if (source == null || source.isNull()) {
             return new Unrecognised("no source");
         }
-        if (source.isTextual()) {
-            return new Local(source.asText());
+        if (source.isString()) {
+            return new Local(source.asString(""));
         }
         if (!source.isObject()) {
             return new Unrecognised("a source that is neither a path nor an object");
         }
         JsonNode discriminator = source.get("source");
-        if (discriminator == null || !discriminator.isTextual()) {
+        if (discriminator == null || !discriminator.isString()) {
             return new Unrecognised("an object source with no \"source\" type");
         }
-        String type = discriminator.asText();
+        String type = discriminator.asString("");
         String pinned = declaredPin(source);
         if (pinned != null) {
             return new Unsupported(
@@ -223,8 +223,8 @@ public sealed interface PluginSource {
 
     private static java.util.Optional<String> field(JsonNode object, String name) {
         JsonNode value = object.get(name);
-        return value != null && value.isTextual() && !value.asText().isBlank()
-                ? java.util.Optional.of(value.asText())
+        return value != null && value.isString() && !value.asString("").isBlank()
+                ? java.util.Optional.of(value.asString(""))
                 : java.util.Optional.empty();
     }
 }

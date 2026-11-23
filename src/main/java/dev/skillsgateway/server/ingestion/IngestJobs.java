@@ -1,8 +1,7 @@
 package dev.skillsgateway.server.ingestion;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
+import dev.skillsgateway.server.config.Json;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.MarketplaceRepository.IngestRecord;
@@ -19,6 +18,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * The on-demand ingest as a job (GW_INGEST_0068): claim the marketplace, answer at once, run the
@@ -33,7 +34,7 @@ public class IngestJobs {
     /** Two, so one slow first ingest leaves room for another marketplace; the rest wait visibly queued. */
     private static final int WORKERS = 2;
 
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final ObjectMapper JSON = Json.MAPPER;
 
     private final IngestionService ingestionService;
     private final MarketplaceRepository marketplaceRepository;
@@ -128,7 +129,7 @@ public class IngestJobs {
         }
         try {
             return JSON.readValue(json, UpstreamFailure.class);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException(e);
         }
     }
