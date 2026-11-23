@@ -8,10 +8,12 @@ import org.springframework.test.context.TestPropertySource;
 
 /**
  * Tomcat's {@code RemoteIpValve} (GW_AUTH_0029), which honours the headers only from a peer inside its
- * internal-proxy ranges; the loopback address this test connects from is one of them.
+ * internal-proxy ranges; the loopback address this test connects from is one of them. Named {@code
+ * web-server} since Spring Boot 4.2 ({@code native} under the deprecated property), and set here by
+ * the name the Helm chart renders.
  */
-@TestPropertySource(properties = "server.forward-headers-strategy=native")
-class ForwardedHeadersNativeTests extends AbstractForwardedHeadersTest {
+@TestPropertySource(properties = "server.request.header.forwarded.strategy=web-server")
+class ForwardedHeadersWebServerTests extends AbstractForwardedHeadersTest {
 
     @Test
     @SVCs({"SVC_GW_AUTH_0029"})

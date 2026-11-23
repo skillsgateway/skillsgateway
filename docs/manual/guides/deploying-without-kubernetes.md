@@ -53,7 +53,7 @@ SGW_OIDC_SCOPE=openid,profile,email
 SKILLSGATEWAY_OIDC_ISSUER=https://idp.example.com/v2.0   # required with a provider configured
 
 # Behind a TLS-terminating proxy — see Running behind a proxy
-SERVER_FORWARDHEADERSSTRATEGY=native
+SERVER_REQUEST_HEADER_FORWARDED_STRATEGY=web-server
 
 # At least one administrator
 SKILLSGATEWAY_ROLES_ADMINS_0=platform-admin@example.com
@@ -81,7 +81,7 @@ URL it builds from the request is wrong until it is told what the proxy sees,
 and the proxy says so in `X-Forwarded-Proto` and `X-Forwarded-Host`:
 
 ```bash
-SERVER_FORWARDHEADERSSTRATEGY=native
+SERVER_REQUEST_HEADER_FORWARDED_STRATEGY=web-server
 ```
 
 Without it the OIDC redirect URI arrives at the identity provider as
@@ -97,19 +97,24 @@ header from a client's. Its three values differ in whom they believe:
 
 | Value | Who is believed | When |
 | --- | --- | --- |
-| `native` | Tomcat honours the headers only from a peer in a private address range: `10/8`, `172.16/12`, `192.168/16`, `100.64/10`, loopback, and their IPv6 counterparts. | The proxy is in your VPC or cluster — where a cloud load balancer or an ingress controller sits. The recommended value. |
+| `web-server` | Tomcat honours the headers only from a peer in a private address range: `10/8`, `172.16/12`, `192.168/16`, `100.64/10`, loopback, and their IPv6 counterparts. | The proxy is in your VPC or cluster — where a cloud load balancer or an ingress controller sits. The recommended value. |
 | `framework` | Spring's filter honours the headers from any peer. | The proxy has a public address, or you need `X-Forwarded-Prefix` (set `SERVER_REQUEST_HEADER_FORWARDED_USEPREFIX=true`) or RFC 7239 `Forwarded` (set `SERVER_REQUEST_HEADER_FORWARDED_NAMING=rfc-7239`). Only where nothing but the proxy can reach port 8080, and where the proxy overwrites the headers rather than passing a client's through. |
 | `none` | Nobody. The container's own view of the request. | The application terminates TLS itself. |
 
 A proxy outside the private ranges can be named rather than trusting everyone:
 `server.tomcat.remoteip.internal-proxies` (`SERVER_TOMCAT_REMOTEIP_INTERNALPROXIES`)
-replaces the list above, as CIDRs or a regular expression, and `native` then
+replaces the list above, as CIDRs or a regular expression, and `web-server` then
 believes those peers.
 
 Leaving the variable unset is not the same as `none`: Spring Boot then deduces
-`native` on a container platform it recognises from the environment —
+`web-server` on a container platform it recognises from the environment —
 Kubernetes and ECS among them — and `none` anywhere else. Name the value; a
 deployment that works because of a deduction is one nobody can read.
+
+`SERVER_FORWARDHEADERSSTRATEGY`, with `native` for `web-server`, is the name
+before Spring Boot 4.2. It still works until Spring Boot 4.4 removes it, but
+replace it rather than adding the new variable beside it: with both set the
+application refuses to start.
 
 !!! note "`framework` was inert on the released image until it was registered explicitly"
 
@@ -143,7 +148,7 @@ replacing `.` with `_`, and **removing** hyphens:
 | `skills-gateway.roles.claim` | `SKILLSGATEWAY_ROLES_CLAIM` |
 | `skills-gateway.storage.backend` | `SKILLSGATEWAY_STORAGE_BACKEND` |
 | `skills-gateway.retention.enabled` | `SKILLSGATEWAY_RETENTION_ENABLED` |
-| `server.forward-headers-strategy` | `SERVER_FORWARDHEADERSSTRATEGY` |
+| `server.request.header.forwarded.strategy` | `SERVER_REQUEST_HEADER_FORWARDED_STRATEGY` |
 
 Hyphens are removed, not turned into underscores: `data-dir` becomes `DATADIR`,
 never `DATA_DIR`. Every setting in [Configuration](../reference/configuration.md)
@@ -352,7 +357,7 @@ docker run -d --name skills-gateway \
   -e SGW_OIDC_USER_NAME_ATTRIBUTE=preferred_username \
   -e SGW_OIDC_SCOPE=openid,profile,email \
   -e SKILLSGATEWAY_OIDC_ISSUER=https://idp.example.com/v2.0 \
-  -e SERVER_FORWARDHEADERSSTRATEGY=native \
+  -e SERVER_REQUEST_HEADER_FORWARDED_STRATEGY=web-server \
   ghcr.io/skillsgateway/skillsgateway:<released-version>
 ```
 

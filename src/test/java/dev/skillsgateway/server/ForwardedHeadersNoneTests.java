@@ -16,7 +16,7 @@ import org.springframework.test.context.TestPropertySource;
  * indistinguishable from a working {@code framework} until all the off-postures were compared
  * against each other.
  */
-@TestPropertySource(properties = "server.forward-headers-strategy=none")
+@TestPropertySource(properties = "server.request.header.forwarded.strategy=none")
 class ForwardedHeadersNoneTests extends AbstractForwardedHeadersTest {
 
     @Test

@@ -16,7 +16,7 @@ import org.springframework.core.Ordered;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
 /**
- * Makes {@code server.forward-headers-strategy=framework} mean the same thing on every
+ * Makes {@code server.request.header.forwarded.strategy=framework} mean the same thing on every
  * packaging (GW_AUTH_0029).
  *
  * <p>Spring Boot registers its {@link ForwardedHeaderFilter} behind {@code @ConditionalOnProperty},

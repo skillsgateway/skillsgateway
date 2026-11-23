@@ -138,12 +138,22 @@ does not deliver is worse than no gate.
 {{- end -}}
 
 {{/*
-Forwarded-header strategy, fail-closed: the three values Spring Boot knows.
+Forwarded-header strategy, fail-closed: the values Spring Boot knows for
+server.request.header.forwarded.strategy, plus `native`, the name Boot 4.1 and
+earlier used for `web-server`, so a values file written before the rename keeps
+rendering. Fails, too, when extraEnv also sets the strategy: the chart's
+variable and an extraEnv one under the deprecated name are two settings, and
+Spring Boot refuses to start with both.
 */}}
 {{- define "skills-gateway.forwardHeadersStrategy" -}}
 {{- $strategy := .Values.forwardHeadersStrategy | default "" -}}
-{{- if not (has $strategy (list "native" "framework" "none")) -}}
-{{- fail (printf "forwardHeadersStrategy must be \"native\", \"framework\" or \"none\" (got %q). It decides whether the gateway believes the scheme and host a proxy reports in X-Forwarded-* headers; a value the gateway does not know would leave every login behind a TLS-terminating Ingress failing on a redirect-URI mismatch." $strategy) -}}
+{{- if not (has $strategy (list "web-server" "native" "framework" "none")) -}}
+{{- fail (printf "forwardHeadersStrategy must be \"web-server\", \"framework\" or \"none\" (got %q). It decides whether the gateway believes the scheme and host a proxy reports in X-Forwarded-* headers; a value the gateway does not know would leave every login behind a TLS-terminating Ingress failing on a redirect-URI mismatch." $strategy) -}}
 {{- end -}}
-{{- $strategy -}}
+{{- range .Values.extraEnv -}}
+{{- if has (.name | default "") (list "SERVER_FORWARDHEADERSSTRATEGY" "SERVER_REQUEST_HEADER_FORWARDED_STRATEGY") -}}
+{{- fail (printf "extraEnv sets %s, but the chart sets the forwarded-header strategy itself from forwardHeadersStrategy. Remove the extraEnv entry and set forwardHeadersStrategy instead: under the new name it would silently override the chart's value, and under the deprecated name Spring Boot refuses to start with both set." .name) -}}
+{{- end -}}
+{{- end -}}
+{{- if eq $strategy "native" -}}web-server{{- else -}}{{- $strategy -}}{{- end -}}
 {{- end -}}

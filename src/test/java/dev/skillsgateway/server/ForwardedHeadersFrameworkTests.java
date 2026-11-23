@@ -10,7 +10,15 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
-/** Spring's filter, which is the strategy the native image used to lose (GW_AUTH_0029). */
+/**
+ * Spring's filter, which is the strategy the native image used to lose (GW_AUTH_0029).
+ *
+ * <p>Set by the deprecated {@code server.forward-headers-strategy}, deliberately: the other postures
+ * use the Boot 4.2 name, and this is the one context that proves the gateway's own registration
+ * still honours the old name end to end, as a deployment configured before the rename relies on.
+ * Move it to {@code server.request.header.forwarded.strategy} with the upgrade to Spring Boot 4.4,
+ * which removes the old name ({@code ForwardedHeadersStrategyTests} covers both at unit level).
+ */
 @TestPropertySource(properties = "server.forward-headers-strategy=framework")
 class ForwardedHeadersFrameworkTests extends AbstractForwardedHeadersTest {
 
