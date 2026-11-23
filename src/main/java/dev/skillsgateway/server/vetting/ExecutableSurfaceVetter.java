@@ -175,6 +175,9 @@ public class ExecutableSurfaceVetter implements Vetter {
         // Apart from the hooks' set, so a server's medium scan never hides a hook's high one.
         private final Map<Server, Set<String>> serverScanned =
                 Map.of(Server.MCP, new HashSet<>(), Server.LSP, new HashSet<>());
+        // What follow() has traversed, per kind, root and path: a shared script can name a different
+        // ${CLAUDE_PLUGIN_ROOT} file under each root that reaches it (GW_VETTING_0047).
+        private final Set<List<String>> followed = new HashSet<>();
         private int hooks;
         private int modules;
         private int servers;
@@ -563,10 +566,13 @@ public class ExecutableSurfaceVetter implements Vetter {
             }
             while (!queue.isEmpty()) {
                 Launched next = queue.poll();
-                if (!visited.add(next.path())) {
+                if (!followed.add(List.of(String.valueOf(server), root, next.path()))) {
                     continue;
                 }
-                String content = server == null ? launchedText(next) : serverLaunchedText(next, server);
+                // A file scanned already, under another root or as a module's, is only traversed again.
+                String content = !visited.add(next.path())
+                        ? ContentRules.text(files.read(next.path()))
+                        : server == null ? launchedText(next) : serverLaunchedText(next, server);
                 if (content == null || next.depth() >= MAX_DEPTH) {
                     continue;
                 }

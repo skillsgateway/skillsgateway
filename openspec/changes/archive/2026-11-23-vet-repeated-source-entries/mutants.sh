@@ -14,7 +14,7 @@ trap 'git checkout -- src/main' EXIT
 
 PC=src/main/java/dev/skillsgateway/server/ingestion/PluginComponents.java
 EV=src/main/java/dev/skillsgateway/server/vetting/ExecutableSurfaceVetter.java
-known='^M[1-9]-'
+known='^M[1-9][0-9]*-'
 
 mutate() { # file old new: replace exactly one occurrence, or fail
   python3 - "$1" "$2" "$3" <<'PY'
@@ -83,6 +83,10 @@ run M8-plain-entry-only-when-first vetting.ExecutableSurfaceVetterTests aPlainLa
   'if (declares || plainRead.add(root)) {' 'if (declares || !roots.containsKey(root)) {'
 run M9-modules-not-cached ingestion.PluginComponentsTests a_shared_cache_reads_each_frontmatter_once_and_every_plugin_still_gets_its_hooks_and_problems "$PC" \
   'cache.modules.computeIfAbsent(' 'new HashMap<String, HookModule>().computeIfAbsent('
+run M10-launch-chain-deduplicated-across-roots vetting.ExecutableSurfaceVetterTests aScriptTwoRootsReachIsFollowedFromEachRoot "$EV" \
+  'if (!followed.add(List.of(String.valueOf(server), root, next.path()))) {' 'if (!followed.add(List.of(String.valueOf(server), next.path()))) {'
+run M11-server-launch-chain-deduplicated-across-roots vetting.ExecutableSurfaceVetterTests aScriptAServerTwoRootsReachLaunchesIsFollowedFromEachRoot "$EV" \
+  'if (!followed.add(List.of(String.valueOf(server), root, next.path()))) {' 'if (!followed.add(List.of(String.valueOf(server), server == null ? root : "", next.path()))) {'
 
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi
