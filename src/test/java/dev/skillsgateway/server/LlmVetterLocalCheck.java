@@ -2,8 +2,6 @@ package dev.skillsgateway.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.storage.GitStorage;
@@ -34,6 +32,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Runs the example LLM vetter ({@code docs/manual/guides/examples/llm-vetter.py}) against a real
@@ -255,8 +255,8 @@ class LlmVetterLocalCheck extends AbstractGatewayTest {
                             HttpResponse.BodyHandlers.ofString())
                     .body();
             JsonNode loaded = null;
-            for (JsonNode candidate : new ObjectMapper().readTree(body).path("models")) {
-                if (candidate.path("name").asText().equals(MODEL)) {
+            for (JsonNode candidate : new JsonMapper().readTree(body).path("models")) {
+                if (candidate.path("name").asString().equals(MODEL)) {
                     loaded = candidate;
                 }
             }

@@ -1,6 +1,5 @@
 package dev.skillsgateway.server.ingestion;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import dev.skillsgateway.server.persistence.Marketplace;
 import dev.skillsgateway.server.persistence.MarketplaceRepository;
 import dev.skillsgateway.server.persistence.Snapshot;
@@ -26,6 +25,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Read-only inventory of what a snapshot contains (GW_INGEST_0008): the plugins its manifest declares and
@@ -263,7 +263,7 @@ public class SnapshotContentService {
      * every other component each provides (GW_INGEST_0045). The diff compares skills only, so it
      * does not pay for reading component declarations.
      */
-    @Requirements({"GW_INGEST_0008", "GW_INGEST_0045", "GW_INGEST_0065"})
+    @Requirements({"GW_INGEST_0008", "GW_INGEST_0045", "GW_INGEST_0065", "GW_INGEST_0074"})
     private static List<PluginContent> plugins(Repository repo, RevCommit commit, boolean withComponents)
             throws IOException {
         byte[] manifestBytes = readFile(repo, commit, MANIFEST_PATH);
@@ -272,6 +272,9 @@ public class SnapshotContentService {
         }
         PluginComponents.Manifest manifest = PluginComponents.Manifest.parse(MANIFEST_PATH, manifestBytes);
         TreeFiles files = withComponents ? TreeFiles.of(repo, commit) : null;
+        // Shared by every entry (GW_INGEST_0074): entries naming one root would otherwise each re-read
+        // every skill file under it, entries times skills for a tree that holds each file once.
+        PluginComponents.Cache cache = new PluginComponents.Cache();
         List<PluginContent> plugins = new ArrayList<>();
         JsonNode entries = manifest.root().path("plugins");
         // One walk for every plugin's skills, and each source root listed once (GW_INGEST_0074): a
@@ -281,10 +284,10 @@ public class SnapshotContentService {
         int readable = Math.min(entries.size(), ManifestPolicy.MAX_PLUGINS);
         for (int i = 0; i < readable; i++) {
             JsonNode plugin = entries.get(i);
-            String name = plugin.path("name").asText(null);
-            String description = plugin.path("description").asText(null);
+            String name = plugin.path("name").asString(null);
+            String description = plugin.path("description").asString(null);
             String source =
-                    plugin.path("source").isTextual() ? plugin.get("source").asText() : null;
+                    plugin.path("source").isString() ? plugin.get("source").asString("") : null;
             List<SkillInfo> skills =
                     source == null || !listedRoots.add(normalize(source)) ? List.of() : skills(skillFiles, source);
             String root = PluginComponents.normalizeRoot(source);
@@ -292,7 +295,8 @@ public class SnapshotContentService {
                 plugins.add(new PluginContent(name, description, source, skills));
                 continue;
             }
-            PluginComponents.Components components = PluginComponents.read(files, root, manifest, "/plugins/" + i);
+            PluginComponents.Components components =
+                    PluginComponents.read(files, root, manifest, "/plugins/" + i, cache);
             plugins.add(new PluginContent(
                     name,
                     description,

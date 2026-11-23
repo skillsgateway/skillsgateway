@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.approval.ApprovalService;
 import dev.skillsgateway.server.approval.RevocationService;
 import dev.skillsgateway.server.facade.HeldContentController;
@@ -29,6 +27,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.mvc.condition.RequestMethodsRequestCondition;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The pull-side revocation check (GW_FACADE_0031, GW_FACADE_0032).
@@ -45,7 +46,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  */
 class HeldContentStatusTests extends AbstractGatewayTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
 
     /** A well-formed commit id that no fixture can have produced. */
     private static final String NEVER_HELD = "0".repeat(39) + "1";
@@ -83,8 +84,8 @@ class HeldContentStatusTests extends AbstractGatewayTest {
                 .as("a superseded but still approved snapshot is approved, not unknown")
                 .isEqualTo(HeldContentController.APPROVED);
         assertThat(state(answers, 1)).isEqualTo(HeldContentController.APPROVED);
-        assertThat(answers.get(0).get("marketplace").asText()).isEqualTo(name);
-        assertThat(answers.get(0).get("sha").asText())
+        assertThat(answers.get(0).get("marketplace").asString()).isEqualTo(name);
+        assertThat(answers.get(0).get("sha").asString())
                 .as("the answer echoes the pair it answers, in the order asked")
                 .isEqualTo(first.sha());
 
@@ -320,13 +321,12 @@ class HeldContentStatusTests extends AbstractGatewayTest {
     }
 
     private static String state(JsonNode answers, int index) {
-        return answers.get(index).get("state").asText();
+        return answers.get(index).get("state").asString();
     }
 
     /** The answer with the pair it echoes removed, so two answers can be compared for what they disclose. */
     private static JsonNode withoutIdentity(JsonNode answer) {
-        return ((com.fasterxml.jackson.databind.node.ObjectNode) answer.deepCopy())
-                .remove(List.of("marketplace", "sha"));
+        return ((tools.jackson.databind.node.ObjectNode) answer.deepCopy()).remove(List.of("marketplace", "sha"));
     }
 
     private static String basic(String secret) {

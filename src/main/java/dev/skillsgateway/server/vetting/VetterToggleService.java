@@ -114,7 +114,7 @@ public class VetterToggleService {
             String correlationId) {
         if (vetter == null || !knownVetters.contains(vetter)) {
             throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    HttpStatus.UNPROCESSABLE_CONTENT,
                     "unknown vetter '%s'; the configured vetters are %s".formatted(vetter, knownVetters));
         }
         Long marketplaceId = null;
@@ -166,7 +166,7 @@ public class VetterToggleService {
     public boolean clear(String vetter, String marketplaceName, String reason, String principal, String correlationId) {
         if (vetter == null || !knownVetters.contains(vetter)) {
             throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    HttpStatus.UNPROCESSABLE_CONTENT,
                     "unknown vetter '%s'; the configured vetters are %s".formatted(vetter, knownVetters));
         }
         Marketplace marketplace = marketplaceRepository
@@ -215,7 +215,7 @@ public class VetterToggleService {
     public void requireKnown(String vetter) {
         if (vetter == null || !knownVetters.contains(vetter)) {
             throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    HttpStatus.UNPROCESSABLE_CONTENT,
                     "unknown vetter '%s'; the configured vetters are %s".formatted(vetter, knownVetters));
         }
     }

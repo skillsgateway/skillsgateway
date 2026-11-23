@@ -6,8 +6,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.reqstool.annotations.SVCs;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,6 +18,9 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.OidcLoginRequestPostProcessor;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Snapshot preview: tree-addressed file inspection with its caps and denials (GW_INGEST_0015) and the
@@ -29,7 +30,7 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
  */
 class PreviewTests extends AbstractGatewayTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
     private static final String SKILL_PATH = "plugins/hello/skills/hello/SKILL.md";
 
     private final OidcLoginRequestPostProcessor alice = oidcLogin().idToken(token -> token.subject("alice"));
@@ -56,7 +57,7 @@ class PreviewTests extends AbstractGatewayTest {
                 .getContentAsString();
         List<String> paths = new ArrayList<>();
         for (JsonNode entry : MAPPER.readTree(treeBody).get("entries")) {
-            paths.add(entry.get("path").asText());
+            paths.add(entry.get("path").asString());
         }
         assertThat(paths).contains(MANIFEST_PATH, SKILL_PATH, "data/huge.txt", "assets/logo.bin");
 
@@ -80,7 +81,7 @@ class PreviewTests extends AbstractGatewayTest {
                 .getResponse()
                 .getContentAsString();
         JsonNode huge = MAPPER.readTree(hugeBody);
-        assertThat(huge.get("text").asText().length()).isEqualTo(128 * 1024);
+        assertThat(huge.get("text").asString().length()).isEqualTo(128 * 1024);
         assertThat(huge.get("size").asLong()).isEqualTo(oversized.getBytes().length);
 
         // Binary: metadata only, never bytes dressed up as text.
@@ -120,7 +121,7 @@ class PreviewTests extends AbstractGatewayTest {
 
         JsonNode window = file(id, "data/numbered.txt", "5000");
         int first = window.get("firstLine").asInt();
-        String text = window.get("text").asText();
+        String text = window.get("text").asString();
         String[] lines = text.split("\n", -1);
         assertThat(window.get("truncated").asBoolean()).isTrue();
         assertThat(text.length()).isLessThanOrEqualTo(128 * 1024);
@@ -133,7 +134,7 @@ class PreviewTests extends AbstractGatewayTest {
         for (String line : new String[] {null, "10", "999999"}) {
             JsonNode head = file(id, "data/numbered.txt", line);
             assertThat(head.get("firstLine").asInt()).as(line).isEqualTo(1);
-            assertThat(head.get("text").asText())
+            assertThat(head.get("text").asString())
                     .as(line)
                     .startsWith("line 00001 ")
                     .hasSize(128 * 1024);
@@ -211,14 +212,14 @@ class PreviewTests extends AbstractGatewayTest {
         JsonNode diff = MAPPER.readTree(body);
         Map<String, JsonNode> byPath = new java.util.HashMap<>();
         for (JsonNode entry : diff.get("entries")) {
-            byPath.put(entry.get("path").asText(), entry);
+            byPath.put(entry.get("path").asString(), entry);
         }
         assertThat(byPath.keySet()).containsExactlyInAnyOrder(SKILL_PATH, "docs/NEW.md", "docs/REMOVE.md");
-        assertThat(byPath.get(SKILL_PATH).get("type").asText()).isEqualTo("modified");
-        assertThat(byPath.get(SKILL_PATH).get("diff").asText()).contains("+Now with a changed instruction.");
-        assertThat(byPath.get("docs/NEW.md").get("type").asText()).isEqualTo("added");
-        assertThat(byPath.get("docs/REMOVE.md").get("type").asText()).isEqualTo("removed");
-        assertThat(byPath.get("docs/REMOVE.md").get("diff").asText()).contains("-# Goes away");
+        assertThat(byPath.get(SKILL_PATH).get("type").asString()).isEqualTo("modified");
+        assertThat(byPath.get(SKILL_PATH).get("diff").asString()).contains("+Now with a changed instruction.");
+        assertThat(byPath.get("docs/NEW.md").get("type").asString()).isEqualTo("added");
+        assertThat(byPath.get("docs/REMOVE.md").get("type").asString()).isEqualTo("removed");
+        assertThat(byPath.get("docs/REMOVE.md").get("diff").asString()).contains("-# Goes away");
 
         // A marketplace serving nothing has no baseline; the honest answer is "all of it is new".
         Registered unserved = registerAndIngest(uniqueName("diffnone"), createUpstream(DEFAULT_MANIFEST));
@@ -233,7 +234,7 @@ class PreviewTests extends AbstractGatewayTest {
         JsonNode none = MAPPER.readTree(noneBody);
         assertThat(none.get("entries").size()).isGreaterThan(0);
         for (JsonNode entry : none.get("entries")) {
-            assertThat(entry.get("type").asText()).isEqualTo("added");
+            assertThat(entry.get("type").asString()).isEqualTo("added");
         }
     }
 

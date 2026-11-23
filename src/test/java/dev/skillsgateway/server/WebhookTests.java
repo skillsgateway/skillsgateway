@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -43,6 +42,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Lifecycle event webhooks: filtering (GW_WEBHOOK_0001), signing (GW_WEBHOOK_0002), retry with backoff (GW_WEBHOOK_0003),
@@ -313,7 +314,7 @@ class WebhookTests extends AbstractGatewayTest {
         assertThat(announced).hasSize(1);
         String payload = announced.getFirst().payload();
 
-        Map<String, Object> body = new ObjectMapper().readValue(payload, Map.class);
+        Map<String, Object> body = new JsonMapper().readValue(payload, Map.class);
         // Exact, not "contains": a removed or renamed field fails here, and so does an added one,
         // which is the point — the payload is a contract, so changing it is a decision.
         assertThat(body).containsOnlyKeys(PAYLOAD_FIELDS.toArray(String[]::new));
@@ -594,7 +595,7 @@ class WebhookTests extends AbstractGatewayTest {
                         WebhookEvent.MARKETPLACE_VETTER_TOGGLED,
                         WebhookEvent.MARKETPLACE_VETTER_TOGGLED);
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = new JsonMapper();
         Map<String, Object> registeredBody =
                 mapper.readValue(payloadOf(announced, WebhookEvent.MARKETPLACE_REGISTERED), Map.class);
         // Exact, not "contains": the payload is a contract, so an added field is a decision too.

@@ -121,7 +121,7 @@ public class VettingChainSettingsService {
             ChainMode mode, String marketplaceName, String reason, String principal, String correlationId) {
         if (mode == null) {
             throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    HttpStatus.UNPROCESSABLE_CONTENT,
                     "the 'mode' field is required; the chain modes are %s".formatted(modeNames()));
         }
         Scope scope = scopeOf(marketplaceName);
@@ -255,7 +255,7 @@ public class VettingChainSettingsService {
     public List<String> validateOrder(List<String> requested) {
         if (requested == null || requested.isEmpty()) {
             throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    HttpStatus.UNPROCESSABLE_CONTENT,
                     "an order must name at least one vetter; the configured vetters are %s".formatted(vetterNames()));
         }
         Set<String> known = vetterNames();
@@ -265,12 +265,12 @@ public class VettingChainSettingsService {
             String trimmed = name == null ? "" : name.trim();
             if (!known.contains(trimmed)) {
                 throw new ResponseStatusException(
-                        HttpStatus.UNPROCESSABLE_ENTITY,
+                        HttpStatus.UNPROCESSABLE_CONTENT,
                         "unknown vetter '%s'; the configured vetters are %s".formatted(name, known));
             }
             if (!seen.add(trimmed)) {
                 throw new ResponseStatusException(
-                        HttpStatus.UNPROCESSABLE_ENTITY, "vetter '%s' is named twice in the order".formatted(trimmed));
+                        HttpStatus.UNPROCESSABLE_CONTENT, "vetter '%s' is named twice in the order".formatted(trimmed));
             }
             order.add(trimmed);
         }
@@ -316,7 +316,7 @@ public class VettingChainSettingsService {
         Scope scope = scopeOf(marketplaceName);
         if (scope.marketplaceId() == null) {
             throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_ENTITY, "an override is cleared for a marketplace, not globally");
+                    HttpStatus.UNPROCESSABLE_CONTENT, "an override is cleared for a marketplace, not globally");
         }
         return scope;
     }

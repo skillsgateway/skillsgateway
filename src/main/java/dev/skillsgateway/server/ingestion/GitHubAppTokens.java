@@ -1,13 +1,12 @@
 package dev.skillsgateway.server.ingestion;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import dev.skillsgateway.server.config.Json;
 import dev.skillsgateway.server.config.SkillsGatewayProperties.GitHubApp;
 import io.github.reqstool.annotations.Requirements;
 import java.io.ByteArrayOutputStream;
@@ -41,6 +40,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * The installation tokens one GitHub App credential entry reads its upstreams with (GW_INGEST_0056):
@@ -78,7 +80,7 @@ final class GitHubAppTokens {
             Pattern.compile("-----BEGIN ([A-Z ]+)-----(.*?)-----END \\1-----", Pattern.DOTALL);
     private static final Pattern BASE64 = Pattern.compile("[A-Za-z0-9+/=]+");
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = Json.MAPPER;
 
     /**
      * Never follows a redirect: the assertion goes to the configured API and nowhere else
@@ -416,13 +418,13 @@ final class GitHubAppTokens {
         String body = "{\"repositories\":[\"" + repo.name() + "\"],\"permissions\":{\"contents\":\"read\"}}";
         Answer answer = call("POST", path, jwt, body, scrub);
         JsonNode issued = answer.status() == 201 ? json(answer.body()) : MAPPER.missingNode();
-        String token = issued.path("token").asText("");
+        String token = issued.path("token").asString("");
         if (token.isEmpty()) {
             throw refusal(Phase.TOKEN, answer, "POST " + path, scrub);
         }
         Instant expiresAt;
         try {
-            expiresAt = Instant.parse(issued.path("expires_at").asText(""));
+            expiresAt = Instant.parse(issued.path("expires_at").asString(""));
         } catch (DateTimeParseException e) {
             // No stated expiry: use it for this read and never again.
             expiresAt = clock.instant();
@@ -541,7 +543,7 @@ final class GitHubAppTokens {
 
     /** GitHub's own {@code message}, or the start of the body; never more than a line's worth. */
     private static String message(String body) {
-        String text = json(body).path("message").asText("");
+        String text = json(body).path("message").asString("");
         if (text.isEmpty() && body != null) {
             text = body.strip();
         }
@@ -552,7 +554,7 @@ final class GitHubAppTokens {
     private static JsonNode json(String body) {
         try {
             return body == null || body.isBlank() ? MAPPER.missingNode() : MAPPER.readTree(body);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             return MAPPER.missingNode();
         }
     }

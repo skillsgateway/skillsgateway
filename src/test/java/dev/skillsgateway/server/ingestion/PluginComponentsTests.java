@@ -473,4 +473,59 @@ class PluginComponentsTests {
                     assertThat((String) problem.toList().get(1)).contains("too large");
                 });
     }
+
+    /**
+     * A manifest may name one root under many entries (GW_INGEST_0074). With a shared cache each skill
+     * file is read once however many entries read the root, and every entry still gets its hooks and
+     * its problems: the cache saves the work, never the answer.
+     */
+    @Test
+    void a_shared_cache_reads_each_frontmatter_once_and_every_plugin_still_gets_its_hooks_and_problems() {
+        String hooked = """
+                ---
+                name: secure
+                description: checks
+                hooks:
+                  PreToolUse:
+                    - hooks:
+                        - type: command
+                          command: ./scripts/check.sh
+                ---
+                body
+                """;
+        Map<String, String> tree = files("skills/secure/SKILL.md", hooked, "skills/big/SKILL.md", null);
+        for (int i = 0; i < 50; i++) {
+            tree.put("skills/s%d/SKILL.md".formatted(i), "---\nname: s%d\ndescription: d\n---\n".formatted(i));
+        }
+        Map<String, Integer> reads = new java.util.HashMap<>();
+        PluginComponents.Files counting = new PluginComponents.Files() {
+            @Override
+            public Collection<String> paths() {
+                return tree.keySet();
+            }
+
+            @Override
+            public byte[] read(String path) {
+                reads.merge(path, 1, Integer::sum);
+                return new MapFiles(tree).read(path);
+            }
+        };
+        Components alone = read(tree, "");
+
+        PluginComponents.Cache cache = new PluginComponents.Cache();
+        for (int entry = 0; entry < 20; entry++) {
+            Components shared = PluginComponents.read(counting, "", null, null, cache);
+            assertThat(shared)
+                    .as("entry %d read through the shared cache", entry)
+                    .isEqualTo(alone);
+        }
+
+        assertThat(alone.hooks()).extracting(Hook::runs).containsExactly("./scripts/check.sh");
+        assertThat(alone.hookProblems())
+                .extracting(PluginComponents.Problem::path)
+                .contains("skills/big/SKILL.md");
+        assertThat(reads)
+                .as("reads per file across 20 entries")
+                .allSatisfy((path, count) -> assertThat(count).as(path).isEqualTo(1));
+    }
 }

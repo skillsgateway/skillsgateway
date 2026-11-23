@@ -48,12 +48,12 @@ class ForwardedHeadersRelativeRedirectsTests {
     @Test
     @SVCs({"SVC_GW_AUTH_0029"})
     void the_filter_takes_relative_redirects_from_the_property() {
-        contexts.withPropertyValues("server.tomcat.use-relative-redirects=true")
-                .run(context -> assertThat(relativeRedirects(context)).isEqualTo(true));
+        contexts.withPropertyValues("server.tomcat.servlet.use-relative-redirects=false")
+                .run(context -> assertThat(relativeRedirects(context)).isEqualTo(false));
 
-        // Boot's default is false, so a literal would not survive this pair: whichever value were
-        // written in, one of the two runs would read the other.
-        contexts.run(context -> assertThat(relativeRedirects(context)).isEqualTo(false));
+        // Boot's default is true (since 4.2; false before), so a literal would not survive this
+        // pair: whichever value were written in, one of the two runs would read the other.
+        contexts.run(context -> assertThat(relativeRedirects(context)).isEqualTo(true));
     }
 
     private static Object relativeRedirects(ApplicationContext context) {

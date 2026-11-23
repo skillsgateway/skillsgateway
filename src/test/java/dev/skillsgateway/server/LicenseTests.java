@@ -5,8 +5,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.persistence.Snapshot;
 import dev.skillsgateway.server.vetting.Finding;
 import dev.skillsgateway.server.vetting.Severity;
@@ -18,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Verification of deterministic license detection (GW_VETTING_0019) and the default — warn-only — policy
@@ -33,7 +34,7 @@ class LicenseTests extends AbstractGatewayTest {
     @Autowired
     private VettingRepository vettingRepository;
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
 
     @Test
     @SVCs({"SVC_GW_VETTING_0019"})
@@ -132,19 +133,20 @@ class LicenseTests extends AbstractGatewayTest {
 
         assertThat(report.path("snapshotId").asLong())
                 .isEqualTo(registered.snapshot().id());
-        assertThat(report.path("sha").asText()).isEqualTo(registered.snapshot().sha());
+        assertThat(report.path("sha").asString())
+                .isEqualTo(registered.snapshot().sha());
         assertThat(report.path("licenses").size()).isGreaterThan(0);
-        assertThat(entry(report, "LICENSE").path("spdxId").asText()).isEqualTo("MIT");
-        assertThat(entry(report, "LICENSE").path("source").asText()).isEqualTo("file");
-        assertThat(entry(report, "LICENSE").path("evaluation").asText()).isEqualTo("ok");
+        assertThat(entry(report, "LICENSE").path("spdxId").asString()).isEqualTo("MIT");
+        assertThat(entry(report, "LICENSE").path("source").asString()).isEqualTo("file");
+        assertThat(entry(report, "LICENSE").path("evaluation").asString()).isEqualTo("ok");
         // The unknown state is first-class on the wire too.
         assertThat(entry(report, "plugins/hello/COPYING").path("spdxId").isNull())
                 .isTrue();
-        assertThat(entry(report, "plugins/hello/COPYING").path("evaluation").asText())
+        assertThat(entry(report, "plugins/hello/COPYING").path("evaluation").asString())
                 .isEqualTo("unknown");
         assertThat(entry(report, ".claude-plugin/marketplace.json#plugins[hello].license")
                         .path("declared")
-                        .asText())
+                        .asString())
                 .isEqualTo("ISC");
         // No policy configured: the report says so rather than inventing one.
         assertThat(report.path("allowed")).isEmpty();
@@ -156,7 +158,7 @@ class LicenseTests extends AbstractGatewayTest {
 
     private static JsonNode entry(JsonNode report, String location) {
         for (JsonNode license : report.path("licenses")) {
-            if (location.equals(license.path("location").asText())) {
+            if (location.equals(license.path("location").asString())) {
                 return license;
             }
         }

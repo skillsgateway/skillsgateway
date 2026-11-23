@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.storage.GitStorage;
 import io.github.reqstool.annotations.SVCs;
 import java.util.HashMap;
@@ -15,6 +14,8 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The fail-closed policy gate at approval (GW_APPROVAL_0007) and its ledger provenance (GW_APPROVAL_0008). Every
@@ -23,7 +24,7 @@ import org.springframework.http.MediaType;
  */
 class PolicyEnforcementTests extends AbstractGatewayTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
 
     private static final String SHELL_SKILL = """
             ---

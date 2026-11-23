@@ -1,8 +1,7 @@
 package dev.skillsgateway.server.webhook;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
+import dev.skillsgateway.server.config.Json;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.AuditSink;
 import dev.skillsgateway.server.persistence.AuditSinkRepository;
@@ -30,6 +29,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Subscriber lifecycle and event fan-out. Emission is enqueue-only: an administrative action
@@ -39,7 +40,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class WebhookService {
 
     private static final Logger log = LoggerFactory.getLogger(WebhookService.class);
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = Json.MAPPER;
     private static final String SECRET_PREFIX = "whsec_";
 
     public static final Pattern SUBSCRIBER_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
@@ -455,7 +456,7 @@ public class WebhookService {
     private String serialize(String event, Object payload) {
         try {
             return MAPPER.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("webhook payload serialization failed for event {}", event, e);
             throw new IllegalStateException("webhook payload serialization failed", e);
         }
