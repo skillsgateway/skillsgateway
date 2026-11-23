@@ -1,49 +1,16 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 #
-# CodeRabbit AI review. Advisory only: its reviews are comments, never
-# "request changes", and a bot approval does not count toward the one
-# maintainer approval protect-main requires.
-#
-# protect-main requires every review thread to be resolved, so a CodeRabbit
-# comment blocks merge until it is resolved, the same as a human one. Reply in
-# the thread (or `@coderabbitai resolve`) when a comment is wrong or out of scope.
+# Repository additions to the central CodeRabbit configuration in
+# skillsgateway/coderabbit (profile, bot skipping, summary placement). Lists
+# here combine with the central ones; path_instructions match by path.
 #
 # AGENTS.md and CLAUDE.md are picked up as review guidelines by default; the
 # repository skills below add the conventions each area is held to.
-language: en-US
+inheritance: true
 
 reviews:
-  profile: chill
-  request_changes_workflow: false
-  # The PR body follows .github/pull_request_template.md (attribution, Evidence),
-  # so the summary goes in the walkthrough comment, never the description.
-  high_level_summary: true
-  high_level_summary_in_walkthrough: true
-  collapse_walkthrough: true
-  poem: false
-  review_status: true
-  sequence_diagrams: false
-  # Labels are declarative (safe-settings deletes undeclared ones); reviewers
-  # are the owner.
-  suggested_labels: false
-  suggested_reviewers: false
-  assess_linked_issues: true
-
-  auto_review:
-    enabled: true
-    drafts: false
-    ignore_title_keywords:
-      - "WIP"
-    # Dependency bumps are gated by CI and auto-merged; a review adds noise.
-    # `@coderabbitai review` on one of these PRs still forces a review.
-    ignore_usernames:
-      - "renovate[bot]"
-      - "dependabot[bot]"
-      - "github-actions[bot]"
-
   path_filters:
-    # Lockfiles and generated code: reviewed through their sources.
-    - "!**/pnpm-lock.yaml"
+    # Generated code and lockfiles the central config does not cover.
     - "!skills-lock.json"
     - "!src/main/frontend/src/api/types.gen.ts"
     - "!src/main/frontend/openapi.json"
@@ -62,7 +29,7 @@ reviews:
         quarantine content, or authenticates /git/** with anything other than a
         PAT or (when enabled) an IdP bearer token. Requirements are referenced
         by @Requirements/@SVCs ids, never restated in code.
-    - path: "src/main/java/**/{facade,approval,auth,registration}/**"
+    - path: "src/main/java/**/{facade,approval,auth}/**"
       instructions: |
         Trust boundary. Expect adversarial and negative tests for every new
         branch, not only happy-path coverage. Flag missing authorization
@@ -88,9 +55,6 @@ reviews:
         MkDocs Material, built with --strict. Requirements are named with id
         and title, never restated.
 
-chat:
-  auto_reply: true
-
 knowledge_base:
   code_guidelines:
     enabled: true
@@ -100,7 +64,7 @@ knowledge_base:
       - files: ".claude/skills/architecture/SKILL.md"
         applyTo: "src/main/java/**"
       - files: ".claude/skills/old-coder/SKILL.md"
-        applyTo: "src/main/java/**/{facade,approval,auth,registration}/**"
+        applyTo: "src/main/java/**/{facade,approval,auth}/**"
       - files: ".claude/skills/design-conventions/SKILL.md"
         applyTo: "src/main/frontend/**"
       - files: ".claude/skills/documentation/SKILL.md"
