@@ -84,9 +84,9 @@ run M8-plain-entry-only-when-first vetting.ExecutableSurfaceVetterTests aPlainLa
 run M9-modules-not-cached ingestion.PluginComponentsTests a_shared_cache_reads_each_frontmatter_once_and_every_plugin_still_gets_its_hooks_and_problems "$PC" \
   'cache.modules.computeIfAbsent(' 'new HashMap<String, HookModule>().computeIfAbsent('
 run M10-launch-chain-deduplicated-across-roots vetting.ExecutableSurfaceVetterTests aScriptTwoRootsReachIsFollowedFromEachRoot "$EV" \
-  'if (!followed.add(List.of(String.valueOf(server), root, next.path()))) {' 'if (!followed.add(List.of(String.valueOf(server), next.path()))) {'
+  'List<String> key = List.of(String.valueOf(server), root, next.path());' 'List<String> key = List.of(String.valueOf(server), next.path());'
 run M11-server-launch-chain-deduplicated-across-roots vetting.ExecutableSurfaceVetterTests aScriptAServerTwoRootsReachLaunchesIsFollowedFromEachRoot "$EV" \
-  'if (!followed.add(List.of(String.valueOf(server), root, next.path()))) {' 'if (!followed.add(List.of(String.valueOf(server), server == null ? root : "", next.path()))) {'
+  'List<String> key = List.of(String.valueOf(server), root, next.path());' 'List<String> key = List.of(String.valueOf(server), server == null ? root : "", next.path());'
 run M12-first-depth-wins vetting.ExecutableSurfaceVetterTests aFileFirstReachedAtTheDepthLimitIsFollowedWhenAShorterChainReachesIt "$EV" \
   'if (shallowest != null && shallowest <= next.depth()) {' 'if (shallowest != null) {'
 run M13-rerun-binary-unreported vetting.ExecutableSurfaceVetterTests aBinaryAScriptMentionsIsStillReportedWhenAHookRunsIt "$EV" \
