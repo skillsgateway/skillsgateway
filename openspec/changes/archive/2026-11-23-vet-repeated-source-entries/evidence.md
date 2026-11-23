@@ -1,8 +1,11 @@
 # Evidence: vet-repeated-source-entries
 
-Source state: `6e26adda` (tree `47e99734`), on `main` after #938 (153e8327).
-Every result below is from one fresh run after the last code edit, on
-2026-11-23.
+Source state: `925243f7` (tree `98c7a787`): the change merged with `main` at
+`99a29cac` (#933, Spring Boot 4.2 and Jackson 3), which renamed the JSON API
+and added a `Json` class the cache's record had to give way to. Every result
+below is from one fresh run after that last code edit, on 2026-11-23. An
+earlier full run on `6e26adda`, before the merge, was also green
+(`Tests run: 1392`).
 
 Tier: trust boundary (vetting). Spec approval: not obtained before coding.
 The owner asked for the fix and a PR in one message ("You can implement the fix
@@ -37,12 +40,12 @@ and proposal, design and tasks were revised to say why.
 
 | Layer | Command | Result |
 |---|---|---|
-| Java suite, UI gate, Spotless, Checkstyle, SBOM, jar | `./mvnw clean verify` | `Tests run: 1392, Failures: 0, Errors: 0, Skipped: 9` · UI `Test Files 46 passed (46)` · `Tests 348 passed (348)` · `BUILD SUCCESS` · `Total time: 10:42 min` |
+| Java suite, UI gate, Spotless, Checkstyle, SBOM, jar | `./mvnw clean verify` | `Tests run: 1400, Failures: 0, Errors: 0, Skipped: 9` · UI `Test Files 46 passed (46)` · `Tests 348 passed (348)` · `BUILD SUCCESS` · `Total time: 11:24 min` |
 | Requirements traceability (backend results only) | `reqstool status local -p docs/reqstool` | `378/422 complete · 44 incomplete · FAIL`; every incomplete id is a portal e2e case (`automated test missing` without the Playwright results); `GW_VETTING_0047` complete. The full gate runs in CI's Traceability job with the e2e results |
 | Storybook story tests, e2e | not run locally | no file under `src/main/frontend/` changed; CI runs both |
-| OpenSpec | `openspec validate --all --strict` | `Totals: 30 passed, 0 failed (30 items)` |
-| Docs | `mkdocs build --strict` | `Documentation built in 2.21 seconds` |
-| Mutation | `openspec/changes/vet-repeated-source-entries/mutants.sh` | `6 mutants run, all killed` |
+| OpenSpec | `openspec validate --all --strict` | `Totals: 29 passed, 0 failed (29 items)` (one fewer: this change is archived) |
+| Docs | `mkdocs build --strict` | `Documentation built in 2.18 seconds` |
+| Mutation | `openspec/changes/archive/2026-11-23-vet-repeated-source-entries/mutants.sh` | `6 mutants run, all killed` |
 | Mutation runner negative control | `ONLY=M99 mutants.sh` | `no mutant selected`, exit 5 |
 | Supply chain | no dependency added or changed | — |
 
