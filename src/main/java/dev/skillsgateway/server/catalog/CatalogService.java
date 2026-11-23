@@ -1,10 +1,7 @@
 package dev.skillsgateway.server.catalog;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
+import dev.skillsgateway.server.config.Json;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.observability.GatewayMetrics;
 import dev.skillsgateway.server.persistence.ActorType;
@@ -39,6 +36,10 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * The global virtual catalog (GW_FACADE_0003–GW_FACADE_0005): one synthesized repository, served by the ordinary
@@ -61,7 +62,7 @@ public class CatalogService {
     private static final String MAIN = Constants.R_HEADS + "main";
     private static final String INTERNAL_REF_PREFIX = "refs/catalog/";
     private static final String COLLISION_LINE = "collision ";
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = Json.MAPPER;
 
     /** The gateway's own name on a ledger entry it writes about its own derived catalog. */
     public static final String ACTOR = "catalog-builder";
@@ -283,7 +284,8 @@ public class CatalogService {
             if (walk == null) {
                 return;
             }
-            JsonNode parsed = MAPPER.readTree(catalog.open(walk.getObjectId(0)).getBytes());
+            byte[] manifestJson = catalog.open(walk.getObjectId(0)).getBytes();
+            JsonNode parsed = Json.io(() -> MAPPER.readTree(manifestJson));
             for (JsonNode plugin : parsed.path("plugins")) {
                 mergePlugin(name, plugin, claims);
             }
@@ -296,10 +298,10 @@ public class CatalogService {
      * decides, once every marketplace has been read.
      */
     private static void mergePlugin(String marketplace, JsonNode plugin, Map<String, List<Claim>> claims) {
-        String prefixed = marketplace + "-" + plugin.path("name").asText("unnamed");
-        ObjectNode merged = plugin.deepCopy();
+        String prefixed = marketplace + "-" + plugin.path("name").asString("unnamed");
+        ObjectNode merged = (ObjectNode) plugin.deepCopy();
         merged.put("name", prefixed);
-        String source = plugin.path("source").asText("");
+        String source = plugin.path("source").asString("");
         String relative = source.startsWith("./") ? source.substring(2) : source;
         merged.put("source", "./" + marketplace + "/" + relative);
         claims.computeIfAbsent(prefixed, name -> new ArrayList<>()).add(new Claim(marketplace, merged));

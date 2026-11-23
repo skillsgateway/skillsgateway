@@ -98,7 +98,7 @@ header from a client's. Its three values differ in whom they believe:
 | Value | Who is believed | When |
 | --- | --- | --- |
 | `native` | Tomcat honours the headers only from a peer in a private address range: `10/8`, `172.16/12`, `192.168/16`, `100.64/10`, loopback, and their IPv6 counterparts. | The proxy is in your VPC or cluster — where a cloud load balancer or an ingress controller sits. The recommended value. |
-| `framework` | Spring's filter honours the headers from any peer. | The proxy has a public address, or you need `X-Forwarded-Prefix` or RFC 7239 `Forwarded`. Only where nothing but the proxy can reach port 8080, and where the proxy overwrites the headers rather than passing a client's through. |
+| `framework` | Spring's filter honours the headers from any peer. | The proxy has a public address, or you need `X-Forwarded-Prefix` (set `SERVER_REQUEST_HEADER_FORWARDED_USEPREFIX=true`) or RFC 7239 `Forwarded` (set `SERVER_REQUEST_HEADER_FORWARDED_NAMING=rfc-7239`). Only where nothing but the proxy can reach port 8080, and where the proxy overwrites the headers rather than passing a client's through. |
 | `none` | Nobody. The container's own view of the request. | The application terminates TLS itself. |
 
 A proxy outside the private ranges can be named rather than trusting everyone:

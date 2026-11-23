@@ -1,7 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skillsgateway.server.config.Json;
 import io.github.reqstool.annotations.Requirements;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -10,6 +9,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Deterministic license detection over a pinned snapshot (GW_VETTING_0019): SPDX identifiers resolved from
@@ -25,7 +27,7 @@ final class LicenseDetector {
 
     static final String MANIFEST_PATH = ".claude-plugin/marketplace.json";
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = Json.MAPPER;
 
     /** File names (case-insensitive, optional single extension) that carry a repository's license. */
     private static final Pattern LICENSE_FILE =
@@ -153,7 +155,7 @@ final class LicenseDetector {
         JsonNode root;
         try {
             root = MAPPER.readTree(text);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             // An unparseable manifest is the manifest policy's finding, not a license detection.
             return List.of();
         }
@@ -162,17 +164,17 @@ final class LicenseDetector {
         addDeclared(
                 detections, path + "#metadata.license", root.path("metadata").path("license"));
         for (JsonNode plugin : root.path("plugins")) {
-            String name = plugin.path("name").asText("?");
+            String name = plugin.path("name").asString("?");
             addDeclared(detections, "%s#plugins[%s].license".formatted(path, name), plugin.path("license"));
         }
         return detections;
     }
 
     private static void addDeclared(List<Detection> detections, String location, JsonNode value) {
-        if (!value.isTextual() || value.asText().isBlank()) {
+        if (!value.isString() || value.asString("").isBlank()) {
             return;
         }
-        String declared = value.asText().trim();
+        String declared = value.asString("").trim();
         String spdxId = KNOWN_IDS.get(declared.toLowerCase(Locale.ROOT));
         detections.add(new Detection(Source.MANIFEST, location, spdxId, declared));
     }

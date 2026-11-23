@@ -67,7 +67,7 @@ class VettingOverrideTests extends AbstractGatewayTest {
                         .with(root)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"overrideVetting\": true}"))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
         // A plain administrative approval of the blocked snapshot is still refused: the override is
         // the only way past the block, and it is deliberate.
         mockMvc.perform(post("/api/v1/snapshots/{id}/approve", snapshotId).with(root))

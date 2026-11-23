@@ -1,7 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skillsgateway.server.config.Json;
 import dev.skillsgateway.server.ingestion.ManifestPolicy;
 import dev.skillsgateway.server.ingestion.PluginComponents;
 import dev.skillsgateway.server.policy.SkillFrontmatter;
@@ -26,6 +25,8 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.TreeFilter;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Whether a snapshot's executable surface is unchanged from the served baseline
@@ -61,7 +62,7 @@ public final class SurfaceComparison {
     private static final String MANIFEST_PATH = ".claude-plugin/marketplace.json";
     private static final String PLUGIN_JSON = ".claude-plugin/plugin.json";
     private static final long MAX_BYTES = 1024 * 1024;
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = Json.MAPPER;
 
     /**
      * @param reason why the surface counts as changed, naming a path or a kind of declaration and
@@ -186,7 +187,7 @@ public final class SurfaceComparison {
         JsonNode root;
         try {
             root = MAPPER.readTree(repo.open(blob).getBytes());
-        } catch (IOException | RuntimeException e) {
+        } catch (RuntimeException e) {
             return false;
         }
         if (root == null || !root.isObject()) {
@@ -207,7 +208,7 @@ public final class SurfaceComparison {
     }
 
     private static boolean keysWithin(JsonNode node, Set<String> allowed) {
-        for (var names = node.fieldNames(); names.hasNext(); ) {
+        for (var names = node.propertyNames().iterator(); names.hasNext(); ) {
             if (!allowed.contains(names.next())) {
                 return false;
             }
@@ -274,7 +275,7 @@ public final class SurfaceComparison {
             }
             for (int i = 0; i < entries.size(); i++) {
                 var source = entries.get(i).path("source");
-                String root = source.isTextual() ? PluginComponents.normalizeRoot(source.asText()) : null;
+                String root = source.isString() ? PluginComponents.normalizeRoot(source.asString("")) : null;
                 if (root != null) {
                     roots.putIfAbsent(root, "/plugins/" + i);
                 }

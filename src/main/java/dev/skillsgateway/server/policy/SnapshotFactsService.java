@@ -1,12 +1,6 @@
 package dev.skillsgateway.server.policy;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonStreamContext;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skillsgateway.server.config.Json;
 import dev.skillsgateway.server.ingestion.IngestionException;
 import dev.skillsgateway.server.ingestion.SnapshotClosure;
 import dev.skillsgateway.server.ingestion.SnapshotContentService;
@@ -33,6 +27,13 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.TokenStreamContext;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Builds the facts a policy expression evaluates over (GW_APPROVAL_0007): the snapshot's metadata, its
@@ -60,7 +61,8 @@ public class SnapshotFactsService {
     private static final Logger log = LoggerFactory.getLogger(SnapshotFactsService.class);
 
     /** Integers read back as {@code Long}, the type {@link #build} puts in and CEL's int is. */
-    private static final ObjectMapper MAPPER = new ObjectMapper().enable(DeserializationFeature.USE_LONG_FOR_INTS);
+    private static final ObjectMapper MAPPER =
+            Json.builder().enable(DeserializationFeature.USE_LONG_FOR_INTS).build();
 
     private static final TypeReference<Map<String, Object>> FACTS_TYPE = new TypeReference<>() {};
 
@@ -109,7 +111,7 @@ public class SnapshotFactsService {
             Map<String, Object> stored = new HashMap<>(facts);
             stored.put("snapshot", snapshotFacts);
             json = MAPPER.writeValueAsString(stored);
-        } catch (PolicyEvaluationException | JsonProcessingException e) {
+        } catch (PolicyEvaluationException | JacksonException e) {
             log.info(
                     "facts of snapshot {} were not recorded and will be built when read: {}",
                     snapshot.id(),
@@ -144,7 +146,7 @@ public class SnapshotFactsService {
             snapshotFacts.put("state", snapshot.state());
             facts.put("snapshot", snapshotFacts);
             return facts;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new PolicyEvaluationException(
                     "recorded facts of snapshot %d are unreadable".formatted(snapshot.id()), e);
         }
@@ -187,19 +189,19 @@ public class SnapshotFactsService {
     /** The line of each {@code plugins[i].name} key, by entry index. */
     static Map<Integer, Integer> pluginNameLines(byte[] manifest) throws IOException {
         Map<Integer, Integer> lines = new HashMap<>();
-        try (JsonParser parser = MAPPER.getFactory().createParser(manifest)) {
+        try (JsonParser parser = MAPPER.createParser(manifest)) {
             JsonToken token;
             while ((token = parser.nextToken()) != null) {
-                if (token != JsonToken.FIELD_NAME || !"name".equals(parser.currentName())) {
+                if (token != JsonToken.PROPERTY_NAME || !"name".equals(parser.currentName())) {
                     continue;
                 }
-                JsonStreamContext array = parser.getParsingContext().getParent();
-                JsonStreamContext top = array == null ? null : array.getParent();
+                TokenStreamContext array = parser.streamReadContext().getParent();
+                TokenStreamContext top = array == null ? null : array.getParent();
                 if (array != null
                         && array.inArray()
                         && top != null
                         && top.inObject()
-                        && "plugins".equals(top.getCurrentName())
+                        && "plugins".equals(top.currentName())
                         && top.getParent() != null
                         && top.getParent().inRoot()) {
                     lines.putIfAbsent(
@@ -207,6 +209,8 @@ public class SnapshotFactsService {
                             parser.currentTokenLocation().getLineNr());
                 }
             }
+        } catch (JacksonException e) {
+            throw new IOException(e.getMessage(), e);
         }
         return lines;
     }

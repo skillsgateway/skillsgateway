@@ -6,8 +6,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.reqstool.annotations.SVCs;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -26,6 +24,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.OidcLoginRequestPostProcessor;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The whole of a snapshot is reachable, whatever its size (GW_APPROVAL_0025–0028): a served snapshot
@@ -35,7 +36,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SnapshotBrowsingTests extends AbstractGatewayTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
     private static final int WIDE = 600;
     private static final int BULK_DIRS = 15;
     private static final int BULK_PER_DIR = 100;
@@ -128,14 +129,14 @@ class SnapshotBrowsingTests extends AbstractGatewayTest {
     void every_child_of_a_directory_wider_than_a_page_is_reached_with_its_change_and_the_counts_are_totals()
             throws Exception {
         JsonNode root = tree("", 0);
-        assertThat(root.path("baselineSha").asText()).isEqualTo(baseSha);
+        assertThat(root.path("baselineSha").asString()).isEqualTo(baseSha);
         assertThat(root.get("files").asInt()).isEqualTo(totalFiles());
         // 600 modified, two added, one removed — the whole delta, though no page holds it.
         assertThat(root.get("changed").asInt()).isEqualTo(603);
 
         Map<String, JsonNode> top = new HashMap<>();
-        root.get("entries").forEach(entry -> top.put(entry.get("name").asText(), entry));
-        assertThat(top.get("wide").get("kind").asText()).isEqualTo("directory");
+        root.get("entries").forEach(entry -> top.put(entry.get("name").asString(), entry));
+        assertThat(top.get("wide").get("kind").asString()).isEqualTo("directory");
         assertThat(top.get("wide").get("files").asInt()).isEqualTo(WIDE + 1);
         assertThat(top.get("wide").get("changed").asInt()).isEqualTo(WIDE + 1);
         assertThat(top.get("bulk").get("files").asInt()).isEqualTo(BULK_DIRS * BULK_PER_DIR);
@@ -147,7 +148,7 @@ class SnapshotBrowsingTests extends AbstractGatewayTest {
         List<String> order = new ArrayList<>();
         root.get("entries")
                 .forEach(entry -> order.add(
-                        entry.get("kind").asText() + ":" + entry.get("name").asText()));
+                        entry.get("kind").asString() + ":" + entry.get("name").asString()));
         assertThat(order)
                 .isSortedAccordingTo(java.util.Comparator.comparing((String key) -> key.startsWith("file:"))
                         .thenComparing(key -> key.substring(key.indexOf(':') + 1)));
@@ -163,19 +164,19 @@ class SnapshotBrowsingTests extends AbstractGatewayTest {
             assertThat(page.get("total").asInt()).isEqualTo(WIDE + 1);
             assertThat(page.get("files").asInt()).isEqualTo(WIDE + 1);
             for (JsonNode child : page.get("entries")) {
-                assertThat(seen.add(child.get("path").asText())).isTrue();
-                assertThat(child.get("kind").asText()).isEqualTo("file");
+                assertThat(seen.add(child.get("path").asString())).isTrue();
+                assertThat(child.get("kind").asString()).isEqualTo("file");
                 assertThat(child.get("size").asLong()).isPositive();
-                String expected = child.get("name").asText().equals("new.txt") ? "added" : "modified";
-                assertThat(child.get("status").asText()).isEqualTo(expected);
+                String expected = child.get("name").asString().equals("new.txt") ? "added" : "modified";
+                assertThat(child.get("status").asString()).isEqualTo(expected);
             }
         }
         assertThat(seen).hasSize(WIDE + 1).contains("wide/f0000.txt", "wide/f0599.txt", "wide/new.txt");
 
         // The removed file is a child of its directory, with no blob to size.
         JsonNode gone = tree("gone", 0).get("entries").get(0);
-        assertThat(gone.get("path").asText()).isEqualTo("gone/old.txt");
-        assertThat(gone.get("status").asText()).isEqualTo("removed");
+        assertThat(gone.get("path").asString()).isEqualTo("gone/old.txt");
+        assertThat(gone.get("status").asString()).isEqualTo("removed");
         assertThat(gone.hasNonNull("size")).isFalse();
 
         // An unchanged file carries no status; an offset past the end is an empty last page.
@@ -228,7 +229,7 @@ class SnapshotBrowsingTests extends AbstractGatewayTest {
         for (JsonNode page : pages) {
             page.get("entries")
                     .forEach(entry ->
-                            assertThat(seen.add(entry.get("path").asText())).isTrue());
+                            assertThat(seen.add(entry.get("path").asString())).isTrue());
         }
         assertThat(seen).hasSize(total).contains("wide/new.txt", "bulk/d14/item-99.txt", "bin/logo.bin");
 
@@ -236,12 +237,12 @@ class SnapshotBrowsingTests extends AbstractGatewayTest {
         assertThat(search.get("total").asInt()).isEqualTo(10);
         assertThat(search.get("truncated").asBoolean()).isFalse();
         search.get("entries")
-                .forEach(entry -> assertThat(entry.get("path").asText()).startsWith("wide/f000"));
+                .forEach(entry -> assertThat(entry.get("path").asString()).startsWith("wide/f000"));
 
         // A match deep in the tree, beyond the first page of the unfiltered listing.
         JsonNode deep = read(get("/api/v1/snapshots/{id}/files", held).param("q", "d14/item-99"));
         assertThat(deep.get("total").asInt()).isEqualTo(1);
-        assertThat(deep.get("entries").get(0).get("path").asText()).isEqualTo("bulk/d14/item-99.txt");
+        assertThat(deep.get("entries").get(0).get("path").asString()).isEqualTo("bulk/d14/item-99.txt");
 
         assertThat(read(get("/api/v1/snapshots/{id}/files", held).param("q", "../"))
                         .get("total")
@@ -258,7 +259,7 @@ class SnapshotBrowsingTests extends AbstractGatewayTest {
         assertThat(pages.getFirst().get("entries").size()).isEqualTo(500);
         Map<String, String> types = new HashMap<>();
         for (JsonNode page : pages) {
-            assertThat(page.get("baselineSha").asText()).isEqualTo(baseSha);
+            assertThat(page.get("baselineSha").asString()).isEqualTo(baseSha);
             assertThat(page.get("total").asInt()).isEqualTo(603);
             JsonNode summary = page.get("summary");
             assertThat(summary.get("added").asInt()).isEqualTo(2);
@@ -270,7 +271,7 @@ class SnapshotBrowsingTests extends AbstractGatewayTest {
             assertThat(summary.get("linesRemoved").asLong()).isEqualTo(1);
             for (JsonNode entry : page.get("entries")) {
                 assertThat(types.put(
-                                entry.get("path").asText(), entry.get("type").asText()))
+                                entry.get("path").asString(), entry.get("type").asString()))
                         .isNull();
             }
         }
@@ -278,8 +279,8 @@ class SnapshotBrowsingTests extends AbstractGatewayTest {
 
         JsonNode one = read(get("/api/v1/snapshots/{id}/diff", held).param("path", "wide/f0001.txt"));
         assertThat(one.get("total").asInt()).isEqualTo(1);
-        assertThat(one.get("entries").get(0).get("type").asText()).isEqualTo("modified");
-        assertThat(one.get("entries").get(0).get("diff").asText()).contains("+new");
+        assertThat(one.get("entries").get(0).get("type").asString()).isEqualTo("modified");
+        assertThat(one.get("entries").get(0).get("diff").asString()).contains("+new");
         assertThat(one.get("summary").get("linesAdded").asLong()).isEqualTo(1);
 
         JsonNode folder = read(get("/api/v1/snapshots/{id}/diff", held).param("path", "wide"));

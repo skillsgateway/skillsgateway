@@ -6,10 +6,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import dev.skillsgateway.server.api.OpenAPI;
@@ -29,6 +25,11 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.info.BuildProperties;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * The contract the API keeps with everything built from it: the served document says which release
@@ -45,7 +46,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
             "cp target/openapi.json src/main/frontend/openapi.json && (cd src/main/frontend && "
                     + "pnpm run gen:api-types)";
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
 
     @Autowired
     private BuildProperties buildProperties;
@@ -277,7 +278,7 @@ class OpenApiContractTests extends AbstractGatewayTest {
                 parse(servedDocument()).read("$.components.schemas.%s.required".formatted(EVENT_PAYLOAD));
         JsonNode onTheWire = MAPPER.readTree(queued.getFirst().payload());
         List<String> fieldsSent = new ArrayList<>();
-        onTheWire.fieldNames().forEachRemaining(fieldsSent::add);
+        onTheWire.propertyNames().iterator().forEachRemaining(fieldsSent::add);
 
         assertThat(fieldsSent)
                 .as("the bytes the dispatcher sends carry every field the published document declares"

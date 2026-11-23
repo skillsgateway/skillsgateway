@@ -1,7 +1,7 @@
 package dev.skillsgateway.server.storage.objectstore;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skillsgateway.server.config.Json;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Everything one repository is, as one small object in the bucket.
@@ -52,7 +53,7 @@ public record RepositoryManifest(
     /** Prefix marking a symbolic reference value, the same spelling git uses on disk. */
     public static final String SYMBOLIC_PREFIX = "ref: ";
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = Json.MAPPER;
 
     /**
      * One pack, described exactly as JGit's {@code DfsPackDescription} needs it back.
@@ -94,7 +95,7 @@ public record RepositoryManifest(
     }
 
     public static RepositoryManifest parse(byte[] json) throws IOException {
-        RepositoryManifest manifest = MAPPER.readValue(json, RepositoryManifest.class);
+        RepositoryManifest manifest = Json.io(() -> MAPPER.readValue(json, RepositoryManifest.class));
         if (manifest.version() != CURRENT_VERSION) {
             throw new IOException("unsupported repository manifest version %d (this gateway writes %d)"
                     .formatted(manifest.version(), CURRENT_VERSION));

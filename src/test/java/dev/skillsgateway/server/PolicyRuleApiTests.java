@@ -9,11 +9,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.reqstool.annotations.SVCs;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Rule lifecycle through the API (GW_APPROVAL_0006): compiled at write time, refused when it does not
@@ -21,7 +22,7 @@ import org.springframework.http.MediaType;
  */
 class PolicyRuleApiTests extends AbstractGatewayTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
 
     private String ruleJson(String name, String expression, boolean enabled) throws Exception {
         return MAPPER.writeValueAsString(

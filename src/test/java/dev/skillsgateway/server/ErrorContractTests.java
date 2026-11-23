@@ -44,7 +44,10 @@ class ErrorContractTests extends AbstractGatewayTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("scheme")));
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("scheme")))
+                // The contract's "request path this problem occurred on" (Framework 7.1 stopped
+                // filling it; ProblemInstanceAdvice keeps it).
+                .andExpect(jsonPath("$.instance").value("/api/v1/marketplaces"));
     }
 
     /** An {@code @ExceptionHandler} refusal has the same envelope, so a client has one shape to read. */
@@ -55,7 +58,8 @@ class ErrorContractTests extends AbstractGatewayTest {
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.detail").exists());
+                .andExpect(jsonPath("$.detail").exists())
+                .andExpect(jsonPath("$.instance").value("/api/v1/snapshots/999999999/vetting"));
     }
 
     /**

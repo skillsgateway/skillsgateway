@@ -2,8 +2,6 @@ package dev.skillsgateway.server.ingestion;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.ingestion.ManifestRewriter.Graft;
 import dev.skillsgateway.server.ingestion.ManifestRewriter.Rewrite;
 import io.github.reqstool.annotations.SVCs;
@@ -30,6 +28,9 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The composite snapshot (GW_INGEST_0024) built against an in-memory repository, so the whole
@@ -52,7 +53,7 @@ import org.junit.jupiter.api.Test;
  */
 class ManifestRewriterTests {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new JsonMapper();
     private static final String MANIFEST_PATH = ".claude-plugin/marketplace.json";
 
     private static final String UPSTREAM_MANIFEST = """
@@ -91,12 +92,12 @@ class ManifestRewriterTests {
 
         assertThat(rewrite.violation()).isNull();
         JsonNode manifest = MAPPER.readTree(fileAt(rewrite.commit(), MANIFEST_PATH));
-        assertThat(manifest.get("plugins").get(1).get("source").asText()).isEqualTo("./_plugins/tools");
+        assertThat(manifest.get("plugins").get(1).get("source").asString()).isEqualTo("./_plugins/tools");
         // Everything else passes through: the local source, the descriptions, the owner block.
-        assertThat(manifest.get("plugins").get(0).get("source").asText()).isEqualTo("./plugins/hello");
-        assertThat(manifest.get("plugins").get(1).get("description").asText()).isEqualTo("external");
-        assertThat(manifest.get("owner").get("name").asText()).isEqualTo("Test");
-        assertThat(manifest.get("name").asText()).isEqualTo("test-marketplace");
+        assertThat(manifest.get("plugins").get(0).get("source").asString()).isEqualTo("./plugins/hello");
+        assertThat(manifest.get("plugins").get(1).get("description").asString()).isEqualTo("external");
+        assertThat(manifest.get("owner").get("name").asString()).isEqualTo("Test");
+        assertThat(manifest.get("name").asString()).isEqualTo("test-marketplace");
     }
 
     @Test

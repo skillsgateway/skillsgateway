@@ -1,8 +1,7 @@
 package dev.skillsgateway.server.audit;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.skillsgateway.server.admin.AdminAuditLogger;
+import dev.skillsgateway.server.config.Json;
 import dev.skillsgateway.server.config.SkillsGatewayProperties;
 import dev.skillsgateway.server.persistence.AuditSink;
 import dev.skillsgateway.server.persistence.AuditSinkRepository;
@@ -31,6 +30,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Cursor-based export of the append-only ledger to registered sinks.
@@ -50,7 +51,7 @@ public class AuditExportService {
     private static final int CHUNK_SIZE = 500;
 
     /** Exported payloads are plain text and numbers, so no java.time modules are involved. */
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = Json.MAPPER;
 
     public static final Pattern SINK_NAME = Pattern.compile("^[a-z0-9][a-z0-9_-]*$");
 
@@ -366,7 +367,7 @@ public class AuditExportService {
     private String serialize(FetchLogRepository.AuditEntry entry) {
         try {
             return MAPPER.writeValueAsString(entry);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("audit entry serialization failed", e);
         }
     }
@@ -374,7 +375,7 @@ public class AuditExportService {
     private String serialize(AuditBatch batch) {
         try {
             return MAPPER.writeValueAsString(batch);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("audit export batch serialization failed for sink {}", batch.sink(), e);
             throw new IllegalStateException("audit export batch serialization failed", e);
         }

@@ -472,10 +472,11 @@ class AutoApprovalTests extends AbstractExternalSourceTest {
         Snapshot returnableAfter = autoApproved(returnable, 1);
 
         withdraw("{\"since\": \"%s\", \"serveAfter\": \"nothing\"}".formatted(since))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
         withdraw("{\"since\": \"%s\", \"reason\": \"bad push\"}".formatted(since))
-                .andExpect(status().isUnprocessableEntity());
-        withdraw("{\"reason\": \"bad push\", \"serveAfter\": \"nothing\"}").andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
+        withdraw("{\"reason\": \"bad push\", \"serveAfter\": \"nothing\"}")
+                .andExpect(status().isUnprocessableContent());
         withdraw(withdrawal(since, "previous_approved"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.marketplace").value(alone.name()));

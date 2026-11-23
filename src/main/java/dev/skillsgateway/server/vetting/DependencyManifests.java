@@ -1,6 +1,5 @@
 package dev.skillsgateway.server.vetting;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import dev.skillsgateway.server.ingestion.PluginComponents;
 import io.github.reqstool.annotations.Requirements;
 import java.nio.charset.StandardCharsets;
@@ -9,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Where a dependency manifest declares dependencies that are installed at run time
