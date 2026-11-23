@@ -175,9 +175,11 @@ public class ExecutableSurfaceVetter implements Vetter {
         // Apart from the hooks' set, so a server's medium scan never hides a hook's high one.
         private final Map<Server, Set<String>> serverScanned =
                 Map.of(Server.MCP, new HashSet<>(), Server.LSP, new HashSet<>());
-        // What follow() has traversed, per kind, root and path: a shared script can name a different
-        // ${CLAUDE_PLUGIN_ROOT} file under each root that reaches it (GW_VETTING_0047).
-        private final Set<List<String>> followed = new HashSet<>();
+        // The shallowest depth follow() has reached each file at, per kind, root and path: a shared
+        // script can name a different ${CLAUDE_PLUGIN_ROOT} file under each root that reaches it
+        // (GW_VETTING_0047), and a file first reached at MAX_DEPTH is followed again when a shorter
+        // chain reaches it (GW_VETTING_0048).
+        private final Map<List<String>, Integer> followed = new HashMap<>();
         private int hooks;
         private int modules;
         private int servers;
@@ -566,13 +568,23 @@ public class ExecutableSurfaceVetter implements Vetter {
             }
             while (!queue.isEmpty()) {
                 Launched next = queue.poll();
-                if (!followed.add(List.of(String.valueOf(server), root, next.path()))) {
+                List<String> key = List.of(String.valueOf(server), root, next.path());
+                Integer shallowest = followed.get(key);
+                if (shallowest != null && shallowest <= next.depth()) {
                     continue;
                 }
-                // A file scanned already, under another root or as a module's, is only traversed again.
-                String content = !visited.add(next.path())
-                        ? ContentRules.text(files.read(next.path()))
-                        : server == null ? launchedText(next) : serverLaunchedText(next, server);
+                followed.put(key, next.depth());
+                String content;
+                if (visited.add(next.path())) {
+                    content = server == null ? launchedText(next) : serverLaunchedText(next, server);
+                } else {
+                    // Scanned already, under another root, at another depth or as a module's file: only
+                    // traversed again, except that a hook running it unreadable is still reported.
+                    content = ContentRules.text(files.read(next.path()));
+                    if (content == null && server == null && next.depth() == 1) {
+                        launchedText(next);
+                    }
+                }
                 if (content == null || next.depth() >= MAX_DEPTH) {
                     continue;
                 }

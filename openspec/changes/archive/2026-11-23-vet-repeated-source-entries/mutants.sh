@@ -87,6 +87,10 @@ run M10-launch-chain-deduplicated-across-roots vetting.ExecutableSurfaceVetterTe
   'if (!followed.add(List.of(String.valueOf(server), root, next.path()))) {' 'if (!followed.add(List.of(String.valueOf(server), next.path()))) {'
 run M11-server-launch-chain-deduplicated-across-roots vetting.ExecutableSurfaceVetterTests aScriptAServerTwoRootsReachLaunchesIsFollowedFromEachRoot "$EV" \
   'if (!followed.add(List.of(String.valueOf(server), root, next.path()))) {' 'if (!followed.add(List.of(String.valueOf(server), server == null ? root : "", next.path()))) {'
+run M12-first-depth-wins vetting.ExecutableSurfaceVetterTests aFileFirstReachedAtTheDepthLimitIsFollowedWhenAShorterChainReachesIt "$EV" \
+  'if (shallowest != null && shallowest <= next.depth()) {' 'if (shallowest != null) {'
+run M13-rerun-binary-unreported vetting.ExecutableSurfaceVetterTests aBinaryAScriptMentionsIsStillReportedWhenAHookRunsIt "$EV" \
+  'if (content == null && server == null && next.depth() == 1) {' 'if (false) {'
 
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi
