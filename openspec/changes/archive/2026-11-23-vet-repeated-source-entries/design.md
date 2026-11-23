@@ -31,6 +31,16 @@ it was dropped. A test reproduced it before the fix.
 Rejected: reading every entry. Correct, but a manifest repeating one root a
 thousand times would read it a thousand times for nothing.
 
+### Following launched files per root
+
+A record two roots reach (a hook, a module, a server) is examined once per
+root, and so is the chain of files it launches: `follow` keys its traversal by
+kind, root and path, because a shared script's `${CLAUDE_PLUGIN_ROOT}/…`
+names a different file under each root. A file already scanned, under another
+root or as a module's, is traversed again without a second scan, so its
+findings and the launched-file count stay as they were. CodeRabbit found the
+path-only key on its second review; two tests reproduced it before the fix.
+
 ### The surface comparison stays as it is
 
 `SurfaceComparison` builds its roots the same first-entry way, but it cannot be

@@ -1,9 +1,11 @@
 # Evidence: vet-repeated-source-entries
 
-Source state: `0cf7d810` (tree `e2d1a33b`), after CodeRabbit's review of #950
-and on top of `main` at `9e057a35` (Jimisola merged `main` into the branch).
+Source state: `abd56202` (tree `0063a1a0`), after CodeRabbit's two reviews of
+#950 and on top of `main` at `9e057a35` (Jimisola merged `main` into the branch).
 Every result below is from one fresh run after that last code edit, on
-2026-11-23. Earlier full runs, on `6e26adda` (before #933) and `925243f7`
+2026-11-23. The mutants ran first; `clean verify` was rerun on the same commit
+after the container's Docker daemon died mid-run (698 context errors, no
+assertion failures). Earlier full runs, on `6e26adda` (before #933) and `925243f7`
 (after it), were also green.
 
 Tier: trust boundary (vetting). Spec approval: not obtained before coding.
@@ -25,6 +27,8 @@ not performed. Both are declared downgrades.
 | Invariant: the cache saves work, never the answer (JSON and frontmatter read once) | `PluginComponentsTests.a_shared_cache_reads_each_frontmatter_once_and_every_plugin_still_gets_its_hooks_and_problems` | killed by M5 |
 | SVC_GW_VETTING_0080: a plain entry still reads the defaults an earlier entry's `agents` paths replaced | `ExecutableSurfaceVetterTests.aPlainLaterEntryStillReadsTheDefaultsAnEarlierEntrysDeclarationsReplaced` | yes: no `auto-run-hook` for `p/agents/default.md` |
 | SVC_GW_VETTING_0080: a hook two roots reach is followed from each | `ExecutableSurfaceVetterTests.aHookTwoRootsReachIsFollowedFromEachRoot` | yes: no `runtime-fetch-exec` at `go.sh` |
+| SVC_GW_VETTING_0080: a script two roots' hook reaches is followed from each root | `ExecutableSurfaceVetterTests.aScriptTwoRootsReachIsFollowedFromEachRoot` | yes: no `runtime-fetch-exec` at `go.sh`; killed by M10 |
+| SVC_GW_VETTING_0080: a script two roots' MCP server reaches is followed from each root | `ExecutableSurfaceVetterTests.aScriptAServerTwoRootsReachLaunchesIsFollowedFromEachRoot` | yes: no `mcp-fetch-exec` at `go.sh`; killed by M11 |
 | Invariant: existing SVC tests unchanged | full suite below | — |
 
 ## Review findings (CodeRabbit), and what changed
@@ -41,6 +45,13 @@ Three findings on `04033213`, each verified against the code:
 3. Minor, valid. Hook-module graphs were re-read per declaring entry. Now
    memoized in `PluginComponents.Cache`; pinned by M9.
 
+One more finding on the re-review of `c5265358`:
+
+4. Major, real. `follow` de-duplicated launched files by path alone, so a
+   shared script's `${CLAUDE_PLUGIN_ROOT}` references were followed under the
+   first root only. Reproduced for a hook and an MCP server, then fixed: the
+   traversal is keyed by kind, root and path. Pinned by M10 and M11.
+
 ## A spec change made during the work, and why
 
 The first design also changed `SurfaceComparison`. Its test, a first
@@ -55,12 +66,12 @@ and proposal, design and tasks were revised to say why.
 
 | Layer | Command | Result |
 |---|---|---|
-| Java suite, UI gate, Spotless, Checkstyle, SBOM, jar | `./mvnw clean verify` | `Tests run: 1402, Failures: 0, Errors: 0, Skipped: 9` · UI `Test Files 46 passed (46)` · `Tests 348 passed (348)` · `BUILD SUCCESS` · `Total time: 09:43 min` |
+| Java suite, UI gate, Spotless, Checkstyle, SBOM, jar | `./mvnw clean verify` | `Tests run: 1404, Failures: 0, Errors: 0, Skipped: 9` · UI `Test Files 46 passed (46)` · `Tests 348 passed (348)` · `BUILD SUCCESS` · `Total time: 09:17 min` |
 | Requirements traceability (backend results only) | `reqstool status local -p docs/reqstool` | `378/422 complete · 44 incomplete · FAIL`; every incomplete id is a portal e2e case (`automated test missing` without the Playwright results); `GW_VETTING_0047` complete. The full gate runs in CI's Traceability job with the e2e results |
 | Storybook story tests, e2e | not run locally | no file under `src/main/frontend/` changed; CI runs both |
 | OpenSpec | `openspec validate --all --strict` | `Totals: 29 passed, 0 failed (29 items)` (one fewer: this change is archived) |
-| Docs | `mkdocs build --strict` | `Documentation built in 2.01 seconds` |
-| Mutation | `openspec/changes/archive/2026-11-23-vet-repeated-source-entries/mutants.sh` | `9 mutants run, all killed` |
+| Docs | `mkdocs build --strict` | `Documentation built in 1.94 seconds` |
+| Mutation | `openspec/changes/archive/2026-11-23-vet-repeated-source-entries/mutants.sh` | `11 mutants run, all killed` |
 | Mutation runner negative control | `ONLY=M99 mutants.sh` | `no mutant selected`, exit 5 |
 | Supply chain | no dependency added or changed | — |
 
@@ -74,5 +85,7 @@ M6-no-plugin-cap-finding killed
 M7-hooks-deduplicated-across-roots killed
 M8-plain-entry-only-when-first killed
 M9-modules-not-cached killed
-9 mutants run, all killed
+M10-launch-chain-deduplicated-across-roots killed
+M11-server-launch-chain-deduplicated-across-roots killed
+11 mutants run, all killed
 ```
