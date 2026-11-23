@@ -493,7 +493,15 @@ class PluginComponentsTests {
                 ---
                 body
                 """;
-        Map<String, String> tree = files("skills/secure/SKILL.md", hooked, "skills/big/SKILL.md", null);
+        Map<String, String> tree = files(
+                "skills/secure/SKILL.md",
+                hooked,
+                "skills/big/SKILL.md",
+                null,
+                "hooks/hooks.json",
+                HOOKS_JSON,
+                ".mcp.json",
+                "{not json");
         for (int i = 0; i < 50; i++) {
             tree.put("skills/s%d/SKILL.md".formatted(i), "---\nname: s%d\ndescription: d\n---\n".formatted(i));
         }
@@ -520,12 +528,42 @@ class PluginComponentsTests {
                     .isEqualTo(alone);
         }
 
-        assertThat(alone.hooks()).extracting(Hook::runs).containsExactly("./scripts/check.sh");
+        assertThat(alone.hooks()).extracting(Hook::runs).contains("./scripts/check.sh");
         assertThat(alone.hookProblems())
                 .extracting(PluginComponents.Problem::path)
-                .contains("skills/big/SKILL.md");
+                .contains("skills/big/SKILL.md", ".mcp.json");
         assertThat(reads)
                 .as("reads per file across 20 entries")
                 .allSatisfy((path, count) -> assertThat(count).as(path).isEqualTo(1));
+    }
+
+    /**
+     * Every entry over a root that declares components of its own is read, not only the first
+     * (GW_VETTING_0047): one per key {@link PluginComponents#read} takes from an entry. An entry that
+     * declares none adds nothing, and entries past the limit are not read.
+     */
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {"commands", "agents", "hooks", "mcpServers", "lspServers", "skills"})
+    @SVCs({"SVC_GW_VETTING_0080"})
+    void a_later_entry_over_a_seen_root_is_read_when_it_declares_components(String key) throws IOException {
+        String json = """
+                {"plugins": [
+                  {"name": "a", "source": "./p"},
+                  {"name": "b", "source": "./p", "description": "declares nothing"},
+                  {"name": "c", "source": "p/", "%s": {}},
+                  {"name": "d", "source": "./q"},
+                  {"name": "e", "source": "./p", "%s": {}}]}
+                """.formatted(key, key);
+        Manifest manifest = Manifest.parse("m.json", json.getBytes(StandardCharsets.UTF_8));
+
+        assertThat(PluginComponents.entriesByRoot(manifest, 1_000))
+                .containsExactly(
+                        Map.entry("p", java.util.List.of("/plugins/0", "/plugins/2", "/plugins/4")),
+                        Map.entry("q", java.util.List.of("/plugins/3")));
+        assertThat(PluginComponents.entriesByRoot(manifest, 4))
+                .containsExactly(
+                        Map.entry("p", java.util.List.of("/plugins/0", "/plugins/2")),
+                        Map.entry("q", java.util.List.of("/plugins/3")));
     }
 }

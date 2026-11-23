@@ -3054,12 +3054,12 @@ requirements:
   - id: GW_VETTING_0047
     title: Hooks that run automatically are flagged with their trigger
     significance: shall
-    description: "The system shall provide a built-in vetter, enabled by default and switchable like every other vetter, that raises a medium-severity finding for every hook a plugin of the snapshot declares, whether in the plugin's default hook file, in hook files or inline hook configuration its plugin manifest or marketplace entry declares, or in the frontmatter of one of its skills or agents; each finding shall name the hook's trigger event and matcher and what it runs, located at the path:line of its declaration."
+    description: "The system shall provide a built-in vetter, enabled by default and switchable like every other vetter, that raises a medium-severity finding for every hook a plugin of the snapshot declares, whether in the plugin's default hook file, in hook files or inline hook configuration its plugin manifest or any of its marketplace entries declares, including several entries that name the same source, or in the frontmatter of one of its skills or agents; each finding shall name the hook's trigger event and matcher and what it runs, located at the path:line of its declaration."
     references:
       requirement_ids: ["GW_VETTING_0001"]
     rationale: "A hook runs code without anyone invoking it: at session start, after every edit, at the end of every turn. That is legitimate plugin behaviour, so on its own it warns rather than blocks; blocking every hook would teach reviewers to waive them unread. It still has to be in front of the reviewer, with its trigger, because the approval is also an approval of what runs unattended."
     categories: ["security"]
-    revision: 0.3.0
+    revision: 0.4.0
 
   - id: GW_VETTING_0048
     title: Code a hook fetches at run time is a high-severity finding

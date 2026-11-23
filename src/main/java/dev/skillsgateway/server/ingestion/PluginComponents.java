@@ -63,10 +63,50 @@ public final class PluginComponents {
     public static final class Cache {
 
         private final Map<String, Frontmatter> frontmatter = new HashMap<>();
+        private final Map<String, Json> json = new HashMap<>();
     }
 
     /** One file's frontmatter hooks, or the problem that kept them from being read. */
     private record Frontmatter(List<Hook> hooks, Problem problem) {}
+
+    /** One JSON declaration file, or the problem that kept it from being read; both null when absent. */
+    private record Json(Manifest parsed, Problem problem) {}
+
+    /** The keys a marketplace entry can declare components under: every key {@link #read} reads from an entry. */
+    static final List<String> ENTRY_COMPONENT_KEYS =
+            List.of("commands", "agents", "hooks", "mcpServers", "lspServers", "skills");
+
+    /**
+     * The manifest's plugins as each root and the JSON pointers of the entries to read it with
+     * (GW_VETTING_0047): the first entry naming the root, and every later one naming it that declares
+     * components of its own. Claude Code installs every entry as a plugin, so a later entry over a
+     * root already seen still adds what it declares; one that declares nothing reads exactly what
+     * the first one reads, so it is left out. Only the first {@code limit} entries are read.
+     */
+    @Requirements({"GW_VETTING_0047"})
+    public static Map<String, List<String>> entriesByRoot(Manifest manifest, int limit) {
+        Map<String, List<String>> roots = new LinkedHashMap<>();
+        if (manifest == null) {
+            return roots;
+        }
+        JsonNode entries = manifest.root().path("plugins");
+        int read = Math.min(entries.size(), limit);
+        for (int i = 0; i < read; i++) {
+            JsonNode entry = entries.get(i);
+            JsonNode source = entry.path("source");
+            String root = source.isTextual() ? normalizeRoot(source.asText()) : null;
+            if (root == null) {
+                continue;
+            }
+            List<String> pointers = roots.get(root);
+            if (pointers == null) {
+                roots.put(root, new ArrayList<>(List.of("/plugins/" + i)));
+            } else if (ENTRY_COMPONENT_KEYS.stream().anyMatch(entry::has)) {
+                pointers.add("/plugins/" + i);
+            }
+        }
+        return roots;
+    }
 
     @Schema(name = "PluginComponent", description = "A command, agent, MCP server or LSP server a plugin provides")
     public record Component(
@@ -352,22 +392,32 @@ public final class PluginComponents {
             if (!exists(path)) {
                 return null;
             }
+            // Memoized per tree (GW_INGEST_0074): one root read under many entries parses each file once.
+            Json read = cache.json.computeIfAbsent(path + "\0" + declares, key -> parseJson(path, declares));
+            if (read.problem() != null) {
+                problems.add(read.problem());
+            }
+            return read.parsed();
+        }
+
+        private Json parseJson(String path, String declares) {
             try {
                 byte[] content = files.read(path);
                 if (content == null) {
-                    problems.add(
+                    return new Json(
+                            null,
                             new Problem(path, "over the scan size limit, so its " + declares + " could not be read"));
-                    return null;
                 }
                 Manifest parsed = Manifest.parse(path, content);
                 if (!parsed.root().isObject()) {
                     throw new IOException("not a JSON object");
                 }
-                return parsed;
+                return new Json(parsed, null);
             } catch (IOException | RuntimeException e) {
-                problems.add(new Problem(
-                        path, "not valid JSON, so its " + declares + " could not be read: " + firstLine(e)));
-                return null;
+                return new Json(
+                        null,
+                        new Problem(
+                                path, "not valid JSON, so its " + declares + " could not be read: " + firstLine(e)));
             }
         }
 
