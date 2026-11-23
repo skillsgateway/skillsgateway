@@ -2996,7 +2996,7 @@ header from a client's. Its three values differ in whom they believe:</p>
 <tr>
 <td><code>framework</code></td>
 <td>Spring's filter honours the headers from any peer.</td>
-<td>The proxy has a public address, or you need <code>X-Forwarded-Prefix</code> or RFC 7239 <code>Forwarded</code>. Only where nothing but the proxy can reach port 8080, and where the proxy overwrites the headers rather than passing a client's through.</td>
+<td>The proxy has a public address, or you need <code>X-Forwarded-Prefix</code> (set <code>SERVER_REQUEST_HEADER_FORWARDED_USEPREFIX=true</code>) or RFC 7239 <code>Forwarded</code> (set <code>SERVER_REQUEST_HEADER_FORWARDED_NAMING=rfc-7239</code>). Only where nothing but the proxy can reach port 8080, and where the proxy overwrites the headers rather than passing a client's through.</td>
 </tr>
 <tr>
 <td><code>none</code></td>

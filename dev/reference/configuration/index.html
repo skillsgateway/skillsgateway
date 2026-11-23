@@ -6125,6 +6125,18 @@ itself with one. Moving <code>path</code> moves that exception with it. See
 <td><em>(unset)</em></td>
 <td><code>native</code>, <code>framework</code>, <code>none</code></td>
 </tr>
+<tr>
+<td><code>server.request.header.forwarded.naming</code></td>
+<td><code>SERVER_REQUEST_HEADER_FORWARDED_NAMING</code></td>
+<td><code>x-forwarded</code></td>
+<td><code>x-forwarded</code>, <code>rfc-7239</code></td>
+</tr>
+<tr>
+<td><code>server.request.header.forwarded.use-prefix</code></td>
+<td><code>SERVER_REQUEST_HEADER_FORWARDED_USEPREFIX</code></td>
+<td><code>false</code></td>
+<td><code>true</code>, <code>false</code></td>
+</tr>
 </tbody>
 </table>
 <p>The gateway serves plain HTTP and terminates no TLS, so the request it sees
@@ -6147,7 +6159,7 @@ with Spring Boot's own meanings:</p>
 </tr>
 <tr>
 <td><code>framework</code></td>
-<td>Spring's <code>ForwardedHeaderFilter</code>: the headers, <code>X-Forwarded-Prefix</code> and RFC 7239 <code>Forwarded</code> are honoured from any peer. The remote address is left as the proxy's.</td>
+<td>Spring's <code>ForwardedHeaderFilter</code>: the headers are honoured from any peer. One family is read, <code>X-Forwarded-*</code> by default or RFC 7239 <code>Forwarded</code> with <code>naming: rfc-7239</code>; <code>X-Forwarded-Prefix</code> only with <code>use-prefix: true</code>. The remote address is left as the proxy's.</td>
 </tr>
 <tr>
 <td><code>none</code></td>
@@ -6166,6 +6178,10 @@ belongs where the proxy's address is inside the internal ranges. The Helm chart
 sets <code>native</code> through its <code>forwardHeadersStrategy</code> value; other runtimes set
 the variable — see
 <a href="../../guides/deploying-without-kubernetes/#running-behind-a-proxy">Running behind a proxy</a>.</p>
+<p>Spring Boot 4.2 renamed the strategy to <code>server.request.header.forwarded.strategy</code>
+(values <code>web-server</code>, <code>framework</code>, <code>none</code>, where <code>web-server</code> is the old
+<code>native</code>). The gateway accepts either name; setting both refuses to start. The
+old name is deprecated in Spring Boot and still what the Helm chart sets.</p>
 <p>The OIDC redirect URI the gateway sends is built from the request's host unless
 <code>SGW_OIDC_REDIRECT_URI</code> fixes it. Register the exact redirect URI or URIs with
 the identity provider, never a wildcard, and have the proxy set <code>Host</code> or
