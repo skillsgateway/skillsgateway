@@ -501,7 +501,13 @@ class PluginComponentsTests {
                 "hooks/hooks.json",
                 HOOKS_JSON,
                 ".mcp.json",
-                "{not json");
+                "{not json",
+                ".claude-plugin/plugin.json",
+                "{\"hooks\": \"./modules/hooks.json\"}",
+                "modules/hooks.json",
+                "{\"modules\": [\"./register.js\"]}",
+                "modules/register.js",
+                "export const register = (on) => { on('session.start', ($, e, next) => next(e)) }\n");
         for (int i = 0; i < 50; i++) {
             tree.put("skills/s%d/SKILL.md".formatted(i), "---\nname: s%d\ndescription: d\n---\n".formatted(i));
         }
@@ -529,6 +535,9 @@ class PluginComponentsTests {
         }
 
         assertThat(alone.hooks()).extracting(Hook::runs).contains("./scripts/check.sh");
+        assertThat(alone.hookModules())
+                .extracting(PluginComponents.HookModule::path)
+                .containsExactly("modules/register.js");
         assertThat(alone.hookProblems())
                 .extracting(PluginComponents.Problem::path)
                 .contains("skills/big/SKILL.md", ".mcp.json");
@@ -561,6 +570,16 @@ class PluginComponentsTests {
                 .containsExactly(
                         Map.entry("p", java.util.List.of("/plugins/0", "/plugins/2", "/plugins/4")),
                         Map.entry("q", java.util.List.of("/plugins/3")));
+        String declaringFirst = """
+                {"plugins": [
+                  {"name": "a", "source": "./p", "%s": {}},
+                  {"name": "b", "source": "./p"},
+                  {"name": "c", "source": "./p"}]}
+                """.formatted(key);
+        assertThat(PluginComponents.entriesByRoot(
+                        Manifest.parse("m.json", declaringFirst.getBytes(StandardCharsets.UTF_8)), 1_000))
+                .as("a plain entry still reads the defaults a declaring one replaced; one plain entry is enough")
+                .containsExactly(Map.entry("p", java.util.List.of("/plugins/0", "/plugins/1")));
         assertThat(PluginComponents.entriesByRoot(manifest, 4))
                 .containsExactly(
                         Map.entry("p", java.util.List.of("/plugins/0", "/plugins/2")),

@@ -66,6 +66,7 @@ public final class PluginComponents {
 
         private final Map<String, Frontmatter> frontmatter = new HashMap<>();
         private final Map<String, JsonFile> json = new HashMap<>();
+        private final Map<String, HookModule> modules = new HashMap<>();
     }
 
     /** One file's frontmatter hooks, or the problem that kept them from being read. */
@@ -80,10 +81,11 @@ public final class PluginComponents {
 
     /**
      * The manifest's plugins as each root and the JSON pointers of the entries to read it with
-     * (GW_VETTING_0047): the first entry naming the root, and every later one naming it that declares
-     * components of its own. Claude Code installs every entry as a plugin, so a later entry over a
-     * root already seen still adds what it declares; one that declares nothing reads exactly what
-     * the first one reads, so it is left out. Only the first {@code limit} entries are read.
+     * (GW_VETTING_0047). Claude Code installs every entry as a plugin, so every entry that declares
+     * components of its own is read, not only the first over its root. Entries that declare none all
+     * read the same thing, the root's defaults, so the first of them stands for the rest; it is still
+     * read when a declaring entry came first, because a declaration can replace a default scan for
+     * its own entry only. Only the first {@code limit} entries are read.
      */
     @Requirements({"GW_VETTING_0047"})
     public static Map<String, List<String>> entriesByRoot(Manifest manifest, int limit) {
@@ -91,6 +93,7 @@ public final class PluginComponents {
         if (manifest == null) {
             return roots;
         }
+        Set<String> plainRead = new java.util.HashSet<>();
         JsonNode entries = manifest.root().path("plugins");
         int read = Math.min(entries.size(), limit);
         for (int i = 0; i < read; i++) {
@@ -100,11 +103,9 @@ public final class PluginComponents {
             if (root == null) {
                 continue;
             }
-            List<String> pointers = roots.get(root);
-            if (pointers == null) {
-                roots.put(root, new ArrayList<>(List.of("/plugins/" + i)));
-            } else if (ENTRY_COMPONENT_KEYS.stream().anyMatch(entry::has)) {
-                pointers.add("/plugins/" + i);
+            boolean declares = ENTRY_COMPONENT_KEYS.stream().anyMatch(entry::has);
+            if (declares || plainRead.add(root)) {
+                roots.computeIfAbsent(root, key -> new ArrayList<>()).add("/plugins/" + i);
             }
         }
         return roots;
@@ -563,7 +564,12 @@ public final class PluginComponents {
                 return;
             }
             if (!modules.containsKey(path)) {
-                modules.put(path, HookModules.read(files, root, path, location));
+                // Memoized per tree: one root read under many entries reads each module graph once.
+                modules.put(
+                        path,
+                        cache.modules.computeIfAbsent(
+                                root + "\0" + path + "\0" + location,
+                                key -> HookModules.read(files, root, path, location)));
             }
         }
 

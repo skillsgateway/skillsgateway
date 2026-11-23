@@ -201,7 +201,8 @@ public class ExecutableSurfaceVetter implements Vetter {
             }
             PluginComponents.Cache cache = new PluginComponents.Cache();
             // A root read under several entries yields its own files' components each time: each is
-            // examined and counted once.
+            // examined and counted once per root. Per root, because a hook two roots reach launches
+            // ${CLAUDE_PLUGIN_ROOT} files of each.
             Set<Object> examined = new HashSet<>();
             Set<String> skillDirectories = new LinkedHashSet<>();
             Set<String> instructions = new LinkedHashSet<>();
@@ -274,24 +275,24 @@ public class ExecutableSurfaceVetter implements Vetter {
                 add(new Finding("hook-config-unreadable", Severity.MEDIUM, problem.path(), problem.message()));
             }
             for (Hook hook : components.hooks()) {
-                if (examined.add(hook)) {
+                if (examined.add(List.of(root, hook))) {
                     hook(root, hook);
                 }
             }
             for (HookModule module : components.hookModules()) {
-                if (examined.add(module)) {
+                if (examined.add(List.of(root, module))) {
                     module(module);
                 }
             }
             for (McpCommand server : components.mcpCommands()) {
-                if (!examined.add(List.of(Server.MCP, server))) {
+                if (!examined.add(List.of(root, Server.MCP, server))) {
                     continue;
                 }
                 servers++;
                 server(root, server, Server.MCP);
             }
             for (McpCommand server : components.lspCommands()) {
-                if (!examined.add(List.of(Server.LSP, server))) {
+                if (!examined.add(List.of(root, Server.LSP, server))) {
                     continue;
                 }
                 lspServers++;

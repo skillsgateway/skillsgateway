@@ -4287,9 +4287,9 @@ cases:
     title: A later marketplace entry naming an already seen source is vetted for what it declares
     verification: automated-test
     description: |
-      GIVEN a manifest whose first entry names a plugin source plainly and whose later entries name the same source and declare, inline, a hook that downloads and executes code, an MCP server, a command path or a skills directory
+      GIVEN a manifest whose entries name one plugin source several times, plainly and and declare, inline, a hook that downloads and executes code, an MCP server, a command path or a skills directory
       WHEN the chain runs
-      THEN each later entry's hook is flagged at its manifest line with its run-time fetch, its declared servers and skill files are examined, and a hook its source's own files declare is counted once however many entries read that source
+      THEN each later entry's hook is flagged at its manifest line with its run-time fetch, its declared servers and skill files are examined, a later entry that declares nothing still reads the defaults an earlier entry's declarations replaced, a hook its source's own files declare is counted once however many entries read that source, and a hook two sources reach is followed from each
     revision: "0.1.0"
 
   - id: SVC_GW_VETTING_0048

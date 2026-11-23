@@ -14,12 +14,22 @@ so the union lost every later entry over a root already seen.
 
 ### Which entries to read
 
-`PluginComponents.entriesByRoot(manifest, limit)` returns, per root, the first
-entry naming it plus every later entry that declares any of `commands`,
-`agents`, `hooks`, `mcpServers`, `lspServers`, `skills`, the keys `read`
-consults on an entry. An entry declaring none of them yields the same
-components as the first entry over the root (the default scans run in both
-cases), so skipping it loses nothing.
+`PluginComponents.entriesByRoot(manifest, limit)` returns, per root, every
+entry that declares any of `commands`, `agents`, `hooks`, `mcpServers`,
+`lspServers`, `skills` (the keys `read` consults on an entry), plus the first
+entry over the root that declares none. Entries that declare none all read the
+same thing, the root's defaults, so one stands for all. That one is read even
+when a declaring entry came first: without a `plugin.json`, an entry's
+`commands` or `agents` paths replace the default scan for that entry only, so
+the plain entry is the only one that reads the default directory.
+
+The first version kept only the first entry over a root plus later declaring
+ones. CodeRabbit found the hole on review: a first entry declaring `agents`
+suppressed the default `agents/` scan, and the plain entry that would have read
+it was dropped. A test reproduced it before the fix.
+
+Rejected: reading every entry. Correct, but a manifest repeating one root a
+thousand times would read it a thousand times for nothing.
 
 ### The surface comparison stays as it is
 
@@ -58,8 +68,16 @@ default directories.
 The same hook, module or server can now arrive from two reads of one root.
 Findings already de-duplicate on id, location and message. The vetter's
 coverage counters (`N hook(s)`, …) would not, so the vetter skips a component
-it has already processed: the hook, module or server record itself, which
-holds its location and what it runs.
+it has already processed under the same root: the root with the hook, module
+or server record, which holds its location and what it runs. The key includes
+the root because a hook two roots reach (a `skills` path from one root into
+another) launches `${CLAUDE_PLUGIN_ROOT}` files under each, and each must be
+followed. Keying by the record alone skipped the second root's scripts; also
+found by CodeRabbit and reproduced by a test first.
+
+Hook-module graphs join frontmatter and JSON in `PluginComponents.Cache`,
+keyed by root, module path and location (all three shape the result), so a
+root read under many declaring entries scans each module graph once.
 
 ## Risks
 

@@ -14,7 +14,7 @@ trap 'git checkout -- src/main' EXIT
 
 PC=src/main/java/dev/skillsgateway/server/ingestion/PluginComponents.java
 EV=src/main/java/dev/skillsgateway/server/vetting/ExecutableSurfaceVetter.java
-known='^M[1-6]-'
+known='^M[1-9]-'
 
 mutate() { # file old new: replace exactly one occurrence, or fail
   python3 - "$1" "$2" "$3" <<'PY'
@@ -65,17 +65,24 @@ run() { # id test-class expected-method file old new
 }
 
 run M1-first-entry-only vetting.ExecutableSurfaceVetterTests aHookInlineOnALaterEntryOverASeenSourceIsFlaggedWithItsFetch "$PC" \
-  '} else if (ENTRY_COMPONENT_KEYS.stream().anyMatch(entry::has)) {' '} else if (false) {'
+  'boolean declares = ENTRY_COMPONENT_KEYS.stream().anyMatch(entry::has);' 'boolean declares = false;'
 run M2-skills-key-dropped vetting.ExecutableSurfaceVetterTests aSkillsDirectoryOnlyALaterEntryDeclaresHasItsFrontmatterHooksFlagged "$PC" \
   '"mcpServers", "lspServers", "skills");' '"mcpServers", "lspServers");'
 run M3-hooks-counted-per-read vetting.ExecutableSurfaceVetterTests aHookInTheSourcesOwnFileIsCountedOnceHoweverManyEntriesReadTheSource "$EV" \
-  'if (examined.add(hook)) {' 'if (examined.add(hook) || true) {'
+  'if (examined.add(List.of(root, hook))) {' 'if (examined.add(List.of(root, hook)) || true) {'
 run M4-entry-limit-ignored ingestion.PluginComponentsTests a_later_entry_over_a_seen_root_is_read_when_it_declares_components "$PC" \
   'int read = Math.min(entries.size(), limit);' 'int read = entries.size();'
 run M5-json-not-cached ingestion.PluginComponentsTests a_shared_cache_reads_each_frontmatter_once_and_every_plugin_still_gets_its_hooks_and_problems "$PC" \
   'JsonFile read = cache.json.computeIfAbsent(path + "\0" + declares, key -> parseJson(path, declares));' 'JsonFile read = parseJson(path, declares);'
 run M6-no-plugin-cap-finding vetting.PluginRootBoundTests a_manifest_with_more_plugins_than_the_bound_fails_closed "$EV" \
   'if (entries > ManifestPolicy.MAX_PLUGINS) {' 'if (false) {'
+
+run M7-hooks-deduplicated-across-roots vetting.ExecutableSurfaceVetterTests aHookTwoRootsReachIsFollowedFromEachRoot "$EV" \
+  'if (examined.add(List.of(root, hook))) {' 'if (examined.add(hook)) {'
+run M8-plain-entry-only-when-first vetting.ExecutableSurfaceVetterTests aPlainLaterEntryStillReadsTheDefaultsAnEarlierEntrysDeclarationsReplaced "$PC" \
+  'if (declares || plainRead.add(root)) {' 'if (declares || !roots.containsKey(root)) {'
+run M9-modules-not-cached ingestion.PluginComponentsTests a_shared_cache_reads_each_frontmatter_once_and_every_plugin_still_gets_its_hooks_and_problems "$PC" \
+  'cache.modules.computeIfAbsent(' 'new HashMap<String, HookModule>().computeIfAbsent('
 
 [ "$ran" -gt 0 ] || { echo "no mutant selected"; exit 5; }
 if [[ -n "${DRY:-}" ]]; then echo "$ran mutants apply"; else echo "$ran mutants run, all killed"; fi
