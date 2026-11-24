@@ -141,13 +141,15 @@ scheme and host the outside world sees from the `X-Forwarded-*` headers that
 proxy sends. The chart names how far those headers are believed:
 
 ```yaml
-forwardHeadersStrategy: native   # the default
+forwardHeadersStrategy: web-server   # the default
 ```
 
-`native` honours the headers only from a peer in a private address range,
+`web-server` honours the headers only from a peer in a private address range,
 which is where an ingress controller sits; `framework` honours them from any
-peer, for a proxy outside those ranges; `none` ignores them. A value the
-gateway does not know fails the render. The choice and its consequences are
+peer, for a proxy outside those ranges; `none` ignores them. `native`, the name
+of `web-server` before Spring Boot 4.2, is still accepted and rendered as
+`web-server`. A value the gateway does not know fails the render. The chart
+passes it as `SERVER_REQUEST_HEADER_FORWARDED_STRATEGY`. The choice and its consequences are
 spelled out in
 [Running behind a proxy](deploying-without-kubernetes.md#running-behind-a-proxy).
 
@@ -157,7 +159,7 @@ registered with the provider, and every login fails on a redirect-URI mismatch.
 `oidc.redirectUri` states the registered URI outright, trusting no header,
 should you ever need to bypass the derivation.
 
-!!! warning "Remove `SERVER_FORWARDHEADERSSTRATEGY: framework` from `extraEnv`"
+!!! warning "Remove the strategy from `extraEnv` and `config`"
 
     Earlier versions of this guide set it there. On the GraalVM native image the
     release used to publish, that value was inert — Spring Boot registers the
@@ -166,8 +168,13 @@ should you ever need to bypass the derivation.
     deduced on Kubernetes, so following the advice made logins fail rather than
     fixing them. The gateway registers the filter itself now, and the release
     artifact is a JVM container, so both halves of that are gone. The chart value
-    replaces the `extraEnv` entry either way; an `extraEnv` entry of the same
-    name would override the chart's.
+    replaces the `extraEnv` entry either way. The chart now sets the strategy
+    under its Spring Boot 4.2 name, and Spring Boot refuses to start with both
+    names set, so the chart refuses to render while `extraEnv` or `config` sets
+    the strategy under either name (`server.forward-headers-strategy` or
+    `server.request.header.forwarded.strategy`). Before upgrading, remove it
+    from both and set `forwardHeadersStrategy`. An `envFrom` source is not
+    checked; keep the strategy out of it too.
 
 ## Storage
 

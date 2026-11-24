@@ -85,16 +85,27 @@ class PackagingTests {
 
         // The proxy the chart itself installs sits inside the cluster's private ranges, so the
         // default is the strategy that trusts exactly those peers and nobody else.
-        assertThat(values.get("forwardHeadersStrategy")).isEqualTo("native");
+        assertThat(values.get("forwardHeadersStrategy")).isEqualTo("web-server");
         assertThat(section(values, "oidc")).containsEntry("redirectUri", "");
 
-        // The value reaches the pod in the variable the gateway reads, through a gate that refuses
-        // anything Spring Boot would not understand rather than rendering an inert setting.
+        // The value reaches the pod in the variable the gateway reads -- the Boot 4.2 name, not the
+        // deprecated one Boot 4.4 removes -- through a gate that refuses anything Spring Boot would
+        // not understand rather than rendering an inert setting. `native`, the value's name before
+        // the rename, is still accepted and rendered as `web-server`, and an extraEnv entry setting
+        // the strategy again, which Boot refuses to start with, fails the render, and so does
+        // a config entry, which the ConfigMap would layer on as application.yaml.
         assertThat(deployment)
-                .contains("SERVER_FORWARDHEADERSSTRATEGY")
+                .contains("SERVER_REQUEST_HEADER_FORWARDED_STRATEGY")
+                .doesNotContain("SERVER_FORWARDHEADERSSTRATEGY")
                 .contains("skills-gateway.forwardHeadersStrategy");
         assertThat(define(helpers, "skills-gateway.forwardHeadersStrategy"))
-                .contains("\"native\" \"framework\" \"none\"")
+                .contains("\"web-server\" \"native\" \"framework\" \"none\"")
+                .contains("if eq $strategy \"native\" -}}web-server")
+                .contains("range .Values.extraEnv")
+                .contains("\"SERVER_FORWARDHEADERSSTRATEGY\" \"SERVER_REQUEST_HEADER_FORWARDED_STRATEGY\"")
+                .contains("include \"skills-gateway.configPaths\"")
+                .contains("\"serverforwardheadersstrategy\"")
+                .contains("\"serverrequestheaderforwardedstrategy\"")
                 .contains("fail");
         assertThat(deployment).contains("SGW_OIDC_REDIRECT_URI").contains(".Values.oidc.redirectUri");
 

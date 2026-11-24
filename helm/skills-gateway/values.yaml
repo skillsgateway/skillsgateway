@@ -153,19 +153,24 @@ persistence:
 # Ingress, or a load balancer before it -- its external URLs (the OIDC redirect
 # URI above all) are built from what that proxy reports in X-Forwarded-*.
 #
-#   native     -- Tomcat honours the headers only from a peer in a private
+#   web-server -- Tomcat honours the headers only from a peer in a private
 #                 address range (10/8, 172.16/12, 192.168/16, 100.64/10,
 #                 loopback, and their IPv6 counterparts), which is where an
 #                 ingress controller or an in-VPC load balancer sits. Default.
+#                 `native`, its name before Spring Boot 4.2, is still accepted.
 #   framework  -- Spring's filter honours them from any peer. For a proxy
 #                 outside those ranges, and only where nothing but the proxy
 #                 can reach the pod.
 #   none       -- ignore them. Right only when the pod terminates TLS itself.
 #
+# Rendered as SERVER_REQUEST_HEADER_FORWARDED_STRATEGY. Do not also set the
+# strategy in extraEnv or config, under either name; the template refuses to
+# render.
+#
 # Named rather than inferred, like the storage backend: Spring Boot would deduce
-# `native` on Kubernetes by itself, and a setting that is written down is one an
+# `web-server` on Kubernetes by itself, and a setting that is written down is one an
 # operator can read and change.
-forwardHeadersStrategy: native
+forwardHeadersStrategy: web-server
 
 # Ingress for the web portal and the git smart-HTTP facade.
 #

@@ -184,7 +184,7 @@ jobs:
             -e SPRING_DATASOURCE_USERNAME=skillsgateway \
             -e SPRING_DATASOURCE_PASSWORD=skillsgateway \
             -e SKILLSGATEWAY_ROLES_ADMINS_0=smoke-test \
-            -e SERVER_FORWARDHEADERSSTRATEGY=framework \
+            -e SERVER_REQUEST_HEADER_FORWARDED_STRATEGY=framework \
             -e SGW_OIDC_CLIENT_ID=smoke-client \
             -e SGW_OIDC_CLIENT_SECRET=smoke-secret \
             -e SGW_OIDC_AUTHORIZATION_URI=http://localhost:9090/default/authorize \
@@ -303,6 +303,40 @@ jobs:
 
       - name: Helm lint
         run: helm lint helm/skills-gateway
+
+      # The forwarded-header strategy gate (GW_AUTH_0029): `native`, the name before
+      # Spring Boot 4.2, still renders as `web-server`, and an extraEnv entry that would
+      # set the strategy a second time fails the render rather than the pod's startup,
+      # and so does a config entry.
+      - name: Helm forwarded-header strategy
+        run: |
+          set -euo pipefail
+          chart=helm/skills-gateway
+          render() {
+            helm template sg "$chart" --set postgresql.host=db --set postgresql.existingSecret=db \
+              --set oidc.existingSecret=oidc --set oidc.issuer=https://idp.example.com \
+              --set persistence.mode=ephemeral "$@"
+          }
+          strategy() { render "$@" | grep -A1 'name: SERVER_REQUEST_HEADER_FORWARDED_STRATEGY' | tail -n1; }
+          [[ "$(strategy)" == *'"web-server"' ]] || { echo "default is not web-server"; exit 1; }
+          [[ "$(strategy --set forwardHeadersStrategy=native)" == *'"web-server"' ]] \
+            || { echo "native did not render as web-server"; exit 1; }
+          if render --set forwardHeadersStrategy=bogus >/dev/null 2>&1; then
+            echo "an unknown strategy rendered"; exit 1
+          fi
+          if render --set 'extraEnv[0].name=SERVER_FORWARDHEADERSSTRATEGY' \
+              --set 'extraEnv[0].value=framework' >/dev/null 2>&1; then
+            echo "a second strategy in extraEnv rendered"; exit 1
+          fi
+          if render --set config.server.forward-headers-strategy=framework >/dev/null 2>&1; then
+            echo "a second strategy in config rendered"; exit 1
+          fi
+          if render --set-json 'config={"server.forwardHeadersStrategy":"framework"}' >/dev/null 2>&1; then
+            echo "a relaxed-binding spelling of the strategy in config rendered"; exit 1
+          fi
+          render --set config.server.request.header.forwarded.use-prefix=true >/dev/null \
+            || { echo "an unrelated forwarded-header setting in config failed to render"; exit 1; }
+          echo "forwarded-header strategy renders and gates as documented"
 
       # --- Publication: only the smoke-tested image, and only from release.yml.
       #

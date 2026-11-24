@@ -20,7 +20,7 @@ Every setting the gateway reads, with its default and what consumes it.
 | [`spring.datasource.*`](#datasource) | PostgreSQL connection. Supplied entirely by environment. | **Yes** |
 | [`spring.security.oauth2.client.*`](#oidc-login) | OIDC login for the web surface. | **Yes** |
 | [`server.servlet.session.cookie.same-site`](#session-cookie) | Whether the browser sends the session cookie on a cross-site request. | No — set to `lax` in `application.yaml`. |
-| [`server.forward-headers-strategy`](#forwarded-headers) | Whether the scheme and host a TLS-terminating proxy reports are believed. **Off by default.** | **Yes**, behind a proxy — which is every real deployment. |
+| [`server.request.header.forwarded.strategy`](#forwarded-headers) | Whether the scheme and host a TLS-terminating proxy reports are believed. **Off by default.** | **Yes**, behind a proxy — which is every real deployment. |
 | [`management.endpoints.*`](#actuator) | Which actuator endpoints are exposed. | No |
 | [`scalar.*`](#api-documentation) | The bundled API reference UI. | No |
 
@@ -1782,7 +1782,7 @@ itself with one. Moving `path` moves that exception with it. See
 
 | Property | Environment variable | Default | Values |
 | --- | --- | --- | --- |
-| `server.forward-headers-strategy` | `SERVER_FORWARDHEADERSSTRATEGY` | _(unset)_ | `native`, `framework`, `none` |
+| `server.request.header.forwarded.strategy` | `SERVER_REQUEST_HEADER_FORWARDED_STRATEGY` | _(unset)_ | `web-server`, `framework`, `none` |
 | `server.request.header.forwarded.naming` | `SERVER_REQUEST_HEADER_FORWARDED_NAMING` | `x-forwarded` | `x-forwarded`, `rfc-7239` |
 | `server.request.header.forwarded.use-prefix` | `SERVER_REQUEST_HEADER_FORWARDED_USEPREFIX` | `false` | `true`, `false` |
 
@@ -1795,23 +1795,30 @@ with Spring Boot's own meanings:
 
 | Value | Effect |
 | --- | --- |
-| `native` | Tomcat's `RemoteIpValve`: the headers are honoured only from a peer whose address is in `server.tomcat.remoteip.internal-proxies` — by default the private ranges `10/8`, `172.16/12`, `192.168/16`, `100.64/10`, loopback and their IPv6 counterparts. `X-Forwarded-For` also replaces the remote address the fetch ledger records. Recommended. |
+| `web-server` | Tomcat's `RemoteIpValve`: the headers are honoured only from a peer whose address is in `server.tomcat.remoteip.internal-proxies` — by default the private ranges `10/8`, `172.16/12`, `192.168/16`, `100.64/10`, loopback and their IPv6 counterparts. `X-Forwarded-For` also replaces the remote address the fetch ledger records. Recommended. |
 | `framework` | Spring's `ForwardedHeaderFilter`: the headers are honoured from any peer. One family is read, `X-Forwarded-*` by default or RFC 7239 `Forwarded` with `naming: rfc-7239`; `X-Forwarded-Prefix` only with `use-prefix: true`. The remote address is left as the proxy's. |
 | `none` | The headers are ignored. |
-| _(unset)_ | `native` when Spring Boot detects a container platform from the environment (Kubernetes and ECS among them), otherwise `none`. |
+| _(unset)_ | `web-server` when Spring Boot detects a container platform from the environment (Kubernetes and ECS among them), otherwise `none`. |
 
 Trusting the headers is a security decision: the gateway cannot tell a proxy's
 header from a client's, so `framework` belongs only where nothing but the proxy
-can reach the listener and the proxy overwrites the headers, and `native`
+can reach the listener and the proxy overwrites the headers, and `web-server`
 belongs where the proxy's address is inside the internal ranges. The Helm chart
-sets `native` through its `forwardHeadersStrategy` value; other runtimes set
+sets `web-server` through its `forwardHeadersStrategy` value; other runtimes set
 the variable — see
 [Running behind a proxy](../guides/deploying-without-kubernetes.md#running-behind-a-proxy).
 
-Spring Boot 4.2 renamed the strategy to `server.request.header.forwarded.strategy`
-(values `web-server`, `framework`, `none`, where `web-server` is the old
-`native`). The gateway accepts either name; setting both refuses to start. The
-old name is deprecated in Spring Boot and still what the Helm chart sets.
+!!! warning "`server.forward-headers-strategy` is deprecated"
+
+    Spring Boot 4.2 renamed `server.forward-headers-strategy`
+    (`SERVER_FORWARDHEADERSSTRATEGY`) to `server.request.header.forwarded.strategy`,
+    and its value `native` to `web-server`; `framework` and `none` are unchanged.
+    The old name still works as an alias until Spring Boot 4.4 removes it, so move
+    to the new one now. Setting both names refuses to start, so replace the old
+    variable rather than adding the new one beside it. The Helm chart sets the new
+    name, still accepts `native` as its `forwardHeadersStrategy` value, and
+    refuses to render while `extraEnv` or `config` sets the strategy under
+    either name.
 
 The OIDC redirect URI the gateway sends is built from the request's host unless
 `SGW_OIDC_REDIRECT_URI` fixes it. Register the exact redirect URI or URIs with
@@ -1824,7 +1831,7 @@ configured, identically on every packaging). Spring Boot's own registration is
 behind a `@ConditionalOnProperty`, which an ahead-of-time image evaluates when it
 is built, with the property unset — so on the GraalVM native image the release
 used to publish it was never compiled in and no runtime value could switch it on.
-`native` never had that problem: Tomcat's valve is installed by a customizer that
+`web-server` (then `native`) never had that problem: Tomcat's valve is installed by a customizer that
 reads the property at runtime. The released image is a JVM container today
 ([ADR 0012 — A JVM container is the release artifact](https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0012-native-image-as-the-release-artifact.md)), where neither shape can occur; the explicit
 registration stays because it is what makes the setting mean one thing on every

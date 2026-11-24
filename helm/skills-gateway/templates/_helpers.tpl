@@ -138,12 +138,47 @@ does not deliver is worse than no gate.
 {{- end -}}
 
 {{/*
-Forwarded-header strategy, fail-closed: the three values Spring Boot knows.
+Forwarded-header strategy, fail-closed: the values Spring Boot knows for
+server.request.header.forwarded.strategy, plus `native`, the name Boot 4.1 and
+earlier used for `web-server`, so a values file written before the rename keeps
+rendering. Fails, too, when extraEnv or config also sets the strategy: the
+chart's variable and a second setting under the deprecated name are two
+settings, and Spring Boot refuses to start with both; under the new name the
+second one is silently overridden.
 */}}
 {{- define "skills-gateway.forwardHeadersStrategy" -}}
 {{- $strategy := .Values.forwardHeadersStrategy | default "" -}}
-{{- if not (has $strategy (list "native" "framework" "none")) -}}
-{{- fail (printf "forwardHeadersStrategy must be \"native\", \"framework\" or \"none\" (got %q). It decides whether the gateway believes the scheme and host a proxy reports in X-Forwarded-* headers; a value the gateway does not know would leave every login behind a TLS-terminating Ingress failing on a redirect-URI mismatch." $strategy) -}}
+{{- if not (has $strategy (list "web-server" "native" "framework" "none")) -}}
+{{- fail (printf "forwardHeadersStrategy must be \"web-server\", \"framework\" or \"none\" (got %q). It decides whether the gateway believes the scheme and host a proxy reports in X-Forwarded-* headers; a value the gateway does not know would leave every login behind a TLS-terminating Ingress failing on a redirect-URI mismatch." $strategy) -}}
 {{- end -}}
-{{- $strategy -}}
+{{- range .Values.extraEnv -}}
+{{- if has (.name | default "") (list "SERVER_FORWARDHEADERSSTRATEGY" "SERVER_REQUEST_HEADER_FORWARDED_STRATEGY") -}}
+{{- fail (printf "extraEnv sets %s, but the chart sets the forwarded-header strategy itself from forwardHeadersStrategy. Remove the extraEnv entry and set forwardHeadersStrategy instead: under the new name it would silently override the chart's value, and under the deprecated name Spring Boot refuses to start with both set." .name) -}}
+{{- end -}}
+{{- end -}}
+{{- $paths := splitList "\n" (include "skills-gateway.configPaths" (dict "prefix" "" "value" (.Values.config | default dict))) -}}
+{{- $inConfig := or (has "serverforwardheadersstrategy" $paths) (has "serverrequestheaderforwardedstrategy" $paths) -}}
+{{- if $inConfig -}}
+{{- fail "config sets the forwarded-header strategy, but the chart sets it itself from forwardHeadersStrategy. Remove it from config and set forwardHeadersStrategy instead: under the new name it would be silently overridden by the chart's value, and under the deprecated name server.forward-headers-strategy Spring Boot refuses to start with both set." -}}
+{{- end -}}
+{{- if eq $strategy "native" -}}web-server{{- else -}}{{- $strategy -}}{{- end -}}
+{{- end -}}
+
+
+{{/*
+Every leaf path of a config map, one per line, in the form Spring Boot's relaxed
+binding compares: segments joined with dots, then lower-cased with the dots,
+dashes and underscores dropped. So `server.forward-headers-strategy`,
+`server: {forwardHeadersStrategy: …}` and `{"server.forwardHeadersStrategy": …}`
+all read `serverforwardheadersstrategy`. Called recursively with
+(dict "prefix" … "value" …).
+*/}}
+{{- define "skills-gateway.configPaths" -}}
+{{- if kindIs "map" .value -}}
+{{- range $key, $child := .value -}}
+{{- include "skills-gateway.configPaths" (dict "prefix" (printf "%s%s" $.prefix $key) "value" $child) }}
+{{ end -}}
+{{- else -}}
+{{- .prefix | lower | replace "." "" | replace "-" "" | replace "_" "" -}}
+{{- end -}}
 {{- end -}}

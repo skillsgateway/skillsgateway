@@ -89,7 +89,7 @@ spec:
             - name: SGW_OIDC_REDIRECT_URI
               value: {{ .Values.oidc.redirectUri | quote }}
             {{- end }}
-            - name: SERVER_FORWARDHEADERSSTRATEGY
+            - name: SERVER_REQUEST_HEADER_FORWARDED_STRATEGY
               value: {{ include "skills-gateway.forwardHeadersStrategy" . | quote }}
             # JGit's own filesystem-timestamp-resolution cache falls back to
             # $HOME/.config/jgit when XDG_CONFIG_HOME is unset, and neither is
