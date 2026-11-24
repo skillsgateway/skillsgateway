@@ -3667,6 +3667,11 @@ and from the frontmatter of its skills and agents. The vetter reads the same
 <p>Plugins come from two places: those the manifest lists, and any directory that
 holds a <code>.claude-plugin/plugin.json</code>. A plugin left out of the manifest is still
 served, so its hooks are still read.</p>
+<p>Claude Code installs every manifest entry as a plugin, even when several
+entries name the same <code>source</code>. Each entry that declares hooks, servers,
+commands, agents or skill directories of its own is read for them, not only
+the first entry over that directory. A hook in the directory's own files is
+reported once, however many entries name it.</p>
 <table>
 <thead>
 <tr>
@@ -3698,7 +3703,7 @@ served, so its hooks are still read.</p>
 </tr>
 <tr>
 <td><code>too-many-plugin-roots</code></td>
-<td>The snapshot declares more than 1,000 plugin roots (directories holding a <code>.claude-plugin/plugin.json</code>). Only the first 1,000 are read, so the rest were not examined</td>
+<td>The snapshot declares more than 1,000 plugin roots (directories holding a <code>.claude-plugin/plugin.json</code>), or its manifest lists more than 1,000 plugins, which only a snapshot ingested before that bound can. Only the first 1,000 are read, so the rest were not examined</td>
 <td>high: blocks</td>
 </tr>
 <tr>
