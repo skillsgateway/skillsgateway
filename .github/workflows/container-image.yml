@@ -331,6 +331,9 @@ jobs:
           if render --set config.server.forward-headers-strategy=framework >/dev/null 2>&1; then
             echo "a second strategy in config rendered"; exit 1
           fi
+          if render --set-json 'config={"server.forwardHeadersStrategy":"framework"}' >/dev/null 2>&1; then
+            echo "a relaxed-binding spelling of the strategy in config rendered"; exit 1
+          fi
           render --set config.server.request.header.forwarded.use-prefix=true >/dev/null \
             || { echo "an unrelated forwarded-header setting in config failed to render"; exit 1; }
           echo "forwarded-header strategy renders and gates as documented"

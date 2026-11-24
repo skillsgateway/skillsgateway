@@ -156,20 +156,29 @@ second one is silently overridden.
 {{- fail (printf "extraEnv sets %s, but the chart sets the forwarded-header strategy itself from forwardHeadersStrategy. Remove the extraEnv entry and set forwardHeadersStrategy instead: under the new name it would silently override the chart's value, and under the deprecated name Spring Boot refuses to start with both set." .name) -}}
 {{- end -}}
 {{- end -}}
-{{- $config := .Values.config | default dict -}}
-{{- $server := get $config "server" | default dict -}}
-{{- $request := get (kindIs "map" $server | ternary $server dict) "request" | default dict -}}
-{{- $header := get (kindIs "map" $request | ternary $request dict) "header" | default dict -}}
-{{- $forwarded := get (kindIs "map" $header | ternary $header dict) "forwarded" | default dict -}}
-{{- $inConfig := or (hasKey $config "server.forward-headers-strategy") (hasKey $config "server.request.header.forwarded.strategy") -}}
-{{- if kindIs "map" $server -}}
-{{- $inConfig = or $inConfig (hasKey $server "forward-headers-strategy") (hasKey $server "forwardHeadersStrategy") -}}
-{{- end -}}
-{{- if kindIs "map" $forwarded -}}
-{{- $inConfig = or $inConfig (hasKey $forwarded "strategy") -}}
-{{- end -}}
+{{- $paths := splitList "\n" (include "skills-gateway.configPaths" (dict "prefix" "" "value" (.Values.config | default dict))) -}}
+{{- $inConfig := or (has "serverforwardheadersstrategy" $paths) (has "serverrequestheaderforwardedstrategy" $paths) -}}
 {{- if $inConfig -}}
 {{- fail "config sets the forwarded-header strategy, but the chart sets it itself from forwardHeadersStrategy. Remove it from config and set forwardHeadersStrategy instead: under the new name it would be silently overridden by the chart's value, and under the deprecated name server.forward-headers-strategy Spring Boot refuses to start with both set." -}}
 {{- end -}}
 {{- if eq $strategy "native" -}}web-server{{- else -}}{{- $strategy -}}{{- end -}}
+{{- end -}}
+
+
+{{/*
+Every leaf path of a config map, one per line, in the form Spring Boot's relaxed
+binding compares: segments joined with dots, then lower-cased with the dots,
+dashes and underscores dropped. So `server.forward-headers-strategy`,
+`server: {forwardHeadersStrategy: …}` and `{"server.forwardHeadersStrategy": …}`
+all read `serverforwardheadersstrategy`. Called recursively with
+(dict "prefix" … "value" …).
+*/}}
+{{- define "skills-gateway.configPaths" -}}
+{{- if kindIs "map" .value -}}
+{{- range $key, $child := .value -}}
+{{- include "skills-gateway.configPaths" (dict "prefix" (printf "%s%s" $.prefix $key) "value" $child) }}
+{{ end -}}
+{{- else -}}
+{{- .prefix | lower | replace "." "" | replace "-" "" | replace "_" "" -}}
+{{- end -}}
 {{- end -}}

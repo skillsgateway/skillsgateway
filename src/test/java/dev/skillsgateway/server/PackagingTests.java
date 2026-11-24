@@ -103,9 +103,9 @@ class PackagingTests {
                 .contains("if eq $strategy \"native\" -}}web-server")
                 .contains("range .Values.extraEnv")
                 .contains("\"SERVER_FORWARDHEADERSSTRATEGY\" \"SERVER_REQUEST_HEADER_FORWARDED_STRATEGY\"")
-                .contains("hasKey $config \"server.forward-headers-strategy\"")
-                .contains("hasKey $server \"forward-headers-strategy\"")
-                .contains("hasKey $forwarded \"strategy\"")
+                .contains("include \"skills-gateway.configPaths\"")
+                .contains("\"serverforwardheadersstrategy\"")
+                .contains("\"serverrequestheaderforwardedstrategy\"")
                 .contains("fail");
         assertThat(deployment).contains("SGW_OIDC_REDIRECT_URI").contains(".Values.oidc.redirectUri");
 
