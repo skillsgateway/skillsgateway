@@ -258,24 +258,25 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["host", "paths"],
+            "required": ["paths"],
             "properties": {
               "host": {
-                "type": "string",
-                "minLength": 1
+                "description": "Empty or omitted: the rule matches any host.",
+                "type": "string"
               },
               "paths": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["path", "pathType"],
+                  "required": ["path"],
                   "properties": {
                     "path": {
                       "type": "string",
                       "minLength": 1
                     },
                     "pathType": {
+                      "description": "Defaults to Prefix.",
                       "type": "string",
                       "enum": ["Exact", "Prefix", "ImplementationSpecific"]
                     }
@@ -286,10 +287,11 @@
           }
         },
         "tls": {
-          "description": "Kubernetes IngressTLS entries.",
+          "description": "IngressTLS entries; the template reads only hosts and secretName.",
           "type": "array",
           "items": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
               "secretName": {
                 "type": "string"

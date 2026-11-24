@@ -62,7 +62,7 @@ through as written (`config`, `resources`, `podSecurityContext`,
 `securityContext`, `affinity`, `tolerations`, and the `extraEnv` and
 `extraEnvFrom` entries) take any key. When upgrading from a chart version
 without the schema, a values file carrying a key the chart never read now fails
-`helm upgrade`; `helm lint -f my-values.yaml` against the new chart names it, and
+`helm upgrade`; `helm lint ./helm/skills-gateway -f my-values.yaml` against the new chart names it, and
 deleting it changes nothing about the deployment.
 
 Rules that span fields, such as `persistence.mode: none` only on the

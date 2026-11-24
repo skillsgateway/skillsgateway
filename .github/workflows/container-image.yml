@@ -365,6 +365,7 @@ jobs:
           refused "an out-of-range port" "/postgresql/port" --set postgresql.port=70000
           refused "a misspelt top-level key" "'persistance' not allowed" --set persistance.mode=ephemeral
           refused "a misspelt nested key" "'objectstore' not allowed" --set storage.objectstore.bucket=b
+          refused "a misspelt TLS key" "'secretNmae' not allowed" --set-json 'ingress.tls=[{"secretNmae":"tls"}]'
           refused "an unknown storage backend" "/storage/backend" --set storage.backend=s3
           refused "an unknown credentials mode" "/storage/objectStore/credentials/mode" \
             --set storage.objectStore.credentials.mode=keys
@@ -372,6 +373,9 @@ jobs:
           refused "an unknown OTLP protocol" "/otel/protocol" --set otel.protocol=http/json
           refused "an unknown strategy" "/forwardHeadersStrategy" --set forwardHeadersStrategy=bogus
           refused "an empty persistence mode" "Git storage has no safe default" --set persistence.mode=
+          # A hostless rule and a path without pathType are the template's to default.
+          render --set ingress.enabled=true --set-json 'ingress.hosts=[{"paths":[{"path":"/"}]}]' >/dev/null \
+            || { echo "a hostless rule without pathType was refused"; exit 1; }
           # Pass-through objects stay open.
           render --set podSecurityContext.supplementalGroups[0]=1000 \
             --set resources.limits.ephemeral-storage=1Gi >/dev/null \
