@@ -141,9 +141,10 @@ does not deliver is worse than no gate.
 Forwarded-header strategy, fail-closed: the values Spring Boot knows for
 server.request.header.forwarded.strategy, plus `native`, the name Boot 4.1 and
 earlier used for `web-server`, so a values file written before the rename keeps
-rendering. Fails, too, when extraEnv also sets the strategy: the chart's
-variable and an extraEnv one under the deprecated name are two settings, and
-Spring Boot refuses to start with both.
+rendering. Fails, too, when extraEnv or config also sets the strategy: the
+chart's variable and a second setting under the deprecated name are two
+settings, and Spring Boot refuses to start with both; under the new name the
+second one is silently overridden.
 */}}
 {{- define "skills-gateway.forwardHeadersStrategy" -}}
 {{- $strategy := .Values.forwardHeadersStrategy | default "" -}}
@@ -154,6 +155,21 @@ Spring Boot refuses to start with both.
 {{- if has (.name | default "") (list "SERVER_FORWARDHEADERSSTRATEGY" "SERVER_REQUEST_HEADER_FORWARDED_STRATEGY") -}}
 {{- fail (printf "extraEnv sets %s, but the chart sets the forwarded-header strategy itself from forwardHeadersStrategy. Remove the extraEnv entry and set forwardHeadersStrategy instead: under the new name it would silently override the chart's value, and under the deprecated name Spring Boot refuses to start with both set." .name) -}}
 {{- end -}}
+{{- end -}}
+{{- $config := .Values.config | default dict -}}
+{{- $server := get $config "server" | default dict -}}
+{{- $request := get (kindIs "map" $server | ternary $server dict) "request" | default dict -}}
+{{- $header := get (kindIs "map" $request | ternary $request dict) "header" | default dict -}}
+{{- $forwarded := get (kindIs "map" $header | ternary $header dict) "forwarded" | default dict -}}
+{{- $inConfig := or (hasKey $config "server.forward-headers-strategy") (hasKey $config "server.request.header.forwarded.strategy") -}}
+{{- if kindIs "map" $server -}}
+{{- $inConfig = or $inConfig (hasKey $server "forward-headers-strategy") (hasKey $server "forwardHeadersStrategy") -}}
+{{- end -}}
+{{- if kindIs "map" $forwarded -}}
+{{- $inConfig = or $inConfig (hasKey $forwarded "strategy") -}}
+{{- end -}}
+{{- if $inConfig -}}
+{{- fail "config sets the forwarded-header strategy, but the chart sets it itself from forwardHeadersStrategy. Remove it from config and set forwardHeadersStrategy instead: under the new name it would be silently overridden by the chart's value, and under the deprecated name server.forward-headers-strategy Spring Boot refuses to start with both set." -}}
 {{- end -}}
 {{- if eq $strategy "native" -}}web-server{{- else -}}{{- $strategy -}}{{- end -}}
 {{- end -}}

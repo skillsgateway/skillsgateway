@@ -1817,8 +1817,8 @@ the variable — see
     to the new one now. Setting both names refuses to start, so replace the old
     variable rather than adding the new one beside it. The Helm chart sets the new
     name, still accepts `native` as its `forwardHeadersStrategy` value, and
-    refuses to render an `extraEnv` entry that sets the strategy under either
-    name.
+    refuses to render while `extraEnv` or `config` sets the strategy under
+    either name.
 
 The OIDC redirect URI the gateway sends is built from the request's host unless
 `SGW_OIDC_REDIRECT_URI` fixes it. Register the exact redirect URI or URIs with

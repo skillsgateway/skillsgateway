@@ -159,7 +159,7 @@ registered with the provider, and every login fails on a redirect-URI mismatch.
 `oidc.redirectUri` states the registered URI outright, trusting no header,
 should you ever need to bypass the derivation.
 
-!!! warning "Remove `SERVER_FORWARDHEADERSSTRATEGY` from `extraEnv`"
+!!! warning "Remove the strategy from `extraEnv` and `config`"
 
     Earlier versions of this guide set it there. On the GraalVM native image the
     release used to publish, that value was inert — Spring Boot registers the
@@ -170,9 +170,11 @@ should you ever need to bypass the derivation.
     artifact is a JVM container, so both halves of that are gone. The chart value
     replaces the `extraEnv` entry either way. The chart now sets the strategy
     under its Spring Boot 4.2 name, and Spring Boot refuses to start with both
-    names set, so the chart refuses to render while `extraEnv` sets the strategy
-    under either name. An `envFrom` source is not checked; keep the strategy out
-    of it too.
+    names set, so the chart refuses to render while `extraEnv` or `config` sets
+    the strategy under either name (`server.forward-headers-strategy` or
+    `server.request.header.forwarded.strategy`). Before upgrading, remove it
+    from both and set `forwardHeadersStrategy`. An `envFrom` source is not
+    checked; keep the strategy out of it too.
 
 ## Storage
 

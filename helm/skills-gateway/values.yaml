@@ -164,7 +164,8 @@ persistence:
 #   none       -- ignore them. Right only when the pod terminates TLS itself.
 #
 # Rendered as SERVER_REQUEST_HEADER_FORWARDED_STRATEGY. Do not also set the
-# strategy in extraEnv, under either name; the template refuses to render.
+# strategy in extraEnv or config, under either name; the template refuses to
+# render.
 #
 # Named rather than inferred, like the storage backend: Spring Boot would deduce
 # `web-server` on Kubernetes by itself, and a setting that is written down is one an

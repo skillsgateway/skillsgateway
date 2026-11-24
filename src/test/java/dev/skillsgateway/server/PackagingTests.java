@@ -92,7 +92,8 @@ class PackagingTests {
         // deprecated one Boot 4.4 removes -- through a gate that refuses anything Spring Boot would
         // not understand rather than rendering an inert setting. `native`, the value's name before
         // the rename, is still accepted and rendered as `web-server`, and an extraEnv entry setting
-        // the strategy again, which Boot refuses to start with, fails the render.
+        // the strategy again, which Boot refuses to start with, fails the render, and so does
+        // a config entry, which the ConfigMap would layer on as application.yaml.
         assertThat(deployment)
                 .contains("SERVER_REQUEST_HEADER_FORWARDED_STRATEGY")
                 .doesNotContain("SERVER_FORWARDHEADERSSTRATEGY")
@@ -102,6 +103,9 @@ class PackagingTests {
                 .contains("if eq $strategy \"native\" -}}web-server")
                 .contains("range .Values.extraEnv")
                 .contains("\"SERVER_FORWARDHEADERSSTRATEGY\" \"SERVER_REQUEST_HEADER_FORWARDED_STRATEGY\"")
+                .contains("hasKey $config \"server.forward-headers-strategy\"")
+                .contains("hasKey $server \"forward-headers-strategy\"")
+                .contains("hasKey $forwarded \"strategy\"")
                 .contains("fail");
         assertThat(deployment).contains("SGW_OIDC_REDIRECT_URI").contains(".Values.oidc.redirectUri");
 
