@@ -1,5 +1,6 @@
 package dev.skillsgateway.server.vetting;
 
+import dev.skillsgateway.server.ingestion.ManifestPolicy;
 import dev.skillsgateway.server.ingestion.PluginComponents;
 import dev.skillsgateway.server.ingestion.PluginComponents.Hook;
 import dev.skillsgateway.server.ingestion.PluginComponents.HookModule;
@@ -174,6 +175,11 @@ public class ExecutableSurfaceVetter implements Vetter {
         // Apart from the hooks' set, so a server's medium scan never hides a hook's high one.
         private final Map<Server, Set<String>> serverScanned =
                 Map.of(Server.MCP, new HashSet<>(), Server.LSP, new HashSet<>());
+        // The shallowest depth follow() has reached each file at, per kind, root and path: a shared
+        // script can name a different ${CLAUDE_PLUGIN_ROOT} file under each root that reaches it
+        // (GW_VETTING_0047), and a file first reached at MAX_DEPTH is followed again when a shorter
+        // chain reaches it (GW_VETTING_0048).
+        private final Map<List<String>, Integer> followed = new HashMap<>();
         private int hooks;
         private int modules;
         private int servers;
@@ -186,16 +192,23 @@ public class ExecutableSurfaceVetter implements Vetter {
         }
 
         Verdict vet() throws IOException {
-            Map<String, String> roots = new LinkedHashMap<>();
+            // Each root with the entries to read it under (GW_VETTING_0047); a root only a plugin.json
+            // names is read under no entry, its one-element list holding null.
+            Map<String, List<String>> roots = new LinkedHashMap<>();
             PluginComponents.Manifest manifest = manifest(roots);
             for (String path : files.paths()) {
                 if (path.equals(PLUGIN_JSON) || path.endsWith("/" + PLUGIN_JSON)) {
                     roots.putIfAbsent(
                             path.substring(0, path.length() - PLUGIN_JSON.length())
                                     .replaceAll("/$", ""),
-                            null);
+                            java.util.Collections.singletonList(null));
                 }
             }
+            PluginComponents.Cache cache = new PluginComponents.Cache();
+            // A root read under several entries yields its own files' components each time: each is
+            // examined and counted once per root. Per root, because a hook two roots reach launches
+            // ${CLAUDE_PLUGIN_ROOT} files of each.
+            Set<Object> examined = new HashSet<>();
             Set<String> skillDirectories = new LinkedHashSet<>();
             Set<String> instructions = new LinkedHashSet<>();
             if (roots.size() > MAX_PLUGIN_ROOTS) {
@@ -209,40 +222,12 @@ public class ExecutableSurfaceVetter implements Vetter {
                                 .formatted(roots.size(), MAX_PLUGIN_ROOTS)));
             }
             int read = 0;
-            for (Map.Entry<String, String> root : roots.entrySet()) {
+            for (Map.Entry<String, List<String>> root : roots.entrySet()) {
                 if (++read > MAX_PLUGIN_ROOTS) {
                     break;
                 }
-                if (Thread.currentThread().isInterrupted()) {
-                    throw new java.util.concurrent.CancellationException("vetting was cancelled");
-                }
-                PluginComponents.Components components = PluginComponents.read(
-                        files, root.getKey(), root.getValue() == null ? null : manifest, root.getValue());
-                components
-                        .skillFiles()
-                        .forEach(skill -> skillDirectories.add(skill.substring(0, skill.lastIndexOf('/'))));
-                for (PluginComponents.Component component : components.commands()) {
-                    instructions.add(component.path());
-                }
-                for (PluginComponents.Component component : components.agents()) {
-                    instructions.add(component.path());
-                }
-                for (PluginComponents.Problem problem : components.hookProblems()) {
-                    add(new Finding("hook-config-unreadable", Severity.MEDIUM, problem.path(), problem.message()));
-                }
-                for (Hook hook : components.hooks()) {
-                    hook(root.getKey(), hook);
-                }
-                for (HookModule module : components.hookModules()) {
-                    module(module);
-                }
-                for (McpCommand server : components.mcpCommands()) {
-                    servers++;
-                    server(root.getKey(), server, Server.MCP);
-                }
-                for (McpCommand server : components.lspCommands()) {
-                    lspServers++;
-                    server(root.getKey(), server, Server.LSP);
+                for (String pointer : root.getValue()) {
+                    readPlugin(root.getKey(), pointer, manifest, cache, examined, skillDirectories, instructions);
                 }
             }
             Set<String> launched = new HashSet<>(scanned);
@@ -265,8 +250,67 @@ public class ExecutableSurfaceVetter implements Vetter {
                                     skillFilesRead));
         }
 
-        /** The manifest's plugin roots into {@code roots}, keyed to their entry's JSON pointer. */
-        private PluginComponents.Manifest manifest(Map<String, String> roots) throws IOException {
+        /**
+         * One plugin: {@code root} read under the manifest entry at {@code pointer}, or under none
+         * (GW_VETTING_0047). What another entry of the same root already brought is skipped.
+         */
+        @Requirements({"GW_VETTING_0047", "GW_VETTING_0064"})
+        private void readPlugin(
+                String root,
+                String pointer,
+                PluginComponents.Manifest manifest,
+                PluginComponents.Cache cache,
+                Set<Object> examined,
+                Set<String> skillDirectories,
+                Set<String> instructions)
+                throws IOException {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new java.util.concurrent.CancellationException("vetting was cancelled");
+            }
+            PluginComponents.Components components =
+                    PluginComponents.read(files, root, pointer == null ? null : manifest, pointer, cache);
+            components.skillFiles().forEach(skill -> skillDirectories.add(skill.substring(0, skill.lastIndexOf('/'))));
+            for (PluginComponents.Component component : components.commands()) {
+                instructions.add(component.path());
+            }
+            for (PluginComponents.Component component : components.agents()) {
+                instructions.add(component.path());
+            }
+            for (PluginComponents.Problem problem : components.hookProblems()) {
+                add(new Finding("hook-config-unreadable", Severity.MEDIUM, problem.path(), problem.message()));
+            }
+            for (Hook hook : components.hooks()) {
+                if (examined.add(List.of(root, hook))) {
+                    hook(root, hook);
+                }
+            }
+            for (HookModule module : components.hookModules()) {
+                if (examined.add(List.of(root, module))) {
+                    module(module);
+                }
+            }
+            for (McpCommand server : components.mcpCommands()) {
+                if (!examined.add(List.of(root, Server.MCP, server))) {
+                    continue;
+                }
+                servers++;
+                server(root, server, Server.MCP);
+            }
+            for (McpCommand server : components.lspCommands()) {
+                if (!examined.add(List.of(root, Server.LSP, server))) {
+                    continue;
+                }
+                lspServers++;
+                server(root, server, Server.LSP);
+            }
+        }
+
+        /**
+         * The manifest's plugin roots into {@code roots}, each with the entries to read it under
+         * (GW_VETTING_0047). Past {@link ManifestPolicy#MAX_PLUGINS} entries, which ingest refuses but an
+         * older snapshot can hold, the run fails closed and reads only the first (GW_VETTING_0064).
+         */
+        private PluginComponents.Manifest manifest(Map<String, List<String>> roots) throws IOException {
             if (!files.paths().contains(MANIFEST_PATH)) {
                 return null;
             }
@@ -285,14 +329,16 @@ public class ExecutableSurfaceVetter implements Vetter {
                         "the marketplace manifest could not be read, so hooks its entries declare could not be read"));
                 return null;
             }
-            var entries = manifest.root().path("plugins");
-            for (int i = 0; i < entries.size(); i++) {
-                var source = entries.get(i).path("source");
-                String root = source.isString() ? PluginComponents.normalizeRoot(source.asString("")) : null;
-                if (root != null) {
-                    roots.putIfAbsent(root, "/plugins/" + i);
-                }
+            int entries = manifest.root().path("plugins").size();
+            if (entries > ManifestPolicy.MAX_PLUGINS) {
+                add(new Finding(
+                        "too-many-plugin-roots",
+                        Severity.HIGH,
+                        MANIFEST_PATH,
+                        "the manifest declares %d plugins; only the first %d were read"
+                                .formatted(entries, ManifestPolicy.MAX_PLUGINS)));
             }
+            roots.putAll(PluginComponents.entriesByRoot(manifest, ManifestPolicy.MAX_PLUGINS));
             return manifest;
         }
 
@@ -522,10 +568,23 @@ public class ExecutableSurfaceVetter implements Vetter {
             }
             while (!queue.isEmpty()) {
                 Launched next = queue.poll();
-                if (!visited.add(next.path())) {
+                List<String> key = List.of(String.valueOf(server), root, next.path());
+                Integer shallowest = followed.get(key);
+                if (shallowest != null && shallowest <= next.depth()) {
                     continue;
                 }
-                String content = server == null ? launchedText(next) : serverLaunchedText(next, server);
+                followed.put(key, next.depth());
+                String content;
+                if (visited.add(next.path())) {
+                    content = server == null ? launchedText(next) : serverLaunchedText(next, server);
+                } else {
+                    // Scanned already, under another root, at another depth or as a module's file: only
+                    // traversed again, except that a hook running it unreadable is still reported.
+                    content = ContentRules.text(files.read(next.path()));
+                    if (content == null && server == null && next.depth() == 1) {
+                        launchedText(next);
+                    }
+                }
                 if (content == null || next.depth() >= MAX_DEPTH) {
                     continue;
                 }

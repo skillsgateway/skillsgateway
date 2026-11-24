@@ -4282,6 +4282,16 @@ cases:
       THEN the executable-surface verdict warns with one medium finding per hook naming its trigger and command at its declaration's path:line, the snapshot without hooks passes with a coverage summary, and the vetter can be switched off like any built-in
     revision: "0.3.0"
 
+  - id: SVC_GW_VETTING_0080
+    requirement_ids: ["GW_VETTING_0047"]
+    title: A later marketplace entry naming an already seen source is vetted for what it declares
+    verification: automated-test
+    description: |
+      GIVEN a manifest whose entries name one plugin source several times, plainly and and declare, inline, a hook that downloads and executes code, an MCP server, a command path or a skills directory
+      WHEN the chain runs
+      THEN each later entry's hook is flagged at its manifest line with its run-time fetch, its declared servers and skill files are examined, a later entry that declares nothing still reads the defaults an earlier entry's declarations replaced, a hook its source's own files declare is counted once however many entries read that source, and a hook two sources reach is followed from each
+    revision: "0.1.0"
+
   - id: SVC_GW_VETTING_0048
     requirement_ids: ["GW_VETTING_0048"]
     title: Download-and-execute and package runners reached by a hook block; the negatives stay silent

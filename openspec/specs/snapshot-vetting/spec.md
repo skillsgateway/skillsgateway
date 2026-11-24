@@ -2,7 +2,9 @@
 
 ## Purpose
 The pluggable vetting chain: ordered vetters run at ingestion against the quarantined, SHA-pinned snapshot, fail-closed aggregation of their verdicts, the built-in secret and prompt-injection scanners, the approval gate that refuses a snapshot whose effective outcome is blocked until an active waiver covers every blocking finding, the portal surface that puts the evidence in front of the reviewer, and the ledger record of every run and verdict.
+
 ## Requirements
+
 ### Requirement: GW_VETTING_0001
 The system SHALL implement GW_VETTING_0001.
 
@@ -296,6 +298,10 @@ The system SHALL implement GW_VETTING_0047.
 
 #### Scenario: SVC_GW_VETTING_0047
 - **WHEN** SVC_GW_VETTING_0047 is run
+- **THEN** it passes
+
+#### Scenario: SVC_GW_VETTING_0080
+- **WHEN** SVC_GW_VETTING_0080 is run
 - **THEN** it passes
 
 ### Requirement: GW_VETTING_0048
