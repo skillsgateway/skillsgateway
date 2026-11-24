@@ -3,6 +3,7 @@ package dev.skillsgateway.server.vetting;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
+import dev.skillsgateway.server.ingestion.ManifestPolicy;
 import io.github.reqstool.annotations.SVCs;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -42,6 +43,29 @@ class PluginRootBoundTests {
         assertThat(verdict.state()).isEqualTo(VerdictState.FAIL);
         assertThat(verdict.findings())
                 .anySatisfy(finding -> assertThat(finding.id()).isEqualTo("too-many-plugin-roots"));
+    }
+
+    /** A manifest past the plugin bound, which only a snapshot ingested before the bound can hold, fails closed. */
+    @Test
+    @SVCs({"SVC_GW_VETTING_0066"})
+    void a_manifest_with_more_plugins_than_the_bound_fails_closed() {
+        StringBuilder plugins = new StringBuilder();
+        for (int i = 0; i <= ManifestPolicy.MAX_PLUGINS; i++) {
+            plugins.append(i == 0 ? "" : ",").append("{\"name\": \"p%d\", \"source\": \"./p\"}".formatted(i));
+        }
+        Map<String, byte[]> files = new LinkedHashMap<>();
+        files.put(
+                ".claude-plugin/marketplace.json",
+                "{\"name\": \"m\", \"plugins\": [%s]}".formatted(plugins).getBytes(StandardCharsets.UTF_8));
+        files.put("p/skills/s/SKILL.md", SKILL);
+
+        Verdict verdict = new ExecutableSurfaceVetter().vet(new InMemorySnapshot(files));
+
+        assertThat(verdict.state()).isEqualTo(VerdictState.FAIL);
+        assertThat(verdict.findings()).anySatisfy(finding -> {
+            assertThat(finding.id()).isEqualTo("too-many-plugin-roots");
+            assertThat(finding.message()).contains("1001 plugins");
+        });
     }
 
     @Test

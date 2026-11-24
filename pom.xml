@@ -33,15 +33,15 @@
         <jgit.version>7.8.1.202611041320-r</jgit.version>
         <reqstool-annotations.version>1.0.2</reqstool-annotations.version>
         <cel.version>0.15.0</cel.version>
-        <spotless.version>3.11.0</spotless.version>
+        <spotless.version>3.12.0</spotless.version>
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
         <checkstyle.version>14.4.0</checkstyle.version>
         <reqstool-plugin.version>1.1.1</reqstool-plugin.version>
         <arconia.version>0.32.0</arconia.version>
-        <awssdk.version>2.59.5</awssdk.version>
+        <awssdk.version>2.59.7</awssdk.version>
         <spring-cloud-aws.version>4.2.2</spring-cloud-aws.version>
         <cyclonedx-plugin.version>2.9.3</cyclonedx-plugin.version>
-        <springdoc.version>3.2.0</springdoc.version>
+        <springdoc.version>3.2.1</springdoc.version>
         <scalar.version>0.4.4</scalar.version>
         <!-- Skips the UI gate execution (typecheck/lint/vitest/tags) without skipping
              the UI build; used by the container-image workflow, where no browsers exist. -->

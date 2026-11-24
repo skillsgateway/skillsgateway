@@ -1,0 +1,71 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# Repository additions to the central CodeRabbit configuration in
+# skillsgateway/coderabbit (profile, bot skipping, summary placement). Lists
+# here combine with the central ones; path_instructions match by path.
+#
+# AGENTS.md and CLAUDE.md are picked up as review guidelines by default; the
+# repository skills below add the conventions each area is held to.
+inheritance: true
+
+reviews:
+  path_filters:
+    # Generated code and lockfiles the central config does not cover.
+    - "!skills-lock.json"
+    - "!src/main/frontend/src/api/types.gen.ts"
+    - "!src/main/frontend/openapi.json"
+    # Archived OpenSpec changes are history; the live specs are reviewed.
+    - "!openspec/changes/archive/**"
+    # Vendored third-party skills, updated by .github/workflows/impeccable-update.yml.
+    - "!.claude/skills/impeccable/**"
+    - "!.impeccable/**"
+    - "!**/*.svg"
+
+  path_instructions:
+    - path: "src/main/java/**/*.java"
+      instructions: |
+        Java 25 / Spring Boot 4. Git operations use JGit, never a subprocess.
+        Flag behaviour that bypasses ApprovalService for publishing, serves
+        quarantine content, or authenticates /git/** with anything other than a
+        PAT or (when enabled) an IdP bearer token. Requirements are referenced
+        by @Requirements/@SVCs ids, never restated in code.
+    - path: "src/main/java/**/{facade,approval,auth}/**"
+      instructions: |
+        Trust boundary. Expect adversarial and negative tests for every new
+        branch, not only happy-path coverage. Flag missing authorization
+        checks, TOCTOU windows and anything that widens the URL scheme
+        allowlist or lets a client pick the pinned ref.
+    - path: "src/main/resources/db/migration/**"
+      instructions: |
+        Applied Flyway migrations must never be edited; a schema change is a
+        new V<n>__*.sql that applies to a database holding the previous
+        schema's rows. Flag tightened constraints without a stated repair.
+    - path: "src/test/**"
+      instructions: |
+        Existing SVC tests must not be weakened or deleted to make a change
+        pass. Container-backed tests use Arconia Dev Services, not raw
+        Testcontainers, where a dev service exists.
+    - path: "src/main/frontend/src/**/*.{ts,tsx}"
+      instructions: |
+        React/Vite portal. Hold UI to the design system in DESIGN.md and
+        .claude/skills/design-conventions. Requirements are JSDoc tags, never
+        restated text.
+    - path: "docs/**/*.md"
+      instructions: |
+        MkDocs Material, built with --strict. Requirements are named with id
+        and title, never restated.
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - files: ".claude/skills/code-conventions/SKILL.md"
+        applyTo: "src/**"
+      - files: ".claude/skills/architecture/SKILL.md"
+        applyTo: "src/main/java/**"
+      - files: ".claude/skills/old-coder/SKILL.md"
+        applyTo: "src/main/java/**/{facade,approval,auth}/**"
+      - files: ".claude/skills/design-conventions/SKILL.md"
+        applyTo: "src/main/frontend/**"
+      - files: ".claude/skills/documentation/SKILL.md"
+        applyTo: "docs/**"

@@ -65,10 +65,51 @@ public final class PluginComponents {
     public static final class Cache {
 
         private final Map<String, Frontmatter> frontmatter = new HashMap<>();
+        private final Map<String, JsonFile> json = new HashMap<>();
+        private final Map<String, HookModule> modules = new HashMap<>();
     }
 
     /** One file's frontmatter hooks, or the problem that kept them from being read. */
     private record Frontmatter(List<Hook> hooks, Problem problem) {}
+
+    /** One JSON declaration file, or the problem that kept it from being read; both null when absent. */
+    private record JsonFile(Manifest parsed, Problem problem) {}
+
+    /** The keys a marketplace entry can declare components under: every key {@link #read} reads from an entry. */
+    static final List<String> ENTRY_COMPONENT_KEYS =
+            List.of("commands", "agents", "hooks", "mcpServers", "lspServers", "skills");
+
+    /**
+     * The manifest's plugins as each root and the JSON pointers of the entries to read it with
+     * (GW_VETTING_0047). Claude Code installs every entry as a plugin, so every entry that declares
+     * components of its own is read, not only the first over its root. Entries that declare none all
+     * read the same thing, the root's defaults, so the first of them stands for the rest; it is still
+     * read when a declaring entry came first, because a declaration can replace a default scan for
+     * its own entry only. Only the first {@code limit} entries are read.
+     */
+    @Requirements({"GW_VETTING_0047"})
+    public static Map<String, List<String>> entriesByRoot(Manifest manifest, int limit) {
+        Map<String, List<String>> roots = new LinkedHashMap<>();
+        if (manifest == null) {
+            return roots;
+        }
+        Set<String> plainRead = new java.util.HashSet<>();
+        JsonNode entries = manifest.root().path("plugins");
+        int read = Math.min(entries.size(), limit);
+        for (int i = 0; i < read; i++) {
+            JsonNode entry = entries.get(i);
+            JsonNode source = entry.path("source");
+            String root = source.isString() ? normalizeRoot(source.asString("")) : null;
+            if (root == null) {
+                continue;
+            }
+            boolean declares = ENTRY_COMPONENT_KEYS.stream().anyMatch(entry::has);
+            if (declares || plainRead.add(root)) {
+                roots.computeIfAbsent(root, key -> new ArrayList<>()).add("/plugins/" + i);
+            }
+        }
+        return roots;
+    }
 
     @Schema(name = "PluginComponent", description = "A command, agent, MCP server or LSP server a plugin provides")
     public record Component(
@@ -356,22 +397,32 @@ public final class PluginComponents {
             if (!exists(path)) {
                 return null;
             }
+            // Memoized per tree (GW_INGEST_0074): one root read under many entries parses each file once.
+            JsonFile read = cache.json.computeIfAbsent(path + "\0" + declares, key -> parseJson(path, declares));
+            if (read.problem() != null) {
+                problems.add(read.problem());
+            }
+            return read.parsed();
+        }
+
+        private JsonFile parseJson(String path, String declares) {
             try {
                 byte[] content = files.read(path);
                 if (content == null) {
-                    problems.add(
+                    return new JsonFile(
+                            null,
                             new Problem(path, "over the scan size limit, so its " + declares + " could not be read"));
-                    return null;
                 }
                 Manifest parsed = Manifest.parse(path, content);
                 if (!parsed.root().isObject()) {
                     throw new IOException("not a JSON object");
                 }
-                return parsed;
+                return new JsonFile(parsed, null);
             } catch (IOException | RuntimeException e) {
-                problems.add(new Problem(
-                        path, "not valid JSON, so its " + declares + " could not be read: " + firstLine(e)));
-                return null;
+                return new JsonFile(
+                        null,
+                        new Problem(
+                                path, "not valid JSON, so its " + declares + " could not be read: " + firstLine(e)));
             }
         }
 
@@ -513,7 +564,12 @@ public final class PluginComponents {
                 return;
             }
             if (!modules.containsKey(path)) {
-                modules.put(path, HookModules.read(files, root, path, location));
+                // Memoized per tree: one root read under many entries reads each module graph once.
+                modules.put(
+                        path,
+                        cache.modules.computeIfAbsent(
+                                root + "\0" + path + "\0" + location,
+                                key -> HookModules.read(files, root, path, location)));
             }
         }
 

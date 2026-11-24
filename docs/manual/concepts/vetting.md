@@ -482,13 +482,19 @@ Plugins come from two places: those the manifest lists, and any directory that
 holds a `.claude-plugin/plugin.json`. A plugin left out of the manifest is still
 served, so its hooks are still read.
 
+Claude Code installs every manifest entry as a plugin, even when several
+entries name the same `source`. Each entry that declares hooks, servers,
+commands, agents or skill directories of its own is read for them, not only
+the first entry over that directory. A hook in the directory's own files is
+reported once, however many entries name it.
+
 | Rule | What it means | Severity |
 | --- | --- | --- |
 | `auto-run-hook` | A hook runs automatically. The finding names its trigger (the event and the tool matcher) and what it runs, with credentials masked, at the `path:line` where it is declared | medium: warns |
 | `runtime-fetch-exec` | A hook's command, or a file of the snapshot the hook launches, downloads code and executes it. That covers three shapes: a download piped into an interpreter; an interpreter fed a download through `$(…)` or `<(…)`; and a file that both downloads to a file and makes that same file executable | high: blocks |
 | `runtime-package-run` | A hook runs a package runner (`npx`, `uvx`, `pnpm dlx`, `pipx run`, …) or installs packages (`pip install`, `npm install`, …). Either way, it fetches its code from a registry at run time | high: blocks |
 | `hook-config-unreadable` | A hook file, a `plugin.json` or the manifest could not be parsed, so the hooks it declares could not be read; an MCP or LSP server file is over the scan size limit or not valid JSON, or a skill or agent file is over the limit, so the servers or frontmatter hooks it declares could not be read (GW_VETTING_0066 — MCP and LSP server files and skill or agent files the vetter cannot read are reported); or a hooks object holds a key the reader does not recognise, or a module path that leaves the plugin; or a skill's or agent's frontmatter `hooks` expands, through YAML aliases, past 10,000 values. The finding names the key | medium: warns |
-| `too-many-plugin-roots` | The snapshot declares more than 1,000 plugin roots (directories holding a `.claude-plugin/plugin.json`). Only the first 1,000 are read, so the rest were not examined | high: blocks |
+| `too-many-plugin-roots` | The snapshot declares more than 1,000 plugin roots (directories holding a `.claude-plugin/plugin.json`), or its manifest lists more than 1,000 plugins, which only a snapshot ingested before that bound can. Only the first 1,000 are read, so the rest were not examined | high: blocks |
 | `hook-target-unscanned` | A hook runs a file that is binary or over the scan size limit, so no rule could read it; or a hook module, or a file it imports, is missing, binary, over the size limit, or a package outside the plugin | medium: warns |
 | `auto-run-module` | A hook module runs in-process in every session. The finding names the events it registers and the `$` interfaces it reaches, at the line that names the module | medium: warns |
 | `module-steers-agent` | A hook module registers `tool.call` (it can deny or rewrite any tool call) or `prompt.compose` (it can rewrite the system prompt), at that registration | medium: warns |
