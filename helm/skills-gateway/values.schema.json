@@ -1,0 +1,363 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/skillsgateway/skillsgateway/helm/skills-gateway/values.schema.json",
+  "title": "skills-gateway chart values",
+  "description": "Types, closed sets and known keys of the chart's values. Rules that span fields (persistence against the storage backend, object-store settings, replica count, the forwarded-header strategy set twice) are checked by the templates, whose messages explain why; see templates/_helpers.tpl.",
+  "type": "object",
+  "additionalProperties": false,
+  "definitions": {
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "stringMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "envVarList": {
+      "description": "Kubernetes EnvVar entries, passed through as written.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "properties": {
+    "global": {
+      "description": "Reserved by Helm for values shared with subcharts. The chart reads nothing from it.",
+      "type": "object"
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "description": "Defaults to the chart's appVersion when empty. Quote a tag that YAML would read as a number.",
+          "type": "string"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        }
+      }
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "create": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "annotations": {
+          "$ref": "#/definitions/stringMap"
+        },
+        "automountServiceAccountToken": {
+          "type": "boolean"
+        }
+      }
+    },
+    "podSecurityContext": {
+      "description": "A Kubernetes PodSecurityContext, passed through as written.",
+      "type": "object"
+    },
+    "securityContext": {
+      "description": "A Kubernetes container SecurityContext, passed through as written.",
+      "type": "object"
+    },
+    "replicaCount": {
+      "description": "More than 1 only with storage.backend object-store; the template refuses otherwise.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "terminationGracePeriodSeconds": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backend": {
+          "type": "string",
+          "enum": ["filesystem", "object-store"]
+        },
+        "objectStore": {
+          "description": "Read only when backend is object-store, which then requires bucket and region.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "endpoint": {
+              "type": "string"
+            },
+            "region": {
+              "type": "string"
+            },
+            "bucket": {
+              "type": "string"
+            },
+            "prefix": {
+              "type": "string"
+            },
+            "credentials": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "mode": {
+                  "description": "static requires existingSecret; web-identity requires serviceAccount.annotations.",
+                  "type": "string",
+                  "enum": ["web-identity", "default", "static"]
+                },
+                "existingSecret": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["ClusterIP", "NodePort", "LoadBalancer"]
+        },
+        "port": {
+          "$ref": "#/definitions/port"
+        }
+      }
+    },
+    "postgresql": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "description": "Required; the template refuses to render without it.",
+          "type": "string"
+        },
+        "port": {
+          "$ref": "#/definitions/port"
+        },
+        "database": {
+          "type": "string",
+          "minLength": 1
+        },
+        "username": {
+          "type": "string",
+          "minLength": 1
+        },
+        "existingSecret": {
+          "description": "Required; a Secret with key password.",
+          "type": "string"
+        }
+      }
+    },
+    "oidc": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "clientId": {
+          "type": "string"
+        },
+        "existingSecret": {
+          "description": "Required; a Secret with key client-secret.",
+          "type": "string"
+        },
+        "authorizationUri": {
+          "type": "string"
+        },
+        "tokenUri": {
+          "type": "string"
+        },
+        "jwkSetUri": {
+          "type": "string"
+        },
+        "userNameAttribute": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "redirectUri": {
+          "type": "string"
+        },
+        "issuer": {
+          "description": "Required; the gateway refuses to start without it.",
+          "type": "string"
+        }
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "description": "No default: the empty string is accepted here only so the template can refuse it with the reason. existingClaim requires existingClaim; none requires storage.backend object-store.",
+          "type": "string",
+          "enum": ["", "existingClaim", "ephemeral", "none"]
+        },
+        "existingClaim": {
+          "type": "string"
+        }
+      }
+    },
+    "forwardHeadersStrategy": {
+      "description": "native is the name of web-server before Spring Boot 4.2, still accepted.",
+      "type": "string",
+      "enum": ["web-server", "native", "framework", "none"]
+    },
+    "ingress": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "className": {
+          "type": "string"
+        },
+        "annotations": {
+          "$ref": "#/definitions/stringMap"
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["paths"],
+            "properties": {
+              "host": {
+                "description": "Empty or omitted: the rule matches any host.",
+                "type": "string"
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["path"],
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "pathType": {
+                      "description": "Defaults to Prefix.",
+                      "type": "string",
+                      "enum": ["Exact", "Prefix", "ImplementationSpecific"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tls": {
+          "description": "IngressTLS entries; the template reads only hosts and secretName.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "secretName": {
+                "type": "string"
+              },
+              "hosts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "resources": {
+      "description": "Kubernetes ResourceRequirements, passed through as written.",
+      "type": "object"
+    },
+    "config": {
+      "description": "Arbitrary Spring configuration, rendered verbatim into a ConfigMap. Never a secret.",
+      "type": "object"
+    },
+    "extraEnv": {
+      "$ref": "#/definitions/envVarList"
+    },
+    "extraEnvFrom": {
+      "description": "Kubernetes EnvFromSource entries, passed through as written.",
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "otel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "endpoint": {
+          "description": "Required when enabled; the template refuses otherwise.",
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string",
+          "enum": ["http/protobuf", "grpc"]
+        },
+        "extraEnv": {
+          "$ref": "#/definitions/envVarList"
+        }
+      }
+    },
+    "nodeSelector": {
+      "$ref": "#/definitions/stringMap"
+    },
+    "tolerations": {
+      "description": "Kubernetes Toleration entries, passed through as written.",
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "affinity": {
+      "description": "A Kubernetes Affinity, passed through as written.",
+      "type": "object"
+    }
+  }
+}
