@@ -70,6 +70,84 @@ class PackagingTests {
     }
 
     /**
+     * The chart ships a values schema, which Helm applies on install, upgrade, lint and template: a
+     * wrong type, an unknown key on one of the chart's own objects and a value outside a closed set
+     * fail before a template runs, where the template would otherwise fall back to a default. The
+     * schema has to describe every key values.yaml carries, or a default install would itself be
+     * refused; the CI render step proves the refusals against a real Helm.
+     */
+    @Test
+    @SVCs({"SVC_GW_RELEASE_0001"})
+    @SuppressWarnings("unchecked")
+    void chartShipsAValuesSchemaThatDescribesEveryValue() throws IOException {
+        Path chart = REPO_ROOT.resolve("helm/skills-gateway");
+        Path schemaFile = chart.resolve("values.schema.json");
+        assertThat(schemaFile).as("the chart carries values.schema.json").exists();
+
+        // JSON is YAML, so the same parser reads it. Draft-07 is what Helm 3 validates.
+        Map<String, Object> schema = parse(schemaFile);
+        assertThat(schema.get("$schema")).isEqualTo("http://json-schema.org/draft-07/schema#");
+
+        Map<String, Object> values = parse(chart.resolve("values.yaml"));
+        assertDescribed("", values, schema);
+
+        // The chart's own objects reject unknown keys, so a misspelt key fails instead of silently
+        // reverting to a default; the pass-through objects carry Kubernetes or Spring shapes the
+        // chart does not own and stay open.
+        assertThat(schema.get("additionalProperties")).as("top level is closed").isEqualTo(false);
+        Map<String, Object> properties = section(schema, "properties");
+        for (String owned : List.of(
+                "image",
+                "serviceAccount",
+                "storage",
+                "service",
+                "postgresql",
+                "oidc",
+                "persistence",
+                "ingress",
+                "otel")) {
+            assertThat(section(properties, owned).get("additionalProperties"))
+                    .as("%s is closed", owned)
+                    .isEqualTo(false);
+        }
+        for (String passThrough : List.of("config", "resources", "podSecurityContext", "securityContext", "affinity")) {
+            assertThat(section(properties, passThrough))
+                    .as("%s stays open", passThrough)
+                    .doesNotContainKey("additionalProperties")
+                    .doesNotContainKey("properties");
+        }
+
+        // The empty mode has to reach the template's refusal, which says why there is no default.
+        assertThat((List<Object>) section(section(section(properties, "persistence"), "properties"), "mode")
+                        .get("enum"))
+                .contains("", "existingClaim", "ephemeral", "none");
+        // The strategy's closed set is the template's, `native` included.
+        assertThat((List<Object>) section(properties, "forwardHeadersStrategy").get("enum"))
+                .containsExactlyInAnyOrder("web-server", "native", "framework", "none");
+        assertThat(define(
+                        Files.readString(chart.resolve("templates/_helpers.tpl")),
+                        "skills-gateway.forwardHeadersStrategy"))
+                .contains("(list \"web-server\" \"native\" \"framework\" \"none\")");
+    }
+
+    /** Every key of {@code values} is a property of {@code schema}, recursively where it has properties. */
+    private static void assertDescribed(String path, Map<String, Object> values, Map<String, Object> schema) {
+        Map<String, Object> properties = section(schema, "properties");
+        if (properties == null) {
+            return;
+        }
+        for (Map.Entry<String, Object> entry : values.entrySet()) {
+            String key = path.isEmpty() ? entry.getKey() : path + "." + entry.getKey();
+            assertThat(properties).as("values.schema.json describes %s", key).containsKey(entry.getKey());
+            if (entry.getValue() instanceof Map<?, ?>) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> child = (Map<String, Object>) entry.getValue();
+                assertDescribed(key, child, section(properties, entry.getKey()));
+            }
+        }
+    }
+
+    /**
      * The chart names the forwarded-header strategy the pod runs with and passes the absolute
      * redirect URI through (GW_AUTH_0029): the Ingress the chart ships terminates TLS, so a chart that
      * left this to Spring Boot's deduction would work by accident and fail silently on the one

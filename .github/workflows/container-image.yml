@@ -338,6 +338,46 @@ jobs:
             || { echo "an unrelated forwarded-header setting in config failed to render"; exit 1; }
           echo "forwarded-header strategy renders and gates as documented"
 
+      # values.schema.json: a wrong type, an unknown key on one of the chart's own objects
+      # and a value outside a closed set fail the render, each with the schema's error rather
+      # than a silent fallback to a default. The empty persistence mode still reaches the
+      # template's refusal, which says why there is no default.
+      - name: Helm values schema
+        run: |
+          set -euo pipefail
+          chart=helm/skills-gateway
+          render() {
+            helm template sg "$chart" --set postgresql.host=db --set postgresql.existingSecret=db \
+              --set oidc.existingSecret=oidc --set oidc.issuer=https://idp.example.com \
+              --set persistence.mode=ephemeral "$@"
+          }
+          refused() {
+            local why=$1 expect=$2; shift 2
+            local out
+            if out=$(render "$@" 2>&1); then echo "$why rendered"; exit 1; fi
+            [[ "$out" == *"$expect"* ]] || { echo "$why failed for the wrong reason: $out"; exit 1; }
+          }
+          render >/dev/null
+          refused "a string replicaCount" "want integer" --set-string replicaCount=2
+          refused "a string service.port" "want integer" --set-string service.port=8080
+          refused "a string ingress.enabled" "want boolean" --set-string ingress.enabled=false
+          refused "replicaCount 0" "/replicaCount" --set replicaCount=0
+          refused "an out-of-range port" "/postgresql/port" --set postgresql.port=70000
+          refused "a misspelt top-level key" "'persistance' not allowed" --set persistance.mode=ephemeral
+          refused "a misspelt nested key" "'objectstore' not allowed" --set storage.objectstore.bucket=b
+          refused "an unknown storage backend" "/storage/backend" --set storage.backend=s3
+          refused "an unknown credentials mode" "/storage/objectStore/credentials/mode" \
+            --set storage.objectStore.credentials.mode=keys
+          refused "an unknown pull policy" "/image/pullPolicy" --set image.pullPolicy=Sometimes
+          refused "an unknown OTLP protocol" "/otel/protocol" --set otel.protocol=http/json
+          refused "an unknown strategy" "/forwardHeadersStrategy" --set forwardHeadersStrategy=bogus
+          refused "an empty persistence mode" "Git storage has no safe default" --set persistence.mode=
+          # Pass-through objects stay open.
+          render --set podSecurityContext.supplementalGroups[0]=1000 \
+            --set resources.limits.ephemeral-storage=1Gi >/dev/null \
+            || { echo "a pass-through object was closed"; exit 1; }
+          echo "values schema refuses what it should and nothing else"
+
       # --- Publication: only the smoke-tested image, and only from release.yml.
       #
       # One build produces both platforms and pushes them as a single tagged

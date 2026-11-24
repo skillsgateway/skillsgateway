@@ -50,6 +50,35 @@ persistence:
   existingClaim: skills-gateway-data
 ```
 
+### The values schema
+
+The chart ships `values.schema.json`, and Helm checks every values file and
+`--set` against it on `install`, `upgrade`, `lint` and `template`. A wrong type
+(`replicaCount: "2"`, `ingress.enabled: "false"`), a value outside a closed set
+(`storage.backend: s3`) and an unknown key on one of the chart's own objects
+(`persistance:`, `storage.objectstore:`) stop the command before anything
+renders, rather than falling back to a default. The objects the chart passes
+through as written (`config`, `resources`, `podSecurityContext`,
+`securityContext`, `affinity`, `tolerations`, and the `extraEnv` and
+`extraEnvFrom` entries) take any key. When upgrading from a chart version
+without the schema, a values file carrying a key the chart never read now fails
+`helm upgrade`; `helm lint -f my-values.yaml` against the new chart names it, and
+deleting it changes nothing about the deployment.
+
+Rules that span fields, such as `persistence.mode: none` only on the
+object-store backend or more than one replica only there, are checked by the
+templates instead, because their messages explain why. A `--set` value that YAML
+reads as a number or a boolean needs `--set-string` where the schema wants a
+string, as `image.tag` does for a numeric tag.
+
+Editors that read JSON Schema (the YAML language server in VS Code and others,
+the Kubernetes plugin in IntelliJ) complete and check a values file when its
+first line points at the schema of the chart version you install:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/skillsgateway/skillsgateway/<released-version>/helm/skills-gateway/values.schema.json
+```
+
 ## Configuring the application
 
 The chart's own keys cover the database, the identity provider and storage.
