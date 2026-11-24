@@ -3441,7 +3441,7 @@
 <td>No — set to <code>lax</code> in <code>application.yaml</code>.</td>
 </tr>
 <tr>
-<td><a href="#forwarded-headers"><code>server.forward-headers-strategy</code></a></td>
+<td><a href="#forwarded-headers"><code>server.request.header.forwarded.strategy</code></a></td>
 <td>Whether the scheme and host a TLS-terminating proxy reports are believed. <strong>Off by default.</strong></td>
 <td><strong>Yes</strong>, behind a proxy — which is every real deployment.</td>
 </tr>
@@ -6120,10 +6120,10 @@ itself with one. Moving <code>path</code> moves that exception with it. See
 </thead>
 <tbody>
 <tr>
-<td><code>server.forward-headers-strategy</code></td>
-<td><code>SERVER_FORWARDHEADERSSTRATEGY</code></td>
+<td><code>server.request.header.forwarded.strategy</code></td>
+<td><code>SERVER_REQUEST_HEADER_FORWARDED_STRATEGY</code></td>
 <td><em>(unset)</em></td>
-<td><code>native</code>, <code>framework</code>, <code>none</code></td>
+<td><code>web-server</code>, <code>framework</code>, <code>none</code></td>
 </tr>
 <tr>
 <td><code>server.request.header.forwarded.naming</code></td>
@@ -6154,7 +6154,7 @@ with Spring Boot's own meanings:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>native</code></td>
+<td><code>web-server</code></td>
 <td>Tomcat's <code>RemoteIpValve</code>: the headers are honoured only from a peer whose address is in <code>server.tomcat.remoteip.internal-proxies</code> — by default the private ranges <code>10/8</code>, <code>172.16/12</code>, <code>192.168/16</code>, <code>100.64/10</code>, loopback and their IPv6 counterparts. <code>X-Forwarded-For</code> also replaces the remote address the fetch ledger records. Recommended.</td>
 </tr>
 <tr>
@@ -6167,21 +6167,29 @@ with Spring Boot's own meanings:</p>
 </tr>
 <tr>
 <td><em>(unset)</em></td>
-<td><code>native</code> when Spring Boot detects a container platform from the environment (Kubernetes and ECS among them), otherwise <code>none</code>.</td>
+<td><code>web-server</code> when Spring Boot detects a container platform from the environment (Kubernetes and ECS among them), otherwise <code>none</code>.</td>
 </tr>
 </tbody>
 </table>
 <p>Trusting the headers is a security decision: the gateway cannot tell a proxy's
 header from a client's, so <code>framework</code> belongs only where nothing but the proxy
-can reach the listener and the proxy overwrites the headers, and <code>native</code>
+can reach the listener and the proxy overwrites the headers, and <code>web-server</code>
 belongs where the proxy's address is inside the internal ranges. The Helm chart
-sets <code>native</code> through its <code>forwardHeadersStrategy</code> value; other runtimes set
+sets <code>web-server</code> through its <code>forwardHeadersStrategy</code> value; other runtimes set
 the variable — see
 <a href="../../guides/deploying-without-kubernetes/#running-behind-a-proxy">Running behind a proxy</a>.</p>
-<p>Spring Boot 4.2 renamed the strategy to <code>server.request.header.forwarded.strategy</code>
-(values <code>web-server</code>, <code>framework</code>, <code>none</code>, where <code>web-server</code> is the old
-<code>native</code>). The gateway accepts either name; setting both refuses to start. The
-old name is deprecated in Spring Boot and still what the Helm chart sets.</p>
+<div class="admonition warning">
+<p class="admonition-title"><code>server.forward-headers-strategy</code> is deprecated</p>
+<p>Spring Boot 4.2 renamed <code>server.forward-headers-strategy</code>
+(<code>SERVER_FORWARDHEADERSSTRATEGY</code>) to <code>server.request.header.forwarded.strategy</code>,
+and its value <code>native</code> to <code>web-server</code>; <code>framework</code> and <code>none</code> are unchanged.
+The old name still works as an alias until Spring Boot 4.4 removes it, so move
+to the new one now. Setting both names refuses to start, so replace the old
+variable rather than adding the new one beside it. The Helm chart sets the new
+name, still accepts <code>native</code> as its <code>forwardHeadersStrategy</code> value, and
+refuses to render while <code>extraEnv</code> or <code>config</code> sets the strategy under
+either name.</p>
+</div>
 <p>The OIDC redirect URI the gateway sends is built from the request's host unless
 <code>SGW_OIDC_REDIRECT_URI</code> fixes it. Register the exact redirect URI or URIs with
 the identity provider, never a wildcard, and have the proxy set <code>Host</code> or
@@ -6192,7 +6200,7 @@ configured, identically on every packaging). Spring Boot's own registration is
 behind a <code>@ConditionalOnProperty</code>, which an ahead-of-time image evaluates when it
 is built, with the property unset — so on the GraalVM native image the release
 used to publish it was never compiled in and no runtime value could switch it on.
-<code>native</code> never had that problem: Tomcat's valve is installed by a customizer that
+<code>web-server</code> (then <code>native</code>) never had that problem: Tomcat's valve is installed by a customizer that
 reads the property at runtime. The released image is a JVM container today
 (<a href="https://github.com/skillsgateway/skillsgateway/blob/main/docs/decisions/0012-native-image-as-the-release-artifact.md">ADR 0012 — A JVM container is the release artifact</a>), where neither shape can occur; the explicit
 registration stays because it is what makes the setting mean one thing on every

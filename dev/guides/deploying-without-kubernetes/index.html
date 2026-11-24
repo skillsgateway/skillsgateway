@@ -2945,7 +2945,7 @@ nobody can administer. Name one in <code>skills-gateway.roles.admins</code>, in 
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="nv">SKILLSGATEWAY_OIDC_ISSUER</span><span class="o">=</span>https://idp.example.com/v2.0<span class="w">   </span><span class="c1"># required with a provider configured</span>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Behind a TLS-terminating proxy — see Running behind a proxy</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="nv">SERVER_FORWARDHEADERSSTRATEGY</span><span class="o">=</span>native
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="nv">SERVER_REQUEST_HEADER_FORWARDED_STRATEGY</span><span class="o">=</span>web-server
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># At least one administrator</span>
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="nv">SKILLSGATEWAY_ROLES_ADMINS_0</span><span class="o">=</span>platform-admin@example.com
@@ -2968,7 +2968,7 @@ sits in front of it — a load balancer, an ingress, a reverse proxy — sees
 <code>https://&lt;your-host&gt;</code>; the application sees <code>http://&lt;container&gt;:8080</code>. Every
 URL it builds from the request is wrong until it is told what the proxy sees,
 and the proxy says so in <code>X-Forwarded-Proto</code> and <code>X-Forwarded-Host</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">SERVER_FORWARDHEADERSSTRATEGY</span><span class="o">=</span>native
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">SERVER_REQUEST_HEADER_FORWARDED_STRATEGY</span><span class="o">=</span>web-server
 </code></pre></div>
 <p>Without it the OIDC redirect URI arrives at the identity provider as
 <code>http://&lt;container&gt;:8080/login/oauth2/code/idp</code> rather than the
@@ -2989,7 +2989,7 @@ header from a client's. Its three values differ in whom they believe:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>native</code></td>
+<td><code>web-server</code></td>
 <td>Tomcat honours the headers only from a peer in a private address range: <code>10/8</code>, <code>172.16/12</code>, <code>192.168/16</code>, <code>100.64/10</code>, loopback, and their IPv6 counterparts.</td>
 <td>The proxy is in your VPC or cluster — where a cloud load balancer or an ingress controller sits. The recommended value.</td>
 </tr>
@@ -3007,12 +3007,16 @@ header from a client's. Its three values differ in whom they believe:</p>
 </table>
 <p>A proxy outside the private ranges can be named rather than trusting everyone:
 <code>server.tomcat.remoteip.internal-proxies</code> (<code>SERVER_TOMCAT_REMOTEIP_INTERNALPROXIES</code>)
-replaces the list above, as CIDRs or a regular expression, and <code>native</code> then
+replaces the list above, as CIDRs or a regular expression, and <code>web-server</code> then
 believes those peers.</p>
 <p>Leaving the variable unset is not the same as <code>none</code>: Spring Boot then deduces
-<code>native</code> on a container platform it recognises from the environment —
+<code>web-server</code> on a container platform it recognises from the environment —
 Kubernetes and ECS among them — and <code>none</code> anywhere else. Name the value; a
 deployment that works because of a deduction is one nobody can read.</p>
+<p><code>SERVER_FORWARDHEADERSSTRATEGY</code>, with <code>native</code> for <code>web-server</code>, is the name
+before Spring Boot 4.2. It still works until Spring Boot 4.4 removes it, but
+replace it rather than adding the new variable beside it: with both set the
+application refuses to start.</p>
 <div class="admonition note">
 <p class="admonition-title"><code>framework</code> was inert on the released image until it was registered explicitly</p>
 <p>Spring Boot registers its forwarded-header filter behind a condition that an
@@ -3058,8 +3062,8 @@ replacing <code>.</code> with <code>_</code>, and <strong>removing</strong> hyph
 <td><code>SKILLSGATEWAY_RETENTION_ENABLED</code></td>
 </tr>
 <tr>
-<td><code>server.forward-headers-strategy</code></td>
-<td><code>SERVER_FORWARDHEADERSSTRATEGY</code></td>
+<td><code>server.request.header.forwarded.strategy</code></td>
+<td><code>SERVER_REQUEST_HEADER_FORWARDED_STRATEGY</code></td>
 </tr>
 </tbody>
 </table>
@@ -3227,7 +3231,7 @@ task. The metric names, and the two worth alerting on, are in
 <a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_USER_NAME_ATTRIBUTE</span><span class="o">=</span>preferred_username<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SGW_OIDC_SCOPE</span><span class="o">=</span>openid,profile,email<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SKILLSGATEWAY_OIDC_ISSUER</span><span class="o">=</span>https://idp.example.com/v2.0<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SERVER_FORWARDHEADERSSTRATEGY</span><span class="o">=</span>native<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">SERVER_REQUEST_HEADER_FORWARDED_STRATEGY</span><span class="o">=</span>web-server<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="w">  </span>ghcr.io/skillsgateway/skillsgateway:&lt;released-version&gt;
 </code></pre></div>
 <p>With <code>config/application.yaml</code>:</p>
