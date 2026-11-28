@@ -39,7 +39,7 @@ jobs:
       - id: oasdiff
         name: Diff the contract
         continue-on-error: true
-        uses: oasdiff/oasdiff-action/breaking@8bf13f088a1c9fd69292cb7694a35b0da07b5915 # v0.2.2
+        uses: oasdiff/oasdiff-action/breaking@533dbf3adf9462a3f4fe58bd61231c977d837342 # v0.2.3
         with:
           base: baseline-openapi.json
           revision: src/main/frontend/openapi.json
