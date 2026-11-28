@@ -226,7 +226,7 @@ jobs:
       # renovate: datasource=pypi depName=reqstool
       REQSTOOL_VERSION: 1.0.1
       # renovate: datasource=npm depName=@fission-ai/openspec
-      OPENSPEC_VERSION: 2.1.1
+      OPENSPEC_VERSION: 2.2.0
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
